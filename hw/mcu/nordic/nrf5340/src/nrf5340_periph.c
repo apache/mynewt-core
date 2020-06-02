@@ -23,6 +23,7 @@
 #include <mcu/nrf5340_hal.h>
 #include <bsp/bsp.h>
 #include <nrfx.h>
+#include "hal/hal_spi.h"
 
 #if MYNEWT_VAL(ADC_0)
 #include <adc/adc.h>
@@ -37,6 +38,10 @@
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || MYNEWT_VAL(UART_3)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
+#endif
+
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_3_MASTER) || MYNEWT_VAL(SPI_4_MASTER)
+#include "bus/drivers/spi_hal.h"
 #endif
 
 #if MYNEWT_VAL(ADC_0)
@@ -94,6 +99,84 @@ static const struct nrf5340_uart_cfg os_bsp_uart3_cfg = {
     .suc_pin_rts = MYNEWT_VAL(UART_3_PIN_RTS),
     .suc_pin_cts = MYNEWT_VAL(UART_3_PIN_CTS),
 };
+#endif
+
+#if MYNEWT_VAL(SPI_0_MASTER)
+static const struct bus_spi_dev_cfg spi0_cfg = {
+    .spi_num = 0,
+    .pin_sck = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi0_bus;
+#endif
+#if MYNEWT_VAL(SPI_0_SLAVE)
+static const struct nrf5340_hal_spi_cfg os_bsp_spi0s_cfg = {
+    .sck_pin = MYNEWT_VAL(SPI_0_SLAVE_PIN_SCK),
+    .mosi_pin = MYNEWT_VAL(SPI_0_SLAVE_PIN_MOSI),
+    .miso_pin = MYNEWT_VAL(SPI_0_SLAVE_PIN_MISO),
+    .ss_pin  = MYNEWT_VAL(SPI_0_SLAVE_PIN_SS),
+};
+#endif
+#if MYNEWT_VAL(SPI_1_MASTER)
+static const struct bus_spi_dev_cfg spi1_cfg = {
+    .spi_num = 1,
+    .pin_sck = MYNEWT_VAL(SPI_1_MASTER_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi1_bus;
+#endif
+#if MYNEWT_VAL(SPI_1_SLAVE)
+static const struct nrf5340_hal_spi_cfg os_bsp_spi1s_cfg = {
+    .sck_pin = MYNEWT_VAL(SPI_1_SLAVE_PIN_SCK),
+    .mosi_pin = MYNEWT_VAL(SPI_1_SLAVE_PIN_MOSI),
+    .miso_pin = MYNEWT_VAL(SPI_1_SLAVE_PIN_MISO),
+    .ss_pin = MYNEWT_VAL(SPI_1_SLAVE_PIN_SS),
+};
+#endif
+#if MYNEWT_VAL(SPI_2_MASTER)
+static const struct bus_spi_dev_cfg spi2_cfg = {
+    .spi_num = 2,
+    .pin_sck = MYNEWT_VAL(SPI_2_MASTER_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_2_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_2_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi2_bus;
+#endif
+#if MYNEWT_VAL(SPI_2_SLAVE)
+static const struct nrf5340_hal_spi_cfg os_bsp_spi2s_cfg = {
+    .sck_pin = MYNEWT_VAL(SPI_2_SLAVE_PIN_SCK),
+    .mosi_pin = MYNEWT_VAL(SPI_2_SLAVE_PIN_MOSI),
+    .miso_pin = MYNEWT_VAL(SPI_2_SLAVE_PIN_MISO),
+    .ss_pin = MYNEWT_VAL(SPI_2_SLAVE_PIN_SS),
+};
+#endif
+#if MYNEWT_VAL(SPI_3_MASTER)
+static const struct bus_spi_dev_cfg spi3_cfg = {
+    .spi_num = 3,
+    .pin_sck = MYNEWT_VAL(SPI_3_MASTER_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_3_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_3_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi3_bus;
+#endif
+#if MYNEWT_VAL(SPI_3_SLAVE)
+static const struct nrf5340_hal_spi_cfg os_bsp_spi3s_cfg = {
+    .sck_pin = MYNEWT_VAL(SPI_3_SLAVE_PIN_SCK),
+    .mosi_pin = MYNEWT_VAL(SPI_3_SLAVE_PIN_MOSI),
+    .miso_pin = MYNEWT_VAL(SPI_3_SLAVE_PIN_MISO),
+    .ss_pin = MYNEWT_VAL(SPI_3_SLAVE_PIN_SS),
+};
+#endif
+#if MYNEWT_VAL(SPI_4_MASTER)
+static const struct bus_spi_dev_cfg spi4_cfg = {
+    .spi_num = 4,
+    .pin_sck = MYNEWT_VAL(SPI_4_MASTER_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_4_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_4_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi4_bus;
 #endif
 
 static void
@@ -211,6 +294,56 @@ nrf5340_periph_create_uart(void)
 #endif
 }
 
+static void
+nrf5340_periph_create_spi(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(SPI_0_MASTER)
+    rc = bus_spi_hal_dev_create("spi0",
+                                &spi0_bus, (struct bus_spi_dev_cfg *)&spi0_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_0_SLAVE)
+    rc = hal_spi_init(0, (void *)&os_bsp_spi0s_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_1_MASTER)
+    rc = bus_spi_hal_dev_create("spi1", &spi1_bus,
+                                (struct bus_spi_dev_cfg *)&spi1_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_1_SLAVE)
+    rc = hal_spi_init(1, (void *)&os_bsp_spi1s_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_2_MASTER)
+    rc = bus_spi_hal_dev_create("spi2", &spi2_bus,
+                                (struct bus_spi_dev_cfg *)&spi2_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_2_SLAVE)
+    rc = hal_spi_init(2, (void *)&os_bsp_spi2s_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_3_MASTER)
+    rc = bus_spi_hal_dev_create("spi3", &spi3_bus,
+                                (struct bus_spi_dev_cfg *)&spi3_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_3_SLAVE)
+    rc = hal_spi_init(3, (void *)&os_bsp_spi3s_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_4_MASTER)
+    rc = bus_spi_hal_dev_create("spi4", &spi4_bus,
+                                (struct bus_spi_dev_cfg *)&spi4_cfg);
+    assert(rc == 0);
+#endif
+}
+
 void
 nrf5340_periph_create(void)
 {
@@ -218,4 +351,5 @@ nrf5340_periph_create(void)
     nrf5340_periph_create_adc();
     nrf5340_periph_create_pwm();
     nrf5340_periph_create_uart();
+    nrf5340_periph_create_spi();
 }

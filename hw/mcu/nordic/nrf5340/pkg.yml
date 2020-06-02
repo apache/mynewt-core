@@ -65,3 +65,22 @@ pkg.deps.PWM_2:
 pkg.deps.PWM_3:
     - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
 
+pkg.deps.SPI_0_MASTER:
+    - "@apache-mynewt-core/hw/bus"
+    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
+
+pkg.deps.SPI_1_MASTER:
+    - "@apache-mynewt-core/hw/bus"
+    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
+
+pkg.deps.SPI_2_MASTER:
+    - "@apache-mynewt-core/hw/bus"
+    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
+
+pkg.deps.SPI_3_MASTER:
+    - "@apache-mynewt-core/hw/bus"
+    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
+
+pkg.deps.SPI_4_MASTER:
+    - "@apache-mynewt-core/hw/bus"
+    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"

@@ -49,6 +49,14 @@ const struct nrf5340_uart_cfg *bsp_uart_config(void);
 struct hal_flash;
 extern const struct hal_flash nrf5340_flash_dev;
 
+/* SPI configuration (used for both master and slave) */
+struct nrf5340_hal_spi_cfg {
+    int8_t sck_pin;
+    int8_t mosi_pin;
+    int8_t miso_pin;
+    int8_t ss_pin;
+};
+
 /*
  * GPIO pin mapping
  *
