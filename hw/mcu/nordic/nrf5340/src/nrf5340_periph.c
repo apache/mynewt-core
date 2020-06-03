@@ -44,6 +44,11 @@
 #include "bus/drivers/spi_hal.h"
 #endif
 
+#if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1) || MYNEWT_VAL(I2C_2) || MYNEWT_VAL(I2C_3)
+#include <bus/drivers/i2c_common.h>
+#include <bus/drivers/i2c_nrf5340.h>
+#endif
+
 #if MYNEWT_VAL(ADC_0)
 static struct adc_dev os_bsp_adc0;
 static struct nrf52_adc_dev_cfg os_bsp_adc0_config = {
@@ -177,6 +182,42 @@ static const struct bus_spi_dev_cfg spi4_cfg = {
     .pin_miso = MYNEWT_VAL(SPI_4_MASTER_PIN_MISO),
 };
 static struct bus_spi_hal_dev spi4_bus;
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+static const struct bus_i2c_dev_cfg i2c0_cfg = {
+    .i2c_num = 0,
+    .pin_sda = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .pin_scl = MYNEWT_VAL(I2C_0_PIN_SCL),
+};
+static struct bus_i2c_dev i2c0_bus;
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+static const struct bus_i2c_dev_cfg i2c1_cfg = {
+    .i2c_num = 1,
+    .pin_sda = MYNEWT_VAL(I2C_1_PIN_SDA),
+    .pin_scl = MYNEWT_VAL(I2C_1_PIN_SCL),
+};
+static struct bus_i2c_dev i2c1_bus;
+#endif
+
+#if MYNEWT_VAL(I2C_2)
+static const struct bus_i2c_dev_cfg i2c2_cfg = {
+    .i2c_num = 2,
+    .pin_sda = MYNEWT_VAL(I2C_2_PIN_SDA),
+    .pin_scl = MYNEWT_VAL(I2C_2_PIN_SCL),
+};
+static struct bus_i2c_dev i2c2_bus;
+#endif
+
+#if MYNEWT_VAL(I2C_3)
+static const struct bus_i2c_dev_cfg i2c3_cfg = {
+    .i2c_num = 3,
+    .pin_sda = MYNEWT_VAL(I2C_3_PIN_SDA),
+    .pin_scl = MYNEWT_VAL(I2C_3_PIN_SCL),
+};
+static struct bus_i2c_dev i2c3_bus;
 #endif
 
 static void
@@ -344,6 +385,35 @@ nrf5340_periph_create_spi(void)
 #endif
 }
 
+static void
+nrf5340_periph_create_i2c(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(I2C_0)
+    rc = bus_i2c_nrf5340_dev_create("i2c0", &i2c0_bus,
+                                    (struct bus_i2c_dev_cfg *)&i2c0_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(I2C_1)
+    rc = bus_i2c_nrf5340_dev_create("i2c1", &i2c1_bus,
+                                    (struct bus_i2c_dev_cfg *)&i2c1_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(I2C_2)
+    rc = bus_i2c_nrf5340_dev_create("i2c2", &i2c2_bus,
+                                    (struct bus_i2c_dev_cfg *)&i2c2_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(I2C_3)
+    rc = bus_i2c_nrf5340_dev_create("i2c3", &i2c3_bus,
+                                    (struct bus_i2c_dev_cfg *)&i2c3_cfg);
+    assert(rc == 0);
+#endif
+}
+
 void
 nrf5340_periph_create(void)
 {
@@ -352,4 +422,5 @@ nrf5340_periph_create(void)
     nrf5340_periph_create_pwm();
     nrf5340_periph_create_uart();
     nrf5340_periph_create_spi();
+    nrf5340_periph_create_i2c();
 }
