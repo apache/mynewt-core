@@ -38,6 +38,34 @@ struct hal_uart {
     const struct stm32_uart_cfg *u_cfg;
 };
 static struct hal_uart uarts[UART_CNT];
+static struct hal_uart *
+uart_by_port(int port)
+{
+    int index;
+
+    (void)index;
+    (void)uarts;
+
+    index = 0;
+#if MYNEWT_VAL(UART_0)
+    if (port == 0) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_1)
+    if (port == 1) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_2)
+    if (port == 2) {
+        return &uarts[index];
+    }
+#endif
+    return NULL;
+};
 
 struct hal_uart_irq {
     struct hal_uart *ui_uart;
@@ -86,11 +114,8 @@ hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
 {
     struct hal_uart *u;
 
-    if (port < 0 || port >= UART_CNT) {
-        return -1;
-    }
-    u = &uarts[port];
-    if (u->u_open) {
+    u = uart_by_port(port);
+    if (!u || u->u_open) {
         return -1;
     }
     u->u_rx_func = rx_func;
@@ -162,8 +187,8 @@ hal_uart_start_rx(int port)
     int sr;
     int rc;
 
-    u = &uarts[port];
-    if (u->u_rx_stall) {
+    u = uart_by_port(port);
+    if (u && u->u_rx_stall) {
         __HAL_DISABLE_INTERRUPTS(sr);
         rc = u->u_rx_func(u->u_func_arg, u->u_rx_data);
         if (rc == 0) {
@@ -180,12 +205,14 @@ hal_uart_start_tx(int port)
     struct hal_uart *u;
     int sr;
 
-    u = &uarts[port];
-    __HAL_DISABLE_INTERRUPTS(sr);
-    u->u_regs->CR1 &= ~USART_CR1_TCIE;
-    u->u_regs->CR1 |= USART_CR1_TXEIE;
-    u->u_tx_end = 0;
-    __HAL_ENABLE_INTERRUPTS(sr);
+    u = uart_by_port(port);
+    if (u) {
+        __HAL_DISABLE_INTERRUPTS(sr);
+        u->u_regs->CR1 &= ~USART_CR1_TCIE;
+        u->u_regs->CR1 |= USART_CR1_TXEIE;
+        u->u_tx_end = 0;
+        __HAL_ENABLE_INTERRUPTS(sr);
+    }
 }
 
 void
@@ -194,11 +221,8 @@ hal_uart_blocking_tx(int port, uint8_t data)
     struct hal_uart *u;
     USART_TypeDef *regs;
 
-    if (port < 0 || port >= UART_CNT) {
-        return;
-    }
-    u = &uarts[port];
-    if (!u->u_open) {
+    u = uart_by_port(port);
+    if (!u || u->u_open) {
         return;
     }
 
@@ -360,12 +384,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     GPIO_InitTypeDef gpio;
 #endif
 
-    if (port < 0 || port >= UART_CNT) {
-        return -1;
-    }
-
-    u = &uarts[port];
-    if (u->u_open) {
+    u = uart_by_port(port);
+    if (!u || u->u_open) {
         return -1;
     }
     cfg = u->u_cfg;
@@ -513,10 +533,10 @@ hal_uart_init(int port, void *arg)
 {
     struct hal_uart *u;
 
-    if (port < 0 || port >= UART_CNT) {
+    u = uart_by_port(port);
+    if (!u) {
         return -1;
     }
-    u = &uarts[port];
     u->u_cfg = (const struct stm32_uart_cfg *)arg;
 
     return 0;
@@ -527,10 +547,10 @@ hal_uart_close(int port)
 {
     struct hal_uart *u;
 
-    if (port < 0 || port >= UART_CNT) {
+    u = uart_by_port(port);
+    if (!u) {
         return -1;
     }
-    u = &uarts[port];
 
     u->u_open = 0;
     u->u_regs->CR1 = 0;
