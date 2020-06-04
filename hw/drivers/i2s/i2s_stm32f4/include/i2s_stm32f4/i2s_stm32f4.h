@@ -67,7 +67,8 @@ struct stm32_i2s {
     DMA_HandleTypeDef *hdma_i2sext;
 
     struct i2s *i2s;
-    struct i2s_sample_buffer *active_buffer;
+    struct i2s_sample_buffer *dma_buffers[2];
+    uint8_t dma_buffer_count;
 };
 
 #define DMA_CFG(dma, ch, st, name) &(name ## _stream ## st ## _channel ## ch)
