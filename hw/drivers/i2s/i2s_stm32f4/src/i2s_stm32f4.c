@@ -25,10 +25,11 @@
 #include <i2s/i2s_driver.h>
 #include <i2s_stm32f4/i2s_stm32f4.h>
 
-#if defined(SPI_I2S_FULLDUPLEX_SUPPORT)
-#define I2SEXT_PRESENT  1
+/* SPI_I2S_FULLDUPLEX_SUPPORT is defined (or not) in ST provided MCU specific header */
+#if defined(SPI_I2S_FULLDUPLEX_SUPPORT) && MYNEWT_VAL(I2S_FULLDUPLEX_ENABLE)
+#define I2S_FULLDUPLEX_SUPPORT  1
 #else
-#define I2SEXT_PRESENT  0
+#define I2S_FULLDUPLEX_SUPPORT  0
 #endif
 
 struct stm32_spi_cfg {
@@ -40,7 +41,7 @@ struct stm32_spi_cfg {
     void (*irq_handler)(void);
     void (*i2s_dma_handler)(void);
     void (*enable_clock)(bool enable);
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
     DMA_HandleTypeDef *hdma_i2sext;
     void (*i2sext_dma_handler)(void);
 #endif
@@ -142,61 +143,12 @@ i2s5_clock_enable(bool enable)
 #endif
 }
 
-void
-HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    struct stm32_i2s *i2s_data = (struct stm32_i2s *)hi2s;
-    struct i2s *i2s = i2s_data->i2s;
-    struct i2s_sample_buffer *processed_buffer = i2s_data->active_buffer;
-
-    i2s_data->active_buffer = i2s_driver_buffer_get(i2s);
-    if (i2s_data->active_buffer) {
-        HAL_I2S_Transmit_DMA(&i2s_data->hi2s,
-                             i2s_data->active_buffer->sample_data,
-                             i2s_data->active_buffer->sample_count);
-    } else {
-        i2s_driver_state_changed(i2s, I2S_STATE_OUT_OF_BUFFERS);
-    }
-    i2s_driver_buffer_put(i2s, processed_buffer);
-}
-
-void
-HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    struct stm32_i2s *i2s_data = (struct stm32_i2s *)hi2s;
-    struct i2s *i2s = i2s_data->i2s;
-    struct i2s_sample_buffer *processed_buffer = i2s_data->active_buffer;
-
-    i2s_data->active_buffer = i2s_driver_buffer_get(i2s);
-    if (i2s_data->active_buffer) {
-        HAL_I2S_Receive_DMA(&i2s_data->hi2s,
-                            i2s_data->active_buffer->sample_data,
-                            i2s_data->active_buffer->capacity);
-    } else {
-        i2s_driver_state_changed(i2s, I2S_STATE_OUT_OF_BUFFERS);
-    }
-    processed_buffer->sample_count = processed_buffer->capacity;
-    i2s_driver_buffer_put(i2s, processed_buffer);
-}
-
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
 void
 HAL_I2SEx_TxRxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-    struct stm32_i2s *i2s_data = (struct stm32_i2s *)hi2s;
-    struct i2s *i2s = i2s_data->i2s;
-    struct i2s_sample_buffer *processed_buffer = i2s_data->active_buffer;
-
-    i2s_data->active_buffer = i2s_driver_buffer_get(i2s);
-    if (i2s_data->active_buffer) {
-        HAL_I2SEx_TransmitReceive_DMA(hi2s,
-                                      i2s_data->active_buffer->sample_data,
-                                      i2s_data->active_buffer->sample_data,
-                                      i2s_data->active_buffer->sample_count);
-    } else {
-        i2s_driver_state_changed(i2s, I2S_STATE_OUT_OF_BUFFERS);
-    }
-    i2s_driver_buffer_put(i2s, processed_buffer);
+    /* TODO: Finish full duplex mode */
+    assert(0);
 }
 #endif
 
@@ -212,11 +164,13 @@ i2s2_dma_stream_irq_handler(void)
     HAL_DMA_IRQHandler(stm32_i2s2.hdma_spi);
 }
 
+#if defined(I2S2ext) && I2S_FULLDUPLEX_SUPPORT
 static void
 i2s2ext_dma_stream_irq_handler(void)
 {
     HAL_DMA_IRQHandler(stm32_i2s2.hdma_i2sext);
 }
+#endif
 
 static void
 i2s3_dma_stream_irq_handler(void)
@@ -224,11 +178,13 @@ i2s3_dma_stream_irq_handler(void)
     HAL_DMA_IRQHandler(stm32_i2s3.hdma_spi);
 }
 
+#if defined(I2S3ext) && I2S_FULLDUPLEX_SUPPORT
 static void
 i2s3ext_dma_stream_irq_handler(void)
 {
     HAL_DMA_IRQHandler(stm32_i2s3.hdma_i2sext);
 }
+#endif
 
 static void
 i2s4_dma_stream_irq_handler(void)
@@ -249,7 +205,7 @@ i2s_init_interrupts(const struct i2s_cfg *cfg)
     HAL_NVIC_SetPriority(cfg->dma_cfg->dma_stream_irq, 5, 0);
     HAL_NVIC_EnableIRQ(cfg->dma_cfg->dma_stream_irq);
 
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
     if (cfg->dma_i2sext_cfg) {
         NVIC_SetVector(cfg->dma_i2sext_cfg->dma_stream_irq, (uint32_t)cfg->spi_cfg->i2sext_dma_handler);
         HAL_NVIC_SetPriority(cfg->dma_i2sext_cfg->dma_stream_irq, 5, 0);
@@ -269,7 +225,7 @@ i2s_init_pins(struct stm32_i2s_pins *pins)
     hal_gpio_init_stm(pins->ck_pin->pin, (GPIO_InitTypeDef *)&pins->ck_pin->hal_init);
     hal_gpio_init_stm(pins->ws_pin->pin, (GPIO_InitTypeDef *)&pins->ws_pin->hal_init);
     hal_gpio_init_stm(pins->sd_pin->pin, (GPIO_InitTypeDef *)&pins->sd_pin->hal_init);
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
     if (pins->ext_sd_pin) {
         hal_gpio_init_stm(pins->ext_sd_pin->pin, (GPIO_InitTypeDef *)&pins->ext_sd_pin->hal_init);
     }
@@ -282,7 +238,7 @@ stm32_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
     int rc = 0;
     struct stm32_i2s *stm32_i2s;
 
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
     if (cfg->pins.ext_sd_pin != NULL) {
         i2s->direction = I2S_OUT_IN;
     } else {
@@ -310,7 +266,7 @@ stm32_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
     stm32_i2s = cfg->spi_cfg->driver_data;
     stm32_i2s->i2s = i2s;
     stm32_i2s->hdma_spi = cfg->spi_cfg->hdma_spi;
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
     stm32_i2s->hdma_i2sext = cfg->spi_cfg->hdma_i2sext;
 #endif
 
@@ -328,7 +284,7 @@ stm32_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
     stm32_i2s->hi2s.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
     stm32_i2s->hi2s.Init.AudioFreq = cfg->sample_rate;
     stm32_i2s->hi2s.Init.CPOL = I2S_CPOL_LOW;
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
     stm32_i2s->hi2s.Init.ClockSource = I2S_CLOCK_PLL;
     if (i2s->direction == I2S_OUT_IN) {
         stm32_i2s->hi2s.Init.FullDuplexMode = I2S_FULLDUPLEXMODE_ENABLE;
@@ -366,7 +322,7 @@ stm32_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
         __HAL_LINKDMA(&stm32_i2s->hi2s, hdmarx, *stm32_i2s->hdma_spi);
     }
 
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
     if (i2s->direction == I2S_OUT_IN) {
         stm32_i2s->hdma_i2sext->Instance = cfg->dma_i2sext_cfg->dma_stream;
         stm32_i2s->hdma_i2sext->Init.Channel = cfg->dma_i2sext_cfg->dma_channel;
@@ -424,20 +380,365 @@ i2s_driver_stop(struct i2s *i2s)
     }
 
     assert(i2s_data->hi2s.State == HAL_I2S_STATE_READY);
-    buffer = i2s_data->active_buffer;
-    if (buffer) {
-        i2s_data->active_buffer = NULL;
+    if (i2s_data->dma_buffer_count > 0) {
+        buffer = i2s_data->dma_buffers[0];
+        i2s_data->dma_buffers[0] = NULL;
         i2s_driver_buffer_put(i2s, buffer);
+        if (i2s_data->dma_buffer_count > 1) {
+            buffer = i2s_data->dma_buffers[1];
+            i2s_driver_buffer_put(i2s, buffer);
+        }
+        i2s_data->dma_buffers[1] = NULL;
+        i2s_data->dma_buffer_count = 0;
     }
     HAL_I2S_DeInit(&i2s_data->hi2s);
     HAL_DMA_DeInit(i2s_data->hdma_spi);
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
     if (i2s->direction == I2S_OUT_IN) {
         HAL_DMA_DeInit(i2s_data->hdma_i2sext);
     }
 #endif
     return 0;
 }
+
+static void
+i2s_dma_complete(DMA_HandleTypeDef *hdma, HAL_DMA_MemoryTypeDef memory)
+{
+    I2S_HandleTypeDef *hi2s = (I2S_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent; /* Derogation MISRAC2012-Rule-11.5 */
+    struct stm32_i2s *i2s_data = (struct stm32_i2s *)hi2s;
+    struct i2s *i2s = i2s_data->i2s;
+    struct i2s_sample_buffer *processed_buffer = NULL;
+    const int ix = (int)memory;
+
+    if (i2s_data->dma_buffer_count == 2) {
+        /* There were already two different memory buffers, one can be returned to the user */
+        processed_buffer = i2s_data->dma_buffers[ix];
+        i2s_data->dma_buffers[ix] = i2s_driver_buffer_get(i2s);
+        /* If there are not more waiting buffers, use same buffer again */
+        if (i2s_data->dma_buffers[ix] == NULL) {
+            i2s_data->dma_buffer_count = 1;
+            i2s_data->dma_buffers[ix] = i2s_data->dma_buffers[ix ^ 1];
+        }
+        HAL_DMAEx_ChangeMemory(hdma, (uint32_t)i2s_data->dma_buffers[ix]->sample_data, memory);
+        processed_buffer->sample_count = processed_buffer->capacity;
+        i2s_driver_buffer_put(i2s, processed_buffer);
+    }
+}
+
+static void
+i2s_dma_m0_complete(DMA_HandleTypeDef *hdma)
+{
+    i2s_dma_complete(hdma, MEMORY0);
+}
+
+static void
+i2s_dma_m1_complete(DMA_HandleTypeDef *hdma)
+{
+    i2s_dma_complete(hdma, MEMORY1);
+}
+
+/*
+ * Following functions:
+ * i2s_dma_error(), i2s_receive_start_dma() i2s_transmit_start_dma(), i2s_transmit_receive_dma()
+ * are close copies of ST HAL functions with exception that they program DMA in double buffering
+ * mode.  Style and naming is in most part unchanged.
+ */
+static void
+i2s_dma_error(DMA_HandleTypeDef *hdma)
+{
+    I2S_HandleTypeDef *hi2s = (I2S_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent; /* Derogation MISRAC2012-Rule-11.5 */
+
+    /* Disable Rx and Tx DMA Request */
+    CLEAR_BIT(hi2s->Instance->CR2, (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN));
+    hi2s->TxXferCount = 0U;
+    hi2s->RxXferCount = 0U;
+
+    hi2s->State = HAL_I2S_STATE_READY;
+
+    /* Set the error code and execute error callback */
+    SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_DMA);
+    /* Call user error callback */
+#if (USE_HAL_I2S_REGISTER_CALLBACKS == 1U)
+    hi2s->ErrorCallback(hi2s);
+#else
+    HAL_I2S_ErrorCallback(hi2s);
+#endif /* USE_HAL_I2S_REGISTER_CALLBACKS */
+}
+
+static HAL_StatusTypeDef
+i2s_receive_start_dma(I2S_HandleTypeDef *hi2s, uint16_t *buf0, uint16_t *buf1, uint16_t sample_count)
+{
+    uint32_t tmpreg_cfgr;
+    uint16_t size;
+
+    if ((buf0 == NULL) || (buf1 == NULL) || (sample_count == 0)) {
+        return HAL_ERROR;
+    }
+
+    /* Process Locked */
+    __HAL_LOCK(hi2s);
+
+    if (hi2s->State != HAL_I2S_STATE_READY) {
+        __HAL_UNLOCK(hi2s);
+        return HAL_BUSY;
+    }
+
+    /* Set state and reset error code */
+    hi2s->State = HAL_I2S_STATE_BUSY_RX;
+    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
+    hi2s->pRxBuffPtr = buf0;
+
+    tmpreg_cfgr = hi2s->Instance->I2SCFGR & (SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_CHLEN);
+
+    if ((tmpreg_cfgr == I2S_DATAFORMAT_24B) || (tmpreg_cfgr == I2S_DATAFORMAT_32B)) {
+        size = sample_count << 1U;
+    } else {
+        size = sample_count;
+    }
+
+    /* Half transfer callback not needed */
+    hi2s->hdmarx->XferHalfCpltCallback = NULL;
+
+    /* Set the I2S Rx DMA transfer complete callback */
+    hi2s->hdmarx->XferCpltCallback = i2s_dma_m0_complete;
+    hi2s->hdmarx->XferM1CpltCallback = i2s_dma_m1_complete;
+
+    /* Set the DMA error callback */
+    hi2s->hdmarx->XferErrorCallback = i2s_dma_error;
+
+    /* Check if Master Receiver mode is selected */
+    if ((hi2s->Instance->I2SCFGR & SPI_I2SCFGR_I2SCFG) == I2S_MODE_MASTER_RX) {
+        /*
+         * Clear the Overrun Flag by a read operation to the SPI_DR register followed by a read
+         * access to the SPI_SR register.
+         */
+        __HAL_I2S_CLEAR_OVRFLAG(hi2s);
+    }
+
+    hi2s->hdmarx->Instance->CR &= ~DMA_SxCR_CT_Msk;
+    /* Enable the Rx DMA Stream/Channel */
+    if (HAL_OK != HAL_DMAEx_MultiBufferStart_IT(hi2s->hdmarx, (uint32_t)&hi2s->Instance->DR,
+                                                (uint32_t)buf0, (uint32_t)buf1, size)) {
+        /* Update SPI error code */
+        SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_DMA);
+        hi2s->State = HAL_I2S_STATE_READY;
+
+        __HAL_UNLOCK(hi2s);
+        return HAL_ERROR;
+    }
+
+    /* Check if the I2S is already enabled */
+    if (HAL_IS_BIT_CLR(hi2s->Instance->I2SCFGR, SPI_I2SCFGR_I2SE)) {
+        /* Enable I2S peripheral */
+        __HAL_I2S_ENABLE(hi2s);
+    }
+
+    /* Check if the I2S Rx request is already enabled */
+    if (HAL_IS_BIT_CLR(hi2s->Instance->CR2, SPI_CR2_RXDMAEN)) {
+        /* Enable Rx DMA Request */
+        SET_BIT(hi2s->Instance->CR2, SPI_CR2_RXDMAEN);
+    }
+
+    __HAL_UNLOCK(hi2s);
+    return HAL_OK;
+}
+
+static HAL_StatusTypeDef
+i2s_transmit_start_dma(I2S_HandleTypeDef *hi2s, uint16_t *buf0, uint16_t *buf1, uint16_t sample_count)
+{
+    uint32_t tmpreg_cfgr;
+    uint16_t size;
+
+    if ((buf0 == NULL) || (buf1 == NULL) || (sample_count == 0)) {
+        return HAL_ERROR;
+    }
+
+    /* Process Locked */
+    __HAL_LOCK(hi2s);
+
+    if (hi2s->State != HAL_I2S_STATE_READY) {
+        __HAL_UNLOCK(hi2s);
+        return HAL_BUSY;
+    }
+
+    /* Set state and reset error code */
+    hi2s->State = HAL_I2S_STATE_BUSY_TX;
+    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
+    hi2s->pTxBuffPtr = buf0;
+
+    tmpreg_cfgr = hi2s->Instance->I2SCFGR & (SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_CHLEN);
+
+    if ((tmpreg_cfgr == I2S_DATAFORMAT_24B) || (tmpreg_cfgr == I2S_DATAFORMAT_32B)) {
+        size = sample_count << 1U;
+    } else {
+        size = sample_count;
+    }
+
+    /* Set the I2S Tx DMA Half transfer complete callback */
+    hi2s->hdmatx->XferHalfCpltCallback = NULL;
+
+    /* Set the I2S Tx DMA transfer complete callback */
+    hi2s->hdmatx->XferCpltCallback = i2s_dma_m0_complete;
+    hi2s->hdmatx->XferM1CpltCallback = i2s_dma_m1_complete;
+
+    /* Set the DMA error callback */
+    hi2s->hdmatx->XferErrorCallback = i2s_dma_error;
+
+    hi2s->hdmatx->Instance->CR &= ~DMA_SxCR_CT_Msk;
+    /* Enable the Tx DMA Stream/Channel */
+    if (HAL_OK != HAL_DMAEx_MultiBufferStart_IT(hi2s->hdmatx, (uint32_t)buf0, (uint32_t)&hi2s->Instance->DR,
+                                                (uint32_t)buf1, size)) {
+        /* Update SPI error code */
+        SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_DMA);
+        hi2s->State = HAL_I2S_STATE_READY;
+
+        __HAL_UNLOCK(hi2s);
+        return HAL_ERROR;
+    }
+
+    /* Check if the I2S is already enabled */
+    if (HAL_IS_BIT_CLR(hi2s->Instance->I2SCFGR, SPI_I2SCFGR_I2SE)) {
+        /* Enable I2S peripheral */
+        __HAL_I2S_ENABLE(hi2s);
+    }
+
+    /* Check if the I2S Rx request is already enabled */
+    if (HAL_IS_BIT_CLR(hi2s->Instance->CR2, SPI_CR2_TXDMAEN)) {
+        /* Enable Rx DMA Request */
+        SET_BIT(hi2s->Instance->CR2, SPI_CR2_TXDMAEN);
+    }
+
+    __HAL_UNLOCK(hi2s);
+    return HAL_OK;
+}
+
+#if I2S_FULLDUPLEX_SUPPORT
+static HAL_StatusTypeDef
+i2s_transmit_receive_dma(I2S_HandleTypeDef *hi2s, uint16_t *buf0, uint16_t *buf1, uint16_t sample_count)
+{
+    uint32_t tmp1 = 0U;
+    HAL_StatusTypeDef errorcode = HAL_OK;
+    uint16_t size;
+
+    if (hi2s->State != HAL_I2S_STATE_READY) {
+        errorcode = HAL_BUSY;
+        goto error;
+    }
+
+    if ((buf0 == NULL) || (buf1 == NULL) || (sample_count == 0U)) {
+        return HAL_ERROR;
+    }
+
+    /* Process Locked */
+    __HAL_LOCK(hi2s);
+
+    hi2s->pTxBuffPtr = buf0;
+    hi2s->pRxBuffPtr = buf0;
+
+    tmp1 = hi2s->Instance->I2SCFGR & (SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_CHLEN);
+    /*
+     * Check the Data format: When a 16-bit data frame or a 16-bit data frame extended
+     * is selected during the I2S configuration phase, the Size parameter means the number
+     * of 16-bit data length in the transaction and when a 24-bit data frame or a 32-bit data
+     * frame is selected the Size parameter means the number of 16-bit data length.
+     */
+    if ((tmp1 == I2S_DATAFORMAT_24B) || (tmp1 == I2S_DATAFORMAT_32B)) {
+        size = sample_count << 1U;
+    } else {
+        size = sample_count;
+    }
+    hi2s->TxXferSize = size;
+    hi2s->TxXferCount = size;
+    hi2s->RxXferSize = size;
+    hi2s->RxXferCount = size;
+
+    hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
+    hi2s->State = HAL_I2S_STATE_BUSY_TX_RX;
+
+    /* No Half transfer needed */
+    hi2s->hdmarx->XferHalfCpltCallback = NULL;
+    hi2s->hdmatx->XferHalfCpltCallback = NULL;
+
+    /* Set the I2S Rx DMA transfer complete callback */
+    hi2s->hdmarx->XferCpltCallback = i2s_dma_m0_complete;
+    hi2s->hdmarx->XferM1CpltCallback = i2s_dma_m1_complete;
+
+    /* Set the I2S Rx DMA error callback */
+    hi2s->hdmarx->XferErrorCallback = i2s_dma_error;
+
+    hi2s->hdmarx->Instance->CR &= ~DMA_SxCR_CT_Msk;
+
+    /* Set the I2S Tx DMA transfer complete callback */
+    hi2s->hdmatx->XferCpltCallback = i2s_dma_m0_complete;
+    hi2s->hdmatx->XferM1CpltCallback = i2s_dma_m1_complete;
+
+    /* Set the I2S Tx DMA error callback */
+    hi2s->hdmatx->XferErrorCallback = i2s_dma_error;
+
+    hi2s->hdmatx->Instance->CR &= ~DMA_SxCR_CT_Msk;
+
+    tmp1 = hi2s->Instance->I2SCFGR & SPI_I2SCFGR_I2SCFG;
+    /* Check if the I2S_MODE_MASTER_TX or I2S_MODE_SLAVE_TX Mode is selected */
+    if ((tmp1 == I2S_MODE_MASTER_TX) || (tmp1 == I2S_MODE_SLAVE_TX)) {
+        /* Enable the Rx DMA Stream */
+        HAL_DMAEx_MultiBufferStart_IT(hi2s->hdmarx, (uint32_t)&I2SxEXT(hi2s->Instance)->DR,
+                                      (uint32_t)buf0, (uint32_t)buf1, size);
+
+        /* Enable Rx DMA Request */
+        SET_BIT(I2SxEXT(hi2s->Instance)->CR2, SPI_CR2_RXDMAEN);
+
+        /* Enable the Tx DMA Stream */
+        HAL_DMAEx_MultiBufferStart_IT(hi2s->hdmatx, (uint32_t)buf0, (uint32_t)&hi2s->Instance->DR,
+                                      (uint32_t)buf1, size);
+
+        /* Enable Tx DMA Request */
+        SET_BIT(hi2s->Instance->CR2, SPI_CR2_TXDMAEN);
+
+        /* Check if the I2S is already enabled */
+        if ((hi2s->Instance->I2SCFGR & SPI_I2SCFGR_I2SE) != SPI_I2SCFGR_I2SE) {
+            /* Enable I2Sext(receiver) before enabling I2Sx peripheral */
+            __HAL_I2SEXT_ENABLE(hi2s);
+
+            /* Enable I2S peripheral after the I2Sext */
+            __HAL_I2S_ENABLE(hi2s);
+        }
+    } else {
+        /* Check if Master Receiver mode is selected */
+        if ((hi2s->Instance->I2SCFGR & SPI_I2SCFGR_I2SCFG) == I2S_MODE_MASTER_RX) {
+            /*
+             * Clear the Overrun Flag by a read operation on the SPI_DR register followed by a read
+             * access to the SPI_SR register.
+             */
+            __HAL_I2S_CLEAR_OVRFLAG(hi2s);
+        }
+        /* Enable the Tx DMA Stream */
+        HAL_DMAEx_MultiBufferStart_IT(hi2s->hdmatx, (uint32_t)buf0, (uint32_t)&I2SxEXT(hi2s->Instance)->DR,
+                                      (uint32_t)buf1, size);
+
+        /* Enable Tx DMA Request */
+        SET_BIT(I2SxEXT(hi2s->Instance)->CR2, SPI_CR2_TXDMAEN);
+
+        /* Enable the Rx DMA Stream */
+        HAL_DMAEx_MultiBufferStart_IT(hi2s->hdmarx, (uint32_t)&hi2s->Instance->DR, (uint32_t)buf0,
+                                      (uint32_t)buf1, size);
+
+        /* Enable Rx DMA Request */
+        SET_BIT(hi2s->Instance->CR2, SPI_CR2_RXDMAEN);
+
+        /* Check if the I2S is already enabled */
+        if ((hi2s->Instance->I2SCFGR & SPI_I2SCFGR_I2SE) != SPI_I2SCFGR_I2SE) {
+            /* Enable I2Sext(transmitter) before enabling I2Sx peripheral */
+            __HAL_I2SEXT_ENABLE(hi2s);
+            /* Enable I2S peripheral before the I2Sext */
+            __HAL_I2S_ENABLE(hi2s);
+        }
+    }
+
+error:
+    __HAL_UNLOCK(hi2s);
+    return errorcode;
+}
+#endif
 
 int
 i2s_driver_start(struct i2s *i2s)
@@ -459,7 +760,7 @@ i2s_driver_start(struct i2s *i2s)
             rc = SYS_EUNKNOWN;
             break;
         }
-#if I2SEXT_PRESENT
+#if I2S_FULLDUPLEX_SUPPORT
         if (i2s->direction == I2S_OUT_IN) {
             if (HAL_DMA_Init(i2s_data->hdma_i2sext) != HAL_OK) {
                 (void)HAL_DMA_DeInit(i2s_data->hdma_spi);
@@ -471,30 +772,39 @@ i2s_driver_start(struct i2s *i2s)
 #endif
     /* Fallthrough */
     case HAL_I2S_STATE_READY:
-        assert(i2s_data->active_buffer == NULL);
-        i2s_data->active_buffer = i2s_driver_buffer_get(i2s);
-        assert(i2s_data->active_buffer);
-        if (i2s_data->active_buffer == NULL) {
+        assert(i2s_data->dma_buffers[0] == NULL);
+        assert(i2s_data->dma_buffers[1] == NULL);
+        assert(i2s_data->dma_buffer_count == 0);
+        i2s_data->dma_buffers[0] = i2s_driver_buffer_get(i2s);
+        i2s_data->dma_buffers[1] = i2s_driver_buffer_get(i2s);
+        if (i2s_data->dma_buffers[0] == NULL) {
             i2s->state = I2S_STATE_OUT_OF_BUFFERS;
             rc = I2S_ERR_NO_BUFFER;
             break;
         }
+        if (i2s_data->dma_buffers[1] == NULL) {
+            i2s_data->dma_buffers[1] = i2s_data->dma_buffers[0];
+            i2s_data->dma_buffer_count = 1;
+        } else {
+            i2s_data->dma_buffer_count = 2;
+        }
         i2s->state = I2S_STATE_RUNNING;
         if (i2s->direction == I2S_IN) {
-            i2s_data->active_buffer->sample_count = i2s_data->active_buffer->capacity;
-            HAL_I2S_Receive_DMA(&i2s_data->hi2s,
-                                i2s_data->active_buffer->sample_data,
-                                i2s_data->active_buffer->sample_count);
+            i2s_data->dma_buffers[0]->sample_count = i2s_data->dma_buffers[0]->capacity;
+            assert(i2s_data->dma_buffers[0]->capacity == i2s_data->dma_buffers[1]->capacity);
+            i2s_receive_start_dma(&i2s_data->hi2s, i2s_data->dma_buffers[0]->sample_data,
+                                  i2s_data->dma_buffers[1]->sample_data, i2s_data->dma_buffers[0]->sample_count);
         } else if (i2s->direction == I2S_OUT) {
-            HAL_I2S_Transmit_DMA(&i2s_data->hi2s,
-                                 i2s_data->active_buffer->sample_data,
-                                 i2s_data->active_buffer->sample_count);
+            i2s_transmit_start_dma(&i2s_data->hi2s,
+                                   i2s_data->dma_buffers[0]->sample_data,
+                                   i2s_data->dma_buffers[1]->sample_data,
+                                   i2s_data->dma_buffers[0]->sample_count);
         } else {
-#if I2SEXT_PRESENT
-            HAL_I2SEx_TransmitReceive_DMA(&i2s_data->hi2s,
-                                          i2s_data->active_buffer->sample_data,
-                                          i2s_data->active_buffer->sample_data,
-                                          i2s_data->active_buffer->sample_count);
+#if I2S_FULLDUPLEX_SUPPORT
+            i2s_transmit_receive_dma(&i2s_data->hi2s,
+                                     i2s_data->dma_buffers[0]->sample_data,
+                                     i2s_data->dma_buffers[1]->sample_data,
+                                     i2s_data->dma_buffers[0]->sample_count);
 #endif
         }
         break;
@@ -512,6 +822,56 @@ i2s_driver_start(struct i2s *i2s)
 void
 i2s_driver_buffer_queued(struct i2s *i2s)
 {
+    struct stm32_i2s *i2s_data = (struct stm32_i2s *)i2s->driver_data;
+    struct i2s_sample_buffer *next_buffer;
+    int sr;
+    int inactive_memory_buffer_ix;
+    uint32_t sample_buffer_addr;
+
+    if (i2s->state != I2S_STATE_RUNNING) {
+        return;
+    }
+    OS_ENTER_CRITICAL(sr);
+    switch (i2s_data->dma_buffer_count) {
+    case 0:
+        i2s_data->dma_buffers[0] = i2s_driver_buffer_get(i2s);
+        i2s_data->dma_buffer_count = 1;
+        break;
+    case 1:
+        next_buffer = i2s_driver_buffer_get(i2s);
+        if ((i2s_data->hdma_spi->Instance->CR & DMA_SxCR_EN) == 0) {
+            i2s_data->dma_buffers[1] = next_buffer;
+        } else {
+            sample_buffer_addr = (uint32_t)next_buffer->sample_data;
+            /* DMA is active with just one buffer, inactive buffer needs to be changed. */
+            inactive_memory_buffer_ix = (i2s_data->hdma_spi->Instance->CR & DMA_SxCR_CT_Msk) ? 0 : 1;
+            HAL_DMAEx_ChangeMemory(i2s_data->hdma_spi, sample_buffer_addr,
+                                   inactive_memory_buffer_ix ? MEMORY1 : MEMORY0);
+            if ((i2s_data->hdma_spi->Instance->CR & DMA_SxCR_EN_Msk) == 0) {
+                /*
+                 * There was race between checking current buffer and settings next.
+                 * In this case M1AR or M0AR was write protected and write did not succeeded,
+                 * Just write the other memory address.
+                 */
+                inactive_memory_buffer_ix ^= 1;
+                HAL_DMAEx_ChangeMemory(i2s_data->hdma_spi, sample_buffer_addr,
+                                       inactive_memory_buffer_ix ? MEMORY1 : MEMORY0);
+
+                /* Writing to MxAR that was used stopped transfer with errors, make it continue */
+                __HAL_DMA_CLEAR_FLAG(i2s_data->hdma_spi,
+                                     (DMA_FLAG_FEIF0_4 | DMA_FLAG_DMEIF0_4 |
+                                      DMA_FLAG_TEIF0_4 | DMA_FLAG_HTIF0_4 |
+                                      DMA_FLAG_TCIF0_4) << i2s_data->hdma_spi->StreamIndex);
+                i2s_data->hdma_spi->Instance->CR |= DMA_SxCR_EN;
+            }
+            i2s_data->dma_buffers[inactive_memory_buffer_ix] = next_buffer;
+        }
+        i2s_data->dma_buffer_count = 2;
+        break;
+    default:
+        break;
+    }
+    OS_EXIT_CRITICAL(sr);
 }
 
 int
@@ -829,7 +1189,7 @@ SPI_CFG_DEFINE(1);
 #endif
 #ifdef SPI2
 static DMA_HandleTypeDef hdma_spi2;
-#ifdef I2S2ext
+#if defined(I2S2ext) && I2S_FULLDUPLEX_SUPPORT
 static DMA_HandleTypeDef hdma_i2s2ext;
 I2S_CFG_DEFINE(2);
 #else
@@ -838,7 +1198,7 @@ SPI_CFG_DEFINE(2);
 #endif
 #ifdef SPI3
 static DMA_HandleTypeDef hdma_spi3;
-#ifdef I2S3ext
+#if defined(I2S3ext) && I2S_FULLDUPLEX_SUPPORT
 static DMA_HandleTypeDef hdma_i2s3ext;
 I2S_CFG_DEFINE(3);
 #else

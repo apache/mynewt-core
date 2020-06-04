@@ -17,3 +17,9 @@
 #
 
 syscfg.defs:
+    I2S_FULLDUPLEX_ENABLE:
+        description: >
+            If set to 1 I2S full duplex is supported in code. This can be set to
+            0 to reduce code size when full duplex is not needed even when
+            hardware could support it.
+        value: 1
