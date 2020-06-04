@@ -29,27 +29,37 @@
 
 #define DA1469X_HAL_I2C_MAX (2)
 
+struct da1469x_hal_i2c_data {
+    bool enabled;
+    uint32_t I2C_CON_REG;
+};
+
 struct da1469x_hal_i2c {
     I2C_Type *regs;
     uint8_t scl_func;
     uint8_t sda_func;
     IRQn_Type irqn;
+    struct da1469x_hal_i2c_data *data;
 };
 
 #if MYNEWT_VAL(I2C_0)
+static struct da1469x_hal_i2c_data da1469x_hal_i2c0_data;
 static const struct da1469x_hal_i2c hal_i2c0 = {
     .regs = (void *)I2C_BASE,
     .scl_func = MCU_GPIO_FUNC_I2C_SCL,
     .sda_func = MCU_GPIO_FUNC_I2C_SDA,
-    .irqn = I2C_IRQn
+    .irqn = I2C_IRQn,
+    .data = &da1469x_hal_i2c0_data,
 };
 #endif
 #if MYNEWT_VAL(I2C_1)
+static struct da1469x_hal_i2c_data da1469x_hal_i2c1_data;
 static const struct da1469x_hal_i2c hal_i2c1 = {
     .regs = (void *)I2C2_BASE,
     .scl_func = MCU_GPIO_FUNC_I2C2_SCL,
     .sda_func = MCU_GPIO_FUNC_I2C2_SDA,
-    .irqn = I2C2_IRQn
+    .irqn = I2C2_IRQn,
+    .data = &da1469x_hal_i2c1_data,
 };
 #endif
 
@@ -86,8 +96,30 @@ hal_i2c_enable(uint8_t i2c_num)
        return HAL_I2C_ERR_INVAL;
     }
 
+    if (i2c->data->enabled) {
+        return 0;
+    }
+
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
+
+    if (i2c == da1469x_hal_i2cs[0]) {
+        CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_CLK_SEL_Msk;
+        CRG_COM->SET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_ENABLE_Msk;
+    } else {
+        CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C2_CLK_SEL_Msk;
+        CRG_COM->SET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C2_ENABLE_Msk;
+    }
+
+    i2c->regs->I2C_CON_REG = i2c->data->I2C_CON_REG;
     /* This will also clear I2C_ABORT and I2C_TX_CMD_BLOCK */
     i2c->regs->I2C_ENABLE_REG = (1 << I2C_I2C_ENABLE_REG_I2C_EN_Pos);
+    while (!(i2c->regs->I2C_ENABLE_STATUS_REG & I2C_I2C_ENABLE_STATUS_REG_IC_EN_Msk));
+
+    i2c->regs->I2C_INTR_MASK_REG = 0x0000;
+
+    NVIC_ClearPendingIRQ(i2c->irqn);
+    NVIC_EnableIRQ(i2c->irqn);
+    i2c->data->enabled = true;
 
     return 0;
 }
@@ -102,7 +134,23 @@ hal_i2c_disable(uint8_t i2c_num)
        return HAL_I2C_ERR_INVAL;
     }
 
+    if (!i2c->data->enabled) {
+        return 0;
+    }
+
     i2c->regs->I2C_ENABLE_REG &= ~(1 << I2C_I2C_ENABLE_REG_I2C_EN_Pos);
+    while (i2c->regs->I2C_ENABLE_STATUS_REG & I2C_I2C_ENABLE_STATUS_REG_IC_EN_Msk);
+
+    if (i2c == da1469x_hal_i2cs[0]) {
+        CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_ENABLE_Msk;
+    } else {
+        CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C2_ENABLE_Msk;
+    }
+
+    da1469x_pd_release(MCU_PD_DOMAIN_COM);
+
+    NVIC_DisableIRQ(i2c->irqn);
+    i2c->data->enabled = false;
 
     return 0;
 }
@@ -112,25 +160,9 @@ i2c_init_hw(const struct da1469x_hal_i2c *i2c, int pin_scl, int pin_sda)
 {
     uint32_t i2c_con_reg;
 
-    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
-
     /* Configure SCL, SDA.*/
     mcu_gpio_set_pin_function(pin_scl, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN, i2c->scl_func);
     mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN, i2c->sda_func);
-
-    if (i2c == da1469x_hal_i2cs[0]) {
-        CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_CLK_SEL_Msk;
-        CRG_COM->SET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_ENABLE_Msk;
-    } else {
-        CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C2_CLK_SEL_Msk;
-        CRG_COM->SET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C2_ENABLE_Msk;
-    }
-
-    /* Abort ongoing transactions and disable I2C */
-    i2c->regs->I2C_ENABLE_REG |= (1 << I2C_I2C_ENABLE_REG_I2C_ABORT_Pos);
-    i2c->regs->I2C_ENABLE_REG &= ~(1 << I2C_I2C_ENABLE_REG_I2C_EN_Pos);
-    while (i2c->regs->I2C_ENABLE_STATUS_REG & I2C_I2C_ENABLE_STATUS_REG_IC_EN_Msk);
-    /* TODO Maybe should wait here some time */
 
     /* Configure I2C_CON_REG, first configure to master */
     i2c_con_reg = (1 << I2C_I2C_CON_REG_I2C_MASTER_MODE_Pos);
@@ -141,11 +173,7 @@ i2c_init_hw(const struct da1469x_hal_i2c *i2c, int pin_scl, int pin_sda)
     /* Set 100 as default speed */
     i2c_con_reg |= (1 << I2C_I2C_CON_REG_I2C_SPEED_Pos);
 
-    i2c->regs->I2C_CON_REG = i2c_con_reg;
-
-    i2c->regs->I2C_INTR_MASK_REG = 0x0000;
-
-    NVIC_EnableIRQ(i2c->irqn);
+    i2c->data->I2C_CON_REG = i2c_con_reg;
 }
 
 static int
@@ -154,7 +182,7 @@ i2c_config(const struct da1469x_hal_i2c *i2c, uint32_t frequency)
     uint32_t i2c_con_reg;
 
     /* Configure I2C_CON_REG */
-    i2c_con_reg = i2c->regs->I2C_CON_REG;
+    i2c_con_reg = i2c->data->I2C_CON_REG;
 
     /* Clear speed register */
     i2c_con_reg &= ~I2C_I2C_CON_REG_I2C_SPEED_Msk;
@@ -169,7 +197,7 @@ i2c_config(const struct da1469x_hal_i2c *i2c, uint32_t frequency)
         return HAL_I2C_ERR_INVAL;
     }
 
-    i2c->regs->I2C_CON_REG = i2c_con_reg;
+    i2c->data->I2C_CON_REG = i2c_con_reg;
 
     return 0;
 }
