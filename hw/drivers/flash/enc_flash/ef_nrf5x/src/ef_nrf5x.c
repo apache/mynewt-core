@@ -24,7 +24,7 @@
 
 #include <mcu/cortex_m4.h>
 
-#if MYNEWT_VAL(BSP_NRF52)
+#if MYNEWT_VAL(BSP_NRF52) || MYNEWT_VAL(BSP_NRF52840)
 #include <mcu/nrf52_hal.h>
 #elif MYNEWT_VAL(BSP_NRF51)
 #include <mcu/nrf51_hal.h>
