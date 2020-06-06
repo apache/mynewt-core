@@ -81,7 +81,7 @@ int os_started(void);
 #define OS_WAIT_FOREVER (-1)
 
 /**
- * Priority of the IDLE task.  Always the lowest priority task in teh system.
+ * Priority of the IDLE task.  Always the lowest priority task in the system.
  */
 #define OS_IDLE_PRIO (0xff)
 
