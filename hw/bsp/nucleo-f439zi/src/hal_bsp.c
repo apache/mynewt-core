@@ -86,6 +86,20 @@ const struct stm32_uart_cfg os_bsp_uart0_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(UART_1)
+const struct stm32_uart_cfg os_bsp_uart1_cfg = {
+    .suc_uart = USART2,
+    .suc_rcc_reg = &RCC->APB1ENR,
+    .suc_rcc_dev = RCC_APB1ENR_USART2EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_1_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_1_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_1_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_1_PIN_CTS),
+    .suc_pin_af = GPIO_AF7_USART2,
+    .suc_irqn = USART2_IRQn
+};
+#endif
+
 #if MYNEWT_VAL(ETH_0)
 const struct stm32_eth_cfg os_bsp_eth0_cfg = {
     /*
