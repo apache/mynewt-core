@@ -252,7 +252,9 @@ i2s_start(struct i2s *i2s)
             rc = i2s_driver_start(i2s);
             if (rc == I2S_OK) {
                 i2s->state = I2S_STATE_RUNNING;
-                i2s->client->state_changed_cb(i2s, I2S_STATE_RUNNING);
+                if (i2s->client) {
+                    i2s->client->state_changed_cb(i2s, I2S_STATE_RUNNING);
+                }
             }
         }
     }
