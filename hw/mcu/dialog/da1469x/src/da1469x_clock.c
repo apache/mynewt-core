@@ -25,6 +25,7 @@
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
+#include "mcu/da1469x_clock.h"
 
 static uint32_t g_mcu_clock_rcx_freq;
 
@@ -81,7 +82,7 @@ da1469x_clock_sys_xtal32m_switch(void)
 }
 
 void
-da1469x_clock_sys_xtal32m_switch_safe(void)
+da1469x_clock_sys_xtal32m_wait_to_settle(void)
 {
     uint32_t primask;
 
@@ -98,6 +99,12 @@ da1469x_clock_sys_xtal32m_switch_safe(void)
     }
 
     __HAL_ENABLE_INTERRUPTS(primask);
+}
+
+void
+da1469x_clock_sys_xtal32m_switch_safe(void)
+{
+    da1469x_clock_sys_xtal32m_wait_to_settle();
 
     da1469x_clock_sys_xtal32m_switch();
 }
@@ -177,4 +184,43 @@ void
 da1469x_clock_lp_rcx_disable(void)
 {
     CRG_TOP->CLK_RCX_REG &= ~CRG_TOP_CLK_RCX_REG_RCX_ENABLE_Msk;
+}
+
+void
+da1469x_clock_pll_disable(void)
+{
+    while (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_PLL96M_Msk) {
+        CRG_TOP->CLK_SWITCH2XTAL_REG = CRG_TOP_CLK_SWITCH2XTAL_REG_SWITCH2XTAL_Msk;
+    }
+
+    CRG_XTAL->PLL_SYS_CTRL1_REG &= ~CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_EN_Msk;
+}
+
+void
+da1469x_clock_pll_wait_to_lock(void)
+{
+    uint32_t primask;
+
+    __HAL_DISABLE_INTERRUPTS(primask);
+
+    NVIC_ClearPendingIRQ(PLL_LOCK_IRQn);
+
+    if (!da1469x_clock_is_pll_locked()) {
+        NVIC_EnableIRQ(PLL_LOCK_IRQn);
+        while (!NVIC_GetPendingIRQ(PLL_LOCK_IRQn)) {
+            __WFI();
+        }
+        NVIC_DisableIRQ(PLL_LOCK_IRQn);
+    }
+
+    __HAL_ENABLE_INTERRUPTS(primask);
+}
+
+void
+da1469x_clock_sys_pll_switch(void)
+{
+    /* CLK_SEL_Msk == 3 means PLL */
+    CRG_TOP->CLK_CTRL_REG |= CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Msk;
+
+    while (!(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_PLL96M_Msk));
 }

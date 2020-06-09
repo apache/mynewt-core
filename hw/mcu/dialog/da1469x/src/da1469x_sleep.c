@@ -97,8 +97,17 @@ da1469x_sleep(os_time_t ticks)
         g_mcu_wait_for_jtag_until = os_time_get() + os_time_ms_to_ticks32(100);
     }
 
-    /* XXX for now we always run on XTAL32M and assume PDC was configure to enable it */
+    /* XXX for now we always want XTAL32M and assume PDC was configure to enable it */
+#if MYNEWT_VAL(MCU_PLL_ENABLE)
+    da1469x_clock_sys_xtal32m_wait_to_settle();
+    da1469x_clock_sys_pll_enable();
+#if MYNEWT_VAL_CHOICE(MCU_SYSCLK_SOURCE, PLL96)
+    da1469x_clock_pll_wait_to_lock();
+    da1469x_clock_sys_pll_switch();
+#endif
+#else
     da1469x_clock_sys_xtal32m_switch_safe();
+#endif
 }
 
 #else

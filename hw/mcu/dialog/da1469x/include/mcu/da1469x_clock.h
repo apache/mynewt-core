@@ -38,6 +38,11 @@ void da1469x_clock_sys_xtal32m_init(void);
 void da1469x_clock_sys_xtal32m_enable(void);
 
 /**
+ * Wait for XTAL32M to settle
+ */
+void da1469x_clock_sys_xtal32m_wait_to_settle(void);
+
+/**
  * Switch sys_clk to XTAL32M
  *
  * Caller shall ensure that XTAL32M is already settled.
@@ -124,6 +129,46 @@ da1469x_clock_amba_disable(uint32_t mask)
     CRG_TOP->CLK_AMBA_REG &= ~mask;
     __HAL_ENABLE_INTERRUPTS(primask);
 }
+
+/**
+ * Enable PLL96
+ */
+static inline void
+da1469x_clock_sys_pll_enable(void)
+{
+    CRG_XTAL->PLL_SYS_CTRL1_REG |= CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_EN_Msk |
+                                   CRG_XTAL_PLL_SYS_CTRL1_REG_LDO_PLL_ENABLE_Msk;
+}
+
+/**
+ * Disable PLL96
+ *
+ * If PLL was used as SYS_CLOCK switches to XTAL32M.
+ */
+void da1469x_clock_sys_pll_disable(void);
+
+/**
+ * Checks whether PLL96 is locked and can be use as system clock or USB clock
+ *
+ * @return 0 if PLL is off, non-0 it its running
+ */
+static inline int
+da1469x_clock_is_pll_locked(void)
+{
+    return 0 != (CRG_XTAL->PLL_SYS_STATUS_REG & CRG_XTAL_PLL_SYS_STATUS_REG_PLL_LOCK_FINE_Msk);
+}
+
+/**
+ * Waits for PLL96 to lock.
+ */
+void da1469x_clock_pll_wait_to_lock(void);
+
+/**
+ * Switches system clock to PLL96
+ *
+ * Caller shall ensure that PLL is already locked.
+ */
+void da1469x_clock_sys_pll_switch(void);
 
 #ifdef __cplusplus
 }
