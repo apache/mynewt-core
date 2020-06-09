@@ -94,10 +94,19 @@ hal_system_clock_start(void)
 
     /* PD_TIM is already started in SystemInit */
 
-    /* Switch to XTAL32M and disable RC32M */
     da1469x_clock_sys_xtal32m_init();
     da1469x_clock_sys_xtal32m_enable();
+#if MYNEWT_VAL(MCU_PLL_ENABLE)
+    da1469x_clock_sys_pll_enable();
+#endif
+#if MYNEWT_VAL_CHOICE(MCU_SYSCLK_SOURCE, PLL96)
+    da1469x_clock_pll_wait_to_lock();
+    da1469x_clock_sys_pll_switch();
+#endif
+#if MYNEWT_VAL_CHOICE(MCU_SYSCLK_SOURCE, XTAL32M)
+    /* Switch to XTAL32M and disable RC32M */
     da1469x_clock_sys_xtal32m_switch_safe();
+#endif
     da1469x_clock_sys_rc32m_disable();
 
 #if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)

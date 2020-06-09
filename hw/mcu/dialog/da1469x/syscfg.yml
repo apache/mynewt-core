@@ -66,6 +66,17 @@ syscfg.defs:
         description: >
             Specifies settling time [ms] of 32K crystal oscillator.
         value: 8000
+    MCU_SYSCLK_SOURCE:
+        description: >
+            Specifies system clock source
+        choices:
+            - XTAL32M
+            - PLL96
+        value: XTAL32M
+    MCU_PLL_ENABLE:
+        description: >
+            Enable 96MHz PLL
+        value: 0
 
     MCU_DEEP_SLEEP:
         description: >
@@ -381,6 +392,9 @@ syscfg.defs:
         restrictions:
             - '!GPADC_BATTERY'
 
+syscfg.vals.'MCU_SYSCLK_SOURCE == "PLL96"':
+    MCU_PLL_ENABLE: 1
+
 syscfg.restrictions:
     - "QSPI_FLASH_ADDRESS_LENGTH==24"
     - "!I2C_0 || (I2C_0_PIN_SCL && I2C_0_PIN_SDA)"
@@ -392,3 +406,4 @@ syscfg.restrictions:
     - "!SPI_1_MASTER || (SPI_1_MASTER_PIN_SCK && SPI_1_MASTER_PIN_MOSI && SPI_1_MASTER_PIN_MISO)"
     - "!SPI_0_SLAVE || (SPI_0_SLAVE_PIN_SCK && SPI_0_SLAVE_PIN_MOSI && SPI_0_SLAVE_PIN_MISO && SPI_0_SLAVE_PIN_SS)"
     - "!SPI_1_SLAVE || (SPI_1_SLAVE_PIN_SCK && SPI_1_SLAVE_PIN_MOSI && SPI_1_SLAVE_PIN_MISO && SPI_1_SLAVE_PIN_SS)"
+    - 'MCU_PLL_ENABLE || MCU_SYSCLK_SOURCE != "PLL96"'
