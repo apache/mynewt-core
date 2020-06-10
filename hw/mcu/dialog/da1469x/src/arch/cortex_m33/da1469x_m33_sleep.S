@@ -99,9 +99,9 @@ da1469x_m33_sleep:
 
 /* Save SCB state (SCR, CCR, SHPR and SHCSR) */
     ldr     r0, =(SCB_BASE + SCB_SCR_OFFSET)
-    ldmia   r0!, {r4-r9}
+    ldmia   r0, {r4-r9}
     and     r9, r9, #(SCB_SHCSR_MASK)
-    ldr     r10, [r1, #(SCB_CPACR_OFFSET - SCB_SCR_OFFSET)]
+    ldr     r10, [r0, #(SCB_CPACR_OFFSET - SCB_SCR_OFFSET)]
     and     r10, r10, #(SCB_CPACR_MASK)
     stmia   r3!, {r4-r10}
 
