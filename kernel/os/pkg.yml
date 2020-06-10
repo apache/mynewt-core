@@ -29,6 +29,9 @@ pkg.deps:
     - "@apache-mynewt-core/sys/sysinit"
     - "@apache-mynewt-core/util/mem"
 
+pkg.deps.CONSOLE_RTT:
+    - "@apache-mynewt-core/hw/drivers/rtt"
+
 pkg.req_apis:
     - console
 
