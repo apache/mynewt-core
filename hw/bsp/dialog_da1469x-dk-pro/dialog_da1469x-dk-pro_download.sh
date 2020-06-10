@@ -122,6 +122,8 @@ symbol-file $FLASH_LOADER
 # valid for Macronix flash found on Dialog development kits)
 set *(int *)0x3800000C = 0xa8a500eb
 set *(int *)0x38000010 = 0x00000066
+# Set XTAL as system clock
+set *(int *)0x50000014 = 0x00000040
 
 set *(int *)0x500000BC = 4
 set \$sp=*(int *)0x20000000
