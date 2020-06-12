@@ -128,9 +128,8 @@ da1469x_m33_sleep:
 /* Set SCB->SCR[SLEEPDEEP] so we can enter deep sleep */
     ldr     r0, =(SCB_BASE + SCB_SCR_OFFSET)
     ldr     r1, [r0, #0]
-    mov     r2, r1
-    orr     r2, r1, #4      /* SLEEPDEEP */
-    str     r2, [r0, #0]
+    orr     r1, r1, #4      /* SLEEPDEEP */
+    str     r1, [r0, #0]
 
 /* Sleep! */
     dsb
