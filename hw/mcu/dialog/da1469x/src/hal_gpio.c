@@ -22,6 +22,7 @@
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_pd.h"
+#include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_retreg.h"
 #include <mcu/mcu.h>
 #include "mcu/cmsis_nvic.h"
@@ -369,6 +370,24 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
         return -1;
     }
 
+#if MYNEWT_VAL(MCU_DEEP_SLEEP)
+    /*
+     * There should be no PDC entry, but let's check it just in case to avoid
+     * creating duplicated entry. We assume that someone either uses hal_gpio
+     * to control pins so we "own" PDC entries, or does this manually so this
+     * is never called for given pin.
+     */
+    i = da1469x_pdc_find(pin, MCU_PDC_MASTER_M33, 0);
+    if (i < 0) {
+        i = da1469x_pdc_add(pin, MCU_PDC_MASTER_M33, MCU_PDC_EN_XTAL);
+        if (i < 0) {
+            return -1;
+        }
+        da1469x_pdc_set(i);
+        da1469x_pdc_ack(i);
+    }
+#endif
+
     hal_gpio_init_in(pin, pull);
 
     switch (trig) {
@@ -405,6 +424,15 @@ hal_gpio_irq_release(int pin)
             hal_gpio_irqs[i].func = NULL;
         }
     }
+
+#if MYNEWT_VAL(MCU_DEEP_SLEEP)
+    i = da1469x_pdc_find(pin, MCU_PDC_MASTER_M33, 0);
+    if (i >= 0) {
+        da1469x_pdc_ack(i);
+        da1469x_pdc_del(i);
+    }
+#endif
+
 }
 
 void
