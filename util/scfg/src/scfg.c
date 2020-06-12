@@ -229,6 +229,10 @@ scfg_register(struct scfg_group *group, char *name)
         case CONF_INT16:
         case CONF_INT32:
         case CONF_INT64:
+        case CONF_UINT8:
+        case CONF_UINT16:
+        case CONF_UINT32:
+        case CONF_UINT64:
         case CONF_STRING:
         case CONF_BOOL:
             break;
