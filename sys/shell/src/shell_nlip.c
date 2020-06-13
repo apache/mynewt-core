@@ -58,6 +58,12 @@ shell_nlip_process(char *data, int len)
     struct os_mbuf *m;
     uint16_t crc;
 
+    /* Trim trailing newline. */
+    if (len >= 1 && data[len - 1] == '\n') {
+        data[len - 1] = '\0';
+        len--;
+    }
+
     rc = base64_decode(data, data);
     if (rc < 0) {
         goto err;
