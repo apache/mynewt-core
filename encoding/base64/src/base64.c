@@ -126,12 +126,12 @@ base64_pad(char *buf, int len)
 #define DECODE_ERROR -1
 
 static unsigned int
-token_decode(const char *token)
+token_decode(const char *token, int len)
 {
     int i;
     unsigned int val = 0;
     int marker = 0;
-    if (strlen(token) < 4)
+    if (len < 4)
         return DECODE_ERROR;
     for (i = 0; i < 4; i++) {
         val *= 64;
@@ -248,7 +248,7 @@ base64_decoder_go(struct base64_decoder *dec)
 
         /* Copy full token into buf and decode it. */
         memcpy(&dec->buf[dec->buf_len], &dec->src[src_off], read_len);
-        val = token_decode(dec->buf);
+        val = token_decode(dec->buf, read_len);
         if (val == DECODE_ERROR) {
             return -1;
         }
