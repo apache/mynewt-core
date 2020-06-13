@@ -131,19 +131,26 @@ token_decode(const char *token, int len)
     int i;
     unsigned int val = 0;
     int marker = 0;
-    if (len < 4)
+
+    if (len < 4) {
         return DECODE_ERROR;
+    }
+
     for (i = 0; i < 4; i++) {
         val *= 64;
-        if (token[i] == '=')
+        if (token[i] == '=') {
             marker++;
-        else if (marker > 0)
+        } else if (marker > 0) {
             return DECODE_ERROR;
-        else
+        } else {
             val += pos(token[i]);
+        }
     }
-    if (marker > 2)
+
+    if (marker > 2) {
         return DECODE_ERROR;
+    }
+
     return (marker << 24) | val;
 }
 
