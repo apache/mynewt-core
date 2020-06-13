@@ -231,6 +231,10 @@ base64_decoder_go(struct base64_decoder *dec)
         /* Detect invalid input. */
         for (i = 0; i < read_len; i++) {
             sval = dec->src[src_off + i];
+            if (sval == '\0') {
+                /* Incomplete input. */
+                return -1;
+            }
             if (sval != '=' && strchr(base64_chars, sval) == NULL) {
                 /* Invalid base64 character. */
                 return -1;
