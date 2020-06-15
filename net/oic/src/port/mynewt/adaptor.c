@@ -172,21 +172,25 @@ oc_connectivity_shutdown(void)
 int
 oc_connectivity_init(void)
 {
-    int rc = -1;
+    int rc;
     int i;
     const struct oc_transport *ot;
 
     oc_conn_init();
+
     for (i = 0; i < OC_TRANSPORT_MAX; i++) {
         if (!oc_transports[i]) {
             continue;
         }
+
         ot = oc_transports[i];
-        if (ot->ot_init() == 0) {
-            rc = 0;
+        rc = ot->ot_init();
+        if (rc != 0) {
+            return -1;
         }
     }
-    return rc;
+
+    return 0;
 }
 
 void
