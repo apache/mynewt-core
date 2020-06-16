@@ -52,6 +52,9 @@
 #include "stm32f4xx_hal_adc.h"
 #include "adc_stm32f4/adc_stm32f4.h"
 #endif
+#if MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0
+#include "os/os_cputime.h"
+#endif
 
 #include "mcu/stm32_hal.h"
 
