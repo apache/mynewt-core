@@ -26,8 +26,8 @@
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash.h>
 #include <hal/hal_system.h>
-#include <mcu/nrf5340_hal.h>
-#include <mcu/nrf5340_periph.h>
+#include <mcu/nrf5340_net_hal.h>
+#include <mcu/nrf5340_net_periph.h>
 #include <bsp/bsp.h>
 
 /*
@@ -47,7 +47,7 @@ hal_bsp_flash_dev(uint8_t id)
      * Internal flash mapped to id 0.
      */
     if (id == 0) {
-        return &nrf5340_flash_dev;
+        return &nrf5340_net_flash_dev;
     }
 
     return NULL;
@@ -72,12 +72,6 @@ hal_bsp_init(void)
     /* Make sure system clocks have started */
     hal_system_clock_start();
 
-    /* Create all available nRF5340 peripherals */
-    nrf5340_periph_create();
-
-#if MYNEWT_VAL(BSP_NRF5340_NET_ENABLE)
-    /* TODO is this good place? Hook this into SHM support when in place? */
-    /* Start Network Core */
-    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
-#endif
+    /* Create all available nRF5340 Net Core peripherals */
+    nrf5340_net_periph_create();
 }

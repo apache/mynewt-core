@@ -282,6 +282,7 @@ which are available under a BSD style license.  Relevant files are:
     * hw/mcu/nordic/nrf51xxx/src/system_nrf51.c
     * hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
     * hw/mcu/nordic/nrf5340/include/nrfx_config.h
+    * hw/mcu/nordic/nrf5340_net/include/nrfx_config.h
 
 This product bundles Gary S. Brown's CRC32 implementation, which is available
 under the following license:
@@ -515,6 +516,9 @@ which is available under the "modified Tcl/Tk" license.  Bundled files are:
     * hw/mcu/nordic/nrf5340/nrf5340.ld
     * hw/mcu/nordic/nrf5340/nrf5340_ram_resident.ld
     * hw/bsp/nordic_pca10095/nordic_pca10095_no_boot.ld
+    * hw/mcu/nordic/nrf5340_net/nrf5340_net.ld
+    * hw/mcu/nordic/nrf5340_net/nrf5340_net_ram_resident.ld
+    * hw/bsp/nordic_pca10095_net/nordic_pca10095_net_no_boot.ld
     * hw/bsp/nordic_pca20020/boot-nrf52xxaa.ld
     * hw/bsp/nordic_pca20020/nordic_pca20020_no_boot.ld
     * hw/bsp/nordic_pca20020/nrf52xxaa.ld

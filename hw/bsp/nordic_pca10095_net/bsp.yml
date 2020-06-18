@@ -1,0 +1,68 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+bsp.name: "nRF5340 PDK (Net Core)"
+bsp.url: https://www.nordicsemi.com/Software-and-tools/Development-Kits/nRF5340-PDK
+bsp.maker: "Nordic Semiconductor"
+bsp.arch: cortex_m33
+bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m33"
+bsp.linkerscript:
+    - "hw/bsp/nordic_pca10095_net/nrf5340_net.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net/nrf5340_net.ld"
+bsp.linkerscript.BOOT_LOADER.OVERWRITE:
+    - "hw/bsp/nordic_pca10095_net/boot-nrf5340_net.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net/nrf5340_net.ld"
+bsp.part2linkerscript: "hw/bsp/nordic_pca10095_net/split-nordic_pca10095_net.ld"
+bsp.downloadscript: "hw/bsp/nordic_pca10095_net/nordic_pca10095_net_download.sh"
+bsp.debugscript: "hw/bsp/nordic_pca10095_net/nordic_pca10095_net_debug.sh"
+bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10095_net/nordic_pca10095_net_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10095_net/nordic_pca10095_net_debug.cmd"
+
+bsp.flash_map:
+    areas:
+        # System areas.
+        FLASH_AREA_BOOTLOADER:
+            device: 0
+            offset: 0x01000000
+            size: 16kB
+        FLASH_AREA_IMAGE_0:
+            device: 0
+            offset: 0x01008000
+            size: 100kB
+        # TODO this should map to app flash
+        FLASH_AREA_IMAGE_1:
+            device: 0
+            offset: 0x01021000
+            size: 100kB
+        FLASH_AREA_IMAGE_SCRATCH:
+            device: 0
+            offset: 0x0103a000
+            size: 8kB
+
+        # User areas.
+        FLASH_AREA_REBOOT_LOG:
+            user_id: 0
+            device: 0
+            offset: 0x01004000
+            size: 16kB
+        FLASH_AREA_NFFS:
+            user_id: 1
+            device: 0
+            offset: 0x010fc000
+            size: 16kB
