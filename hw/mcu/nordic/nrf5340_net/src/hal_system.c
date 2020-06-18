@@ -36,13 +36,6 @@
 void
 hal_system_init(void)
 {
-#if MYNEWT_VAL(MCU_DCDC_ENABLED)
-    NRF_REGULATORS_S->VREGMAIN.DCDCEN = 1;
-
-#if MYNEWT_VAL(BSP_NRF5340_NET_ENABLE)
-    NRF_REGULATORS_S->VREGRADIO.DCDCEN = 1;
-#endif
-#endif
 }
 
 void
@@ -108,16 +101,16 @@ hal_system_clock_start(void)
 #endif
 
     /* Check if this clock source is already running */
-    if ((NRF_CLOCK_S->LFCLKSTAT & regmsk) != regval) {
-        NRF_CLOCK_S->TASKS_LFCLKSTOP = 1;
-        NRF_CLOCK_S->EVENTS_LFCLKSTARTED = 0;
-        NRF_CLOCK_S->LFCLKSRC = clksrc;
-        NRF_CLOCK_S->TASKS_LFCLKSTART = 1;
+    if ((NRF_CLOCK_NS->LFCLKSTAT & regmsk) != regval) {
+        NRF_CLOCK_NS->TASKS_LFCLKSTOP = 1;
+        NRF_CLOCK_NS->EVENTS_LFCLKSTARTED = 0;
+        NRF_CLOCK_NS->LFCLKSRC = clksrc;
+        NRF_CLOCK_NS->TASKS_LFCLKSTART = 1;
 
         /* Wait here till started! */
         while (1) {
-            if (NRF_CLOCK_S->EVENTS_LFCLKSTARTED) {
-                if ((NRF_CLOCK_S->LFCLKSTAT & regmsk) == regval) {
+            if (NRF_CLOCK_NS->EVENTS_LFCLKSTARTED) {
+                if ((NRF_CLOCK_NS->LFCLKSTAT & regmsk) == regval) {
                     break;
                 }
             }

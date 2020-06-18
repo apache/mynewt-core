@@ -17,18 +17,9 @@
 #
 
 syscfg.defs:
-    BSP_NRF5340:
-        description: 'Set to indicate that BSP has NRF5340'
+    BSP_NRF5340_NET:
+        description: 'Set to indicate that BSP has NRF5340 NET'
         value: 1
-
-    SOFT_PWM:
-        description: 'Enable soft PWM'
-        value: 0
-
-    BSP_NRF5340_NET_ENABLE:
-       description: >
-            When enabled Network Core of nRF5340 is started on init.
-       value: 0
 
 syscfg.vals:
     # Set default pins for peripherals
@@ -52,8 +43,19 @@ syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
-    MCU_DCDC_ENABLED: 1
+    #Net Core DCDC is enabled from application core
+    #MCU_DCDC_ENABLED: 1
     MCU_LFCLK_SOURCE: LFXO
 
     # Always use non-blocking API
     SPI_HAL_USE_NOBLOCK: 1
+
+    # nRF5340 Network Core doesn't have floating point unit
+    HARDFLOAT: 0
+
+syscfg.vals.BLE_CONTROLLER:
+    TIMER_0: 0
+    TIMER_3: 1
+    OS_CPUTIME_FREQ: 32768
+    OS_CPUTIME_TIMER_NUM: 3
+    BLE_LL_RFMGMT_ENABLE_TIME: 1500

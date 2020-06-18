@@ -108,6 +108,9 @@ split-nordic_pca20020.ld
 nrf5340.ld
 nrf5340_ram_resident.ld
 nordic_pca10095_no_boot.ld
+nrf5340_net.ld
+nrf5340_net_ram_resident.ld
+nordic_pca10095_net_no_boot.ld
 rb-blend2_no_boot.ld
 split-rb-blend2.ld
 split-telee02.ld
@@ -457,6 +460,7 @@ docs
 # nrfX - BSD License
 nrfx
 nrfx_glue.h
+nrfx_config.h
 nrf52xxx
 nrf91xx
 nrf52xxx-compat
@@ -512,3 +516,5 @@ bmp388
 # Nordic NRF5340 SDK - APL2 license
 system_nrf5340.c
 gcc_startup_nrf5340.s
+system_nrf5340_net.c
+gcc_startup_nrf5340_net.s
