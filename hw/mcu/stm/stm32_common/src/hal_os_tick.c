@@ -22,7 +22,7 @@
 #include <hal/hal_os_tick.h>
 
 /*
- * XXX implement tickless mode.
+ * XXX implement tickless mode for MCU other then STM32F1.
  */
 
 /*
@@ -43,6 +43,8 @@ __WFI(void)
                     "bx lr");
 }
 #endif
+
+#if MYNEWT_VAL(STM32_CLOCK_LSE) == 0 || (((32768 / OS_TICKS_PER_SEC) * OS_TICKS_PER_SEC) != 32768) || !defined(STM32F1)
 
 void
 os_tick_idle(os_time_t ticks)
@@ -76,3 +78,5 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     DBGMCU->CR |= (DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY);
 #endif
 }
+
+#endif

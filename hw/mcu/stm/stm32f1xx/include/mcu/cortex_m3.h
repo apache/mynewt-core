@@ -21,12 +21,13 @@
 #define __MCU_CORTEX_M3_H__
 
 #include "stm32f1xx.h"
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define OS_TICKS_PER_SEC    (1000)
+#define OS_TICKS_PER_SEC    MYNEWT_VAL(OS_TICKS_PER_SEC)
 
 static inline void
 hal_debug_break(void)

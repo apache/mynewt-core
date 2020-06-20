@@ -374,3 +374,8 @@ syscfg.defs:
     ADC_2:
         description: "ADC_2"
         value:  0
+
+    OS_TICKS_PER_SEC:
+        description: >
+            Desired ticks frequency in Hz.
+        value: 1000
