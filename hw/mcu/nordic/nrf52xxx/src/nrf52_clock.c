@@ -35,6 +35,11 @@ nrf52_clock_hfxo_request(void)
     int started;
     uint32_t ctx;
 
+#if MYNEWT_VAL_CHOICE(MCU_HFCLK_SOURCE, HFINT)
+    /* Cannot enable/disable hfxo if it is not present */
+    assert(0);
+#endif
+
     started = 0;
     __HAL_DISABLE_INTERRUPTS(ctx);
     assert(nrf52_clock_hfxo_refcnt < 0xff);
@@ -62,6 +67,11 @@ nrf52_clock_hfxo_release(void)
 {
     int stopped;
     uint32_t ctx;
+
+#if MYNEWT_VAL_CHOICE(MCU_HFCLK_SOURCE, HFINT)
+    /* Cannot enable/disable hfxo if it is not present */
+    assert(0);
+#endif
 
     stopped = 0;
     __HAL_DISABLE_INTERRUPTS(ctx);

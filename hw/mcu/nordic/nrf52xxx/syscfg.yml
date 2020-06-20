@@ -42,6 +42,18 @@ syscfg.defs:
             expected to be overridden by the BSP.
         value: 0
 
+    MCU_HFCLK_SOURCE:
+        description: >
+            Selected source for high frequency clock (HFCLK).
+            Selecting HFXO will still mostly use the HFINT but will switch to HFXO when requested (BLE, certain timers, etc...)
+            Selecting HFINT should only be used in the case where an external 32MHz crystal oscillator is not present.
+        value: HFXO
+        choices:
+            - HFXO
+            - HFINT
+        restrictions:
+            - '(MCU_HFCLK_SOURCE == "HFXO") || (MCU_LFCLK_SOURCE != "LFSYNTH")'
+
     MCU_LFCLK_SOURCE:
         description: >
             Selected source for low frequency clock (LFCLK).
