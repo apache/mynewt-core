@@ -650,6 +650,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
 
+#if MYNEWT_VAL_CHOICE(MCU_HFCLK_SOURCE, HFXO)
     /* Make sure HFXO is started */
     if ((NRF_CLOCK->HFCLKSTAT &
          (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) !=
@@ -662,6 +663,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
             }
         }
     }
+#endif
     hwtimer = bsptimer->tmr_reg;
 
     /* Stop the timer first */
