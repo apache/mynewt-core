@@ -36,7 +36,8 @@
 #include "hash/hash.h"
 #include "hash_stm32/hash_stm32.h"
 #endif
-#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4) || MYNEWT_VAL(UART_5) || MYNEWT_VAL(UART_6) || MYNEWT_VAL(UART_7)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4) || \
+    MYNEWT_VAL(UART_5) || MYNEWT_VAL(UART_6) || MYNEWT_VAL(UART_7)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #endif
