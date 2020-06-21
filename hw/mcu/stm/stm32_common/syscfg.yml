@@ -83,6 +83,86 @@ syscfg.defs:
         description: 'UART_2 CTS pin'
         value: -1
 
+    UART_3:
+        description: 'UART 3'
+        value:  0
+    UART_3_PIN_TX:
+        description: 'UART_3 TX pin'
+        value: -1
+    UART_3_PIN_RX:
+        description: 'UART_3 RX pin'
+        value: -1
+    UART_3_PIN_RTS:
+        description: 'UART_3 RTS pin'
+        value: -1
+    UART_3_PIN_CTS:
+        description: 'UART_3 CTS pin'
+        value: -1
+
+    UART_4:
+        description: 'UART 4'
+        value:  0
+    UART_4_PIN_TX:
+        description: 'UART_4 TX pin'
+        value: -1
+    UART_4_PIN_RX:
+        description: 'UART_4 RX pin'
+        value: -1
+    UART_4_PIN_RTS:
+        description: 'UART_4 RTS pin'
+        value: -1
+    UART_4_PIN_CTS:
+        description: 'UART_4 CTS pin'
+        value: -1
+
+    UART_5:
+        description: 'UART 5'
+        value:  0
+    UART_5_PIN_TX:
+        description: 'UART_5 TX pin'
+        value: -1
+    UART_5_PIN_RX:
+        description: 'UART_5 RX pin'
+        value: -1
+    UART_5_PIN_RTS:
+        description: 'UART_5 RTS pin'
+        value: -1
+    UART_5_PIN_CTS:
+        description: 'UART_5 CTS pin'
+        value: -1
+
+    UART_6:
+        description: 'UART 6'
+        value:  0
+    UART_6_PIN_TX:
+        description: 'UART_6 TX pin'
+        value: -1
+    UART_6_PIN_RX:
+        description: 'UART_6 RX pin'
+        value: -1
+    UART_6_PIN_RTS:
+        description: 'UART_6 RTS pin'
+        value: -1
+    UART_6_PIN_CTS:
+        description: 'UART_6 CTS pin'
+        value: -1
+
+    UART_7:
+        description: 'UART 7'
+        value:  0
+    UART_7_PIN_TX:
+        description: 'UART_7 TX pin'
+        value: -1
+    UART_7_PIN_RX:
+        description: 'UART_7 RX pin'
+        value: -1
+    UART_7_PIN_RTS:
+        description: 'UART_7 RTS pin'
+        value: -1
+    UART_7_PIN_CTS:
+        description: 'UART_7 CTS pin'
+        value: -1
+
     SPI_0_MASTER:
         description: 'SPI 0 master'
         value:  0

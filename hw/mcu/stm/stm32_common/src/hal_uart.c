@@ -63,6 +63,37 @@ uart_by_port(int port)
     if (port == 2) {
         return &uarts[index];
     }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_3)
+    if (port == 3) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_4)
+    if (port == 4) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_5)
+    if (port == 5) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_6)
+    if (port == 6) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_7)
+    if (port == 7) {
+        return &uarts[index];
+    }
+    index++;
 #endif
     return NULL;
 };
