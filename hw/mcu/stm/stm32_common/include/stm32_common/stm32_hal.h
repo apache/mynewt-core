@@ -32,7 +32,9 @@ extern "C" {
                   ((uint8_t)(MYNEWT_VAL(UART_4) != 0)) + \
                   ((uint8_t)(MYNEWT_VAL(UART_5) != 0)) + \
                   ((uint8_t)(MYNEWT_VAL(UART_6) != 0)) + \
-                  ((uint8_t)(MYNEWT_VAL(UART_7) != 0)))
+                  ((uint8_t)(MYNEWT_VAL(UART_7) != 0)) + \
+                  ((uint8_t)(MYNEWT_VAL(UART_8) != 0)) + \
+                  ((uint8_t)(MYNEWT_VAL(UART_9) != 0)))
 
 #define PWM_CNT (((uint8_t)(MYNEWT_VAL(PWM_0) != 0)) + \
                  ((uint8_t)(MYNEWT_VAL(PWM_1) != 0)) + \

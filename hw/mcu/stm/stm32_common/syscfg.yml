@@ -163,6 +163,38 @@ syscfg.defs:
         description: 'UART_7 CTS pin'
         value: -1
 
+    UART_8:
+        description: 'UART 8'
+        value:  0
+    UART_8_PIN_TX:
+        description: 'UART_8 TX pin'
+        value: -1
+    UART_8_PIN_RX:
+        description: 'UART_8 RX pin'
+        value: -1
+    UART_8_PIN_RTS:
+        description: 'UART_8 RTS pin'
+        value: -1
+    UART_8_PIN_CTS:
+        description: 'UART_8 CTS pin'
+        value: -1
+
+    UART_9:
+        description: 'UART 9'
+        value:  0
+    UART_9_PIN_TX:
+        description: 'UART_9 TX pin'
+        value: -1
+    UART_9_PIN_RX:
+        description: 'UART_9 RX pin'
+        value: -1
+    UART_9_PIN_RTS:
+        description: 'UART_9 RTS pin'
+        value: -1
+    UART_9_PIN_CTS:
+        description: 'UART_9 CTS pin'
+        value: -1
+
     SPI_0_MASTER:
         description: 'SPI 0 master'
         value:  0

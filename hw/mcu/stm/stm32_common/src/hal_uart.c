@@ -95,6 +95,17 @@ uart_by_port(int port)
     }
     index++;
 #endif
+#if MYNEWT_VAL(UART_8)
+    if (port == 8) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_9)
+    if (port == 9) {
+        return &uarts[index];
+    }
+#endif
     return NULL;
 };
 
@@ -103,7 +114,11 @@ struct hal_uart_irq {
     volatile uint32_t ui_cnt;
 };
 
-#if defined(UART8_BASE)
+#if defined(UART10_BASE)
+static struct hal_uart_irq uart_irqs[10];
+#elif defined(UART9_BASE)
+static struct hal_uart_irq uart_irqs[9];
+#elif defined(UART8_BASE)
 static struct hal_uart_irq uart_irqs[8];
 #elif defined(UART7_BASE)
 static struct hal_uart_irq uart_irqs[7];
