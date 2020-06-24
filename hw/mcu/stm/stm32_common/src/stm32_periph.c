@@ -36,7 +36,8 @@
 #include "hash/hash.h"
 #include "hash_stm32/hash_stm32.h"
 #endif
-#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4) || \
+    MYNEWT_VAL(UART_5) || MYNEWT_VAL(UART_6) || MYNEWT_VAL(UART_7) || MYNEWT_VAL(UART_8) || MYNEWT_VAL(UART_9)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #endif
@@ -94,6 +95,34 @@ extern const struct stm32_uart_cfg os_bsp_uart1_cfg;
 #if MYNEWT_VAL(UART_2)
 static struct uart_dev os_bsp_uart2;
 extern const struct stm32_uart_cfg os_bsp_uart2_cfg;
+#endif
+#if MYNEWT_VAL(UART_3)
+static struct uart_dev os_bsp_uart3;
+extern const struct stm32_uart_cfg os_bsp_uart3_cfg;
+#endif
+#if MYNEWT_VAL(UART_4)
+static struct uart_dev os_bsp_uart4;
+extern const struct stm32_uart_cfg os_bsp_uart4_cfg;
+#endif
+#if MYNEWT_VAL(UART_5)
+static struct uart_dev os_bsp_uart5;
+extern const struct stm32_uart_cfg os_bsp_uart5_cfg;
+#endif
+#if MYNEWT_VAL(UART_6)
+static struct uart_dev os_bsp_uart6;
+extern const struct stm32_uart_cfg os_bsp_uart6_cfg;
+#endif
+#if MYNEWT_VAL(UART_7)
+static struct uart_dev os_bsp_uart7;
+extern const struct stm32_uart_cfg os_bsp_uart7_cfg;
+#endif
+#if MYNEWT_VAL(UART_8)
+static struct uart_dev os_bsp_uart8;
+extern const struct stm32_uart_cfg os_bsp_uart7_cfg;
+#endif
+#if MYNEWT_VAL(UART_9)
+static struct uart_dev os_bsp_uart9;
+extern const struct stm32_uart_cfg os_bsp_uart7_cfg;
 #endif
 
 #if MYNEWT_VAL(ADC_0)
@@ -307,6 +336,48 @@ stm32_periph_create_uart(void)
     rc = os_dev_create(&os_bsp_uart2.ud_dev, "uart2",
                        OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
                        (void *)&os_bsp_uart2_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_3)
+    rc = os_dev_create(&os_bsp_uart3.ud_dev, "uart3",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart3_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_4)
+    rc = os_dev_create(&os_bsp_uart4.ud_dev, "uart4",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart4_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_5)
+    rc = os_dev_create(&os_bsp_uart5.ud_dev, "uart5",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart5_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_6)
+    rc = os_dev_create(&os_bsp_uart6.ud_dev, "uart6",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart6_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_7)
+    rc = os_dev_create(&os_bsp_uart7.ud_dev, "uart7",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart7_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_8)
+    rc = os_dev_create(&os_bsp_uart8.ud_dev, "uart8",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart8_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_9)
+    rc = os_dev_create(&os_bsp_uart9.ud_dev, "uart9",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart9_cfg);
     assert(rc == 0);
 #endif
 }
