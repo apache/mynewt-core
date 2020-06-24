@@ -40,6 +40,12 @@ extern "C" {
 #define MN_SOCK_DGRAM           2
 
 /*
+ * Protocol
+ */
+#define MN_PROTO_UDP            17
+#define MN_PROTO_TCP            6
+
+/*
  * Error codes from mn_socket interface.
  */
 #define MN_EAFNOSUPPORT         1

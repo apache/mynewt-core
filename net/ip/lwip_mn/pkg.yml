@@ -17,12 +17,20 @@
 # under the License.
 #
 
-pkg.name: net/ip
+pkg.name: net/ip/lwip_mn
 pkg.description: LwIP adaptation to Mynewt
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage:
 pkg.keywords:
-    - ip
-    - ipv6
-    - tcp
-    - udp
+    - lwip
+
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/net/ip/lwip_base"
+    - "@apache-mynewt-core/net/ip/mn_socket"
+
+pkg.deps.LWIP_CLI:
+    - "@apache-mynewt-core/sys/shell"
+
+pkg.init:
+    ip_init: 'MYNEWT_VAL(IP_SYSINIT_STAGE)'
