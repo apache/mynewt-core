@@ -66,7 +66,15 @@ static void twim1_irq_handler(void);
 static const struct twim twims[TWIM_COUNT] = {
     {
         .nrf_twim = NRF_TWIM0,
+#if MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52832) || MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52840)
         .irqn = SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn,
+#elif MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52810)
+        .irqn = TWIM0_TWIS0_TWI0_IRQn,
+#elif  MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52811)
+        .irqn = TWIM0_TWIS0_TWI0_SPIM1_SPIS1_SPI1_IRQn,
+#else
+#error Unsupported MCU_TARGET
+#endif
         .isr = twim0_irq_handler,
     },
     {

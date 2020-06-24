@@ -103,8 +103,10 @@ syscfg.defs:
         description: 'Enable nRF52xxx I2C (TWI) 0'
         value: 0
         restrictions:
-            - "!SPI_0_MASTER"
-            - "!SPI_0_SLAVE"
+            - '!(SPI_0_MASTER && ((MCU_TARGET == "nrf52832") || (MCU_TARGET == "nrf52840")))'
+            - '!(SPI_0_SLAVE  && ((MCU_TARGET == "nrf52832") || (MCU_TARGET == "nrf52840")))'
+            - '!(SPI_1_MASTER && (MCU_TARGET == "nrf52811"))'
+            - '!(SPI_1_SLAVE  && (MCU_TARGET == "nrf52811"))'
     I2C_0_PIN_SCL:
         description: 'SCL pin for I2C_0'
         value: ''
@@ -136,7 +138,7 @@ syscfg.defs:
         value: 0
         restrictions:
             - "!SPI_0_SLAVE"
-            - "!I2C_0"
+            - '!(I2C_0 && ((MCU_TARGET == "nrf52832") || (MCU_TARGET == "nrf52840")))'
     SPI_0_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_0_MASTER'
         value: ''
@@ -152,7 +154,7 @@ syscfg.defs:
         value: 0
         restrictions:
             - "!SPI_0_MASTER"
-            - "!I2C_0"
+            - '!(I2C_0 && ((MCU_TARGET == "nrf52832") || (MCU_TARGET == "nrf52840")))'
     SPI_0_SLAVE_PIN_SCK:
         description: 'SCK pin for SPI_0_SLAVE'
         value: ''
@@ -171,7 +173,8 @@ syscfg.defs:
         value: 0
         restrictions:
             - "!SPI_1_SLAVE"
-            - "!I2C_1"
+            - '!(I2C_1 && ((MCU_TARGET == "nrf52832") || (MCU_TARGET == "nrf52840")))'
+            - '!(I2C_0 && ((MCU_TARGET == "nrf52811")))'
     SPI_1_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_1_MASTER'
         value: ''
@@ -187,7 +190,8 @@ syscfg.defs:
         value: 0
         restrictions:
             - "!SPI_1_MASTER"
-            - "!I2C_1"
+            - '!(I2C_1 && ((MCU_TARGET == "nrf52832") || (MCU_TARGET == "nrf52840")))'
+            - '!(I2C_0 && ((MCU_TARGET == "nrf52811")))'
     SPI_1_SLAVE_PIN_SCK:
         description: 'SCK pin for SPI_1_SLAVE'
         value: ''

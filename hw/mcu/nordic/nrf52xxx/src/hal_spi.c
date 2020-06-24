@@ -649,10 +649,19 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
     }
 
     irq_handler = NULL;
-    spi->spi_type  = spi_type;
+    spi->spi_type = spi_type;
     if (spi_num == 0) {
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
+
+/* SPI IRQn name is different between MCU variants */
+#if MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52832) || MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52840)
         spi->irq_num = SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn;
+#elif MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52810) || MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52811)
+        spi->irq_num = SPIM0_SPIS0_SPI0_IRQn;
+#else
+#error Unsupported MCU_TARGET
+#endif
+
         irq_handler = nrf52_spi0_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_0_MASTER)
@@ -671,8 +680,17 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         goto err;
 #endif
     } else if (spi_num == 1) {
-#if MYNEWT_VAL(SPI_1_MASTER)  || MYNEWT_VAL(SPI_1_SLAVE)
+#if MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE)
+
+        /* SPI IRQn name is different between MCU variants */
+#if MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52832) || MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52840)
         spi->irq_num = SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQn;
+#elif MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52811)
+        spi->irq_num = TWIM0_TWIS0_TWI0_SPIM1_SPIS1_SPI1_IRQn;
+#else
+#error Unsupported MCU_TARGET
+#endif
+
         irq_handler = nrf52_spi1_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_1_MASTER)
