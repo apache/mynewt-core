@@ -27,7 +27,7 @@ pkg.keywords:
     - ethernet
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/net/ip/lwip_base"
+    - "@apache-mynewt-core/net/ip/lwip_mn"
 
 pkg.deps.MCU_STM32F4:
     - "@apache-mynewt-core/hw/mcu/stm/stm32f4xx"
@@ -35,7 +35,7 @@ pkg.deps.MCU_STM32F4:
 pkg.deps.MCU_STM32F7:
     - "@apache-mynewt-core/hw/mcu/stm/stm32f7xx"
 
-pkg.req_apis: 
+pkg.req_apis:
 
 pkg.init:
     stm32_eth_open: 'MYNEWT_VAL(STM32_ETH_SYSINIT_STAGE)'
