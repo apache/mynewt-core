@@ -223,6 +223,11 @@ uart_irq_handler(int num)
     if (isr & USART_ISR_ORE) {
         regs->ICR |= USART_ICR_ORECF;
     }
+#else
+    /* clear overrun */
+    if (isr & USART_SR_ORE) {
+        (void)RXDR(regs);
+    }
 #endif
 }
 
