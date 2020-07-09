@@ -150,6 +150,9 @@ void mcu_gpio_exit_sleep(void);
 #define MCU_MEM_QSPIF_M_END_ADDRESS     (0x18000000)
 #define MCU_MEM_SYSRAM_START_ADDRESS    (0x20000000)
 #define MCU_MEM_SYSRAM_END_ADDRESS      (0x20080000)
+#define MCU_MEM_QSPIF_M_RANGE_ADDRESS(x) \
+    ((uint32_t)(x) >= (uint32_t)MCU_MEM_QSPIF_M_START_ADDRESS && \
+     (uint32_t)(x) <= (uint32_t)MCU_MEM_QSPIF_M_END_ADDRESS)
 
 #define MCU_OTPM_BASE 0x30080000UL
 #define MCU_OTPM_SIZE 4096

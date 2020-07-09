@@ -28,6 +28,17 @@ static struct os_mutex gmtx;
 
 #define VALID_AES_KEYLEN(x) (((x) == 128) || ((x) == 192) || ((x) == 256))
 
+/* Definitions for REMAP_ADR0 (bits 2:0) of SYS_CTRL_REG. See Datasheet for details */
+typedef enum {
+    Sys_Remap_ROM = 0,
+    Sys_Remap_OTP,
+    Sys_Remap_QSPIF,
+    Sys_Remap_RAMS_Uncached,
+    Sys_Remap_QSPIF_Uncached,          /* For verification only */
+    Sys_Remap_SYSRAM2,                 /* For testing purposes only */
+    Sys_Remap_Cache_DATA_RAM_Uncached, /* For CACHERAM_MUX=0, for testing purposes only */
+} Sys_Remap_ADR0;
+
 static bool
 da1469x_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
                     uint16_t mode, uint16_t keylen)
@@ -62,6 +73,7 @@ da1469x_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
     uint32_t *keyreg;
     uint32_t *keyp32;
     uint32_t ctrl_reg;
+    Sys_Remap_ADR0 remap_adr0;
 
     if (!da1469x_has_support(crypto, op, algo, mode, keylen)) {
         return 0;
@@ -159,6 +171,17 @@ da1469x_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
         *keyreg++ = os_bswap_32(*keyp32); keyp32++;
         *keyreg++ = os_bswap_32(*keyp32); keyp32++;
         *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+    }
+
+    /*
+     * REMAP_ADR0 when 2, address 0 is mapped to QSPI Flash. See SYS_CTRL_REG in datasheet.
+     * If inbuf is in QSPI Flash, the addresses need to be translated to
+     * 0x36000000 range for the DMA engine access.
+     */
+    remap_adr0 = (CRG_TOP->SYS_CTRL_REG & CRG_TOP_SYS_CTRL_REG_REMAP_ADR0_Msk) >> CRG_TOP_SYS_CTRL_REG_REMAP_ADR0_Pos;
+
+    if (MCU_MEM_QSPIF_M_RANGE_ADDRESS(inbuf) && remap_adr0 == Sys_Remap_QSPIF) {
+        inbuf += 0x20000000;
     }
 
     AES_HASH->CRYPTO_FETCH_ADDR_REG = (uint32_t)inbuf;
