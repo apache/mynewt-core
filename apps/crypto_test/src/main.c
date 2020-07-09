@@ -44,6 +44,8 @@ struct test_vectors {
     struct vector_data vectors[];
 };
 
+static struct os_mutex mtx;
+
 /*
  * Test vectors from "NIST Special Publication 800-38A"
  */
@@ -348,6 +350,24 @@ run_ctr_bench(struct crypto_dev *crypto, uint8_t iter)
 }
 #endif /* MYNEWT_VAL(CRYPTOTEST_BENCHMARK) */
 
+static void
+lock(void)
+{
+    int rc;
+
+    rc = os_mutex_pend(&mtx, OS_TIMEOUT_NEVER);
+    assert(rc == 0);
+}
+
+static void
+unlock(void)
+{
+    int rc;
+
+    rc = os_mutex_release(&mtx);
+    assert(rc == 0);
+}
+
 #if MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)
 static void
 concurrency_test_handler(void *arg)
@@ -372,7 +392,9 @@ concurrency_test_handler(void *arg)
         os_time_delay(1);
     }
 
+    lock();
     printf("%s [%d fails / %d ok] done\n", t->t_name, fail, ok);
+    unlock();
 
     while (1) {
         os_time_delay(OS_TICKS_PER_SEC);
@@ -671,11 +693,15 @@ main(void)
     int iterations;
 #endif
     int i;
+    int rc;
 
     sysinit();
 
     crypto = (struct crypto_dev *) os_dev_open("crypto", OS_TIMEOUT_NEVER, NULL);
     assert(crypto);
+
+    rc = os_mutex_init(&mtx);
+    assert(rc == 0);
 
     printf("=== Test vectors ===\n");
     for (i = 0; all_tests[i] != NULL; i++) {
