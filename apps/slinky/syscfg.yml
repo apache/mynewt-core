@@ -43,3 +43,7 @@ syscfg.vals:
     STATS_MGMT: 1
     LOG_MGMT: 1
     CONFIG_MGMT: 1
+
+    # Enable shell history
+    CONSOLE_HISTORY: ram
+    CONSOLE_HISTORY_RAM_HISTORY_SIZE: 5
