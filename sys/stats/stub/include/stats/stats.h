@@ -61,7 +61,6 @@ struct stats_hdr {
 
 #define STATS_SIZE_INIT_PARMS(__sectvarname, __size) 0, 0
 
-#define STATS_GET(__sectvarname, __var)
 #define STATS_INC(__sectvarname, __var)
 #define STATS_INCN(__sectvarname, __var, __n)
 #define STATS_CLEAR(__sectvarname, __var)
