@@ -223,8 +223,6 @@ main(void)
 
     sysinit();
 
-    hal_timer_config(4, 1000000);
-
     /* Radio initialization. */
     radio_events.TxDone = on_tx_done;
     radio_events.RxDone = on_rx_done;
