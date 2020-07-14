@@ -695,14 +695,14 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
     }
     else if(hi2c->XferSize == 2U)
     {
-      /* Disable Acknowledge */
-      hi2c->Instance->CR1 &= ~I2C_CR1_ACK;
-
       /* Enable Pos */
       hi2c->Instance->CR1 |= I2C_CR1_POS;
 
       /* Clear ADDR flag */
       __HAL_I2C_CLEAR_ADDRFLAG(hi2c);
+
+      /* Disable Acknowledge */
+      hi2c->Instance->CR1 &= ~I2C_CR1_ACK;
     }
     else
     {
