@@ -23,6 +23,8 @@
 #include <mcu/da1469x_clock.h>
 #include <crypto/crypto.h>
 #include <crypto_da1469x/crypto_da1469x.h>
+#include <mcu/da1469x_otp.h>
+#include <mcu/da1469x_dma.h>
 
 static struct os_mutex gmtx;
 
@@ -57,6 +59,34 @@ da1469x_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
     }
 
     return false;
+}
+
+static void
+do_dma_key_tx(const void *key, uint16_t keylen)
+{
+    DMA_Type *dma_regs = DMA;
+    /* DMA len: keylen in bits, bus width is 4 */
+    keylen >>= 5;
+
+    /* enable OTP clock and set in read mode */
+    da1469x_clock_amba_enable(CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk);
+    da1469x_otp_set_mode(OTPC_MODE_READ);
+
+    /* securely DMA hardware key from secret storage to QSPI decrypt engine */
+    dma_regs->DMA_REQ_MUX_REG |= 0xf000;
+    dma_regs->DMA7_LEN_REG = keylen;
+    /* program source and destination addresses */
+    dma_regs->DMA7_A_START_REG = (uint32_t)key;
+    dma_regs->DMA7_B_START_REG = (uint32_t)&AES_HASH->CRYPTO_KEYS_START;
+    dma_regs->DMA7_CTRL_REG = DMA_DMA7_CTRL_REG_AINC_Msk |
+                              DMA_DMA7_CTRL_REG_BINC_Msk |
+                              (MCU_DMA_BUS_WIDTH_4B << DMA_DMA7_CTRL_REG_BW_Pos) |
+                              DMA_DMA7_CTRL_REG_DMA_ON_Msk;
+    while (dma_regs->DMA7_IDX_REG != keylen);
+
+    /* set OTP to standby and turn off clock */
+    da1469x_otp_set_mode(OTPC_MODE_STBY);
+    da1469x_clock_amba_disable(CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk);
 }
 
 static uint32_t
@@ -154,23 +184,27 @@ da1469x_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
         AES_HASH->CRYPTO_MREG3_REG = os_bswap_32(((uint32_t *)iv)[0]);
     }
 
-    keyreg = (uint32_t *)&AES_HASH->CRYPTO_KEYS_START;
-    keyp32 = (uint32_t *)key;
-    switch (keylen) {
-    case 256:
-        *keyreg++ = os_bswap_32(*keyp32); keyp32++;
-        *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+    if (OTP_ADDRESS_RANGE_USER_DATA_KEYS(key)) {
+        do_dma_key_tx(key, keylen);
+    } else {
+        keyreg = (uint32_t *)&AES_HASH->CRYPTO_KEYS_START;
+        keyp32 = (uint32_t *)key;
+        switch (keylen) {
+        case 256:
+            *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+            *keyreg++ = os_bswap_32(*keyp32); keyp32++;
         /* fallthrough */
-    case 192:
-        *keyreg++ = os_bswap_32(*keyp32); keyp32++;
-        *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+        case 192:
+            *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+            *keyreg++ = os_bswap_32(*keyp32); keyp32++;
         /* fallthrough */
-    case 128:
-    default:
-        *keyreg++ = os_bswap_32(*keyp32); keyp32++;
-        *keyreg++ = os_bswap_32(*keyp32); keyp32++;
-        *keyreg++ = os_bswap_32(*keyp32); keyp32++;
-        *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+        case 128:
+        default:
+            *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+            *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+            *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+            *keyreg++ = os_bswap_32(*keyp32); keyp32++;
+        }
     }
 
     /*

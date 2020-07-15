@@ -35,6 +35,7 @@ extern "C" {
  */
 struct eflash_da1469x_dev {
     struct enc_flash_dev end_dev;
+    struct crypto_dev *ecd_crypto;
     struct os_sem ef_sem;
 };
 
