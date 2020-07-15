@@ -684,6 +684,11 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
       /* Disable Acknowledge */
       hi2c->Instance->CR1 &= ~I2C_CR1_ACK;
 
+#if MYNEWT_VAL(MCU_STM32F1)
+      /* Disable all active IRQs around ADDR clearing and STOP programming because the EV6_3
+      software sequence must complete before the current byte end of transfer */
+      __disable_irq();
+#endif
       /* Clear ADDR flag */
       __HAL_I2C_CLEAR_ADDRFLAG(hi2c);
 
@@ -692,9 +697,30 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
         /* Generate Stop */
         hi2c->Instance->CR1 |= I2C_CR1_STOP;
       }
+#if MYNEWT_VAL(MCU_STM32F1)
+      /* Re-enable IRQs */
+      __enable_irq();
+#endif
     }
     else if(hi2c->XferSize == 2U)
     {
+#if MYNEWT_VAL(MCU_STM32F1)
+      /* Enable Pos */
+      hi2c->Instance->CR1 |= I2C_CR1_POS;
+
+      /* Disable all active IRQs around ADDR clearing and STOP programming because the EV6_3
+      software sequence must complete before the current byte end of transfer */
+      __disable_irq();
+
+      /* Clear ADDR flag */
+      __HAL_I2C_CLEAR_ADDRFLAG(hi2c);
+
+      /* Disable Acknowledge */
+      hi2c->Instance->CR1 &= ~I2C_CR1_ACK;
+
+      /* Re-enable IRQs */
+      __enable_irq();
+#else
       /* Disable Acknowledge */
       hi2c->Instance->CR1 &= ~I2C_CR1_ACK;
 
@@ -703,6 +729,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
 
       /* Clear ADDR flag */
       __HAL_I2C_CLEAR_ADDRFLAG(hi2c);
+#endif
     }
     else
     {
@@ -747,6 +774,12 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
             return HAL_TIMEOUT;
           }
 
+#if MYNEWT_VAL(MCU_STM32F1)
+          /* Disable all active IRQs around ADDR clearing and STOP programming because the EV6_3
+             software sequence must complete before the current byte end of transfer */
+          __disable_irq();
+#endif
+
           if (LastOp)
           {
             /* Generate Stop */
@@ -757,6 +790,11 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
           (*hi2c->pBuffPtr++) = hi2c->Instance->DR;
           hi2c->XferSize--;
           hi2c->XferCount--;
+
+#if MYNEWT_VAL(MCU_STM32F1)
+          /* Re-enable IRQs */
+          __enable_irq();
+#endif
 
           /* Read data from DR */
           (*hi2c->pBuffPtr++) = hi2c->Instance->DR;
@@ -775,6 +813,11 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
           /* Disable Acknowledge */
           hi2c->Instance->CR1 &= ~I2C_CR1_ACK;
 
+#if MYNEWT_VAL(MCU_STM32F1)
+          /* Disable all active IRQs around ADDR clearing and STOP programming because the EV6_3
+             software sequence must complete before the current byte end of transfer */
+          __disable_irq();
+#endif
           /* Read data from DR */
           (*hi2c->pBuffPtr++) = hi2c->Instance->DR;
           hi2c->XferSize--;
@@ -783,6 +826,10 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
           /* Wait until BTF flag is set */
           if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_BTF, RESET, Timeout, tickstart) != HAL_OK)
           {
+#if MYNEWT_VAL(MCU_STM32F1)
+            /* Re-enable IRQs */
+            __enable_irq();
+#endif
             return HAL_TIMEOUT;
           }
 
@@ -797,6 +844,10 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
           hi2c->XferSize--;
           hi2c->XferCount--;
 
+#if MYNEWT_VAL(MCU_STM32F1)
+          /* Re-enable IRQs */
+          __enable_irq();
+#endif
           /* Read data from DR */
           (*hi2c->pBuffPtr++) = hi2c->Instance->DR;
           hi2c->XferSize--;
