@@ -425,8 +425,6 @@ hal_uart_init(int port, void *arg)
         mcu_gpio_set_pin_function(cfg->pin_cts, MCU_GPIO_MODE_INPUT, gpiofunc[3]);
     }
 
-    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
-
     NVIC_DisableIRQ(irqn);
     NVIC_SetPriority(irqn, (1 << __NVIC_PRIO_BITS) - 1);
     NVIC_SetVector(irqn, (uint32_t)isr);
@@ -556,6 +554,15 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
     da1469x_uart_rx_intr_enable(uart);
 
+    /*
+     * We can acquire PD_COM here to be sure it's acquired only if everything is
+     * set properly. It's ok to setup UART without acquiring that domain earlier
+     * explicitly because hal_uart_config shall only be called after hal_uart_init
+     * and the latter configures GPIOs. Since at least one GPIO is configured, we
+     * can assume PD_COM is enabled while in active mode.
+     */
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
+
     return 0;
 }
 
@@ -592,6 +599,8 @@ hal_uart_close(int port)
         mcu_gpio_set_pin_function(uart->cfg->pin_rx, MCU_GPIO_MODE_INPUT,
                                   uart->rx_pin_func);
     }
+
+    da1469x_pd_release(MCU_PD_DOMAIN_COM);
 
     return 0;
 }
