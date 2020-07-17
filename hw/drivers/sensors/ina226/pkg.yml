@@ -1,0 +1,24 @@
+pkg.name: hw/drivers/sensors/ina226
+pkg.description: Driver for the INA226 current sensor
+pkg.author:
+pkg.keywords:
+    - current
+    - power
+    - i2c
+    - sensor
+
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/sensor"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/hw/util/i2cn"
+
+pkg.req_apis:
+    - stats
+
+pkg.deps.INA226_CLI:
+    - "@apache-mynewt-core/util/parse"
+
+pkg.init.INA226_CLI:
+    ina226_shell_init: 'MYNEWT_VAL(INA226_CLI_SYSINIT_STAGE)'

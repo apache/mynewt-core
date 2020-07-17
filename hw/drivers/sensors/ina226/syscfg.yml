@@ -1,0 +1,47 @@
+syscfg.defs:
+    INA226_CLI:
+        description: 'Enable shell support for the INA226'
+        value: 0
+    INA226_ITF_LOCK_TMO:
+        description: 'INA226 interface lock timeout in milliseconds'
+        value: 1000
+    INA226_SHELL_DEV_NAME:
+        description: 'INA226 shell device name'
+        value: '"ina226_0"'
+    INA226_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the INA226 sends an unexpected NACK.
+        value: 2
+
+    INA226_INT_SUPPORT:
+        description: >
+            INA226 interrupt code enabled.
+        value: 1
+    INA226_DEFAULT_AVERAGING:
+        description: >
+            Default averaging (value from ina226_avg_mode enum).
+        value: INA226_AVG_1
+    INA226_DEFAULT_VBUS_CONVERSION_TIME:
+        description: >
+            Default vbus conversion time (value from ina226_ct enum).
+        value: INA226_CT_1100_US
+    INA226_DEFAULT_VSHUNT_CONVERSION_TIME:
+        description: >
+            Default vshunt conversion time (value from ina226_ct enum).
+        value: INA226_CT_1100_US
+    ### Log settings.
+
+    INA226_LOG_MODULE:
+        description: 'Numeric module ID to use for INA226 log messages.'
+        value: 86
+    INA226_LOG_LVL:
+        description: 'Minimum level for the INA226 log.'
+        value: 1
+    INA226_CLI_SYSINIT_STAGE:
+        description: 'Sysinit stage for the INA226 shell'
+        value: 500
+syscfg.logs:
+    INA226_LOG:
+        module: MYNEWT_VAL(INA226_LOG_MODULE)
+        level: MYNEWT_VAL(INA226_LOG_LVL)
