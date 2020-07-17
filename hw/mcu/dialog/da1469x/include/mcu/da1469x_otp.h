@@ -36,6 +36,11 @@ extern "C" {
 #define OTP_SEGMENT_QSPI_FW_KEYS    0xb00
 #define OTP_SEGMENT_USER_DATA_KEYS  0xa00
 #define OTP_SEGMENT_SIGNATURE_KEYS  0x8c0
+#define OTP_SEGMENT_USER_DATA_LEN   0x100
+
+#define OTP_ADDRESS_RANGE_USER_DATA_KEYS(x) \
+    (((uint32_t)(x) >= (uint32_t)MCU_OTPM_BASE + OTP_SEGMENT_USER_DATA_KEYS) && \
+     ((uint32_t)(x) < (uint32_t)MCU_OTPM_BASE + OTP_SEGMENT_USER_DATA_KEYS + OTP_SEGMENT_USER_DATA_LEN))
 
 enum otpc_mode_val {
     OTPC_MODE_PDOWN = 0,

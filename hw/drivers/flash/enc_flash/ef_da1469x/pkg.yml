@@ -30,4 +30,5 @@ pkg.deps:
     - "@apache-mynewt-core/hw/drivers/flash/enc_flash"
     - "@apache-mynewt-core/hw/drivers/flash/enc_flash/ef_da1469x"
     - "@apache-mynewt-core/hw/mcu/dialog"
+    - "@apache-mynewt-core/hw/drivers/crypto"
 
