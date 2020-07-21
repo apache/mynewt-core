@@ -373,7 +373,16 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit_Custom(I2C_HandleTypeDef *hi2c,
       /* Wait until BUSY flag is reset */
       if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_BUSY, SET, I2C_TIMEOUT_BUSY_FLAG, tickstart) != HAL_OK)
       {
-        return HAL_BUSY;
+        /* Stuck in busy state, datasheet recommends software reset */
+        HAL_I2C_DeInit(hi2c);
+        hi2c->Instance->CR1 |= I2C_CR1_SWRST;
+        hi2c->Instance->CR1 &= ~I2C_CR1_SWRST;
+        HAL_I2C_Init(hi2c);
+        /* If still busy give up */
+        if(__HAL_I2C_GET_FLAG(hi2c, I2C_FLAG_BUSY) == SET)
+        {
+          return HAL_BUSY;
+        }
       }
     }
 
