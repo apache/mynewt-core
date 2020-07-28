@@ -71,10 +71,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct param {
     unsigned char width; /**< field width */
     char lz;            /**< Leading zeros */
-    char sign:1;        /**<  The sign to display (if any) */
-    char alt:1;         /**< alternate form */
-    char uc:1;          /**<  Upper case (for base16 only) */
-    char left:1;        /**<  Force text to left (padding on right) */
+    unsigned char sign:1;        /**<  The sign to display (if any) */
+    unsigned char alt:1;         /**<  alternate form */
+    unsigned char uc:1;          /**<  Upper case (for base16 only) */
+    unsigned char left:1;        /**<  Force text to left (padding on right) */
+    unsigned char hh:2;          /**<  Short value */
     char base;  /**<  number base (e.g.: 8, 10, 16) */
     char *bf;           /**<  Buffer to output */
 };
@@ -84,6 +85,13 @@ static void ui2a(unsigned long long int num, struct param *p)
     int n = 0;
     unsigned long long int d = 1;
     char *bf = p->bf;
+
+    if (p->hh == 1) {
+        num = (unsigned short int)num;
+    } else if (p->hh == 2) {
+        num = (unsigned char)num;
+    }
+
     while (num / d >= p->base)
         d *= p->base;
     while (d != 0) {
@@ -260,6 +268,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             p.sign = 0;
             p.left = 0;
             p.uc = 0;
+            p.hh = 0;
             lng = 0;
 
             /* Flags */
@@ -302,6 +311,14 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 if (ch == 'l') {
                     ch = *(fmt++);
                     lng = 2;
+                }
+            } else if (ch == 'h') {
+                ch = *(fmt++);
+                p.hh = 1;
+
+                if (ch == 'h') {
+                    ch = *(fmt++);
+                    p.hh = 2;
                 }
             }
 
