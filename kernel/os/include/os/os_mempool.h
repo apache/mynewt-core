@@ -28,6 +28,7 @@
 #ifndef _OS_MEMPOOL_H_
 #define _OS_MEMPOOL_H_
 
+#include <stdbool.h>
 #include "os/os.h"
 #include "os/queue.h"
 
@@ -154,20 +155,20 @@ struct os_mempool *os_mempool_info_get_next(struct os_mempool *,
 #else
 #define OS_MEMPOOL_BLOCK_SZ(sz) (sz)
 #endif
-#if (OS_CFG_ALIGNMENT == OS_CFG_ALIGN_4)
-#define OS_MEMPOOL_SIZE(n, blksize)                                     \
-    (((OS_MEMPOOL_BLOCK_SZ(blksize) + 3) / 4) * (n))
+#if (OS_ALIGNMENT == 4)
 typedef uint32_t os_membuf_t;
-#else
-#define OS_MEMPOOL_SIZE(n, blksize)                                     \
-    (((OS_MEMPOOL_BLOCK_SZ(blksize) + 7) / 8) * (n))
+#elif (OS_ALIGNMENT == 8)
 typedef uint64_t os_membuf_t;
-#endif
+#elif (OS_ALIGNMENT == 16)
+typedef __uint128_t os_membuf_t;
+#else
+#error "Unhandled `OS_ALIGNMENT` for `os_membuf_t`"
+#endif /* OS_ALIGNMENT == * */
+#define OS_MEMPOOL_SIZE(n,blksize)      ((((blksize) + ((OS_ALIGNMENT)-1)) / (OS_ALIGNMENT)) * (n))
 
 /** Calculates the number of bytes required to initialize a memory pool. */
 #define OS_MEMPOOL_BYTES(n,blksize)     \
     (sizeof (os_membuf_t) * OS_MEMPOOL_SIZE((n), (blksize)))
-
 
 /**
  * Initialize a memory pool.
