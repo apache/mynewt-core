@@ -48,6 +48,7 @@ syscfg.vals:
     # Default Pins for Peripherals
 
     # SPI port 0 connected to ST7789 display
+    SPI_0_MASTER: 1
     SPI_0_MASTER_PIN_SCK:  2  # P0.02: SPI-SCK, LCD_SCK
     SPI_0_MASTER_PIN_MOSI: 3  # P0.03: SPI-MOSI, LCD_SDI
     SPI_0_MASTER_PIN_MISO: 4  # P0.04: SPI-MISO
@@ -71,6 +72,31 @@ syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+
+    # SPI Flash
+    SPIFLASH:               1
+    SPIFLASH_SPI_NUM:       0
+    SPIFLASH_SPI_CS_PIN:    5 # P0.05 SPI-CE#(SPI-NOR)
+    SPIFLASH_BAUDRATE:      8000
+    SPIFLASH_MANUFACTURER:  0x0B
+    SPIFLASH_MEMORY_TYPE:   0x40
+    SPIFLASH_MEMORY_CAPACITY: 0x16
+    SPIFLASH_SECTOR_COUNT:  1024
+    SPIFLASH_SECTOR_SIZE:   4096
+    SPIFLASH_PAGE_SIZE:     256
+
+    SPIFLASH_TBP1_TYPICAL:  20      # Byte program time (first byte) (us)
+    SPIFLASH_TBP1_MAXIMUM:  50      # Maximum byte program time (first byte) (us)
+    SPIFLASH_TPP_TYPICAL:   700     # Page program time (us)
+    SPIFLASH_TPP_MAXIMUM:   3000    # Maximum page program time (us)
+    SPIFLASH_TSE_TYPICAL:   30000   # Sector erase time (4KB) (us)
+    SPIFLASH_TSE_MAXIMUM:   400000  # Maximum sector erase time (us)
+    SPIFLASH_TBE1_TYPICAL:  120000  # Block erase time (32KB) (us)
+    SPIFLASH_TBE1_MAXIMUM:  800000  # Maximum block erase time (32KB) (us)
+    SPIFLASH_TBE2_TYPICAL:  150000  # Block erase time (64KB) (us)
+    SPIFLASH_TBE2_MAXIMUM:  1000000 # Maximum block erase time (64KB) (us)
+    SPIFLASH_TCE_TYPICAL:   3000000 # Chip erase time (us)
+    SPIFLASH_TCE_MAXIMUM:   10000000 # Maximum chip erase time (us)
 
 syscfg.vals.BSP_BATTERY:
     # ADC needed for battery voltage

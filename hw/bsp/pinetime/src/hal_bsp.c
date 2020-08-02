@@ -37,6 +37,9 @@
 #include "adc_nrf52/adc_nrf52.h"
 #include <nrf_saadc.h>
 #endif
+#if MYNEWT_VAL(SPIFLASH)
+#include <spiflash/spiflash.h>
+#endif
 
 /** What memory to include in coredump. */
 static const struct hal_bsp_mem_dump dump_cfg[] = {
@@ -53,6 +56,15 @@ hal_bsp_core_dump(int *area_cnt)
     return dump_cfg;
 }
 
+static const struct hal_flash *flash_devs[] = {
+    /* MCU internal flash. */
+    [0] = &nrf52k_flash_dev,
+#if MYNEWT_VAL(SPIFLASH)
+    /* External SPI Flash. */
+    [1] = &spiflash_dev.hal,
+#endif
+};
+
 /**
  * Retrieves the flash device with the specified ID.  Returns NULL if no such
  * device exists.
@@ -60,15 +72,10 @@ hal_bsp_core_dump(int *area_cnt)
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
-    switch (id) {
-    case 0:
-        /* MCU internal flash. */
-        return &nrf52k_flash_dev;
-
-    default:
-        /* External flash.  Assume not present in this BSP. */
+    if (id >= ARRAY_SIZE(flash_devs)) {
         return NULL;
     }
+    return flash_devs[id];
 }
 
 /**

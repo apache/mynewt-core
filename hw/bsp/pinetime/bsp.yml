@@ -29,34 +29,41 @@ bsp.part2linkerscript: "hw/bsp/pinetime/split-pinetime.ld"
 bsp.downloadscript: "hw/bsp/pinetime/pinetime_download.sh"
 bsp.debugscript: "hw/bsp/pinetime/pinetime_debug.sh"
 
+# This flash layout is compatible with other community firmwares. It is based on: https://lupyuen.github.io/pinetime-rust-mynewt/articles/mcuboot
+#TODO: The image size could be increased by 12kB. This space is already reserved, but not yet used. This is to be compatible with other firmwares that use the image size of 464kB.
 bsp.flash_map:
     areas:
         # System areas.
         FLASH_AREA_BOOTLOADER:
             device: 0
             offset: 0x00000000
-            size: 16kB
+            size: 24kB
         FLASH_AREA_IMAGE_0:
             device: 0
             offset: 0x00008000
-            size: 232kB
+            size: 464kB
         FLASH_AREA_IMAGE_1:
-            device: 0
-            offset: 0x00042000
-            size: 232kB
+            device: 1
+            offset: 0x00040000
+            size: 464kB
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
-            offset: 0x0007c000
+            offset: 0x0007f000
             size: 4kB
 
         # User areas.
         FLASH_AREA_REBOOT_LOG:
             user_id: 0
             device: 0
-            offset: 0x00004000
-            size: 16kB
+            offset: 0x00006000
+            size: 8kB
         FLASH_AREA_NFFS:
             user_id: 1
-            device: 0
-            offset: 0x0007d000
-            size: 12kB
+            device: 1
+            offset: 0x000b7000
+            size: 3364kB
+        FLASH_AREA_BOOTLOADER_ASSETS:
+            user_id: 2
+            device: 1
+            offset: 0x00000000
+            size: 256kB
