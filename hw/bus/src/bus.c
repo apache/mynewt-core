@@ -540,6 +540,8 @@ bus_node_get_lock_timeout(struct os_dev *node)
 {
     struct bus_node *bnode = (struct bus_node *)node;
 
+    BUS_DEBUG_VERIFY_NODE(bnode);
+
     return bnode->lock_timeout ? bnode->lock_timeout : g_bus_node_lock_timeout;
 }
 
@@ -550,6 +552,8 @@ bus_dev_set_pm(struct os_dev *bus, bus_pm_mode_t pm_mode,
 #if MYNEWT_VAL(BUS_PM)
     struct bus_dev *bdev = (struct bus_dev *)bus;
     int rc;
+
+    BUS_DEBUG_VERIFY_DEV(bdev);
 
     rc = os_mutex_pend(&bdev->lock, OS_TIMEOUT_NEVER);
     if (rc) {
