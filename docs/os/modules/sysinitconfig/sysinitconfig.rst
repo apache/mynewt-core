@@ -352,6 +352,47 @@ use the flash area named ``FLASH_AREA_NFFS`` in the ``syscfg.yml`` file.
     syscfg.vals:
         NFFS_FLASH_AREA: FLASH_AREA_NFFS
 
+Conditional Settings
+~~~~~~~~~~~~~~~~~~~~
+
+Setings in most Mynewt YAML files can be made conditional on syscfg
+settings.  For example, a package might depend on a second package
+*only if a syscfg setting has a particular value*.  The condition can
+be the value of a single syscfg setting or an arbitrary expression
+involving many settings.
+
+Examples of Conditional Settings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example 6
+`````````
+
+In this example, a package depends on ``lib/pkg2`` only if
+``MY_SETTING`` has a true value.
+
+
+.. code-block:: yaml
+
+    pkg.deps.MY_SETTING:
+        # Only depend on pkg2 if MY_SETTING is true.
+        - lib/pkg2
+
+A setting is "true" if it has a value other than 0 or the empty string.
+Undefined settings are not true.
+
+Example 7
+`````````
+
+In this example, a package overrides the setting ``FOO`` only if
+``BAR`` is greater than 5 and ``BAZ`` is not true.
+
+
+.. code-block:: yaml
+
+    syscfg.vals.'(BAR > 5 && !BAZ):
+        # Only override FOO if BAR is greater than 5 and BAZ is untrue.
+        FOO: 35
+
 Generated syscfg.h and Referencing System Configuration Settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -639,36 +680,3 @@ function:
         nmgr_shell_pkg_init();
     }
     #endif
-
-Conditional Configurations
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can use the system configuration setting values to conditionally
-specify parameter values in ``pkg.yml`` and ``syscfg.yml`` files. The
-syntax is:
-
-.. code-block:: yaml
-
-    parameter_name.PKGA_SYSCFG_NAME:
-         parameter_value
-
-This specifies that ``parameter_value`` is only set for
-``parameter_name`` if the ``PKGA_SYSCFG_NAME`` configuration setting
-value is non-zero. Here is an example from the ``libs/os`` package
-``pkg.yml`` file:
-
-.. code-block:: yaml
-
-    pkg.deps:
-        - "@apache-mynewt-core/sys/sysinit"
-        - "@apache-mynewt-core/util/mem"
-
-    pkg.deps.OS_CLI
-        - "@apache-mynewt-core/sys/shell"
-
-This example specifies that the ``os`` package depends on the
-``sysinit`` and ``mem`` packages, and also depends on the ``shell``
-package when ``OS_CLI`` is enabled.
-
-The newt tool aborts the build when it detects circular conditional
-dependencies.
