@@ -33,6 +33,8 @@ sys.path.append(os.path.join(os.getcwd(), "repos", "mcuboot", "scripts",
                 "imgtool"))
 import keys as keys
 
+DEFAULT_BAUDRATE = 500000
+
 # Cmds that apply for the dialog BSP are defined here.
 # Custom Commands are defined in the custom BSP starting
 # at a different offset so that the default command set
@@ -144,9 +146,9 @@ def get_serial_port(port, baudrate, timeout, bytesize, stopbits):
     return ser
 
 
-def otp_read_key(index, segment, uart):
+def otp_read_key(index, segment, uart, baudrate):
     seg_map = {'signature': 0, 'data': 1, 'qspi': 2}
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     cmd = cmd_read_key(0xaa55aa55, Cmd.OTP_READ_KEY, seg_map[segment], index)
     data = struct.pack('IIII', *cmd)
@@ -175,8 +177,9 @@ def otp_read_key(index, segment, uart):
               callback=validate_slot_index)
 @click.option('-s', '--segment', type=click.Choice(['signature', 'data',
               'qspi']), help='OTP segment', required=True,)
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Write a single key to OTP key segment')
-def otp_write_key(infile, index, segment, uart):
+def otp_write_key(infile, index, segment, uart, baudrate):
 
     key = bytearray()
     try:
@@ -210,7 +213,7 @@ def otp_write_key(infile, index, segment, uart):
 
     seg_map = {'signature': 0, 'data': 1, 'qspi': 2}
 
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     cmd = cmd_write_key(0xaa55aa55, Cmd.OTP_WRITE_KEY, seg_map[segment], index)
     # swap endianness of data to little endian
@@ -245,9 +248,10 @@ def generate_payload(data):
 
 @ click.argument('outfile')
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Read data from OTP configuration script area')
-def otp_read_config(uart, outfile):
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+def otp_read_config(uart, outfile, baudrate):
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     # length is unused, so set to 0
     cmd = cmd_append_value(0xaa55aa55, Cmd.OTP_READ_CONFIG, 0)
@@ -281,9 +285,10 @@ def otp_read_config(uart, outfile):
               help='flash address offset from base, hexadecimal')
 @click.option('-l', '--length', type=int, required=True, help='length to read')
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Read from flash')
-def flash_read(uart, length, outfile, offset):
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+def flash_read(uart, length, outfile, offset, baudrate):
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     try:
         f = open(outfile, "wb")
@@ -346,9 +351,10 @@ def flash_read(uart, length, outfile, offset):
               help='flash address offset, in hex')
 @click.option('-l', '--length', type=int, required=True, help='size to erase')
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Erase flash')
-def flash_erase(uart, offset, length):
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+def flash_erase(uart, offset, length, baudrate):
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     # length is unused, so set to 0
     offset = int(offset, 16)
@@ -375,9 +381,10 @@ def flash_erase(uart, offset, length):
               help='flash address offset, in hex')
 @click.option('-b', '--block-size', type=int, default=4096, help='block size')
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Write to flash')
-def flash_write(uart, infile, offset, block_size):
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+def flash_write(uart, infile, offset, block_size, baudrate):
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     try:
         f = open(infile, "rb")
@@ -422,8 +429,8 @@ def flash_write(uart, infile, offset, block_size):
     print("Successfully wrote flash")
 
 
-def send_otp_config_payload(uart, data):
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+def send_otp_config_payload(uart, data, baudrate):
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     data_bytes = generate_payload(data)
 
@@ -457,9 +464,10 @@ def send_otp_config_payload(uart, data):
 @click.option('-v', '--value', type=str, required=True,
               help='register value in hexadecimal')
 @click.option('-u', '--uart', required=True, help='uart port')
-def otp_append_register(uart, address, value):
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
+def otp_append_register(uart, address, value, baudrate):
 
-    send_otp_config_payload(uart, [int(address, 16), int(value, 16)])
+    send_otp_config_payload(uart, [int(address, 16), int(value, 16)], baudrate)
 
 
 @click.option('-t', '--trim', type=str, required=True,
@@ -467,91 +475,103 @@ def otp_append_register(uart, address, value):
 @click.option('-i', '--index', type=int, required=True,
               help='Trim value id')
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Append trim value to OTP configuration script')
-def otp_append_trim(uart, trim, index):
+def otp_append_trim(uart, trim, index, baudrate):
 
     data = []
     data.append(0x90000000 + (len(trim) << 8) + index)
     for entry in trim:
         data.append(int(entry, 16))
 
-    send_otp_config_payload(uart, data)
+    send_otp_config_payload(uart, data, baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Disable development mode')
-def disable_development_mode(uart):
+def disable_development_mode(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x70000000])
+    send_otp_config_payload(uart, [0x70000000], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Enable secure boot')
-def enable_secure_boot(uart):
+def enable_secure_boot(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x500000cc, 0x1])
+    send_otp_config_payload(uart, [0x500000cc, 0x1], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Write lock OTP QSPI key area')
-def disable_qspi_key_write(uart):
+def disable_qspi_key_write(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x500000cc, 0x40])
+    send_otp_config_payload(uart, [0x500000cc, 0x40], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Read lock OTP QSPI key area')
-def disable_qspi_key_read(uart):
+def disable_qspi_key_read(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x500000cc, 0x80])
+    send_otp_config_payload(uart, [0x500000cc, 0x80], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Write lock OTP user key area')
-def disable_user_key_write(uart):
+def disable_user_key_write(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x500000cc, 0x10])
+    send_otp_config_payload(uart, [0x500000cc, 0x10], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Read lock OTP user key area')
-def disable_user_key_read(uart):
+def disable_user_key_read(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x500000cc, 0x20])
+    send_otp_config_payload(uart, [0x500000cc, 0x20], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Write lock OTP signature key area')
-def disable_signature_key_write(uart):
+def disable_signature_key_write(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x500000cc, 0x8])
+    send_otp_config_payload(uart, [0x500000cc, 0x8], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Disable CMAC debugger')
-def disable_cmac_debugger(uart):
+def disable_cmac_debugger(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x500000cc, 0x4])
+    send_otp_config_payload(uart, [0x500000cc, 0x4], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Disable SWD debugger')
-def disable_swd_debugger(uart):
+def disable_swd_debugger(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x500000cc, 0x2])
+    send_otp_config_payload(uart, [0x500000cc, 0x2], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Close out OTP configuration script')
-def close_config_script(uart):
+def close_config_script(uart, baudrate):
 
-    send_otp_config_payload(uart, [0x0])
+    send_otp_config_payload(uart, [0x0], baudrate)
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Initialize blank OTP Config script')
-def init_config_script(uart):
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+def init_config_script(uart, baudrate):
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     # length is unused, so set to 0
     cmd = cmd_append_value(0xaa55aa55, Cmd.OTP_INIT, 0)
@@ -574,9 +594,10 @@ def init_config_script(uart):
 
 
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--baudrate', default=DEFAULT_BAUDRATE, help='default baudrate')
 @click.command(help='Test if the board is alive by sending and receving data')
-def test_alive_target(uart):
-    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
+def test_alive_target(uart, baudrate):
+    ser = get_serial_port(uart, baudrate, 1, 8, serial.STOPBITS_ONE)
 
     # length is unused, so set to 0
     cmd = cmd_append_value(0xaa55aa55, Cmd.TEST_ALIVE, 0)
