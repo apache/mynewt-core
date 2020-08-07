@@ -80,7 +80,7 @@ task. The main steps are:
 3. In your application ``main()`` function, call the ``sysinit()``
    function to initialize the system and packages, perform application
    specific initialization, then wait and dispatch events from the OS
-   default event queue in an infinite loop. (See :doc:`../modules/sysinitconfig/sysinitconfig`
+   default event queue in an infinite loop. (See :doc:`../modules/sysinitdown/sysinitdown`
    for more details.)
 
 Initializing application modules and tasks can get somewhat complicated
