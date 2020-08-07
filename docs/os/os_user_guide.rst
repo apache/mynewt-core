@@ -17,6 +17,7 @@ OS User Guide
    Image Manager <modules/imgmgr/imgmgr>
    Compile-Time Configuration <modules/sysinitconfig/sysinitconfig>
    System Initialization and Shutdown <modules/sysinitdown/sysinitdown>
+   Build-Time Hooks <modules/extcmd/extcmd>
    File System <modules/fs/fs>
    Flash Circular Buffer <modules/fcb/fcb>
    Sensor Framework <modules/sensor_framework/sensor_framework>
