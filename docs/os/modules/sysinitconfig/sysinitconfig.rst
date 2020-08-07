@@ -1,4 +1,4 @@
-Compile-Time Configuration and Initialization
+Compile-Time Configuration
 -----------------------------------------------
 
 .. toctree::
@@ -6,10 +6,10 @@ Compile-Time Configuration and Initialization
 
    sysconfig_error
 
-This guide describes how Mynewt manages system configuration and
-initialization. It shows you how to tell Mynewt to use default or
-customized values to initialize packages that you develop or use to
-build a target. This guide:
+This guide describes how Mynewt manages system configuration.  It shows
+you how to tell Mynewt to use default or customized values to
+configure packages that you develop or use to build a target. This
+guide:
 
 -  Assumes you have read the
    :ref:`concepts` section that describes
@@ -17,9 +17,6 @@ build a target. This guide:
    ``syscfg.yml`` files.
 -  Assumes you have read the Mynewt :doc:`../../../newt/newt_operation` and are familiar with how newt
    determines package dependencies for your target build.
--  Covers only the system initialization for hardware independent
-   packages. It does not cover the Board Support Package (BSP) and other
-   hardware dependent system initialization.
 
 .. contents::
    :local:
@@ -28,8 +25,6 @@ build a target. This guide:
 Mynewt defines several configuration parameters in the ``pkg.yml`` and
 ``syscfg.yml`` files. The newt tool uses this information to:
 
--  Generate a system initialization function that calls all the
-   package-specific system initialization functions.
 -  Generate a system configuration header file that contains all the
    package configuration settings and values.
 -  Display the system configuration settings and values in the
@@ -512,171 +507,3 @@ when the setting value is non-zero.
         SYSINIT_PANIC_ASSERT(rc == 0);
     #endif
     }
-
-System Initialization
-~~~~~~~~~~~~~~~~~~~~~
-
-During system startup, Mynewt creates a default event queue and a main
-task to process events from this queue. You can override the
-``OS_MAIN_TASK_PRIO`` and ``OS_MAIN_TASK_STACK_SIZE`` setting values
-defined by the ``kernel/os`` package to specify different task priority
-and stack size values.
-
-Your application's ``main()`` function executes in the context of the
-main task and must perform the following:
-
--  At the start of ``main()``, call the Mynewt ``sysinit()`` function to
-   initialize the packages before performing any other processing.
--  At the end of ``main()``, wait for and dispatch events from the
-   default event queue in an infinite loop.
-
-**Note:** You must include the ``sysinit/sysinit.h`` header file to
-access the ``sysinit()`` function.
-
-Here is an example of a ``main()`` function:
-
-.. code-block:: cpp
-
-    int
-    main(int argc, char **argv)
-    {
-        /* First, call sysinit() to perform the system and package initialization */
-        sysinit();
-
-        /* ... other application initialization processing ... */
-
-        /*  Last, process events from the default event queue.  */
-        while (1) {
-           os_eventq_run(os_eventq_dflt_get());
-        }
-        /* main never returns */
-    }
-
-Specifying Package Initialization Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``sysinit()`` function calls the ``sysinit_app()`` function to
-perform system initialization for the packages in the target. You can,
-optionally, specify one or more package initialization functions that
-``sysinit_app()`` calls to initialize a package.
-
-A package initialization function must have the following prototype:
-
-.. code-block:: cpp
-
-    void init_func_name(void)
-
-Package initialization functions are called in stages to ensure that
-lower priority packages are initialized before higher priority packages.
-A stage is an integer value, 0 or higher, that specifies when an
-initialization function is called. Mynewt calls the package
-initialization functions in increasing stage number order. The call
-order for initialization functions with the same stage number depends on
-the order the packages are processed, and you cannot rely on a specific
-call order for these functions.
-
-You use the ``pkg.init`` parameter in the ``pkg.yml`` file to specify an
-initialization function and the stage number to call the function. You
-can specify multiple initialization functions, with a different stage
-number for each function, for the parameter values. This feature allows
-packages with interdependencies to perform initialization in multiple
-stages.
-
-The ``pkg.init`` parameter has the following syntax in the ``pkg.yml``
-file:
-
-.. code-block:: yaml
-
-    pkg.init:
-        pkg_init_func1_name: pkg_init_func1_stage
-        pkg_init_func2_name: pkg_init_func2_stage
-
-                  ...
-
-        pkg_init_funcN_name: pkg_init_funcN_stage
-
-where ``pkg_init_func#_name`` is the C function name of an
-initialization function, and ``pkg_init_func#_stage`` is an integer
-value, 0 or higher, that indicates the stage when the
-``pkg_init_func#_name`` function is called.
-
-**Note:** The ``pkg.init_function`` and ``pkg.init_stage`` parameters
-introduced in a previous release for specifying a package initialization
-function and a stage number are deprecated and have been retained to
-support the legacy format. They will not be maintained for future
-releases and we recommend that you migrate to use the ``pkg.init``
-parameter.
-
-Generated sysinit_app() Function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The newt tool processes the ``pkg.init`` parameters in all the
-``pkg.yml`` files for a target, generates the ``sysinit_app()`` function
-in the ``<target-path>/generated/src/<target-name>-sysinit_app.c`` file,
-and includes the file in the build. Here is an example ``sysinit_app()``
-function:
-
-.. code-block:: cpp
-
-    /**
-     * This file was generated by Apache Newt (incubating) version: 1.0.0-dev
-     */
-
-    #if !SPLIT_LOADER
-
-    void split_app_init(void);
-    void os_pkg_init(void);
-    void imgmgr_module_init(void);
-
-    /* ... */
-
-    void stats_module_init(void);
-
-    void
-    sysinit_app(void)
-    {
-
-        /*** Stage 0 */
-        /* 0.0: kernel/os */
-        os_pkg_init();
-
-        /*** Stage 2 */
-        /* 2.0: sys/flash_map */
-        flash_map_init();
-
-        /*** Stage 10 */
-        /* 10.0: sys/stats/full */
-        stats_module_init();
-
-        /*** Stage 20 */
-        /* 20.0: sys/console/full */
-        console_pkg_init();
-
-        /*** Stage 100 */
-        /* 100.0: sys/log/full */
-        log_init();
-        /* 100.1: sys/mfg */
-        mfg_init();
-
-        /* ... */
-
-        /*** Stage 300 */
-        /* 300.0: sys/config */
-        config_pkg_init();
-
-        /*** Stage 500 */
-        /* 500.0: sys/id */
-        id_init();
-        /* 500.1: sys/shell */
-        shell_init();
-
-        /* ... */
-
-        /* 500.4: mgmt/imgmgr */
-        imgmgr_module_init();
-
-        /*** Stage 501 */
-        /* 501.0: mgmt/newtmgr/transport/nmgr_shell */
-        nmgr_shell_pkg_init();
-    }
-    #endif
