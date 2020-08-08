@@ -29,6 +29,14 @@ syscfg.defs:
         description: 'Setup charger driver in the BSP'
         value: 1
 
+syscfg.defs.BUS_DRIVER_PRESENT:
+    BSP_FLASH_SPI_NAME:
+        description: 'SPIFLASH device name'
+        value: '"spiflash0"'
+    BSP_FLASH_SPI_BUS:
+        description: 'bus name SPIFLASH is connected to'
+        value: '"spi0"'
+
 syscfg.vals.BOOT_LOADER:
     BSP_BATTERY: 0
     BSP_CHARGER: 0

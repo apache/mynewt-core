@@ -56,6 +56,18 @@ hal_bsp_core_dump(int *area_cnt)
     return dump_cfg;
 }
 
+#if MYNEWT_VAL(SPIFLASH)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+struct bus_spi_node_cfg flash_spi_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BSP_FLASH_SPI_BUS),
+    .pin_cs = MYNEWT_VAL(SPIFLASH_SPI_CS_PIN),
+    .mode = BUS_SPI_MODE_3,
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = MYNEWT_VAL(SPIFLASH_BAUDRATE),
+};
+#endif
+#endif
+
 static const struct hal_flash *flash_devs[] = {
     /* MCU internal flash. */
     [0] = &nrf52k_flash_dev,
@@ -169,14 +181,50 @@ hal_bsp_charger_init(void)
 }
 #endif
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static struct bus_spi_node hal_bsp_display_spi;
+struct bus_spi_node_cfg hal_bsp_display_spi_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BSP_FLASH_SPI_BUS),
+    .pin_cs = LCD_CHIP_SELECT_PIN,
+    .mode = BUS_SPI_MODE_3,
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = 8000,
+};
+
+static void
+hal_bsp_display_spi_init(void)
+{
+    int rc;
+
+    rc = bus_spi_node_create("spidisplay", &hal_bsp_display_spi, &hal_bsp_display_spi_cfg, NULL);
+    assert(rc == 0);
+}
+#endif
+
 void
 hal_bsp_init(void)
 {
+    int rc;
+
+    (void)rc;
+
     /* Make sure system clocks have started. */
     hal_system_clock_start();
 
     /* Create all available nRF52840 peripherals */
     nrf52_periph_create();
+
+    #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    /* Create display spi node */
+    hal_bsp_display_spi_init();
+
+    #if MYNEWT_VAL(SPIFLASH)
+    /* Create external flash dev */
+    rc = spiflash_create_spi_dev(&spiflash_dev.dev,
+                                 MYNEWT_VAL(BSP_FLASH_SPI_NAME), &flash_spi_cfg);
+    assert(rc == 0);
+    #endif
+    #endif
 
     #if MYNEWT_VAL(BSP_CHARGER)
     /* Create charge controller */
