@@ -116,7 +116,7 @@ static const struct nrf91_hal_i2c_cfg hal_i2c1_cfg = {
 #if MYNEWT_VAL(I2C_2)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static const struct bus_i2c_dev_cfg i2c2_cfg = {
-    .i2c_num = 0,
+    .i2c_num = 2,
     .pin_sda = MYNEWT_VAL(I2C_2_PIN_SDA),
     .pin_scl = MYNEWT_VAL(I2C_2_PIN_SCL),
 };
@@ -132,7 +132,7 @@ static const struct nrf91_hal_i2c_cfg hal_i2c2_cfg = {
 #if MYNEWT_VAL(I2C_3)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static const struct bus_i2c_dev_cfg i2c3_cfg = {
-    .i2c_num = 1,
+    .i2c_num = 3,
     .pin_sda = MYNEWT_VAL(I2C_3_PIN_SDA),
     .pin_scl = MYNEWT_VAL(I2C_3_PIN_SCL),
 };
@@ -347,7 +347,7 @@ nrf91_periph_create_i2c(void)
 #endif
 #if MYNEWT_VAL(I2C_2)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_i2c_hal_dev_create("i2c2", &i2c0_bus,
+    rc = bus_i2c_hal_dev_create("i2c2", &i2c2_bus,
                                 (struct bus_i2c_dev_cfg *)&i2c2_cfg);
     assert(rc == 0);
 #else
@@ -357,7 +357,7 @@ nrf91_periph_create_i2c(void)
 #endif
 #if MYNEWT_VAL(I2C_3)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_i2c_hal_dev_create("i2c3", &i2c1_bus,
+    rc = bus_i2c_hal_dev_create("i2c3", &i2c3_bus,
                                 (struct bus_i2c_dev_cfg *)&i2c3_cfg);
     assert(rc == 0);
 #else

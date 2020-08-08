@@ -145,17 +145,17 @@ Reset_Handler_split:
     bgt    .LC5
 .LC4:
 
-    LDR     R0, =__HeapBase
-    LDR     R1, =__HeapLimit
-    BL      _sbrkInit
+    ldr     R0, =__HeapBase
+    ldr     R1, =__HeapLimit
+    bl      _sbrkInit
 
-    LDR     R0, =SystemInit
-    BLX     R0
+    ldr     R0, =SystemInit
+    blx     R0
 
-    BL      hal_system_init
+    bl      hal_system_init
 
-    LDR     R0, =_start_split
-    BX      R0
+    ldr     R0, =_start_split
+    bx      R0
 
     .pool
     .cantunwind

@@ -85,7 +85,7 @@ hal_i2c_delay_us(uint32_t number_of_us)
 {
     register uint32_t delay __ASM("r0") = number_of_us;
     __ASM volatile (
-#ifdef NRF51
+#ifdef NRF91
         ".syntax unified\n"
 #endif
         "1:\n"
@@ -151,7 +151,7 @@ hal_i2c_delay_us(uint32_t number_of_us)
         " NOP\n"
 #end        if
         " BNE 1b\n"
-#ifdef NRF51
+#ifdef NRF91
         ".syntax divided\n"
 #endif
         : "+r" (delay));
