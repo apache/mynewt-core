@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic/nrf91xxx
+pkg.name: hw/mcu/nordic/nrf91xx
 pkg.description: MCU definition for Nordic nRF91 ARM Cortex-M33 chips.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
