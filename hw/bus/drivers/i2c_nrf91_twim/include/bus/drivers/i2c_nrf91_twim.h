@@ -34,7 +34,7 @@ extern "C" {
 #define TWIM_CUSTOM_FREQUENCY_FREQUENCY_K380 (0x06147ae9UL)
 
 /**
- * Initialize os_dev as I2C bus device using nRF91xxx TWIM peripheral
+ * Initialize os_dev as I2C bus device using nRF91xx TWIM peripheral
  *
  * This can be passed as a parameter to os_dev_create() when creating os_dev
  * object for I2C device, however it's recommended to create devices using helper
@@ -47,7 +47,7 @@ int
 bus_i2c_nrf91_twim_dev_init_func(struct os_dev *odev, void *arg);
 
 /**
- * Create I2C bus device using nRF91xxx TWIM peripheral
+ * Create I2C bus device using nRF91xx TWIM peripheral
  *
  * This is a convenient helper and recommended way to create os_dev for bus I2C
  * device instead of calling os_dev_create() directly.

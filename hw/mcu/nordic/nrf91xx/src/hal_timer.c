@@ -51,7 +51,7 @@ struct nrf91_hal_timer {
     uint8_t tmr_rtc;
     uint8_t tmr_pad;
     uint32_t tmr_cntr;
-    uint32_t timer_isrs;
+    uint32_t tmr_isrs;
     uint32_t tmr_freq;
     void *tmr_reg;
     TAILQ_HEAD(hal_timer_qhead, hal_timer) hal_timer_q;
@@ -327,7 +327,7 @@ hal_timer_irq_handler(struct nrf91_hal_timer *bsptimer)
 
     /* XXX: make these stats? */
     /* Count # of timer isrs */
-    ++bsptimer->timer_isrs;
+    ++bsptimer->tmr_isrs;
 
     /*
      * NOTE: we dont check the 'compare' variable here due to how the timer
@@ -378,7 +378,7 @@ hal_rtc_timer_irq_handler(struct nrf91_hal_timer *bsptimer)
     }
 
     /* Count # of timer isrs */
-    ++bsptimer->timer_isrs;
+    ++bsptimer->tmr_isrs;
 
     /*
      * NOTE: we dont check the 'compare' variable here due to how the timer
@@ -492,6 +492,14 @@ hal_timer_init(int timer_num, void *cfg)
         irq_num = RTC0_IRQn;
         hwtimer = NRF_RTC0;
         irq_isr = nrf91_timer3_irq_handler;
+        bsptimer->tmr_rtc = 1;
+        break;
+#endif
+#if MYNEWT_VAL(TIMER_4)
+    case 3:
+        irq_num = RTC1_IRQn;
+        hwtimer = NRF_RTC1;
+        irq_isr = nrf91_timer4_irq_handler;
         bsptimer->tmr_rtc = 1;
         break;
 #endif

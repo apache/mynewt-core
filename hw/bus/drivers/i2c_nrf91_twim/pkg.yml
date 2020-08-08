@@ -18,7 +18,7 @@
 #
 
 pkg.name: hw/bus/drivers/i2c_nrf91_twim
-pkg.description: I2C bus driver using nRF91xxx TWIM peripheral
+pkg.description: I2C bus driver using nRF91xx TWIM peripheral
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:

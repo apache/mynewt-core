@@ -54,7 +54,7 @@ syscfg.defs:
             events for interrupts. This mode may be less accurate (i.e. pulse
             length needs to be longer in order to be detected) but it reduces
             power consumption since it does not require HFCLK to be running.
-            Refer to nRF91xxx Product Specification document for more details.
+            Refer to nRF91xx Product Specification document for more details.
         value: 0
 
     MCU_DEBUG_IGNORE_BKPT:
@@ -65,7 +65,7 @@ syscfg.defs:
 
 # MCU peripherals definitions
     I2C_0:
-        description: 'Enable nRF91xxx I2C 0'
+        description: 'Enable nRF91xx I2C 0'
         value: 0
         restrictions:
             - "!SPI_0_MASTER"
@@ -81,7 +81,7 @@ syscfg.defs:
         value: 100
 
     I2C_1:
-        description: 'Enable nRF91xxx I2C 1'
+        description: 'Enable nRF91xx I2C 1'
         value: 0
         restrictions:
             - "!SPI_1_MASTER"
@@ -97,7 +97,7 @@ syscfg.defs:
         value: 100
 
     I2C_2:
-        description: 'Enable nRF91xxx I2C 2'
+        description: 'Enable nRF91xx I2C 2'
         value: 0
         restrictions:
             - "!SPI_2_MASTER"
@@ -113,7 +113,7 @@ syscfg.defs:
         value: 100
 
     I2C_3:
-        description: 'Enable nRF91xxx I2C 3'
+        description: 'Enable nRF91xx I2C 3'
         value: 0
         restrictions:
             - "!SPI_3_MASTER"
@@ -129,7 +129,7 @@ syscfg.defs:
         value: 100
 
     SPI_0_MASTER:
-        description: 'Enable nRF91xxx SPI Master 0'
+        description: 'Enable nRF91xx SPI Master 0'
         value: 0
         restrictions:
             - "!SPI_0_SLAVE"
@@ -145,7 +145,7 @@ syscfg.defs:
         value: ''
 
     SPI_0_SLAVE:
-        description: 'Enable nRF91xxx SPI Slave 0'
+        description: 'Enable nRF91xx SPI Slave 0'
         value: 0
         restrictions:
             - "!SPI_0_MASTER"
@@ -164,7 +164,7 @@ syscfg.defs:
         value: ''
 
     SPI_1_MASTER:
-        description: 'Enable nRF91xxx SPI Master 1'
+        description: 'Enable nRF91xx SPI Master 1'
         value: 0
         restrictions:
             - "!SPI_1_SLAVE"
@@ -180,7 +180,7 @@ syscfg.defs:
         value: ''
 
     SPI_1_SLAVE:
-        description: 'Enable nRF91xxx SPI Slave 1'
+        description: 'Enable nRF91xx SPI Slave 1'
         value: 0
         restrictions:
             - "!SPI_1_MASTER"
@@ -199,7 +199,7 @@ syscfg.defs:
         value: ''
 
     SPI_2_MASTER:
-        description: 'Enable nRF91xxx SPI Master 2'
+        description: 'Enable nRF91xx SPI Master 2'
         value: 0
         restrictions:
             - "!SPI_2_SLAVE"
@@ -215,7 +215,7 @@ syscfg.defs:
         value: ''
 
     SPI_2_SLAVE:
-        description: 'Enable nRF91xxx SPI Slave 2'
+        description: 'Enable nRF91xx SPI Slave 2'
         value: 0
         restrictions:
             - "!SPI_2_MASTER"
@@ -234,7 +234,7 @@ syscfg.defs:
         value: ''
 
     SPI_3_MASTER:
-        description: 'Enable nRF91xxx SPI Master 3'
+        description: 'Enable nRF91xx SPI Master 3'
         value: 0
         restrictions:
             - 'MCU_TARGET == "nRF9160" || !SPI_3_MASTER'
@@ -249,7 +249,7 @@ syscfg.defs:
         value: ''
 
     SPI_3_SLAVE:
-        description: 'Enable nRF91xxx SPI Slave 3'
+        description: 'Enable nRF91xx SPI Slave 3'
         value: 0
         restrictions:
             - "!SPI_3_MASTER"
@@ -269,7 +269,7 @@ syscfg.defs:
 
 
     UART_0:
-        description: 'Enable nRF91xxx UART0'
+        description: 'Enable nRF91xx UART0'
         value: 0
     UART_0_PIN_TX:
         description: 'TX pin for UART0'
@@ -285,7 +285,7 @@ syscfg.defs:
         value: -1
 
     UART_1:
-        description: 'Enable nRF91xxx UART1'
+        description: 'Enable nRF91xx UART1'
         value: 1
         restrictions:
             - 'MCU_TARGET == "nRF9160" || !UART_1'
@@ -303,7 +303,7 @@ syscfg.defs:
         value: -1
 
     UART_2:
-        description: 'Enable nRF91xxx UART2'
+        description: 'Enable nRF91xx UART2'
         value: 0
         restrictions:
             - 'MCU_TARGET == "nRF9160" || !UART_2'
@@ -321,7 +321,7 @@ syscfg.defs:
         value: -1
 
     UART_3:
-        description: 'Enable nRF91xxx UART3'
+        description: 'Enable nRF91xx UART3'
         value: 0
         restrictions:
             - 'MCU_TARGET == "nRF9160" || !UART_3'
@@ -339,16 +339,19 @@ syscfg.defs:
         value: -1
 
     TIMER_0:
-        description: 'Enable nRF91xxx Timer 0'
+        description: 'Enable nRF91xx Timer 0'
         value:  1
     TIMER_1:
-        description: 'Enable nRF91xxx Timer 1'
+        description: 'Enable nRF91xx Timer 1'
         value:  0
     TIMER_2:
-        description: 'Enable nRF91xxx Timer 2'
+        description: 'Enable nRF91xx Timer 2'
         value:  0
     TIMER_3:
-        description: 'Enable nRF91xxx RTC 0'
+        description: 'Enable nRF91xx RTC 0'
+        value:  1
+    TIMER_4:
+        description: 'Enable nRF91xx RTC 1'
         value:  1
 
     QSPI_ENABLE:
