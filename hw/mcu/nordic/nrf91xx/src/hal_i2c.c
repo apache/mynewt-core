@@ -149,7 +149,7 @@ hal_i2c_delay_us(uint32_t number_of_us)
         " NOP\n"
         " NOP\n"
         " NOP\n"
-#end        if
+#endif
         " BNE 1b\n"
 #ifdef NRF91
         ".syntax divided\n"
