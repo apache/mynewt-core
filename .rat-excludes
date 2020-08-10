@@ -58,6 +58,7 @@ iar_startup_nrf51.s
 iar_startup_nrf52.s
 system_nrf9160.c
 gcc_startup_nrf9160.s
+gcc_startup_nrf9160_split.s
 nrf9160.h
 nrf9160_bitfields.h
 
