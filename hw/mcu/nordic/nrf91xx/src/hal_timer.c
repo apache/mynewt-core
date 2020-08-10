@@ -496,7 +496,7 @@ hal_timer_init(int timer_num, void *cfg)
         break;
 #endif
 #if MYNEWT_VAL(TIMER_4)
-    case 3:
+    case 4:
         irq_num = RTC1_IRQn;
         hwtimer = NRF_RTC1;
         irq_isr = nrf91_timer4_irq_handler;
