@@ -2001,7 +2001,6 @@ typedef struct
 
   #define FPU_BASE_NS         (SCS_BASE_NS +  0x0F30UL)                  /*!< Floating Point Unit               (non-secure address space) */
   #define FPU_NS              ((FPU_Type       *)     FPU_BASE_NS      ) /*!< Floating Point Unit               (non-secure address space) */
-
 #endif /* defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U) */
 /*@} */
 
@@ -2420,6 +2419,7 @@ __STATIC_INLINE void __NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
 {
   uint32_t *vectors = (uint32_t *)SCB->VTOR;
   vectors[(int32_t)IRQn + NVIC_USER_IRQ_OFFSET] = vector;
+  __DSB();
 }
 
 

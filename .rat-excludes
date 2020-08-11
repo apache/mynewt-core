@@ -56,6 +56,12 @@ arm_startup_nrf52.s
 uicr_config.h
 iar_startup_nrf51.s
 iar_startup_nrf52.s
+system_nrf9160.c
+gcc_startup_nrf9160.s
+gcc_startup_nrf9160_split.s
+nrf9160.h
+nrf9160_bitfields.h
+
 
 # Linker scripts for Nordics nRF5X - TCL license
 nrf51dk_no_boot.ld
@@ -114,6 +120,13 @@ fanstel-ev-bt840_no_boot.ld
 split-fanstel-ev-bt840.ld
 puckjs_no_boot.ld
 split_puckjs.ld
+nrf91.ld
+split-nordic_pca10090.ld
+nordic_pca10090_no_boot.ld
+boot-nrf91xxaa.ld
+nordic_pca10090_no_boot.ld
+nrf91xxaa.ld
+nrf91_ram_resident.ld
 
 # STM32 HAL - BSD License
 stm32_driver_mod_i2c_v1.c
@@ -442,6 +455,7 @@ docs
 nrfx
 nrfx_glue.h
 nrf52xxx
+nrf91xx
 nrf52xxx-compat
 
 # cmsis-core - Apache License

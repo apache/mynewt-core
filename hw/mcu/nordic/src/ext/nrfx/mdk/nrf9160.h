@@ -112,7 +112,8 @@ typedef enum {
   FPU_IRQn                  =  44,              /*!< 44 FPU                                                                    */
   GPIOTE1_IRQn              =  49,              /*!< 49 GPIOTE1                                                                */
   KMU_IRQn                  =  57,              /*!< 57 KMU                                                                    */
-  CRYPTOCELL_IRQn           =  64               /*!< 64 CRYPTOCELL                                                             */
+  CRYPTOCELL_IRQn           =  64,              /*!< 64 CRYPTOCELL                                                             */
+  MAX_IRQn                  = 256
 } IRQn_Type;
 
 
