@@ -22,6 +22,7 @@
 #include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
+#include "mcu/da1469x_sleep.h"
 #include "mcu/mcu.h"
 #include "hal/hal_system.h"
 #include "da1469x_priv.h"
@@ -34,6 +35,8 @@ uint8_t g_mcu_pdc_combo_idx;
 
 static bool g_mcu_wait_for_jtag;
 static os_time_t g_mcu_wait_for_jtag_until;
+
+static struct da1469x_sleep_cb g_da1469x_sleep_cb;
 
 static inline bool
 da1469x_sleep_any_irq_pending(void)
@@ -56,7 +59,7 @@ da1469x_sleep_is_blocked(void)
 void
 da1469x_sleep(os_time_t ticks)
 {
-    int ret;
+    int slept;
 
     da1469x_pdc_ack_all_m33();
 
@@ -69,10 +72,19 @@ da1469x_sleep(os_time_t ticks)
     /* PD_SYS will not be disabled here until we enter deep sleep, so don't wait */
     da1469x_pd_release_nowait(MCU_PD_DOMAIN_SYS);
 
+    if (g_da1469x_sleep_cb.enter_sleep) {
+        g_da1469x_sleep_cb.enter_sleep(ticks);
+    }
+
     mcu_gpio_enter_sleep();
-    ret = da1469x_m33_sleep();
+    slept = da1469x_m33_sleep();
     mcu_gpio_exit_sleep();
-    if (!ret) {
+
+    if (g_da1469x_sleep_cb.exit_sleep) {
+        g_da1469x_sleep_cb.exit_sleep(slept);
+    }
+
+    if (!slept) {
         /* We were not sleeping, no need to apply PD_SYS settings again */
         da1469x_pd_acquire_noconf(MCU_PD_DOMAIN_SYS);
         return;
@@ -110,6 +122,12 @@ da1469x_sleep(os_time_t ticks)
 #endif
 }
 
+void
+da1469x_sleep_cb_register(struct da1469x_sleep_cb *cb)
+{
+    g_da1469x_sleep_cb = *cb;
+}
+
 #else
 
 void
@@ -117,6 +135,11 @@ da1469x_sleep(os_time_t ticks)
 {
     __DSB();
     __WFI();
+}
+
+void
+da1469x_sleep_cb_register(struct da1469x_sleep_cb *cb)
+{
 }
 
 #endif
