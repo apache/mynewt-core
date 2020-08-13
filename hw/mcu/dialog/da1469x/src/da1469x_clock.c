@@ -186,6 +186,62 @@ da1469x_clock_lp_rcx_disable(void)
     CRG_TOP->CLK_RCX_REG &= ~CRG_TOP_CLK_RCX_REG_RCX_ENABLE_Msk;
 }
 
+static void
+da1469x_delay_us(uint32_t delay_us)
+{
+    /*
+     * SysTick runs on ~32 MHz clock while PLL is not started.
+     * so multiplying by 32 to convert from us to SysTicks.
+     */
+    SysTick->LOAD = delay_us * 32;
+    SysTick->VAL = 0UL;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
+    while (0 == (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
+    SysTick->CTRL = 0;
+}
+
+/*
+ * The following definition are taken from newer version of SDK file DA1469xAB.h.
+ * File was not updated due to other registers definitions that went missing.
+ * This should be removed once Dialog SDK header has all definitions.
+ */
+#ifndef CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Msk
+#define CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Pos (14UL)   /*!< PLL_SEL_MIN_CUR_INT (Bit 14)                          */
+#define CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Msk (0x4000UL) /*!< PLL_SEL_MIN_CUR_INT (Bitfield-Mask: 0x01)           */
+#else
+#error Please remove above definition. It looks like it is not needed any more.
+#endif
+
+/**
+ * Enable PLL96
+ */
+void
+da1469x_clock_sys_pll_enable(void)
+{
+    /* Start PLL LDO if not done yet */
+    if ((CRG_XTAL->PLL_SYS_STATUS_REG & CRG_XTAL_PLL_SYS_STATUS_REG_LDO_PLL_OK_Msk) == 0) {
+        CRG_XTAL->PLL_SYS_CTRL1_REG |= CRG_XTAL_PLL_SYS_CTRL1_REG_LDO_PLL_ENABLE_Msk;
+        /* Wait for XTAL LDO to settle */
+        da1469x_delay_us(20);
+    }
+    if ((CRG_XTAL->PLL_SYS_STATUS_REG & CRG_XTAL_PLL_SYS_STATUS_REG_PLL_LOCK_FINE_Msk) == 0) {
+        /* Use internal VCO current setting to enable precharge */
+        CRG_XTAL->PLL_SYS_CTRL1_REG |= CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Msk;
+        /* Enable precharge */
+        CRG_XTAL->PLL_SYS_CTRL2_REG |= CRG_XTAL_PLL_SYS_CTRL2_REG_PLL_RECALIB_Msk;
+        /* Start the SYSPLL */
+        CRG_XTAL->PLL_SYS_CTRL1_REG |= CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_EN_Msk;
+        /* Precharge loopfilter (Vtune) */
+        da1469x_delay_us(10);
+        /* Disable precharge */
+        CRG_XTAL->PLL_SYS_CTRL2_REG &= ~CRG_XTAL_PLL_SYS_CTRL2_REG_PLL_RECALIB_Msk;
+        /* Extra wait time */
+        da1469x_delay_us(5);
+        /* Take external VCO current setting */
+        CRG_XTAL->PLL_SYS_CTRL1_REG &= ~CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Msk;
+    }
+}
+
 void
 da1469x_clock_pll_disable(void)
 {
@@ -193,7 +249,8 @@ da1469x_clock_pll_disable(void)
         CRG_TOP->CLK_SWITCH2XTAL_REG = CRG_TOP_CLK_SWITCH2XTAL_REG_SWITCH2XTAL_Msk;
     }
 
-    CRG_XTAL->PLL_SYS_CTRL1_REG &= ~CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_EN_Msk;
+    CRG_XTAL->PLL_SYS_CTRL1_REG &= ~(CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_EN_Msk |
+                                     CRG_XTAL_PLL_SYS_CTRL1_REG_LDO_PLL_ENABLE_Msk);
 }
 
 void
