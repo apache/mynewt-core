@@ -133,12 +133,7 @@ da1469x_clock_amba_disable(uint32_t mask)
 /**
  * Enable PLL96
  */
-static inline void
-da1469x_clock_sys_pll_enable(void)
-{
-    CRG_XTAL->PLL_SYS_CTRL1_REG |= CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_EN_Msk |
-                                   CRG_XTAL_PLL_SYS_CTRL1_REG_LDO_PLL_ENABLE_Msk;
-}
+void da1469x_clock_sys_pll_enable(void);
 
 /**
  * Disable PLL96
