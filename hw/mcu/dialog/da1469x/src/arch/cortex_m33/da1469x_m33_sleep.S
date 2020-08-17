@@ -39,7 +39,7 @@ da1469x_m33_sleep_state:
     .space 40   /* R4-R12, LR */
 .saved_nvic:
     .space 8    /* ISER[0..1] */
-    .space 40   /* IPR[0..39] */
+    .space 44   /* IPR[0..43] */
 .saved_scb:
     .space 28   /* SCR, CCR, SHPR[0..11], CPACR */
 #if MYNEWT_VAL(HARDFLOAT)
@@ -89,13 +89,13 @@ da1469x_m33_sleep:
     mrs     r2, CONTROL
     stmia   r3!, {r0-r2,r4-r12, lr}
 
-/* Save NVIC state (ISER[0..1] and IPR[0..39]) */
+/* Save NVIC state (ISER[0..1] and IPR[0..43]) */
     ldr     r0, =NVIC_BASE
     add     r1, r0, NVIC_IPR_OFFSET
     ldmia   r0!, {r4-r5}
     stmia   r3!, {r4-r5}
-    ldmia   r1!, {r2, r4-r12}
-    stmia   r3!, {r2, r4-r12}
+    ldmia   r1, {r0, r2, r4-r12}
+    stmia   r3!, {r0, r2, r4-r12}
 
 /* Save SCB state (SCR, CCR, SHPR and SHCSR) */
     ldr     r0, =(SCB_BASE + SCB_SCR_OFFSET)
@@ -118,6 +118,25 @@ da1469x_m33_sleep:
     ldr     r0, =RESET_STAT_REG
     movs    r3, #0
     str     r3, [r0, #0]
+
+#if MYNEWT_VAL(MCU_DEEP_SLEEP_QSPIC_QUAD_DISABLE)
+/*
+ * Disable QSPI continuous mode to achieve flash standby
+ */
+    ldr     r0, =QSPIC_BASE
+    ldr     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+    bic     r1, r1, #1      /* Clear automode */
+    orr     r1, r1, #0x3c   /* Set IO2/IO3 DAT and OEN */
+    str     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+    mov     r1, #1          /* Set single */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    mov     r1, #8          /* Enable CS */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    mov     r1, #0xff       /* Exit QPI mode */
+    strb    r1, [r0, #(QSPIC_WRITEDATA_OFFSET)]
+    mov     r1, #16         /* Disable CS */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+#endif
 
 /* Disable QSPI controller clock */
     ldr     r0, =CLK_AMBA_REG
@@ -149,6 +168,21 @@ da1469x_m33_sleep:
     orr     r1, r1, #0x1000
     str     r1, [r2, #0]
 
+#if MYNEWT_VAL(MCU_DEEP_SLEEP_QSPIC_QUAD_DISABLE)
+/*
+ * Put flash back into automode. We need to do this before we start executing code from flash
+ * again.
+ */
+    ldr     r0, =QSPIC_BASE
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    mov     r1, #4          /* Set quad */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    ldr     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+    bic     r1, r1, #0xc    /* Clear IO2/IO3 OEN */
+    orr     r1, r1, #1      /* Enable automode */
+    str     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+#endif
+
     b       da1469x_m33_restore
 
     .section .text_ram
@@ -174,8 +208,8 @@ da1469x_m33_wakeup:
     add     r1, r0, NVIC_IPR_OFFSET
     ldmia   r3!, {r4-r5}
     stmia   r0!, {r4-r5}
-    ldmia   r3!, {r2, r4-r12}
-    stmia   r1!, {r2, r4-r12}
+    ldmia   r3, {r0, r2, r4-r12}
+    stmia   r1!, {r0, r2, r4-r12}
 
  /* Restore SCB state */
     ldmia   r3!, {r4-r10}
