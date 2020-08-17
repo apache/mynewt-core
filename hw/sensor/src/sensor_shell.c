@@ -37,6 +37,8 @@
 #include "sensor/pressure.h"
 #include "sensor/humidity.h"
 #include "sensor/gyro.h"
+#include "sensor/voltage.h"
+#include "sensor/current.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "hal/hal_i2c.h"
@@ -178,6 +180,12 @@ sensor_cmd_display_type(char **argv)
             case SENSOR_TYPE_COLOR:
                 console_printf("    color: 0x%x\n", type);
                 break;
+            case SENSOR_TYPE_VOLTAGE:
+                console_printf("    voltage: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_CURRENT:
+                console_printf("    current: 0x%x\n", type);
+                break;
             case SENSOR_TYPE_USER_DEFINED_1:
                 console_printf("    user defined 1: 0x%x\n", type);
                 break;
@@ -255,6 +263,8 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data,
     struct sensor_press_data *spd;
     struct sensor_humid_data *shd;
     struct sensor_gyro_data *sgd;
+    struct sensor_voltage_data *svd;
+    struct sensor_current_data *scud;
     char tmpstr[13];
 
     console_printf("ts: [ secs: %ld usecs: %d cputime: %u ]\n",
@@ -418,6 +428,24 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data,
         if (shd->shd_humid_is_valid) {
             console_printf("relative humidity = %s%%rh",
                            sensor_ftostr(shd->shd_humid, tmpstr, 13));
+        }
+        console_printf("\n");
+    }
+
+    if (type == SENSOR_TYPE_VOLTAGE) {
+        svd = (struct sensor_voltage_data *)data;
+        if (svd->svd_voltage_is_valid) {
+            console_printf("voltage = %sV",
+                           sensor_ftostr(svd->svd_voltage, tmpstr, 13));
+        }
+        console_printf("\n");
+    }
+
+    if (type == SENSOR_TYPE_CURRENT) {
+        scud = (struct sensor_current_data *)data;
+        if (scud->scd_current_is_valid) {
+            console_printf("current = %sA",
+                           sensor_ftostr(scud->scd_current, tmpstr, 13));
         }
         console_printf("\n");
     }

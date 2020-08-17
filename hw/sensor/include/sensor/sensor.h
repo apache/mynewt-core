@@ -84,6 +84,10 @@ typedef enum {
     SENSOR_TYPE_EULER                = (1 << 14),
     /* Color Sensor */
     SENSOR_TYPE_COLOR                = (1 << 15),
+    /* Voltage */
+    SENSOR_TYPE_VOLTAGE              = (1 << 16),
+    /* Current */
+    SENSOR_TYPE_CURRENT              = (1 << 17),
 
     /* Standard sensor types to be defined here */
 
