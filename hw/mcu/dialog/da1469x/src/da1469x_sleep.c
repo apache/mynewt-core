@@ -59,7 +59,8 @@ da1469x_sleep_is_blocked(void)
 void
 da1469x_sleep(os_time_t ticks)
 {
-    int ret;
+    int slept;
+    bool can_sleep = true;
 
     da1469x_pdc_ack_all_m33();
 
@@ -69,14 +70,27 @@ da1469x_sleep(os_time_t ticks)
         return;
     }
 
+    if (g_da1469x_sleep_cb.enter_sleep) {
+        can_sleep = g_da1469x_sleep_cb.enter_sleep(ticks);
+        if (!can_sleep) {
+            __DSB();
+            __WFI();
+            return;
+        }
+    }
+
     /* Must enter mcu gpio sleep before releasing MCU_PD_DOMAIN_SYS */
     mcu_gpio_enter_sleep();
 
     /* PD_SYS will not be disabled here until we enter deep sleep, so don't wait */
     da1469x_pd_release_nowait(MCU_PD_DOMAIN_SYS);
 
-    ret = da1469x_m33_sleep();
+    slept = da1469x_m33_sleep();
     mcu_gpio_exit_sleep();
+
+    if (g_da1469x_sleep_cb.exit_sleep) {
+        g_da1469x_sleep_cb.exit_sleep(slept);
+    }
 
     if (!slept) {
         /* We were not sleeping, no need to apply PD_SYS settings again */
@@ -116,6 +130,12 @@ da1469x_sleep(os_time_t ticks)
 #endif
 }
 
+void
+da1469x_sleep_cb_register(struct da1469x_sleep_cb *cb)
+{
+    g_da1469x_sleep_cb = *cb;
+}
+
 #else
 
 void
@@ -125,4 +145,8 @@ da1469x_sleep(os_time_t ticks)
     __WFI();
 }
 
+void
+da1469x_sleep_cb_register(struct da1469x_sleep_cb *cb)
+{
+}
 #endif
