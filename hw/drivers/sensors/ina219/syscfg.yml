@@ -48,7 +48,7 @@ syscfg.defs:
 
     INA219_LOG_MODULE:
         description: 'Numeric module ID to use for INA219 log messages.'
-        value: 86
+        value: 88
     INA219_LOG_LVL:
         description: 'Minimum level for the INA219 log.'
         value: 1
