@@ -160,6 +160,10 @@ syscfg.defs:
         value: ''
         restrictions:
         - (MCU_QSPIC_APP_CFG)
+    MCU_DEEP_SLEEP_QSPIC_QUAD_DISABLE:
+        description: >
+            Enable disabling quad mode when entering deep sleep
+        value: 0
 
 # MCU peripherals definitions
     I2C_0:
