@@ -208,8 +208,8 @@ da1469x_m33_wakeup:
     add     r1, r0, NVIC_IPR_OFFSET
     ldmia   r3!, {r4-r5}
     stmia   r0!, {r4-r5}
-    ldmia   r3, {r0, r2, r4-r12}
-    stmia   r1!, {r0, r2, r4-r12}
+    ldmia   r3!, {r0, r2, r4-r12}
+    stmia   r1, {r0, r2, r4-r12}
 
  /* Restore SCB state */
     ldmia   r3!, {r4-r10}
