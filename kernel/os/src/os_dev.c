@@ -64,9 +64,12 @@ os_dev_add(struct os_dev *dev)
      */
     prev_dev = NULL;
     STAILQ_FOREACH(cur_dev, &g_os_dev_list, od_next) {
-        if (dev->od_stage < cur_dev->od_stage ||
-            ((dev->od_stage == cur_dev->od_stage) &&
-             (dev->od_priority < cur_dev->od_priority))) {
+        if (dev == cur_dev) {
+            /* Do nothing */
+            return 0;
+        } else if (dev->od_stage < cur_dev->od_stage ||
+                   ((dev->od_stage == cur_dev->od_stage) &&
+                    (dev->od_priority < cur_dev->od_priority))) {
             break;
         }
         prev_dev = cur_dev;
