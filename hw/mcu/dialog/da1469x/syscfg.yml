@@ -165,6 +165,47 @@ syscfg.defs:
             Enable disabling quad mode when entering deep sleep
         value: 0
 
+    MCU_PRAIL_1V8_SUPPLY:
+        description: >
+            Configures supply for 1V8 rail. To disable rail, select "none".
+            Max load is 10mA on "ldo_ret", 50mA otherwise (check documentation).
+            MCU_DCDC_ENABLE has to be enabled for "dcdc" to have any effect,
+            otherwise "ldo" is used.
+        value: ldo
+        restrictions: $notnull
+        choices:
+            - none
+            - ldo_ret
+            - ldo
+            - dcdc
+    MCU_PRAIL_1V8_SUPPLY_SLEEP:
+        description: >
+            Configures supply for 1V8 rail during sleep.
+        value: ldo_ret
+        restrictions: $notnull
+        choices:
+            - none
+            - ldo_ret
+    MCU_PRAIL_1V8P_SUPPLY:
+        description: >
+            Configures supply for 1V8P rail. See 1V8 rail for details.
+        value: ldo
+        restrictions: $notnull
+        choices:
+            - none
+            - ldo_ret
+            - ldo
+            - dcdc
+    MCU_PRAIL_1V8P_SUPPLY_SLEEP:
+        description: >
+            Configures supply for 1V8P rail during sleep. See 1V8 rail for
+            details.
+        value: ldo_ret
+        restrictions: $notnull
+        choices:
+            - none
+            - ldo_ret
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable DA1469x I2C'
