@@ -110,6 +110,12 @@ SECTIONS
         . = ALIGN(4);
     } > RAM
 
+    /* Section for app-net cores IPC */
+    .ipc (NOLOAD):
+    {
+        *(.ipc)
+    } > IPC
+
     /* This section will be zeroed by RTT package init */
     .rtt (NOLOAD):
     {

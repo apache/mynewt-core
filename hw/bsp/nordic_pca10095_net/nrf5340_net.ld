@@ -20,6 +20,7 @@ MEMORY
 {
   FLASH (rx) : ORIGIN = 0x01008000, LENGTH = 0x19000
   RAM (rwx) : ORIGIN = 0x21000000, LENGTH = 0x10000
+  IPC (rw)  : ORIGIN = 0x20000400, LENGTH = 0x40000
 }
 
 /* This linker script is used for images and thus contains an image header */

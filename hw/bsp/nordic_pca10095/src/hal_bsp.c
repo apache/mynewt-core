@@ -74,10 +74,4 @@ hal_bsp_init(void)
 
     /* Create all available nRF5340 peripherals */
     nrf5340_periph_create();
-
-#if MYNEWT_VAL(BSP_NRF5340_NET_ENABLE)
-    /* TODO is this good place? Hook this into SHM support when in place? */
-    /* Start Network Core */
-    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
-#endif
 }
