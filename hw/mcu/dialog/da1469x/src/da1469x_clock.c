@@ -208,8 +208,6 @@ da1469x_delay_us(uint32_t delay_us)
 #ifndef CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Msk
 #define CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Pos (14UL)   /*!< PLL_SEL_MIN_CUR_INT (Bit 14)                          */
 #define CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Msk (0x4000UL) /*!< PLL_SEL_MIN_CUR_INT (Bitfield-Mask: 0x01)           */
-#else
-#error Please remove above definition. It looks like it is not needed any more.
 #endif
 
 /**
