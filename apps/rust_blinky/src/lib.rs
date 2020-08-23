@@ -16,36 +16,39 @@
 
 #![no_std]
 
-extern "C" {
-    fn sysinit_start();
-    fn sysinit_app();
-    fn sysinit_end();
-    fn hal_gpio_init_out(pin: i32, val: i32) -> i32;
-    fn hal_gpio_toggle(pin: i32);
-    fn os_time_delay(osticks: u32);
-}
+mod bindings;
 
 extern crate panic_halt;
 
-const OS_TICKS_PER_SEC: u32 = 128;
-
-const LED_BLINK_PIN: i32 = 23;
-
+// Define a safe wrapper for os_time_delay
+fn os_time_delay_ms(ms: u32) {
+    let mut ticks: bindings::os_time_t = 0;
+    let result = unsafe { bindings::os_time_ms_to_ticks(ms, &mut ticks) };
+    assert!(result == 0);
+    unsafe { bindings::os_time_delay(ticks) };
+}
 
 #[no_mangle]
 pub extern "C" fn main() {
     /* Initialize all packages. */
-    unsafe { sysinit_start(); }
-    unsafe { sysinit_app(); }
-    unsafe { sysinit_end(); }
+    unsafe {
+        bindings::sysinit_start();
+        bindings::sysinit_app();
+        bindings::sysinit_end();
+    }
 
-    unsafe { hal_gpio_init_out(LED_BLINK_PIN, 1); }
+    /* Turn on the LED */
+    unsafe {
+        bindings::hal_gpio_init_out(bindings::LED_BLINK_PIN as i32, 1);
+    }
 
     loop {
         /* Wait one second */
-        unsafe { os_time_delay(OS_TICKS_PER_SEC); }
+        os_time_delay_ms(1000);
 
         /* Toggle the LED */
-        unsafe { hal_gpio_toggle(LED_BLINK_PIN); }
+        unsafe {
+            bindings::hal_gpio_toggle(bindings::LED_BLINK_PIN as i32);
+        }
     }
 }

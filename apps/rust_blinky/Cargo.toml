@@ -22,6 +22,10 @@ edition = "2018"
 
 [dependencies]
 panic-halt = "0.2.0"
+cty = "0.2.1"
+
+[build-dependencies]
+bindgen = "0.54.0"
 
 [lib]
 crate-type = ["staticlib"]
