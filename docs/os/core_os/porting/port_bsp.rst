@@ -79,7 +79,7 @@ We create our targets with the following set of newt commands:
 ::
 
     newt target create boot-myboard &&
-    newt target set boot-myboard app=@apache-mynewt-core/apps/boot  \
+    newt target set boot-myboard app=@mcuboot/boot/mynewt  \
                                  bsp=hw/bsp/myboard                 \
                                  build_profile=optimized
 
@@ -93,7 +93,7 @@ Which generates the following output:
 ::
 
     Target targets/boot-myboard successfully created
-    Target targets/boot-myboard successfully set target.app to @apache-mynewt-core/apps/boot
+    Target targets/boot-myboard successfully set target.app to @mcuboot/boot/mynewt
     Target targets/boot-myboard successfully set target.bsp to hw/bsp/myboard
     Target targets/boot-myboard successfully set target.build_profile to debug
     Target targets/blinky-myboard successfully created
