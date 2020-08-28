@@ -192,6 +192,7 @@ static const struct ble_gatt_svc_def oc_gatt_svr_svcs[] = { {
     },
 };
 
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 0)
 /*
  * Look up service index based on characteristic handle from request.
  */
@@ -207,6 +208,8 @@ oc_ble_req_attr_to_idx(uint16_t attr_handle)
     }
     return -1;
 }
+#endif
+
 
 static uint8_t
 oc_ep_gatt_size(const struct oc_endpoint *oe)
