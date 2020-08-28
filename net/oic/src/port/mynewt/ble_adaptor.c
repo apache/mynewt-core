@@ -535,7 +535,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     if (oe_ble->srv_idx >= OC_BLE_SRV_CNT) {
         goto err;
     }
-    attr_handle = oc_ble_src_handles[oe_ble->srv_idx].rsp;
+    attr_handle = oc_ble_srv_handles[oe_ble->srv_idx].rsp;
 #endif
     mtu = ble_att_mtu(conn_handle);
     if (mtu < 4) {
