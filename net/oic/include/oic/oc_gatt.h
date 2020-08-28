@@ -48,7 +48,7 @@ extern "C" {
 /* Secure CoAP rsp. characteristic: 0x1001 */
 #define OC_GATT_SEC_RSP_CHR_UUID    0x1001
 
-int oc_ble_coap_gatt_init(void);
+int oc_ble_coap_gatt_srv_init(void);
 void oc_ble_coap_conn_new(uint16_t conn_handle);
 void oc_ble_coap_conn_del(uint16_t conn_handle);
 

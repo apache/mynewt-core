@@ -345,7 +345,7 @@ oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
 #endif
 
 int
-oc_ble_coap_gatt_init(void)
+oc_ble_coap_gatt_srv_init(void)
 {
 #if (MYNEWT_VAL(OC_SERVER) == 1)
     int rc;
