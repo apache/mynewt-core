@@ -66,25 +66,29 @@
 
 static int
 nrf52k_qspi_read(const struct hal_flash *dev, uint32_t address,
-        void *dst, uint32_t num_bytes);
+                 void *dst, uint32_t num_bytes);
 static int
 nrf52k_qspi_write(const struct hal_flash *dev, uint32_t address,
-        const void *src, uint32_t num_bytes);
+                  const void *src, uint32_t num_bytes);
 static int
 nrf52k_qspi_erase_sector(const struct hal_flash *dev,
-        uint32_t sector_address);
+                         uint32_t sector_address);
 static int
 nrf52k_qspi_sector_info(const struct hal_flash *dev, int idx,
-        uint32_t *address, uint32_t *sz);
+                        uint32_t *address, uint32_t *sz);
 static int
 nrf52k_qspi_init(const struct hal_flash *dev);
+static int
+nrf52k_qspi_erase(const struct hal_flash *dev, uint32_t address,
+                  uint32_t size);
 
 static const struct hal_flash_funcs nrf52k_qspi_funcs = {
     .hff_read = nrf52k_qspi_read,
     .hff_write = nrf52k_qspi_write,
     .hff_erase_sector = nrf52k_qspi_erase_sector,
     .hff_sector_info = nrf52k_qspi_sector_info,
-    .hff_init = nrf52k_qspi_init
+    .hff_init = nrf52k_qspi_init,
+    .hff_erase = nrf52k_qspi_erase
 };
 
 const struct hal_flash nrf52k_qspi_dev = {
@@ -98,7 +102,8 @@ const struct hal_flash nrf52k_qspi_dev = {
 
 static int
 nrf52k_qspi_read(const struct hal_flash *dev, uint32_t address,
-        void *dst, uint32_t num_bytes) {
+                 void *dst, uint32_t num_bytes)
+{
     uint32_t ram_buffer[4];
     uint8_t *ram_ptr = NULL;
     uint32_t read_bytes;
@@ -149,7 +154,7 @@ nrf52k_qspi_read(const struct hal_flash *dev, uint32_t address,
 
 static int
 nrf52k_qspi_write(const struct hal_flash *dev, uint32_t address,
-        const void *src, uint32_t num_bytes)
+                  const void *src, uint32_t num_bytes)
 {
     uint32_t ram_buffer[4];
     uint8_t *ram_ptr = NULL;
@@ -162,7 +167,7 @@ nrf52k_qspi_write(const struct hal_flash *dev, uint32_t address,
 
     while (num_bytes != 0) {
         page_limit = (address & ~(MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE) - 1)) +
-                MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
+                     MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
         /*
          * Use RAM buffer if src or address is not 4 bytes aligned,
          * or number of bytes to write is less then 4
@@ -218,30 +223,76 @@ nrf52k_qspi_write(const struct hal_flash *dev, uint32_t address,
     return 0;
 }
 
+static void
+erase_block(uint32_t starting_address,
+            nrf_qspi_erase_len_t block_size_type)
+{
+    while ((NRF_QSPI->STATUS & QSPI_STATUS_READY_Msk) == 0)
+        ;
+    NRF_QSPI->EVENTS_READY = 0;
+    NRF_QSPI->ERASE.PTR = starting_address;
+    NRF_QSPI->ERASE.LEN = block_size_type;
+    NRF_QSPI->TASKS_ERASESTART = 1;
+    while (NRF_QSPI->EVENTS_READY == 0)
+        ;
+
+}
+
 static int
 nrf52k_qspi_erase_sector(const struct hal_flash *dev,
-        uint32_t sector_address)
+                         uint32_t sector_address)
 {
     int8_t erases;
 
     erases = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) / 4096;
     while (erases-- > 0) {
-        while ((NRF_QSPI->STATUS & QSPI_STATUS_READY_Msk) == 0)
-            ;
-        NRF_QSPI->EVENTS_READY = 0;
-        NRF_QSPI->ERASE.PTR = sector_address;
-        NRF_QSPI->ERASE.LEN = NRF_QSPI_ERASE_LEN_4KB;
-        NRF_QSPI->TASKS_ERASESTART = 1;
-        while (NRF_QSPI->EVENTS_READY == 0)
-            ;
+        erase_block(sector_address, NRF_QSPI_ERASE_LEN_4KB);
         sector_address += 4096;
     }
+
+    return 0;
+}
+
+static int
+nrf52k_qspi_erase(const struct hal_flash *dev, uint32_t address,
+                  uint32_t size)
+{
+
+    uint32_t end;
+
+    address &= ~0xFFFU;
+    end = address + size;
+
+    if (end == MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) *
+        MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE)) {
+        erase_block(0, NRF_QSPI_ERASE_LEN_ALL);
+        return 0;
+    }
+
+    while (size) {
+        if ((address & 0xFFFFU) == 0 && (size >= 0x10000)) {
+            /* 64 KB erase if possible */
+            erase_block(address, NRF_QSPI_ERASE_LEN_64KB);
+            address += 0x10000;
+            size -= 0x10000;
+            continue;
+        }
+
+        erase_block(address, NRF_QSPI_ERASE_LEN_4KB);
+        address += 0x1000;
+        if (size > 0x1000) {
+            size -= 0x1000;
+        } else {
+            size = 0;
+        }
+    }
+
     return 0;
 }
 
 static int
 nrf52k_qspi_sector_info(const struct hal_flash *dev, int idx,
-        uint32_t *address, uint32_t *sz)
+                        uint32_t *address, uint32_t *sz)
 {
     *address = idx * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
     *sz = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
@@ -253,16 +304,16 @@ static int
 nrf52k_qspi_init(const struct hal_flash *dev)
 {
     const nrf_qspi_prot_conf_t config0 = {
-            .readoc = MYNEWT_VAL(QSPI_READOC),
-            .writeoc = MYNEWT_VAL(QSPI_WRITEOC),
-            .addrmode = MYNEWT_VAL(QSPI_ADDRMODE),
-            .dpmconfig = MYNEWT_VAL(QSPI_DPMCONFIG)
+        .readoc = MYNEWT_VAL(QSPI_READOC),
+        .writeoc = MYNEWT_VAL(QSPI_WRITEOC),
+        .addrmode = MYNEWT_VAL(QSPI_ADDRMODE),
+        .dpmconfig = MYNEWT_VAL(QSPI_DPMCONFIG)
     };
     const nrf_qspi_phy_conf_t config1 = {
-            .sck_delay = MYNEWT_VAL(QSPI_SCK_DELAY),
-            .dpmen = 0,
-            .spi_mode = MYNEWT_VAL(QSPI_SPI_MODE),
-            .sck_freq = MYNEWT_VAL(QSPI_SCK_FREQ),
+        .sck_delay = MYNEWT_VAL(QSPI_SCK_DELAY),
+        .dpmen = 0,
+        .spi_mode = MYNEWT_VAL(QSPI_SPI_MODE),
+        .sck_freq = MYNEWT_VAL(QSPI_SCK_FREQ),
     };
     /*
      * Configure pins
