@@ -92,6 +92,12 @@ syscfg.defs:
             Used internally by the newt tool.
         value: 1
 
+    MCU_DMA_IRQ_PRIO:
+        description: >
+            Specifies the NVIC interrupt priority to assign for the DMA_IRQn 
+            interrupt.
+        value: 15
+
     RAM_RESIDENT:
         description: 'Compile app to be loaded to RAM'
         value: 0
