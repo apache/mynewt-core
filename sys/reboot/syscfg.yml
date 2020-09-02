@@ -45,6 +45,12 @@ syscfg.defs:
             this size is allocated on the stack each time an entry is written.
         value: 256
 
+    REBOOT_LOG_REBOOT_REASON_SIZE:
+        description: >
+            The maximum size, in bytes, of a reboot reason string entry.  A buffer of
+            this size is allocated on the stack each time an entry is written.
+        value: 32
+
     REBOOT_SYSINIT_STAGE:
         description: >
             Sysinit stage for reboot functionality.

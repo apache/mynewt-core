@@ -72,6 +72,8 @@ enum hal_reset_reason {
     HAL_RESET_SYS_OFF_INT = 7,
     /** Restart due to DFU */
     HAL_RESET_DFU = 8,
+    /** Restart reason other */
+    HAL_RESET_OTHER = 256,
 };
 
 /**

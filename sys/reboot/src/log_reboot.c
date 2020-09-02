@@ -207,7 +207,7 @@ log_reboot_write(const struct log_reboot_info *info)
     }
 
     cbor_encode_text_stringz(&map, "rsn");
-    cbor_encode_text_stringz(&map, REBOOT_REASON_STR(info->reason));
+    cbor_encode_text_stringz(&map,log_reboot_reason_str(info->reason));
 
     cbor_encode_text_stringz(&map, "cnt");
     cbor_encode_int(&map, reboot_cnt);
@@ -381,6 +381,48 @@ reboot_conf_export(void (*func)(char *name, char *val),
                                  sizeof str));
     }
     return 0;
+}
+
+const char *
+log_reboot_reason_str(enum hal_reset_reason reason)
+{
+    static char str_reason[MYNEWT_VAL(REBOOT_LOG_REBOOT_REASON_SIZE)];
+
+    if (reason >= HAL_RESET_OTHER) {
+        snprintf(str_reason,MYNEWT_VAL(REBOOT_LOG_REBOOT_REASON_SIZE),"OTHER: 0x%X",reason - HAL_RESET_OTHER);
+        return str_reason;
+    }
+
+    switch (reason) {
+    case HAL_RESET_POR:
+        return "HARD";
+        break;
+    case HAL_RESET_PIN:
+        return "RESET_PIN";
+        break;
+    case HAL_RESET_WATCHDOG:
+        return "WDOG";
+        break;
+    case HAL_RESET_SOFT:
+        return "SOFT";
+        break;
+    case HAL_RESET_BROWNOUT:
+        return "BROWNOUT";
+        break;
+    case HAL_RESET_REQUESTED:
+        return "REQUESTED";
+        break;
+    case HAL_RESET_SYS_OFF_INT:
+        return "SYSTEM_OFF_INT";
+        break;
+    case HAL_RESET_DFU:
+        return "DFU";
+        break;
+    default:
+        snprintf(str_reason,MYNEWT_VAL(REBOOT_LOG_REBOOT_REASON_SIZE),"UNKNOWN %d",reason);
+        return str_reason;
+        break;
+    }
 }
 
 void
