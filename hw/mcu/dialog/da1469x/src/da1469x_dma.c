@@ -46,11 +46,11 @@ struct da1469x_dma_interrupt_cfg {
 };
 
 #if (MCU_DMA_CHAN_MAX) > 8
-static uint8_t g_da1469x_dma_acquired;
-static uint8_t g_da1469x_dma_isr_set;
-#else
 static uint16_t g_da1469x_dma_acquired;
 static uint16_t g_da1469x_dma_isr_set;
+#else
+static uint8_t g_da1469x_dma_acquired;
+static uint8_t g_da1469x_dma_isr_set;
 #endif
 
 static struct da1469x_dma_interrupt_cfg g_da1469x_dma_isr_cfg[MCU_DMA_CHAN_MAX];
