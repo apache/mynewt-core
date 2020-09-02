@@ -34,7 +34,8 @@ extern "C" {
               (reason == HAL_RESET_REQUESTED ? "REQUESTED" :            \
                 (reason == HAL_RESET_SYS_OFF_INT ? "SYSTEM_OFF_INT" :   \
                   (reason == HAL_RESET_DFU ? "DFU" :                    \
-                "UNKNOWN"))))))))
+                    (reason == HAL_RESET_OTHER ? "OTHER" :              \
+    "UNKNOWN")))))))))
 
 struct log_reboot_info {
     enum hal_reset_reason reason;
@@ -45,7 +46,7 @@ struct log_reboot_info {
 
 int log_reboot(const struct log_reboot_info *info);
 void reboot_start(enum hal_reset_reason reason);
-
+const char * log_reboot_reason_str(enum hal_reset_reason reason);
 extern uint16_t reboot_cnt;
 
 #ifdef __cplusplus

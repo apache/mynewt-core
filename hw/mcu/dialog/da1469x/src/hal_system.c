@@ -52,13 +52,24 @@ hal_system_init(void)
     CRG_TOP->RESET_STAT_REG = 0;
 
     if (reg & CRG_TOP_RESET_STAT_REG_PORESET_STAT_Msk) {
-        g_hal_reset_reason = HAL_RESET_POR;
+        if (reg & CRG_TOP_RESET_STAT_REG_SWD_HWRESET_STAT_Msk) {
+            g_hal_reset_reason = HAL_RESET_PIN;
+        }
+        if (reg & CRG_TOP_RESET_STAT_REG_HWRESET_STAT_Msk) {
+            g_hal_reset_reason = HAL_RESET_POR;
+        } else if (reg & CRG_TOP_RESET_STAT_REG_SWRESET_STAT_Msk) {
+            g_hal_reset_reason = HAL_RESET_SYS_OFF_INT;
+        }
     } else if (reg & CRG_TOP_RESET_STAT_REG_WDOGRESET_STAT_Msk) {
         g_hal_reset_reason = HAL_RESET_WATCHDOG;
-    } else if (reg & CRG_TOP_RESET_STAT_REG_SWRESET_STAT_Msk) {
-        g_hal_reset_reason = HAL_RESET_SOFT;
+    } else if (reg & CRG_TOP_RESET_STAT_REG_CMAC_WDOGRESET_STAT_Msk) {
+        g_hal_reset_reason = HAL_RESET_OTHER + 1;
+    } else if (reg & CRG_TOP_RESET_STAT_REG_SWD_HWRESET_STAT_Msk) {
+        g_hal_reset_reason = HAL_RESET_OTHER;
     } else if (reg & CRG_TOP_RESET_STAT_REG_HWRESET_STAT_Msk) {
         g_hal_reset_reason = HAL_RESET_PIN;
+    } else if (reg & CRG_TOP_RESET_STAT_REG_SWRESET_STAT_Msk) {
+        g_hal_reset_reason = HAL_RESET_SOFT;
     } else {
         g_hal_reset_reason = 0;
     }
