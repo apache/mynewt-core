@@ -183,7 +183,7 @@ script:
   # NOTE: "native" is here to avoid having to install gcc-multilib
   - export IGNORED_BSPS="ci40 embarc_emsk hifive1 native-armv7 native-mips
                          pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub
-                         native"
+                         native dialog_cmac"
   - |
     if [ "${TEST}" == "STYLE" ]; then
       python3 $HOME/ci/check_style.py
