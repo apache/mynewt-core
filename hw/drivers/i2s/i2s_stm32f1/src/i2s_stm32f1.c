@@ -31,13 +31,21 @@ static struct stm32_i2s stm32_i2s3;
 void
 i2s2_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_I2S_IRQHandler(&stm32_i2s2.hi2s);
+
+    os_trace_isr_exit();
 }
 
 void
 i2s3_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_I2S_IRQHandler(&stm32_i2s3.hi2s);
+
+    os_trace_isr_exit();
 }
 
 static void
@@ -104,13 +112,21 @@ HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 static void
 i2s2_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(&stm32_i2s2.hdma_spi);
+
+    os_trace_isr_exit();
 }
 
 static void
 i2s3_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(&stm32_i2s3.hdma_spi);
+
+    os_trace_isr_exit();
 }
 
 static void

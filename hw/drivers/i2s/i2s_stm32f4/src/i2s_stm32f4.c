@@ -56,31 +56,51 @@ static struct stm32_i2s stm32_i2s5;
 void
 i2s1_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_I2S_IRQHandler(&stm32_i2s1.hi2s);
+
+    os_trace_isr_exit();
 }
 
 void
 i2s2_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_I2S_IRQHandler(&stm32_i2s2.hi2s);
+
+    os_trace_isr_exit();
 }
 
 void
 i2s3_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_I2S_IRQHandler(&stm32_i2s3.hi2s);
+
+    os_trace_isr_exit();
 }
 
 void
 i2s4_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_I2S_IRQHandler(&stm32_i2s4.hi2s);
+
+    os_trace_isr_exit();
 }
 
 void
 i2s5_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_I2S_IRQHandler(&stm32_i2s5.hi2s);
+
+    os_trace_isr_exit();
 }
 
 static void
@@ -155,47 +175,75 @@ HAL_I2SEx_TxRxCpltCallback(I2S_HandleTypeDef *hi2s)
 static void
 i2s1_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(stm32_i2s1.hdma_spi);
+
+    os_trace_isr_exit();
 }
 
 static void
 i2s2_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(stm32_i2s2.hdma_spi);
+
+    os_trace_isr_exit();
 }
 
 #if defined(I2S2ext) && I2S_FULLDUPLEX_SUPPORT
 static void
 i2s2ext_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(stm32_i2s2.hdma_i2sext);
+
+    os_trace_isr_exit();
 }
 #endif
 
 static void
 i2s3_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(stm32_i2s3.hdma_spi);
+
+    os_trace_isr_exit();
 }
 
 #if defined(I2S3ext) && I2S_FULLDUPLEX_SUPPORT
 static void
 i2s3ext_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(stm32_i2s3.hdma_i2sext);
+
+    os_trace_isr_exit();
 }
 #endif
 
 static void
 i2s4_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(stm32_i2s4.hdma_spi);
+
+    os_trace_isr_exit();
 }
 
 static void
 i2s5_dma_stream_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     HAL_DMA_IRQHandler(stm32_i2s5.hdma_spi);
+
+    os_trace_isr_exit();
 }
 
 static void
