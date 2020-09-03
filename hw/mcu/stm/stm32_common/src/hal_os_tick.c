@@ -26,6 +26,15 @@
  */
 
 /*
+ * ST's MCUs seems to have problem with accessing AHB interface from SWD during SLEEP.
+ * This makes it almost impossible to use with SEGGER SystemView, therefore when OS_SYSVIEW
+ * is defined __WFI will become a loop waiting for pending interrupts.
+ */
+#if MYNEWT_VAL(OS_SYSVIEW)
+#undef __WFI
+#define __WFI() do { } while ((SCB->ICSR & (SCB_ICSR_ISRPENDING_Msk | SCB_ICSR_PENDSTSET_Msk)) == 0)
+#else
+/*
  * Errata for STM32F405, STM32F407, STM32F415, STM32F417.
  * When WFI instruction is placed at address like 0x080xxxx4
  * (also seen for addresses ending with xxx2). System may
@@ -42,6 +51,7 @@ __WFI(void)
      __ASM volatile("wfi\n"
                     "bx lr");
 }
+#endif
 #endif
 
 #if MYNEWT_VAL(STM32_CLOCK_LSE) == 0 || (((32768 / OS_TICKS_PER_SEC) * OS_TICKS_PER_SEC) != 32768) || !defined(STM32F1)

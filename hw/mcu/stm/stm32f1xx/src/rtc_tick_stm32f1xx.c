@@ -27,6 +27,16 @@
 /* RTC tick only if LSE is enabled and OS_TICKS_PER_SEC can work with 32768 oscillator */
 #if MYNEWT_VAL(STM32_CLOCK_LSE) && (((32768 / OS_TICKS_PER_SEC) * OS_TICKS_PER_SEC) == 32768)
 
+/*
+ * ST's MCUs seems to have problem with accessing AHB interface from SWD during SLEEP.
+ * This makes it almost impossible to use with SEGGER SystemView, therefore when OS_SYSVIEW
+ * is defined __WFI will become a loop waiting for pending interrupts.
+ */
+#if MYNEWT_VAL(OS_SYSVIEW)
+#undef __WFI
+#define __WFI() do { } while ((SCB->ICSR & (SCB_ICSR_ISRPENDING_Msk | SCB_ICSR_PENDSTSET_Msk)) == 0)
+#endif
+
 struct hal_os_tick {
     uint32_t rtc_cnt;
 };
