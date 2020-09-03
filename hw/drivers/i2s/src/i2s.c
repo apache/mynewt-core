@@ -103,6 +103,7 @@ static void
 i2s_buffers_from_pool(struct i2s *i2s, struct i2s_buffer_pool *pool)
 {
     int i;
+    int j;
     int sr;
     struct i2s_sample_buffer *buffers;
     uintptr_t sample_data;
@@ -125,10 +126,16 @@ i2s_buffers_from_pool(struct i2s *i2s, struct i2s_buffer_pool *pool)
     sample_data = (uintptr_t)&buffers[pool->buffer_count];
 
     for (i = 0; i < pool->buffer_count; ++i) {
+        for (j = 0; j < I2S_BUFFER_GUARD; ++j, ++sample_data) {
+            *(uint8_t *)sample_data = MYNEWT_VAL(I2S_BUFFER_GUARD_PATTERN);
+        }
         buffers[i].capacity = samples_per_buffer;
         buffers[i].sample_data = (void *)sample_data;
         buffers[i].sample_count = 0;
         sample_data += pool->buffer_size;
+        for (j = 0; j < I2S_BUFFER_GUARD; ++j, ++sample_data) {
+            *(uint8_t *)sample_data = MYNEWT_VAL(I2S_BUFFER_GUARD_PATTERN);
+        }
 
         OS_ENTER_CRITICAL(sr);
         if (i2s->direction == I2S_IN) {
@@ -316,7 +323,24 @@ i2s_buffer_put(struct i2s *i2s, struct i2s_sample_buffer *buffer)
 {
     int sr;
     int rc = I2S_OK;
+    int i;
+    const uint8_t *pre;
+    const uint8_t *post;
 
+    if (I2S_BUFFER_GUARD) {
+        pre = (const uint8_t *)(buffer->sample_data);
+        post = (const uint8_t *)(buffer->sample_data) + buffer->capacity * i2s->sample_size_in_bytes;
+        for (i = 0; i < I2S_BUFFER_GUARD; ++i) {
+            /*
+             * Assert here means that a memory was corrupted in some way,
+             * no indication that the buffer was overwritten due to buffer size mismatch,
+             * but rather some other memory manipulation went amiss.
+             */
+            assert(*--pre == MYNEWT_VAL(I2S_BUFFER_GUARD_PATTERN));
+            /* Assert here usually means that more data was written to the buffer then it's size. */
+            assert(*post++ == MYNEWT_VAL(I2S_BUFFER_GUARD_PATTERN));
+        }
+    }
     /*
      * Output sample buffer without samples?
      * Don't bother driver, just put in client queue.

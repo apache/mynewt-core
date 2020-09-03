@@ -57,6 +57,8 @@ struct i2s_buffer_pool {
     struct i2s_sample_buffer *buffers;
 };
 
+#define I2S_BUFFER_GUARD MYNEWT_VAL(I2S_BUFFER_GUARD)
+
 /**
  * I2S buffer pool definition.
  * @param name   pool name to be used,
@@ -64,8 +66,8 @@ struct i2s_buffer_pool {
  * @param size   single buffer size in bytes
  */
 #define I2S_BUFFER_POOL_DEF(name, count, size) \
-    static uint8_t _Alignas(struct i2s_buffer_pool) name ## _buffers[(sizeof(struct i2s_sample_buffer) + size) * \
-                                                                     count]; \
+    static uint8_t _Alignas(struct i2s_buffer_pool) name ## _buffers[(sizeof(struct i2s_sample_buffer) + (size) + \
+                                                                      2 * (I2S_BUFFER_GUARD)) * (count)]; \
     struct i2s_buffer_pool name = { \
         .buffer_size = size, \
         .buffer_count = count, \
