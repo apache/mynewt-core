@@ -285,6 +285,7 @@ void nrfx_spim_uninit(nrfx_spim_t const * p_instance);
  * - @ref NRFX_SPIM_FLAG_HOLD_XFER - Driver is not starting the transfer. Use this
  *   flag if the transfer is triggered externally by PPI. Use
  *   @ref nrfx_spim_start_task_get to get the address of the start task.
+ *   Chip select must be configured to @ref NRFX_SPIM_PIN_NOT_USED and managed outside the driver.
  * - @ref NRFX_SPIM_FLAG_NO_XFER_EVT_HANDLER - No user event handler after transfer
  *   completion. This also means no interrupt at the end of the transfer.
  *   If @ref NRFX_SPIM_FLAG_NO_XFER_EVT_HANDLER is used, the driver does not set the instance into

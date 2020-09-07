@@ -76,7 +76,6 @@ extern "C" {
                                  (bit_width == NRF_TIMER_BIT_WIDTH_32) :  \
     false))))
 
-#if (TIMER_COUNT > 3) || defined(__NRFX_DOXYGEN__)
 /**
  * @brief Macro for checking correctness of bit width configuration for the specified timer.
  *
@@ -86,19 +85,26 @@ extern "C" {
  * @retval true  Timer instance supports the specified bit width resolution value.
  * @retval false Timer instance does not support the specified bit width resolution value.
  */
-#define NRF_TIMER_IS_BIT_WIDTH_VALID(p_reg, bit_width) (                \
-       ((p_reg == NRF_TIMER0) && (TIMER_BIT_WIDTH_MAX(0, bit_width)))   \
-    || ((p_reg == NRF_TIMER1) && (TIMER_BIT_WIDTH_MAX(1, bit_width)))   \
-    || ((p_reg == NRF_TIMER2) && (TIMER_BIT_WIDTH_MAX(2, bit_width)))   \
-    || ((p_reg == NRF_TIMER3) && (TIMER_BIT_WIDTH_MAX(3, bit_width)))   \
-    || ((p_reg == NRF_TIMER4) && (TIMER_BIT_WIDTH_MAX(4, bit_width))) )
-
+#if (TIMER_COUNT == 3) || defined(__NRFX_DOXYGEN__)
+    #define NRF_TIMER_IS_BIT_WIDTH_VALID(p_reg, bit_width) (              \
+           ((p_reg == NRF_TIMER0) && TIMER_BIT_WIDTH_MAX(0, bit_width))   \
+        || ((p_reg == NRF_TIMER1) && TIMER_BIT_WIDTH_MAX(1, bit_width))   \
+        || ((p_reg == NRF_TIMER2) && TIMER_BIT_WIDTH_MAX(2, bit_width)))
+#elif (TIMER_COUNT == 4)
+    #define NRF_TIMER_IS_BIT_WIDTH_VALID(p_reg, bit_width) (              \
+           ((p_reg == NRF_TIMER0) && TIMER_BIT_WIDTH_MAX(0, bit_width))   \
+        || ((p_reg == NRF_TIMER1) && TIMER_BIT_WIDTH_MAX(1, bit_width))   \
+        || ((p_reg == NRF_TIMER2) && TIMER_BIT_WIDTH_MAX(2, bit_width))   \
+        || ((p_reg == NRF_TIMER3) && TIMER_BIT_WIDTH_MAX(3, bit_width)))
+#elif (TIMER_COUNT == 5)
+    #define NRF_TIMER_IS_BIT_WIDTH_VALID(p_reg, bit_width) (              \
+           ((p_reg == NRF_TIMER0) && TIMER_BIT_WIDTH_MAX(0, bit_width))   \
+        || ((p_reg == NRF_TIMER1) && TIMER_BIT_WIDTH_MAX(1, bit_width))   \
+        || ((p_reg == NRF_TIMER2) && TIMER_BIT_WIDTH_MAX(2, bit_width))   \
+        || ((p_reg == NRF_TIMER3) && TIMER_BIT_WIDTH_MAX(3, bit_width))   \
+        || ((p_reg == NRF_TIMER4) && TIMER_BIT_WIDTH_MAX(4, bit_width)))
 #else
-#define NRF_TIMER_IS_BIT_WIDTH_VALID(p_reg, bit_width) (             \
-       ((p_reg == NRF_TIMER0) && TIMER_BIT_WIDTH_MAX(0, bit_width))  \
-    || ((p_reg == NRF_TIMER1) && TIMER_BIT_WIDTH_MAX(1, bit_width))  \
-    || ((p_reg == NRF_TIMER2) && TIMER_BIT_WIDTH_MAX(2, bit_width)) )
-
+    #error "Not supported timer count"
 #endif
 
 /**
@@ -316,6 +322,15 @@ NRF_STATIC_INLINE void nrf_timer_shorts_enable(NRF_TIMER_Type * p_reg,
  */
 NRF_STATIC_INLINE void nrf_timer_shorts_disable(NRF_TIMER_Type * p_reg,
                                                 uint32_t         mask);
+
+/**
+ * @brief Function for setting the specified shortcuts.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Shortcuts to be set.
+ */
+NRF_STATIC_INLINE void nrf_timer_shorts_set(NRF_TIMER_Type * p_reg,
+                                            uint32_t         mask);
 
 /**
  * @brief Function for enabling the specified interrupts.
@@ -557,10 +572,7 @@ NRF_STATIC_INLINE void nrf_timer_event_clear(NRF_TIMER_Type *  p_reg,
                                              nrf_timer_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)event);
 }
 
 NRF_STATIC_INLINE bool nrf_timer_event_check(NRF_TIMER_Type const * p_reg,
@@ -585,6 +597,12 @@ NRF_STATIC_INLINE void nrf_timer_shorts_disable(NRF_TIMER_Type * p_reg,
                                                 uint32_t         mask)
 {
     p_reg->SHORTS &= ~(mask);
+}
+
+NRF_STATIC_INLINE void nrf_timer_shorts_set(NRF_TIMER_Type * p_reg,
+                                            uint32_t         mask)
+{
+    p_reg->SHORTS = mask;
 }
 
 NRF_STATIC_INLINE void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,

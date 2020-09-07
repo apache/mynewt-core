@@ -296,6 +296,15 @@ void nrfx_uarte_tx_abort(nrfx_uarte_t const * p_instance);
  *       to be placed in the Data RAM region. If this condition is not met,
  *       this function fails with the error code NRFX_ERROR_INVALID_ADDR.
  *
+ * @warning When the double-buffering feature is used and the UARTE interrupt
+ *          is processed with a delay (for example, due to a higher priority interrupt)
+ *          long enough for both buffers to get filled completely,
+ *          the event handler will be invoked only once, to notify that
+ *          the first buffer has been filled. This is because from hardware perspective it
+ *          is impossible to deduce in such case if the second buffer was also filled completely or not.
+ *          To prevent this from happening, keep the UARTE interrupt latency low
+ *          or use large enough reception buffers.
+ *
  * @param[in] p_instance Pointer to the driver instance structure.
  * @param[in] p_data     Pointer to data.
  * @param[in] length     Number of bytes to receive. Maximum possible length is
@@ -333,6 +342,16 @@ bool nrfx_uarte_rx_ready(nrfx_uarte_t const * p_instance);
  * @note @ref NRFX_UARTE_EVT_RX_DONE event will be generated in non-blocking mode.
  *       It will contain number of bytes received until the abort was called. The event
  *       handler will be called from the UARTE interrupt context.
+ *
+ * @warning When the double-buffering feature is used and the UARTE interrupt
+ *          is processed with a delay (for example, due to a higher priority
+ *          interrupt) long enough for the first buffer to be filled completely,
+ *          the event handler will be supplied with the pointer to the first
+ *          buffer and the number of bytes received in the second buffer.
+ *          This is because from hardware perspective it is impossible to deduce
+ *          the reception of which buffer has been aborted.
+ *          To prevent this from happening, keep the UARTE interrupt latency low
+ *          or use large enough reception buffers.
  *
  * @param[in] p_instance Pointer to the driver instance structure.
  */

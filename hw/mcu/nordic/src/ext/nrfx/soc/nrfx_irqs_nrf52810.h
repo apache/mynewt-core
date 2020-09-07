@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef NRFX_IRQS_NRF52832_H__
-#define NRFX_IRQS_NRF52832_H__
+#ifndef NRFX_IRQS_NRF52810_H__
+#define NRFX_IRQS_NRF52810_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -133,4 +133,4 @@ extern "C" {
 }
 #endif
 
-#endif // NRFX_IRQS_NRF52832_H__
+#endif // NRFX_IRQS_NRF52810_H__

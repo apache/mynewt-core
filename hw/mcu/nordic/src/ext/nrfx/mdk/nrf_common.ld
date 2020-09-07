@@ -87,6 +87,7 @@ SECTIONS
     } > FLASH
     __exidx_end = .;
 
+    . = ALIGN(4);
     __etext = .;
 
     .data : AT (__etext)

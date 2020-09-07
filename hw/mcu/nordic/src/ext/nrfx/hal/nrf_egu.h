@@ -41,7 +41,7 @@ extern "C" {
 /**
 * @defgroup nrf_egu_hal EGU HAL
 * @{
-* @ingroup nrf_swi_egu
+* @ingroup nrf_egu
 * @brief   Hardware access layer for managing the Event Generator Unit (EGU) peripheral.
 */
 
@@ -324,10 +324,7 @@ NRF_STATIC_INLINE void nrf_egu_event_clear(NRF_EGU_Type * p_reg, nrf_egu_event_t
 {
     NRFX_ASSERT(p_reg);
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)egu_event)) = 0x0UL;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)egu_event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)egu_event);
 }
 
 NRF_STATIC_INLINE uint32_t nrf_egu_event_address_get(NRF_EGU_Type const * p_reg,

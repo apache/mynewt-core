@@ -13,8 +13,10 @@ SoCs, as well as startup and initialization files for them.
 ## Supported SoCs
 
 * nRF51 Series
+* nRF52805
 * nRF52810
 * nRF52811
+* nRF52820
 * nRF52832
 * nRF52833
 * nRF52840
@@ -27,7 +29,7 @@ SoCs, as well as startup and initialization files for them.
  .
  ├── doc             # Project documentation files
  ├── drivers         # nrfx driver files
- │   └── include     # nrfx driver headers
+ │   ├── include     # nrfx driver headers
  │   └── src         # nrfx driver sources
  ├── hal             # Hardware Access Layer files
  ├── helpers         # nrfx driver helper files

@@ -43,11 +43,17 @@
 extern bool nrfx_power_irq_enabled;
 #endif
 
+#if defined(CLOCK_LFCLKSRC_SRC_RC) || defined(__NRFX_DOXYGEN__)
+    #define LF_SRC_RC CLOCK_LFCLKSRC_SRC_RC
+#else
+    #define LF_SRC_RC CLOCK_LFCLKSRC_SRC_LFRC
+#endif
+
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)
     #if (NRF_CLOCK_HAS_CALIBRATION == 0)
         #error "Calibration is not available in the SoC that is used."
     #endif
-    #if (NRFX_CLOCK_CONFIG_LF_SRC != CLOCK_LFCLKSRC_SRC_RC)
+    #if (NRFX_CLOCK_CONFIG_LF_SRC != LF_SRC_RC)
         #error "Calibration can be performed only for the RC Oscillator."
     #endif
 #endif
@@ -77,6 +83,30 @@ extern bool nrfx_power_irq_enabled;
      defined(NRF52840_XXAA))
     // Enable workaround for nRF52 anomaly 201 (EVENTS_HFCLKSTARTED might be generated twice).
     #define USE_WORKAROUND_FOR_ANOMALY_201 1
+#endif
+
+#if defined(CLOCK_LFCLKSRC_SRC_Xtal)
+    #define LF_SRC_LFXO CLOCK_LFCLKSRC_SRC_Xtal
+#else
+    #define LF_SRC_LFXO CLOCK_LFCLKSRC_SRC_LFXO
+#endif
+
+#if defined(NRF_CLOCK_USE_EXTERNAL_LFCLK_SOURCES)
+    #define LF_SRC_XTAL_LOW  (CLOCK_LFCLKSRC_SRC_Xtal | \
+                             (CLOCK_LFCLKSRC_EXTERNAL_Enabled << CLOCK_LFCLKSRC_EXTERNAL_Pos))
+    #define LF_SRC_XTAL_FULL (CLOCK_LFCLKSRC_SRC_Xtal | \
+                             (CLOCK_LFCLKSRC_BYPASS_Enabled   << CLOCK_LFCLKSRC_BYPASS_Pos) | \
+                             (CLOCK_LFCLKSRC_EXTERNAL_Enabled << CLOCK_LFCLKSRC_EXTERNAL_Pos))
+#else
+    #define LF_SRC_XTAL_LOW  LF_SRC_LFXO
+    #define LF_SRC_XTAL_FULL LF_SRC_LFXO
+#endif
+
+#if NRFX_CHECK(NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED) && \
+    NRFX_CLOCK_CONFIG_LF_SRC != LF_SRC_LFXO && \
+    NRFX_CLOCK_CONFIG_LF_SRC != LF_SRC_XTAL_LOW && \
+    NRFX_CLOCK_CONFIG_LF_SRC != LF_SRC_XTAL_FULL
+    #error "Two-stage LFXO start procedure enabled but LFCLK source is not set to LFXO!"
 #endif
 
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)
@@ -173,7 +203,9 @@ void nrfx_clock_enable(void)
 {
     NRFX_ASSERT(m_clock_cb.module_initialized);
     nrfx_power_clock_irq_init();
+#if !NRFX_CHECK(NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED)
     nrf_clock_lf_src_set(NRF_CLOCK, (nrf_clock_lfclk_t)NRFX_CLOCK_CONFIG_LF_SRC);
+#endif
 #if NRF_CLOCK_HAS_HFCLKSRC
     nrf_clock_hf_src_set(NRF_CLOCK, NRF_CLOCK_HFCLK_HIGH_ACCURACY);
 #endif
@@ -233,6 +265,25 @@ void nrfx_clock_start(nrf_clock_domain_t domain)
     switch (domain)
     {
         case NRF_CLOCK_DOMAIN_LFCLK:
+#if NRFX_CHECK(NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED)
+            {
+                nrf_clock_lfclk_t lfclksrc;
+                if (nrf_clock_is_running(NRF_CLOCK, NRF_CLOCK_DOMAIN_LFCLK, &lfclksrc) &&
+                    lfclksrc == NRFX_CLOCK_CONFIG_LF_SRC)
+                {
+                    // If the two-stage LFXO procedure has finished already
+                    // use the configured LF clock source.
+                    nrf_clock_lf_src_set(NRF_CLOCK, (nrf_clock_lfclk_t)NRFX_CLOCK_CONFIG_LF_SRC);
+                }
+                else
+                {
+                    // If the two-stage LFXO procedure hasn't started yet
+                    // or the RC stage is in progress,
+                    // use the RC oscillator as LF clock source.
+                    nrf_clock_lf_src_set(NRF_CLOCK, NRF_CLOCK_LFCLK_RC);
+                }
+            }
+#endif // NRFX_CHECK(NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED)
             nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_LFCLKSTARTED);
             nrf_clock_int_enable(NRF_CLOCK, NRF_CLOCK_INT_LF_STARTED_MASK);
 #if NRFX_CHECK(USE_WORKAROUND_FOR_ANOMALY_132)
@@ -271,18 +322,26 @@ void nrfx_clock_stop(nrf_clock_domain_t domain)
     switch (domain)
     {
         case NRF_CLOCK_DOMAIN_LFCLK:
+            nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_LF_STARTED_MASK);
+            nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_LFCLKSTARTED);
             nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_LFCLKSTOP);
             break;
         case NRF_CLOCK_DOMAIN_HFCLK:
+            nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_HF_STARTED_MASK);
+            nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLKSTARTED);
             nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_HFCLKSTOP);
             break;
 #if NRF_CLOCK_HAS_HFCLK192M
         case NRF_CLOCK_DOMAIN_HFCLK192M:
+            nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_HF192M_STARTED_MASK);
+            nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLK192MSTARTED);
             nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_HFCLK192MSTOP);
             break;
 #endif
 #if NRF_CLOCK_HAS_HFCLKAUDIO
         case NRF_CLOCK_DOMAIN_HFCLKAUDIO:
+            nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_HFAUDIO_STARTED_MASK);
+            nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLKAUDIOSTARTED);
             nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_HFCLKAUDIOSTOP);
             break;
 #endif
@@ -290,17 +349,24 @@ void nrfx_clock_stop(nrf_clock_domain_t domain)
             NRFX_ASSERT(0);
             return;
     }
+
+    bool stopped;
     if (domain == NRF_CLOCK_DOMAIN_HFCLK)
     {
         nrf_clock_hfclk_t clk_src = NRF_CLOCK_HFCLK_HIGH_ACCURACY;
-        while (nrfx_clock_is_running(domain, &clk_src) && (clk_src == NRF_CLOCK_HFCLK_HIGH_ACCURACY))
-        {}
+        NRFX_WAIT_FOR((!nrfx_clock_is_running(domain, &clk_src) ||
+                       (clk_src != NRF_CLOCK_HFCLK_HIGH_ACCURACY)), 10000, 1, stopped);
     }
     else
     {
-        while (nrfx_clock_is_running(domain, NULL))
-        {}
+        NRFX_WAIT_FOR(!nrfx_clock_is_running(domain, NULL), 10000, 1, stopped);
     }
+
+    if (!stopped)
+    {
+        NRFX_LOG_ERROR("Failed to stop clock domain: %d.", domain);
+    }
+
 #if NRFX_CHECK(USE_WORKAROUND_FOR_ANOMALY_201)
     if (domain == NRF_CLOCK_DOMAIN_HFCLK)
     {
@@ -465,9 +531,23 @@ void nrfx_clock_irq_handler(void)
     {
         nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_LFCLKSTARTED);
         NRFX_LOG_DEBUG("Event: NRF_CLOCK_EVENT_LFCLKSTARTED");
-        nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_LF_STARTED_MASK);
 
-        m_clock_cb.event_handler(NRFX_CLOCK_EVT_LFCLK_STARTED);
+#if NRFX_CHECK(NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED)
+        nrf_clock_lfclk_t lfclksrc;
+        (void)nrf_clock_is_running(NRF_CLOCK, NRF_CLOCK_DOMAIN_LFCLK, &lfclksrc);
+        if (lfclksrc == NRF_CLOCK_LFCLK_RC)
+        {
+            // After the LFRC oscillator start switch to external source.
+            nrf_clock_lf_src_set(NRF_CLOCK, (nrf_clock_lfclk_t)NRFX_CLOCK_CONFIG_LF_SRC);
+            nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_LFCLKSTART);
+        }
+        else
+#endif
+        {
+            // After the LF clock external source start invoke user callback.
+            nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_LF_STARTED_MASK);
+            m_clock_cb.event_handler(NRFX_CLOCK_EVT_LFCLK_STARTED);
+        }
     }
 
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)

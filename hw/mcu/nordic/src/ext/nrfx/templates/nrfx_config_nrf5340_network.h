@@ -32,6 +32,10 @@
 #ifndef NRFX_CONFIG_NRF5340_NETWORK_H__
 #define NRFX_CONFIG_NRF5340_NETWORK_H__
 
+#ifndef NRFX_CONFIG_H__
+#error "This file should not be included directly. Include nrfx_config.h instead."
+#endif
+
 /*
  * The MDK provides macros for accessing the peripheral register structures
  * by using their secure and non-secure address mappings (with the names
@@ -39,10 +43,12 @@
  * use the macros without any suffixes, you must translate the names.
  * The following section provides configuration for the name translation.
  */
-#define NRF_ACL        NRF_ACL_NS
 #define NRF_AAR        NRF_AAR_NS
+#define NRF_ACL        NRF_ACL_NS
 #define NRF_CCM        NRF_CCM_NS
 #define NRF_CLOCK      NRF_CLOCK_NS
+#define NRF_CTI        NRF_CTI_NS
+#define NRF_CTRLAP     NRF_CTRLAP_NS
 #define NRF_DCNF       NRF_DCNF_NS
 #define NRF_DPPIC      NRF_DPPIC_NS
 #define NRF_ECB        NRF_ECB_NS
@@ -77,7 +83,6 @@
 #define NRF_VREQCTRL   NRF_VREQCTRL_NS
 #define NRF_WDT        NRF_WDT_NS
 
-
 // <<< Use Configuration Wizard in Context Menu >>>\n
 
 // <h> nRF_Drivers
@@ -102,6 +107,17 @@
 
 #ifndef NRFX_CLOCK_CONFIG_LF_CAL_ENABLED
 #define NRFX_CLOCK_CONFIG_LF_CAL_ENABLED 0
+#endif
+
+// <q> NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED - Enables two-stage LFXO start procedure
+
+// <i> If set to a non-zero value, LFRC will be started before LFXO and corresponding
+// <i> event will be generated. It means that CPU will be woken up when LFRC
+// <i> oscillator starts, but user callback will be invoked only after LFXO
+// <i> finally starts.
+
+#ifndef NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED
+#define NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED 0
 #endif
 
 // <o> NRFX_CLOCK_CONFIG_HFCLK192M_SRC  - HFCLK192M source.

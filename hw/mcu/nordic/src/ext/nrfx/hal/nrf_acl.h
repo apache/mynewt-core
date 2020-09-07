@@ -33,12 +33,14 @@
 #define NRF_ACL_H__
 
 #include <nrfx.h>
+#include <hal/nrf_ficr.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define NRF_ACL_REGION_SIZE_MAX (512 * 1024UL)
+#define NRF_ACL_REGION_SIZE_MAX \
+    (nrf_ficr_codepagesize_get(NRF_FICR) * nrf_ficr_codesize_get(NRF_FICR))
 
 /**
  * @defgroup nrf_acl_hal ACL HAL
@@ -113,9 +115,10 @@ NRF_STATIC_INLINE void nrf_acl_region_set(NRF_ACL_Type * p_reg,
                                           nrf_acl_perm_t perm)
 {
     NRFX_ASSERT(region_id < ACL_REGIONS_COUNT);
-    NRFX_ASSERT(address % NRF_FICR->CODEPAGESIZE == 0);
+    NRFX_ASSERT(address % nrf_ficr_codepagesize_get(NRF_FICR) == 0);
     NRFX_ASSERT(size <= NRF_ACL_REGION_SIZE_MAX);
     NRFX_ASSERT(size != 0);
+    NRFX_ASSERT(size % nrf_ficr_codepagesize_get(NRF_FICR) == 0);
 
     p_reg->ACL[region_id].ADDR = address;
     p_reg->ACL[region_id].SIZE = size;

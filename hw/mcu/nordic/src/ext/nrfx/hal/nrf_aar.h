@@ -269,10 +269,7 @@ NRF_STATIC_INLINE void nrf_aar_event_clear(NRF_AAR_Type *  p_reg,
                                            nrf_aar_event_t aar_event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)aar_event)) = 0;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)aar_event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)aar_event);
 }
 
 NRF_STATIC_INLINE uint32_t nrf_aar_event_address_get(NRF_AAR_Type const * p_reg,

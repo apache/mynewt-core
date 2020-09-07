@@ -32,6 +32,10 @@
 #ifndef NRFX_CONFIG_NRF9160_H__
 #define NRFX_CONFIG_NRF9160_H__
 
+#ifndef NRFX_CONFIG_H__
+#error "This file should not be included directly. Include nrfx_config.h instead."
+#endif
+
 /*
  * The MDK provides macros for accessing the peripheral register structures
  * by using their secure and non-secure address mappings (with the names
@@ -95,16 +99,27 @@
  * only one type of access available. For these peripherals, you cannot choose
  * between secure and non-secure mapping.
  */
-#define NRF_CRYPTOCELL NRF_CRYPTOCELL_S
-#define NRF_FICR       NRF_FICR_S
-#define NRF_GPIOTE0    NRF_GPIOTE0_S
-#define NRF_GPIOTE1    NRF_GPIOTE1_NS
-#define NRF_SPU        NRF_SPU_S
-#define NRF_UICR       NRF_UICR_S
+#if defined(NRF_TRUSTZONE_NONSECURE)
+#define NRF_GPIOTE1      NRF_GPIOTE1_NS
+#else
+#define NRF_CC_HOST_RGF  NRF_CC_HOST_RGF_S
+#define NRF_CRYPTOCELL   NRF_CRYPTOCELL_S
+#define NRF_CTRL_AP_PERI NRF_CTRL_AP_PERI_S
+#define NRF_FICR         NRF_FICR_S
+#define NRF_GPIOTE0      NRF_GPIOTE0_S
+#define NRF_SPU          NRF_SPU_S
+#define NRF_TAD          NRF_TAD_S
+#define NRF_UICR         NRF_UICR_S
+#endif
 
-/* Fixups for GPIOTE driver. */
-#define NRF_GPIOTE        NRF_GPIOTE0_S
+/* Fixups for the GPIOTE driver. */
+#if defined(NRF_TRUSTZONE_NONSECURE)
+#define NRF_GPIOTE        NRF_GPIOTE1
+#define GPIOTE_IRQHandler GPIOTE1_IRQHandler
+#else
+#define NRF_GPIOTE        NRF_GPIOTE0
 #define GPIOTE_IRQHandler GPIOTE0_IRQHandler
+#endif
 
 // <<< Use Configuration Wizard in Context Menu >>>\n
 
@@ -122,6 +137,17 @@
 
 #ifndef NRFX_CLOCK_CONFIG_LF_SRC
 #define NRFX_CLOCK_CONFIG_LF_SRC 2
+#endif
+
+// <q> NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED - Enables two-stage LFXO start procedure
+
+// <i> If set to a non-zero value, LFRC will be started before LFXO and corresponding
+// <i> event will be generated. It means that CPU will be woken up when LFRC
+// <i> oscillator starts, but user callback will be invoked only after LFXO
+// <i> finally starts.
+
+#ifndef NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED
+#define NRFX_CLOCK_CONFIG_LFXO_TWO_STAGE_ENABLED 0
 #endif
 
 // <o> NRFX_CLOCK_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority.

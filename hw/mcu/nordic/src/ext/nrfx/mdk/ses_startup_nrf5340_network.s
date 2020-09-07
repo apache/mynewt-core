@@ -87,11 +87,6 @@ UsageFault_Handler:
   b     .
 
   .thumb_func
-  .weak   SecureFault_Handler
-SecureFault_Handler:
-  b     .
-
-  .thumb_func
   .weak   SVC_Handler
 SVC_Handler:
   b     .
@@ -210,7 +205,7 @@ _vectors:
   .word MemoryManagement_Handler
   .word BusFault_Handler
   .word UsageFault_Handler
-  .word SecureFault_Handler
+  .word 0                           /*Reserved */
   .word 0                           /*Reserved */
   .word 0                           /*Reserved */
   .word 0                           /*Reserved */

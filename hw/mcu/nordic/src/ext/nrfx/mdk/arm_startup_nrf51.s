@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2018 ARM Limited. All rights reserved.
+; Copyright (c) 2009-2020 ARM Limited. All rights reserved.
 ; 
 ;     SPDX-License-Identifier: Apache-2.0
 ; 

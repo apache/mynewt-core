@@ -441,10 +441,7 @@ NRF_STATIC_INLINE bool nrf_gpiote_event_check(NRF_GPIOTE_Type const * p_reg,
 NRF_STATIC_INLINE void nrf_gpiote_event_clear(NRF_GPIOTE_Type * p_reg, nrf_gpiote_event_t event)
 {
     *((volatile uint32_t *)nrf_gpiote_event_address_get(p_reg, event)) = 0;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)nrf_gpiote_event_address_get(p_reg, event));
-    (void)dummy;
-#endif
+    nrf_event_readback((void *)nrf_gpiote_event_address_get(p_reg, event));
 }
 
 NRF_STATIC_INLINE uint32_t nrf_gpiote_event_address_get(NRF_GPIOTE_Type const * p_reg,

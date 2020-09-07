@@ -115,7 +115,7 @@ nrfx_err_t nrfx_qdec_init(nrfx_qdec_config_t const * p_config,
         nrf_qdec_ledpre_set(NRF_QDEC, p_config->ledpre);
         nrf_qdec_ledpol_set(NRF_QDEC, p_config->ledpol);
     }
-    nrf_qdec_pio_assign(NRF_QDEC, p_config->psela, p_config->pselb, p_config->pselled);
+    nrf_qdec_pins_set(NRF_QDEC, p_config->psela, p_config->pselb, p_config->pselled);
     nrf_qdec_shorts_enable(NRF_QDEC, NRF_QDEC_SHORT_REPORTRDY_READCLRACC_MASK);
 
     if (p_config->dbfen)
@@ -156,6 +156,16 @@ void nrfx_qdec_uninit(void)
     NRFX_ASSERT(m_state != NRFX_DRV_STATE_UNINITIALIZED);
     nrfx_qdec_disable();
     NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_QDEC));
+
+    nrf_gpio_cfg_default(nrf_qdec_phase_a_pin_get(NRF_QDEC));
+    nrf_gpio_cfg_default(nrf_qdec_phase_b_pin_get(NRF_QDEC));
+
+    uint32_t led_pin = nrf_qdec_led_pin_get(NRF_QDEC);
+    if (led_pin != NRF_QDEC_LED_NOT_CONNECTED)
+    {
+        nrf_gpio_cfg_default(led_pin);
+    }
+
     m_state = NRFX_DRV_STATE_UNINITIALIZED;
     NRFX_LOG_INFO("Uninitialized.");
 }

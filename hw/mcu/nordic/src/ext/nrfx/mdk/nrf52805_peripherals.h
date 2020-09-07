@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2010 - 2018, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -77,6 +77,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define RADIO_EASYDMA_MAXCNT_SIZE 8
 
+#define RADIO_TXPOWER_TXPOWER_Max RADIO_TXPOWER_TXPOWER_Pos4dBm
+
 /* Accelerated Address Resolver */
 #define AAR_PRESENT
 #define AAR_COUNT 1
@@ -140,11 +142,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Serial Peripheral Interface Master */
 #define SPI_PRESENT
-#define SPI_COUNT 2
+#define SPI_COUNT 1
 
 /* Serial Peripheral Interface Master with DMA */
 #define SPIM_PRESENT
-#define SPIM_COUNT 2
+#define SPIM_COUNT 1
 
 #define SPIM0_MAX_DATARATE  8
 #define SPIM1_MAX_DATARATE  8
@@ -163,7 +165,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Serial Peripheral Interface Slave with DMA*/
 #define SPIS_PRESENT
-#define SPIS_COUNT 2
+#define SPIS_COUNT 1
 
 #define SPIS0_EASYDMA_MAXCNT_SIZE 14
 #define SPIS1_EASYDMA_MAXCNT_SIZE 14
@@ -193,6 +195,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #define UARTE_COUNT 1
 
 #define UARTE0_EASYDMA_MAXCNT_SIZE 14
+
+/* Quadrature Decoder */
+#define QDEC_PRESENT
+#define QDEC_COUNT 1
 
 /* Successive Approximation Analog to Digital Converter */
 #define SAADC_PRESENT

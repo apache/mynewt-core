@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2010 - 2018, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -76,6 +76,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_COUNT 1
 
 #define RADIO_EASYDMA_MAXCNT_SIZE 8
+
+#define RADIO_TXPOWER_TXPOWER_Max RADIO_TXPOWER_TXPOWER_Pos4dBm
 
 /* Accelerated Address Resolver */
 #define AAR_PRESENT

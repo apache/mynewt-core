@@ -231,6 +231,15 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 
+/**
+ * @brief When set to a non-zero value, this macro specifies that inside HALs
+ *        the event registers are read back after clearing, on devices that
+ *        otherwise could defer the actual register modification.
+ */
+#define NRFX_EVENT_READBACK_ENABLED 1
+
+//------------------------------------------------------------------------------
+
 /** @brief Bitmask that defines DPPI channels that are reserved for use outside of the nrfx library. */
 #define NRFX_DPPI_CHANNELS_USED  0
 

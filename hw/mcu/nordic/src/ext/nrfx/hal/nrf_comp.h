@@ -48,18 +48,27 @@ extern "C" {
 /** @brief COMP analog pin selection. */
 typedef enum
 {
-    NRF_COMP_INPUT_0 = COMP_PSEL_PSEL_AnalogInput0, /*!< AIN0 selected as analog input. */
-    NRF_COMP_INPUT_1 = COMP_PSEL_PSEL_AnalogInput1, /*!< AIN1 selected as analog input. */
-    NRF_COMP_INPUT_2 = COMP_PSEL_PSEL_AnalogInput2, /*!< AIN2 selected as analog input. */
-    NRF_COMP_INPUT_3 = COMP_PSEL_PSEL_AnalogInput3, /*!< AIN3 selected as analog input. */
-    NRF_COMP_INPUT_4 = COMP_PSEL_PSEL_AnalogInput4, /*!< AIN4 selected as analog input. */
-    NRF_COMP_INPUT_5 = COMP_PSEL_PSEL_AnalogInput5, /*!< AIN5 selected as analog input. */
-    NRF_COMP_INPUT_6 = COMP_PSEL_PSEL_AnalogInput6, /*!< AIN6 selected as analog input. */
+    NRF_COMP_INPUT_0   = COMP_PSEL_PSEL_AnalogInput0, /*!< AIN0 selected as analog input. */
+    NRF_COMP_INPUT_1   = COMP_PSEL_PSEL_AnalogInput1, /*!< AIN1 selected as analog input. */
+    NRF_COMP_INPUT_2   = COMP_PSEL_PSEL_AnalogInput2, /*!< AIN2 selected as analog input. */
+    NRF_COMP_INPUT_3   = COMP_PSEL_PSEL_AnalogInput3, /*!< AIN3 selected as analog input. */
+#if defined (COMP_PSEL_PSEL_AnalogInput4) || defined (__NRFX_DOXYGEN__)
+    NRF_COMP_INPUT_4   = COMP_PSEL_PSEL_AnalogInput4, /*!< AIN4 selected as analog input. */
+#endif
+#if defined (COMP_PSEL_PSEL_AnalogInput5) || defined (__NRFX_DOXYGEN__)
+    NRF_COMP_INPUT_5   = COMP_PSEL_PSEL_AnalogInput5, /*!< AIN5 selected as analog input. */
+#endif
+#if defined (COMP_PSEL_PSEL_AnalogInput6) || defined (__NRFX_DOXYGEN__)
+    NRF_COMP_INPUT_6   = COMP_PSEL_PSEL_AnalogInput6, /*!< AIN6 selected as analog input. */
+#endif
 #if defined (COMP_PSEL_PSEL_AnalogInput7) || defined (__NRFX_DOXYGEN__)
-    NRF_COMP_INPUT_7 = COMP_PSEL_PSEL_AnalogInput7, /*!< AIN7 selected as analog input. */
+    NRF_COMP_INPUT_7   = COMP_PSEL_PSEL_AnalogInput7, /*!< AIN7 selected as analog input. */
 #endif
 #if defined (COMP_PSEL_PSEL_VddDiv2) || defined (__NRFX_DOXYGEN__)
-    NRF_COMP_VDD_DIV2 = COMP_PSEL_PSEL_VddDiv2,     /*!< VDD/2 selected as analog input. */
+    NRF_COMP_VDD_DIV2  = COMP_PSEL_PSEL_VddDiv2,      /*!< VDD/2 selected as analog input. */
+#endif
+#if defined (COMP_PSEL_PSEL_VddhDiv5) || defined (__NRFX_DOXYGEN__)
+    NRF_COMP_VDDH_DIV5 = COMP_PSEL_PSEL_VddhDiv5,     /*!< VDDH/5 selected as analog input. */
 #endif
 } nrf_comp_input_t;
 
@@ -80,10 +89,18 @@ typedef enum
     NRF_COMP_EXT_REF_1 = COMP_EXTREFSEL_EXTREFSEL_AnalogReference1, /*!< Use AIN1 as external analog reference. */
     NRF_COMP_EXT_REF_2 = COMP_EXTREFSEL_EXTREFSEL_AnalogReference2, /*!< Use AIN2 as external analog reference. */
     NRF_COMP_EXT_REF_3 = COMP_EXTREFSEL_EXTREFSEL_AnalogReference3, /*!< Use AIN3 as external analog reference. */
+#if defined (COMP_EXTREFSEL_EXTREFSEL_AnalogReference4) || defined (__NRFX_DOXYGEN__)
     NRF_COMP_EXT_REF_4 = COMP_EXTREFSEL_EXTREFSEL_AnalogReference4, /*!< Use AIN4 as external analog reference. */
+#endif
+#if defined (COMP_EXTREFSEL_EXTREFSEL_AnalogReference5) || defined (__NRFX_DOXYGEN__)
     NRF_COMP_EXT_REF_5 = COMP_EXTREFSEL_EXTREFSEL_AnalogReference5, /*!< Use AIN5 as external analog reference. */
+#endif
+#if defined (COMP_EXTREFSEL_EXTREFSEL_AnalogReference6) || defined (__NRFX_DOXYGEN__)
     NRF_COMP_EXT_REF_6 = COMP_EXTREFSEL_EXTREFSEL_AnalogReference6, /*!< Use AIN6 as external analog reference. */
+#endif
+#if defined (COMP_EXTREFSEL_EXTREFSEL_AnalogReference7) || defined (__NRFX_DOXYGEN__)
     NRF_COMP_EXT_REF_7 = COMP_EXTREFSEL_EXTREFSEL_AnalogReference7  /*!< Use AIN7 as external analog reference. */
+#endif
 } nrf_comp_ext_ref_t;
 
 /** @brief COMP THDOWN and THUP values that are used to calculate the threshold voltages VDOWN and VUP. */
@@ -463,10 +480,7 @@ NRF_STATIC_INLINE void nrf_comp_task_trigger(NRF_COMP_Type * p_reg, nrf_comp_tas
 NRF_STATIC_INLINE void nrf_comp_event_clear(NRF_COMP_Type * p_reg, nrf_comp_event_t event)
 {
     *( (volatile uint32_t *)( (uint8_t *)p_reg + (uint32_t)event) ) = 0;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)event);
 }
 
 NRF_STATIC_INLINE bool nrf_comp_event_check(NRF_COMP_Type const * p_reg, nrf_comp_event_t event)

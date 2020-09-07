@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2010 - 2018, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,6 +34,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define NRF_ERRATAS_H
 
 #include "nrf.h"
+
+/* Check MDK version to make sure we have the required macros */
+NRF_MDK_VERSION_ASSERT_AT_LEAST(8,34,0);
 
 /*lint ++flb "Enter library region */
 

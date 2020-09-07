@@ -1,6 +1,58 @@
 # Changelog
 All notable changes to this project are documented in this file.
 
+## [2.3.0] - 2020-08-19
+### Added
+- Added support for nRF52805.
+- Implemented workaround for nRF52 Series anomaly 197 in the POWER HAL.
+- Implemented workaround for nRF52 Series anomalies 211 and 223 in the USBD driver.
+- Added support for the nRF53 Series in the QSPI HAL.
+- Added function in the GPIO HAL that returns port index.
+- Introduced a QSPI HAL symbol that indicates the availability of the QSPI mode 1.
+- Introduced shortcut functionality in the CCM HAL.
+- Added function in the TIMER HAL for setting the specified shortcuts.
+- Added optional two-stage start procedure of the LFXO in the CLOCK driver.
+
+### Changed
+- Updated MDK to 8.35.0.
+- Divided network and application core-specific functionalities for nRF5340 in the RESET HAL and the reset reason helper.
+
+### Fixed
+- Corrected assertions in the NVMC driver.
+- Corrected return types in the CCM HAL.
+- Fixed setting of program memory access mode for secure code in the NVMC driver.
+- Removed usage of the NRF_UICR symbol on non-secure targets in address validity checks in the NVMC driver.
+- Fixed an error message in the SPIM driver that prevented successful compilation with logging enabled.
+- Fixed unused parameters in the PPI HAL.
+
+## [2.2.0] - 2020-04-28
+### Added
+- Added support for nRF52820.
+- Added possibility to use the nRF52833 DK in development for nRF52820. LEDs and buttons in this DK use GPIOs that are not present in the actual nRF52820 device, so accesses to these need special handling in the GPIO HAL.
+- Added the nrfx_reset_reason helper layer, to facilitate developing generic code that uses the RESETREAS register.
+- Implemented workarounds for nRF52 Series anomalies 170 and 196 in the I2S driver.
+- Added implicit casting of uint32_t to unsigned long in log messages, to prevent compiler warnings.
+- Added missing secure and non-secure peripheral symbol translations for nRF5340 and nRF9160.
+- Added functions in the NVMC driver for reading and writing halfword data from the OTP region of the UICR.
+
+### Changed
+- Updated MDK to 8.32.1.
+- Improved documentation regarding double-buffered reception in the UARTE driver.
+- Unified policy of pin cleanup procedure during uninitialization of the drivers. Now every driver restores utilized pins to default setting.
+- Removed support for revision Engineering A of nRF52840 in the USBD driver.
+- Changed selected while() loops to NRFX_WAIT_FOR() macro in the SPIM, UARTE and CLOCK drivers to improve robustness.
+
+### Fixed
+- Fixed assertions that check write addresses in the NVMC driver. Now the UICR memory region is handled properly.
+- Fixed a race condition in the CLOCK driver when requested clock was stopped during ramp-up from high priority interrupt.
+- Fixed assertions that check pin numbers in the GPIO HAL and GPIOTE driver. Now noncontiguous groups of available pin numbers are handled properly.
+- Fixed assertion that checks correctness of limit setting in the SAADC driver.
+- Fixed spurious callback invocation when the SPIM driver was reinitialized to blocking mode from non-blocking mode.
+- Fixed missing workaround for I2S STOP anomaly for nRF52833.
+- Fixed handling of NRFX_SPIM_FLAG_HOLD_XFER setting in the blocking mode of the SPIM driver.
+- Fixed void pointer cast in the CLOCK HAL, which could cause memory corruption with specific compiler settings.
+- Fixed definition of the NRF_CLOCK_LFCLK_Synth value, to make it available also in builds for nRF5340.
+
 ## [2.1.0] - 2020-01-24
 ### Added
 - Added HALs for DCNF, OSCILLATORS, USBREG, and VREQCTRL.

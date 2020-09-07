@@ -8,7 +8,7 @@
   <version>1</version>
   <description>nRF52840 reference description for radio MCU with ARM 32-bit Cortex-M4 Microcontroller </description>
   <licenseText>
-Copyright (c) 2010 - 2018, Nordic Semiconductor ASA All rights reserved.\n
+Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.\n
 \n
 Redistribution and use in source and binary forms, with or without\n
 modification, are permitted provided that the following conditions are met:\n
@@ -1181,14 +1181,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>REGOUT0</name>
-          <description>Output voltage from REG0 regulator stage. The maximum output voltage from this stage is given as VDDH - VREG0DROP.</description>
+          <description>GPIO reference voltage / external output supply voltage in high voltage mode</description>
           <addressOffset>0x304</addressOffset>
           <access>read-write</access>
           <resetValue>0xFFFFFFFF</resetValue>
           <fields>
             <field>
               <name>VOUT</name>
-              <description>Output voltage from REG0 regulator stage.</description>
+              <description>Output voltage from of REG0 regulator stage. The maximum output voltage from this stage is given as VDDH - VEXDIF.</description>
               <lsb>0</lsb>
               <msb>2</msb>
               <enumeratedValues>
@@ -11742,6 +11742,32 @@ POSSIBILITY OF SUCH DAMAGE.\n
           </fields>
         </register>
         <register>
+          <name>EVENTS_SYNC</name>
+          <description>Preamble indicator.</description>
+          <addressOffset>0x168</addressOffset>
+          <access>read-write</access>
+          <fields>
+            <field>
+              <name>EVENTS_SYNC</name>
+              <description>Preamble indicator.</description>
+              <lsb>0</lsb>
+              <msb>0</msb>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>NotGenerated</name>
+                  <description>Event not generated</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Generated</name>
+                  <description>Event generated</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
           <name>EVENTS_PHYEND</name>
           <description>Generated in Ble_LR125Kbit, Ble_LR500Kbit and Ieee802154_250Kbit modes when last bit is sent on air.</description>
           <addressOffset>0x16C</addressOffset>
@@ -12691,6 +12717,33 @@ POSSIBILITY OF SUCH DAMAGE.\n
               </enumeratedValues>
             </field>
             <field>
+              <name>SYNC</name>
+              <description>Write '1' to enable interrupt for event SYNC</description>
+              <lsb>26</lsb>
+              <msb>26</msb>
+              <enumeratedValues>
+                <usage>read</usage>
+                <enumeratedValue>
+                  <name>Disabled</name>
+                  <description>Read: Disabled</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Enabled</name>
+                  <description>Read: Enabled</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+              <enumeratedValues>
+                <usage>write</usage>
+                <enumeratedValue>
+                  <name>Set</name>
+                  <description>Enable</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
               <name>PHYEND</name>
               <description>Write '1' to enable interrupt for event PHYEND</description>
               <lsb>27</lsb>
@@ -13270,6 +13323,33 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <description>Write '1' to disable interrupt for event MHRMATCH</description>
               <lsb>23</lsb>
               <msb>23</msb>
+              <enumeratedValues>
+                <usage>read</usage>
+                <enumeratedValue>
+                  <name>Disabled</name>
+                  <description>Read: Disabled</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Enabled</name>
+                  <description>Read: Enabled</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+              <enumeratedValues>
+                <usage>write</usage>
+                <enumeratedValue>
+                  <name>Clear</name>
+                  <description>Disable</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>SYNC</name>
+              <description>Write '1' to disable interrupt for event SYNC</description>
+              <lsb>26</lsb>
+              <msb>26</msb>
               <enumeratedValues>
                 <usage>read</usage>
                 <enumeratedValue>
@@ -32507,7 +32587,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>SCRATCHPTR</name>
-              <description>Pointer to a scratch data area used for temporary storage during resolution.A space of minimum 3 bytes must be reserved.</description>
+              <description>Pointer to a scratch data area used for temporary storage during resolution. A space of minimum 3 bytes must be reserved.</description>
               <lsb>0</lsb>
               <msb>31</msb>
             </field>
@@ -39805,7 +39885,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <fields>
               <field>
                 <name>SIZE</name>
-                <description>Size of flash region n in bytes. Must be a multiple of the flash page size, and the maximum region size is limited to 512kB.</description>
+                <description>Size of flash region n in bytes. Must be a multiple of the flash page size, and the maximum region size is limited to 512 kB.</description>
                 <lsb>0</lsb>
                 <msb>31</msb>
               </field>
@@ -49239,13 +49319,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <dim>0x8</dim>
           <dimIncrement>0x4</dimIncrement>
           <name>EVENTS_ENDEPIN[%s]</name>
-          <description>Description collection: The whole EPIN[n] buffer has been consumed. The buffer can be accessed safely by software.</description>
+          <description>Description collection: The whole EPIN[n] buffer has been consumed. The RAM buffer can be accessed safely by software.</description>
           <addressOffset>0x108</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_ENDEPIN</name>
-              <description>The whole EPIN[n] buffer has been consumed. The buffer can be accessed safely by software.</description>
+              <description>The whole EPIN[n] buffer has been consumed. The RAM buffer can be accessed safely by software.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -49291,13 +49371,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_ENDISOIN</name>
-          <description>The whole ISOIN buffer has been consumed. The buffer can be accessed safely by software.</description>
+          <description>The whole ISOIN buffer has been consumed. The RAM buffer can be accessed safely by software.</description>
           <addressOffset>0x12C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_ENDISOIN</name>
-              <description>The whole ISOIN buffer has been consumed. The buffer can be accessed safely by software.</description>
+              <description>The whole ISOIN buffer has been consumed. The RAM buffer can be accessed safely by software.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -49319,13 +49399,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <dim>0x8</dim>
           <dimIncrement>0x4</dimIncrement>
           <name>EVENTS_ENDEPOUT[%s]</name>
-          <description>Description collection: The whole EPOUT[n] buffer has been consumed. The buffer can be accessed safely by software.</description>
+          <description>Description collection: The whole EPOUT[n] buffer has been consumed. The RAM buffer can be accessed safely by software.</description>
           <addressOffset>0x130</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_ENDEPOUT</name>
-              <description>The whole EPOUT[n] buffer has been consumed. The buffer can be accessed safely by software.</description>
+              <description>The whole EPOUT[n] buffer has been consumed. The RAM buffer can be accessed safely by software.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -49345,13 +49425,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_ENDISOOUT</name>
-          <description>The whole ISOOUT buffer has been consumed. The buffer can be accessed safely by software.</description>
+          <description>The whole ISOOUT buffer has been consumed. The RAM buffer can be accessed safely by software.</description>
           <addressOffset>0x150</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_ENDISOOUT</name>
-              <description>The whole ISOOUT buffer has been consumed. The buffer can be accessed safely by software.</description>
+              <description>The whole ISOOUT buffer has been consumed. The RAM buffer can be accessed safely by software.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -53103,7 +53183,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <fields>
               <field>
                 <name>PTR</name>
-                <description>Data pointer</description>
+                <description>Data pointer. Accepts any address in Data RAM.</description>
                 <lsb>0</lsb>
                 <msb>31</msb>
               </field>
@@ -53152,7 +53232,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <fields>
               <field>
                 <name>PTR</name>
-                <description>Data pointer</description>
+                <description>Data pointer. Accepts any address in Data RAM.</description>
                 <lsb>0</lsb>
                 <msb>31</msb>
               </field>
@@ -53203,7 +53283,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <fields>
               <field>
                 <name>PTR</name>
-                <description>Data pointer</description>
+                <description>Data pointer. Accepts any address in Data RAM.</description>
                 <lsb>0</lsb>
                 <msb>31</msb>
               </field>
@@ -53252,7 +53332,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <fields>
               <field>
                 <name>PTR</name>
-                <description>Data pointer</description>
+                <description>Data pointer. Accepts any address in Data RAM.</description>
                 <lsb>0</lsb>
                 <msb>31</msb>
               </field>

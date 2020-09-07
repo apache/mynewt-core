@@ -38,6 +38,10 @@
 extern "C" {
 #endif
 
+#ifndef NRF_I2S0
+#define NRF_I2S0 NRF_I2S
+#endif
+
 /**
  * @defgroup nrf_i2s_hal I2S HAL
  * @{
@@ -360,6 +364,51 @@ NRF_STATIC_INLINE void nrf_i2s_pins_set(NRF_I2S_Type * p_reg,
                                         uint32_t       sdin_pin);
 
 /**
+ * @brief Function for getting the SCK pin selection.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return SCK pin selection.
+ */
+NRF_STATIC_INLINE uint32_t nrf_i2s_sck_pin_get(NRF_I2S_Type const * p_reg);
+
+/**
+ * @brief Function for getting the LRCK pin selection.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return LRCK pin selection.
+ */
+NRF_STATIC_INLINE uint32_t nrf_i2s_lrck_pin_get(NRF_I2S_Type const * p_reg);
+
+/**
+ * @brief Function for getting the MCK pin selection.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return MCK pin selection.
+ */
+NRF_STATIC_INLINE uint32_t nrf_i2s_mck_pin_get(NRF_I2S_Type const * p_reg);
+
+/**
+ * @brief Function for getting the SDOUT pin selection.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return SDOUT pin selection.
+ */
+NRF_STATIC_INLINE uint32_t nrf_i2s_sdout_pin_get(NRF_I2S_Type const * p_reg);
+
+/**
+ * @brief Function for getting the SDIN pin selection.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return SDIN pin selection.
+ */
+NRF_STATIC_INLINE uint32_t nrf_i2s_sdin_pin_get(NRF_I2S_Type const * p_reg);
+
+/**
  * @brief Function for setting the I2S peripheral configuration.
  *
  * @param[in] p_reg        Pointer to the structure of registers of the peripheral.
@@ -476,10 +525,7 @@ NRF_STATIC_INLINE void nrf_i2s_event_clear(NRF_I2S_Type *  p_reg,
                                            nrf_i2s_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)event);
 }
 
 NRF_STATIC_INLINE bool nrf_i2s_event_check(NRF_I2S_Type const * p_reg,
@@ -561,6 +607,31 @@ NRF_STATIC_INLINE void nrf_i2s_pins_set(NRF_I2S_Type * p_reg,
     p_reg->PSEL.MCK   = mck_pin;
     p_reg->PSEL.SDOUT = sdout_pin;
     p_reg->PSEL.SDIN  = sdin_pin;
+}
+
+NRF_STATIC_INLINE uint32_t nrf_i2s_sck_pin_get(NRF_I2S_Type const * p_reg)
+{
+    return p_reg->PSEL.SCK;
+}
+
+NRF_STATIC_INLINE uint32_t nrf_i2s_lrck_pin_get(NRF_I2S_Type const * p_reg)
+{
+    return p_reg->PSEL.LRCK;
+}
+
+NRF_STATIC_INLINE uint32_t nrf_i2s_mck_pin_get(NRF_I2S_Type const * p_reg)
+{
+    return p_reg->PSEL.MCK;
+}
+
+NRF_STATIC_INLINE uint32_t nrf_i2s_sdout_pin_get(NRF_I2S_Type const * p_reg)
+{
+    return p_reg->PSEL.SDOUT;
+}
+
+NRF_STATIC_INLINE uint32_t nrf_i2s_sdin_pin_get(NRF_I2S_Type const * p_reg)
+{
+    return p_reg->PSEL.SDIN;
 }
 
 NRF_STATIC_INLINE bool nrf_i2s_configure(NRF_I2S_Type *     p_reg,

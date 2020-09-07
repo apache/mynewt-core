@@ -115,6 +115,17 @@ static void configure_pins(nrfx_pwm_t const *        p_instance,
     nrf_pwm_pins_set(p_instance->p_registers, out_pins);
 }
 
+static void deconfigure_pins(nrfx_pwm_t const * p_instance)
+{
+    for (uint8_t ch_idx = 0; ch_idx < NRF_PWM_CHANNEL_COUNT; ch_idx++)
+    {
+        uint32_t pin = nrf_pwm_pin_get(p_instance->p_registers, ch_idx);
+        if (pin != NRF_PWM_PIN_NOT_CONNECTED)
+        {
+            nrf_gpio_cfg_default(pin);
+        }
+    }
+}
 
 nrfx_err_t nrfx_pwm_init(nrfx_pwm_t const *        p_instance,
                          nrfx_pwm_config_t const * p_config,
@@ -190,6 +201,8 @@ void nrfx_pwm_uninit(nrfx_pwm_t const * p_instance)
 #endif
 
     nrf_pwm_disable(p_instance->p_registers);
+
+    deconfigure_pins(p_instance);
 
     p_cb->state = NRFX_DRV_STATE_UNINITIALIZED;
 }

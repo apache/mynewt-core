@@ -234,7 +234,10 @@ nrfx_err_t nrfx_pdm_init(nrfx_pdm_config_t const * p_config,
 void nrfx_pdm_uninit(void)
 {
     nrf_pdm_disable(NRF_PDM0);
-    nrf_pdm_psel_disconnect(NRF_PDM0);
+
+    nrf_gpio_cfg_default(nrf_pdm_clk_pin_get(NRF_PDM0));
+    nrf_gpio_cfg_default(nrf_pdm_din_pin_get(NRF_PDM0));
+
     m_cb.drv_state = NRFX_DRV_STATE_UNINITIALIZED;
     NRFX_LOG_INFO("Uninitialized.");
 }

@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2018 ARM Limited. All rights reserved.
+; Copyright (c) 2009-2020 ARM Limited. All rights reserved.
 ; 
 ;     SPDX-License-Identifier: Apache-2.0
 ; 
@@ -30,7 +30,7 @@ Stack_Size      EQU __STARTUP_CONFIG_STACK_SIZE
                 ELIF :DEF: __STACK_SIZE
 Stack_Size      EQU __STACK_SIZE
                 ELSE
-Stack_Size      EQU 8192
+Stack_Size      EQU 4096
                 ENDIF
                 
                 IF :DEF: __STARTUP_CONFIG
@@ -48,7 +48,7 @@ Heap_Size       EQU __STARTUP_CONFIG_HEAP_SIZE
                 ELIF :DEF: __HEAP_SIZE
 Heap_Size       EQU __HEAP_SIZE
                 ELSE
-Heap_Size       EQU 8192
+Heap_Size       EQU 4096
                 ENDIF
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3

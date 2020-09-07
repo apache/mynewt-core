@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2010 - 2018, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -43,15 +43,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Interrupt service routines handlers. */
 #ifndef TWIM0_TWIS0_IRQHandler
-    #define TWIM0_TWIS0_IRQHandler      TWIM0_TWIS0_SPIM1_SPIS1_IRQHandler
+    #define TWIM0_TWIS0_IRQHandler      TWIM0_TWIS0_TWI0_SPIM1_SPIS1_SPI1_IRQHandler
 #endif
 
 
 /* Interrupt service routines index. */
 #ifndef TWIM0_TWIS0_IRQn
-    #define TWIM0_TWIS0_IRQn            TWIM0_TWIS0_SPIM1_SPIS1_IRQn
+    #define TWIM0_TWIS0_IRQn            TWIM0_TWIS0_TWI0_SPIM1_SPIS1_SPI1_IRQn
 #endif
-
 
 /*lint --flb "Leave library region" */
 

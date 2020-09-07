@@ -59,12 +59,14 @@ typedef enum
     NRF_PPI_CHANNEL7  = PPI_CHEN_CH7_Pos,  /**< Channel 7. */
     NRF_PPI_CHANNEL8  = PPI_CHEN_CH8_Pos,  /**< Channel 8. */
     NRF_PPI_CHANNEL9  = PPI_CHEN_CH9_Pos,  /**< Channel 9. */
+#if (PPI_CH_NUM > 10) || defined(__NRFX_DOXYGEN__)
     NRF_PPI_CHANNEL10 = PPI_CHEN_CH10_Pos, /**< Channel 10. */
     NRF_PPI_CHANNEL11 = PPI_CHEN_CH11_Pos, /**< Channel 11. */
     NRF_PPI_CHANNEL12 = PPI_CHEN_CH12_Pos, /**< Channel 12. */
     NRF_PPI_CHANNEL13 = PPI_CHEN_CH13_Pos, /**< Channel 13. */
     NRF_PPI_CHANNEL14 = PPI_CHEN_CH14_Pos, /**< Channel 14. */
     NRF_PPI_CHANNEL15 = PPI_CHEN_CH15_Pos, /**< Channel 15. */
+#endif
 #if (PPI_CH_NUM > 16) || defined(__NRFX_DOXYGEN__)
     NRF_PPI_CHANNEL16 = PPI_CHEN_CH16_Pos, /**< Channel 16. */
     NRF_PPI_CHANNEL17 = PPI_CHEN_CH17_Pos, /**< Channel 17. */
@@ -546,6 +548,7 @@ NRF_STATIC_INLINE uint32_t nrf_ppi_task_group_disable_address_get(NRF_PPI_Type c
 NRF_STATIC_INLINE nrf_ppi_task_t nrf_ppi_group_enable_task_get(NRF_PPI_Type const * p_reg,
                                                                uint8_t              index)
 {
+    (void)p_reg;
     NRFX_ASSERT(index < PPI_GROUP_NUM);
     return (nrf_ppi_task_t)NRFX_OFFSETOF(NRF_PPI_Type, TASKS_CHG[index].EN);
 }
@@ -553,6 +556,7 @@ NRF_STATIC_INLINE nrf_ppi_task_t nrf_ppi_group_enable_task_get(NRF_PPI_Type cons
 NRF_STATIC_INLINE nrf_ppi_task_t nrf_ppi_group_disable_task_get(NRF_PPI_Type const * p_reg,
                                                                 uint8_t              index)
 {
+    (void)p_reg;
     NRFX_ASSERT(index < PPI_GROUP_NUM);
     return (nrf_ppi_task_t)NRFX_OFFSETOF(NRF_PPI_Type, TASKS_CHG[index].DIS);
 }

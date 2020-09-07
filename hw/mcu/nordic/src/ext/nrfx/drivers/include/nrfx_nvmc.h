@@ -155,6 +155,37 @@ bool nrfx_nvmc_byte_writable_check(uint32_t address, uint8_t value);
 void nrfx_nvmc_byte_write(uint32_t address, uint8_t value);
 
 /**
+ * @brief Function for checking whether a halfword is writable at the specified address.
+ *
+ * The NVMC is only able to write '0' to bits in the Flash that are erased (set to '1').
+ * It cannot rewrite a bit back to '1'. This function checks if the value currently
+ * residing at the specified address can be transformed to the desired value
+ * without any '0' to '1' transitions.
+ *
+ * @param address Address to be checked. Must be halfword-aligned.
+ * @param value   Value to be checked.
+ *
+ * @retval true  Halfword can be written at the specified address.
+ * @retval false Halfword cannot be written at the specified address.
+ *               Erase page or change address.
+ */
+bool nrfx_nvmc_halfword_writable_check(uint32_t address, uint16_t value);
+
+/**
+ * @brief Function for writing a 16-bit halfword to flash.
+ *
+ * To determine if the flash write has been completed, use @ref nrfx_nvmc_write_done_check().
+ *
+ * @note Depending on the source of the code being executed,
+ *       the CPU may be halted during the operation.
+ *       Refer to the Product Specification for more information.
+ *
+ * @param address Address to write to. Must be halfword-aligned.
+ * @param value   Value to write.
+ */
+void nrfx_nvmc_halfword_write(uint32_t address, uint16_t value);
+
+/**
  * @brief Function for checking whether a word is writable at the specified address.
  *
  * The NVMC is only able to write '0' to bits in the Flash that are erased (set to '1').
@@ -214,6 +245,19 @@ void nrfx_nvmc_bytes_write(uint32_t address, void const * src, uint32_t num_byte
  * @param num_words Number of words to write.
  */
 void nrfx_nvmc_words_write(uint32_t address, void const * src, uint32_t num_words);
+
+/**
+ * @brief Function for reading a 16-bit aligned halfword from the OTP (UICR)
+ *
+ * OTP is a region of the UICR present in some chips. This function must be used
+ * to read halfword data from this region since unaligned accesses are not
+ * available on the OTP flash area.
+ *
+ * @param address Address to read from. Must be halfword-aligned.
+ *
+ * @retval The contents at @p address.
+ */
+uint16_t nrfx_nvmc_otp_halfword_read(uint32_t address);
 
 /**
  * @brief Function for getting the total flash size in bytes.

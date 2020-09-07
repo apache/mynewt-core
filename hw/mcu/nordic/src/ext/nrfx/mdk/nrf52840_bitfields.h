@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2010 - 2018, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -169,7 +169,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: AAR_SCRATCHPTR */
 /* Description: Pointer to data area used for temporary storage */
 
-/* Bits 31..0 : Pointer to a scratch data area used for temporary storage during resolution.A space of minimum 3 bytes must be reserved. */
+/* Bits 31..0 : Pointer to a scratch data area used for temporary storage during resolution. A space of minimum 3 bytes must be reserved. */
 #define AAR_SCRATCHPTR_SCRATCHPTR_Pos (0UL) /*!< Position of SCRATCHPTR field. */
 #define AAR_SCRATCHPTR_SCRATCHPTR_Msk (0xFFFFFFFFUL << AAR_SCRATCHPTR_SCRATCHPTR_Pos) /*!< Bit mask of SCRATCHPTR field. */
 
@@ -187,7 +187,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: ACL_ACL_SIZE */
 /* Description: Description cluster: Size of region to protect counting from address ACL[n].ADDR. Write '0' as no effect. */
 
-/* Bits 31..0 : Size of flash region n in bytes. Must be a multiple of the flash page size, and the maximum region size is limited to 512kB. */
+/* Bits 31..0 : Size of flash region n in bytes. Must be a multiple of the flash page size, and the maximum region size is limited to 512 kB. */
 #define ACL_ACL_SIZE_SIZE_Pos (0UL) /*!< Position of SIZE field. */
 #define ACL_ACL_SIZE_SIZE_Msk (0xFFFFFFFFUL << ACL_ACL_SIZE_SIZE_Pos) /*!< Bit mask of SIZE field. */
 
@@ -10284,6 +10284,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_EVENTS_MHRMATCH_EVENTS_MHRMATCH_NotGenerated (0UL) /*!< Event not generated */
 #define RADIO_EVENTS_MHRMATCH_EVENTS_MHRMATCH_Generated (1UL) /*!< Event generated */
 
+/* Register: RADIO_EVENTS_SYNC */
+/* Description: Preamble indicator. */
+
+/* Bit 0 : Preamble indicator. */
+#define RADIO_EVENTS_SYNC_EVENTS_SYNC_Pos (0UL) /*!< Position of EVENTS_SYNC field. */
+#define RADIO_EVENTS_SYNC_EVENTS_SYNC_Msk (0x1UL << RADIO_EVENTS_SYNC_EVENTS_SYNC_Pos) /*!< Bit mask of EVENTS_SYNC field. */
+#define RADIO_EVENTS_SYNC_EVENTS_SYNC_NotGenerated (0UL) /*!< Event not generated */
+#define RADIO_EVENTS_SYNC_EVENTS_SYNC_Generated (1UL) /*!< Event generated */
+
 /* Register: RADIO_EVENTS_PHYEND */
 /* Description: Generated in Ble_LR125Kbit, Ble_LR500Kbit and Ieee802154_250Kbit modes when last bit is sent on air. */
 
@@ -10419,6 +10428,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_INTENSET_PHYEND_Disabled (0UL) /*!< Read: Disabled */
 #define RADIO_INTENSET_PHYEND_Enabled (1UL) /*!< Read: Enabled */
 #define RADIO_INTENSET_PHYEND_Set (1UL) /*!< Enable */
+
+/* Bit 26 : Write '1' to enable interrupt for event SYNC */
+#define RADIO_INTENSET_SYNC_Pos (26UL) /*!< Position of SYNC field. */
+#define RADIO_INTENSET_SYNC_Msk (0x1UL << RADIO_INTENSET_SYNC_Pos) /*!< Bit mask of SYNC field. */
+#define RADIO_INTENSET_SYNC_Disabled (0UL) /*!< Read: Disabled */
+#define RADIO_INTENSET_SYNC_Enabled (1UL) /*!< Read: Enabled */
+#define RADIO_INTENSET_SYNC_Set (1UL) /*!< Enable */
 
 /* Bit 23 : Write '1' to enable interrupt for event MHRMATCH */
 #define RADIO_INTENSET_MHRMATCH_Pos (23UL) /*!< Position of MHRMATCH field. */
@@ -10576,6 +10592,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_INTENCLR_PHYEND_Disabled (0UL) /*!< Read: Disabled */
 #define RADIO_INTENCLR_PHYEND_Enabled (1UL) /*!< Read: Enabled */
 #define RADIO_INTENCLR_PHYEND_Clear (1UL) /*!< Disable */
+
+/* Bit 26 : Write '1' to disable interrupt for event SYNC */
+#define RADIO_INTENCLR_SYNC_Pos (26UL) /*!< Position of SYNC field. */
+#define RADIO_INTENCLR_SYNC_Msk (0x1UL << RADIO_INTENCLR_SYNC_Pos) /*!< Bit mask of SYNC field. */
+#define RADIO_INTENCLR_SYNC_Disabled (0UL) /*!< Read: Disabled */
+#define RADIO_INTENCLR_SYNC_Enabled (1UL) /*!< Read: Enabled */
+#define RADIO_INTENCLR_SYNC_Clear (1UL) /*!< Disable */
 
 /* Bit 23 : Write '1' to disable interrupt for event MHRMATCH */
 #define RADIO_INTENCLR_MHRMATCH_Pos (23UL) /*!< Position of MHRMATCH field. */
@@ -15830,9 +15853,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define UICR_DEBUGCTRL_CPUNIDEN_Enabled (0xFFUL) /*!< Enable CPU ITM and ETM functionality (default behavior) */
 
 /* Register: UICR_REGOUT0 */
-/* Description: Output voltage from REG0 regulator stage. The maximum output voltage from this stage is given as VDDH - VREG0DROP. */
+/* Description: GPIO reference voltage / external output supply voltage in high voltage mode */
 
-/* Bits 2..0 : Output voltage from REG0 regulator stage. */
+/* Bits 2..0 : Output voltage from of REG0 regulator stage. The maximum output voltage from this stage is given as VDDH - VEXDIF. */
 #define UICR_REGOUT0_VOUT_Pos (0UL) /*!< Position of VOUT field. */
 #define UICR_REGOUT0_VOUT_Msk (0x7UL << UICR_REGOUT0_VOUT_Pos) /*!< Bit mask of VOUT field. */
 #define UICR_REGOUT0_VOUT_1V8 (0UL) /*!< 1.8 V */
@@ -15938,9 +15961,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define USBD_EVENTS_STARTED_EVENTS_STARTED_Generated (1UL) /*!< Event generated */
 
 /* Register: USBD_EVENTS_ENDEPIN */
-/* Description: Description collection: The whole EPIN[n] buffer has been consumed. The buffer can be accessed safely by software. */
+/* Description: Description collection: The whole EPIN[n] buffer has been consumed. The RAM buffer can be accessed safely by software. */
 
-/* Bit 0 : The whole EPIN[n] buffer has been consumed. The buffer can be accessed safely by software. */
+/* Bit 0 : The whole EPIN[n] buffer has been consumed. The RAM buffer can be accessed safely by software. */
 #define USBD_EVENTS_ENDEPIN_EVENTS_ENDEPIN_Pos (0UL) /*!< Position of EVENTS_ENDEPIN field. */
 #define USBD_EVENTS_ENDEPIN_EVENTS_ENDEPIN_Msk (0x1UL << USBD_EVENTS_ENDEPIN_EVENTS_ENDEPIN_Pos) /*!< Bit mask of EVENTS_ENDEPIN field. */
 #define USBD_EVENTS_ENDEPIN_EVENTS_ENDEPIN_NotGenerated (0UL) /*!< Event not generated */
@@ -15956,27 +15979,27 @@ POSSIBILITY OF SUCH DAMAGE.
 #define USBD_EVENTS_EP0DATADONE_EVENTS_EP0DATADONE_Generated (1UL) /*!< Event generated */
 
 /* Register: USBD_EVENTS_ENDISOIN */
-/* Description: The whole ISOIN buffer has been consumed. The buffer can be accessed safely by software. */
+/* Description: The whole ISOIN buffer has been consumed. The RAM buffer can be accessed safely by software. */
 
-/* Bit 0 : The whole ISOIN buffer has been consumed. The buffer can be accessed safely by software. */
+/* Bit 0 : The whole ISOIN buffer has been consumed. The RAM buffer can be accessed safely by software. */
 #define USBD_EVENTS_ENDISOIN_EVENTS_ENDISOIN_Pos (0UL) /*!< Position of EVENTS_ENDISOIN field. */
 #define USBD_EVENTS_ENDISOIN_EVENTS_ENDISOIN_Msk (0x1UL << USBD_EVENTS_ENDISOIN_EVENTS_ENDISOIN_Pos) /*!< Bit mask of EVENTS_ENDISOIN field. */
 #define USBD_EVENTS_ENDISOIN_EVENTS_ENDISOIN_NotGenerated (0UL) /*!< Event not generated */
 #define USBD_EVENTS_ENDISOIN_EVENTS_ENDISOIN_Generated (1UL) /*!< Event generated */
 
 /* Register: USBD_EVENTS_ENDEPOUT */
-/* Description: Description collection: The whole EPOUT[n] buffer has been consumed. The buffer can be accessed safely by software. */
+/* Description: Description collection: The whole EPOUT[n] buffer has been consumed. The RAM buffer can be accessed safely by software. */
 
-/* Bit 0 : The whole EPOUT[n] buffer has been consumed. The buffer can be accessed safely by software. */
+/* Bit 0 : The whole EPOUT[n] buffer has been consumed. The RAM buffer can be accessed safely by software. */
 #define USBD_EVENTS_ENDEPOUT_EVENTS_ENDEPOUT_Pos (0UL) /*!< Position of EVENTS_ENDEPOUT field. */
 #define USBD_EVENTS_ENDEPOUT_EVENTS_ENDEPOUT_Msk (0x1UL << USBD_EVENTS_ENDEPOUT_EVENTS_ENDEPOUT_Pos) /*!< Bit mask of EVENTS_ENDEPOUT field. */
 #define USBD_EVENTS_ENDEPOUT_EVENTS_ENDEPOUT_NotGenerated (0UL) /*!< Event not generated */
 #define USBD_EVENTS_ENDEPOUT_EVENTS_ENDEPOUT_Generated (1UL) /*!< Event generated */
 
 /* Register: USBD_EVENTS_ENDISOOUT */
-/* Description: The whole ISOOUT buffer has been consumed. The buffer can be accessed safely by software. */
+/* Description: The whole ISOOUT buffer has been consumed. The RAM buffer can be accessed safely by software. */
 
-/* Bit 0 : The whole ISOOUT buffer has been consumed. The buffer can be accessed safely by software. */
+/* Bit 0 : The whole ISOOUT buffer has been consumed. The RAM buffer can be accessed safely by software. */
 #define USBD_EVENTS_ENDISOOUT_EVENTS_ENDISOOUT_Pos (0UL) /*!< Position of EVENTS_ENDISOOUT field. */
 #define USBD_EVENTS_ENDISOOUT_EVENTS_ENDISOOUT_Msk (0x1UL << USBD_EVENTS_ENDISOOUT_EVENTS_ENDISOOUT_Pos) /*!< Bit mask of EVENTS_ENDISOOUT field. */
 #define USBD_EVENTS_ENDISOOUT_EVENTS_ENDISOOUT_NotGenerated (0UL) /*!< Event not generated */
@@ -17138,7 +17161,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: USBD_EPIN_PTR */
 /* Description: Description cluster: Data pointer */
 
-/* Bits 31..0 : Data pointer */
+/* Bits 31..0 : Data pointer. Accepts any address in Data RAM. */
 #define USBD_EPIN_PTR_PTR_Pos (0UL) /*!< Position of PTR field. */
 #define USBD_EPIN_PTR_PTR_Msk (0xFFFFFFFFUL << USBD_EPIN_PTR_PTR_Pos) /*!< Bit mask of PTR field. */
 
@@ -17159,7 +17182,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: USBD_ISOIN_PTR */
 /* Description: Data pointer */
 
-/* Bits 31..0 : Data pointer */
+/* Bits 31..0 : Data pointer. Accepts any address in Data RAM. */
 #define USBD_ISOIN_PTR_PTR_Pos (0UL) /*!< Position of PTR field. */
 #define USBD_ISOIN_PTR_PTR_Msk (0xFFFFFFFFUL << USBD_ISOIN_PTR_PTR_Pos) /*!< Bit mask of PTR field. */
 
@@ -17180,7 +17203,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: USBD_EPOUT_PTR */
 /* Description: Description cluster: Data pointer */
 
-/* Bits 31..0 : Data pointer */
+/* Bits 31..0 : Data pointer. Accepts any address in Data RAM. */
 #define USBD_EPOUT_PTR_PTR_Pos (0UL) /*!< Position of PTR field. */
 #define USBD_EPOUT_PTR_PTR_Msk (0xFFFFFFFFUL << USBD_EPOUT_PTR_PTR_Pos) /*!< Bit mask of PTR field. */
 
@@ -17201,7 +17224,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: USBD_ISOOUT_PTR */
 /* Description: Data pointer */
 
-/* Bits 31..0 : Data pointer */
+/* Bits 31..0 : Data pointer. Accepts any address in Data RAM. */
 #define USBD_ISOOUT_PTR_PTR_Pos (0UL) /*!< Position of PTR field. */
 #define USBD_ISOOUT_PTR_PTR_Msk (0xFFFFFFFFUL << USBD_ISOOUT_PTR_PTR_Pos) /*!< Bit mask of PTR field. */
 

@@ -64,6 +64,12 @@ typedef enum
     NRF_CCM_EVENT_ERROR    = offsetof(NRF_CCM_Type, EVENTS_ERROR),    ///< CCM error event.
 } nrf_ccm_event_t;
 
+/** @brief Types of CCM shorts. */
+typedef enum
+{
+    NRF_CCM_SHORT_ENDKSGEN_CRYPT_MASK = CCM_SHORTS_ENDKSGEN_CRYPT_Msk, ///< Shortcut for starting encryption/decryption when the key-stream generation is complete.
+} nrf_ccm_short_mask_t;
+
 /** @brief CCM interrupts. */
 typedef enum
 {
@@ -165,6 +171,33 @@ NRF_STATIC_INLINE bool nrf_ccm_event_check(NRF_CCM_Type const * p_reg,
  */
 NRF_STATIC_INLINE uint32_t nrf_ccm_event_address_get(NRF_CCM_Type const * p_reg,
                                                      nrf_ccm_event_t      event);
+
+/**
+ * @brief Function for enabling the specified shortcuts.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Shortcuts to be enabled.
+ */
+NRF_STATIC_INLINE void nrf_ccm_shorts_enable(NRF_CCM_Type * p_reg,
+                                             uint32_t       mask);
+
+/**
+ * @brief Function for disabling the specified shortcuts.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Shortcuts to be disabled.
+ */
+NRF_STATIC_INLINE void nrf_ccm_shorts_disable(NRF_CCM_Type * p_reg,
+                                              uint32_t       mask);
+
+/**
+ * @brief Function for setting the specified shortcuts.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Shortcuts to be set.
+ */
+NRF_STATIC_INLINE void nrf_ccm_shorts_set(NRF_CCM_Type * p_reg,
+                                          uint32_t       mask);
 
 /**
  * @brief Function for enabling specified interrupts.
@@ -342,10 +375,7 @@ NRF_STATIC_INLINE void nrf_ccm_event_clear(NRF_CCM_Type *  p_reg,
                                            nrf_ccm_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)event);
 }
 
 NRF_STATIC_INLINE bool nrf_ccm_event_check(NRF_CCM_Type const * p_reg,
@@ -358,6 +388,25 @@ NRF_STATIC_INLINE uint32_t nrf_ccm_event_address_get(NRF_CCM_Type const * p_reg,
                                                      nrf_ccm_event_t      event)
 {
     return ((uint32_t)p_reg + (uint32_t)event);
+}
+
+
+NRF_STATIC_INLINE void nrf_ccm_shorts_enable(NRF_CCM_Type * p_reg,
+                                             uint32_t       mask)
+{
+    p_reg->SHORTS |= mask;
+}
+
+NRF_STATIC_INLINE void nrf_ccm_shorts_disable(NRF_CCM_Type * p_reg,
+                                              uint32_t       mask)
+{
+    p_reg->SHORTS &= ~(mask);
+}
+
+NRF_STATIC_INLINE void nrf_ccm_shorts_set(NRF_CCM_Type * p_reg,
+                                          uint32_t       mask)
+{
+    p_reg->SHORTS = mask;
 }
 
 NRF_STATIC_INLINE void nrf_ccm_int_enable(NRF_CCM_Type * p_reg, uint32_t mask)

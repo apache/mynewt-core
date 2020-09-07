@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2010 - 2018, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -69,17 +69,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define IPC_CH_NUM 16
 #define IPC_CONF_NUM 16
-#define IPC_GPMEM_NUM 4
+#define IPC_GPMEM_NUM 2
 
 /* GPIO */
 #define GPIO_PRESENT
 #define GPIO_COUNT 2
 
 #define P0_PIN_NUM 32
-#define P1_PIN_NUM 12
+#define P1_PIN_NUM 16
 
 #define P0_FEATURE_PINS_PRESENT 0xFFFFFFFFUL
-#define P1_FEATURE_PINS_PRESENT 0x00000FFFUL
+#define P1_FEATURE_PINS_PRESENT 0x0000FFFFUL
 
 
 /* ACL */
@@ -92,6 +92,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define RADIO_EASYDMA_MAXCNT_SIZE 9
 #define RADIO_FEATURE_IEEE_802_15_4_PRESENT
+
+#define RADIO_TXPOWER_TXPOWER_Max RADIO_TXPOWER_TXPOWER_0dBm
 
 /* Accelerated Address Resolver */
 #define AAR_PRESENT
