@@ -30,6 +30,9 @@
  */
 
 #include <nrfx_twi_twim.h>
+
+#if NRFX_CHECK(NRFX_TWI_ENABLED) || NRFX_CHECK(NRFX_TWIM_ENABLED)
+
 #include <hal/nrf_gpio.h>
 
 #define TWI_TWIM_PIN_CONFIGURE(_pin) nrf_gpio_cfg((_pin),                     \
@@ -79,3 +82,5 @@ nrfx_err_t nrfx_twi_twim_bus_recover(uint32_t scl_pin, uint32_t sda_pin)
         return NRFX_ERROR_INTERNAL;
     }
 }
+
+#endif // NRFX_CHECK(NRFX_TWI_ENABLED) || NRFX_CHECK(NRFX_TWIM_ENABLED)

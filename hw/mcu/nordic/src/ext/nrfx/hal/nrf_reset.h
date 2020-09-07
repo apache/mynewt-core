@@ -38,6 +38,20 @@
 extern "C" {
 #endif
 
+#if defined(NRF5340_XXAA_NETWORK) || defined(__NRFX_DOXYGEN__)
+/** @brief Presence of Network core RESET functionality. */
+#define NRF_RESET_HAS_NETWORK 1
+#else
+#define NRF_RESET_HAS_NETWORK 0
+#endif
+
+#if defined(NRF5340_XXAA_APPLICATION) || defined(__NRFX_DOXYGEN__)
+/** @brief Presence of Application core RESET functionality. */
+#define NRF_RESET_HAS_APPLICATION 1
+#else
+#define NRF_RESET_HAS_APPLICATION 0
+#endif
+
 /**
  * @defgroup nrf_reset_hal RESET HAL
  * @{
@@ -56,14 +70,18 @@ typedef enum
     NRF_RESET_RESETREAS_OFF_MASK       = RESET_RESETREAS_OFF_Msk,       ///< Bit mask of OFF field.
     NRF_RESET_RESETREAS_LPCOMP_MASK    = RESET_RESETREAS_LPCOMP_Msk,    ///< Bit mask of LPCOMP field.
     NRF_RESET_RESETREAS_DIF_MASK       = RESET_RESETREAS_DIF_Msk,       ///< Bit mask of DIF field.
+#if NRF_RESET_HAS_NETWORK
     NRF_RESET_RESETREAS_LSREQ_MASK     = RESET_RESETREAS_LSREQ_Msk,     ///< Bit mask of LSREQ field.
     NRF_RESET_RESETREAS_LLOCKUP_MASK   = RESET_RESETREAS_LLOCKUP_Msk,   ///< Bit mask of LLOCKUP field.
     NRF_RESET_RESETREAS_LDOG_MASK      = RESET_RESETREAS_LDOG_Msk,      ///< Bit mask of LDOG field.
     NRF_RESET_RESETREAS_MFORCEOFF_MASK = RESET_RESETREAS_MFORCEOFF_Msk, ///< Bit mask of MFORCEOFF field.
+#endif
     NRF_RESET_RESETREAS_NFC_MASK       = RESET_RESETREAS_NFC_Msk,       ///< Bit mask of NFC field.
     NRF_RESET_RESETREAS_DOG1_MASK      = RESET_RESETREAS_DOG1_Msk,      ///< Bit mask of DOG1 field.
     NRF_RESET_RESETREAS_VBUS_MASK      = RESET_RESETREAS_VBUS_Msk,      ///< Bit mask of VBUS field.
+#if NRF_RESET_HAS_NETWORK
     NRF_RESET_RESETREAS_LCTRLAP_MASK   = RESET_RESETREAS_LCTRLAP_Msk,   ///< Bit mask of LCTRLAP field.
+#endif
 } nrf_reset_resetreas_mask_t;
 
 /**
@@ -88,6 +106,7 @@ NRF_STATIC_INLINE uint32_t nrf_reset_resetreas_get(NRF_RESET_Type const * p_reg)
  */
 NRF_STATIC_INLINE void nrf_reset_resetreas_clear(NRF_RESET_Type * p_reg, uint32_t mask);
 
+#if NRF_RESET_HAS_APPLICATION
 /**
  * @brief Function for setting the force off signal for the Network core.
  *
@@ -98,6 +117,7 @@ NRF_STATIC_INLINE void nrf_reset_resetreas_clear(NRF_RESET_Type * p_reg, uint32_
  *                  False if the force off signal is to be released.
  */
 NRF_STATIC_INLINE void nrf_reset_network_force_off(NRF_RESET_Type * p_reg, bool hold);
+#endif // NRF_RESET_HAS_APPLICATION
 
 #ifndef NRF_DECLARE_ONLY
 
@@ -111,11 +131,13 @@ NRF_STATIC_INLINE void nrf_reset_resetreas_clear(NRF_RESET_Type * p_reg, uint32_
     p_reg->RESETREAS = mask;
 }
 
+#if NRF_RESET_HAS_APPLICATION
 NRF_STATIC_INLINE void nrf_reset_network_force_off(NRF_RESET_Type * p_reg, bool hold)
 {
     p_reg->NETWORK.FORCEOFF = (hold ? RESET_NETWORK_FORCEOFF_FORCEOFF_Hold :
                                       RESET_NETWORK_FORCEOFF_FORCEOFF_Release);
 }
+#endif // NRF_RESET_HAS_APPLICATION
 
 #endif // NRF_DECLARE_ONLY
 

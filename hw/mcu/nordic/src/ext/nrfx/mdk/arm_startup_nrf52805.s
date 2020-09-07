@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2018 ARM Limited. All rights reserved.
+; Copyright (c) 2009-2020 ARM Limited. All rights reserved.
 ; 
 ;     SPDX-License-Identifier: Apache-2.0
 ; 
@@ -102,7 +102,7 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     CCM_AAR_IRQHandler
                 DCD     WDT_IRQHandler
                 DCD     RTC1_IRQHandler
-                DCD     0                         ; Reserved
+                DCD     QDEC_IRQHandler
                 DCD     0                         ; Reserved
                 DCD     SWI0_EGU0_IRQHandler
                 DCD     SWI1_EGU1_IRQHandler
@@ -281,6 +281,7 @@ Default_Handler PROC
                 EXPORT   CCM_AAR_IRQHandler [WEAK]
                 EXPORT   WDT_IRQHandler [WEAK]
                 EXPORT   RTC1_IRQHandler [WEAK]
+                EXPORT   QDEC_IRQHandler [WEAK]
                 EXPORT   SWI0_EGU0_IRQHandler [WEAK]
                 EXPORT   SWI1_EGU1_IRQHandler [WEAK]
                 EXPORT   SWI2_IRQHandler [WEAK]
@@ -304,6 +305,7 @@ ECB_IRQHandler
 CCM_AAR_IRQHandler
 WDT_IRQHandler
 RTC1_IRQHandler
+QDEC_IRQHandler
 SWI0_EGU0_IRQHandler
 SWI1_EGU1_IRQHandler
 SWI2_IRQHandler

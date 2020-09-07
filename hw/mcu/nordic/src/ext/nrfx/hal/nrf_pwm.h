@@ -428,6 +428,16 @@ NRF_STATIC_INLINE void nrf_pwm_pins_set(NRF_PWM_Type * p_reg,
                                         uint32_t       out_pins[NRF_PWM_CHANNEL_COUNT]);
 
 /**
+ * @brief Function for getting pin selection associated with specified PWM output channel.
+ *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
+ * @param[in] channel PWM output channel.
+ *
+ * @return Pin selection associated with specified PWM output channel.
+ */
+NRF_STATIC_INLINE uint32_t nrf_pwm_pin_get(NRF_PWM_Type const * p_reg, uint8_t channel);
+
+/**
  * @brief Function for configuring the PWM peripheral.
  *
  * @param[in] p_reg      Pointer to the structure of registers of the peripheral.
@@ -542,10 +552,7 @@ NRF_STATIC_INLINE void nrf_pwm_event_clear(NRF_PWM_Type *  p_reg,
                                            nrf_pwm_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)event);
 }
 
 NRF_STATIC_INLINE bool nrf_pwm_event_check(NRF_PWM_Type const * p_reg,
@@ -643,6 +650,12 @@ NRF_STATIC_INLINE void nrf_pwm_pins_set(NRF_PWM_Type * p_reg,
     {
         p_reg->PSEL.OUT[i] = out_pins[i];
     }
+}
+
+NRF_STATIC_INLINE uint32_t nrf_pwm_pin_get(NRF_PWM_Type const * p_reg, uint8_t channel)
+{
+    NRFX_ASSERT(channel < NRF_PWM_CHANNEL_COUNT);
+    return p_reg->PSEL.OUT[channel];
 }
 
 NRF_STATIC_INLINE void nrf_pwm_configure(NRF_PWM_Type * p_reg,

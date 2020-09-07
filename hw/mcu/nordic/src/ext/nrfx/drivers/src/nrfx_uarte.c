@@ -96,6 +96,7 @@ typedef struct
     size_t                     rx_buffer_length;
     size_t                     rx_secondary_buffer_length;
     nrfx_drv_state_t           state;
+    bool                       rx_aborted;
 } uarte_control_block_t;
 static uarte_control_block_t m_cb[NRFX_UARTE_ENABLED_COUNT];
 
@@ -212,8 +213,16 @@ static void apply_workaround_for_enable_anomaly(nrfx_uarte_t const * p_instance)
         nrf_uarte_enable(p_instance->p_reg);
         nrf_uarte_task_trigger(p_instance->p_reg, NRF_UARTE_TASK_STOPRX);
 
-        while (*rxenable_reg)
-        {}
+        bool workaround_succeded;
+        // The UARTE is able to receive up to four bytes after the STOPRX task has been triggered.
+        // On lowest supported baud rate (1200 baud), with parity bit and two stop bits configured
+        // (resulting in 12 bits per data byte sent), this may take up to 40 ms.
+        NRFX_WAIT_FOR(*rxenable_reg == 0, 40000, 1, workaround_succeded);
+        if (!workaround_succeded)
+        {
+            NRFX_LOG_ERROR("Failed to apply workaround for instance with base address: %p.",
+                           (void *)p_instance->p_reg);
+        }
 
         (void)nrf_uarte_errorsrc_get_and_clear(p_instance->p_reg);
         nrf_uarte_disable(p_instance->p_reg);
@@ -313,9 +322,18 @@ void nrfx_uarte_uninit(nrfx_uarte_t const * p_instance)
     nrf_uarte_task_trigger(p_reg, NRF_UARTE_TASK_STOPTX);
 
     // Wait for TXSTOPPED event and for RXTO event, provided that there was ongoing reception.
-    while (!nrf_uarte_event_check(p_reg, NRF_UARTE_EVENT_TXSTOPPED) ||
-           (p_cb->rx_buffer_length && !nrf_uarte_event_check(p_reg, NRF_UARTE_EVENT_RXTO)))
-    {}
+    bool stopped;
+
+    // The UARTE is able to receive up to four bytes after the STOPRX task has been triggered.
+    // On lowest supported baud rate (1200 baud), with parity bit and two stop bits configured
+    // (resulting in 12 bits per data byte sent), this may take up to 40 ms.
+    NRFX_WAIT_FOR((nrf_uarte_event_check(p_reg, NRF_UARTE_EVENT_TXSTOPPED) &&
+                  (!p_cb->rx_buffer_length || nrf_uarte_event_check(p_reg, NRF_UARTE_EVENT_RXTO))),
+                  40000, 1, stopped);
+    if (!stopped)
+    {
+        NRFX_LOG_ERROR("Failed to stop instance with base address: %p.", (void *)p_instance->p_reg);
+    }
 
     nrf_uarte_disable(p_reg);
     pins_to_default(p_instance);
@@ -513,6 +531,7 @@ nrfx_err_t nrfx_uarte_rx(nrfx_uarte_t const * p_instance,
     }
     else
     {
+        p_cb->rx_aborted = false;
         nrf_uarte_int_enable(p_instance->p_reg, NRF_UARTE_INT_ERROR_MASK |
                                                 NRF_UARTE_INT_ENDRX_MASK);
     }
@@ -582,6 +601,7 @@ void nrfx_uarte_rx_abort(nrfx_uarte_t const * p_instance)
     {
         nrf_uarte_shorts_disable(p_instance->p_reg, NRF_UARTE_SHORT_ENDRX_STARTRX);
     }
+    p_cb->rx_aborted = true;
     nrf_uarte_task_trigger(p_instance->p_reg, NRF_UARTE_TASK_STOPRX);
     NRFX_LOG_INFO("RX transaction aborted.");
 }
@@ -609,11 +629,11 @@ static void uarte_irq_handler(NRF_UARTE_Type *        p_uarte,
     else if (nrf_uarte_event_check(p_uarte, NRF_UARTE_EVENT_ENDRX))
     {
         nrf_uarte_event_clear(p_uarte, NRF_UARTE_EVENT_ENDRX);
-        size_t amount = nrf_uarte_rx_amount_get(p_uarte);
-        // If the transfer was stopped before completion, amount of transfered bytes
-        // will not be equal to the buffer length. Interrupted transfer is ignored.
-        if (amount == p_cb->rx_buffer_length)
+
+        // Aborted transfers are handled in RXTO event processing.
+        if (!p_cb->rx_aborted)
         {
+            size_t amount = p_cb->rx_buffer_length;
             if (p_cb->rx_secondary_buffer_length != 0)
             {
                 uint8_t * p_data = p_cb->p_rx_buffer;

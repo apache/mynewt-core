@@ -34,10 +34,14 @@
 
 #if defined(NRF51)
     #include <nrfx_config_nrf51.h>
+#elif defined(NRF52805_XXAA)
+    #include <nrfx_config_nrf52805.h>
 #elif defined(NRF52810_XXAA)
     #include <nrfx_config_nrf52810.h>
 #elif defined(NRF52811_XXAA)
     #include <nrfx_config_nrf52811.h>
+#elif defined(NRF52820_XXAA)
+    #include <nrfx_config_nrf52820.h>
 #elif defined(NRF52832_XXAA) || defined (NRF52832_XXAB)
     #include <nrfx_config_nrf52832.h>
 #elif defined(NRF52833_XXAA)

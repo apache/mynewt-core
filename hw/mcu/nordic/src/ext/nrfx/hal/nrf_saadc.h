@@ -650,10 +650,7 @@ NRF_STATIC_INLINE bool nrf_saadc_event_check(NRF_SAADC_Type const * p_reg, nrf_s
 NRF_STATIC_INLINE void nrf_saadc_event_clear(NRF_SAADC_Type * p_reg, nrf_saadc_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)event);
 }
 
 NRF_STATIC_INLINE uint32_t  nrf_saadc_event_address_get(NRF_SAADC_Type const * p_reg,

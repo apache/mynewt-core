@@ -1,6 +1,6 @@
 /*
  
-Copyright (c) 2009-2018 ARM Limited. All rights reserved.
+Copyright (c) 2009-2020 ARM Limited. All rights reserved.
 
     SPDX-License-Identifier: Apache-2.0
 
@@ -108,7 +108,7 @@ __isr_vector:
     .long   CCM_AAR_IRQHandler
     .long   WDT_IRQHandler
     .long   RTC1_IRQHandler
-    .long   0                           /*Reserved */
+    .long   QDEC_IRQHandler
     .long   0                           /*Reserved */
     .long   SWI0_EGU0_IRQHandler
     .long   SWI1_EGU1_IRQHandler
@@ -222,10 +222,11 @@ Reset_Handler:
  *      __etext: LMA of start of the section to copy from. Usually end of text
  *      __data_start__: VMA of start of the section to copy to.
  *      __bss_start__: VMA of end of the section to copy to. Normally __data_end__ is used, but by using __bss_start__
- *                    the user can add their own initialized data section before BSS section with the INTERT AFTER command.
+ *                    the user can add their own initialized data section before BSS section with the INSERT AFTER command.
  *
  * All addresses must be aligned to 4 bytes boundary.
  */
+#ifndef __STARTUP_SKIP_ETEXT
     ldr r1, =__etext
     ldr r2, =__data_start__
     ldr r3, =__bss_start__
@@ -240,6 +241,7 @@ Reset_Handler:
     bgt .L_loop1
 
 .L_loop1_done:
+#endif
 
 /* This part of work usually is done in C library startup code. Otherwise,
  * define __STARTUP_CLEAR_BSS to enable it in this startup. This section
@@ -380,6 +382,7 @@ Default_Handler:
     IRQ  CCM_AAR_IRQHandler
     IRQ  WDT_IRQHandler
     IRQ  RTC1_IRQHandler
+    IRQ  QDEC_IRQHandler
     IRQ  SWI0_EGU0_IRQHandler
     IRQ  SWI1_EGU1_IRQHandler
     IRQ  SWI2_IRQHandler

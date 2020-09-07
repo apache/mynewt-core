@@ -312,8 +312,8 @@ void nrfx_twim_uninit(nrfx_twim_t const * p_instance)
 
     if (!p_cb->hold_bus_uninit)
     {
-        nrf_gpio_cfg_default(p_instance->p_twim->PSEL.SCL);
-        nrf_gpio_cfg_default(p_instance->p_twim->PSEL.SDA);
+        nrf_gpio_cfg_default(nrf_twim_scl_pin_get(p_instance->p_twim));
+        nrf_gpio_cfg_default(nrf_twim_sda_pin_get(p_instance->p_twim));
     }
 
     p_cb->state = NRFX_DRV_STATE_UNINITIALIZED;

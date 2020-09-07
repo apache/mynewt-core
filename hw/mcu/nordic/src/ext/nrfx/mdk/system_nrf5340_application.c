@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2009-2018 ARM Limited. All rights reserved.
+Copyright (c) 2009-2020 ARM Limited. All rights reserved.
 
     SPDX-License-Identifier: Apache-2.0
 
@@ -76,6 +76,18 @@ void SystemInit(void)
         #if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
           SAU->CTRL |= (1 << SAU_CTRL_ALLNS_Pos);
         #endif
+
+        /* Workaround for Errata 97 "ERASEPROTECT, APPROTECT, or startup problems" found at the Errata document
+           for your device located at https://infocenter.nordicsemi.com/index.jsp  */
+        if (nrf53_errata_97())
+        {
+            if (*((volatile uint32_t *)0x50004A20ul) == 0)
+            {
+                *((volatile uint32_t *)0x50004A20ul) = 0xDul;
+                *((volatile uint32_t *)0x5000491Cul) = 0x1ul;
+                *((volatile uint32_t *)0x5000491Cul) = 0x0ul;
+            }
+        }
 
         /* Trimming of the device. Copy all the trimming values from FICR into the target addresses. Trim
          until one ADDR is not initialized. */

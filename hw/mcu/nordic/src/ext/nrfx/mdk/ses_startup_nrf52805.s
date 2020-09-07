@@ -166,6 +166,9 @@ Dummy_Handler:
 .weak RTC1_IRQHandler
 .thumb_set RTC1_IRQHandler, Dummy_Handler
 
+.weak QDEC_IRQHandler
+.thumb_set QDEC_IRQHandler, Dummy_Handler
+
 .weak SWI0_EGU0_IRQHandler
 .thumb_set SWI0_EGU0_IRQHandler, Dummy_Handler
 
@@ -243,7 +246,7 @@ _vectors:
   .word   CCM_AAR_IRQHandler
   .word   WDT_IRQHandler
   .word   RTC1_IRQHandler
-  .word   0                           /*Reserved */
+  .word   QDEC_IRQHandler
   .word   0                           /*Reserved */
   .word   SWI0_EGU0_IRQHandler
   .word   SWI1_EGU1_IRQHandler

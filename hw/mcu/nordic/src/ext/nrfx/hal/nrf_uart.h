@@ -255,38 +255,38 @@ NRF_STATIC_INLINE void nrf_uart_txrx_pins_set(NRF_UART_Type * p_reg,
 NRF_STATIC_INLINE void nrf_uart_txrx_pins_disconnect(NRF_UART_Type * p_reg);
 
 /**
- * @brief Function for getting TX pin.
+ * @brief Function for getting TX pin selection.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
- * @return TX pin number.
+ * @return TX pin selection.
  */
 NRF_STATIC_INLINE uint32_t nrf_uart_tx_pin_get(NRF_UART_Type const * p_reg);
 
 /**
- * @brief Function for getting RX pin.
+ * @brief Function for getting RX pin selection.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
- * @return RX pin number.
+ * @return RX pin selection.
  */
 NRF_STATIC_INLINE uint32_t nrf_uart_rx_pin_get(NRF_UART_Type const * p_reg);
 
 /**
- * @brief Function for getting RTS pin.
+ * @brief Function for getting RTS pin selection.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
- * @return RTS pin number.
+ * @return RTS pin selection.
  */
 NRF_STATIC_INLINE uint32_t nrf_uart_rts_pin_get(NRF_UART_Type const * p_reg);
 
 /**
- * @brief Function for getting CTS pin.
+ * @brief Function for getting CTS pin selection.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
- * @return CTS pin number.
+ * @return CTS pin selection.
  */
 NRF_STATIC_INLINE uint32_t nrf_uart_cts_pin_get(NRF_UART_Type const * p_reg);
 
@@ -367,10 +367,7 @@ NRF_STATIC_INLINE void nrf_uart_baudrate_set(NRF_UART_Type * p_reg, nrf_uart_bau
 NRF_STATIC_INLINE void nrf_uart_event_clear(NRF_UART_Type * p_reg, nrf_uart_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
-#if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
-    (void)dummy;
-#endif
+    nrf_event_readback((uint8_t *)p_reg + (uint32_t)event);
 }
 
 NRF_STATIC_INLINE bool nrf_uart_event_check(NRF_UART_Type const * p_reg, nrf_uart_event_t event)
