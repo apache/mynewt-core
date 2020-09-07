@@ -22,7 +22,7 @@
 #include "hal/hal_system.h"
 #include "hal/hal_debug.h"
 #include "nrf.h"
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config.h"
 
 /**
  * Function called at startup. Called after BSS and .data initialized but

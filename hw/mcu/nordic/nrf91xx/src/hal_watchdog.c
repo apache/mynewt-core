@@ -22,7 +22,7 @@
 #include "hal/hal_watchdog.h"
 #include "mcu/cmsis_nvic.h"
 #include "nrf.h"
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config.h"
 
 static void
 nrf91_hal_wdt_default_handler(void)

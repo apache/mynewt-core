@@ -26,7 +26,7 @@
 #include <hal/hal_gpio.h>
 #include <mcu/nrf91_hal.h>
 #include "nrf_twim.h"
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config.h"
 
 #include <nrf.h>
 

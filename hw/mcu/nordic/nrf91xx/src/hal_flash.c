@@ -22,7 +22,7 @@
 #include "nrf.h"
 #include "mcu/nrf91_hal.h"
 #include <hal/hal_flash_int.h>
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config.h"
 #include "nrf_nvmc.h"
 
 #define NRF91K_FLASH_SECTOR_SZ	4096
