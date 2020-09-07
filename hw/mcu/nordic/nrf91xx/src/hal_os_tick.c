@@ -22,7 +22,7 @@
 #include "hal/hal_os_tick.h"
 #include "nrf.h"
 #include "mcu/cmsis_nvic.h"
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config.h"
 
 /* The OS scheduler requires a low-frequency timer. */
 #if MYNEWT_VAL(OS_SCHEDULING) && !MYNEWT_VAL(MCU_LFCLK_SOURCE)

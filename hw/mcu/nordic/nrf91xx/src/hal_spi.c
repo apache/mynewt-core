@@ -25,7 +25,7 @@
 #include <hal/hal_spi.h>
 #include "mcu/nrf91_hal.h"
 #include "nrf.h"
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config.h"
 
 #ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))

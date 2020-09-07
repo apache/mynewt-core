@@ -20,7 +20,7 @@
 #include <mcu/cortex_m33.h>
 #include "hal/hal_nvreg.h"
 #include "nrf.h"
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config.h"
 
 /* There are two GPREGRET registers on the NRF91 */
 #define HAL_NVREG_MAX (2)
