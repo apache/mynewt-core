@@ -110,6 +110,7 @@ da1469x_dma_init(void)
 {
     NVIC_DisableIRQ(DMA_IRQn);
     NVIC_SetVector(DMA_IRQn, (uint32_t)dma_handler);
+    NVIC_SetPriority(DMA_IRQn, MYNEWT_VAL(MCU_DMA_IRQ_PRIO));
 }
 
 struct da1469x_dma_regs *
