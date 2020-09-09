@@ -199,7 +199,7 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
         sz = crypto_encrypt_custom(crypto, algo, mode, key, keylen, ivp,
                 inbuf, outbuf, asksz);
         if (sz == asksz && memcmp(outbuf, vector->cipher, sz) == 0) {
-            printf("ok, sz=%lu\n", sz);
+            printf("ok, sz=%"PRIu32"\n", sz);
         } else {
             printf("fail\n");
         }
@@ -224,7 +224,7 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
         sz = crypto_decrypt_custom(crypto, algo, mode, key, keylen, ivp,
                 inbuf, outbuf, asksz);
         if (sz == asksz && memcmp(outbuf, vector->plain, sz) == 0) {
-            printf("ok, sz=%lu\n", sz);
+            printf("ok, sz=%"PRIu32"\n", sz);
         } else {
             printf("fail\n");
         }
@@ -268,7 +268,9 @@ run_benchmark(char *name, block_encrypt_func_t encfn, void *data, uint8_t iter)
     int i, j;
     uint8_t output[AES_BLOCK_LEN];
     uint16_t blkidx;
-    os_time_t t;
+    os_time_t t, e;
+    uint32_t ms;
+    int ret;
 
     printf("%s - running %d iterations of 4096 block encrypt... ", name, iter);
     t = os_time_get();
@@ -286,7 +288,10 @@ run_benchmark(char *name, block_encrypt_func_t encfn, void *data, uint8_t iter)
             }
         }
     }
-    printf("done in %lu ticks\n", os_time_get() - t);
+    e = os_time_get() - t;
+    ret = os_time_ticks_to_ms(e, &ms);
+    assert(ret == 0);
+    printf("done in %"PRIu32" ticks / %"PRIu32" ms\n", e, ms);
 }
 
 static void
@@ -296,7 +301,9 @@ run_cbc_bench(struct crypto_dev *crypto, uint8_t iter)
     uint8_t iv[AES_BLOCK_LEN];
     uint8_t output[AES_BLOCK_LEN];
     uint16_t blkidx;
-    os_time_t t;
+    os_time_t t, e;
+    uint32_t ms;
+    int ret;
 
     printf("AES-128-CBC - running %d iterations of 4096 block encrypt... ", iter);
     t = os_time_get();
@@ -316,7 +323,10 @@ run_cbc_bench(struct crypto_dev *crypto, uint8_t iter)
             }
         }
     }
-    printf("done in %lu ticks\n", os_time_get() - t);
+    e = os_time_get() - t;
+    ret = os_time_ticks_to_ms(e, &ms);
+    assert(ret == 0);
+    printf("done in %"PRIu32" ticks / %"PRIu32" ms\n", e, ms);
 }
 
 static void
@@ -326,7 +336,9 @@ run_ctr_bench(struct crypto_dev *crypto, uint8_t iter)
     uint8_t output[AES_BLOCK_LEN];
     uint8_t nonce[AES_BLOCK_LEN];
     uint16_t blkidx;
-    os_time_t t;
+    os_time_t t, e;
+    uint32_t ms;
+    int ret;
 
     printf("AES-128-CTR - running %d iterations of 4096 block encrypt... ", iter);
     t = os_time_get();
@@ -346,7 +358,10 @@ run_ctr_bench(struct crypto_dev *crypto, uint8_t iter)
             }
         }
     }
-    printf("done in %lu ticks\n", os_time_get() - t);
+    e = os_time_get() - t;
+    ret = os_time_ticks_to_ms(e, &ms);
+    assert(ret == 0);
+    printf("done in %"PRIu32" ticks / %"PRIu32" ms\n", e, ms);
 }
 #endif /* MYNEWT_VAL(CRYPTOTEST_BENCHMARK) */
 
