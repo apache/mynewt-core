@@ -137,7 +137,6 @@ ipc_nrf5340_isr(void)
     for (i = 0; i < IPC_MAX_CHANS; i++) {
         if (irq_pend & (0x1UL << i)) {
             NRF_IPC->EVENTS_RECEIVE[i] = 0;
-            assert(ipcs[i].cb);
             ipcs[i].cb(i, ipcs[i].user_data);
         }
     }
