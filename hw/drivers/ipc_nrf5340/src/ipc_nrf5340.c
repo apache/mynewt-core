@@ -25,7 +25,7 @@
 /* Currently this allows only for 1-1 connection. */
 
 #define IPC_MAX_CHANS MYNEWT_VAL(IPC_NRF5340_CHANNELS)
-#define IPC_BUF_SIZE (MYNEWT_VAL(IPC_NRF5340_BUF_SZ) + 1)
+#define IPC_BUF_SIZE MYNEWT_VAL(IPC_NRF5340_BUF_SZ)
 
 struct ipc_channel {
     ipc_nrf5340_recv_cb cb;
@@ -44,11 +44,7 @@ static struct ipc_shm __attribute__((section (".ipc"))) shms[IPC_MAX_CHANS];
 static uint16_t
 ipc_nrf5340_shm_get_data_length(uint16_t head, uint16_t tail)
 {
-    if (head >= tail) {
-        return head - tail;
-    }
-
-    return IPC_BUF_SIZE - (tail - head);
+    return ((unsigned int)(head - tail)) % IPC_BUF_SIZE;
 }
 
 static int
