@@ -25,7 +25,8 @@ syscfg.defs:
 
     IPC_NRF5340_BUF_SZ:
         description: >
-            Shared memory ring buffer size used for IPC (per enabled channel)
+            Shared memory ring buffer size used for IPC (per enabled channel).
+            It is recommended to use size which is power of two.
         value: 256
 
     IPC_NRF5340_SYSINIT_STAGE:
