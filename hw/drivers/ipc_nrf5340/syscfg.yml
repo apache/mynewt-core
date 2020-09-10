@@ -29,6 +29,12 @@ syscfg.defs:
             It is recommended to use size which is power of two.
         value: 256
 
+    IPC_NRF5340_BLOCKING_WRITE:
+        description: >
+            If this is set IPC write will block instead of returning and error
+            if ringbuffer is full.
+        value: 1
+
     IPC_NRF5340_SYSINIT_STAGE:
         description: >
             Sysinit stage for nRF53 IPC

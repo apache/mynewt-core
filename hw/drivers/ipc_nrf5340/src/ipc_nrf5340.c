@@ -51,12 +51,13 @@ static int
 ipc_nrf5340_shm_write(struct ipc_shm *shm, const void *data, uint16_t data_len)
 {
     uint16_t head = shm->head;
-    uint16_t tail = shm->tail;
     uint16_t len;
 
     /* check if data will fit */
-    if (data_len + ipc_nrf5340_shm_get_data_length(head, tail) >= IPC_BUF_SIZE) {
+    while (data_len + ipc_nrf5340_shm_get_data_length(head, shm->tail) >= IPC_BUF_SIZE) {
+#if !MYNEWT_VAL(IPC_NRF5340_BLOCKING_WRITE)
         return -ENOMEM;
+#endif
     }
 
     len = min(data_len, IPC_BUF_SIZE - head);
