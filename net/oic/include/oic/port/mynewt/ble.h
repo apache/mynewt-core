@@ -31,6 +31,9 @@ struct oc_endpoint_ble {
     struct oc_ep_hdr ep;
     uint8_t srv_idx;
     uint16_t conn_handle;
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
+    uint16_t tx_att_handle;
+#endif
 };
 
 /**
@@ -53,6 +56,11 @@ int oc_endpoint_is_gatt(const struct oc_endpoint *oe);
  */
 int oc_endpoint_gatt_conn_eq(const struct oc_endpoint *oe1,
                              const struct oc_endpoint *oe2);
+
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
+void oc_endpoint_gatt_create(struct oc_endpoint_ble *ep, uint16_t conn_handle,
+                             uint16_t attr_handle);
+#endif
 
 #ifdef __cplusplus
 }

@@ -52,6 +52,11 @@ int oc_ble_coap_gatt_srv_init(void);
 void oc_ble_coap_conn_new(uint16_t conn_handle);
 void oc_ble_coap_conn_del(uint16_t conn_handle);
 
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
+void oc_ble_coap_gatt_notify_rx(uint16_t conn_handle, uint16_t att_handle,
+                                struct os_mbuf *om);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

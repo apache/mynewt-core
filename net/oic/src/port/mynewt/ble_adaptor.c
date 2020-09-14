@@ -192,6 +192,7 @@ static const struct ble_gatt_svc_def oc_gatt_svr_svcs[] = { {
     },
 };
 
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 0)
 /*
  * Look up service index based on characteristic handle from request.
  */
@@ -207,6 +208,8 @@ oc_ble_req_attr_to_idx(uint16_t attr_handle)
     }
     return -1;
 }
+#endif
+
 
 static uint8_t
 oc_ep_gatt_size(const struct oc_endpoint *oe)
@@ -321,8 +324,11 @@ oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
     switch (ctxt->op) {
     case BLE_GATT_ACCESS_OP_WRITE_CHR:
         m = ctxt->om;
-
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
+        srv_idx = OC_BLE_SRV_NONE;
+#else
         srv_idx = oc_ble_req_attr_to_idx(attr_handle);
+#endif
         assert(srv_idx >= 0);
         rc = oc_ble_reass(m, conn_handle, srv_idx);
         if (rc) {
@@ -390,6 +396,32 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
 
     oc_stream_conn_del(&oc_ble_r, &ep_desc);
 }
+
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
+void
+oc_endpoint_gatt_create(struct oc_endpoint_ble *ep, uint16_t conn_handle,
+                        uint16_t attr_handle)
+{
+    ep->ep.oe_type = oc_gatt_transport_id;
+    ep->conn_handle = conn_handle;
+    ep->tx_att_handle = attr_handle;
+    ep->srv_idx = OC_BLE_SRV_NONE;
+}
+#endif
+
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
+void
+oc_ble_coap_gatt_notify_rx(uint16_t conn_handle, uint16_t att_handle,
+                           struct os_mbuf *om)
+{
+    struct ble_gatt_access_ctxt ctxt = {
+            .op = BLE_GATT_ACCESS_OP_WRITE_CHR,
+            .om = om,
+    };
+    oc_gatt_chr_access(conn_handle, att_handle, &ctxt, NULL);
+    om = NULL;
+}
+#endif
 
 /*
  * This runs in the context of task handling coap.
@@ -500,11 +532,14 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     STATS_INC(oc_ble_stats, oframe);
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
 
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
+    attr_handle = oe_ble->tx_att_handle;
+#else
     if (oe_ble->srv_idx >= OC_BLE_SRV_CNT) {
         goto err;
     }
     attr_handle = oc_ble_srv_handles[oe_ble->srv_idx].rsp;
-
+#endif
     mtu = ble_att_mtu(conn_handle);
     if (mtu < 4) {
         oc_ble_coap_conn_del(conn_handle);
@@ -519,8 +554,11 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     while (1) {
         STATS_INC(oc_ble_stats, oseg);
         pkt = STAILQ_NEXT(OS_MBUF_PKTHDR(m), omp_next);
-
+#if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
+        ble_gattc_write_no_rsp(conn_handle, attr_handle, m);
+#else
         ble_gattc_notify_custom(conn_handle, attr_handle, m);
+#endif
         if (pkt) {
             m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
         } else {

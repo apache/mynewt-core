@@ -64,6 +64,10 @@ syscfg.defs:
         description: 'Enables OIC server support'
         value: '0'
 
+    OC_BLE_CENTRAL:
+        description: 'Send messages as characteristic writes'
+        value: '0'
+
     OC_DEBUG:
         description: 'Enables OIC debug logs'
         value: '0'
