@@ -381,6 +381,7 @@ enum bmp388_int_type {
 enum bmp388_read_mode {
     BMP388_READ_M_POLL = 0,
     BMP388_READ_M_STREAM = 1,
+    BMP388_READ_M_HYBRID = 2,
 };
 
 /* Read mode configuration */
@@ -719,6 +720,7 @@ struct bmp388 {
 #endif
     /* Variable used to hold stats data */
     STATS_SECT_DECL(bmp388_stat_section) stats;
+    bool bmp388_cfg_complete;
 };
 
 /**
