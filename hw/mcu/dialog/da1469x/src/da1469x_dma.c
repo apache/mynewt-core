@@ -38,7 +38,7 @@
             ((_periph) << ((_cidx) * 2));           \
     } while (0)
 #define MCU_DMA_GET_MUX(_cidx)                      \
-    (DMA->DMA_REQ_MUX_REG >> ((_cidx) * 4) & 0xf)
+    ((DMA->DMA_REQ_MUX_REG >> ((_cidx) * 2)) & 0xf)
 
 struct da1469x_dma_interrupt_cfg {
     da1469x_dma_interrupt_cb cb;
@@ -133,7 +133,12 @@ da1469x_dma_acquire_single(int cidx)
 
     chan = MCU_DMA_CIDX2CHAN(cidx);
 
-    MCU_DMA_SET_MUX(cidx, MCU_DMA_PERIPH_NONE);
+    /*
+     * DMA_REQ_MUX_REG applies only to channels < 8
+     */
+    if (cidx < 8) {
+        MCU_DMA_SET_MUX(cidx, MCU_DMA_PERIPH_NONE);
+    }
 
     chan->DMA_CTRL_REG &= ~DMA_DMA0_CTRL_REG_DREQ_MODE_Msk;
 
@@ -181,8 +186,10 @@ da1469x_dma_release_channel(struct da1469x_dma_regs *chan)
     /*
      * If corresponding pair for this channel is configured for triggering from
      * peripheral, we'll use lower of channel index.
+     *
+     * Only channels 0-7 can use pairs for peripherals.
      */
-    if (MCU_DMA_GET_MUX(cidx) != MCU_DMA_PERIPH_NONE) {
+    if (cidx < 8 && MCU_DMA_GET_MUX(cidx) != MCU_DMA_PERIPH_NONE) {
         cidx &= 0xfe;
         chan = MCU_DMA_CIDX2CHAN(cidx);
 
@@ -201,7 +208,6 @@ da1469x_dma_release_channel(struct da1469x_dma_regs *chan)
     } else {
         chan->DMA_CTRL_REG &= ~DMA_DMA0_CTRL_REG_DMA_ON_Msk;
         g_da1469x_dma_acquired &= ~(1 << cidx);
-
         g_da1469x_dma_isr_set &= ~(1 << cidx);
         DMA->DMA_CLEAR_INT_REG = 1 << cidx;
         memset(&g_da1469x_dma_isr_cfg[cidx], 0,
