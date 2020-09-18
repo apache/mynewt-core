@@ -457,6 +457,7 @@ This product bundles FATFS, which is available under a
 This product bundles part of linker scripts from Nordic Semiconductor,
 which is available under the "modified Tcl/Tk" license.  Bundled files are:
     * hw/mcu/ambiq/apollo2/apollo2.ld
+    * hw/mcu/dialog/cmac/cmac.ld
     * hw/mcu/dialog/da1469x/da1469x.ld
     * hw/mcu/dialog/da1469x/da1469x_ram_resident.ld
     * hw/mcu/nordic/nrf51xxx/nrf51.ld
@@ -691,6 +692,8 @@ under the "3-clause BSD" license. For details, see:
 This product bundles part of DA1469 SDK by Dialog Semiconductor which is
 available under the "3-clause BSD" license. Bundled files are:
     * hw/mcu/dialog/include/DA1469xAB.h
+    * hw/mcu/dialog/include/CMAC.h
+    * hw/mcu/dialog/include/system_CMAC.h
 
 This product bundles part of tinyusb which is available under the MIT license. Bundled files are:
     * hw/usb/tinyusb/std_descriptors/include/tusb_config.h
