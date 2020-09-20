@@ -3142,7 +3142,7 @@ bmp388_stream_read(struct sensor *sensor,
     /* FIFO object to be assigned to device structure */
     struct bmp3_fifo fifo;
     /* Pressure and temperature array of structures with maximum frame size */
-    struct bmp3_data sensor_data[74];
+    struct bmp3_data sensor_data[MYNEWT_VAL(BMP388_FIFO_CONVERTED_DATA_SIZE)];
     /* Loop Variable */
     uint8_t i;
     uint16_t frame_length;
@@ -3231,8 +3231,9 @@ bmp388_stream_read(struct sensor *sensor,
 #endif
 
     if (time_ms != 0) {
-        if (time_ms > BMP388_MAX_STREAM_MS)
+        if (time_ms > BMP388_MAX_STREAM_MS) {
             time_ms = BMP388_MAX_STREAM_MS;
+        }
         rc = os_time_ms_to_ticks(time_ms, &time_ticks);
         if (rc) {
             goto err;
@@ -3366,6 +3367,246 @@ err:
     return rc;
 }
 
+int
+bmp388_hybrid_read(struct sensor *sensor,
+                   sensor_type_t sensor_type,
+                   sensor_data_func_t read_func,
+                   void *read_arg,
+                   uint32_t time_ms)
+{
+    int rc;
+    struct bmp388 *bmp388;
+    struct bmp388_cfg *cfg;
+    os_time_t time_ticks;
+    os_time_t stop_ticks = 0;
+    uint16_t try_count;
+    
+#if MYNEWT_VAL(BMP388_FIFO_ENABLE)
+    /* FIFO object to be assigned to device structure */
+    struct bmp3_fifo fifo;
+    /* Pressure and temperature array of structures with maximum frame size */
+    struct bmp3_data sensor_data[MYNEWT_VAL(BMP388_FIFO_CONVERTED_DATA_SIZE)];
+    /* Loop Variable */
+    uint8_t i;
+    uint16_t frame_length;
+    /* Enable fifo */
+    fifo.settings.mode = BMP3_ENABLE;
+    /* Enable Pressure sensor for fifo */
+    fifo.settings.press_en = BMP3_ENABLE;
+    /* Enable temperature sensor for fifo */
+    fifo.settings.temp_en = BMP3_ENABLE;
+    /* Enable fifo time */
+    fifo.settings.time_en = BMP3_ENABLE;
+    /* No subsampling for FIFO */
+    fifo.settings.down_sampling = BMP3_FIFO_NO_SUBSAMPLING;
+    fifo.sensortime_updated = false;
+    uint16_t current_fifo_len;
+#else
+    struct bmp3_data sensor_data;
+#endif
+
+    /* If the read isn't looking for pressure or temperature data, don't do anything. */
+    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) &&
+            (!(sensor_type & SENSOR_TYPE_TEMPERATURE))) {
+        BMP388_LOG_ERROR("unsupported sensor type for bmp388\n");
+        return SYS_EINVAL;
+    }
+
+    bmp388 = (struct bmp388 *)SENSOR_GET_DEVICE(sensor);
+    
+    cfg = &bmp388->cfg;
+
+    if (cfg->read_mode.mode != BMP388_READ_M_HYBRID) {
+        BMP388_LOG_ERROR("*****bmp388_hybrid_read mode is not hybrid\n");
+        return SYS_EINVAL;
+    }
+
+    if (bmp388->bmp388_cfg_complete == false) {
+        /* no interrupt feature */
+        /* enable normal mode for fifo feature */
+        rc = bmp388_set_normal_mode(bmp388);
+        if (rc) {
+            BMP388_LOG_ERROR("******bmp388_set_normal_mode failed %d\n", rc);
+            goto error;
+        }
+
+        rc = bmp3_fifo_flush(&bmp388->bmp3_dev); 
+        if(rc) {
+            BMP388_LOG_ERROR("fifo flush failed, error=0x%02x\n", rc);
+            goto error;
+        }
+        
+        rc = bmp388_set_fifo_cfg(bmp388, cfg->fifo_mode, cfg->fifo_threshold);
+        if(rc) {
+            BMP388_LOG_ERROR("set fifo failed, error=0x%02x\n", rc);
+            goto error;
+        }
+#if MYNEWT_VAL(BMP388_INT_ENABLE)
+        rc = bmp388_set_int_enable(bmp388, 1, bmp388->cfg.read_mode.int_type);
+        if(rc) {
+            BMP388_LOG_ERROR("set int enable failed, error=0x%02x\n", rc);
+            goto error;
+        }
+        rc = bmp388_clear_int(bmp388);
+        if(rc) {
+            BMP388_LOG_ERROR("clear int failed, error=0x%02x\n", rc);
+            goto error;
+        }
+#endif
+        bmp388->bmp388_cfg_complete = true;
+    }
+     
+    
+#if MYNEWT_VAL(BMP388_FIFO_ENABLE)
+    bmp388->bmp3_dev.fifo = &fifo;
+
+    fifo.data.req_frames = bmp388->bmp3_dev.fifo_watermark_level;
+#endif
+    
+    if (time_ms != 0) {
+        if (time_ms > BMP388_MAX_STREAM_MS) {
+            time_ms = BMP388_MAX_STREAM_MS;
+        }
+        rc = os_time_ms_to_ticks(time_ms, &time_ticks);
+        if (rc) {
+            goto error;
+        }
+        stop_ticks = os_time_get() + time_ticks;
+    }
+
+
+#if MYNEWT_VAL(BMP388_FIFO_ENABLE)
+    try_count = 0xA;
+
+    do {
+        rc = bmp3_get_status(&bmp388->bmp3_dev);
+        rc |= bmp3_get_fifo_length(&current_fifo_len, &bmp388->bmp3_dev);
+        delay_msec(2);
+#if MYNEWT_VAL(BMP388_INT_ENABLE)
+    } while (((bmp388->bmp3_dev.status.intr.fifo_wm == 0) &&
+                  (bmp388->bmp3_dev.status.intr.fifo_full == 0)) && (try_count > 0));
+
+#else
+    } while ((--try_count > 0) && (rc != BMP3_OK));
+#endif
+
+    if ((rc != BMP3_OK) || (try_count == 0)) {
+#if FIFOPARSE_DEBUG
+        BMP388_LOG_ERROR("*****status %d\n", rc);
+        BMP388_LOG_ERROR("*****try_count is %d\n", try_count);
+        BMP388_LOG_ERROR("*****fifo length is %d\n", current_fifo_len);
+#endif
+        BMP388_LOG_ERROR("*****BMP388 STATUS READ FAILED\n");
+        goto error;
+    }
+
+    rc = bmp3_get_fifo_data(&bmp388->bmp3_dev);
+    if(rc != BMP3_OK) {
+        BMP388_LOG_ERROR("*****BMP388 FIFO READ FAILED\n");
+        goto error;
+    }
+   
+#if MYNEWT_VAL(BMP388_INT_ENABLE)
+    rc = bmp388_clear_int(bmp388);
+    if (rc) {
+        BMP388_LOG_ERROR("Could not clear int src err=0x%02x\n", rc);
+        goto error;
+    }
+#endif
+
+    if (fifo.settings.time_en) {
+        fifo.no_need_sensortime = false;
+    } else {
+        fifo.no_need_sensortime = true;
+    }
+
+    rc = bmp3_extract_fifo_data(sensor_data, &bmp388->bmp3_dev);
+    
+    if (fifo.data.frame_not_available) {
+        /* No valid frame read */
+        BMP388_LOG_ERROR("*****No valid Fifo Frames %d\n", rc);
+        goto error;
+    } else {
+#if BMP388_DEBUG
+        BMP388_LOG_ERROR("*****parsed_frames is %d\n", fifo.data.parsed_frames);
+#endif
+        frame_length = fifo.data.parsed_frames;
+
+        for(i = 0; i < frame_length; i++) {
+            rc = bmp388_do_report(sensor, sensor_type, read_func, read_arg, &sensor_data[i]);
+            
+            if(rc) {
+                BMP388_LOG_ERROR("*****BMP388_DO_REPORT FAILED %d\n", rc);
+                goto error;
+            }
+        }
+
+        if (fifo.sensortime_updated) {
+            BMP388_LOG_ERROR("*****BMP388 SENSOR TIME %d\n", fifo.data.sensor_time);
+            fifo.sensortime_updated = false;
+        }
+    }
+
+#else /* FIFO NOT ENABLED */
+    if (bmp388->cfg.fifo_mode == BMP388_FIFO_M_BYPASS) {
+        /* make data is available */
+        try_count = 5; 
+
+
+        do {
+            rc = bmp3_get_status(&bmp388->bmp3_dev);
+#if MYNEWT_VAL(BMP388_INT_ENABLE)
+            if(bmp388->bmp3_dev.status.intr.drdy) {
+                break;
+            }
+#else
+            if((bmp388->bmp3_dev.status.sensor.drdy_press) &&
+                    (bmp388->bmp3_dev.status.sensor.drdy_temp)) {
+                break;
+            }
+#endif       
+            delay_msec(2);
+#if FIFOPARSE_DEBUG
+            BMP388_LOG_ERROR("*****status %d\n", rc);
+#endif
+        } while (--try_count > 0);
+
+        rc = bmp388_get_sensor_data(bmp388, &sensor_data);
+        if (rc) {
+            BMP388_LOG_ERROR("bmp388_get_sensor_data failed %d\n", rc);
+            goto error;
+        }
+
+        rc = bmp388_do_report(sensor, sensor_type, read_func, read_arg, &sensor_data);
+        if (rc) {
+            BMP388_LOG_ERROR("bmp388_do_report failed %d\n", rc);
+            goto error;
+        }
+
+    }
+#endif /* #if MYNEWT_VAL(BMP388_FIFO_ENABLE) */
+
+    if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
+        BMP388_LOG_INFO("stream time expired\n");
+        BMP388_LOG_INFO("you can make BMP388_MAX_STREAM_MS bigger to extend stream time duration\n");
+        goto error;
+    } 
+
+    return rc;
+
+error:
+    /* reset device */
+    rc = bmp388_set_power_mode(bmp388, cfg->power_mode);
+    if (rc) {
+        BMP388_LOG_ERROR("Could not set power mode err=0x%02x\n", rc);
+    }
+    bmp388->bmp388_cfg_complete = false;
+
+    return rc;
+
+}   /* bmp388_hybrid_read */
+
+
 static int
 bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
                    sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
@@ -3416,8 +3657,10 @@ bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     if (cfg->read_mode.mode == BMP388_READ_M_POLL) {
         rc = bmp388_poll_read(sensor, type, data_func, data_arg, timeout);
-    } else {
+    } else if (cfg->read_mode.mode == BMP388_READ_M_STREAM) {
         rc = bmp388_stream_read(sensor, type, data_func, data_arg, timeout);
+    } else { /* hybrid mode */
+        rc = bmp388_hybrid_read(sensor, type, data_func, data_arg, timeout);
     }
 err:
     if (rc) {

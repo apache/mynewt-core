@@ -71,6 +71,11 @@ syscfg.defs:
         description: >
             Number of OS ticks to wait for each I2C transaction to complete.
         value: 3
+    BMP388_FIFO_CONVERTED_DATA_SIZE:
+        description: >
+            The number of available bmp3_data structs to hold the converted
+            sensor data that is read from the device.
+        value: 74
 
     ### Log settings.
 
