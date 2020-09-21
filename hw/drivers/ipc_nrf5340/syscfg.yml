@@ -40,5 +40,13 @@ syscfg.defs:
             Sysinit stage for nRF53 IPC
         value: 10
 
+    IPC_NRF5340_NET_GPIO:
+        description: >
+            List of comma separated GPIO that should be configured for Network
+            Core usage. Can be define numeric or with constants from bsp.h
+            eg "LED_1, LED_2" or "1, 2". Further GPIO configuration should be
+            done by Network Core.
+        value: ""
+
 syscfg.restrictions:
     - "!BSP_NRF5340 || BSP_NRF5340_NET_ENABLE"
