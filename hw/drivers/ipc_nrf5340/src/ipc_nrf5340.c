@@ -21,6 +21,8 @@
 #include <os/os.h>
 #include <ipc_nrf5340/ipc_nrf5340.h>
 #include <nrfx.h>
+#include <mcu/nrf5340_hal.h>
+#include <bsp/bsp.h>
 
 /* Currently this allows only for 1-1 connection. */
 
@@ -148,17 +150,31 @@ ipc_nrf5340_isr(void)
 void
 ipc_nrf5340_init(void)
 {
-    int channel;
+    int i;
 
 #if MYNEWT_VAL(BSP_NRF5340)
+#if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
+    unsigned int gpios[] = { MYNEWT_VAL(IPC_NRF5340_NET_GPIO) };
+    NRF_GPIO_Type *nrf_gpio;
+#endif
+
     /* Make sure network core if off when we set up IPC */
-    NRF_RESET_S->NETWORK.FORCEOFF  = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
+    NRF_RESET_S->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
     memset(shms, 0, sizeof(shms));
+
+#if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
+    /* Configure GPIOs for Networking Core */
+    for (i = 0; i < ARRAY_SIZE(gpios); i++) {
+        nrf_gpio = HAL_GPIO_PORT(gpios[i]);
+        nrf_gpio->PIN_CNF[HAL_GPIO_INDEX(gpios[i])] =
+            GPIO_PIN_CNF_MCUSEL_NetworkMCU << GPIO_PIN_CNF_MCUSEL_Pos;
+    }
+#endif
 #endif
 
     /* Enable IPC channels */
-    for (channel = 0; channel < IPC_MAX_CHANS; channel++) {
-        NRF_IPC->SEND_CNF[channel] = (0x01UL << channel);
+    for (i = 0; i < IPC_MAX_CHANS; i++) {
+        NRF_IPC->SEND_CNF[i] = (0x01UL << i);
     }
 
     NVIC_SetVector(IPC_IRQn, (uint32_t)ipc_nrf5340_isr);
