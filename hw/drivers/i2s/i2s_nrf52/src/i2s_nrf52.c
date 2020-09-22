@@ -167,31 +167,59 @@ i2s_driver_stop(struct i2s *i2s)
     return 0;
 }
 
+/* Settings are stored for following sampling frequencies:
+ * 8000, 16000, 22050, 32000, 441000, 48000 */
+struct i2s_clock_cfg {
+    nrf_i2s_mck_t mck_setup;
+    nrf_i2s_ratio_t ratio;
+};
+
+static const uint16_t sample_rates[] = { 8000, 16000, 22050, 32000, 44100, 48000 };
+
+static const struct i2s_clock_cfg mck_for_8_16_bit_samples[] = {
+    { NRF_I2S_MCK_32MDIV125, NRF_I2S_RATIO_32X}, /*  8000:  8000     LRCK error  0.0% */
+    { NRF_I2S_MCK_32MDIV63, NRF_I2S_RATIO_32X},  /* 16000: 15873.016 LRCK error -0.8% */
+    { NRF_I2S_MCK_32MDIV15, NRF_I2S_RATIO_96X},  /* 22050: 22222.222 LRCK error  0.8% */
+    { NRF_I2S_MCK_32MDIV31, NRF_I2S_RATIO_32X},  /* 32000: 32258.065 LRCK error  0.8% */
+    { NRF_I2S_MCK_32MDIV23, NRF_I2S_RATIO_32X},  /* 44100: 43478.261 LRCK error -1.4% */
+    { NRF_I2S_MCK_32MDIV21, NRF_I2S_RATIO_32X}   /* 48000: 47619.048 LRCK error -0.8% */
+};
+
+static const struct i2s_clock_cfg mck_for_24_bit_samples[] = {
+    { NRF_I2S_MCK_32MDIV21, NRF_I2S_RATIO_192X}, /*  8000:  7936.508 LRCK error -0.8% */
+    { NRF_I2S_MCK_32MDIV42, NRF_I2S_RATIO_48X},  /* 16000: 15873.016 LRCK error -0.8% */
+    { NRF_I2S_MCK_32MDIV30, NRF_I2S_RATIO_48X},  /* 22050: 22222.222 LRCK error  0.8% */
+    { NRF_I2S_MCK_32MDIV21, NRF_I2S_RATIO_48X},  /* 32000: 31746.032 LRCK error -0.8% */
+    { NRF_I2S_MCK_32MDIV15, NRF_I2S_RATIO_48X},  /* 44100: 44444.444 LRCK error  0.8% */
+    { NRF_I2S_MCK_32MDIV15, NRF_I2S_RATIO_48X}   /* 48000: 44444.444 LRCK error -7.4% */
+};
+
 static void
 nrf52_select_i2s_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
 {
-    cfg->ratio = NRF_I2S_RATIO_32X;
-    switch (sample_rate) {
-    case 16000:
-        cfg->mck_setup = NRF_I2S_MCK_32MDIV63;
-        break;
-    case 22500:
-        cfg->mck_setup = NRF_I2S_MCK_32MDIV42;
-        break;
-    case 32000:
-        cfg->mck_setup = NRF_I2S_MCK_32MDIV31;
-        break;
-    case 441000:
-        cfg->mck_setup = NRF_I2S_MCK_32MDIV23;
-        break;
-    case 48000:
-        cfg->ratio = NRF_I2S_RATIO_48X;
-        cfg->mck_setup = NRF_I2S_MCK_32MDIV21;
-        break;
-    default:
-        assert(0);
-        cfg->mck_setup = NRF_I2S_MCK_32MDIV63;
+    int i;
+
+    if (cfg->ratio != 0 || cfg->mck_setup != 0) {
+        /* User provided custom clock setup, no need to use stock values */
+        return;
     }
+    for (i = 0; i < ARRAY_SIZE(sample_rates); ++i) {
+        if (sample_rates[i] == sample_rate) {
+            if (cfg->sample_width == NRF_I2S_SWIDTH_8BIT ||
+                cfg->sample_width == NRF_I2S_SWIDTH_16BIT) {
+                cfg->ratio = mck_for_8_16_bit_samples[i].ratio;
+                cfg->mck_setup = mck_for_8_16_bit_samples[i].mck_setup;
+            } else if (cfg->sample_width == NRF_I2S_SWIDTH_24BIT) {
+                cfg->ratio = mck_for_24_bit_samples[i].ratio;
+                cfg->mck_setup = mck_for_24_bit_samples[i].mck_setup;
+            } else {
+                /* Invalid value of sample_width */
+                assert(0);
+            }
+            break;
+        }
+    }
+    assert(cfg->mck_setup);
 }
 
 int
