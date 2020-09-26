@@ -106,6 +106,10 @@ syscfg.vals:
     SPIFLASH_TCE_TYPICAL:   3000000 # Chip erase time (us)
     SPIFLASH_TCE_MAXIMUM:   10000000 # Maximum chip erase time (us)
 
+    # The default PineTime bootloader will setup a 7 second watchdog
+    SANITY_INTERVAL: 5000
+    WATCHDOG_INTERVAL: 7000
+
 syscfg.vals.BSP_BATTERY:
     # ADC needed for battery voltage
     ADC_0: 1
