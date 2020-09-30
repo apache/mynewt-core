@@ -25,7 +25,7 @@
 #include <battery/battery_prop.h>
 #include <battery/battery_drv.h>
 
-#define BATTERY_MAX_COUNT 1
+#define BATTERY_MAX_COUNT MYNEWT_VAL(BATTERY_MAX_COUNT)
 
 #define GET_BIT(arr, bit)   ((arr)[(bit) / 32] & (1 << ((bit) % 32)))
 

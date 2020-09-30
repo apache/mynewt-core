@@ -26,6 +26,11 @@ syscfg.defs:
             Specify the eventq to be used by the battery manager
         value:
 
+    BATTERY_MAX_COUNT:
+        description: >
+            Maximum number of batteries.
+        value: 1
+
     BATTERY_MAX_PROPERTY_COUNT:
         description: >
             Maximum number of supported battery properties. Number should
