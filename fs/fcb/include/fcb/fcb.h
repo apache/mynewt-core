@@ -151,3 +151,7 @@ int fcb_area_info(struct fcb *fcb, struct flash_area *fa, int *elemsp,
 #endif
 
 #endif /* __SYS_FLASHVAR_H_ */
+
+/**
+ * @} FCB
+ */

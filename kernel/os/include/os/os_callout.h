@@ -22,7 +22,7 @@
 /**
  * @addtogroup OSKernel
  * @{
- *   @defgroup OSCallouts 
+ *   @defgroup OSCallouts  OS Callouts
  *   @{
  */
 

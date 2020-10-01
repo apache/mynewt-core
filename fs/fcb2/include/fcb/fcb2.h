@@ -314,3 +314,7 @@ int fcb2_area_info(struct fcb2 *fcb, int sector, int *elemsp, int *bytesp);
 #endif
 
 #endif /* __SYS_FLASHVAR_H_ */
+
+/**
+ * @} FCB2
+ */

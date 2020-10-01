@@ -248,9 +248,3 @@ int json_read_array(struct json_buffer *, const struct json_array_t *);
 #endif
 
 #endif /* _JSON_H_ */
-
-/**
- *   @} OSEncoding
- * @} OSJSON
- */
-

@@ -35,8 +35,8 @@
 extern "C" {
 #endif
 
-/**  
- * @defgroup SensorAPI 
+/**
+ * @defgroup SensorAPI Sensor API
  * @{
  */
 
@@ -702,7 +702,7 @@ void sensor_unlock(struct sensor *sensor);
  */
 
 /**
- * @defgroup SensorListenerAPI
+ * @defgroup SensorListenerAPI Sensor listener API
  * @{
  */
 
@@ -749,7 +749,7 @@ int sensor_register_err_func(struct sensor *sensor,
  */
 
 /**
- * @defgroup SensorNotifierAPI
+ * @defgroup SensorNotifierAPI Sensor notifier API
  * @{
  */
 
@@ -781,7 +781,7 @@ int sensor_unregister_notifier(struct sensor *sensor, struct sensor_notifier *no
  */
 
 /**
- * @defgroup SensorAPI
+ * @defgroup SensorAPI Sensor API
  * @{
  */
 
@@ -887,7 +887,7 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
 
 
 /**
- *   @defgroup SensorManagerAPI
+ *   @defgroup SensorManagerAPI Sensor manager API
      @{
  */
 
