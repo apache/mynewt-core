@@ -21,7 +21,7 @@
 /**
  * @addtogroup OSKernel
  * @{
- *   @defgroup OSMalloc
+ *   @defgroup OSMalloc OS malloc
  *   @{
  */
 

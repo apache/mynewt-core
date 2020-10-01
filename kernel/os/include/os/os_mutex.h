@@ -127,3 +127,8 @@ static inline uint16_t os_mutex_get_level(struct os_mutex *mu)
 #endif
 
 #endif  /* _OS_MUTEX_H_ */
+
+/**
+ *   @} OSMutex
+ * @} OSKernel
+ */
