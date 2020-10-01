@@ -80,7 +80,7 @@ required. The log package comes with three pre-built log handlers:
 -  cbmem -- writes/reads log events to a circular buffer. Supports
    walking and reading for access by newtmgr and shell commands.
 -  fcb -- writes/reads log events to a :doc:`flash circular
-   buffer <../../fcb/fcb>`. Supports walking and reading for
+   buffer <../fcb/fcb>`. Supports walking and reading for
    access by newtmgr and shell commands.
 
 In addition, it is possible to create custom log handlers for other

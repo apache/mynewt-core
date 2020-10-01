@@ -8,7 +8,7 @@ function to register a listener that specifies the callback function and
 the types of sensor data to listen for from a sensor device.
 
 When the ``sensor_read()`` function defined in the :doc:`sensor
-API <../os/modules/sensor_framework/sensor_api>` is called to read
+API <sensor_api>` is called to read
 the sensor data for the specified sensor types from a sensor, the
 ``sensor_read()`` function calls the listener callback, passing it the
 sensor data that is read from the sensor.

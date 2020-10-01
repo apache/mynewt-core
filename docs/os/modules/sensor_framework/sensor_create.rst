@@ -37,7 +37,7 @@ application. For example:
 2. Include the "<sensorname>/<sensorname>.h" header file. The BSP uses
 the functions and data structures that a device driver package exports.
 See the :doc:`Sensor Device
-Driver <../os/modules/sensor_framework/sensor_driver>` page for
+Driver <sensor_driver>` page for
 details.
 
 3. Declare a variable named ``sensorname`` of type

@@ -4,6 +4,11 @@ Flash
 The hardware independent interface to flash memory that is used by
 applications.
 
+.. toctree::
+    :hidden:
+
+    hal_flash_int
+
 Description
 ~~~~~~~~~~~
 

@@ -4,7 +4,7 @@ Shell
 The shell runs above the console and provides two functionalities:
 
 -  Processes console input. See the :doc:`Enabling the Console and Shell
-   tutorial <../../../tutorials/blinky_console>` for example of the
+   tutorial <../../../tutorials/blinky/blinky_console>` for example of the
    shell.
 -  Implements the :doc:`newtmgr <../../../newtmgr/index>` line
    protocol over serial transport.
@@ -259,7 +259,7 @@ structures hold help texts for a shell command.
     struct shell_param {
         const char *param_name;
         const char *help;
-    };`
+    };
 
 +------------------+--------------------------------------------------------+
 | Element          | Description                                            |
