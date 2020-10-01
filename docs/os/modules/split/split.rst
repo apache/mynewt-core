@@ -90,7 +90,7 @@ Tutorial
 --------
 
 Building a Split Image
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 We will be referring to the Nordic PCA10028 (nRF51 DK) for examples in
 this document. Let's take a look at this board's flash map (defined in
@@ -291,7 +291,7 @@ via either the ``newt load`` or ``newt run`` command.
     Loading loader image into slot 1
 
 Image Management
-~~~~~~~~~~~~~~~~
+----------------
 
 Retrieve Current State (image list)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

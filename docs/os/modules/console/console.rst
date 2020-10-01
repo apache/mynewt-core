@@ -216,7 +216,7 @@ is received. The two event queues are used as follows:
    available for the console to use for buffering input data.
 
    The caller must initialize the avail_queue and initialize and add an
-   :doc:`../../os/core_os/event_queue/event_queue` to the
+   :doc:`../../core_os/event_queue/event_queue` to the
    avail_queue before calling the :c:func:`console_set_queues()` function.
    The fields for the event should be set as follows:
 

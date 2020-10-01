@@ -43,14 +43,14 @@ object:
 **Notes**:
 
 -  See the :doc:`Sensor Device
-   Driver <../os/modules/sensor_framework/sensor_driver>` page for
+   Driver <sensor_driver>` page for
    the functions and data structures that a sensor driver package
    exports.
 
 -  The ``<sensorname>_init()`` function must also call the
    ``sensor_mgr_register()`` function to register the sensor with the
    sensor manager. See the :doc:`Sensor Manager
-   API <../os/modules/sensor_framework/sensor_mgr_api>` for
+   API <sensor_mgr_api>` for
    details.
 
 Setting the Configured Sensor Types
@@ -95,7 +95,7 @@ sensor at specified poll intervals. An application must call the
 in order for poller to poll the sensor.
 
 **Note:** An application needs to register a :doc:`sensor
-listener <../os/modules/sensor_framework/sensor_listener_api>` to
+listener <sensor_listener_api>` to
 receive the sensor data that the sensor manager poller reads from a
 sensor.
 
@@ -112,8 +112,8 @@ Sensor Object
 
 The ``struct sensor`` data structure represents the sensor device. The
 sensor API, the :doc:`sensor manager
-API <../os/modules/sensor_framework/sensor_mgr_api>`, and the :doc:`sensor
-listener API <../os/modules/sensor_framework/sensor_listener_api>`
+API <sensor_mgr_api>`, and the :doc:`sensor
+listener API <sensor_listener_api>`
 all operate on the ``sensor`` object abstraction. A sensor is maintained
 in the sensor manager global sensors list.
 
