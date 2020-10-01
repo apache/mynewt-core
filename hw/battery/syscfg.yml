@@ -36,3 +36,8 @@ syscfg.defs:
         description: >
             Sysinit stage for battery functionality.
         value: 501
+
+    BATTERY_DRIVERS_MAX:
+        description: >
+            Number of battery drivers that can be registered.
+        value: 2
