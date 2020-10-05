@@ -283,17 +283,17 @@ syscfg.defs:
         value: ''
 
     SPI_3_MASTER:
-        description: 'SPI 2 master'
+        description: 'SPI 3 master'
         value:  0
         restrictions:
             - "!SPI_3_SLAVE"
     SPI_3_SLAVE:
-        description: 'SPI 2 slave'
+        description: 'SPI 3 slave'
         value:  0
         restrictions:
             - "!SPI_3_MASTER"
     SPI_3:
-        description: 'SPI 2 enabled'
+        description: 'SPI 3 enabled'
         value: 'MYNEWT_VAL_SPI_3_MASTER || MYNEWT_VAL_SPI_3_SLAVE'
     SPI_3_CUSTOM_CFG:
         description: 'Allow SPI_3 configuration override'
@@ -309,6 +309,64 @@ syscfg.defs:
         value: ''
     SPI_3_PIN_SS:
         description: 'SS pin for SPI_3'
+        value: ''
+
+    SPI_4_MASTER:
+        description: 'SPI 4 master'
+        value:  0
+        restrictions:
+            - "!SPI_4_SLAVE"
+    SPI_4_SLAVE:
+        description: 'SPI 4 slave'
+        value:  0
+        restrictions:
+            - "!SPI_4_MASTER"
+    SPI_4:
+        description: 'SPI 4 enabled'
+        value: 'MYNEWT_VAL_SPI_4_MASTER || MYNEWT_VAL_SPI_4_SLAVE'
+    SPI_4_CUSTOM_CFG:
+        description: 'Allow SPI_4 configuration override'
+        value: 0
+    SPI_4_PIN_SCK:
+        description: 'SCK pin for SPI_4'
+        value: ''
+    SPI_4_PIN_MOSI:
+        description: 'MOSI pin for SPI_4'
+        value: ''
+    SPI_4_PIN_MISO:
+        description: 'MISO pin for SPI_4'
+        value: ''
+    SPI_4_PIN_SS:
+        description: 'SS pin for SPI_4'
+        value: ''
+
+    SPI_5_MASTER:
+        description: 'SPI 5 master'
+        value:  0
+        restrictions:
+            - "!SPI_5_SLAVE"
+    SPI_5_SLAVE:
+        description: 'SPI 5 slave'
+        value:  0
+        restrictions:
+            - "!SPI_5_MASTER"
+    SPI_5:
+        description: 'SPI 5 enabled'
+        value: 'MYNEWT_VAL_SPI_5_MASTER || MYNEWT_VAL_SPI_5_SLAVE'
+    SPI_5_CUSTOM_CFG:
+        description: 'Allow SPI_5 configuration override'
+        value: 0
+    SPI_5_PIN_SCK:
+        description: 'SCK pin for SPI_5'
+        value: ''
+    SPI_5_PIN_MOSI:
+        description: 'MOSI pin for SPI_5'
+        value: ''
+    SPI_5_PIN_MISO:
+        description: 'MISO pin for SPI_5'
+        value: ''
+    SPI_5_PIN_SS:
+        description: 'SS pin for SPI_5'
         value: ''
 
     I2C_0:
