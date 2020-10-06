@@ -176,6 +176,7 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func,
     struct cbmem_entry_hdr *hdr;
     struct cbmem_iter iter;
     int rc;
+    int walk_rc = 0;
 
     cbmem = (struct cbmem *) log->l_arg;
 
@@ -190,7 +191,7 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func,
     if (log_offset->lo_ts < 0) {
         hdr = cbmem->c_entry_end;
         if (hdr != NULL) {
-            rc = walk_func(log, log_offset, (void *)hdr, hdr->ceh_len);
+            walk_rc = walk_func(log, log_offset, (void *)hdr, hdr->ceh_len);
         }
     } else {
         cbmem_iter_start(cbmem, &iter);
@@ -200,8 +201,8 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func,
                 break;
             }
 
-            rc = walk_func(log, log_offset, (void *)hdr, hdr->ceh_len);
-            if (rc == 1) {
+            walk_rc = walk_func(log, log_offset, (void *)hdr, hdr->ceh_len);
+            if (walk_rc != 0) {
                 break;
             }
         }
@@ -212,7 +213,7 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func,
         goto err;
     }
 
-    return (0);
+    return (walk_rc);
 err:
     return (rc);
 }
