@@ -20,14 +20,27 @@
 #include "mcu/mcu.h"
 #include "mcu/cmac_pdc.h"
 #include "cmac_driver/cmac_shared.h"
+#include "cmac_priv.h"
 #include "CMAC.h"
 
 void
 SYS2CMAC_IRQHandler(void)
 {
+    uint16_t pending_ops;
+
     if (CMAC->CM_EXC_STAT_REG & CMAC_CM_EXC_STAT_REG_EXC_SYS2CMAC_Msk) {
+        cmac_shared_lock();
+        pending_ops = g_cmac_shared_data.pending_ops;
+        g_cmac_shared_data.pending_ops = 0;
+        cmac_shared_unlock();
+
         cmac_mbox_read();
         cmac_rand_read();
+
+        if (pending_ops & CMAC_PENDING_OP_LP_CLK) {
+            cmac_sleep_recalculate();
+        }
+
         CMAC->CM_EXC_STAT_REG = CMAC_CM_EXC_STAT_REG_EXC_SYS2CMAC_Msk;
     }
 

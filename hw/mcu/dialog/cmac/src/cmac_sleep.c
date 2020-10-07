@@ -198,6 +198,14 @@ cmac_sleep_calculate_wakeup_time(void)
 }
 
 void
+cmac_sleep_recalculate(void)
+{
+    if (cmac_timer_slp_update()) {
+        cmac_sleep_calculate_wakeup_time();
+    }
+}
+
+void
 cmac_sleep(void)
 {
     bool switch_to_slp;
@@ -213,10 +221,6 @@ cmac_sleep(void)
     deep_sleep = MYNEWT_VAL(MCU_DEEP_SLEEP);
 
     cmac_pdc_ack_all();
-
-    if (cmac_timer_slp_update()) {
-        cmac_sleep_calculate_wakeup_time();
-    }
 
     wakeup_at = cmac_timer_next_at();
 
