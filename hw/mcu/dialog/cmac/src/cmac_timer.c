@@ -367,11 +367,15 @@ cmac_timer_slp_disable(uint32_t exp_ticks)
 bool
 cmac_timer_slp_update(void)
 {
-    if (g_cmac_shared_data.lp_clock_freq == g_cmac_timer_slp.freq) {
+    uint32_t lp_clock_freq;
+
+    lp_clock_freq = g_cmac_shared_data.lp_clock_freq;
+
+    if (lp_clock_freq == g_cmac_timer_slp.freq) {
         return false;
     }
 
-    g_cmac_timer_slp.freq = g_cmac_shared_data.lp_clock_freq;
+    g_cmac_timer_slp.freq = lp_clock_freq;
 
 #if !MYNEWT_VAL(MCU_SLP_TIMER_32K_ONLY)
     if (g_cmac_timer_slp.freq) {
