@@ -85,10 +85,9 @@ end
 # Load a file to a specific flash location
 #
 define fl_file_sz
-       shell echo -n set \$file_sz= > /tmp/foo.gdb
-       shell wc -c $arg0 | awk '{print $1}' >> /tmp/foo.gdb
-       source /tmp/foo.gdb
-       shell rm /tmp/foo.gdb
+       shell wc -c $arg0 | awk '{print "set \$file_sz="$1}' > foo.gdb
+       source foo.gdb
+       shell rm foo.gdb
 end
 
 define fl_program
