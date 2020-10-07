@@ -30,6 +30,7 @@ extern "C" {
 extern int8_t g_cmac_pdc_cmac2sys;
 
 void cmac_sleep(void);
+void cmac_sleep_recalculate(void);
 
 #ifdef __cplusplus
 }
