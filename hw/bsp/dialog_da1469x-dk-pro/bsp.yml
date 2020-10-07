@@ -22,10 +22,6 @@ bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m33"
 bsp.downloadscript:
     "hw/bsp/dialog_da1469x-dk-pro/dialog_da1469x-dk-pro_download.sh"
 bsp.debugscript: "hw/bsp/dialog_da1469x-dk-pro/dialog_da1469x-dk-pro_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE:
-    "hw/bsp/dialog_da1469x-dk-pro/dialog_da1469x-dk-pro_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE:
-    "hw/bsp/dialog_da1469x-dk-pro/dialog_da1469x-dk-pro_debug.cmd"
 
 bsp.linkerscript:
     - "hw/bsp/dialog_da1469x-dk-pro/da1469x.ld"
