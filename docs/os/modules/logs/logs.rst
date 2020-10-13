@@ -157,7 +157,8 @@ circular buffer.
 
     #include <log/log.h>
 
-    static uint32_t cbmem_buf[MAX_CBMEM_BUF];
+    #define MAX_CBMEM_BUF 300
+    static uint8_t cbmem_buf[MAX_CBMEM_BUF];
     static struct cbmem cbmem;
 
 

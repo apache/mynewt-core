@@ -106,7 +106,6 @@ static int sensor_oic_gap_event(struct ble_gap_event *event, void *arg);
 /* Task 1 */
 #define TASK1_PRIO (8)
 #define TASK1_STACK_SIZE    OS_STACK_ALIGN(192)
-#define MAX_CBMEM_BUF 600
 static struct os_task task1;
 static volatile int g_task1_loops;
 

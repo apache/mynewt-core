@@ -79,7 +79,7 @@ static struct conf_handler test_conf_handler = {
 static uint8_t test8;
 static uint8_t test8_shadow;
 static char test_str[32];
-static uint32_t cbmem_buf[MAX_CBMEM_BUF];
+static uint8_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
 
 static char *
