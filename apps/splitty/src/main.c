@@ -73,7 +73,7 @@ STATS_NAME_START(gpio_stats)
 STATS_NAME(gpio_stats, toggles)
 STATS_NAME_END(gpio_stats)
 
-static uint32_t cbmem_buf[MAX_CBMEM_BUF];
+static uint8_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
 
 static void
