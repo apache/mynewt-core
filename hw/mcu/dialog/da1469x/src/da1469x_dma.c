@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include "os/os_trace_api.h"
 #include "mcu/da1469x_dma.h"
+#include "mcu/da1469x_pd.h"
 #include "mcu/cmsis_nvic.h"
 #include "defs/error.h"
 
@@ -129,6 +130,10 @@ da1469x_dma_acquire_single(int cidx)
         return NULL;
     }
 
+    if (!g_da1469x_dma_acquired) {
+        da1469x_pd_acquire(MCU_PD_DOMAIN_SYS);
+    }
+
     g_da1469x_dma_acquired |= 1 << cidx;
 
     chan = MCU_DMA_CIDX2CHAN(cidx);
@@ -161,6 +166,10 @@ da1469x_dma_acquire_periph(int cidx, uint8_t periph,
         if (g_da1469x_dma_acquired & (3 << cidx)) {
             return SYS_EBUSY;
         }
+    }
+
+    if (!g_da1469x_dma_acquired) {
+        da1469x_pd_acquire(MCU_PD_DOMAIN_SYS);
     }
 
     g_da1469x_dma_acquired |= 3 << cidx;
@@ -217,6 +226,10 @@ da1469x_dma_release_channel(struct da1469x_dma_regs *chan)
     DMA->DMA_INT_MASK_REG = g_da1469x_dma_isr_set;
     if (!g_da1469x_dma_isr_set) {
         NVIC_DisableIRQ(DMA_IRQn);
+    }
+
+    if (!g_da1469x_dma_acquired) {
+        da1469x_pd_release(MCU_PD_DOMAIN_SYS);
     }
 
     return 0;
