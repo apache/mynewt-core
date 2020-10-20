@@ -44,6 +44,7 @@ extern "C" {
 #define MCU_PD_DOMAIN_RAD           5
 
 int da1469x_pd_init(void);
+int da1469x_pd_get_ref_cnt(uint8_t pd);
 int da1469x_pd_acquire(uint8_t pd);
 int da1469x_pd_acquire_noconf(uint8_t pd);
 int da1469x_pd_release(uint8_t pd);
