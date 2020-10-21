@@ -64,7 +64,7 @@ da1469x_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
 static void
 do_dma_key_tx(const void *key, uint16_t keylen)
 {
-    DMA_Type *dma_regs = DMA;
+    struct da1469x_dma_regs *dma_regs;
     /* DMA len: keylen in bits, bus width is 4 */
     keylen >>= 5;
 
@@ -72,18 +72,24 @@ do_dma_key_tx(const void *key, uint16_t keylen)
     da1469x_clock_amba_enable(CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk);
     da1469x_otp_set_mode(OTPC_MODE_READ);
 
-    /* securely DMA hardware key from secret storage to QSPI decrypt engine */
-    dma_regs->DMA_REQ_MUX_REG |= 0xf000;
-    dma_regs->DMA7_LEN_REG = keylen;
+    /*
+     * Securely DMA hardware key using channel #7 from secret storage to decrypt engine
+     * The channel #7 is a secure channel and used for crypto operations only. It should
+     * always return the correct address.
+     */
+    dma_regs = da1469x_dma_acquire_single(7);
+    assert(dma_regs);
+    dma_regs->DMA_LEN_REG = keylen;
     /* program source and destination addresses */
-    dma_regs->DMA7_A_START_REG = (uint32_t)key;
-    dma_regs->DMA7_B_START_REG = (uint32_t)&AES_HASH->CRYPTO_KEYS_START;
-    dma_regs->DMA7_CTRL_REG = DMA_DMA7_CTRL_REG_AINC_Msk |
-                              DMA_DMA7_CTRL_REG_BINC_Msk |
-                              (MCU_DMA_BUS_WIDTH_4B << DMA_DMA7_CTRL_REG_BW_Pos) |
-                              DMA_DMA7_CTRL_REG_DMA_ON_Msk;
-    while (dma_regs->DMA7_IDX_REG != keylen);
+    dma_regs->DMA_A_START_REG = (uint32_t)key;
+    dma_regs->DMA_B_START_REG = (uint32_t)&AES_HASH->CRYPTO_KEYS_START;
+    dma_regs->DMA_CTRL_REG = DMA_DMA7_CTRL_REG_AINC_Msk |
+                             DMA_DMA7_CTRL_REG_BINC_Msk |
+                             (MCU_DMA_BUS_WIDTH_4B << DMA_DMA7_CTRL_REG_BW_Pos) |
+                             DMA_DMA7_CTRL_REG_DMA_ON_Msk;
+    while (dma_regs->DMA_IDX_REG != keylen);
 
+    da1469x_dma_release_channel(dma_regs);
     /* set OTP to standby and turn off clock */
     da1469x_otp_set_mode(OTPC_MODE_STBY);
     da1469x_clock_amba_disable(CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk);
