@@ -89,6 +89,7 @@ static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
 
 #if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
 static uint32_t g_mcu_gpio_latch_state[2];
+static uint32_t g_mcu_gpio_data_latch_state[2];
 static uint8_t g_mcu_gpio_retained_num;
 static struct da1469x_retreg g_mcu_gpio_retained[MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM)];
 #endif
@@ -473,6 +474,10 @@ mcu_gpio_enter_sleep(void)
         return;
     }
 
+    /* Save pins states and their latched values */
+    g_mcu_gpio_data_latch_state[0] = GPIO->P0_DATA_REG;
+    g_mcu_gpio_data_latch_state[1] = GPIO->P1_DATA_REG;
+
     g_mcu_gpio_latch_state[0] = CRG_TOP->P0_PAD_LATCH_REG;
     g_mcu_gpio_latch_state[1] = CRG_TOP->P1_PAD_LATCH_REG;
 
@@ -498,8 +503,8 @@ mcu_gpio_exit_sleep(void)
     da1469x_retreg_restore(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
 
     /* Set pins states to their latched values */
-    GPIO->P0_DATA_REG = GPIO->P0_DATA_REG;
-    GPIO->P1_DATA_REG = GPIO->P1_DATA_REG;
+    GPIO->P0_DATA_REG = g_mcu_gpio_data_latch_state[0];
+    GPIO->P1_DATA_REG = g_mcu_gpio_data_latch_state[1];
 
     CRG_TOP->P0_PAD_LATCH_REG = g_mcu_gpio_latch_state[0];
     CRG_TOP->P1_PAD_LATCH_REG = g_mcu_gpio_latch_state[1];
