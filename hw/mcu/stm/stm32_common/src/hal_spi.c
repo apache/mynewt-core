@@ -648,7 +648,9 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_4_ENABLED
     case 4:
         __HAL_RCC_SPI5_CLK_ENABLE();
-#if !MYNEWT_VAL(MCU_STM32F1)
+#if defined(GPIO_AF6_SPI5)
+        gpio.Alternate = GPIO_AF6_SPI5;
+#elif defined(GPIO_AF5_SPI5)
         gpio.Alternate = GPIO_AF5_SPI5;
 #endif
         spi->handle.Instance = SPI5;
