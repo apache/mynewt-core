@@ -25,7 +25,8 @@
 #include <battery/battery_drv.h>
 #include <battery/battery.h>
 
-int battery_prop_get_value(struct battery_property *prop)
+int
+battery_prop_get_value(struct battery_property *prop)
 {
     struct battery_driver *drv;
     struct battery *bat = (struct battery *)battery_get_battery(prop->bp_bat_num);
@@ -39,7 +40,8 @@ int battery_prop_get_value(struct battery_property *prop)
 }
 
 int
-battery_prop_get_value_float(struct battery_property *prop, float *value) {
+battery_prop_get_value_float(struct battery_property *prop, float *value)
+{
     int rc = battery_prop_get_value(prop);
     if (rc == 0 && prop->bp_valid) {
         *value = prop->bp_value.bpv_flt;
@@ -117,7 +119,8 @@ get_property_driver(struct battery_property *prop)
 
 int
 battery_prop_set_value(struct battery_property *prop,
-        const battery_property_value_t *value) {
+                       const battery_property_value_t *value)
+{
     struct battery_driver *drv = get_property_driver(prop);
     int rc = 0;
     /* Driver provided property */
@@ -129,13 +132,14 @@ battery_prop_set_value(struct battery_property *prop,
         prop->bp_valid = 1;
     }
     if (prop->bp_base) {
-        // TODO: Search for complex properties
+        /* TODO: Search for complex properties */
     }
     return rc;
 }
 
 int
-battery_prop_set_value_float(struct battery_property *prop, float value) {
+battery_prop_set_value_float(struct battery_property *prop, float value)
+{
     battery_property_value_t v;
     v.bpv_flt = value;
     return battery_prop_set_value(prop, &v);

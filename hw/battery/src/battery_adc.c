@@ -61,8 +61,8 @@ battery_adc_property_get(struct battery_driver *driver,
              * and divider if external resistor divider is used for measurement.
              */
             property->bp_value.bpv_voltage =
-                    adc_result_mv(bat_adc->adc_dev, bat_adc->cfg.channel, val) *
-                    bat_adc->cfg.mul / bat_adc->cfg.div;
+                adc_result_mv(bat_adc->adc_dev, bat_adc->cfg.channel, val) *
+                bat_adc->cfg.mul / bat_adc->cfg.div;
         }
     } else {
         rc = -1;
@@ -94,11 +94,11 @@ battery_adc_disable(struct battery *battery)
 }
 
 static const struct battery_driver_functions battery_adc_drv_funcs = {
-    .bdf_property_get     = battery_adc_property_get,
-    .bdf_property_set     = battery_adc_property_set,
+    .bdf_property_get = battery_adc_property_get,
+    .bdf_property_set = battery_adc_property_set,
 
-    .bdf_enable           = battery_adc_enable,
-    .bdf_disable          = battery_adc_disable,
+    .bdf_enable = battery_adc_enable,
+    .bdf_disable = battery_adc_disable,
 };
 
 static const struct battery_driver_property battery_adc_properties[] = {
@@ -115,7 +115,7 @@ battery_adc_open(struct os_dev *dev, uint32_t timeout, void *arg)
 
     /* Open ADC with parameters specified in BSP */
     bat_adc->adc_dev = (struct adc_dev *)os_dev_open(
-            (char *)bat_adc->cfg.adc_dev_name, timeout, bat_adc->cfg.adc_open_arg);
+        (char *)bat_adc->cfg.adc_dev_name, timeout, bat_adc->cfg.adc_open_arg);
     if (bat_adc->adc_dev) {
         /* Setup channel configuration to use for battery voltage */
         adc_chan_config(bat_adc->adc_dev, bat_adc->cfg.channel,
