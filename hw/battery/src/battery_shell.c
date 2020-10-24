@@ -35,58 +35,50 @@ static int bat_compat_cmd(int argc, char **argv);
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 #define HELP(a) &(a)
 
-static const struct shell_param bat_read_params[] =
-{
-        { "all" },
-        { NULL }
+static const struct shell_param bat_read_params[] = {
+    { "all" },
+    { NULL }
 };
 
-static const struct shell_param bat_monitor_params[] =
-{
-        { NULL }
+static const struct shell_param bat_monitor_params[] = {
+    { NULL }
 };
 
-static const struct shell_cmd_help bat_read_help =
-{
-        .summary = "read battery properties",
-        .usage = "read <prop>",
-        .params = bat_read_params,
+static const struct shell_cmd_help bat_read_help = {
+    .summary = "read battery properties",
+    .usage = "read <prop>",
+    .params = bat_read_params,
 };
 
-static const struct shell_cmd_help bat_write_help =
-{
-        .summary = "write battery properties",
-        .usage = "read <prop> <value>",
-        .params = NULL,
+static const struct shell_cmd_help bat_write_help = {
+    .summary = "write battery properties",
+    .usage = "read <prop> <value>",
+    .params = NULL,
 };
 
-static const struct shell_cmd_help bat_list_help =
-{
-        .summary = "list battery properties",
-        .usage = "list",
-        .params = NULL,
+static const struct shell_cmd_help bat_list_help = {
+    .summary = "list battery properties",
+    .usage = "list",
+    .params = NULL,
 };
 
-static const struct shell_cmd_help bat_poll_rate_help =
-{
-        .summary = "set battery polling rate",
-        .usage = "pollrate <time_in_s>",
-        .params = NULL,
+static const struct shell_cmd_help bat_poll_rate_help = {
+    .summary = "set battery polling rate",
+    .usage = "pollrate <time_in_s>",
+    .params = NULL,
 };
 
-static const struct shell_cmd_help bat_monitor_help =
-{
-        .summary = "start battery property monitoring",
-        .usage = "monitor <prop> [off]",
-        .params = bat_monitor_params,
+static const struct shell_cmd_help bat_monitor_help = {
+    .summary = "start battery property monitoring",
+    .usage = "monitor <prop> [off]",
+    .params = bat_monitor_params,
 };
 
 #else
 #define HELP(a) NULL
 #endif
 
-static const struct shell_cmd bat_cli_cmd =
-{
+static const struct shell_cmd bat_cli_cmd = {
     .sc_cmd = "bat",
     .sc_cmd_func = bat_compat_cmd,
 };
@@ -97,7 +89,8 @@ static const struct shell_cmd bat_cli_cmd =
  * Help for the bat command.
  *
  */
-static void cmd_bat_help(void)
+static void
+cmd_bat_help(void)
 {
     console_printf("Usage: bat <cmd> [options]\n");
     console_printf("Available bat commands:\n");
@@ -117,23 +110,24 @@ static void cmd_bat_help(void)
 }
 
 static const char *bat_status[] = {
-        "???",
-        "charging",
-        "discharging",
-        "connected not charging",
-        "battery full",
+    "???",
+    "charging",
+    "discharging",
+    "connected not charging",
+    "battery full",
 };
 
 static const char *bat_level[] = {
-        "???",
-        "battery level critical",
-        "battery level low",
-        "battery level normal",
-        "battery level high",
-        "battery level full",
+    "???",
+    "battery level critical",
+    "battery level low",
+    "battery level normal",
+    "battery level high",
+    "battery level full",
 };
 
-static void print_property(const struct battery_property *prop)
+static void
+print_property(const struct battery_property *prop)
 {
     char name[20];
 
@@ -198,7 +192,8 @@ battery_shell_open_dev(void)
     return bat;
 }
 
-static int cmd_bat_read(int argc, char **argv)
+static int
+cmd_bat_read(int argc, char **argv)
 {
     int rc;
     int maxp;
@@ -321,10 +316,10 @@ cmd_bat_write(int argc, char ** argv)
     }
 
     if (prop->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
-            (prop->bp_flags & BATTERY_PROPERTY_FLAGS_ALARM_THREASH) != 0) {
+        (prop->bp_flags & BATTERY_PROPERTY_FLAGS_ALARM_THREASH) != 0) {
         rc = battery_prop_set_value_uint32(prop, (uint32_t)val);
     } else if (prop->bp_type == BATTERY_PROP_TEMP_NOW &&
-            (prop->bp_flags & BATTERY_PROPERTY_FLAGS_ALARM_THREASH) != 0) {
+               (prop->bp_flags & BATTERY_PROPERTY_FLAGS_ALARM_THREASH) != 0) {
         rc = battery_prop_set_value_float(prop, val);
     } else {
         console_printf("Property %s can't be written!\n", argv[1]);
@@ -346,7 +341,8 @@ err:
     return rc;
 }
 
-static int cmd_bat_list(int argc, char **argv)
+static int
+cmd_bat_list(int argc, char **argv)
 {
     int i;
     int max;
@@ -380,7 +376,8 @@ err:
     return rc;
 }
 
-static int cmd_bat_poll_rate(int argc, char **argv)
+static int
+cmd_bat_poll_rate(int argc, char **argv)
 {
     int rc;
     uint32_t rate_in_s;
@@ -415,19 +412,21 @@ err:
     return rc;
 }
 
-static int bat_property(struct battery_prop_listener *listener,
-        const struct battery_property *prop)
+static int
+bat_property(struct battery_prop_listener *listener,
+             const struct battery_property *prop)
 {
     print_property(prop);
     return 0;
 }
 
 static struct battery_prop_listener listener = {
-        .bpl_prop_changed = bat_property,
-        .bpl_prop_read = bat_property,
+    .bpl_prop_changed = bat_property,
+    .bpl_prop_read = bat_property,
 };
 
-static int cmd_bat_monitor(int argc, char **argv)
+static int
+cmd_bat_monitor(int argc, char **argv)
 {
     int rc;
     struct battery_property *prop;
@@ -477,8 +476,7 @@ err:
     return rc;
 }
 
-static const struct shell_cmd bat_cli_commands[] =
-{
+static const struct shell_cmd bat_cli_commands[] = {
     SHELL_CMD("read", cmd_bat_read, &bat_read_help),
     SHELL_CMD("write", cmd_bat_write, &bat_write_help),
     SHELL_CMD("list", cmd_bat_list, &bat_list_help),
@@ -497,36 +495,30 @@ static const struct shell_cmd bat_cli_commands[] =
  *
  * @return int 0: success, -1 error
  */
-static int bat_compat_cmd(int argc, char **argv)
+static int
+bat_compat_cmd(int argc, char **argv)
 {
     int rc;
     int i;
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
         rc = SYS_EINVAL;
-    }
-    else
-    {
-        for (i = 0; bat_cli_commands[i].sc_cmd; ++i)
-        {
-            if (strcmp(bat_cli_commands[i].sc_cmd, argv[1]) == 0)
-            {
+    } else {
+        for (i = 0; bat_cli_commands[i].sc_cmd; ++i) {
+            if (strcmp(bat_cli_commands[i].sc_cmd, argv[1]) == 0) {
                 rc = bat_cli_commands[i].sc_cmd_func(argc - 1, argv + 1);
                 break;
             }
         }
         /* No command found */
-        if (bat_cli_commands[i].sc_cmd == NULL)
-        {
+        if (bat_cli_commands[i].sc_cmd == NULL) {
             console_printf("Invalid command.\n");
             rc = -1;
         }
     }
 
     /* Print help in case of error */
-    if (rc)
-    {
+    if (rc) {
         cmd_bat_help();
     }
 
