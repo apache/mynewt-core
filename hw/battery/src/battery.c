@@ -376,7 +376,8 @@ battery_prop_get_name(const struct battery_property *prop, char *buf,
     const struct battery_driver_property *driver_prop =
             &driver->bd_driver_properties[prop->bp_prop_num - driver->bd_first_property];
 
-    strncpy(buf, driver_prop->bdp_name, buf_size);
+    strncpy(buf, driver_prop->bdp_name, buf_size - 1);
+    buf[buf_size - 1] = '\0';
 
     return buf;
 }
@@ -389,7 +390,7 @@ battery_find_property_by_name(struct os_dev *battery, const char *name)
     int i;
 
     for (i = 0; i < bat->b_all_property_count; ++i) {
-        battery_prop_get_name(&bat->b_properties[i], buf, 20);
+        battery_prop_get_name(&bat->b_properties[i], buf, sizeof(buf));
         if (strcmp(buf, name) == 0) {
             return &bat->b_properties[i];
         }
