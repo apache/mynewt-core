@@ -31,7 +31,19 @@
 
 . $CORE_PATH/hw/scripts/openocd.sh
 
-CFG="-f interface/stlink.cfg -f target/nrf52.cfg"
+detect_programmer
+echo "Detected programmer: $DETECTED_PROGRAMMER"
+
+case $DETECTED_PROGRAMMER in
+	cmsis-dap)
+		OPENOCD_INTERFACE=cmsis-dap
+		;;
+	*) # default to stlink
+		OPENOCD_INTERFACE=stlink
+		;;
+esac
+
+CFG="-f interface/${OPENOCD_INTERFACE}.cfg -f target/nrf52.cfg"
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0
