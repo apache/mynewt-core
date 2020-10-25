@@ -89,6 +89,9 @@ detect_programmer() {
     echo "$USB_DEV" | grep -q -i '0483:3748'
     [ $? -eq 0 ] && DETECTED_PROGRAMMER='stlink-v2'
 
+    echo "$USB_DEV" | grep -q -i '0483:374b'
+    [ $? -eq 0 ] && DETECTED_PROGRAMMER='stlink-v2-1'
+
     echo "$USB_DEV" | grep -q -i '1366:1015'
     [ $? -eq 0 ] && DETECTED_PROGRAMMER='jlink'
 

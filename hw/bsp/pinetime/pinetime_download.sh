@@ -38,6 +38,9 @@ case $DETECTED_PROGRAMMER in
 	cmsis-dap)
 		OPENOCD_INTERFACE=cmsis-dap
 		;;
+	stlink-v2-1)
+		OPENOCD_INTERFACE=stlink-v2-1
+		;;
 	*) # default to stlink
 		OPENOCD_INTERFACE=stlink
 		;;
