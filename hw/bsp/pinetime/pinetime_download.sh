@@ -31,20 +31,8 @@
 
 . $CORE_PATH/hw/scripts/openocd.sh
 
-detect_programmer
-echo "Detected programmer: $DETECTED_PROGRAMMER"
-
-case $DETECTED_PROGRAMMER in
-	cmsis-dap)
-		OPENOCD_INTERFACE=cmsis-dap
-		;;
-	stlink-v2-1)
-		OPENOCD_INTERFACE=stlink-v2-1
-		;;
-	*) # default to stlink
-		OPENOCD_INTERFACE=stlink
-		;;
-esac
+# autodetect or default stlink
+openocd_detect_interface stlink
 
 CFG="-f interface/${OPENOCD_INTERFACE}.cfg -f target/nrf52.cfg"
 

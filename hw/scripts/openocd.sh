@@ -149,3 +149,18 @@ openocd_reset_run () {
     openocd $CFG -c init -c "reset run" -c shutdown
     return $?
 }
+
+openocd_detect_interface () {
+    detect_programmer
+    case $DETECTED_PROGRAMMER in
+        cmsis-dap)
+            OPENOCD_INTERFACE='cmsis-dap'
+            ;;
+        stlink-v2-1)
+            OPENOCD_INTERFACE='stlink-v2-1'
+            ;;
+        *) # default is passed by argument or 'stlink'
+            OPENOCD_INTERFACE=${1:=stlink}
+            ;;
+    esac
+}

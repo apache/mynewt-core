@@ -97,4 +97,6 @@ detect_programmer() {
 
     # no programmers detected
     [ -z "$DETECTED_PROGRAMMER" ] && DETECTED_PROGRAMMER='none'
+
+    echo "Detected programmer: $DETECTED_PROGRAMMER"
 }
