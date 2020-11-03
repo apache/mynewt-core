@@ -77,26 +77,30 @@ parse_extra_jtag_cmd() {
     EXTRA_JTAG_CMD=$NEW_EXTRA_JTAG_CMD
 }
 
-# Try to detect connnected programmers
+# Try to detect connected programmers
 detect_programmer() {
 
-    # scan USB for well-known VID:PID
-    USB_DEV=$(ls /sys/bus/hid/devices)
+    DETECTED_PROGRAMMER='none'
+    
+    # check if lsusb command is available
+    if [ $(which lsusb) ] ; then
 
-    echo "$USB_DEV" | grep -q -i 'c251:f001'
-    [ $? -eq 0 ] && DETECTED_PROGRAMMER='cmsis-dap'
+        # extract the VID:PID list for connected USB devices
+        USB_DEV=$(lsusb | cut -f6 -d' ')
 
-    echo "$USB_DEV" | grep -q -i '0483:3748'
-    [ $? -eq 0 ] && DETECTED_PROGRAMMER='stlink-v2'
+        echo "$USB_DEV" | grep -q -i 'c251:f001'
+        [ $? -eq 0 ] && DETECTED_PROGRAMMER='cmsis-dap'
 
-    echo "$USB_DEV" | grep -q -i '0483:374b'
-    [ $? -eq 0 ] && DETECTED_PROGRAMMER='stlink-v2-1'
+        echo "$USB_DEV" | grep -q -i '0483:3748'
+        [ $? -eq 0 ] && DETECTED_PROGRAMMER='stlink-v2'
 
-    echo "$USB_DEV" | grep -q -i '1366:1015'
-    [ $? -eq 0 ] && DETECTED_PROGRAMMER='jlink'
+        echo "$USB_DEV" | grep -q -i '0483:374b'
+        [ $? -eq 0 ] && DETECTED_PROGRAMMER='stlink-v2-1'
 
-    # no programmers detected
-    [ -z "$DETECTED_PROGRAMMER" ] && DETECTED_PROGRAMMER='none'
+        echo "$USB_DEV" | grep -q -i '1366:1015'
+        [ $? -eq 0 ] && DETECTED_PROGRAMMER='jlink'
+
+    fi
 
     echo "Detected programmer: $DETECTED_PROGRAMMER"
 }
