@@ -31,7 +31,10 @@
 
 . $CORE_PATH/hw/scripts/openocd.sh
 
-CFG="-f interface/stlink.cfg -f target/nrf52.cfg"
+# autodetect or default stlink
+openocd_detect_interface stlink
+
+CFG="-f interface/${OPENOCD_INTERFACE}.cfg -f target/nrf52.cfg"
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0
