@@ -1343,7 +1343,8 @@ compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     BMP388_LOG_ERROR("*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
 #endif
 
-    partial_data5 = (partial_data4 * uncomp_data->pressure) / 512;
+    partial_data5 = (partial_data4 * (uncomp_data->pressure / 10)) / 512;
+    partial_data5 = partial_data5 * 10;
 
 #if COMPENSTATE_DEBUG
     BMP388_LOG_ERROR("*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
