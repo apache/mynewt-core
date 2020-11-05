@@ -226,10 +226,10 @@ int os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz);
 
 /**
  * Get the current time of day.  Returns the time of day in UTC
- * into the tv argument, and returns the timezone (if set) into
+ * into the utctime argument, and returns the timezone (if set) into
  * tz.
  *
- * @param tv The structure to put the UTC time of day into
+ * @param utctime The structure to put the UTC time of day into
  * @param tz The structure to put the timezone information into
  *
  * @return 0 on success, non-zero on failure
