@@ -42,12 +42,15 @@ da1469x_clock_sys_xtal32m_init(void)
     uint32_t reg;
     int xtalrdy_cnt;
 
-    /* Number of lp_clk cycles (~30.5us) */
-    xtalrdy_cnt = MYNEWT_VAL(MCU_CLOCK_XTAL32M_SETTLE_TIME_US) * 10 / 305;
+    /*
+     * Number of 256kHz clock cycles (~4.085us) assuming worst case when actual frequency is 244800.
+     * RC32M is in range <30.6, 32.6> so 256Khz can ba as low as 30.6MHz / 125 = 244.8kHz.
+     */
+    xtalrdy_cnt = MYNEWT_VAL(MCU_CLOCK_XTAL32M_SETTLE_TIME_US) * 1000 / 4085;
 
     reg = CRG_XTAL->XTALRDY_CTRL_REG;
-    reg &= ~(CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CLK_SEL_Msk |
-             CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Msk);
+    reg &= ~(CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Msk);
+    reg |= CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CLK_SEL_Msk;
     reg |= xtalrdy_cnt;
     CRG_XTAL->XTALRDY_CTRL_REG = reg;
 }
