@@ -75,8 +75,10 @@ hal_system_restart(void *img_start)
 }
 
 #if MYNEWT_VAL(BOOT_CUSTOM_START) && MCUBOOT_MYNEWT
-#define IMAGE_TLV_AES_NONCE   0x50
-#define IMAGE_TLV_SECRET_ID   0x60
+#define IMAGE_TLV_AES_NONCE_LEGACY   0x50
+#define IMAGE_TLV_SECRET_ID_LEGACY   0x60
+#define IMAGE_TLV_AES_NONCE   0xa1
+#define IMAGE_TLV_SECRET_ID   0xa2
 
 sec_text_ram_core void
 boot_custom_start(uintptr_t flash_base, struct boot_rsp *rsp)
@@ -117,7 +119,8 @@ boot_custom_start(uintptr_t flash_base, struct boot_rsp *rsp)
             break;
         }
 
-        if (type == IMAGE_TLV_AES_NONCE) {
+        if ((type == IMAGE_TLV_AES_NONCE) ||
+            (type == IMAGE_TLV_AES_NONCE_LEGACY)) {
             assert(len == 8);
 
             rc = flash_area_read(fap, off, buf, len);
@@ -126,7 +129,8 @@ boot_custom_start(uintptr_t flash_base, struct boot_rsp *rsp)
             nonce[0] = __builtin_bswap32(*(uint32_t *)buf);
             nonce[1] = __builtin_bswap32(*(uint32_t *)(buf + 4));
             has_aes_nonce = true;
-        } else if (type == IMAGE_TLV_SECRET_ID) {
+        } else if ((type == IMAGE_TLV_SECRET_ID) ||
+                   (type == IMAGE_TLV_SECRET_ID_LEGACY)) {
             assert(len == 4);
 
             rc = flash_area_read(fap, off, buf, len);
