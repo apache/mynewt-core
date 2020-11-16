@@ -205,6 +205,8 @@ cmac_sleep_recalculate(void)
     }
 }
 
+extern bool ble_rf_try_recalibrate(uint32_t idle_time_us);
+
 void
 cmac_sleep(void)
 {
@@ -234,6 +236,10 @@ cmac_sleep(void)
         switch_to_slp = false;
         deep_sleep = false;
         goto do_sleep;
+    }
+
+    if (ble_rf_try_recalibrate(sleep_usecs)) {
+        goto skip_sleep;
     }
 
     sleep_lp_ticks = cmac_timer_usecs_to_lp_ticks(sleep_usecs);
@@ -305,5 +311,6 @@ do_sleep:
         g_mcu_wait_for_swd_start = cmac_timer_read_hi();
     }
 
+skip_sleep:
     MCU_DIAG_SER('>');
 }
