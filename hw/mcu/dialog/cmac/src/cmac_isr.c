@@ -23,6 +23,8 @@
 #include "cmac_priv.h"
 #include "CMAC.h"
 
+extern void ble_rf_calibrate_req(void);
+
 void
 SYS2CMAC_IRQHandler(void)
 {
@@ -39,6 +41,10 @@ SYS2CMAC_IRQHandler(void)
 
         if (pending_ops & CMAC_PENDING_OP_LP_CLK) {
             cmac_sleep_recalculate();
+        }
+
+        if (pending_ops & CMAC_PENDING_OP_RF_CAL) {
+            ble_rf_calibrate_req();
         }
 
         CMAC->CM_EXC_STAT_REG = CMAC_CM_EXC_STAT_REG_EXC_SYS2CMAC_Msk;
