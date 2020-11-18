@@ -83,6 +83,7 @@
 #define HAL_I2C_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
 #define HAL_SPI_MODULE_ENABLED
+#define HAL_RTC_MODULE_ENABLED
 
 /* ########################## Oscillator Values adaptation ####################*/
 /**
