@@ -433,5 +433,11 @@ syscfg.defs:
         description: "ADC_2"
         value:  0
 
+    OS_TICKS_USE_RTC:
+        description: >
+            Use RTC as source of system ticks.
+            When enabled, OS_TICKS_PER_SEC should be one of 128, 256, 512, 1024.
+        value: 0
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 1000
