@@ -160,7 +160,6 @@ da1469x_m33_sleep:
  * did not sleep.
  */
     str     r1, [r0, #0]
-    mov     r0, #0
 
 /* Enable QSPI controller clock */
     ldr     r2, =CLK_AMBA_REG
@@ -183,6 +182,7 @@ da1469x_m33_sleep:
     str     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
 #endif
 
+    mov     r0, #0
     b       da1469x_m33_restore
 
     .section .text_ram
