@@ -157,6 +157,11 @@ wakeup_handler:
     .globl Reset_Handler
     .type  Reset_Handler, %function
 Reset_Handler:
+#if MYNEWT_VAL(RAM_RESIDENT)
+    mov     r0, #0
+    msr     msplim, r0
+#endif
+
 #if MYNEWT_VAL(MCU_MTB_ENABLE)
     mov     r2, #0
     ldr     r1, =MTB_POSITION_REG
