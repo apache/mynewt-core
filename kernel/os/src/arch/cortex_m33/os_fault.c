@@ -163,6 +163,23 @@ os_default_irq(struct trap_frame *tf)
     uint32_t orig_sp;
 #endif
 
+    /* Stop MTB if implemented so interrupt handler execution is not recorded */
+    asm volatile (".syntax unified           \n"
+                  "    ldr  r1, =0xe00ff000  \n"
+                  "    ldr  r2, [r1, #0x1c]  \n"
+                  "    tst  r2, #1           \n"
+                  "    beq  1f               \n"
+                  "    bic  r2, #0x00ff      \n"
+                  "    bic  r2, #0x0f00      \n"
+                  "    add  r1, r2           \n"
+                  "    ldr  r2, [r1, #4]     \n"
+                  "    bic  r2, #0x80000000  \n"
+                  "    str  r2, [r1, #4]     \n"
+                  " 1:                       \n"
+                  :
+                  :
+                  : "r1", "r2");
+
     console_blocking_mode();
     console_printf("Unhandled interrupt (%ld), exception sp 0x%08lx\n",
       SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk, (uint32_t)tf->ef);
