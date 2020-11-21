@@ -46,6 +46,10 @@ da1469x_m33_sleep_state:
 .saved_fpu:
     .space 8    /* FPCCR, FPDSCR */
 #endif
+#if MYNEWT_VAL(MCU_MTB_ENABLE)
+.saved_mtb:
+    .space 12   /* POSITION, MASTER, FLOW */
+#endif
 
     .size   da1469x_m33_sleep_state, . - da1469x_m33_sleep_state
 
@@ -64,6 +68,9 @@ da1469x_m33_sleep_state:
     .equ QSPIC_CTRLBUS_OFFSET,      0x000
     .equ QSPIC_CTRLMOD_OFFSET,      0x004
     .equ QSPIC_WRITEDATA_OFFSET,    0x018
+    .equ MTB_POSITION_REG,          0xE0043000
+    .equ MTB_MASTER_REG,            0xE0043004
+    .equ MTB_FLOW_REG,              0xE0043008
 
     .equ SCB_CPACR_MASK,            0x00F00000  /* CP10 and CP11 */
     .equ SCB_SHCSR_MASK,            0x000F0000  /* xxxFAULTENA */
@@ -112,6 +119,13 @@ da1469x_m33_sleep:
     and     r4, r4, #(FPU_FPCCR_MASK)
     ldr     r5, [r0, #(FPU_FPDSCR_OFFSET)]
     stmia   r3!, {r4-r5}
+#endif
+
+#if MYNEWT_VAL(MCU_MTB_ENABLE)
+/* Save MTB state  */
+    ldr     r0, =MTB_POSITION_REG
+    ldm     r0, {r4-r6}
+    stmia   r3!, {r4-r6}
 #endif
 
 /* Clear RESET_STAT_REG so wakeup handler can detect wakeup from deep sleep */
@@ -229,6 +243,17 @@ da1469x_m33_wakeup:
     orr     r4, r4, r1
     str     r4, [r0, #(FPU_FPCCR_OFFSET)]
     str     r5, [r0, #(FPU_FPDSCR_OFFSET)]
+#endif
+
+#if MYNEWT_VAL(MCU_MTB_ENABLE)
+/* Restore MTB state */
+    ldmia   r3!, {r4-r6}
+    ldr     r0, =MTB_POSITION_REG
+    str     r4, [r0]
+    ldr     r0, =MTB_FLOW_REG
+    str     r6, [r0]
+    ldr     r0, =MTB_MASTER_REG
+    str     r5, [r0]
 #endif
 
 /* Restore MSP, PSP and CONTROL */

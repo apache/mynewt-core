@@ -32,6 +32,9 @@
     .equ    SYS_CTRL_REG,       0x50000024
     .equ    CACHE_FLASH_REG,    0x100C0040
     .equ    RESET_STAT_REG,     0x500000BC
+    .equ    MTB_POSITION_REG,   0xE0043000
+    .equ    MTB_MASTER_REG,     0xE0043004
+    .equ    MTB_FLOW_REG,       0xE0043008
 
     .globl  __StackTop
     .globl  __StackLimit
@@ -154,6 +157,25 @@ wakeup_handler:
     .globl Reset_Handler
     .type  Reset_Handler, %function
 Reset_Handler:
+#if MYNEWT_VAL(MCU_MTB_ENABLE)
+    mov     r2, #0
+    ldr     r1, =MTB_POSITION_REG
+    str     r2, [r1]
+    ldr     r1, =MTB_FLOW_REG
+    str     r2, [r1]
+    ldr     r1, =MTB_MASTER_REG
+#if MYNEWT_VAL(MCU_MTB_AUTO_START)
+    ldr     r2, =0x80000009
+#else
+    ldr     r2, =0x00000009
+#endif
+    str     r2, [r1]
+#else
+    ldr     r1, =MTB_MASTER_REG
+    mov     r2, #0
+    str     r2, [r1]
+#endif
+
  /* Make sure interrupt vector is remapped at 0x0 */
     ldr     r1, =SYS_CTRL_REG
     ldrh    r2, [r1, #0]

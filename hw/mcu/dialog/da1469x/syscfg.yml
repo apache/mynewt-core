@@ -86,6 +86,19 @@ syscfg.defs:
             general usage.
         value: 0
 
+    MCU_MTB_ENABLE:
+        description: >
+            Enable support for Micro Trace Buffer (MTB).
+            This will reserve RAM space for MTB buffer, configure
+            MTB on boot and properly store/restore MTB registers
+            state during deep sleep to allow continuous trace.
+        value: 0
+    MCU_MTB_AUTO_START:
+        description: >
+            Auto start MTB trace on boot. If disabled, MTB can be
+            still enabled manually either via code or debugger.
+        value: 0
+
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
