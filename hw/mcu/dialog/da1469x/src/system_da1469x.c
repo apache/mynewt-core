@@ -38,6 +38,11 @@
 
 extern uint8_t __StackLimit;
 
+#if MYNEWT_VAL(MCU_MTB_ENABLE)
+/* Dummy symbol to reserve 8KB of RAM for MTB */
+uint32_t __attribute__((section(".mtb"))) mtb_dummy[2048];
+#endif
+
 void
 SystemInit(void)
 {

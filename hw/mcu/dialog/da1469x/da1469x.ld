@@ -210,11 +210,18 @@ SECTIONS
         *(.stack*)
     } > RAM
 
+    /* Dummy section to calculate whether we need to move stack out of MTB
+     * buffer or not. */
+    .mtb (NOLOAD) :
+    {
+        KEEP(*(.mtb));
+    }
+
     _ram_start = ORIGIN(RAM);
 
     /* Set stack top to end of RAM, and stack limit move down by
      * size of stack_dummy section */
-    __StackTop = ORIGIN(RAM) + LENGTH(RAM);
+    __StackTop = ORIGIN(RAM) + LENGTH(RAM) - SIZEOF(.mtb);
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
     PROVIDE(__stack = __StackTop);
 
