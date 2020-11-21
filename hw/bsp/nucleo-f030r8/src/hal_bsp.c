@@ -122,3 +122,8 @@ hal_bsp_init(void)
 {
     stm32_periph_create();
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

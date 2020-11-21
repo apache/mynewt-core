@@ -181,6 +181,11 @@ hal_bsp_init(void)
 #endif
 }
 
+void
+hal_bsp_deinit(void)
+{
+}
+
 int
 hal_bsp_hw_id_len(void)
 {

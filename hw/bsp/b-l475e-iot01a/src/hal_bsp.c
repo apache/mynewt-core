@@ -170,6 +170,11 @@ hal_bsp_init(void)
     sensor_dev_create();
 }
 
+void
+hal_bsp_deinit(void)
+{
+}
+
 /**
  * Returns the configured priority for the given interrupt. If no priority
  * configured, return the priority passed in

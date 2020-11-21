@@ -105,6 +105,11 @@ hal_bsp_init(void)
     nrf52_periph_create();
 }
 
+void
+hal_bsp_deinit(void)
+{
+}
+
 #if MYNEWT_VAL(BSP_USE_HAL_SPI)
 void
 bsp_spi_read_buf(uint8_t addr, uint8_t *buf, uint8_t size)

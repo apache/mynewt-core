@@ -37,3 +37,8 @@ hal_bsp_init(void)
     /* Create all available CMAC peripherals */
     cmac_periph_create();
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

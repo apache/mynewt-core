@@ -121,6 +121,11 @@ hal_bsp_init(void)
 }
 
 void
+hal_bsp_deinit(void)
+{
+}
+
+void
 hal_bsp_init_trng(void)
 {
     int i;

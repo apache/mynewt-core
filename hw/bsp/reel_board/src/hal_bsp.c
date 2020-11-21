@@ -94,3 +94,8 @@ hal_bsp_init(void)
         assert(rc == 0);
     }
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

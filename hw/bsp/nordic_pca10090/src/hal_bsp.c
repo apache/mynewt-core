@@ -95,3 +95,8 @@ hal_bsp_init(void)
     /* Create all available nRF9160 peripherals */
     nrf91_periph_create();
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

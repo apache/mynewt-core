@@ -195,3 +195,8 @@ hal_bsp_init(void)
 
     (void)rc;
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

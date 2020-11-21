@@ -83,3 +83,8 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 }
+
+void
+hal_bsp_deinit(void)
+{
+}
