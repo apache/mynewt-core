@@ -95,6 +95,13 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    RCC->AHBENR = RCC_AHBENR_FLITFEN | RCC_AHBENR_SRAMEN;
+    RCC->APB1ENR = 0;
+    RCC->APB2ENR = 0;
+    RCC->APB1RSTR = 0xFFFFFFFF;
+    RCC->APB2RSTR = 0x0038FFFD;
+    RCC->APB1RSTR = 0x0;
+    RCC->APB2RSTR = 0x0;
 }
 
 /**

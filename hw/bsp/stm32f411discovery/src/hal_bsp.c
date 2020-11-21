@@ -171,6 +171,18 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    RCC->AHB1ENR = 0;
+    RCC->AHB2ENR = 0;
+    RCC->APB1ENR = 0;
+    RCC->APB2ENR = 0;
+    RCC->AHB1RSTR = 0x00C0109F;
+    RCC->AHB2RSTR = 0x00000080;
+    RCC->APB1RSTR = 0x10E2C80F;
+    RCC->APB2RSTR = 0x00177931;
+    RCC->AHB1RSTR = 0x00000000;
+    RCC->AHB2RSTR = 0x00000000;
+    RCC->APB1RSTR = 0x00000000;
+    RCC->APB2RSTR = 0x00000000;
 }
 
 /**
