@@ -91,3 +91,7 @@ hal_bsp_init(void)
     da1469x_periph_create();
 }
 
+void
+hal_bsp_deinit(void)
+{
+}

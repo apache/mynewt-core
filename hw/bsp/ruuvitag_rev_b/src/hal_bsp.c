@@ -210,3 +210,8 @@ hal_bsp_init(void)
 
     sensor_dev_create();
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

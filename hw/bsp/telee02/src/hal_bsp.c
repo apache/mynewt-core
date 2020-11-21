@@ -118,6 +118,11 @@ hal_bsp_init(void)
     assert(rc == 0);
 }
 
+void
+hal_bsp_deinit(void)
+{
+}
+
 #if MYNEWT_VAL(LORA_NODE)
 void lora_bsp_enable_mac_timer(void)
 {

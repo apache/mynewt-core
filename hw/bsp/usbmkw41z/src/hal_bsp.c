@@ -86,3 +86,8 @@ hal_bsp_init(void)
 {
     return;
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

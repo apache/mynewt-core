@@ -236,3 +236,8 @@ hal_bsp_init(void)
     hal_bsp_battery_init();
     #endif
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

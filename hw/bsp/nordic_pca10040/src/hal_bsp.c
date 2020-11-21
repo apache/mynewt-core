@@ -120,3 +120,8 @@ hal_bsp_init(void)
     /* Create all available nRF52840 peripherals */
     nrf52_periph_create();
 }
+
+void
+hal_bsp_deinit(void)
+{
+}

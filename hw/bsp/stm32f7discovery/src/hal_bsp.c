@@ -159,6 +159,11 @@ hal_bsp_init(void)
     stm32_periph_create();
 }
 
+void
+hal_bsp_deinit(void)
+{
+}
+
 /**
  * Returns the configured priority for the given interrupt. If no priority
  * configured, return the priority passed in

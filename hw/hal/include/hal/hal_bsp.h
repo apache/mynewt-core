@@ -40,6 +40,15 @@ extern "C" {
 void hal_bsp_init(void);
 
 /**
+ * De-initializes BSP. Intended to be called from bootloader
+ * before it call application reset handler.
+ * It should leave resources (timers/DMA/peripherals) in a state
+ * that nothing unexpected is active before application code
+ * is ready to handle it.
+ */
+void hal_bsp_deinit(void);
+
+/**
  * Return pointer to flash device structure, given BSP specific
  * flash id.
  */
