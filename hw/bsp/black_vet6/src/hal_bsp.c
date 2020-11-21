@@ -351,4 +351,19 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    RCC->AHB1ENR = RCC_AHB1ENR_CCMDATARAMEN;
+    RCC->AHB2ENR = 0x0;
+    RCC->AHB3ENR = 0x0;
+    RCC->APB1ENR = 0x0;
+    RCC->APB2ENR = 0x0;
+    RCC->AHB1RSTR = 0x22E017FF;
+    RCC->AHB2RSTR = 0x000000F1;
+    RCC->AHB3RSTR = 0x00000001;
+    RCC->APB1RSTR = 0xF6FEC9FF;
+    RCC->APB2RSTR = 0x04777933;
+    RCC->AHB1RSTR = 0x0;
+    RCC->AHB2RSTR = 0x0;
+    RCC->AHB3RSTR = 0x0;
+    RCC->APB1RSTR = 0x0;
+    RCC->APB2RSTR = 0x0;
 }
