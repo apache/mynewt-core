@@ -58,6 +58,9 @@ extern uint8_t _ram2_start;
 /* BUTTON pins */
 #define BTN_USER_1      MCU_GPIO_PORTC(13)
 
+/* Button pin */
+#define BUTTON_1        BTN_USER_1
+
 /* Arduino pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTG(9)
 #define ARDUINO_PIN_D1      MCU_GPIO_PORTG(14)

@@ -49,6 +49,9 @@ extern uint8_t _ccram_start;
 
 #define LED_BLINK_PIN LED_BLINK_PIN_1
 
+/* Button pin */
+#define BUTTON_1            MCU_GPIO_PORTC(13)
+
 /* Arduino nano pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTA(10)
 #define ARDUINO_PIN_D1      MCU_GPIO_PORTA(9)

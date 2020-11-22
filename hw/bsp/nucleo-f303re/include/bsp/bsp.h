@@ -52,6 +52,9 @@ extern uint8_t _ccram_start;
 /* Buttons */
 #define BTN_USER_1        MCU_GPIO_PORTC(13)
 
+/* Button pin */
+#define BUTTON_1          BTN_USER_1
+
 /* This defines the maximum NFFS areas (block) are in the BSPs NFS file 
  * system space.  This in conjunction with flash map determines how 
  * many NFS blocks there will be.  A minimum is the number of individually
