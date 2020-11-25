@@ -27,7 +27,14 @@
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_clock.h"
 
+#define XTAL32M_FREQ    32000000
+#define RC32M_FREQ      32000000
+#define PLL_FREQ        96000000
+#define XTAL32K_FREQ       32768
+
 static uint32_t g_mcu_clock_rcx_freq;
+
+uint32_t SystemCoreClock = RC32M_FREQ;
 
 static inline bool
 da1469x_clock_is_xtal32m_settled(void)
@@ -82,6 +89,8 @@ da1469x_clock_sys_xtal32m_switch(void)
     }
 
     while (!(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_XTAL32M_Msk));
+
+    SystemCoreClock = XTAL32M_FREQ;
 }
 
 void
@@ -130,6 +139,10 @@ da1469x_clock_lp_xtal32k_switch(void)
     CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
                              ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
                             (2 << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
+    /* If system is running on LP clock update SystemCoreClock */
+    if (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_LP_CLK_Msk) {
+        SystemCoreClock = XTAL32K_FREQ;
+    }
 }
 
 void
@@ -144,6 +157,11 @@ da1469x_clock_lp_rcx_switch(void)
     CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
                              ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
                             (1 << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
+
+    /* If system is running on LP clock update SystemCoreClock */
+    if (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_LP_CLK_Msk) {
+        SystemCoreClock = g_mcu_clock_rcx_freq;
+    }
 }
 
 void
@@ -248,6 +266,8 @@ da1469x_clock_pll_disable(void)
 {
     while (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_PLL96M_Msk) {
         CRG_TOP->CLK_SWITCH2XTAL_REG = CRG_TOP_CLK_SWITCH2XTAL_REG_SWITCH2XTAL_Msk;
+
+        SystemCoreClock = XTAL32M_FREQ;
     }
 
     CRG_XTAL->PLL_SYS_CTRL1_REG &= ~(CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_EN_Msk |
@@ -281,4 +301,6 @@ da1469x_clock_sys_pll_switch(void)
     CRG_TOP->CLK_CTRL_REG |= CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Msk;
 
     while (!(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_PLL96M_Msk));
+
+    SystemCoreClock = PLL_FREQ;
 }
