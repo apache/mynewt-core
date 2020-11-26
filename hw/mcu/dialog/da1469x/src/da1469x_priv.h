@@ -27,6 +27,7 @@
 extern "C" {
 #endif
 
+extern uint8_t g_mcu_pdc_sw_trigger_idx;
 extern uint8_t g_mcu_pdc_combo_idx;
 extern bool g_mcu_lpclk_available;
 

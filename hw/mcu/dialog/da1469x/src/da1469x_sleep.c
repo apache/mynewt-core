@@ -31,6 +31,7 @@
 
 extern int da1469x_m33_sleep(void) __attribute__((naked));
 
+uint8_t g_mcu_pdc_sw_trigger_idx;
 uint8_t g_mcu_pdc_combo_idx;
 
 static bool g_mcu_wait_for_jtag;
@@ -62,8 +63,6 @@ da1469x_sleep(os_time_t ticks)
     int slept;
     bool can_sleep = true;
 
-    da1469x_pdc_ack_all_m33();
-
     if (da1469x_sleep_is_blocked() || ticks < 3) {
         __DSB();
         __WFI();
@@ -82,12 +81,19 @@ da1469x_sleep(os_time_t ticks)
     /* Must enter mcu gpio sleep before releasing MCU_PD_DOMAIN_SYS */
     mcu_gpio_enter_sleep();
 
+    /*
+     * Set SW trigger entry pending in PDC to make sure SYS_SLEEP=1 won't
+     * disable us.
+     */
+    da1469x_pdc_set(g_mcu_pdc_sw_trigger_idx);
+
     /* PD_SYS will not be disabled here until we enter deep sleep, so don't wait */
     if (!da1469x_pd_release_nowait(MCU_PD_DOMAIN_SYS)) {
         __DSB();
         __WFI();
         slept = 0;
     } else {
+        da1469x_pdc_ack_all_m33();
         slept = da1469x_m33_sleep();
     }
 

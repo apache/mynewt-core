@@ -125,6 +125,14 @@ SystemInit(void)
     da1469x_pdc_ack(idx);
     g_mcu_pdc_combo_idx = idx;
 
+    /* Add entry for SW trigger */
+    idx = da1469x_pdc_add(MCU_PDC_TRIGGER_SW_TRIGGER, MCU_PDC_MASTER_M33,
+                          MCU_PDC_EN_XTAL);
+    assert(idx >= 0);
+    da1469x_pdc_set(idx);
+    da1469x_pdc_ack(idx);
+    g_mcu_pdc_sw_trigger_idx = idx;
+
     /* Enable cache retainability */
     CRG_TOP->PMU_CTRL_REG |= CRG_TOP_PMU_CTRL_REG_RETAIN_CACHE_Msk;
 #endif
