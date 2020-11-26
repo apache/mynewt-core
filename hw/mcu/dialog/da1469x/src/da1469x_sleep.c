@@ -83,9 +83,14 @@ da1469x_sleep(os_time_t ticks)
     mcu_gpio_enter_sleep();
 
     /* PD_SYS will not be disabled here until we enter deep sleep, so don't wait */
-    da1469x_pd_release_nowait(MCU_PD_DOMAIN_SYS);
+    if (!da1469x_pd_release_nowait(MCU_PD_DOMAIN_SYS)) {
+        __DSB();
+        __WFI();
+        slept = 0;
+    } else {
+        slept = da1469x_m33_sleep();
+    }
 
-    slept = da1469x_m33_sleep();
     mcu_gpio_exit_sleep();
 
     if (g_da1469x_sleep_cb.exit_sleep) {
