@@ -273,6 +273,10 @@ hal_uart_start_rx(int port)
         return;
     }
 
+    if (uart->cfg->pin_rx < 0) {
+        return;
+    }
+
     __HAL_DISABLE_INTERRUPTS(primask);
 
     if (uart->rx_stalled) {
@@ -417,7 +421,9 @@ hal_uart_init(int port, void *arg)
     uart->cfg = cfg;
 
     mcu_gpio_set_pin_function(cfg->pin_tx, MCU_GPIO_MODE_OUTPUT, gpiofunc[0]);
-    mcu_gpio_set_pin_function(cfg->pin_rx, MCU_GPIO_MODE_INPUT, gpiofunc[1]);
+    if (uart->cfg->pin_rx >= 0) {
+        mcu_gpio_set_pin_function(cfg->pin_rx, MCU_GPIO_MODE_INPUT, gpiofunc[1]);
+    }
     if (cfg->pin_rts >= 0) {
         mcu_gpio_set_pin_function(cfg->pin_rts, MCU_GPIO_MODE_OUTPUT, gpiofunc[2]);
     }
@@ -477,7 +483,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     }
 
     /* Enable pullup if configured */
-    if (uart->cfg->rx_pullup) {
+    if (uart->cfg->pin_rx >= 0 && uart->cfg->rx_pullup) {
         mcu_gpio_set_pin_function(uart->cfg->pin_rx, MCU_GPIO_MODE_INPUT_PULLUP,
                                   uart->rx_pin_func);
     }
@@ -552,7 +558,9 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     NVIC_ClearPendingIRQ(uart->irqn);
     NVIC_EnableIRQ(uart->irqn);
 
-    da1469x_uart_rx_intr_enable(uart);
+    if (uart->cfg->pin_rx >= 0) {
+        da1469x_uart_rx_intr_enable(uart);
+    }
 
     /*
      * We can acquire PD_COM here to be sure it's acquired only if everything is
@@ -595,7 +603,7 @@ hal_uart_close(int port)
     }
 
     /* Set back to input with no pullup if pullup enabled */
-    if (uart->cfg->rx_pullup) {
+    if (uart->cfg->pin_rx >= 0 && uart->cfg->rx_pullup) {
         mcu_gpio_set_pin_function(uart->cfg->pin_rx, MCU_GPIO_MODE_INPUT,
                                   uart->rx_pin_func);
     }
