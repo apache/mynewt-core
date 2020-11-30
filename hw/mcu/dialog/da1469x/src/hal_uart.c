@@ -25,6 +25,7 @@
 #include "mcu/da1469x_hal.h"
 #include "mcu/mcu.h"
 #include "hal/hal_uart.h"
+#include "hal/hal_gpio.h"
 #include "defs/error.h"
 #include "os/os_trace_api.h"
 #include "os/util.h"
@@ -38,6 +39,8 @@ struct da1469x_uart {
 
     volatile uint8_t rx_stalled : 1;
     volatile uint8_t tx_started : 1;
+    /* RX temporarily switched to GPIO with interrupt */
+    volatile uint8_t rx_disconnected : 1;
     volatile uint8_t rx_data;
 
     /*
@@ -150,6 +153,26 @@ da1469x_uart_rx_intr_disable(struct da1469x_uart *uart)
     uart->regs->UART2_IER_DLH_REG &= ~UART2_UART2_IER_DLH_REG_ERBFI_DLH0_Msk;
 }
 
+static void
+da1469x_uart_set_rx_pin(struct da1469x_uart *uart)
+{
+    int mode = uart->cfg->rx_pullup ? MCU_GPIO_MODE_INPUT_PULLUP : MCU_GPIO_MODE_INPUT;
+
+    if (uart->cfg->pin_rx >= 0) {
+        mcu_gpio_set_pin_function(uart->cfg->pin_rx, mode, uart->rx_pin_func);
+    }
+}
+
+static void
+da1469x_uart_set_rx_pin_as_gpio(struct da1469x_uart *uart)
+{
+    int mode = uart->cfg->rx_pullup ? MCU_GPIO_MODE_INPUT_PULLUP : MCU_GPIO_MODE_INPUT;
+
+    if (uart->cfg->pin_rx >= 0) {
+        mcu_gpio_set_pin_function(uart->cfg->pin_rx, mode, MCU_GPIO_FUNC_GPIO);
+    }
+}
+
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
 static void
 da1469x_uart_isr_thr_empty(struct da1469x_uart *uart)
@@ -194,6 +217,39 @@ da1469x_uart_isr_recv_data(struct da1469x_uart *uart)
 }
 
 static void
+da1469x_uart_reconnect_rx(void *arg)
+{
+    struct da1469x_uart *uart = (struct da1469x_uart *)arg;
+
+    /* RX pin high, reconfigure RX pin for UART */
+    if (hal_gpio_read(uart->cfg->pin_rx) == 1) {
+        hal_gpio_irq_release(uart->cfg->pin_rx);
+        uart->rx_disconnected = 0;
+        da1469x_uart_set_rx_pin(uart);
+    }
+}
+
+void
+da1469x_uart_busy(struct da1469x_uart *uart)
+{
+    UART2_Type *regs = uart->regs;
+    int8_t pin_rx = uart->cfg->pin_rx;
+    hal_gpio_pull_t mode = uart->cfg->rx_pullup ? HAL_GPIO_PULL_UP : HAL_GPIO_PULL_NONE;
+
+    (void)regs->UART2_USR_REG;
+    (void)regs->UART2_LSR_REG;
+    /* Busy due to low RX */
+    if (MYNEWT_VAL(MCU_UART_DICONNECT_RX_ON_BUSY) && hal_gpio_read(pin_rx) == 0) {
+        hal_gpio_irq_init(pin_rx, da1469x_uart_reconnect_rx, uart,
+                          HAL_GPIO_TRIG_RISING, mode);
+        uart->rx_disconnected = 1;
+        hal_gpio_irq_enable(pin_rx);
+        return;
+    }
+    assert(0);
+}
+
+static void
 da1469x_uart_common_isr(struct da1469x_uart *uart)
 {
     UART2_Type *regs;
@@ -221,9 +277,7 @@ da1469x_uart_common_isr(struct da1469x_uart *uart)
         case 0x06: /* receiver line status */
             break;
         case 0x07: /* busy detect */
-            /* Clear the flag so if assert not defined no infinite loop here */
-            (void)regs->UART2_USR_REG;
-            assert(0);
+            da1469x_uart_busy(uart);
             break;
         case 0x0c: /* character timeout */
             break;
@@ -421,9 +475,9 @@ hal_uart_init(int port, void *arg)
     uart->cfg = cfg;
 
     mcu_gpio_set_pin_function(cfg->pin_tx, MCU_GPIO_MODE_OUTPUT, gpiofunc[0]);
-    if (uart->cfg->pin_rx >= 0) {
-        mcu_gpio_set_pin_function(cfg->pin_rx, MCU_GPIO_MODE_INPUT, gpiofunc[1]);
-    }
+
+    da1469x_uart_set_rx_pin(uart);
+
     if (cfg->pin_rts >= 0) {
         mcu_gpio_set_pin_function(cfg->pin_rts, MCU_GPIO_MODE_OUTPUT, gpiofunc[2]);
     }
@@ -446,7 +500,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     UART2_Type *regs;
     uint32_t reg;
     uint32_t baudrate_cfg;
-    uint32_t loop_count;
 
     uart = da1469x_uart_resolve(port);
     if (!uart) {
@@ -482,31 +535,12 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         return SYS_ENOTSUP;
     }
 
-    /* Enable pullup if configured */
-    if (uart->cfg->pin_rx >= 0 && uart->cfg->rx_pullup) {
-        mcu_gpio_set_pin_function(uart->cfg->pin_rx, MCU_GPIO_MODE_INPUT_PULLUP,
-                                  uart->rx_pin_func);
-    }
-
-    /*
-     * If the UART is busy we are not allowed to write to the LCR register.
-     * Doing so results in the "busy detect" error. Only reason UART should
-     * be busy here is if something is driving RX low.
-     *
-     * XXX: the loop counter here is ugly for sure. Did not want to assume
-     * an OS for the hal and instantiating a timer for this seemed pretty
-     * heavyweight. There are 4 instructions and I realize this time will be
-     * quite variable based on CPU clock and cache, etc.
-     *
-     * Did not want to simply poll and not break out as holding RX low would
-     * cause an infinite loop here.
-     */
-    loop_count = 0;
-    while (regs->UART2_USR_REG & UART2_UART2_USR_REG_UART_BUSY_Msk) {
-        ++loop_count;
-        if (loop_count > 10000) {
-            return SYS_EBUSY;
-        }
+    if (uart->cfg->pin_rx >= 0) {
+        /*
+         * Switch to GPIO during configuration to prevent landing up in
+         * busy state if RX line is low.
+         */
+        da1469x_uart_set_rx_pin_as_gpio(uart);
     }
 
     regs->UART2_LCR_REG |= UART2_UART2_LCR_REG_UART_DLAB_Msk;
@@ -558,10 +592,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     NVIC_ClearPendingIRQ(uart->irqn);
     NVIC_EnableIRQ(uart->irqn);
 
-    if (uart->cfg->pin_rx >= 0) {
-        da1469x_uart_rx_intr_enable(uart);
-    }
-
     /*
      * We can acquire PD_COM here to be sure it's acquired only if everything is
      * set properly. It's ok to setup UART without acquiring that domain earlier
@@ -571,6 +601,12 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
      */
     da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
 
+    /* Reconnect RX pin to UART and enable RX interrupt. */
+    if (uart->cfg->pin_rx >= 0) {
+        da1469x_uart_rx_intr_enable(uart);
+        da1469x_uart_set_rx_pin(uart);
+    }
+
     return 0;
 }
 
@@ -578,6 +614,7 @@ int
 hal_uart_close(int port)
 {
     struct da1469x_uart *uart;
+    int sr;
 
     uart = da1469x_uart_resolve(port);
     if (!uart) {
@@ -602,10 +639,18 @@ hal_uart_close(int port)
         break;
     }
 
-    /* Set back to input with no pullup if pullup enabled */
-    if (uart->cfg->pin_rx >= 0 && uart->cfg->rx_pullup) {
-        mcu_gpio_set_pin_function(uart->cfg->pin_rx, MCU_GPIO_MODE_INPUT,
-                                  uart->rx_pin_func);
+    /*
+     * If RX pin was changed to GPIO due busy state, change it back to UART RX
+     * releasing interrupt that was setup.
+     */
+    if (uart->cfg->pin_rx >= 0) {
+        OS_ENTER_CRITICAL(sr);
+        if (uart->rx_disconnected) {
+            hal_gpio_irq_release(uart->cfg->pin_rx);
+            uart->rx_disconnected = 0;
+            da1469x_uart_set_rx_pin(uart);
+        }
+        OS_EXIT_CRITICAL(sr);
     }
 
     da1469x_pd_release(MCU_PD_DOMAIN_COM);

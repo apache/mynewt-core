@@ -105,6 +105,13 @@ syscfg.defs:
             Used internally by the newt tool.
         value: 1
 
+    MCU_UART_DICONNECT_RX_ON_BUSY:
+        description: >
+            If set to 1, UART RX pin will be configured to GPIO once busy state is
+            detected.  UART block can stuck in busy state when RX line is set to 0.
+            This will result in continuous BUSY interrupt.
+            To prevent such case RX pin can be configured to GPIO.
+        value: 0
     MCU_DMA_IRQ_PRIO:
         description: >
             Specifies the NVIC interrupt priority to assign for the DMA_IRQn 
