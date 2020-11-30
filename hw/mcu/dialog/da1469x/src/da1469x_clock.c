@@ -33,6 +33,8 @@
 #define XTAL32K_FREQ       32768
 
 static uint32_t g_mcu_clock_rcx_freq;
+static uint32_t g_mcu_clock_rc32k_freq;
+static uint32_t g_mcu_clock_rc32m_freq;
 
 uint32_t SystemCoreClock = RC32M_FREQ;
 
@@ -164,6 +166,41 @@ da1469x_clock_lp_rcx_switch(void)
     }
 }
 
+/**
+ * Measure clock frequency
+ *
+ * @param clock_sel - clock to measure
+ *                  0 - RC32K
+ *                  1 - RC32M
+ *                  2 - XTAL32K
+ *                  3 - RCX
+ *                  4 - RCOSC
+ * @param ref_cnt - number of cycles used for measurement.
+ * @return  clock frequency
+ */
+static uint32_t
+da1469x_clock_calibrate(uint8_t clock_sel, uint16_t ref_cnt)
+{
+    uint32_t ref_val;
+
+    da1469x_pd_acquire(MCU_PD_DOMAIN_PER);
+
+    assert(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_XTAL32M_Msk);
+    assert(!(ANAMISC->CLK_REF_SEL_REG & ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk));
+
+    ANAMISC->CLK_REF_CNT_REG = ref_cnt;
+    ANAMISC->CLK_REF_SEL_REG = (clock_sel << ANAMISC_CLK_REF_SEL_REG_REF_CLK_SEL_Pos) |
+                               ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk;
+
+    while (ANAMISC->CLK_REF_SEL_REG & ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk);
+
+    ref_val = ANAMISC->CLK_REF_VAL_REG;
+
+    da1469x_pd_release(MCU_PD_DOMAIN_PER);
+
+    return 32000000 * ref_cnt / ref_val;
+}
+
 void
 da1469x_clock_lp_rcx_calibrate(void)
 {
@@ -173,24 +210,19 @@ da1469x_clock_lp_rcx_calibrate(void)
      *     also make it configurable if necessary
      */
     const uint32_t ref_cnt = 100;
-    uint32_t ref_val;
+    g_mcu_clock_rcx_freq = da1469x_clock_calibrate(3, ref_cnt);
+}
 
-    da1469x_pd_acquire(MCU_PD_DOMAIN_PER);
+void
+da1469x_clock_lp_rc32k_calibrate(void)
+{
+    g_mcu_clock_rc32k_freq = da1469x_clock_calibrate(0, 100);
+}
 
-    assert(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_XTAL32M_Msk);
-    assert(!(ANAMISC->CLK_REF_SEL_REG & ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk));
-
-    ANAMISC->CLK_REF_CNT_REG = ref_cnt;
-    ANAMISC->CLK_REF_SEL_REG = (3 << ANAMISC_CLK_REF_SEL_REG_REF_CLK_SEL_Pos) |
-                               ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk;
-
-    while (ANAMISC->CLK_REF_SEL_REG & ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk);
-
-    ref_val = ANAMISC->CLK_REF_VAL_REG;
-
-    da1469x_pd_release(MCU_PD_DOMAIN_PER);
-
-    g_mcu_clock_rcx_freq = 32000000 * ref_cnt / ref_val;
+void
+da1469x_clock_lp_rc32m_calibrate(void)
+{
+    g_mcu_clock_rc32m_freq = da1469x_clock_calibrate(1, 100);
 }
 
 uint32_t
@@ -199,6 +231,22 @@ da1469x_clock_lp_rcx_freq_get(void)
     assert(g_mcu_clock_rcx_freq);
 
     return g_mcu_clock_rcx_freq;
+}
+
+uint32_t
+da1469x_clock_lp_rc32k_freq_get(void)
+{
+    assert(g_mcu_clock_rc32k_freq);
+
+    return g_mcu_clock_rc32k_freq;
+}
+
+uint32_t
+da1469x_clock_lp_rc32m_freq_get(void)
+{
+    assert(g_mcu_clock_rc32m_freq);
+
+    return g_mcu_clock_rc32m_freq;
 }
 
 void
