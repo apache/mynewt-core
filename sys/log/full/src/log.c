@@ -955,18 +955,17 @@ log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
 {
     int bytes_read;
 
+#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
+    bytes_read = log_read(log, dptr, hdr, 0, (LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN));
+    if (bytes_read != (LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN)) {
+        return SYS_EIO;
+    }
+#else
     bytes_read = log_read(log, dptr, hdr, 0, LOG_BASE_ENTRY_HDR_SIZE);
     if (bytes_read != LOG_BASE_ENTRY_HDR_SIZE) {
         return SYS_EIO;
     }
-
-    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
-        bytes_read = log_read(log, dptr, hdr->ue_imghash,
-                              LOG_BASE_ENTRY_HDR_SIZE, LOG_IMG_HASHLEN);
-        if (bytes_read != LOG_IMG_HASHLEN) {
-            return SYS_EIO;
-        }
-    }
+#endif
 
     return 0;
 }
