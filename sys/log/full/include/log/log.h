@@ -126,7 +126,7 @@ struct log_handler {
     lh_registered_func_t log_registered;
 };
 
-/* Image hash length to be looged */
+/* Image hash length to be logged */
 #define LOG_IMG_HASHLEN 4
 
 /* Flags used to indicate type of data in reserved payload*/
