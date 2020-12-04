@@ -139,29 +139,29 @@ i2s3_clock_enable(bool enable)
 #endif
 }
 
+#ifdef SPI4
 static void
 i2s4_clock_enable(bool enable)
 {
-#ifdef SPI4
     if (enable) {
         __HAL_RCC_SPI4_CLK_ENABLE();
     } else {
         __HAL_RCC_SPI4_CLK_DISABLE();
     }
-#endif
 }
+#endif
 
+#ifdef SPI5
 static void
 i2s5_clock_enable(bool enable)
 {
-#ifdef SPI5
     if (enable) {
         __HAL_RCC_SPI5_CLK_ENABLE();
     } else {
         __HAL_RCC_SPI5_CLK_DISABLE();
     }
-#endif
 }
+#endif
 
 #if I2S_FULLDUPLEX_SUPPORT
 void
@@ -226,6 +226,7 @@ i2s3ext_dma_stream_irq_handler(void)
 }
 #endif
 
+#ifdef SPI4
 static void
 i2s4_dma_stream_irq_handler(void)
 {
@@ -235,7 +236,9 @@ i2s4_dma_stream_irq_handler(void)
 
     os_trace_isr_exit();
 }
+#endif
 
+#ifdef SPI5
 static void
 i2s5_dma_stream_irq_handler(void)
 {
@@ -245,6 +248,7 @@ i2s5_dma_stream_irq_handler(void)
 
     os_trace_isr_exit();
 }
+#endif
 
 static void
 i2s_init_interrupts(const struct i2s_cfg *cfg)
@@ -1007,9 +1011,13 @@ I2S_PIN_DEFINE(2, B, 11, GPIO_AF5_SPI2);
 I2S_PIN_DEFINE(2, C, 9, GPIO_AF5_SPI2);
 
 /* I2S2 Possible MCK pins */
+#ifdef GPIO_AF5_SPI2
 I2S_PIN_DEFINE(2, A, 3, GPIO_AF5_SPI2);
+I2S_PIN_DEFINE(2, C, 6, GPIO_AF5_SPI2);
+#endif
+#ifdef GPIO_AF6_SPI2
 I2S_PIN_DEFINE(2, A, 6, GPIO_AF6_SPI2);
-I2S_PIN_DEFINE(2, C, 6, GPIO_AF6_SPI2);
+#endif
 
 /* I2S2 Possible CK pins */
 I2S_CK_PIN_DEFINE(2, B, 10, GPIO_AF5_SPI2);
@@ -1026,8 +1034,11 @@ I2S_SD_PIN_DEFINE(2, B, 15, GPIO_AF5_SPI2);
 I2S_SD_PIN_DEFINE(2, C, 3, GPIO_AF5_SPI2);
 
 /* I2S2_ext possible SD pins */
+#ifdef GPIO_AF6_SPI2
 I2S_SD_PIN_DEFINE(2, B, 14, GPIO_AF6_SPI2);
 I2S_SD_PIN_DEFINE(2, C, 2, GPIO_AF6_SPI2);
+I2S_SD_PIN_DEFINE(2, I, 2, GPIO_AF5_SPI2);
+#endif
 
 /* I2S3 possible CK pins */
 I2S_CK_PIN_DEFINE(3, B, 3, GPIO_AF6_SPI3);
@@ -1040,23 +1051,36 @@ I2S_WS_PIN_DEFINE(3, A, 15, GPIO_AF6_SPI3);
 /* I2S3 possible SD pins */
 I2S_SD_PIN_DEFINE(3, B, 5, GPIO_AF6_SPI3);
 I2S_SD_PIN_DEFINE(3, C, 12, GPIO_AF6_SPI3);
+#ifdef GPIO_AF5_SPI3
 I2S_SD_PIN_DEFINE(3, D, 6, GPIO_AF5_SPI3);
+#endif
 
 /* I2S3 possible MCK pins */
 I2S_PIN_DEFINE(3, B, 10, GPIO_AF6_SPI3);
 I2S_PIN_DEFINE(3, C, 7, GPIO_AF6_SPI3);
 
 /* I2S4 possible CK pins */
+#ifdef GPIO_AF5_SPI4
 I2S_CK_PIN_DEFINE(4, E, 2, GPIO_AF5_SPI4);
 I2S_CK_PIN_DEFINE(4, E, 12, GPIO_AF5_SPI4);
+#endif
+#ifdef GPIO_AF6_SPI4
 I2S_CK_PIN_DEFINE(4, B, 13, GPIO_AF6_SPI4);
+#endif
 
+#ifdef GPIO_AF7_SPI3
 /* I2S3_ext possible SD pins */
 I2S_SD_PIN_DEFINE(3, B, 4, GPIO_AF7_SPI3);
+#endif
+#ifdef GPIO_AF5_SPI3
 I2S_SD_PIN_DEFINE(3, C, 11, GPIO_AF5_SPI3);
+#endif
 
 /* I2S4 possible WS pins */
+#ifdef GPIO_AF6_SPI4
 I2S_WS_PIN_DEFINE(4, B, 12, GPIO_AF6_SPI4);
+#endif
+#ifdef GPIO_AF5_SPI4
 I2S_WS_PIN_DEFINE(4, E, 4, GPIO_AF5_SPI4);
 I2S_WS_PIN_DEFINE(4, E, 11, GPIO_AF5_SPI4);
 
@@ -1064,8 +1088,10 @@ I2S_WS_PIN_DEFINE(4, E, 11, GPIO_AF5_SPI4);
 I2S_SD_PIN_DEFINE(4, A, 1, GPIO_AF5_SPI4);
 I2S_SD_PIN_DEFINE(4, E, 6, GPIO_AF5_SPI4);
 I2S_SD_PIN_DEFINE(4, E, 14, GPIO_AF5_SPI4);
+#endif
 
 /* I2S5 possible CK pins */
+#ifdef GPIO_AF6_SPI5
 I2S_CK_PIN_DEFINE(5, B, 0, GPIO_AF6_SPI5);
 I2S_CK_PIN_DEFINE(5, E, 2, GPIO_AF6_SPI5);
 I2S_CK_PIN_DEFINE(5, E, 12, GPIO_AF6_SPI5);
@@ -1080,6 +1106,7 @@ I2S_SD_PIN_DEFINE(5, A, 10, GPIO_AF6_SPI5);
 I2S_SD_PIN_DEFINE(5, B, 8, GPIO_AF6_SPI5);
 I2S_SD_PIN_DEFINE(5, E, 6, GPIO_AF6_SPI5);
 I2S_SD_PIN_DEFINE(5, E, 14, GPIO_AF6_SPI5);
+#endif
 
 #define DMA_STREAM_DEFINE(dma, ch, st, name) \
     const struct stm32_dma_cfg name ## _stream ## st ## _channel ## ch = {  \
