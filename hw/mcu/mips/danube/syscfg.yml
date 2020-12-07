@@ -22,3 +22,6 @@ syscfg.defs:
             Specifies the required alignment for internal flash writes.
             Used internally by the newt tool.
         value: 1
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 1000

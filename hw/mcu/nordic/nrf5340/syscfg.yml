@@ -408,7 +408,10 @@ syscfg.defs:
     I2C_3_FREQ_KHZ:
         description: 'Frequency [kHz] for I2C_3'
         value: 100
-        
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 128
+
 syscfg.restrictions:
     - "!UART_0 || (UART_0_PIN_TX && UART_0_PIN_RX)"
     - "!UART_1 || (UART_1_PIN_TX && UART_1_PIN_RX)"

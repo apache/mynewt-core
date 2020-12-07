@@ -123,3 +123,6 @@ syscfg.defs:
                     APOLLO2_TIMER_SOURCE_TMRPINA
                     APOLLO2_TIMER_SOURCE_BUCKA
         value:
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 128

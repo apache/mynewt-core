@@ -26,14 +26,6 @@
 extern "C" {
 #endif
 
-/*
- * NOTE: the current timer used for this chip is a 1 kHz clock. Thus, the
- * number of OS ticks per second should be a multiple of 1000. If interrupts
- * are disabled for longer than an ostick it is possible that os time will not
- * be accurate.
- */
-#define OS_TICKS_PER_SEC	(1000)
-
 static inline void
 hal_debug_break(void)
 {

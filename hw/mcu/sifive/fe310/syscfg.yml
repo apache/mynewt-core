@@ -70,10 +70,6 @@ syscfg.defs:
     TIMER_2:
         description: 'Whether to use PWM0 8 bit timer as system timer'
         value:  0
-    OS_TICKS_PER_SEC:
-        description: 'Desired ticks frequency in Hz'
-        value: 128
-        range: 128,256,512,1024
     OS_TICKLESS_SLEEP:
         description: 'Enable tickless sleep'
         value: 1
@@ -85,3 +81,9 @@ syscfg.defs:
             This maybe useful when .bssnz section is being used to store data across
             software reboots.
         value: 1
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 128
+
+syscfg.restrictions:
+    - "(OS_TICKS_PER_SEC == 128 || OS_TICKS_PER_SEC == 256 || OS_TICKS_PER_SEC == 512 || OS_TICKS_PER_SEC == 1024)"

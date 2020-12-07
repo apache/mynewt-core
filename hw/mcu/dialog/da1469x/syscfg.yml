@@ -474,6 +474,9 @@ syscfg.defs:
         restrictions:
             - '!GPADC_BATTERY'
 
+syscfg.vals:
+    OS_TICKS_PER_SEC: 128
+
 syscfg.vals.'MCU_SYSCLK_SOURCE == "PLL96"':
     MCU_PLL_ENABLE: 1
 
