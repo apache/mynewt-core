@@ -21,8 +21,10 @@
 #include <os/os.h>
 #include <ipc_nrf5340/ipc_nrf5340.h>
 #include <nrfx.h>
+#if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
 #include <mcu/nrf5340_hal.h>
 #include <bsp/bsp.h>
+#endif
 
 /* Currently this allows only for 1-1 connection. */
 
