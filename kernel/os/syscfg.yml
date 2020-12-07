@@ -145,6 +145,11 @@ syscfg.defs:
             on error detection.  Enabling this setting increases stack usage.
         value: 0
 
+    OS_TICKS_PER_SEC:
+        description: 'Desired ticks frequency in Hz'
+        value:
+        restrictions: $notnull
+
     OS_IDLE_TICKLESS_MS_MIN:
         description: >
             Minimum duration of tickless idle period in miliseconds.

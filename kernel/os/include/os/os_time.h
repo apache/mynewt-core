@@ -77,6 +77,16 @@ extern "C" {
 #define INT32_MAX   0x7FFFFFFF
 #endif
 
+#ifdef OS_TICKS_PER_SEC
+#warning "OS_TICKS_PER_SEC should be configured in syscfg"
+#else
+#if MYNEWT_VAL(OS_TICKS_PER_SEC)
+#define OS_TICKS_PER_SEC        MYNEWT_VAL(OS_TICKS_PER_SEC)
+#else
+#error "Application, BSP or target must specify OS_TICKS_PER_SEC syscfg value"
+#endif
+#endif
+
 typedef uint32_t os_time_t;
 typedef int32_t os_stime_t;
 #define OS_TIME_MAX UINT32_MAX
