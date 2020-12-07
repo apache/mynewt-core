@@ -27,8 +27,6 @@
 extern "C" {
 #endif
 
-#define OS_TICKS_PER_SEC    (128)
-
 static inline void
 hal_debug_break(void)
 {

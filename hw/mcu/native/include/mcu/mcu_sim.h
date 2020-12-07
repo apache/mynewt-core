@@ -23,8 +23,6 @@
 extern "C" {
 #endif
 
-#define OS_TICKS_PER_SEC    (100)
-
 extern char *native_flash_file;
 extern char *native_uart_log_file;
 extern const char *native_uart_dev_strs[];

@@ -126,5 +126,9 @@ syscfg.defs:
     SPI_0_SLAVE_PIN_SS:
         description: 'SS pin for SPI_0_SLAVE'
         value: ''
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 128
+
 syscfg.restrictions:
     - "!UART_0 || (UART_0_PIN_TX && UART_0_PIN_RX)"

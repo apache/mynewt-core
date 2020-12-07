@@ -92,11 +92,6 @@ syscfg.defs:
             the breakpoint wherever it gets called, For example, reset and crash
        value: 0
 
-    OS_TICKS_PER_SEC:
-        description: >
-            Desired ticks frequency in Hz. Note: Value must be a power of 2.
-        value: 128
-        range: 128,256,512,1024
 
 # MCU peripherals definitions
     I2C_0:
@@ -457,6 +452,9 @@ syscfg.defs:
             - "!XTAL_RC"
         deprecated: 1
 
+syscfg.vals:
+    OS_TICKS_PER_SEC: 128
+
 syscfg.vals.MCU_NRF52832:
     MCU_TARGET: nRF52832
 syscfg.vals.MCU_NRF52840:
@@ -481,3 +479,4 @@ syscfg.restrictions:
     - "!SPI_2_SLAVE || (SPI_2_SLAVE_PIN_SCK && SPI_2_SLAVE_PIN_MOSI && SPI_2_SLAVE_PIN_MISO && SPI_2_SLAVE_PIN_SS)"
     - "!UART_0 || (UART_0_PIN_TX && UART_0_PIN_RX)"
     - "!UART_1 || (UART_1_PIN_TX && UART_1_PIN_RX)"
+    - "(OS_TICKS_PER_SEC == 128 || OS_TICKS_PER_SEC == 256 || OS_TICKS_PER_SEC == 512 || OS_TICKS_PER_SEC == 1024)"

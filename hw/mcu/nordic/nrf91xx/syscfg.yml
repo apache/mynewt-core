@@ -429,6 +429,9 @@ syscfg.defs:
         description: 'Enable pin reset'
         value: 0
 
+syscfg.vals:
+    OS_TICKS_PER_SEC: 128
+
 syscfg.vals.MCU_NRF9160:
     MCU_TARGET: nRF9160
 

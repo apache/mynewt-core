@@ -77,5 +77,8 @@ syscfg.defs:
         value: -1
         range: -1,0..31
 
+syscfg.vals:
+    OS_TICKS_PER_SEC: 128
+
 syscfg.restrictions:
     - BLE_CONTROLLER

@@ -42,3 +42,6 @@ syscfg.defs:
         value:  0
         restrictions:
             - "!SPI_1_MASTER"
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 1000
