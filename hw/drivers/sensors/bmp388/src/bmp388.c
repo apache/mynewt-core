@@ -3375,7 +3375,7 @@ bmp388_hybrid_read(struct sensor *sensor,
                    void *read_arg,
                    uint32_t time_ms)
 {
-    int rc;
+    int rc = 0;
     struct bmp388 *bmp388;
     struct bmp388_cfg *cfg;
     os_time_t time_ticks;
