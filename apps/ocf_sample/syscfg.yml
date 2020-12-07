@@ -22,3 +22,7 @@ syscfg.vals:
 
     # Default task settings
     OS_MAIN_STACK_SIZE: 512
+
+syscfg.vals.OC_TRANSPORT_GATT:
+    # Config in RAM
+    BLE_STORE_CONFIG_PERSIST: 0

@@ -34,7 +34,7 @@ pkg.deps:
     - "@apache-mynewt-nimble/nimble/host/services/ans"
     - "@apache-mynewt-nimble/nimble/host/services/gap"
     - "@apache-mynewt-nimble/nimble/host/services/gatt"
-    - "@apache-mynewt-nimble/nimble/host/store/ram"
+    - "@apache-mynewt-nimble/nimble/host/store/config"
     - "@apache-mynewt-nimble/nimble/transport"
     - "@apache-mynewt-core/sys/console/full"
     - "@apache-mynewt-core/sys/log/full"

@@ -67,3 +67,7 @@ syscfg.defs:
         - '!BLE_ROLE_CENTRAL'
         - '!BLE_ROLE_OBSERVER'
         - BLE_ROLE_PERIPHERAL
+
+syscfg.vals.SENSOR_BLE:
+    # Config in RAM
+    BLE_STORE_CONFIG_PERSIST: 0

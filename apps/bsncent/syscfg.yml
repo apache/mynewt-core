@@ -27,3 +27,6 @@ syscfg.vals:
 
     # Turn strict scheduling on
     BLE_LL_STRICT_CONN_SCHEDULING: 1
+
+    # Config in RAM
+    BLE_STORE_CONFIG_PERSIST: 0
