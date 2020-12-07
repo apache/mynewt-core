@@ -23,3 +23,6 @@ syscfg.vals:
 
     # Default task settings
     OS_MAIN_STACK_SIZE: 336
+
+    # Config in RAM
+    BLE_STORE_CONFIG_PERSIST: 0

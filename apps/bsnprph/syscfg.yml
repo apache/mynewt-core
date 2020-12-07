@@ -30,3 +30,6 @@ syscfg.vals:
     BLE_ROLE_CENTRAL: 0
     BLE_ROLE_OBSERVER: 0
     BLE_ROLE_PERIPHERAL: 1
+
+    # Config in RAM
+    BLE_STORE_CONFIG_PERSIST: 0

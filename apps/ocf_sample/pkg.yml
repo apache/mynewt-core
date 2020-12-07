@@ -38,5 +38,5 @@ pkg.deps.OC_TRANSPORT_SERIAL:
 
 pkg.deps.OC_TRANSPORT_GATT:
     - "@apache-mynewt-nimble/nimble/host"
-    - "@apache-mynewt-nimble/nimble/host/store/ram"
+    - "@apache-mynewt-nimble/nimble/host/store/config"
     - "@apache-mynewt-nimble/nimble/transport"

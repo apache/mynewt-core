@@ -69,3 +69,6 @@ syscfg.vals:
     # Optionally add OC BLE transport.
 syscfg.vals.TESTBENCH_BLE:
     OC_TRANSPORT_GATT: 1
+
+    # Config in RAM
+    BLE_STORE_CONFIG_PERSIST: 0

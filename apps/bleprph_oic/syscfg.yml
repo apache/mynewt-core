@@ -71,3 +71,6 @@ syscfg.vals:
     # ATT MTU values.
     MSYS_1_BLOCK_COUNT: 20
     MSYS_1_BLOCK_SIZE: 150
+
+    # Config in RAM
+    BLE_STORE_CONFIG_PERSIST: 0
