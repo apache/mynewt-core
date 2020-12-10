@@ -24,10 +24,14 @@ syscfg.defs:
         description: 'The maximum UDP datagram size (send and receive).'
         value: 2048
     NATIVE_SOCKETS_POLL_ITVL:
+        description: Use NATIVE_SOCKETS_POLL_INTERVAL instead.
+        defunct: 1
+        value:
+    NATIVE_SOCKETS_POLL_INTERVAL_MS:
         description: >
             The frequency at which to poll for received data.  Units
-            are OS ticks.
-        value: 'OS_TICKS_PER_SEC / 5'
+            are ms.
+        value: 200
     NATIVE_SOCKETS_STACK_SZ:
         description: 'The size of the native sockets task stack, in bytes.'
         value: 4096
