@@ -754,7 +754,7 @@ socket_task(void *arg)
     os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
     while (1) {
         os_mutex_release(&nss->mtx);
-        os_time_delay(MYNEWT_VAL(NATIVE_SOCKETS_POLL_ITVL));
+        os_time_delay(os_time_ms_to_ticks32(MYNEWT_VAL(NATIVE_SOCKETS_POLL_INTERVAL_MS)));
         os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
         if (nss->poll_fd_cnt) {
             rc = poll(nss->poll_fds, nss->poll_fd_cnt, 0);
