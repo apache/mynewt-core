@@ -370,14 +370,14 @@ button_exec_fsm(button_t *button, int action)
  do_pressed:
 #if MYNEWT_VAL(BUTTON_USE_LONG)
     if (button->mode & BUTTON_FLG_LONG) {
-        os_callout_reset(callout, MYNEWT_VAL(BUTTON_LONGHOLD_TICKS));
+        os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_LONGHOLD_TIME_MS)));
 #if MYNEWT_VAL(BUTTON_USE_REPEAT)
     } else if (button->mode & BUTTON_FLG_REPEATING) {
-        os_callout_reset(callout, MYNEWT_VAL(BUTTON_REPEAT_FIRST_TICKS));
+        os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_REPEAT_FIRST_TIME_MS)));
 #endif
     }
 #elif MYNEWT_VAL(BUTTON_USE_REPEAT)
-    os_callout_reset(callout, MYNEWT_VAL(BUTTON_REPEAT_FIRST_TICKS));
+    os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_REPEAT_FIRST_TIME_MS)));
 #endif
     button->state = BUTTON_FLG_PRESSED;
 #if MYNEWT_VAL(BUTTON_EMIT_STATE_CHANGED)
@@ -391,23 +391,23 @@ button_exec_fsm(button_t *button, int action)
     
 #if MYNEWT_VAL(BUTTON_USE_DOUBLE)
  to_wait_dblpressed:
-    os_callout_reset(callout, MYNEWT_VAL(BUTTON_DBLCLICK_TICKS));
+    os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_DBLCLICK_TIMEOUT_MS)));
     button->fsm_state = _BUTTON_FSM_WAIT_DBLPRESSED;
     return;
     
  do_dblpressed:
 #if MYNEWT_VAL(BUTTON_USE_LONG)
     if (button->mode & BUTTON_FLG_LONG) {
-        os_callout_reset(callout, MYNEWT_VAL(BUTTON_LONGHOLD_TICKS));
+        os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_LONGHOLD_TIME_MS)));
 #if MYNEWT_VAL(BUTTON_USE_REPEAT)
     } else if (button->mode & BUTTON_FLG_REPEATING) {
-        os_callout_reset(callout, MYNEWT_VAL(BUTTON_REPEAT_FIRST_TICKS)); 
+        os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_REPEAT_FIRST_TIME_MS)));
 #endif
     } else {
         os_callout_stop(callout);
     }   
 #elif MYNEWT_VAL(BUTTON_USE_REPEAT)
-    os_callout_reset(callout, MYNEWT_VAL(BUTTON_REPEAT_FIRST_TICKS)); 
+    os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_REPEAT_FIRST_TIME_MS)));
 #else
     os_callout_stop(callout);
 #endif
@@ -423,7 +423,7 @@ button_exec_fsm(button_t *button, int action)
  do_longpress:
 #if MYNEWT_VAL(BUTTON_USE_REPEAT)
     if (button->mode & BUTTON_FLG_REPEATING)
-        os_callout_reset(callout, MYNEWT_VAL(BUTTON_REPEAT_FIRST_TICKS));
+        os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_REPEAT_FIRST_TIME_MS)));
 #endif
     button->state |= BUTTON_FLG_LONG;
 #if MYNEWT_VAL(BUTTON_EMIT_STATE_CHANGED)
@@ -435,7 +435,7 @@ button_exec_fsm(button_t *button, int action)
     
 #if MYNEWT_VAL(BUTTON_USE_REPEAT)
  do_repeat:
-    os_callout_reset(callout, MYNEWT_VAL(BUTTON_REPEAT_TICKS));
+    os_callout_reset(callout, os_time_ms_to_ticks32(MYNEWT_VAL(BUTTON_REPEAT_TIME_MS)));
     
 #if MYNEWT_VAL(BUTTON_EMIT_ACTION)
 #if MYNEWT_VAL(BUTTON_USE_EMULATION)

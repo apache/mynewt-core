@@ -19,24 +19,40 @@
 
 syscfg.defs:
     BUTTON_DBLCLICK_TICKS:
+        description: Use BUTTON_DBLCLICK_TIMEOUT_MS instead.
+        defunct: 1
+        value:
+    BUTTON_LONGHOLD_TICKS:
+        description: Use BUTTON_LONGHOLD_TIME_MS instead.
+        defunct: 1
+        value:
+    BUTTON_REPEAT_FIRST_TICKS:
+        description: Use BUTTON_REPEAT_FIRST_TIME_MS instead.
+        defunct: 1
+        value:
+    BUTTON_REPEAT_TICKS:
+        description: Use BUTTON_REPEAT_TIME_MS instead.
+        defunct: 1
+        value:
+    BUTTON_DBLCLICK_TIMEOUT_MS:
         description: >
-            Maximum time in wich a second click should be performed
+            Maximum time in which a second click should be performed
             to consider it a double click. This will also introduce
             a delay for generating the single click event.
-        value: '(OS_TICKS_PER_SEC / 4)'
-    BUTTON_LONGHOLD_TICKS:
+        value: 250
+    BUTTON_LONGHOLD_TIME_MS:
         description: >
             Minimum time to wait with the button pressed to consider
             it a long hold (long press, long click, long double click).
-        value: '(OS_TICKS_PER_SEC)'
-    BUTTON_REPEAT_FIRST_TICKS:
+        value: 1000
+    BUTTON_REPEAT_FIRST_TIME_MS:
         description: >
             Time to wait before generating the first repeated action.
-        value: '(OS_TICKS_PER_SEC)'
-    BUTTON_REPEAT_TICKS:
+        value: 1000
+    BUTTON_REPEAT_TIME_MS:
         description: >
             Time to wait before generating consecutive repeated action.
-        value: '(OS_TICKS_PER_SEC)'
+        value: 1000
     BUTTON_EVENT_MAX:
         description: >
             Maximum number of pending button event. (about 20bytes/event)
