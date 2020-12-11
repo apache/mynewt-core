@@ -292,12 +292,15 @@ hal_gpio_irq_handler(void)
     struct hal_gpio_irq *irq;
     uint32_t stat;
     int i;
+    int pin;
 
     *WKUP_RESET_IRQ_REG_ADDR = 1;
     NVIC_ClearPendingIRQ(KEY_WKUP_GPIO_IRQn);
 
     for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
         irq = &hal_gpio_irqs[i];
+
+        pin = irq->pin;
 
         /* Read latched status value from relevant GPIO port */
         stat = WKUP_STAT(irq->pin);
@@ -306,7 +309,7 @@ hal_gpio_irq_handler(void)
             irq->func(irq->arg);
         }
 
-        WKUP_CLEAR_PX(irq->pin);
+        WKUP_CLEAR_PX(pin);
     }
 }
 
