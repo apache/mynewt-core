@@ -149,6 +149,23 @@ uart_blocking_tx(struct uart_dev *dev, uint8_t byte)
     dev->ud_funcs.uf_blocking_tx(dev, byte);
 }
 
+/**
+ * Open UART device
+ *
+ * This is thin wrapper to open uart device.  It calls os_dev_open
+ * with types clearly visible.
+ *
+ * @param name - device name, typically "uart0"
+ * @param conf - configuration of UART
+ *
+ * @return 0 - on success, error code otherwise
+ */
+static inline struct uart_dev *
+uart_open(const char *name, struct uart_conf *conf)
+{
+    return (struct uart_dev *)os_dev_open(name, OS_TIMEOUT_NEVER, conf);
+}
+
 #ifdef __cplusplus
 }
 #endif
