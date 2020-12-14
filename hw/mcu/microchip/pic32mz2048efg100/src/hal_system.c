@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
 #include "hal/hal_system.h"
 
 #include <xc.h>
