@@ -39,8 +39,11 @@ pkg.deps.TRNG:
 pkg.deps.CRYPTO:
     - "@apache-mynewt-core/hw/drivers/crypto/crypto_da1469x"
 
-pkg.deps.'UART_0 || UART_1 || UART_2':
+pkg.deps.'(UART_0 || UART_1 || UART_2) && HAL_UART':
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.'(UART_0 || UART_1 || UART_2) && !HAL_UART':
+    - "@apache-mynewt-core/hw/drivers/uart/uart_da1469x"
 
 pkg.deps.'(I2C_0 || I2C_1) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
