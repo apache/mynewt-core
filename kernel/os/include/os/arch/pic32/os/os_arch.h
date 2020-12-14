@@ -21,6 +21,7 @@
 #define _OS_ARCH_H
 
 #include <stdint.h>
+#include <xc.h>
 #include "mcu/pic32.h"
 
 /* CPU status register */
