@@ -60,6 +60,8 @@ struct os_task *g_fpu_task;
 
 struct os_task_t* g_fpu_user;
 
+static void timer_handler(void);
+
 /* core timer interrupt */
 void __attribute__((interrupt(IPL1AUTO),
 vector(_CORE_TIMER_VECTOR))) isr_core_timer(void)
@@ -74,7 +76,7 @@ void
 __attribute__((interrupt(IPL1AUTO), vector(_CORE_SOFTWARE_0_VECTOR)))
 isr_sw0(void);
 
-void
+static void
 timer_handler(void)
 {
     os_time_advance(1);
