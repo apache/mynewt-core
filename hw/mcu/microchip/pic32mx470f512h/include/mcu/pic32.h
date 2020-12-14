@@ -22,4 +22,10 @@
 
 #define OS_TICKS_PER_SEC    (1000)
 
+static inline void
+hal_debug_break(void)
+{
+    __asm__ volatile (" sdbbp 0");
+}
+
 #endif /* __MCU_PIC32_H__ */
