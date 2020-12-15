@@ -70,7 +70,8 @@ static struct hal_spi_settings mmc_settings = {
     .data_mode  = HAL_SPI_MODE0,
     /* XXX: MMC initialization accepts clocks in the range 100-400KHz */
     /* TODO: switch to high-speed aka 25MHz after initialization. */
-    .baudrate   = 100,
+    /* Currently the lowest clock acceptable is 125KHz */
+    .baudrate   = 125,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
