@@ -19960,7 +19960,7 @@ typedef struct
 #define IS_TIM_32B_COUNTER_INSTANCE(INSTANCE)(((INSTANCE) == TIM2) || \
                                               ((INSTANCE) == TIM5))
 
-/***************** TIM Instances : external trigger input availabe ************/
+/***************** TIM Instances : external trigger input available ************/
 #define IS_TIM_ETR_INSTANCE(INSTANCE)  (((INSTANCE) == TIM1) || \
                                         ((INSTANCE) == TIM2) || \
                                         ((INSTANCE) == TIM3) || \

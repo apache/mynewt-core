@@ -5739,7 +5739,7 @@ typedef struct
 #define IS_TIM_ENCODER_INTERFACE_INSTANCE(INSTANCE) (((INSTANCE) == TIM2)   || \
                                                      ((INSTANCE) == TIM21))
 
-/***************** TIM Instances : external trigger input availabe ************/
+/***************** TIM Instances : external trigger input available ************/
 #define IS_TIM_ETR_INSTANCE(INSTANCE)      (((INSTANCE) == TIM2)  || \
                                             ((INSTANCE) == TIM21))
 

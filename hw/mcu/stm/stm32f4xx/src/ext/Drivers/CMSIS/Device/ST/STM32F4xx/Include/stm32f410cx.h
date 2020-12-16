@@ -7190,7 +7190,7 @@ typedef struct
 /********************** TIM Instances : 32 bit Counter ************************/
 #define IS_TIM_32B_COUNTER_INSTANCE(INSTANCE)((INSTANCE) == TIM5)
 
-/***************** TIM Instances : external trigger input availabe ************/
+/***************** TIM Instances : external trigger input available ************/
 #define IS_TIM_ETR_INSTANCE(INSTANCE)  (((INSTANCE) == TIM1) || \
                                         ((INSTANCE) == TIM5))
 
