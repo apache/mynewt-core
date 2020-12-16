@@ -24,6 +24,7 @@
 #include "console/console.h"
 #include "hal/hal_system.h"
 #include "os_priv.h"
+#include "hal/hal_watchdog.h"
 
 #if MYNEWT_VAL(OS_COREDUMP)
 #include "coredump/coredump.h"
@@ -208,6 +209,7 @@ os_default_irq(struct trap_frame *tf)
 #endif
 
 #if MYNEWT_VAL(OS_COREDUMP)
+    hal_watchdog_tickle();
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));
 #endif
