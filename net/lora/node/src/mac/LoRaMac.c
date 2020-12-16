@@ -1511,6 +1511,10 @@ lora_mac_process_rx_win2_timeout(struct os_event *ev)
     /* Turn off the high resolution timer */
     lora_enter_low_power();
     lora_node_log(LORA_NODE_LOG_RX_WIN2_TIMEOUT, 0, 0, 0);
+
+    /* Force timeout from rx_win 1 */
+    lora_mac_process_radio_rx_timeout(0);
+
     /*
      * There are two cases here. Either the radio is still receiving in which
      * case the radio status is not idle, or the radio finished receiving
