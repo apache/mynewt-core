@@ -296,8 +296,6 @@ OnRadioTxDone(void)
 static void
 OnRadioRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 {
-    os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_rx_event);
-
     /*
       * TODO: for class C devices we may need to handle this differently as
       * the device is continuously listening I believe and it may be possible
@@ -308,6 +306,8 @@ OnRadioRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     g_lora_mac_data.rxpkt.rxdinfo.snr = snr;
     g_lora_mac_data.rxbuf = payload;
     g_lora_mac_data.rxbufsize = size;
+
+    os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_rx_event);
 }
 
 /**
