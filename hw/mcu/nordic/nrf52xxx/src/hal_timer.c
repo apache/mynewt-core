@@ -26,6 +26,7 @@
 #include "hal/hal_timer.h"
 #include "nrf.h"
 #include "mcu/nrf52_hal.h"
+#include "mcu/nrf52_clock.h"
 
 /* IRQ prototype */
 typedef void (*hal_timer_irq_handler_t)(void);
@@ -652,17 +653,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
 
 #if MYNEWT_VAL_CHOICE(MCU_HFCLK_SOURCE, HFXO)
     /* Make sure HFXO is started */
-    if ((NRF_CLOCK->HFCLKSTAT &
-         (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) !=
-        (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) {
-        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-        NRF_CLOCK->TASKS_HFCLKSTART = 1;
-        while (1) {
-            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
-                break;
-            }
-        }
-    }
+    nrf52_clock_hfxo_request();
 #endif
     hwtimer = bsptimer->tmr_reg;
 
@@ -723,6 +714,12 @@ hal_timer_deinit(int timer_num)
     }
     bsptimer->tmr_enabled = 0;
     bsptimer->tmr_reg = NULL;
+
+#if MYNEWT_VAL_CHOICE(MCU_HFCLK_SOURCE, HFXO)
+    if (timer_num != 5) {
+        nrf52_clock_hfxo_release();
+    }
+#endif
     __HAL_ENABLE_INTERRUPTS(ctx);
 
 err:
