@@ -102,6 +102,9 @@ hal_system_clock_start(void)
             }
         }
     }
+#else
+    /* Make sure HFCLK is stopped */
+    NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 #endif
 
     /* Check if this clock source is already running */
