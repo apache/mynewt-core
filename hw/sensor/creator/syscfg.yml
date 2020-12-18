@@ -274,5 +274,10 @@ syscfg.defs:
 
     SENSOR_CREATOR_SYSINIT_STAGE:
         description: >
-            Sysinit stage for the sensor creator package.
+            Sysinit stage for the sensor creator device initialization.
         value: 500
+
+    SENSOR_CREATOR_CREATE_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the creator device creation.
+        value: 6

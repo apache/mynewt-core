@@ -79,4 +79,5 @@ pkg.deps.ICP10114_OFB:
 pkg.deps.ADXL345_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/adxl345"
 pkg.init:
-    sensor_dev_create: 'MYNEWT_VAL(SENSOR_CREATOR_SYSINIT_STAGE)'
+    sensor_dev_create: 'MYNEWT_VAL(SENSOR_CREATOR_CREATE_SYSINIT_STAGE)'
+    sensor_dev_init: 'MYNEWT_VAL(SENSOR_CREATOR_SYSINIT_STAGE)'
