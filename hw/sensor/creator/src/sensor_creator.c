@@ -1746,9 +1746,6 @@ sensor_dev_create(void)
     rc = os_dev_create((struct os_dev *) &drv2605, "drv2605_0",
       OS_DEV_INIT_PRIMARY, 0, drv2605_init, (void *)&i2c_0_itf_drv);
     assert(rc == 0);
-
-    rc = config_drv2605_actuator();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(LSM303DLHC_OFB)
@@ -1761,9 +1758,6 @@ sensor_dev_create(void)
     rc = os_dev_create((struct os_dev *) &lsm303dlhc, "lsm303dlhc_0",
       OS_DEV_INIT_PRIMARY, 0, lsm303dlhc_init, (void *)&i2c_0_itf_lsm);
     assert(rc == 0);
-
-    rc = config_lsm303dlhc_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(LSM6DSO_OFB)
@@ -1775,9 +1769,6 @@ sensor_dev_create(void)
       OS_DEV_INIT_PRIMARY, 0, lsm6dso_init, (void *)&lsm6dso_i2c_itf);
 #endif
     assert(rc == 0);
-
-    rc = config_lsm6dso_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(MPU6050_OFB)
@@ -1788,9 +1779,6 @@ sensor_dev_create(void)
     rc = os_dev_create((struct os_dev *) &mpu6050, "mpu6050_0",
       OS_DEV_INIT_PRIMARY, 0, mpu6050_init, (void *)&mpu6050_i2c_itf);
 #endif
-    assert(rc == 0);
-
-    rc = config_mpu6050_sensor();
     assert(rc == 0);
 #endif
 
@@ -1804,26 +1792,17 @@ sensor_dev_create(void)
       OS_DEV_INIT_PRIMARY, 0, bno055_init, (void *)&bno055_i2c_itf);
     assert(rc == 0);
 #endif
-
-    rc = config_bno055_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(TSL2561_OFB)
     rc = os_dev_create((struct os_dev *) &tsl2561, "tsl2561_0",
       OS_DEV_INIT_PRIMARY, 0, tsl2561_init, (void *)&i2c_0_itf_tsl);
     assert(rc == 0);
-
-    rc = config_tsl2561_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(TSL2591_OFB)
     rc = os_dev_create((struct os_dev *) &tsl2591, "tsl2591_0",
       OS_DEV_INIT_PRIMARY, 0, tsl2591_init, (void *)&i2c_0_itf_tsl2591);
-    assert(rc == 0);
-
-    rc = config_tsl2591_sensor();
     assert(rc == 0);
 #endif
 
@@ -1832,15 +1811,9 @@ sensor_dev_create(void)
     rc = tcs34725_create_i2c_sensor_dev(&tcs34725.i2c_node, "tcs34725_0",
                                         &tcs34725_i2c_cfg, &i2c_0_itf_tcs);
     assert(rc == 0);
-
-    rc = config_tcs34725_sensor();
-    assert(rc == 0);
 #else
     rc = os_dev_create((struct os_dev *) &tcs34725, "tcs34725_0",
       OS_DEV_INIT_PRIMARY, 0, tcs34725_init, (void *)&i2c_0_itf_tcs);
-    assert(rc == 0);
-
-    rc = config_tcs34725_sensor();
     assert(rc == 0);
 #endif
 #endif
@@ -1855,26 +1828,17 @@ sensor_dev_create(void)
       OS_DEV_INIT_PRIMARY, 0, bme280_init, (void *)&spi_0_itf_bme);
     assert(rc == 0);
 #endif
-
-    rc = config_bme280_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(MS5837_OFB)
     rc = os_dev_create((struct os_dev *) &ms5837, "ms5837_0",
       OS_DEV_INIT_PRIMARY, 0, ms5837_init, (void *)&i2c_0_itf_ms37);
     assert(rc == 0);
-
-    rc = config_ms5837_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(MS5840_OFB)
     rc = os_dev_create((struct os_dev *) &ms5840, "ms5840_0",
       OS_DEV_INIT_PRIMARY, 0, ms5840_init, (void *)&i2c_0_itf_ms40);
-    assert(rc == 0);
-
-    rc = config_ms5840_sensor();
     assert(rc == 0);
 #endif
 
@@ -1892,8 +1856,6 @@ sensor_dev_create(void)
       OS_DEV_INIT_PRIMARY, 0, bmp280_init, (void *)&i2c_0_itf_bmp);
     assert(rc == 0);
 #endif
-    rc = config_bmp280_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(BMA253_OFB)
@@ -1906,17 +1868,11 @@ sensor_dev_create(void)
       OS_DEV_INIT_PRIMARY, 0, bma253_init, &spi2c_0_itf_bma253);
     assert(rc == 0);
 #endif
-
-    rc = config_bma253_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(BMA2XX_OFB)
     rc = os_dev_create((struct os_dev *)&bma2xx, "bma2xx_0",
       OS_DEV_INIT_PRIMARY, 0, bma2xx_init, &spi2c_0_itf_bma2xx);
-    assert(rc == 0);
-
-    rc = config_bma2xx_sensor();
     assert(rc == 0);
 #endif
 
@@ -1936,8 +1892,6 @@ sensor_dev_create(void)
     assert(rc == 0);
 
 #endif
-    rc = config_bmp388_sensor();
-    assert(rc == 0);
 #endif
 
 
@@ -1955,17 +1909,11 @@ sensor_dev_create(void)
       OS_DEV_INIT_PRIMARY, 0, adxl345_init, (void *)&adxl_itf);
 #endif
     assert(rc == 0);
-
-    rc = config_adxl345_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(LPS33HW_OFB)
     rc = os_dev_create((struct os_dev *) &lps33hw, "lps33hw_0",
       OS_DEV_INIT_PRIMARY, 0, lps33hw_init, (void *)&i2c_0_itf_lps);
-    assert(rc == 0);
-
-    rc = config_lps33hw_sensor();
     assert(rc == 0);
 #endif
 
@@ -1973,17 +1921,11 @@ sensor_dev_create(void)
     rc = os_dev_create((struct os_dev *) &lps33thw, "lps33thw_0",
       OS_DEV_INIT_PRIMARY, 0, lps33thw_init, (void *)&i2c_0_itf_lpst);
     assert(rc == 0);
-
-    rc = config_lps33thw_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(LIS2DW12_OFB)
     rc = os_dev_create((struct os_dev *) &lis2dw12, "lis2dw12_0",
       OS_DEV_INIT_PRIMARY, 0, lis2dw12_init, (void *)&i2c_0_itf_lis2dw12);
-    assert(rc == 0);
-
-    rc = config_lis2dw12_sensor();
     assert(rc == 0);
 #endif
 
@@ -1999,17 +1941,11 @@ sensor_dev_create(void)
       OS_DEV_INIT_PRIMARY, 0, lis2dh12_init, &lis2dh12_itf);
     assert(rc == 0);
 #endif
-
-    rc = config_lis2dh12_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(LIS2DS12_OFB)
     rc = os_dev_create((struct os_dev *) &lis2ds12, "lis2ds12_0",
       OS_DEV_INIT_PRIMARY, 0, lis2ds12_init, (void *)&i2c_0_itf_lis2ds12);
-    assert(rc == 0);
-
-    rc = config_lis2ds12_sensor();
     assert(rc == 0);
 #endif
 
@@ -2017,17 +1953,11 @@ sensor_dev_create(void)
     rc = os_dev_create((struct os_dev *) &bme680, "bme680_0",
       OS_DEV_INIT_PRIMARY, 0, bme680_init, (void *)&i2c_0_itf_bme680);
     assert(rc == 0);
-
-    rc = config_bme680_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(KXTJ3_OFB)
     rc = os_dev_create((struct os_dev *) &kxtj3, "kxtj3_0",
       OS_DEV_INIT_PRIMARY, 0, kxtj3_init, (void *)&i2c_0_itf_kxtj3);
-    assert(rc == 0);
-
-    rc = config_kxtj3_sensor();
     assert(rc == 0);
 #endif
 
@@ -2035,17 +1965,11 @@ sensor_dev_create(void)
     rc = os_dev_create((struct os_dev *) &dps368, "dps368_0",
       OS_DEV_INIT_PRIMARY, 0, dps368_init, (void *)&i2c_0_itf_dps368);
     assert(rc == 0);
-
-    rc = config_dps368_sensor();
-    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(ICP101XX_OFB)
     rc = os_dev_create((struct os_dev *) &icp101xx, "icp101xx_0",
       OS_DEV_INIT_PRIMARY, 0, icp101xx_init, (void *)&i2c_0_itf_icp101xx);
-    assert(rc == 0);
-
-    rc = config_icp101xx_sensor();
     assert(rc == 0);
 #endif
 
@@ -2053,7 +1977,143 @@ sensor_dev_create(void)
     rc = os_dev_create((struct os_dev *) &icp10114, "icp10114_0",
       OS_DEV_INIT_PRIMARY, 0, icp101xx_init, (void *)&i2c_0_itf_icp10114);
     assert(rc == 0);
+#endif
+}
 
+/* Sensors initialization */
+void
+sensor_dev_init(void)
+{
+    int rc;
+
+    (void)rc;
+#if MYNEWT_VAL(DRV2605_OFB)
+    rc = config_drv2605_actuator();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LSM303DLHC_OFB)
+    rc = config_lsm303dlhc_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LSM6DSO_OFB)
+    rc = config_lsm6dso_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(MPU6050_OFB)
+    rc = config_mpu6050_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BNO055_OFB)
+    rc = config_bno055_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TSL2561_OFB)
+    rc = config_tsl2561_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TSL2591_OFB)
+    rc = config_tsl2591_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TCS34725_OFB)
+    rc = config_tcs34725_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BME280_OFB)
+    rc = config_bme280_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(MS5837_OFB)
+    rc = config_ms5837_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(MS5840_OFB)
+    rc = config_ms5840_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BMP280_OFB)
+    rc = config_bmp280_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BMA253_OFB)
+    rc = config_bma253_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+    rc = config_bma2xx_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BMP388_OFB)
+    rc = config_bmp388_sensor();
+    assert(rc == 0);
+#endif
+
+
+#if MYNEWT_VAL(ADXL345_OFB)
+    rc = config_adxl345_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LPS33HW_OFB)
+    rc = config_lps33hw_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LPS33THW_OFB)
+    rc = config_lps33thw_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LIS2DW12_OFB)
+    rc = config_lis2dw12_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LIS2DH12_OFB)
+    rc = config_lis2dh12_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LIS2DS12_OFB)
+    rc = config_lis2ds12_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BME680_OFB)
+    rc = config_bme680_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(KXTJ3_OFB)
+    rc = config_kxtj3_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(DPS368_OFB)
+    rc = config_dps368_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ICP101XX_OFB)
+    rc = config_icp101xx_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ICP10114_OFB)
     rc = config_icp10114_sensor();
     assert(rc == 0);
 #endif
