@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 /* DMA peripheral can be one of following values */
-#define MCI_DMA_PERIPH_SPI              (0)
+#define MCU_DMA_PERIPH_SPI              (0)
 #define MCU_DMA_PERIPH_SPI2             (1)
 #define MCU_DMA_PERIPH_UART             (2)
 #define MCU_DMA_PERIPH_UART2            (3)
