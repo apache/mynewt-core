@@ -23,4 +23,4 @@ syscfg.defs:
     FLASH_MAP_SYSINIT_STAGE:
         description: >
             Sysinit stage for flash map functionality.
-        value: 2
+        value: 9
