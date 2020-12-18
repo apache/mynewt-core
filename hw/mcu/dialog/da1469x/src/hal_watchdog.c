@@ -29,7 +29,11 @@ hal_watchdog_init(uint32_t expire_msecs)
     SYS_WDOG->WATCHDOG_CTRL_REG = SYS_WDOG_WATCHDOG_CTRL_REG_WDOG_FREEZE_EN_Msk;
     GPREG->SET_FREEZE_REG |= GPREG_SET_FREEZE_REG_FRZ_SYS_WDOG_Msk;
 
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    g_hal_watchdog_reload_val = expire_msecs / 21;
+#else
     g_hal_watchdog_reload_val = expire_msecs / 10;
+#endif
     assert((g_hal_watchdog_reload_val & 0xFFFFC000) == 0);
 
     while (SYS_WDOG->WATCHDOG_CTRL_REG & SYS_WDOG_WATCHDOG_CTRL_REG_WRITE_BUSY_Msk) {
