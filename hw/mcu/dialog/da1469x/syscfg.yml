@@ -66,6 +66,17 @@ syscfg.defs:
         description: >
             Specifies settling time [ms] of 32K crystal oscillator.
         value: 8000
+
+    MCU_CLOCK_RCX_CAL_REF_CNT:
+        description: >
+            Reference count value for calibration of RCX clock. The higher
+            the value the more accurate the calibration but also increases
+            calibration time. The calibration time is approximately this
+            value multiplied by one 15kHz clock cycle, thus total calibration
+            time will be approx 66.67 usecs * MCU_CLOCK_RCX_CAL_REF_CNT.
+        value: 100
+        restrictions: '!0'
+
     MCU_SYSCLK_SOURCE:
         description: >
             Specifies system clock source
@@ -114,7 +125,7 @@ syscfg.defs:
         value: 0
     MCU_DMA_IRQ_PRIO:
         description: >
-            Specifies the NVIC interrupt priority to assign for the DMA_IRQn 
+            Specifies the NVIC interrupt priority to assign for the DMA_IRQn
             interrupt.
         value: 15
 

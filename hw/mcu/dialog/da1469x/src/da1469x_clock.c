@@ -204,13 +204,8 @@ da1469x_clock_calibrate(uint8_t clock_sel, uint16_t ref_cnt)
 void
 da1469x_clock_lp_rcx_calibrate(void)
 {
-    /*
-     * XXX not sure what is a good value here, this is just some value that
-     *     seems to work fine; we need to check how accurate this is and perhaps
-     *     also make it configurable if necessary
-     */
-    const uint32_t ref_cnt = 100;
-    g_mcu_clock_rcx_freq = da1469x_clock_calibrate(3, ref_cnt);
+    g_mcu_clock_rcx_freq =
+        da1469x_clock_calibrate(3, MYNEWT_VAL(MCU_CLOCK_RCX_CAL_REF_CNT));
 }
 
 void
