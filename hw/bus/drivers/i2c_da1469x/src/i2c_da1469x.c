@@ -26,10 +26,7 @@
 #include "bus/bus_driver.h"
 #include "bus/drivers/i2c_common.h"
 #include "mcu/mcu.h"
-
-#if MYNEWT_VAL(I2C_DA1469X_BUS_DRIVER)
 #include "mcu/da1469x_dma.h"
-#endif
 
 #if MYNEWT_VAL(I2C_DA1469X_STAT)
 #include "stats/stats.h"
@@ -388,6 +385,7 @@ i2c_da1469x_init_node(struct bus_dev *bdev, struct bus_node *bnode, void *arg)
 {
     struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
     struct bus_i2c_node_cfg *cfg = arg;
+    (void)bdev;
 
     BUS_DEBUG_POISON_NODE(node);
 
