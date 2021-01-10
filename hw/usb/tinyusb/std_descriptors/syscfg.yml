@@ -109,7 +109,7 @@ syscfg.defs:
         value:
 
     USBD_HID_REPORT_ID_KEYBOARD:
-        description: HID keyboard report ID
+        description: HID keyboard report ID. 0 Or empty to ommit the report.
         value:
     USBD_HID_CAPS_LOCK_LED_PIN:
         description: Caps Lock LED
@@ -124,7 +124,7 @@ syscfg.defs:
         description: Value to set to pin to turn led on
         value: 0
     USBD_HID_REPORT_ID_MOUSE:
-        description: HID keyboard report ID
+        description: HID keyboard report ID. 0 Or empty to ommit the report.
         value:
 
     USBD_BTH_EVENT_EP:
