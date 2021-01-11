@@ -145,3 +145,9 @@ usb_cdc_console_pkg_init(void)
 
     return 0;
 }
+
+int
+usb_cdc_console_is_init(void)
+{
+    return (int)tud_cdc_connected();
+}
