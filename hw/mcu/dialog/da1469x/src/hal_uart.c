@@ -91,6 +91,7 @@ struct da1469x_uart_baudrate {
 
 static const struct da1469x_uart_baudrate da1469x_uart_baudrates[] = {
     { 1000000, 0x00000200 },
+    {  921600, 0x00000203 },
     {  500000, 0x00000400 },
     {  230400, 0x0000080b },
     {  115200, 0x00001106 },
