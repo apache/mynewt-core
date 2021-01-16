@@ -228,7 +228,7 @@ find_driver_property(struct battery *bat, struct battery_driver *driver,
     int i;
     assert(driver);
 
-    for (i = 0; driver->bd_property_count; ++i, ++prop) {
+    for (i = 0; i < driver->bd_property_count; ++i, ++prop) {
         if (prop->bp_type == type && prop->bp_flags == flags) {
             return prop;
         }
@@ -248,8 +248,10 @@ find_hardware_property(struct battery *battery, struct battery_driver *driver,
         res = find_driver_property(battery, driver, type, flags);
     } else {
         for (i = 0; res == NULL && i < BATTERY_DRIVERS_MAX; ++i) {
-            res = find_driver_property(battery, battery->b_drivers[i],
-                                       type, flags);
+            if (battery->b_drivers[i]) {
+                res = find_driver_property(battery, battery->b_drivers[i],
+                                           type, flags);
+            }
         }
     }
     return res;
