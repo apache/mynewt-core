@@ -614,7 +614,7 @@ static void ppp_log_write(int level, char *buf) {
     LWIP_UNUSED_ARG(buf);
     PPPDEBUG(level, ("%s\n", buf) );
 #if 0
-    if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
+    if (log_to_fd >= 0 && (level != PPP_LOG_DEBUG || debug)) {
 	int n = strlen(buf);
 
 	if (n > 0 && buf[n-1] == '\n')
@@ -633,7 +633,7 @@ void ppp_fatal(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_ERR, fmt, pvar);
+    ppp_logit(PPP_LOG_ERR, fmt, pvar);
     va_end(pvar);
 
     LWIP_ASSERT("ppp_fatal", 0);   /* as promised */
@@ -646,7 +646,7 @@ void ppp_error(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_ERR, fmt, pvar);
+    ppp_logit(PPP_LOG_ERR, fmt, pvar);
     va_end(pvar);
 #if 0 /* UNUSED */
     ++error_count;
@@ -660,7 +660,7 @@ void ppp_warn(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_WARNING, fmt, pvar);
+    ppp_logit(PPP_LOG_WARNING, fmt, pvar);
     va_end(pvar);
 }
 
@@ -671,7 +671,7 @@ void ppp_notice(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_NOTICE, fmt, pvar);
+    ppp_logit(PPP_LOG_NOTICE, fmt, pvar);
     va_end(pvar);
 }
 
@@ -682,7 +682,7 @@ void ppp_info(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_INFO, fmt, pvar);
+    ppp_logit(PPP_LOG_INFO, fmt, pvar);
     va_end(pvar);
 }
 
@@ -693,7 +693,7 @@ void ppp_dbglog(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_DEBUG, fmt, pvar);
+    ppp_logit(PPP_LOG_DEBUG, fmt, pvar);
     va_end(pvar);
 }
 

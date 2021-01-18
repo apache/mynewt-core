@@ -27,3 +27,8 @@ remove includes from files that reference it:
 
     `net/ip/lwip_base/src/netif/ppp/pppapi.c`
     `net/ip/lwip_base/src/netif/ethernet.c`
+
+7. Fix conflicting log macros (they conflict with Mynewt logging) from
+`lwip_base/include/netif/ppp/pppdebug.h`.
+    * Prefix `LOG_*`, with `PPP_` in `lwip_base/include/netif/ppp/pppdebug.h`.
+    * Apply `PPP_` prefixes as needed in `lwip_base/src/netif/ppp/utils.c`
