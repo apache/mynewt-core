@@ -16,7 +16,7 @@ needed).
 
 4. Delete the Windows-only makefsdata app:
 
-    rm -r src/apps/httpd/makefsdata
+    rm -r src/apps/http/makefsdata
 
 5. Delete the pppoe files (not Apache-license-compatible):
 
