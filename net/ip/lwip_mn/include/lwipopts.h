@@ -85,9 +85,6 @@ extern "C" {
 /* MEMP_NUM_TCP_SEG: the number of simultaneously queued TCP
    segments. */
 #define MEMP_NUM_TCP_SEG                (TCP_SND_QUEUELEN + 1)
-/* MEMP_NUM_SYS_TIMEOUT: the number of simulateously active
-   timeouts. */
-#define MEMP_NUM_SYS_TIMEOUT            12
 
 #define MEMP_NUM_TCPIP_MSG_API          16
 
