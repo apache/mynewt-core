@@ -244,6 +244,10 @@ coap_receive(struct os_mbuf **mp)
                 coap_remove_observer_by_mid(OC_MBUF_ENDPOINT(m), message->mid);
 #endif
             }
+        } else {
+            /* CoAP over TCP doesn't support Confirmable, Non-confirmable,
+               Acknowledgment and Reset messages are simply not supported.  */
+            erbium_status_code = SERVICE_UNAVAILABLE_5_03;
         }
 
         /* Open transaction now cleared for ACK since mid matches */
