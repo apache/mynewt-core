@@ -57,13 +57,8 @@
 #include <tinycrypt/constants.h>
 #include <tinycrypt/ecc.h>
 #include <tinycrypt/ecc_dh.h>
+#include <tinycrypt/utils.h>
 #include <string.h>
-
-#if default_RNG_defined
-static uECC_RNG_Function g_rng_function = &default_CSPRNG;
-#else
-static uECC_RNG_Function g_rng_function = 0;
-#endif
 
 int uECC_make_key_with_d(uint8_t *public_key, uint8_t *private_key,
 			 unsigned int *d, uECC_Curve curve)
@@ -92,7 +87,7 @@ int uECC_make_key_with_d(uint8_t *public_key, uint8_t *private_key,
 				       _public + curve->num_words);
 
 		/* erasing temporary buffer used to store secret: */
-		memset(_private, 0, NUM_ECC_BYTES);
+		_set_secure(_private, 0, NUM_ECC_BYTES);
 
 		return 1;
 	}
@@ -133,7 +128,7 @@ int uECC_make_key(uint8_t *public_key, uint8_t *private_key, uECC_Curve curve)
 					       _public + curve->num_words);
 
 			/* erasing temporary buffer that stored secret: */
-			memset(_private, 0, NUM_ECC_BYTES);
+			_set_secure(_private, 0, NUM_ECC_BYTES);
 
       			return 1;
     		}
@@ -173,7 +168,7 @@ int uECC_shared_secret(const uint8_t *public_key, const uint8_t *private_key,
 
 	/* If an RNG function was specified, try to get a random initial Z value to
 	 * improve protection against side-channel attacks. */
-	if (g_rng_function) {
+	if (uECC_get_rng()) {
 		if (!uECC_generate_random_int(p2[carry], curve->p, num_words)) {
 			r = 0;
 			goto clear_and_out;
@@ -189,12 +184,9 @@ int uECC_shared_secret(const uint8_t *public_key, const uint8_t *private_key,
 
 clear_and_out:
 	/* erasing temporary buffer used to store secret: */
-	memset(p2, 0, sizeof(p2));
-	__asm__ __volatile__("" :: "g"(p2) : "memory");
-	memset(tmp, 0, sizeof(tmp));
-	__asm__ __volatile__("" :: "g"(tmp) : "memory");
-	memset(_private, 0, sizeof(_private));
-	__asm__ __volatile__("" :: "g"(_private) : "memory");
+	_set_secure(p2, 0, sizeof(p2));
+	_set_secure(tmp, 0, sizeof(tmp));
+	_set_secure(_private, 0, sizeof(_private));
 
 	return r;
 }
