@@ -618,7 +618,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     case 1:
         __HAL_RCC_SPI2_CLK_ENABLE();
 #if !MYNEWT_VAL(MCU_STM32F1)
-    #if !MYNEWT_VAL(MCU_STM32L0)
+    #if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0)
         gpio.Alternate = GPIO_AF5_SPI2;
     #else
         gpio.Alternate = GPIO_AF0_SPI2;
