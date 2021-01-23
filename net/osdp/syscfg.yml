@@ -1,0 +1,281 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+
+    OSDP_MODE_PD:
+        value: 0
+        description: 'Configure this device to operate as a PD (Peripheral Device)'
+
+    OSDP_MODE_CP:
+        value: 0
+        description: 'Configure this device to operate as a CP (Control Panel)'
+
+    OSDP_SC_ENABLED:
+        value: 0
+        description: 'Secure the OSDP communication channel with encryption and mutual
+            authentication.'
+
+    OSDP_USE_CRYPTO_HOOK:
+        value: 0
+        description: 'Override crypto functions.'
+
+    OSDP_SC_RETRY_WAIT_SEC:
+        value: 600
+        description: 'Time in seconds to wait after a secure channel failure, and before
+          retrying to establish it.'
+
+    OSDP_RESP_TOUT_MS:
+        value: 200
+        description: 'Response timeout'
+
+    OSDP_PD_SC_TIMEOUT_MS:
+        value: 400
+        description: 'OSDP_PD_SC_TIMEOUT_MS'
+
+    OSDP_UART_DEV_NAME:
+        description: Device name of UART device for OSDP"
+        value: '"NONE"'
+
+    OSDP_UART_BAUD_RATE:
+        value: 115200
+        description: 'OSDP defines that baud rate can be either 9600 or 38400 or
+                      115200.'
+
+    OSDP_UART_BUFFER_LENGTH:
+        value: 256
+        description: 'OSDP UART buffer length'
+
+    OSDP_THREAD_STACK_SIZE:
+        value: 1024
+        description: 'OSDP Thread stack size'
+
+    OSDP_PACKET_TRACE:
+        value: 0
+        description: 'Print bytes sent/received over OSDP to console
+            Prints bytes sent/received over OSDP to console for debugging.
+            LOG_HEXDUMP_DBG() is used to achieve this and can be very verbose.'
+
+    CONFIG_OSDP_SKIP_MARK_BYTE:
+        value: 0
+        description: 'Some devices send the leading 0xFF (MARK) byte on the packet while
+          others dont. Compile time macro to choose either modes.
+          - In PD mode, library will respond with MARK byte if the command sent
+          from the CP had it.
+          - In CP mode, library will send command with MARK byte if
+          CONFIG_OSDP_SKIP_MARK_BYTE is not enabled.'
+
+    OSDP_CMD_ID_OFFSET:
+        value: 6
+        description: 'If CONFIG_OSDP_SKIP_MARK_BYTE is 0, this offset is 6, else 5.'
+
+    # Peripheral Device mode config
+
+    OSDP_NUM_CONNECTED_PD:
+        value: 1
+        description: 'In PD mode, number of connected PDs is is always 1 and cannot be configured.'
+
+    OSDP_PD_COMMAND_QUEUE_SIZE:
+        value: 16
+        description: 'The number of commands that can be queued to a given PD. In CP mode,
+          the queue size is multiplied by number of connected PD so this can grow
+          very quickly.'
+
+    OSDP_PD_ADDRESS:
+        value: 1
+        description: 'The 7 least significant bits represent the address of the PD to which
+          the message is directed, or the address of the PD sending the reply.
+          Address 0x7F is reserved as a broadcast address to which all PDs would
+          respond.'
+
+    OSDP_PD_SCBK:
+        value: '"NONE"'
+        description: 'Secure Channel Base Key (SCBK). Hexadecimal string representation
+          of the the 16 byte OSDP PD Secure Channel Base Key. When this field is sent
+          to "NONE", the PD is set to Install Mode. In this mode, the PD would allow a
+          CP to setup a secure channel with default SCBK. Once as secure channel is
+          active with the default key, the CP can send a KEYSET command to set new keys
+          to the PD. It is up to the user to make sure that the PD enters the Install Mode
+          only during provisioning time (controlled environment).'
+
+    # Peripheral Device ID Information
+
+    OSDP_PD_ID_VENDOR_CODE:
+        value: 0
+        description: 'PD Vendor Code. IEEE assigned OUI. Least 24 bits are valid. range 0 0x00FFFFFF.'
+
+    OSDP_PD_ID_MODEL:
+        value: 0
+        description: 'range 0 255 PD Product Model Number. Manufacturers model number. Least 8 bits are valid.'
+
+    OSDP_PD_ID_VERSION:
+        value: 0
+        description: 'PD Product Version. range 0 255 .Manufacturers version of this product. Least 8 bits are valid.'
+
+    OSDP_PD_ID_SERIAL_NUMBER:
+        value: 0
+        description: 'PD Serial Number. range 0 0xFFFFFFFF. A 4-byte serial number for the PD.'
+
+    OSDP_PD_ID_FIRMWARE_VERSION:
+        value: 0
+        description: 'hex PD Firmware Version.  range 0 0x00FFFFFF'
+
+    # Contact Status Monitoring
+
+    OSDP_PD_CAP_CONTACT_STATUS_MONITORING_COMP_LEVEL:
+        value: 0
+        description: 'Possible values:
+          - 01: PD monitors and reports the state of the circuit without any
+          supervision. The PD encodes the circuit status per its default
+          interpretation of contact state to active/inactive status.
+          - 02: Like 01, plus: The PD accepts configuration of the encoding of the
+          open/closed circuit status to the reported active/inactive status. (User
+          may configure each circuit as normally-closed or normally-open.)
+          - 03: Like 02, plus: PD supports supervised monitoring. The operating mode
+          for each circuit is determined by configuration settings.
+          - 04: Like 03, plus: the PD supports custom End-Of-Line settings within
+          the Manufacturer guidelines.'
+
+    OSDP_PD_CAP_CONTACT_STATUS_MONITORING_NUM_ITEMS:
+        value: 0
+        description: 'The number of Inputs'
+
+    # Output Control
+
+    OSDP_PD_CAP_OUTPUT_CONTROL_COMP_LEVEL:
+        value: 0
+        description: 'Possible values:
+          - 01: The PD is able to activate and deactivate the Output per direct
+          command from the CP.
+          - 02: Like 01, plus: The PD is able to accept configuration of the Output
+          driver to set the inactive state of the Output. The typical state of an
+          inactive Output is the state of the Output when no power is applied to the
+          PD and the output device (relay) is not energized. The inverted drive
+          setting causes the PD to energize the Output during the inactive state and
+          de-energize the Output during the active state. This feature allows the
+          support of "fail-safe/fail-secure" operating modes.
+          - 03: Like 01, plus: The PD is able to accept timed commands to the
+          Output. A timed command specifies the state of the Output for the
+          specified duration.
+          - 04: Like 02 and 03 - normal/inverted drive and timed operation.'
+
+    OSDP_PD_CAP_OUTPUT_CONTROL_NUM_ITEMS:
+        value: 0
+        description: 'The number of Outputs.'
+
+    # LED Control
+
+    OSDP_PD_CAP_READER_LED_CONTROL_COMP_LEVEL:
+        value: 0
+        description: 'Compliance Level
+          - 01: the PD support on/off control only
+          - 02: the PD supports timed commands
+          - 03: like 02, plus bi-color LEDs
+          - 04: like 02, plus tri-color LEDs'
+
+    OSDP_PD_CAP_READER_LED_CONTROL_NUM_ITEMS:
+        value: 0
+        description: 'The number of LEDs per reader.'
+
+    # Audible Output
+
+    OSDP_PD_CAP_READER_AUDIBLE_OUTPUT_COMP_LEVEL:
+        value: 0
+        description: 'Possible values:
+          - 01: the PD support on/off control only
+          - 02: the PD supports timed commands'
+
+    OSDP_PD_CAP_READER_AUDIBLE_OUTPUT_NUM_ITEMS:
+        value: 0
+        description: 'The number of audible annunciators per reader'
+
+    # Text Output
+
+    OSDP_PD_CAP_READER_TEXT_OUTPUT_COMP_LEVEL:
+        value: 0
+        description: 'Possible values:
+          - 00: The PD has no text display support
+          - 01: The PD supports 1 row of 16 characters
+          - 02: the PD supports 2 rows of 16 characters
+          - 03: the PD supports 4 rows of 16 characters
+          - 04: TBD.'
+
+    OSDP_PD_CAP_READER_TEXT_OUTPUT_NUM_ITEMS:
+        value: 0
+        description: 'Number of textual displays per reader'
+
+    # Card Data Format
+
+    OSDP_PD_CAP_CARD_DATA_FORMAT_COMP_LEVEL:
+        value: 0
+        description: 'Possible values:
+          - 01: the PD sends card data to the CP as array of bits, not exceeding
+          1024 bits.
+          - 02: the PD sends card data to the CP as array of BCD characters, not
+          exceeding 256 characters.
+          - 03: the PD can send card data to the CP as array of bits, or as an
+          array of BCD characters.'
+
+    # Time Keeping
+
+    OSDP_PD_CAP_TIME_KEEPING_COMP_LEVEL:
+        value: 0
+        description: 'Possible values:
+          - 00: The PD does not support time/date functionality
+          - 01: The PD understands time/date settings per Command osdp_TDSET
+          - 02: The PD is able to locally update the time and date'
+
+    # CP mode config
+
+    OSDP_PD_ADDRESS_LIST:
+        value: '"abc"'
+        description: Comma Separated Values of PD addresses. The number of values in this
+          string should exactly match the number of connected PDs specified above
+
+
+    OSDP_CMD_RETRY_WAIT_SEC:
+        value: 30
+        description: 'Time in seconds to wait after a command failure, and before retrying or
+          issuing further commands.'
+
+    OSDP_PD_POLL_RATE:
+        value: 20
+        description: 'The Control Panel must query the Peripheral Device periodically to
+          maintain connection sequence and to get status and events. This option
+          defined the number of times such a POLL command is sent per second.'
+
+    OSDP_MASTER_KEY:
+        value: '"NONE"'
+        description: 'Secure Channel Master Key. Hexadecimal string representation of the the 16 byte OSDP Secure Channel
+          master Key. This is a mandatory key when secure channel is enabled.'
+
+    # Logging
+
+    OSDP_LOG_MODULE:
+        description: 'Numeric module ID to use for OSDP log messages.'
+        value: 150
+    OSDP_LOG_LVL:
+        description: 'Minimum level for the OSDP log.'
+        value: 0
+
+syscfg.logs:
+    OSDP_LOG:
+        module: MYNEWT_VAL(OSDP_LOG_MODULE)
+        level: MYNEWT_VAL(OSDP_LOG_LVL)
+
+syscfg.vals:
