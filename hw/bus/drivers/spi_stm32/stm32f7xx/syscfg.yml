@@ -1,0 +1,93 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    SPI1_DMA_PRIORITY:
+        description: 'DMA priority for SPI1 RX and TX'
+        value: DMA_PRIORITY_LOW
+    SPI2_DMA_PRIORITY:
+        description: 'DMA priority for SPI2 RX and TX'
+        value: DMA_PRIORITY_LOW
+    SPI3_DMA_PRIORITY:
+        description: 'DMA priority for SPI3 RX and TX'
+        value: DMA_PRIORITY_LOW
+    SPI4_DMA_PRIORITY:
+        description: 'DMA priority for SPI4 RX and TX'
+        value: DMA_PRIORITY_LOW
+    SPI5_DMA_PRIORITY:
+        description: 'DMA priority for SPI5 RX and TX'
+        value: DMA_PRIORITY_LOW
+    SPI6_DMA_PRIORITY:
+        description: 'DMA priority for SPI6 RX and TX'
+        value: DMA_PRIORITY_LOW
+
+    SPI1_RX_DMA:
+        description: 'DMA stream to use for SPI1 RX'
+        #        value: DMA2_stream0_channel3
+        #        value: DMA2_stream2_channel3
+        value: DMA2_stream0_channel3
+    SPI1_TX_DMA:
+        description: 'DMA stream to use for SPI1 TX'
+        #        value: DMA2_stream3_channel3
+        #        value: DMA2_stream5_channel3
+        #        value: DMA2_stream2_channel2
+        value: DMA2_stream3_channel3
+    SPI2_RX_DMA:
+        description: 'DMA stream to use for SPI2 RX'
+        #        value: DMA1_stream3_channel0
+        value: DMA1_stream3_channel0
+    SPI2_TX_DMA:
+        description: 'DMA stream to use for SPI2 TX'
+        #        value: DMA1_stream4_channel0
+        value: DMA1_stream4_channel0
+    SPI3_RX_DMA:
+        description: 'DMA stream to use for SPI3 RX'
+        #        value: DMA1_stream0_channel0
+        #        value: DMA1_stream2_channel0
+        value: DMA1_stream0_channel0
+    SPI3_TX_DMA:
+        description: 'DMA stream to use for SPI3 TX'
+        #        value: DMA1_stream5_channel0
+        #        value: DMA1_stream7_channel0
+        value: DMA1_stream5_channel0
+    SPI4_RX_DMA:
+        description: 'DMA stream to use for SPI4 RX'
+        #        value: DMA2_stream0_channel4
+        #        value: DMA2_stream3_channel5
+        value: DMA2_stream0_channel4
+    SPI4_TX_DMA:
+        description: 'DMA stream to use for SPI4 TX'
+        #        value: DMA2_stream1_channel4
+        #        value: DMA2_stream4_channel5
+        value: DMA2_stream1_channel4
+    SPI5_RX_DMA:
+        description: 'DMA stream to use for SPI5 RX'
+        #        value: DMA2_stream5_channel7
+        value: DMA2_stream5_channel7
+    SPI5_TX_DMA:
+        description: 'DMA stream to use for SPI5 TX'
+        #        value: DMA2_stream6_channel7
+        value: DMA2_stream6_channel7
+    SPI6_RX_DMA:
+        description: 'DMA stream to use for SPI6 RX'
+        #        value: DMA2_stream5_channel1
+        value: DMA2_stream5_channel1
+    SPI6_TX_DMA:
+        description: 'DMA stream to use for SPI6 TX'
+        #        value: DMA2_stream6_channel1
+        value: DMA2_stream6_channel1
