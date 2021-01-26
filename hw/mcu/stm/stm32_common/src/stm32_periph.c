@@ -41,6 +41,13 @@
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #endif
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_3_MASTER) || \
+    MYNEWT_VAL(SPI_4_MASTER) || MYNEWT_VAL(SPI_5_MASTER)
+#include "bus/drivers/spi_stm32.h"
+#endif
+#endif
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
 #include <pwm_stm32/pwm_stm32.h>
 #endif
@@ -148,6 +155,69 @@ extern const struct stm32_hal_i2c_cfg os_bsp_i2c1_cfg;
 extern const struct stm32_hal_i2c_cfg os_bsp_i2c2_cfg;
 #endif
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+#if MYNEWT_VAL(SPI_0_MASTER)
+static const struct bus_spi_dev_cfg spi0_cfg = {
+    .spi_num = 0,
+    .pin_sck = MYNEWT_VAL(SPI_0_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_0_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_0_PIN_MISO),
+};
+static struct bus_spi_dev spi0_bus;
+#endif
+
+#if MYNEWT_VAL(SPI_1_MASTER)
+static const struct bus_spi_dev_cfg spi1_cfg = {
+    .spi_num = 1,
+    .pin_sck = MYNEWT_VAL(SPI_1_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_1_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_1_PIN_MISO),
+};
+static struct bus_spi_dev spi1_bus;
+#endif
+
+#if MYNEWT_VAL(SPI_2_MASTER)
+static const struct bus_spi_dev_cfg spi2_cfg = {
+    .spi_num = 2,
+    .pin_sck = MYNEWT_VAL(SPI_2_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_2_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_2_PIN_MISO),
+};
+static struct bus_spi_dev spi2_bus;
+#endif
+
+#if MYNEWT_VAL(SPI_3_MASTER)
+static const struct bus_spi_dev_cfg spi3_cfg = {
+    .spi_num = 3,
+    .pin_sck = MYNEWT_VAL(SPI_3_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_3_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_3_PIN_MISO),
+};
+static struct bus_spi_dev spi3_bus;
+#endif
+
+#if MYNEWT_VAL(SPI_4_MASTER)
+static const struct bus_spi_dev_cfg spi4_cfg = {
+    .spi_num = 4,
+    .pin_sck = MYNEWT_VAL(SPI_4_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_4_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_4_PIN_MISO),
+};
+static struct bus_spi_dev spi4_bus;
+#endif
+
+#if MYNEWT_VAL(SPI_5_MASTER)
+static const struct bus_spi_dev_cfg spi5_cfg = {
+    .spi_num = 5,
+    .pin_sck = MYNEWT_VAL(SPI_5_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_5_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_5_PIN_MISO),
+};
+static struct bus_spi_dev spi5_bus;
+#endif
+
+#else
 #if (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))
 #if MYNEWT_VAL(SPI_0_CUSTOM_CFG)
 extern const struct stm32_hal_spi_cfg os_bsp_spi0_cfg;
@@ -198,6 +268,7 @@ static const struct stm32_hal_spi_cfg os_bsp_spi3_cfg = {
     .ss_pin = MYNEWT_VAL(SPI_3_PIN_SS),
     .irq_prio = 2,
 };
+#endif
 #endif
 #endif
 
@@ -403,6 +474,47 @@ stm32_periph_create_i2c(void)
 #endif
 }
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+stm32_periph_create_spi(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(SPI_0_MASTER)
+    rc = bus_spi_stm32_dev_create("spi0", &spi0_bus,
+                                  (struct bus_spi_dev_cfg *)&spi0_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_1_MASTER)
+    rc = bus_spi_stm32_dev_create("spi1", &spi1_bus,
+                                  (struct bus_spi_dev_cfg *)&spi1_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_2_MASTER)
+    rc = bus_spi_stm32_dev_create("spi2", &spi2_bus,
+                                  (struct bus_spi_dev_cfg *)&spi2_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_3_MASTER)
+    rc = bus_spi_stm32_dev_create("spi3", &spi3_bus,
+                                  (struct bus_spi_dev_cfg *)&spi3_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_4_MASTER)
+    rc = bus_spi_stm32_dev_create("spi4", &spi4_bus,
+                                  (struct bus_spi_dev_cfg *)&spi4_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_5_MASTER)
+    rc = bus_spi_stm32_dev_create("spi5", &spi5_bus,
+                                  (struct bus_spi_dev_cfg *)&spi5_cfg);
+    assert(rc == 0);
+#endif
+}
+
+#else
 static void
 stm32_periph_create_spi(void)
 {
@@ -443,6 +555,7 @@ stm32_periph_create_spi(void)
     assert(rc == 0);
 #endif
 }
+#endif
 
 static void
 stm32_periph_create_adc(void)
