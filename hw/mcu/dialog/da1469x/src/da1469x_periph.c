@@ -27,7 +27,7 @@
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
 #include "uart/uart.h"
-#if MYNEWT_VAL(HAL_UART)
+#if MYNEWT_VAL(UART_HAL)
 #include "uart_hal/uart_hal.h"
 #else
 #include "uart_da1469x/uart_da1469x.h"
@@ -350,19 +350,25 @@ da1469x_periph_create_adc(void)
 #endif
 }
 
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
+#if MYNEWT_VAL(UART_HAL)
+static int
+da1469x_uart_create(struct uart_dev *dev, const char *name, uint8_t priority,
+                    const struct da1469x_uart_cfg *cfg)
+{
+    return os_dev_create(&dev->ud_dev, "uart0",
+                         OS_DEV_INIT_PRIMARY, priority, uart_hal_init,
+                         (void *)cfg);
+}
+#else
 static int
 da1469x_uart_create(struct da1469x_uart_dev *dev, const char *name, uint8_t priority,
                     const struct da1469x_uart_cfg *cfg)
 {
-#if MYNEWT_VAL(HAL_UART)
-    return os_dev_create(&dev->ud_dev, "uart0",
-                         OS_DEV_INIT_PRIMARY, priority, uart_hal_init,
-                         (void *)&os_bsp_uart0_cfg);
-#else
-    (void)priority;
     return da1469x_uart_dev_create(dev, name, priority, cfg);
-#endif
 }
+#endif
+#endif
 
 static void
 da1469x_periph_create_uart(void)

@@ -336,8 +336,8 @@ syscfg.defs:
         description: 'SS pin for SPI_1_SLAVE'
         value: ''
 
-    HAL_UART:
-        description: 'Use hal_uart driver instead of da1469x_uart.'
+    UART_HAL:
+        description: 'Use uart_hal driver instead of uart_da1469x.'
         value: 0
 
     UART_0:
