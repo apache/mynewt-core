@@ -61,6 +61,12 @@ int console_read(char *str, int cnt, int *newline);
 #endif
 void console_blocking_mode(void);
 void console_non_blocking_mode(void);
+/**
+ * Switch console echo state for input data on or off
+ *
+ * @param on Let console know if it should echo the input (!= 0),
+ *        or disable the echo (= 0).
+ */
 void console_echo(int on);
 
 int console_vprintf(const char *fmt, va_list ap);

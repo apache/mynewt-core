@@ -981,7 +981,7 @@ handle_nlip(uint8_t byte)
         insert_char(&input->line[cur], byte);
         if (byte == '\n') {
             input->line[cur] = '\0';
-            console_echo(1);
+            console_echo(echo);
             nlip_state = 0;
 
             console_handle_line();
@@ -1160,8 +1160,10 @@ console_handle_char(uint8_t byte)
                 console_switch_to_prompt();
                 console_clear_line();
             } else {
-                console_filter_out('\r');
-                console_filter_out('\n');
+                if (echo) {
+                    console_filter_out('\r');
+                    console_filter_out('\n');
+                }
             }
             if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none)) {
                 console_history_add(input->line);
