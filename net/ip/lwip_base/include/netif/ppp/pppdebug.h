@@ -40,14 +40,18 @@
 #ifndef PPPDEBUG_H
 #define PPPDEBUG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Trace levels. */
-#define LOG_CRITICAL  (PPP_DEBUG | LWIP_DBG_LEVEL_SEVERE)
-#define LOG_ERR       (PPP_DEBUG | LWIP_DBG_LEVEL_SEVERE)
-#define LOG_NOTICE    (PPP_DEBUG | LWIP_DBG_LEVEL_WARNING)
-#define LOG_WARNING   (PPP_DEBUG | LWIP_DBG_LEVEL_WARNING)
-#define LOG_INFO      (PPP_DEBUG)
-#define LOG_DETAIL    (PPP_DEBUG)
-#define LOG_DEBUG     (PPP_DEBUG)
+#define PPP_LOG_CRITICAL  (PPP_DEBUG | LWIP_DBG_LEVEL_SEVERE)
+#define PPP_LOG_ERR       (PPP_DEBUG | LWIP_DBG_LEVEL_SEVERE)
+#define PPP_LOG_NOTICE    (PPP_DEBUG | LWIP_DBG_LEVEL_WARNING)
+#define PPP_LOG_WARNING   (PPP_DEBUG | LWIP_DBG_LEVEL_WARNING)
+#define PPP_LOG_INFO      (PPP_DEBUG)
+#define PPP_LOG_DETAIL    (PPP_DEBUG)
+#define PPP_LOG_DEBUG     (PPP_DEBUG)
 
 #if PPP_DEBUG
 
@@ -74,6 +78,10 @@
 #define PPPDEBUG(a, b)
 
 #endif /* PPP_DEBUG */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPPDEBUG_H */
 
