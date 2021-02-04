@@ -28,20 +28,9 @@
 #  - NO_GDB set if we should not start gdb to debug
 #
 
+. $CORE_PATH/hw/scripts/pyocd.sh
+
 FILE_NAME=$BIN_BASENAME.elf
-GDB_CMD_FILE=.gdb_cmds
+TARGET=k64f
 
-echo "Debugging" $FILE_NAME
-
-#
-# Block Ctrl-C from getting passed to openocd.
-# Exit openocd when gdb detaches.
-#
-set -m
-pyocd-gdbserver &
-set +m
-
-echo "target remote localhost:3333" > $GDB_CMD_FILE
-echo "mem 0x20030000 0xffffffff rw nocache" >> $GDB_CMD_FILE
-arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-rm $GDB_CMD_FILE
+pyocd_debug
