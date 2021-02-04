@@ -28,14 +28,13 @@
 #  - FLASH_OFFSET contains the flash offset to download to
 #  - BOOT_LOADER is set if downloading a bootloader
 
-. $CORE_PATH/hw/scripts/openocd.sh
-
-common_file_to_load
+. $CORE_PATH/hw/scripts/pyocd.sh
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0
 fi
 
-echo "Downloading" ${FILE_NAME} "to" ${FLASH_OFFSET}
+TARGET=k64f
 
-pyocd-flashtool -se --address ${FLASH_OFFSET} ${FILE_NAME} bin
+common_file_to_load
+pyocd_load
