@@ -273,15 +273,23 @@ hal_bsp_init(void)
     rc = hal_spi_init(1, NULL, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
+#if MYNEWT_VAL(SPI_2_MASTER)
+    rc = hal_spi_init(2, NULL, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
 #if MYNEWT_VAL(SPI_0_SLAVE)
     rc = hal_spi_init(0, NULL, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
 #endif
-
 #if MYNEWT_VAL(SPI_1_SLAVE)
-    rc = hal_spi_init(0, NULL, HAL_SPI_TYPE_SLAVE);
+    rc = hal_spi_init(1, NULL, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
 #endif
+#if MYNEWT_VAL(SPI_2_SLAVE)
+    rc = hal_spi_init(2, NULL, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+
 }
 
 void

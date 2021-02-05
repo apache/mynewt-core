@@ -17,3 +17,4 @@
 #
 syscfg.vals:
     OS_TICKS_PER_SEC: 1000
+    MCU_FLASH_MIN_WRITE_SIZE: 8
