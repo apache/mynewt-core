@@ -99,11 +99,14 @@ class MicroTraceBuffer(gdb.Command):
         self._print(f"    ~A~0x{addr:08x}:    ~D~{asm}")
 
     def _disassemble(self, start: int, end: int):
-        disasm = self._arch.disassemble(start, end)
-        for instr in disasm:
-            addr = instr["addr"]
-            asm = instr["asm"].expandtabs(8)
-            self._describe_instr(addr, asm)
+        try:
+            disasm = self._arch.disassemble(start, end)
+            for instr in disasm:
+                addr = instr["addr"]
+                asm = instr["asm"].expandtabs(8)
+                self._describe_instr(addr, asm)
+        except gdb.MemoryError:
+            print(f"Error disassembling 0x{start:08x}-0x{end:08x}")
         print()
 
     def _cmd_decode(self):
@@ -154,10 +157,10 @@ class MicroTraceBuffer(gdb.Command):
                 if mtb_pkt_src & 0xff000000 == 0xff000000:
                     self._print(f"~X~Exception return (LR: 0x{mtb_pkt_src:08x}, "
                                 f"ret address: 0x{mtb_pkt_dst:08x})")
+                    print()
+                    continue
                 else:
                     self._print(f"~X~Exception entry (ret address: 0x{mtb_pkt_src:08x})")
-                print()
-                continue
 
             # on 1st entry in trace buffer, disassemble source of the branch
             if exec_begin is None:
@@ -172,6 +175,9 @@ class MicroTraceBuffer(gdb.Command):
             # print(f"exe> 0x{exec_begin:08x} -> 0x{exec_end:08x}")
 
             self._disassemble(exec_begin, exec_end)
+
+            if bit_a != 0:
+                self._print(f"~X~Exception started")
 
         # disassemble target of last branch
         self._disassemble(mtb_pkt_dst, mtb_pkt_dst)
