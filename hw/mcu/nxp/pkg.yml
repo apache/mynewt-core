@@ -25,19 +25,34 @@ pkg.keywords:
     - nxp
     - frdm-k64f
     - MK64F12
+    - MK8xF
 
 pkg.type: sdk
 
 pkg.ign_files.BSP_MK64F12:
-    - "fsl_sbrk.c"
+    - "fsl_cache*"
+    - "fsl_flexio*"
+    - "fsl_lmem*"
+    - "fsl_ltc*"
+    - "fsl_sdramc*"
+    - "fsl_smartcard*"
+    - "fsl_tpm*"
+    - "fsl_tsi*"
+    - "fsl_lpuart*"
+    - "fsl_qspi*"
 
-pkg.src_dirs:
-    - "src/ext/sdk-2.0-frdm-k64f_b160321/devices/MK64F12"
-    - "src/ext/sdk-2.0-frdm-k64f_b160321/devices/MK64F12/drivers"
-    - "src/ext/sdk-2.0-frdm-k64f_b160321/devices/MK64F12/gcc"
-    - "src/ext/sdk-2.0-frdm-k64f_b160321/devices/MK64F12/utilities"
+pkg.ign_files.BSP_MK8XF:
+    - "fsl_uart*"
+    - "fsl_enet*"
+    - "fsl_flexcan*"
 
-pkg.cflags: -std=gnu99 -D__assert_func=__assert_func_nxp
+pkg.ign_files.BSP_MK81F:
+    - "fsl_pdb*"
+
+pkg.src_dirs.BSP_KINETIS:
+    - "src/ext/nxp-kinetis-sdk/drivers"
+
+pkg.cflags: -std=gnu99 -mthumb
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"

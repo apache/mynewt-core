@@ -98,10 +98,11 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
-static void init_hardware(void)
+static void
+init_hardware(void)
 {
     /* Disable the MPU otherwise USB cannot access the bus */
-    MPU->CESR = 0;
+    SYSMPU->CESR = 0;
 
     /* Enable all the ports */
     SIM->SCGC5 |= (SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK |
@@ -116,7 +117,7 @@ static struct eflash_crypto_dev enc_flash_dev0 = {
         .efd_hal = {
             .hf_itf = &enc_flash_funcs,
         },
-        .efd_hwdev = &mk64f12_flash_dev,
+        .efd_hwdev = &kinetis_flash_dev,
     }
 };
 #endif
@@ -125,7 +126,7 @@ const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
     if (id == 0) {
-        return &mk64f12_flash_dev;
+        return &kinetis_flash_dev;
     }
 #if MYNEWT_VAL(ENC_FLASH_DEV)
     if (id == 1) {
