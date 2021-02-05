@@ -181,6 +181,10 @@ static struct os_event charge_control_read_event = {
     .ev_cb = charge_control_read_ev_cb,
 };
 
+#ifdef MYNEWT_VAL_CHARGE_CONTROL_MGR_EVQ
+extern struct os_eventq MYNEWT_VAL(CHARGE_CONTROL_MGR_EVQ);
+#endif
+
 /* =================================================================
  * ====================== PKG ======================================
  * =================================================================
@@ -210,7 +214,7 @@ charge_control_read_ev_cb(struct os_event *ev)
     struct charge_control_read_ev_ctx *ccrec;
 
     ccrec = ev->ev_arg;
-    rc = charge_control_read(ccrec->ccrec_charge_control, ccrec->ccrec_type, 
+    rc = charge_control_read(ccrec->ccrec_charge_control, ccrec->ccrec_type,
             NULL, NULL, OS_TIMEOUT_NEVER);
     assert(rc == 0);
 }
@@ -801,7 +805,7 @@ charge_control_mgr_init(void)
     struct os_timezone ostz;
 
 #ifdef MYNEWT_VAL_CHARGE_CONTROL_MGR_EVQ
-    charge_control_mgr_evq_set(MYNEWT_VAL(CHARGE_CONTROL_MGR_EVQ));
+    charge_control_mgr_evq_set(&MYNEWT_VAL(CHARGE_CONTROL_MGR_EVQ));
 #else
     charge_control_mgr_evq_set(os_eventq_dflt_get());
 #endif
