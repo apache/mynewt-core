@@ -37,6 +37,12 @@ class MicroTraceBuffer(gdb.Command):
 
     def __init__(self):
         super(MicroTraceBuffer, self).__init__("mtb", gdb.COMMAND_STATUS, gdb.COMPLETE_NONE)
+        try:
+            mtb_state_at_crash = gdb.lookup_symbol("mtb_state_at_crash")[0]
+            if mtb_state_at_crash is not None and int(gdb.parse_and_eval('mtb_state_at_crash.mtb_base_reg')) != 0:
+                self._mtb_base_addr = int(gdb.parse_and_eval('mtb_state_at_crash').address)
+        except gdb.error:
+            pass
         if colorama:
             self._colors = {"A": colorama.Fore.BLUE,
                             "D": colorama.Fore.RESET,
