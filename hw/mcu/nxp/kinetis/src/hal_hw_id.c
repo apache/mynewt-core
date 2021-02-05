@@ -17,18 +17,32 @@
  * under the License.
  */
 
-#ifndef __MCU_FRDMK64F_BSP_H_
-#define __MCU_FRDMK64F_BSP_H_
+#include <inttypes.h>
+#include <string.h>
 
-#ifdef __cplusplus
- extern "C" {
+#include <hal/hal_bsp.h>
+
+#include "fsl_sim.h"
+
+#ifndef min
+#define min(a, b) ((a)<(b)?(a):(b))
 #endif
 
-struct hal_flash;
-extern const struct hal_flash mk64f12_flash_dev;
+#define KINETIS_HW_ID_LEN sizeof(sim_uid_t)
 
-#ifdef __cplusplus
+int
+hal_bsp_hw_id_len(void)
+{
+    return KINETIS_HW_ID_LEN;
 }
-#endif
 
-#endif /* __MCU_FRDMK64F_BSP_H_ */
+int hal_bsp_hw_id(uint8_t *id, int max_len)
+{
+    sim_uid_t uid;
+    max_len = min(KINETIS_HW_ID_LEN, max_len);
+
+    SIM_GetUniqueId(&uid);
+    memcpy(id, (uint8_t *) &uid, max_len);
+
+    return max_len;
+}

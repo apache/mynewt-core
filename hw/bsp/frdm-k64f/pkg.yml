@@ -26,7 +26,7 @@ pkg.keywords:
 
 pkg.cflags:
     - -DDEBUG
-    - -fno-builtin -fno-common -ffreestanding
+    - -fno-builtin -fno-common
     - -DCPU_MK64FN1M0VMD12
     - -DPRINTF_FLOAT_ENABLE=0
     - -DSCANF_FLOAT_ENABLE=0
@@ -42,7 +42,7 @@ pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/nxp/MK64F12"
+    - "@apache-mynewt-core/hw/mcu/nxp/kinetis/MK64F12"
     - "@apache-mynewt-core/libc/baselibc"
 
 pkg.deps.UART_0:

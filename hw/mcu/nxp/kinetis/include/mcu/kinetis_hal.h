@@ -16,10 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "hal/hal_system.h"
 
-enum hal_reset_reason
-hal_reset_cause(void)
-{
-    return HAL_RESET_POR;
+#ifndef __KINETIS_HAL_H_
+#define __KINETIS_HAL_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct nxp_hal_i2c_cfg {
+    int8_t pin_scl;
+    int8_t pin_sda;
+    uint32_t frequency;
+};
+
+struct nxp_hal_spi_cfg {
+    uint32_t clk_pin;
+    uint32_t pcs_pin;
+    uint32_t sout_pin;
+    uint32_t sin_pin;
+};
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* __KINETIS_HAL_H_ */

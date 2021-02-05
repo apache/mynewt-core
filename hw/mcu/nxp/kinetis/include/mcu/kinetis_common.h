@@ -17,31 +17,27 @@
  * under the License.
  */
 
-#include <inttypes.h>
-#include <string.h>
+#ifndef __KINETIS_COMMON_H_
+#define __KINETIS_COMMON_H_
 
-#include <hal/hal_bsp.h>
-
-#include "MK64F12.h"
-
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#define MK64F12_HW_ID_LEN     7
-
-int
-hal_bsp_hw_id_len(void)
-{
-    return MK64F12_HW_ID_LEN;
+#if MYNEWT_VAL(BSP_MK64F12)
+#include "MK64F12.h"
+#elif MYNEWT_VAL(BSP_MK80F)
+#include "MK80F25615.h"
+#elif MYNEWT_VAL(BSP_MK81F)
+#include "MK81F25615.h"
+#elif MYNEWT_VAL(BSP_MK82F)
+#include "MK82F25615.h"
+#else
+#error "Unsupported MCU"
+#endif
+#ifdef __cplusplus
 }
+#endif
 
-/*
- * TODO: Use serial# registers
- */
-int hal_bsp_hw_id(uint8_t *id, int max_len)
-{
-    memcpy(id, (void *)"ABCDEFG", MK64F12_HW_ID_LEN + 1);
+#endif /* __KINETIS_COMMON_H_ */
 
-    return MK64F12_HW_ID_LEN;
-}

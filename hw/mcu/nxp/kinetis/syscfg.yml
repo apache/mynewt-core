@@ -1,0 +1,423 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:        
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 8
+
+    TRNG:
+        description: 'Enable True Random Number Generator (RNGA)'
+        value: 0
+
+    CRYPTO:
+        description: 'Enable cryptograpy accelerator (CAU)'
+        value: 0
+
+    HASH:
+        description: 'Enable hash accelerator (CAU)'
+        value: 0
+
+    GPIO_MAX_IRQ:
+        description: 'Max number of GPIO pins assigned to IRQs'
+        value: 10
+
+    # UART0 PINS on CMSIS-DAP Interface
+    UART_0:
+        description: 'Whether to enable UART0'
+        value:  0
+    UART_0_PORT:
+        description: 'GPIO port for UART0 pins'
+        value:  PORTB
+    UART_0_PORT_CLOCK:
+        description: 'Clock to enable for UART0 pins'
+        value:  kCLOCK_PortB
+    UART_0_PIN_TX:
+        description: 'TX pin for UART0'
+        value:  17
+    UART_0_PIN_RX:
+        description: 'RX pin for UART0'
+        value:  16
+
+    UART_1:
+        description: 'Whether to enable UART1'
+        value:  0
+    UART_1_PORT:
+        description: 'GPIO port for UART1 pins'
+        value:  PORTC
+    UART_1_PORT_CLOCK:
+        description: 'Clock to enable for UART1 pins'
+        value:  kCLOCK_PortC
+    UART_1_PIN_TX:
+        description: 'TX pin for UART1'
+        value:  4
+    UART_1_PIN_RX:
+        description: 'RX pin for UART1x'
+        value:  3
+
+    UART_2:
+        description: 'Whether to enable UART2'
+        value:  0
+    UART_2_PORT:
+        description: 'GPIO port for UART2 pins'
+        value:  PORTD
+    UART_2_PORT_CLOCK:
+        description: 'Clock to enable for UART2 pins'
+        value:  kCLOCK_PortD
+    UART_2_PIN_TX:
+        description: 'TX pin for UART2'
+        value:  2
+    UART_2_PIN_RX:
+        description: 'RX pin for UART2'
+        value:  3
+
+    UART_3:
+        description: 'Whether to enable UART3'
+        value:  0
+    UART_3_PORT:
+        description: 'GPIO port for UART3 pins'
+        value:  PORTC
+    UART_3_PORT_CLOCK:
+        description: 'Clock to enable for UART3 pins'
+        value:  kCLOCK_PortC
+    UART_3_PIN_TX:
+        description: 'TX pin for UART3'
+        value:  17
+    UART_3_PIN_RX:
+        description: 'RX pin for UART3'
+        value:  16
+
+    UART_4:
+        description: 'Whether to enable UART4'
+        value:  0
+    UART_4_PORT:
+        description: 'GPIO port for UART4 pins'
+        value:  PORTC
+    UART_4_PORT_CLOCK:
+        description: 'Clock to enable for UART4 pins'
+        value:  kCLOCK_PortC
+    UART_4_PIN_TX:
+        description: 'TX pin for UART4'
+        value:  15
+    UART_4_PIN_RX:
+        description: 'RX pin for UART4'
+        value:  14
+
+    UART_5:
+        description: 'Whether to enable UART5'
+        value:  0
+    UART_5_PORT:
+        description: 'GPIO port for UART5 pins'
+        value:  PORTE
+    UART_5_PORT_CLOCK:
+        description: 'Clock to enable for UART5 pins'
+        value:  kCLOCK_PortE
+    UART_5_PIN_TX:
+        description: 'TX pin for UART5'
+        value:  9
+    UART_5_PIN_RX:
+        description: 'RX pin for UART5'
+        value:  8
+
+    I2C_0:
+        description: 'Enable I2C0'
+        value: 0
+    I2C_0_PORT:
+        description: 'GPIO port for I2C0'
+        value: PORTB
+    I2C_0_MUX:
+        description: 'Pin mux selection for I2C0'
+        value: kPORT_MuxAlt2
+    I2C_0_PIN_SCL:
+        description: 'SCL pin for I2C_0'
+        value: 0
+    I2C_0_PIN_SDA:
+        description: 'SDA pin for I2C_0'
+        value: 1
+    I2C_0_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_0'
+        value: 100
+
+    I2C_1:
+        description: 'Enable DA1469x I2C1.'
+        value: 0
+    I2C_1_PORT:
+        description: 'GPIO port for I2C1'
+        value: PORTC
+    I2C_1_MUX:
+        description: 'Pin mux selection for I2C1'
+        value: kPORT_MuxAlt2
+    I2C_1_PIN_SCL:
+        description: 'SCL pin for I2C_1'
+        value: 10
+    I2C_1_PIN_SDA:
+        description: 'SDA pin for I2C_1'
+        value: 11
+    I2C_1_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_1'
+        value: 100
+
+    I2C_2:
+        description: 'Enable DA1469x I2C2.'
+        value: 0
+    I2C_2_PORT:
+        description: 'GPIO port for I2C2'
+        value: PORTA
+    I2C_2_MUX:
+        description: 'Pin mux selection for I2C2'
+        value: kPORT_MuxAlt4
+    I2C_2_PIN_SCL:
+        description: 'SCL pin for I2C_2'
+        value: 2
+    I2C_2_PIN_SDA:
+        description: 'SDA pin for I2C_2'
+        value: 1
+    I2C_2_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_2'
+        value: 100
+
+    I2C_3:
+        description: 'Enable DA1469x I2C3.'
+        value: 0
+    I2C_3_PORT:
+        description: 'GPIO port for I2C3'
+        value: PORTA
+    I2C_3_MUX:
+        description: 'Pin mux selection for I2C3'
+        value: kPORT_MuxAlt4
+    I2C_3_PIN_SCL:
+        description: 'SCL pin for I2C_3'
+        value: 2
+    I2C_3_PIN_SDA:
+        description: 'SDA pin for I2C_3'
+        value: 1
+    I2C_3_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_3'
+        value: 100
+
+    SPI_0_MASTER:
+        description: 'Enable NXP SPI Master 0'
+        value: 0
+        restrictions:
+            - "!SPI_0_SLAVE"
+    SPI_0_MASTER_PORT:
+        description: 'GPIO port for SPI_0_MASTER'
+        value: PORTA
+    SPI_0_MASTER_MUX:
+        description: 'Pin mux selection for SPI_0_MASTER'
+        value: kPORT_MuxAlt2
+    SPI_0_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_0_MASTER'
+        value: 15
+    SPI_0_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value: 16
+    SPI_0_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_0_MASTER'
+        value: 17
+
+    SPI_0_SLAVE:
+        description: 'Enable NXP SPI Slave 0'
+        value: 0
+        restrictions:
+            - "!SPI_0_MASTER"
+    SPI_0_SLAVE_PORT:
+        description: 'GPIO port for SPI_0_SLAVE'
+        value: PORTA
+    SPI_0_SLAVE_MUX:
+        description: 'Pin mux selection for SPI_0_SLAVE'
+        value: kPORT_MuxAlt2
+    SPI_0_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_0_SLAVE'
+        value: 15
+    SPI_0_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_SLAVE'
+        value: 17
+    SPI_0_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_0_SLAVE'
+        value: 16
+    SPI_0_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_0_SLAVE'
+        value: 14
+
+    SPI_1_MASTER:
+        description: 'Enable NXP SPI Master 1'
+        value: 0
+        restrictions:
+            - "!SPI_1_SLAVE"
+    SPI_1_MASTER_PORT:
+        description: 'GPIO port for SPI_1_MASTER'
+        value: PORTD
+    SPI_1_MASTER_MUX:
+        description: 'Pin mux selection for SPI_1_MASTER'
+        value: kPORT_MuxAlt7
+    SPI_1_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_1_MASTER'
+        value: 5
+    SPI_1_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_MASTER'
+        value: 6
+    SPI_1_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_1_MASTER'
+        value: 7
+
+    SPI_1_SLAVE:
+        description: 'Enable NXP SPI Slave 1'
+        value: 0
+        restrictions:
+            - "!SPI_1_MASTER"
+    SPI_1_SLAVE_PORT:
+        description: 'GPIO port for SPI_0_SLAVE'
+        value: PORTD
+    SPI_1_SLAVE_MUX:
+        description: 'Pin mux selection for SPI_0_SLAVE'
+        value: kPORT_MuxAlt7
+    SPI_1_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_1_SLAVE'
+        value: 5
+    SPI_1_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_SLAVE'
+        value: 7
+    SPI_1_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_1_SLAVE'
+        value: 6
+    SPI_1_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_1_SLAVE'
+        value: 4
+
+    SPI_2_MASTER:
+        description: 'Enable NXP SPI Master 2'
+        value: 0
+        restrictions:
+            - "!SPI_2_SLAVE"
+    SPI_2_MASTER_PORT:
+        description: 'GPIO port for SPI_1_MASTER'
+        value: PORTB
+    SPI_2_MASTER_MUX:
+        description: 'Pin mux selection for SPI_1_MASTER'
+        value: kPORT_MuxAlt2
+    SPI_2_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_2_MASTER'
+        value: 21
+    SPI_2_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_2_MASTER'
+        value: 22
+    SPI_2_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_2_MASTER'
+        value: 23
+
+    SPI_2_SLAVE:
+        description: 'Enable NXP SPI Slave 2'
+        value: 0
+        restrictions:
+            - "!SPI_2_MASTER"
+    SPI_2_SLAVE_PORT:
+        description: 'GPIO port for SPI_0_SLAVE'
+        value: PORTB
+    SPI_2_SLAVE_MUX:
+        description: 'Pin mux selection for SPI_0_SLAVE'
+        value: kPORT_MuxAlt2
+    SPI_2_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_2_SLAVE'
+        value: 21
+    SPI_2_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_2_SLAVE'
+        value: 23
+    SPI_2_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_2_SLAVE'
+        value: 22
+    SPI_2_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_2_SLAVE'
+        value: 20
+
+    QSPI_ENABLE:
+        description: 'NXP QSPI'
+        value: 0
+    QSPI_DDR_MODE:
+        description: >
+            Use Double Data Rate mode.
+            If disabled uses Single Data Rate mode.
+        value: 0
+    QSPI_SCK_DELAY:
+        description: >
+            Minimum amount of time that the CSN pin must stay high
+            before it can go low again. Value is specified in number of 16
+            MHz periods (62.5 ns).
+        value: 0
+    QSPI_SCK_FREQ:
+        description: '32MHz clock divider (0-31). Clock = 32MHz / (1+divider)'
+        value: 0
+    QSPI_SPI_MODE:
+        description: 'SPI 0=Mode0 or 1=Mode3'
+        value: 0
+    QSPI_FLASH_SECTOR_SIZE:
+        description: 'QSPI sector size.'
+        value: 0
+    QSPI_FLASH_PAGE_SIZE:
+        description: 'QSPI sector size.'
+        value: 0
+    QSPI_FLASH_SECTOR_COUNT:
+        description: 'QSPI sector count'
+        value: 0
+    QSPIA_MUX:
+        description: 'Mux for QSPIA pins'
+        value: -1
+    QSPI_PIN_SSA:
+        description: 'SS pin for QSPIA'
+        value: -1
+    QSPI_PIN_SCKA:
+        description: 'SCK pin for QSPIA'
+        value: -1
+    QSPI_PIN_DIO0A:
+        description: 'DIO0 pin for QSPIA'
+        value: -1
+    QSPI_PIN_DIO1A:
+        description: 'DIO1 pin for QSPIA'
+        value: -1
+    QSPI_PIN_DIO2A:
+        description: 'DIO2 pin for QSPIA'
+        value: -1
+    QSPI_PIN_DIO3A:
+        description: 'DIO3 pin for QSPIA'
+        value: -1
+    QSPIB_PORT:
+        description: 'Port for QSPIB pins'
+        value: -1
+    QSPIB_MUX:
+        description: 'Mux for QSPIB pins'
+        value: -1
+    QSPI_PIN_SSB:
+        description: 'SS pin for QSPIB'
+        value: -1
+    QSPI_PIN_SCKB:
+        description: 'SCK pin for QSPIB'
+        value: -1
+    QSPI_PIN_DIO0B:
+        description: 'DIO0 pin for QSPIB'
+        value: -1
+    QSPI_PIN_DIO1B:
+        description: 'DIO1 pin for QSPIB'
+        value: -1
+    QSPI_PIN_DIO2B:
+        description: 'DIO2 pin for QSPIB'
+        value: -1
+    QSPI_PIN_DIO3B:
+        description: 'DIO3 pin for QSPIB'
+        value: -1

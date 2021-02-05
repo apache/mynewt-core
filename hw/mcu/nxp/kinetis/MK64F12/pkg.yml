@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nxp/MK64F12
+pkg.name: hw/mcu/nxp/kinetis/MK64F12
 pkg.description: MCU definition for NXP K64F ARM Cortex-M4 chip
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
@@ -25,4 +25,4 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/cmsis-core"
-    - "@apache-mynewt-core/hw/mcu/nxp"
+    - "@apache-mynewt-core/hw/mcu/nxp/kinetis"

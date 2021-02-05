@@ -15,25 +15,5 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-syscfg.defs:
-    MCU_FLASH_MIN_WRITE_SIZE:
-        description: >
-            Specifies the required alignment for internal flash writes.
-            Used internally by the newt tool.
-        value: 8
-
-    TRNG:
-        description: 'Enable True Random Number Generator (RNGA)'
-        value: 0
-
-    CRYPTO:
-        description: 'Enable cryptograpy accelerator (CAU)'
-        value: 0
-
-    HASH:
-        description: 'Enable hash accelerator (CAU)'
-        value: 0
-
 syscfg.vals:
     OS_TICKS_PER_SEC: 1000

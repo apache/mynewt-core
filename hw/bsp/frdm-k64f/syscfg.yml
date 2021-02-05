@@ -22,109 +22,49 @@ syscfg.defs:
         description: 'Set to indicate that BSP has NXP MK64F12'
         value: 1
 
-    # UART0 PINS on CMSIS-DAP Interface
-    UART_0:
-        description: 'Whether to enable UART0'
-        value:  1
-    UART_0_PORT:
-        description: 'GPIO port for UART0 pins'
-        value:  PORTB
-    UART_0_PORT_CLOCK:
-        description: 'Clock to enable for UART0 pins'
-        value:  kCLOCK_PortB
-    UART_0_PIN_TX:
-        description: 'TX pin for UART0'
-        value:  16
-    UART_0_PIN_RX:
-        description: 'RX pin for UART0'
-        value:  17
+syscfg.vals:
+  # UART0 PINS on CMSIS-DAP Interface
+    UART_0: 1
+    UART_0_PORT: PORTB
+    UART_0_PORT_CLOCK: kCLOCK_PortB
+    UART_0_PIN_TX: 16
+    UART_0_PIN_RX: 17
 
     # PINS conflict with SPI0 must choose 1
-    UART_1:
-        description: 'Whether to enable UART1'
-        value:  0
-    UART_1_PORT:
-        description: 'GPIO port for UART1 pins'
-        value:  PORTC
-    UART_1_PORT_CLOCK:
-        description: 'Clock to enable for UART1 pins'
-        value:  kCLOCK_PortC
-    UART_1_PIN_TX:
-        description: 'TX pin for UART1'
-        value:  3
-    UART_1_PIN_RX:
-        description: 'RX pin for UART1x'
-        value:  4
+    UART_1:  0
+    UART_1_PORT: PORTC
+    UART_1_PORT_CLOCK: kCLOCK_PortC
+    UART_1_PIN_TX: 3
+    UART_1_PIN_RX: 4
 
     # PINS conflict with SPI0 must choose 1
-    UART_2:
-        description: 'Whether to enable UART2'
-        value:  0
-    UART_2_PORT:
-        description: 'GPIO port for UART2 pins'
-        value:  PORTD
-    UART_2_PORT_CLOCK:
-        description: 'Clock to enable for UART2 pins'
-        value:  kCLOCK_PortD
-    UART_2_PIN_TX:
-        description: 'TX pin for UART2'
-        value:  2
-    UART_2_PIN_RX:
-        description: 'RX pin for UART2'
-        value:  3
+    UART_2: 0
+    UART_2_PORT: PORTD
+    UART_2_PORT_CLOCK: kCLOCK_PortD
+    UART_2_PIN_TX: 2
+    UART_2_PIN_RX: 3
 
     # PINS conflict with ENET0 must choose 1
-    UART_3:
-        description: 'Whether to enable UART3'
-        value:  0
-    UART_3_PORT:
-        description: 'GPIO port for UART3 pins'
-        value:  PORTC
-    UART_3_PORT_CLOCK:
-        description: 'Clock to enable for UART3 pins'
-        value:  kCLOCK_PortC
-    UART_3_PIN_TX:
-        description: 'TX pin for UART3'
-        value:  16
-    UART_3_PIN_RX:
-        description: 'RX pin for UART3'
-        value:  17
+    UART_3: 0
+    UART_3_PORT: PORTC
+    UART_3_PORT_CLOCK: kCLOCK_PortC
+    UART_3_PIN_TX: 16
+    UART_3_PIN_RX: 17
 
     # PINS conflict with ENET0 must choose 1
-    UART_4:
-        description: 'Whether to enable UART4'
-        value:  0
-    UART_4_PORT:
-        description: 'GPIO port for UART4 pins'
-        value:  PORTC
-    UART_4_PORT_CLOCK:
-        description: 'Clock to enable for UART4 pins'
-        value:  kCLOCK_PortC
-    UART_4_PIN_TX:
-        description: 'TX pin for UART4'
-        value:  14
-    UART_4_PIN_RX:
-        description: 'RX pin for UART4'
-        value:  15
+    UART_4: 0
+    UART_4_PORT: PORTC
+    UART_4_PORT_CLOCK: kCLOCK_PortC
+    UART_4_PIN_TX: 14
+    UART_4_PIN_RX: 15
 
     # PINS conflict with I2S0 must choose 1
-    UART_5:
-        description: 'Whether to enable UART5'
-        value:  0
-    UART_5_PORT:
-        description: 'GPIO port for UART5 pins'
-        value:  PORTE
-    UART_5_PORT_CLOCK:
-        description: 'Clock to enable for UART5 pins'
-        value:  kCLOCK_PortE
-    UART_5_PIN_TX:
-        description: 'TX pin for UART5'
-        value:  9
-    UART_5_PIN_RX:
-        description: 'RX pin for UART5'
-        value:  8
+    UART_5: 0
+    UART_5_PORT: PORTE
+    UART_5_PORT_CLOCK: kCLOCK_PortE
+    UART_5_PIN_TX: 9
+    UART_5_PIN_RX: 8
 
-syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS

@@ -25,8 +25,6 @@
 #include "fsl_wdog.h"
 #include "fsl_rcm.h"
 
-/* #define WATCHDOG_STUB */
-
 #ifndef WATCHDOG_STUB
 static WDOG_Type *wdog_base = WDOG;
 

@@ -17,43 +17,20 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nxp
-pkg.description: Common MCU definitions for NXP K6x series chips.
+pkg.name: hw/mcu/nxp/kinetis
+pkg.description: Kinetis common MCU definitions and files
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - nxp
-    - frdm-k64f
-    - MK64F12
-    - MK8xF
-
-pkg.type: sdk
-
-pkg.ign_files.BSP_MK64F12:
-    - "fsl_cache*"
-    - "fsl_flexio*"
-    - "fsl_lmem*"
-    - "fsl_ltc*"
-    - "fsl_sdramc*"
-    - "fsl_smartcard*"
-    - "fsl_tpm*"
-    - "fsl_tsi*"
-    - "fsl_lpuart*"
-    - "fsl_qspi*"
-
-pkg.ign_files.BSP_MK8XF:
-    - "fsl_uart*"
-    - "fsl_enet*"
-    - "fsl_flexcan*"
-
-pkg.ign_files.BSP_MK81F:
-    - "fsl_pdb*"
-
-pkg.src_dirs.BSP_KINETIS:
-    - "src/ext/nxp-kinetis-sdk/drivers"
-
-pkg.cflags: -std=gnu99 -mthumb
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/hw/mcu/nxp"
+
+pkg.ign_files.BSP_MK64F12:
+  - "hal_lpuart.c"
+  - "hal_lpuart_nxp.h"
+
+pkg.ign_files.BSP_MK8XF:
+  - "hal_uart.c"
+  - "hal_uart_nxp.h"
