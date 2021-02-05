@@ -15,6 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+
+syscfg.defs:
+    BSP_MK8XF:
+        description: >
+          Set to indicate that BSP has NXP MK8xF
+        value: 1
+
 syscfg.vals:
+    MCU_FLASH_MIN_WRITE_SIZE: 2
     OS_TICKS_PER_SEC: 1000
-    MCU_FLASH_MIN_WRITE_SIZE: 8

@@ -48,6 +48,7 @@ pkg.ign_files.BSP_MK8XF:
 
 pkg.ign_files.BSP_MK81F:
     - "fsl_pdb*"
+    - "fsl_sai*"
 
 pkg.src_dirs.BSP_KINETIS:
     - "src/ext/nxp-kinetis-sdk/drivers"

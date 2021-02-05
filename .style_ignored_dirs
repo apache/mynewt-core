@@ -11,3 +11,4 @@ net/ip/lwip_base
 net/lora/node/src/mac
 net/mqtt/eclipse
 hw/mcu/nxp/kinetis/MK64F12/src/
+hw/mcu/nxp/kinetis/MK8xF/MK82F
