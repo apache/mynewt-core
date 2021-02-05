@@ -116,7 +116,52 @@ trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
     regs->pc = tf->ef->pc;
     regs->psr = tf->ef->psr;
 }
+
+struct mtb_state {
+    uint32_t mtb_position_reg;
+    uint32_t mtb_master_reg;
+    uint32_t mtb_flow_reg;
+    uint32_t mtb_base_reg;
+} mtb_state_at_crash;
 #endif
+
+static void
+mtb_stop(void)
+{
+    /*
+     * Stop MTB if implemented so interrupt handler execution is not recorded.
+     * Store MTB registers in mtb_state_at_crash so it can be used for
+     * crash analyzes.
+     */
+    asm volatile (".syntax unified           \n"
+                  "    ldr  r1, =0xe00ff000  \n"
+                  "    ldr  r2, [r1, #0x1c]  \n"
+                  "    tst  r2, #1           \n"
+                  "    beq  1f               \n"
+                  "    bic  r2, #0x00ff      \n"
+                  "    bic  r2, #0x0f00      \n"
+                  "    add  r1, r2           \n"
+                  "    ldr  r2, [r1, #4]     \n"
+                  "    bic  r2, #0x80000000  \n"
+                  "    str  r2, [r1, #4]     \n"
+#if MYNEWT_VAL(OS_COREDUMP)
+                  "    str  r2, [%[mtbs], #4]\n"
+                  "    ldr  r2, [r1]         \n"
+                  "    str  r2, [%[mtbs]]    \n"
+                  "    ldr  r2, [r1, #8]     \n"
+                  "    str  r2, [%[mtbs], #8]\n"
+                  "    ldr  r2, [r1, #12]    \n"
+                  "    str  r2, [%[mtbs], #12]\n"
+#endif /* MYNEWT_VAL(OS_COREDUMP) */
+                  " 1:                       \n"
+                  :
+#if MYNEWT_VAL(OS_COREDUMP)
+                  : [mtbs] "r" (&mtb_state_at_crash)
+#else
+                  :
+#endif
+                  : "r1", "r2");
+}
 
 void
 __assert_func(const char *file, int line, const char *func, const char *e)
@@ -125,6 +170,9 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     struct log_reboot_info lri;
 #endif
     int sr;
+
+    /* Stop MTB if implemented so interrupt handler execution is not recorded */
+    mtb_stop();
 
     OS_ENTER_CRITICAL(sr);
     (void)sr;
@@ -165,21 +213,7 @@ os_default_irq(struct trap_frame *tf)
 #endif
 
     /* Stop MTB if implemented so interrupt handler execution is not recorded */
-    asm volatile (".syntax unified           \n"
-                  "    ldr  r1, =0xe00ff000  \n"
-                  "    ldr  r2, [r1, #0x1c]  \n"
-                  "    tst  r2, #1           \n"
-                  "    beq  1f               \n"
-                  "    bic  r2, #0x00ff      \n"
-                  "    bic  r2, #0x0f00      \n"
-                  "    add  r1, r2           \n"
-                  "    ldr  r2, [r1, #4]     \n"
-                  "    bic  r2, #0x80000000  \n"
-                  "    str  r2, [r1, #4]     \n"
-                  " 1:                       \n"
-                  :
-                  :
-                  : "r1", "r2");
+    mtb_stop();
 
     console_blocking_mode();
     console_printf("Unhandled interrupt (%ld), exception sp 0x%08lx\n",
