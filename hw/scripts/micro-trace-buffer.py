@@ -18,7 +18,7 @@
 try:
     import colorama
 except ImportError:
-    pass
+    colorama = None
 import re
 
 
