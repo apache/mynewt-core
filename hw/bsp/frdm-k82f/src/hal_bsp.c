@@ -31,6 +31,10 @@
 #if MYNEWT_VAL(ENC_FLASH_DEV)
 #include <ef_crypto/ef_crypto.h>
 #endif
+#if MYNEWT_VAL(HASH)
+#include "hash/hash.h"
+#include "hash_kinetis/hash_kinetis.h"
+#endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
     MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4)
 #include "uart/uart.h"
@@ -98,6 +102,9 @@ static const struct nxp_hal_i2c_cfg hal_i2c3_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(HASH)
+static struct hash_dev os_bsp_hash;
+#endif
 
 /*
  * What memory to include in coredump.
@@ -221,6 +228,12 @@ hal_bsp_init(void)
     /* Init pinmux and other hardware setup. */
     init_hardware();
     BOARD_BootClockRUN();
+
+#if MYNEWT_VAL(HASH)
+    rc = os_dev_create(&os_bsp_hash.dev, "hash", OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT, kinetis_hash_dev_init, NULL);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
