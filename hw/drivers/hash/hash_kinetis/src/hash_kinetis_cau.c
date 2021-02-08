@@ -18,7 +18,7 @@
  */
 
 #include <stdint.h>
-#include "hash_k64f/hash_k64f.h"
+#include "hash_kinetis/hash_kinetis.h"
 
 /*
  * CAU interface

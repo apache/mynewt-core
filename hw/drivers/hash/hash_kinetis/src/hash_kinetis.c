@@ -22,7 +22,7 @@
 #include <os/mynewt.h>
 
 #include "hash/hash.h"
-#include "hash_k64f/hash_k64f.h"
+#include "hash_kinetis/hash_kinetis.h"
 
 static struct os_mutex gmtx;
 static uint32_t g_algos = HASH_ALGO_SHA256;
@@ -51,7 +51,7 @@ extern void cau_sha256_hash(const unsigned char *msg_data,
         unsigned int *sha256_state);
 
 static int
-k64f_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
+kinetis_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
 {
     struct hash_sha256_context *sha256ctx;
 
@@ -69,7 +69,7 @@ k64f_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
 }
 
 static int
-k64f_hash_update(struct hash_dev *hash, void *ctx, uint16_t algo,
+kinetis_hash_update(struct hash_dev *hash, void *ctx, uint16_t algo,
         const void *inbuf, uint32_t inlen)
 {
     uint32_t i;
@@ -100,7 +100,7 @@ k64f_hash_update(struct hash_dev *hash, void *ctx, uint16_t algo,
 }
 
 static int
-k64f_hash_finish(struct hash_dev *hash, void *ctx, uint16_t algo,
+kinetis_hash_finish(struct hash_dev *hash, void *ctx, uint16_t algo,
         void *outbuf)
 {
     uint32_t i;
@@ -142,7 +142,7 @@ k64f_hash_finish(struct hash_dev *hash, void *ctx, uint16_t algo,
 }
 
 static int
-k64f_hash_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
+kinetis_hash_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 {
     struct hash_dev *hash;
 
@@ -158,20 +158,20 @@ k64f_hash_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 }
 
 int
-k64f_hash_dev_init(struct os_dev *dev, void *arg)
+kinetis_hash_dev_init(struct os_dev *dev, void *arg)
 {
     struct hash_dev *hash;
 
     hash = (struct hash_dev *)dev;
     assert(hash);
 
-    OS_DEV_SETHANDLERS(dev, k64f_hash_dev_open, NULL);
+    OS_DEV_SETHANDLERS(dev, kinetis_hash_dev_open, NULL);
 
     assert(os_mutex_init(&gmtx) == 0);
 
-    hash->interface.start = k64f_hash_start;
-    hash->interface.update = k64f_hash_update;
-    hash->interface.finish = k64f_hash_finish;
+    hash->interface.start = kinetis_hash_start;
+    hash->interface.update = kinetis_hash_update;
+    hash->interface.finish = kinetis_hash_finish;
     hash->interface.algomask = g_algos;
 
     return 0;

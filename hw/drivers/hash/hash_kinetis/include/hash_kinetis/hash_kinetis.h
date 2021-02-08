@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef __HASH_K64F_H__
-#define __HASH_K64F_H__
+#ifndef __HASH_KINETIS_H__
+#define __HASH_KINETIS_H__
 
 #include "hash/hash.h"
 
@@ -26,10 +26,10 @@
 extern "C" {
 #endif
 
-int k64f_hash_dev_init(struct os_dev *dev, void *arg);
+int kinetis_hash_dev_init(struct os_dev *dev, void *arg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __HASH_K64F_H__ */
+#endif /* __HASH_KINETIS_H__ */
