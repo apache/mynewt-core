@@ -73,4 +73,4 @@ pkg.deps.ENC_FLASH_DEV:
     - "@apache-mynewt-core/hw/drivers/flash/enc_flash/ef_crypto"
 
 pkg.deps.HASH:
-    - "@apache-mynewt-core/hw/drivers/hash/hash_k64f"
+    - "@apache-mynewt-core/hw/drivers/hash/hash_kinetis"
