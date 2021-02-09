@@ -18,7 +18,27 @@
  */
 
 #include <string.h>
+#include "os/mynewt.h"
+
+#if MYNEWT_VAL(KINETIS_TRNG_USE_RNGA)
+#define USE_RNGA 1
 #include "fsl_rnga.h"
+#elif MYNEWT_VAL(KINETIS_TRNG_USE_TRNG)
+#define USE_TRNG 1
+#include "fsl_trng.h"
+#define TRNG_START(base)                                              \
+    do {                                                              \
+        (base)->MCTL &= ~TRNG_MCTL_PRGM_MASK;                         \
+        (base)->MCTL |= TRNG_MCTL_ERR_MASK;                           \
+    } while (0)
+#define TRNG_STOP(base)                                               \
+    do {                                                              \
+        (base)->MCTL |= (TRNG_MCTL_PRGM_MASK | TRNG_MCTL_ERR_MASK);   \
+    } while (0)
+#else
+#error "Unsupported TRNG interface"
+#endif
+
 #include "trng/trng.h"
 #include "trng_kinetis/trng_kinetis.h"
 
@@ -30,16 +50,20 @@ static os_stack_t *pstack;
 static bool running;
 static struct os_eventq rng_evtq;
 
-#define RNGA_POLLER_PRIO (8)
-#define RNGA_POLLER_STACK_SIZE OS_STACK_ALIGN(64)
+#define TRNG_POLLER_PRIO (8)
+#define TRNG_POLLER_STACK_SIZE OS_STACK_ALIGN(64)
 static struct os_task poller_task;
 
 static inline void
-kinetis_rnga_start(void)
+kinetis_trng_start(void)
 {
     struct os_event evt;
 
+#if USE_RNGA
     RNGA_SetMode(RNG, kRNGA_ModeNormal);
+#elif USE_TRNG
+    TRNG_START(TRNG0);
+#endif
     running = true;
 
     evt.ev_queued = 0;
@@ -48,9 +72,14 @@ kinetis_rnga_start(void)
 }
 
 static inline void
-kinetis_rnga_stop(void)
+kinetis_trng_stop(void)
 {
-   RNGA_SetMode(RNG, kRNGA_ModeSleep);
+#if USE_RNGA
+    RNGA_SetMode(RNG, kRNGA_ModeSleep);
+#elif USE_TRNG
+    TRNG_STOP(TRNG0);
+#endif
+
    running = false;
 }
 
@@ -83,7 +112,7 @@ kinetis_trng_read(struct trng_dev *trng, void *ptr, size_t size)
     rng_cache_out = (rng_cache_out + num_read) % sizeof(rng_cache);
 
     if (num_read > 0) {
-        kinetis_rnga_start();
+        kinetis_trng_start();
     }
 
     os_mutex_release(&rng_cache_mu);
@@ -110,7 +139,7 @@ kinetis_trng_get_u32(struct trng_dev *trng)
 }
 
 static void
-rnga_poller_handler(void *arg)
+trng_poller_handler(void *arg)
 {
     int8_t i;
     uint8_t data[4];
@@ -118,8 +147,12 @@ rnga_poller_handler(void *arg)
 
     while (1) {
         if (running) {
+#if USE_RNGA
             rc = RNGA_GetRandomData(RNG, data, sizeof(uint32_t));
-            if (rc == kStatus_Success) {
+#else
+            rc = TRNG_GetRandomData(TRNG0, data, sizeof(uint32_t));
+#endif
+            if (rc == 0) {
                 os_mutex_pend(&rng_cache_mu, OS_TIMEOUT_NEVER);
                 for (i = 0; i < 4; i++) {
                     rng_cache[rng_cache_in++] = data[i];
@@ -129,7 +162,7 @@ rnga_poller_handler(void *arg)
                     }
 
                     if ((rng_cache_in + 1) % sizeof(rng_cache) == rng_cache_out) {
-                        kinetis_rnga_stop();
+                        kinetis_trng_stop();
                         break;
                     }
                 }
@@ -146,6 +179,9 @@ static int
 kinetis_trng_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 {
     struct trng_dev *trng;
+#if USE_TRNG
+    trng_config_t default_config;
+#endif
 
     trng = (struct trng_dev *)dev;
     assert(trng);
@@ -154,9 +190,14 @@ kinetis_trng_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
         rng_cache_out = 0;
         rng_cache_in = 0;
 
+#if USE_RNGA
         RNGA_Init(RNG);
+#elif USE_TRNG
+        (void)TRNG_GetDefaultConfig(&default_config);
+        TRNG_Init(TRNG0, &default_config);
+#endif
 
-        kinetis_rnga_start();
+        kinetis_trng_start();
     }
 
     return 0;
@@ -179,11 +220,11 @@ kinetis_trng_dev_init(struct os_dev *dev, void *arg)
     os_eventq_init(&rng_evtq);
     os_mutex_init(&rng_cache_mu);
 
-    pstack = malloc(sizeof(os_stack_t) * RNGA_POLLER_STACK_SIZE);
+    pstack = malloc(sizeof(os_stack_t) * TRNG_POLLER_STACK_SIZE);
     assert(pstack);
 
-    rc = os_task_init(&poller_task, "rnga_poller", rnga_poller_handler, NULL,
-            RNGA_POLLER_PRIO, OS_WAIT_FOREVER, pstack, RNGA_POLLER_STACK_SIZE);
+    rc = os_task_init(&poller_task, "trng_poller", trng_poller_handler, NULL,
+            TRNG_POLLER_PRIO, OS_WAIT_FOREVER, pstack, TRNG_POLLER_STACK_SIZE);
     if (rc) {
         return rc;
     }

@@ -20,3 +20,13 @@ syscfg.defs:
     KINETIS_TRNG_CACHE_LEN:
         description: 'Internal cache length, shall be a multiple of 4'
         value: 32
+    KINETIS_TRNG_USE_RNGA:
+        description: 'Use the RNGA HW module (default)'
+        value: 1
+        restrictions:
+            - '!KINETIS_TRNG_USE_TRNG'
+    KINETIS_TRNG_USE_TRNG:
+        description: 'Use the TRNG HW module'
+        value: 0
+        restrictions:
+            - '!KINETIS_TRNG_USE_RNGA'
