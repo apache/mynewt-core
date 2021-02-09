@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef __CRYPTO_K64F_H__
-#define __CRYPTO_K64F_H__
+#ifndef __CRYPTO_KINETIS_H__
+#define __CRYPTO_KINETIS_H__
 
 #include "crypto/crypto.h"
 
@@ -26,10 +26,10 @@
 extern "C" {
 #endif
 
-int k64f_crypto_dev_init(struct os_dev *dev, void *arg);
+int kinetis_crypto_dev_init(struct os_dev *dev, void *arg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CRYPTO_K64F_H__ */
+#endif /* __CRYPTO_KINETIS_H__ */
