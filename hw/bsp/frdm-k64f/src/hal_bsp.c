@@ -30,7 +30,7 @@
 #include "hal/hal_flash.h"
 #if MYNEWT_VAL(TRNG)
 #include "trng/trng.h"
-#include "trng_k64f/trng_k64f.h"
+#include "trng_kinetis/trng_kinetis.h"
 #endif
 #if MYNEWT_VAL(CRYPTO)
 #include "crypto/crypto.h"
@@ -210,7 +210,7 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(TRNG)
     rc = os_dev_create(&os_bsp_trng.dev, "trng",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                       k64f_trng_dev_init, NULL);
+                       kinetis_trng_dev_init, NULL);
     assert(rc == 0);
 #endif
 

@@ -20,9 +20,9 @@
 #include <string.h>
 #include "fsl_rnga.h"
 #include "trng/trng.h"
-#include "trng_k64f/trng_k64f.h"
+#include "trng_kinetis/trng_kinetis.h"
 
-static uint8_t rng_cache[ MYNEWT_VAL(K64F_TRNG_CACHE_LEN) ];
+static uint8_t rng_cache[ MYNEWT_VAL(KINETIS_TRNG_CACHE_LEN) ];
 static uint16_t rng_cache_out;
 static uint16_t rng_cache_in;
 static struct os_mutex rng_cache_mu;
@@ -35,7 +35,7 @@ static struct os_eventq rng_evtq;
 static struct os_task poller_task;
 
 static inline void
-k64f_rnga_start(void)
+kinetis_rnga_start(void)
 {
     struct os_event evt;
 
@@ -48,14 +48,14 @@ k64f_rnga_start(void)
 }
 
 static inline void
-k64f_rnga_stop(void)
+kinetis_rnga_stop(void)
 {
    RNGA_SetMode(RNG, kRNGA_ModeSleep);
    running = false;
 }
 
 static size_t
-k64f_trng_read(struct trng_dev *trng, void *ptr, size_t size)
+kinetis_trng_read(struct trng_dev *trng, void *ptr, size_t size)
 {
     size_t num_read;
 
@@ -83,7 +83,7 @@ k64f_trng_read(struct trng_dev *trng, void *ptr, size_t size)
     rng_cache_out = (rng_cache_out + num_read) % sizeof(rng_cache);
 
     if (num_read > 0) {
-        k64f_rnga_start();
+        kinetis_rnga_start();
     }
 
     os_mutex_release(&rng_cache_mu);
@@ -92,7 +92,7 @@ k64f_trng_read(struct trng_dev *trng, void *ptr, size_t size)
 }
 
 static uint32_t
-k64f_trng_get_u32(struct trng_dev *trng)
+kinetis_trng_get_u32(struct trng_dev *trng)
 {
     union {
         uint32_t v32;
@@ -100,10 +100,10 @@ k64f_trng_get_u32(struct trng_dev *trng)
     } val;
     size_t num;
 
-    num = k64f_trng_read(trng, &val.v8, sizeof(val.v8));
+    num = kinetis_trng_read(trng, &val.v8, sizeof(val.v8));
     while (num < sizeof(val.v8)) {
         os_sched(NULL);
-        num += k64f_trng_read(trng, &val.v8[num], sizeof(val.v8) - num);
+        num += kinetis_trng_read(trng, &val.v8[num], sizeof(val.v8) - num);
     }
 
     return val.v32;
@@ -129,7 +129,7 @@ rnga_poller_handler(void *arg)
                     }
 
                     if ((rng_cache_in + 1) % sizeof(rng_cache) == rng_cache_out) {
-                        k64f_rnga_stop();
+                        kinetis_rnga_stop();
                         break;
                     }
                 }
@@ -143,7 +143,7 @@ rnga_poller_handler(void *arg)
 }
 
 static int
-k64f_trng_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
+kinetis_trng_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 {
     struct trng_dev *trng;
 
@@ -156,14 +156,14 @@ k64f_trng_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 
         RNGA_Init(RNG);
 
-        k64f_rnga_start();
+        kinetis_rnga_start();
     }
 
     return 0;
 }
 
 int
-k64f_trng_dev_init(struct os_dev *dev, void *arg)
+kinetis_trng_dev_init(struct os_dev *dev, void *arg)
 {
     struct trng_dev *trng;
     int rc;
@@ -171,10 +171,10 @@ k64f_trng_dev_init(struct os_dev *dev, void *arg)
     trng = (struct trng_dev *)dev;
     assert(trng);
 
-    OS_DEV_SETHANDLERS(dev, k64f_trng_dev_open, NULL);
+    OS_DEV_SETHANDLERS(dev, kinetis_trng_dev_open, NULL);
 
-    trng->interface.get_u32 = k64f_trng_get_u32;
-    trng->interface.read = k64f_trng_read;
+    trng->interface.get_u32 = kinetis_trng_get_u32;
+    trng->interface.read = kinetis_trng_read;
 
     os_eventq_init(&rng_evtq);
     os_mutex_init(&rng_cache_mu);

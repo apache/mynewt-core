@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,13 +16,7 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/trng/trng_k64f
-pkg.description: TRNG driver for K64F
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-
-pkg.apis:
-    - TRNG_HW_IMPL
-pkg.deps:
-    - "@apache-mynewt-core/hw/drivers/trng"
+syscfg.defs:
+    KINETIS_TRNG_CACHE_LEN:
+        description: 'Internal cache length, shall be a multiple of 4'
+        value: 32
