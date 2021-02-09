@@ -380,6 +380,9 @@ syscfg.defs:
     SPIFLASH_IS25WP032D:
         description: Add support for IS25WP032D
         value: 0
+    SPIFLASH_IS25LP064A:
+        description: Add support for IS25LP064A
+        value: 0
     SPIFLASH_W25X05CL:
         description: Add support for W25X05CL
         value: 0
@@ -457,6 +460,12 @@ syscfg.defs:
         value: 0
     SPIFLASH_W25Q32JW_IQ:
         description: Add support for W25Q32JW_IQ
+        value: 0
+    SPIFLASH_W25Q64JV:
+        description: Add support for W25Q64JV
+        value: 0
+    SPIFLASH_W25Q128JV:
+        description: Add support for W25Q128JV
         value: 0
     SPIFLASH_AT25SF041:
         description: Add support for AT25SF041
