@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef __TRNG_K64F_H__
-#define __TRNG_K64F_H__
+#ifndef __TRNG_KINETIS_H__
+#define __TRNG_KINETIS_H__
 
 #include "trng/trng.h"
 
@@ -26,10 +26,10 @@
 extern "C" {
 #endif
 
-int k64f_trng_dev_init(struct os_dev *dev, void *arg);
+int kinetis_trng_dev_init(struct os_dev *dev, void *arg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __TRNG_K64F_H__ */
+#endif /* __TRNG_KINETIS_H__ */
