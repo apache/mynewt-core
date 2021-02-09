@@ -135,6 +135,8 @@ struct spiflash_chip {
 #define FLASH_CAPACITY_8MBIT        0x14
 #define FLASH_CAPACITY_16MBIT       0x15
 #define FLASH_CAPACITY_32MBIT       0x16
+#define FLASH_CAPACITY_64MBIT       0x17
+#define FLASH_CAPACITY_128MBIT      0x18
 
 void spiflash_power_down(struct spiflash_dev *dev);
 void spiflash_release_power_down(struct spiflash_dev *dev);
