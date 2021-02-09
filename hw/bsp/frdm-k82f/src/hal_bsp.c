@@ -35,6 +35,10 @@
 #include "hash/hash.h"
 #include "hash_kinetis/hash_kinetis.h"
 #endif
+#if MYNEWT_VAL(TRNG)
+#include "trng/trng.h"
+#include "trng_kinetis/trng_kinetis.h"
+#endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
     MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4)
 #include "uart/uart.h"
@@ -106,6 +110,10 @@ static const struct nxp_hal_i2c_cfg hal_i2c3_cfg = {
 static struct hash_dev os_bsp_hash;
 #endif
 
+#if MYNEWT_VAL(TRNG)
+static struct trng_dev os_bsp_trng;
+#endif
+
 /*
  * What memory to include in coredump.
  */
@@ -116,7 +124,8 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
-static void init_hardware(void)
+static void
+init_hardware(void)
 {
     /* Disable the MPU otherwise USB cannot access the bus */
     SYSMPU->CESR = 0;
@@ -232,6 +241,13 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(HASH)
     rc = os_dev_create(&os_bsp_hash.dev, "hash", OS_DEV_INIT_KERNEL,
                        OS_DEV_INIT_PRIO_DEFAULT, kinetis_hash_dev_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TRNG)
+    rc = os_dev_create(&os_bsp_trng.dev, "trng",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       kinetis_trng_dev_init, NULL);
     assert(rc == 0);
 #endif
 
