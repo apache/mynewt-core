@@ -67,7 +67,7 @@ pkg.deps.TRNG:
     - "@apache-mynewt-core/hw/drivers/trng/trng_kinetis"
 
 pkg.deps.CRYPTO:
-    - "@apache-mynewt-core/hw/drivers/crypto/crypto_k64f"
+    - "@apache-mynewt-core/hw/drivers/crypto/crypto_kinetis"
 
 pkg.deps.ENC_FLASH_DEV:
     - "@apache-mynewt-core/hw/drivers/flash/enc_flash/ef_crypto"

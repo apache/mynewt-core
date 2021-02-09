@@ -18,7 +18,7 @@
  */
 
 #include <stdint.h>
-#include "crypto_k64f/crypto_k64f.h"
+#include "crypto_kinetis/crypto_kinetis.h"
 
 /*
  * CAU interface

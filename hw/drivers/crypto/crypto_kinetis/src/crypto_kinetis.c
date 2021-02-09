@@ -22,7 +22,7 @@
 #include <os/mynewt.h>
 
 #include "crypto/crypto.h"
-#include "crypto_k64f/crypto_k64f.h"
+#include "crypto_kinetis/crypto_kinetis.h"
 
 static struct os_mutex gmtx;
 
@@ -71,7 +71,7 @@ typedef void (* cau_aes_func_t)(const unsigned char *in,
         unsigned char *out);
 
 static uint32_t
-k64f_crypto_cau_aes_nr(cau_aes_func_t aes_func, const uint8_t *key,
+kinetis_crypto_cau_aes_nr(cau_aes_func_t aes_func, const uint8_t *key,
         int keylen, const uint8_t *inbuf, uint8_t *outbuf, size_t len)
 {
     uint32_t i;
@@ -108,8 +108,8 @@ k64f_crypto_cau_aes_nr(cau_aes_func_t aes_func, const uint8_t *key,
 }
 
 static bool
-k64f_crypto_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
-        uint16_t mode, uint16_t keylen)
+kinetis_crypto_has_support(struct crypto_dev *crypto, uint8_t op,
+        uint16_t algo, uint16_t mode, uint16_t keylen)
 {
     (void)op;
 
@@ -129,37 +129,37 @@ k64f_crypto_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
 }
 
 static uint32_t
-k64f_crypto_encrypt(struct crypto_dev *crypto, uint16_t algo, uint16_t mode,
+kinetis_crypto_encrypt(struct crypto_dev *crypto, uint16_t algo, uint16_t mode,
         const uint8_t *key, uint16_t keylen, uint8_t *iv, const uint8_t *inbuf,
         uint8_t *outbuf, uint32_t len)
 {
     (void)iv;
 
-    if (!k64f_crypto_has_support(crypto, CRYPTO_OP_ENCRYPT, algo, mode, keylen)) {
+    if (!kinetis_crypto_has_support(crypto, CRYPTO_OP_ENCRYPT, algo, mode, keylen)) {
         return 0;
     }
 
-    return k64f_crypto_cau_aes_nr(cau_aes_encrypt, key, keylen, inbuf,
+    return kinetis_crypto_cau_aes_nr(cau_aes_encrypt, key, keylen, inbuf,
             outbuf, len);
 }
 
 static uint32_t
-k64f_crypto_decrypt(struct crypto_dev *crypto, uint16_t algo, uint16_t mode,
+kinetis_crypto_decrypt(struct crypto_dev *crypto, uint16_t algo, uint16_t mode,
         const uint8_t *key, uint16_t keylen, uint8_t *iv, const uint8_t *inbuf,
         uint8_t *outbuf, uint32_t len)
 {
     (void)iv;
 
-    if (!k64f_crypto_has_support(crypto, CRYPTO_OP_ENCRYPT, algo, mode, keylen)) {
+    if (!kinetis_crypto_has_support(crypto, CRYPTO_OP_ENCRYPT, algo, mode, keylen)) {
         return 0;
     }
 
-    return k64f_crypto_cau_aes_nr(cau_aes_decrypt, key, keylen, inbuf,
+    return kinetis_crypto_cau_aes_nr(cau_aes_decrypt, key, keylen, inbuf,
             outbuf, len);
 }
 
 static int
-k64f_crypto_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
+kinetis_crypto_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 {
     struct crypto_dev *crypto;
 
@@ -174,20 +174,20 @@ k64f_crypto_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 }
 
 int
-k64f_crypto_dev_init(struct os_dev *dev, void *arg)
+kinetis_crypto_dev_init(struct os_dev *dev, void *arg)
 {
     struct crypto_dev *crypto;
 
     crypto = (struct crypto_dev *)dev;
     assert(crypto);
 
-    OS_DEV_SETHANDLERS(dev, k64f_crypto_dev_open, NULL);
+    OS_DEV_SETHANDLERS(dev, kinetis_crypto_dev_open, NULL);
 
     assert(os_mutex_init(&gmtx) == 0);
 
-    crypto->interface.encrypt = k64f_crypto_encrypt;
-    crypto->interface.decrypt = k64f_crypto_decrypt;
-    crypto->interface.has_support = k64f_crypto_has_support;
+    crypto->interface.encrypt = kinetis_crypto_encrypt;
+    crypto->interface.decrypt = kinetis_crypto_decrypt;
+    crypto->interface.has_support = kinetis_crypto_has_support;
 
     return 0;
 }

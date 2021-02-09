@@ -34,7 +34,7 @@
 #endif
 #if MYNEWT_VAL(CRYPTO)
 #include "crypto/crypto.h"
-#include "crypto_k64f/crypto_k64f.h"
+#include "crypto_kinetis/crypto_kinetis.h"
 #endif
 #if MYNEWT_VAL(ENC_FLASH_DEV)
 #include <ef_crypto/ef_crypto.h>
@@ -217,7 +217,7 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(CRYPTO)
     rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                       k64f_crypto_dev_init, NULL);
+                       kinetis_crypto_dev_init, NULL);
     assert(rc == 0);
 #endif
 

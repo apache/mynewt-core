@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/crypto/crypto_k64f
-pkg.description: Crypto driver for NXP K64F
+pkg.name: hw/drivers/crypto/crypto_kinetis
+pkg.description: Crypto driver for NXP Kinetis Family
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
