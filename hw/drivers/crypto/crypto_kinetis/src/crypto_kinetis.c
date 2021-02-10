@@ -17,12 +17,22 @@
  * under the License.
  */
 
+#include <stdint.h>
 #include <string.h>
 #include "mcu/cmsis_nvic.h"
 #include <os/mynewt.h>
 
 #include "crypto/crypto.h"
 #include "crypto_kinetis/crypto_kinetis.h"
+
+#if MYNEWT_VAL(KINETIS_CRYPTO_USE_CAU)
+#define USE_CAU 1
+#elif MYNEWT_VAL(KINETIS_CRYPTO_USE_LTC)
+#define USE_LTC 1
+#include "fsl_ltc.h"
+#else
+#error "Unsupported CRYPTO HW"
+#endif
 
 static struct os_mutex gmtx;
 
@@ -39,6 +49,7 @@ ROUNDS_PER_KEYLEN(uint16_t keylen)
     }
 }
 
+#if USE_CAU
 /*
  * These routines are exported by NXP's provided CAU and mmCAU software
  * library.
@@ -107,6 +118,78 @@ kinetis_crypto_cau_aes_nr(cau_aes_func_t aes_func, const uint8_t *key,
     return i;
 }
 
+#else /* USE_LTC */
+
+static uint32_t
+kinetis_crypto_ltc_aes_encrypt(uint16_t mode, const uint8_t *key,
+        int keylen, uint8_t *iv, const uint8_t *inbuf, uint8_t *outbuf,
+        size_t len)
+{
+    status_t ret = 0;
+    uint32_t keysize = keylen / 8;
+
+    switch (mode) {
+    case CRYPTO_MODE_ECB:
+        ret = LTC_AES_EncryptEcb(LTC0, inbuf, outbuf, len, key, keysize);
+        if (ret == 0) {
+            return len;
+        }
+        break;
+    case CRYPTO_MODE_CTR:
+        ret = LTC_AES_CryptCtr(LTC0, inbuf, outbuf, len, iv, key, keysize, NULL, NULL);
+        if (ret == 0) {
+            return len;
+        }
+        break;
+    case CRYPTO_MODE_CBC:
+        ret = LTC_AES_EncryptCbc(LTC0, inbuf, outbuf, len, iv, key, keysize);
+        if (ret == 0) {
+            memcpy(iv, &outbuf[len-AES_BLOCK_LEN], AES_BLOCK_LEN);
+            return len;
+        }
+        break;
+    }
+
+    return 0;
+}
+
+static uint32_t
+kinetis_crypto_ltc_aes_decrypt(uint16_t mode, const uint8_t *key,
+        int keylen, uint8_t *iv, const uint8_t *inbuf, uint8_t *outbuf,
+        size_t len)
+{
+    status_t ret = 0;
+    uint16_t keysize = keylen / 8;
+    uint8_t iv_save[AES_BLOCK_LEN];
+
+    switch (mode) {
+    case CRYPTO_MODE_ECB:
+        ret = LTC_AES_DecryptEcb(LTC0, inbuf, outbuf, len, key, keysize, kLTC_EncryptKey);
+        if (ret == 0) {
+            return len;
+        }
+        break;
+    case CRYPTO_MODE_CTR:
+        ret = LTC_AES_CryptCtr(LTC0, inbuf, outbuf, len, iv, key, keysize, NULL, NULL);
+        if (ret == 0) {
+            return len;
+        }
+        break;
+    case CRYPTO_MODE_CBC:
+        memcpy(iv_save, &inbuf[len-AES_BLOCK_LEN], AES_BLOCK_LEN);
+        ret = LTC_AES_DecryptCbc(LTC0, inbuf, outbuf, len, iv, key, keysize, kLTC_EncryptKey);
+        if (ret == 0) {
+            memcpy(iv, iv_save, AES_BLOCK_LEN);
+            return len;
+        }
+        break;
+    }
+
+    return 0;
+}
+
+#endif
+
 static bool
 kinetis_crypto_has_support(struct crypto_dev *crypto, uint8_t op,
         uint16_t algo, uint16_t mode, uint16_t keylen)
@@ -117,11 +200,19 @@ kinetis_crypto_has_support(struct crypto_dev *crypto, uint8_t op,
         return false;
     }
 
-    if (mode != CRYPTO_MODE_ECB) {
+#if USE_CAU
+    if ((mode & CRYPTO_MODE_ECB) == 0) {
+#else
+    if ((mode & (CRYPTO_MODE_ECB | CRYPTO_MODE_CBC | CRYPTO_MODE_CTR)) == 0) {
+#endif
         return false;
     }
 
+#if USE_CAU
     if (!CRYPTO_VALID_AES_KEYLEN(keylen)) {
+#else
+    if (!ltc_check_key_size(keylen / 8)) {
+#endif
         return false;
     }
 
@@ -139,8 +230,13 @@ kinetis_crypto_encrypt(struct crypto_dev *crypto, uint16_t algo, uint16_t mode,
         return 0;
     }
 
+#if USE_CAU
     return kinetis_crypto_cau_aes_nr(cau_aes_encrypt, key, keylen, inbuf,
             outbuf, len);
+#else
+    return kinetis_crypto_ltc_aes_encrypt(mode, key, keylen, iv, inbuf,
+            outbuf, len);
+#endif
 }
 
 static uint32_t
@@ -154,8 +250,13 @@ kinetis_crypto_decrypt(struct crypto_dev *crypto, uint16_t algo, uint16_t mode,
         return 0;
     }
 
+#if USE_CAU
     return kinetis_crypto_cau_aes_nr(cau_aes_decrypt, key, keylen, inbuf,
             outbuf, len);
+#else
+    return kinetis_crypto_ltc_aes_decrypt(mode, key, keylen, iv, inbuf,
+            outbuf, len);
+#endif
 }
 
 static int
@@ -167,7 +268,11 @@ kinetis_crypto_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
     assert(crypto);
 
     if (!(dev->od_flags & OS_DEV_F_STATUS_OPEN)) {
-        /* XXX need to do something here? */
+#if USE_LTC
+        LTC_Init(LTC0);
+        /* Enable differential power analysis resistance */
+        LTC_SetDpaMaskSeed(LTC0, SIM->UIDL);
+#endif
     }
 
     return OS_OK;

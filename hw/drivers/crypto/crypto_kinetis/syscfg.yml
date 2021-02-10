@@ -18,6 +18,16 @@
 #
 
 syscfg.defs:
+    KINETIS_CRYPTO_USE_CAU:
+        description: "This MCU has mmCAU HW (default)"
+        value: 1
+        restrictions:
+          - '!KINETIS_CRYPTO_USE_LTC'
+    KINETIS_CRYPTO_USE_LTC:
+        description: "This MCU has LTC HW"
+        value: 0
+        restrictions:
+          - '!KINETIS_CRYPTO_USE_CAU'
     CRYPTO_HW_AES_CBC:
         description: "This HW does not support AES-CBC mode."
         value: 0
