@@ -7,9 +7,10 @@
 #ifndef _OSDP_COMMON_H_
 #define _OSDP_COMMON_H_
 
+#include <os/os_mempool.h>
+#include <os/os_mutex.h>
+
 #include "osdp/osdp.h"
-#include "osdp/queue.h"
-#include "osdp/slab.h"
 #include "osdp/osdp_utils.h"
 
 #ifndef NULL
@@ -228,13 +229,6 @@ enum osdp_pkt_errors_e {
     OSDP_ERR_PKT_CHECK = -4
 };
 
-struct osdp_slab {
-    int block_size;
-    int num_blocks;
-    int free_blocks;
-    uint8_t *blob;
-};
-
 struct osdp_secure_channel {
     uint8_t scbk[16];
     uint8_t s_enc[16];
@@ -249,9 +243,31 @@ struct osdp_secure_channel {
     uint8_t pd_cryptogram[16];
 };
 
+#if MYNEWT_VAL(OSDP_MODE_PD)
+struct pd_event_node {
+    TAILQ_ENTRY(pd_event_node) pd_node;
+    struct osdp_event object;
+};
+typedef TAILQ_HEAD(queue, pd_event_node) queue_t;
+#else
+struct cp_cmd_node {
+    TAILQ_ENTRY(cp_cmd_node) cp_node;
+    struct osdp_cmd object;
+};
+typedef TAILQ_HEAD(queue, cp_cmd_node) queue_t;
+#endif
+
+/* Adjust pool size based on CP vs PD mode */
+#if MYNEWT_VAL(OSDP_MODE_PD)
+#define POOL_SIZE OS_MEMPOOL_SIZE(MYNEWT_VAL(OSDP_PD_COMMAND_QUEUE_SIZE), sizeof(struct pd_event_node))
+#else
+#define POOL_SIZE OS_MEMPOOL_SIZE(MYNEWT_VAL(OSDP_PD_COMMAND_QUEUE_SIZE), sizeof(struct cp_cmd_node))
+#endif
+
 struct osdp_queue {
     queue_t queue;
-    slab_t slab;
+    struct os_mempool pool;
+    os_membuf_t pool_buf[POOL_SIZE];
 };
 
 struct osdp_pd {
@@ -272,7 +288,7 @@ struct osdp_pd {
 
     int64_t tstamp;
     int64_t sc_tstamp;
-    uint8_t rx_buf[MYNEWT_VAL(OSDP_UART_BUFFER_LENGTH)];
+    uint8_t rx_buf[MYNEWT_VAL(OSDP_UART_RX_BUFFER_LENGTH)];
     int rx_buf_len;
     int64_t phy_tstamp;
 
@@ -289,6 +305,7 @@ struct osdp_pd {
     struct osdp_secure_channel sc;
     void *command_callback_arg;
     pd_command_callback_t command_callback;
+    struct os_mutex lock; /* Manage access to pool + queue */
 };
 
 struct osdp_cp {
@@ -333,6 +350,8 @@ int64_t osdp_millis_now(void);
 int64_t osdp_millis_since(int64_t last);
 /* void osdp_dump(const char *head, uint8_t *buf, int len); */
 uint16_t osdp_compute_crc16(const uint8_t *buf, size_t len);
+int osdp_device_lock(struct os_mutex *lock);
+void osdp_device_unlock(struct os_mutex *lock);
 
 /* from osdp.c */
 struct osdp *osdp_get_ctx();

@@ -204,7 +204,8 @@ osdp_compute_mac(struct osdp_pd *pd, int is_cmd,
                  const uint8_t *data, int len)
 {
     int pad_len;
-    uint8_t buf[MYNEWT_VAL(OSDP_UART_BUFFER_LENGTH)] = { 0 };
+    uint8_t buf[max(MYNEWT_VAL(OSDP_UART_TX_BUFFER_LENGTH),
+            MYNEWT_VAL(OSDP_UART_RX_BUFFER_LENGTH))] = { 0 };
     uint8_t iv[16];
 
     memcpy(buf, data, len);

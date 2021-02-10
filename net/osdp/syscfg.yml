@@ -27,9 +27,13 @@ syscfg.defs:
         description: 'Configure this device to operate as a CP (Control Panel)'
 
     OSDP_SC_ENABLED:
-        value: 0
+        value: 1
         description: 'Secure the OSDP communication channel with encryption and mutual
-            authentication.'
+            authentication by default.'
+
+    OSDP_REFRESH_INTERVAL_MS:
+        value: 50
+        description: 'Refresh interval factor for OSDP state update.'
 
     OSDP_USE_CRYPTO_HOOK:
         value: 0
@@ -42,11 +46,15 @@ syscfg.defs:
 
     OSDP_RESP_TOUT_MS:
         value: 200
-        description: 'Response timeout'
+        description: 'Response timeout in milliseconds.'
 
     OSDP_PD_SC_TIMEOUT_MS:
         value: 400
-        description: 'OSDP_PD_SC_TIMEOUT_MS'
+        description: 'Timeout in milliseconds for secure mode session.'
+
+    OSDP_DEVICE_LOCK_TIMEOUT_MS:
+        value: 20
+        description: 'Event/Command mutex timeout in milliseconds'
 
     OSDP_UART_DEV_NAME:
         description: Device name of UART device for OSDP"
@@ -57,13 +65,13 @@ syscfg.defs:
         description: 'OSDP defines that baud rate can be either 9600 or 38400 or
                       115200.'
 
-    OSDP_UART_BUFFER_LENGTH:
+    OSDP_UART_TX_BUFFER_LENGTH:
         value: 256
-        description: 'OSDP UART buffer length'
+        description: 'OSDP UART TX buffer length'
 
-    OSDP_THREAD_STACK_SIZE:
-        value: 1024
-        description: 'OSDP Thread stack size'
+    OSDP_UART_RX_BUFFER_LENGTH:
+        value: 256
+        description: 'OSDP UART RX buffer length'
 
     OSDP_PACKET_TRACE:
         value: 0

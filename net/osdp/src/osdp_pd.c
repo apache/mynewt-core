@@ -51,6 +51,7 @@
 #define OSDP_PD_ERR_NO_DATA            1
 #define OSDP_PD_ERR_GENERIC           -1
 #define OSDP_PD_ERR_REPLY             -2
+#define OSDP_PD_ERR_EMPTY_Q           -3
 
 /* Implicit cababilities */
 static struct osdp_pd_cap osdp_pd_cap[] = {
@@ -68,27 +69,26 @@ static struct osdp_pd_cap osdp_pd_cap[] = {
     { -1, 0, 0 } /* Sentinel */
 };
 
-struct pd_event_node {
-    queue_node_t node;
-    struct osdp_event object;
-};
-
 static int
 pd_event_queue_init(struct osdp_pd *pd)
 {
-    if (slab_init(&pd->event.slab, sizeof(struct pd_event_node),
-          MYNEWT_VAL(OSDP_PD_COMMAND_QUEUE_SIZE))) {
-        OSDP_LOG_ERROR("Failed to initialize command slab\n");
-        return -1;
-    }
-    queue_init(&pd->event.queue);
-    return 0;
-}
+    int rc;
+    rc = os_mempool_init(&pd->event.pool,
+          MYNEWT_VAL(OSDP_PD_COMMAND_QUEUE_SIZE),
+          sizeof(struct pd_event_node),
+          pd->event.pool_buf, "pd_event_pool");
 
-static void
-pd_event_queue_del(struct osdp_pd *pd)
-{
-    slab_del(&pd->event.slab);
+    if (rc != OS_OK) {
+        OSDP_LOG_ERROR("Failed to initialize command pool\n");
+        return rc;
+    }
+
+    pd->event.queue.tqh_first = NULL;
+    pd->event.queue.tqh_last = &pd->event.queue.tqh_first;
+
+    os_mutex_init(&pd->lock);
+
+    return rc;
 }
 
 static struct osdp_event *
@@ -96,43 +96,60 @@ pd_event_alloc(struct osdp_pd *pd)
 {
     struct pd_event_node *event = NULL;
 
-    if (slab_alloc(&pd->event.slab, (void **)&event)) {
-        OSDP_LOG_ERROR("Event slab allocation failed\n");
+    event = os_memblock_get(&pd->event.pool);
+
+    if (event == NULL) {
+        OSDP_LOG_ERROR("Event pool allocation failed\n");
         return NULL;
     }
+
     return &event->object;
 }
 
 static void
 pd_event_free(struct osdp_pd *pd, struct osdp_event *event)
 {
-    struct pd_event_node *n;
+    struct pd_event_node *node;
 
-    n = CONTAINER_OF(event, struct pd_event_node, object);
-    slab_free(&pd->event.slab, n);
+    node = CONTAINER_OF(event, struct pd_event_node, object);
+    os_memblock_put(&pd->event.pool, node);
 }
 
 static void
 pd_event_enqueue(struct osdp_pd *pd, struct osdp_event *event)
 {
-    struct pd_event_node *n;
+    struct pd_event_node *node;
 
-    n = CONTAINER_OF(event, struct pd_event_node, object);
-    queue_enqueue(&pd->event.queue, &n->node);
+    node = CONTAINER_OF(event, struct pd_event_node, object);
+    TAILQ_INSERT_HEAD(&pd->event.queue, node, pd_node);
 }
 
 static int
 pd_event_dequeue(struct osdp_pd *pd, struct osdp_event **event)
 {
-    struct pd_event_node *n;
-    queue_node_t *node;
+    struct pd_event_node *node;
 
-    if (queue_dequeue(&pd->event.queue, &node)) {
-        return -1;
+    node = TAILQ_LAST(&pd->event.queue, queue);
+    if (node == NULL) {
+        return OSDP_PD_ERR_EMPTY_Q;
     }
-    n = CONTAINER_OF(node, struct pd_event_node, node);
-    *event = &n->object;
+    TAILQ_REMOVE(&pd->event.queue, node, pd_node);
+
+    *event = &node->object;
     return 0;
+}
+
+static void
+pd_event_queue_del(struct osdp_pd *pd)
+{
+    /* Empty the queue and put back blocks */
+    struct osdp_event *event;
+    while (pd_event_dequeue(pd, &event) == 0) {
+        pd_event_free(pd, event);
+    }
+
+    os_mempool_clear(&pd->event.pool);
+    os_mempool_unregister(&pd->event.pool);
 }
 
 static int
@@ -165,6 +182,54 @@ pd_translate_event(struct osdp_event *event, uint8_t *data)
     }
     memcpy(data, event, sizeof(struct osdp_event));
     return reply_code;
+}
+
+static int
+pd_event_get(struct osdp_pd *pd, struct osdp_event **event, int *ret)
+{
+    int rc = 0;
+
+    rc = osdp_device_lock(&pd->lock);
+    if (rc) {
+        return rc;
+    }
+
+    rc = pd_event_dequeue(pd, event);
+    if (rc) {
+        goto err;
+    }
+
+    *ret = pd_translate_event(*event, pd->ephemeral_data);
+    pd_event_free(pd, *event);
+
+err:
+    osdp_device_unlock(&pd->lock);
+    return rc;
+}
+
+static int
+pd_event_put(struct osdp_pd *pd, struct osdp_event *event)
+{
+    int rc = 0;
+    struct osdp_event *ev;
+
+    rc = osdp_device_lock(&pd->lock);
+    if (rc) {
+        return rc;
+    }
+
+    ev = pd_event_alloc(pd);
+    if (ev == NULL) {
+        rc = OS_ENOMEM;
+        goto err;
+    }
+
+    memcpy(ev, event, sizeof(struct osdp_event));
+    pd_event_enqueue(pd, ev);
+
+err:
+    osdp_device_unlock(&pd->lock);
+    return rc;
 }
 
 static int
@@ -285,10 +350,8 @@ pd_decode_command(struct osdp_pd *pd, uint8_t *buf, int len)
     case CMD_POLL:
         ASSERT_LENGTH(len, CMD_POLL_DATA_LEN);
         /* Check if we have external events in the queue */
-        if (pd_event_dequeue(pd, &event) == 0) {
-            ret = pd_translate_event(event, pd->ephemeral_data);
+        if (pd_event_get(pd, &event, &ret) == 0) {
             pd->reply_id = ret;
-            pd_event_free(pd, event);
         } else {
             pd->reply_id = REPLY_ACK;
         }
@@ -1079,13 +1142,6 @@ osdp_pd_teardown(osdp_t *ctx)
     assert(ctx);
 
     pd_event_queue_del(TO_PD(ctx, 0));
-
-    /*
-       These are static allocations in the ported version
-       safe_free(TO_PD(ctx, 0));
-       safe_free(TO_CP(ctx));
-       safe_free(ctx);
-     */
 }
 
 void
@@ -1121,16 +1177,9 @@ int
 osdp_pd_notify_event(osdp_t *ctx, struct osdp_event *event)
 {
     assert(ctx);
-    struct osdp_event *ev;
     struct osdp_pd *pd = GET_CURRENT_PD(ctx);
 
-    ev = pd_event_alloc(pd);
-    if (ev == NULL) {
-        return -1;
-    }
-
-    memcpy(ev, event, sizeof(struct osdp_event));
-    pd_event_enqueue(pd, ev);
+    pd_event_put(pd, event);
     return 0;
 }
 

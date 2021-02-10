@@ -20,18 +20,22 @@
 
 #include "osdp/osdp_common.h"
 #include "osdp/osdp_hooks.h"
-#include "osdp/slab.h"
 
 /*
- * Set this to size of the UART buffer length and add block size
+ * Set this to size of the max UART buffer length and add block size
  * If the entire buffer were to be encrypted, account for the
  * the fact that the output buffer comes with IV appended
  */
-#define MAX_SCRATCH_LEN (MYNEWT_VAL(OSDP_UART_BUFFER_LENGTH) + TC_AES_BLOCK_SIZE)
+#define MAX_UART_BUF (max(MYNEWT_VAL(OSDP_UART_TX_BUFFER_LENGTH), \
+                          MYNEWT_VAL(OSDP_UART_RX_BUFFER_LENGTH)))
+#define MAX_SCRATCH_LEN (MAX_UART_BUF + TC_AES_BLOCK_SIZE)
 static uint8_t scratch_buf1[MAX_SCRATCH_LEN];
 #if MYNEWT_VAL(TRNG) && !MYNEWT_VAL(OSDP_USE_CRYPTO_HOOK)
 static struct trng_dev *trng = NULL;
 #endif /* MYNEWT_VAL(TRNG) && !MYNEWT_VAL(OSDP_USE_CRYPTO_HOOK) */
+
+#define OSDP_LOCK_TMO \
+    (OS_TICKS_PER_SEC * MYNEWT_VAL(OSDP_DEVICE_LOCK_TIMEOUT_MS)/1000 + 1)
 
 #if 0
 /* see macro in osdp_common.h */
@@ -201,3 +205,34 @@ osdp_get_status_mask(osdp_t *ctx)
 
     return mask;
 }
+
+/**
+ * Lock access to event/command resource.  Blocks until configured timeout.
+ *
+ * @param The peripheral device to lock.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+osdp_device_lock(struct os_mutex *lock)
+{
+    int rc;
+
+    rc = os_mutex_pend(lock, OSDP_LOCK_TMO);
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
+    }
+    return (rc);
+}
+
+/**
+ * Unlock access to the event/command resource.
+ *
+ * @param The peripheral device to unlock access to.
+ */
+void
+osdp_device_unlock(struct os_mutex *lock)
+{
+    os_mutex_release(lock);
+}
+
