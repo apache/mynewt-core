@@ -39,6 +39,10 @@
 #include "trng/trng.h"
 #include "trng_kinetis/trng_kinetis.h"
 #endif
+#if MYNEWT_VAL(CRYPTO)
+#include "crypto/crypto.h"
+#include "crypto_kinetis/crypto_kinetis.h"
+#endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
     MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4)
 #include "uart/uart.h"
@@ -112,6 +116,10 @@ static struct hash_dev os_bsp_hash;
 
 #if MYNEWT_VAL(TRNG)
 static struct trng_dev os_bsp_trng;
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+static struct crypto_dev os_bsp_crypto;
 #endif
 
 /*
@@ -248,6 +256,13 @@ hal_bsp_init(void)
     rc = os_dev_create(&os_bsp_trng.dev, "trng",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        kinetis_trng_dev_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+    rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       kinetis_crypto_dev_init, NULL);
     assert(rc == 0);
 #endif
 

@@ -60,6 +60,9 @@ pkg.deps.UART_3:
 pkg.deps.UART_4:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
+pkg.deps.CRYPTO:
+    - "@apache-mynewt-core/hw/drivers/crypto/crypto_kinetis"
+
 pkg.deps.ENC_FLASH_DEV:
     - "@apache-mynewt-core/hw/drivers/flash/enc_flash/ef_crypto"
 
