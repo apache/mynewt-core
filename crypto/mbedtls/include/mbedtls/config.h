@@ -2161,7 +2161,7 @@
  *      MBEDTLS_TLS_ECDHE_PSK_WITH_ARIA_128_CBC_SHA256
  *      MBEDTLS_TLS_ECDHE_PSK_WITH_ARIA_256_CBC_SHA384
  */
-//#define MBEDTLS_ARIA_C
+#define MBEDTLS_ARIA_C
 
 /**
  * \def MBEDTLS_CCM_C
@@ -2232,7 +2232,7 @@
  * Requires: MBEDTLS_AES_C or MBEDTLS_DES_C
  *
  */
-//#define MBEDTLS_CMAC_C
+#define MBEDTLS_CMAC_C
 
 /**
  * \def MBEDTLS_CTR_DRBG_C
@@ -2366,7 +2366,7 @@
  *
  * Requires: MBEDTLS_ECP_C, MBEDTLS_MD_C
  */
-//#define MBEDTLS_ECJPAKE_C
+#define MBEDTLS_ECJPAKE_C
 
 /**
  * \def MBEDTLS_ECP_C
@@ -2514,7 +2514,7 @@
  *            it, and considering stronger message digests instead.
  *
  */
-//#define MBEDTLS_MD2_C
+#define MBEDTLS_MD2_C
 
 /**
  * \def MBEDTLS_MD4_C
@@ -2531,7 +2531,7 @@
  *            it, and considering stronger message digests instead.
  *
  */
-//#define MBEDTLS_MD4_C
+#define MBEDTLS_MD4_C
 
 /**
  * \def MBEDTLS_MD5_C

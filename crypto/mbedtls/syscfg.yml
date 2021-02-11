@@ -42,6 +42,8 @@ syscfg.defs:
     value: 0
   MBEDTLS_ECP_DP_CURVE25519:
     value: 0
+  MBEDTLS_ECJPAKE_C:
+    value: 0
 
   # Ciphers
   MBEDTLS_AES_ALT:
@@ -54,6 +56,8 @@ syscfg.defs:
   MBEDTLS_AES_FEWER_TABLES:
     value: 0
   MBEDTLS_ARC4_C:
+    value: 0
+  MBEDTLS_ARIA_C:
     value: 0
   MBEDTLS_BLOWFISH_C:
     value: 0
@@ -78,6 +82,8 @@ syscfg.defs:
     value: 0
 
   # MAC
+  MBEDTLS_CMAC_C:
+    value: 0
   MBEDTLS_POLY1305_C:
     value: 0
 
@@ -101,6 +107,10 @@ syscfg.defs:
     value: 0
   MBEDTLS_SHA256_C:
     value: 1
+  MBEDTLS_MD2_C:
+    value: 0
+  MBEDTLS_MD4_C:
+    value: 0
   MBEDTLS_MD5_C:
     value: 0
   MBEDTLS_SHA1_C:
