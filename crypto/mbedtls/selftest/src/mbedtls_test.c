@@ -52,63 +52,74 @@
 #include "mbedtls/base64.h"
 #include "mbedtls/timing.h"
 
-TEST_CASE_DECL(sha1_test)
-TEST_CASE_DECL(sha256_test)
-TEST_CASE_DECL(sha512_test)
 TEST_CASE_DECL(aes_test)
 TEST_CASE_DECL(arc4_test)
+TEST_CASE_DECL(aria_test)
+TEST_CASE_DECL(base64_test)
 TEST_CASE_DECL(bignum_test)
+TEST_CASE_DECL(camellia_test)
 TEST_CASE_DECL(ccm_test)
+TEST_CASE_DECL(chacha20_test)
+TEST_CASE_DECL(chachapoly_test)
+TEST_CASE_DECL(cmac_test)
+TEST_CASE_DECL(ctr_drbg_test)
+TEST_CASE_DECL(des_test)
 TEST_CASE_DECL(dhm_test)
+TEST_CASE_DECL(ecjpake_test)
 TEST_CASE_DECL(ecp_test)
 TEST_CASE_DECL(entropy_test)
 TEST_CASE_DECL(gcm_test)
 TEST_CASE_DECL(hmac_drbg_test)
+TEST_CASE_DECL(md2_test)
+TEST_CASE_DECL(md4_test)
 TEST_CASE_DECL(md5_test)
+TEST_CASE_DECL(memory_buffer_alloc_test)
+TEST_CASE_DECL(nist_kw_test)
 TEST_CASE_DECL(pkcs5_test)
+TEST_CASE_DECL(poly1305_test)
 TEST_CASE_DECL(ripemd160_test)
 TEST_CASE_DECL(rsa_test)
+TEST_CASE_DECL(sha1_test)
+TEST_CASE_DECL(sha256_test)
+TEST_CASE_DECL(sha512_test)
+TEST_CASE_DECL(timing_test)
 TEST_CASE_DECL(x509_test)
 TEST_CASE_DECL(xtea_test)
-TEST_CASE_DECL(poly1305_test)
-TEST_CASE_DECL(chacha20_test)
-TEST_CASE_DECL(chachapoly_test)
-TEST_CASE_DECL(des_test)
-TEST_CASE_DECL(camellia_test)
-TEST_CASE_DECL(nist_kw_test)
-TEST_CASE_DECL(ctr_drbg_test)
-TEST_CASE_DECL(base64_test)
-TEST_CASE_DECL(timing_test)
 
 TEST_SUITE(mbedtls_test_all)
 {
-    sha1_test();
-    sha256_test();
-    sha512_test();
     aes_test();
     arc4_test();
+    aria_test();
+    base64_test();
     bignum_test();
+    camellia_test();
     ccm_test();
+    chacha20_test();
+    chachapoly_test();
+    cmac_test();
+    ctr_drbg_test();
+    des_test();
     dhm_test();
+    ecjpake_test();
     ecp_test();
     entropy_test();
     gcm_test();
     hmac_drbg_test();
+    md2_test();
+    md4_test();
     md5_test();
+    nist_kw_test();
     pkcs5_test();
+    poly1305_test();
     ripemd160_test();
     rsa_test();
+    sha1_test();
+    sha256_test();
+    sha512_test();
+    timing_test();
     x509_test();
     xtea_test();
-    poly1305_test();
-    chacha20_test();
-    chachapoly_test();
-    des_test();
-    camellia_test();
-    nist_kw_test();
-    ctr_drbg_test();
-    base64_test();
-    timing_test();
 }
 
 int

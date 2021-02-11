@@ -183,6 +183,10 @@ extern "C" {
 #undef MBEDTLS_ECP_DP_CURVE25519_ENABLED
 #endif
 
+#if MYNEWT_VAL(MBEDTLS_ECJPAKE_C) == 0
+#undef MBEDTLS_ECJPAKE_C
+#endif
+
 #if MYNEWT_VAL(MBEDTLS_AES_ALT) == 0
 #undef MBEDTLS_AES_ALT
 #endif
@@ -201,6 +205,9 @@ extern "C" {
 #endif
 #if MYNEWT_VAL(MBEDTLS_ARC4_C) == 0
 #undef MBEDTLS_ARC4_C
+#endif
+#if MYNEWT_VAL(MBEDTLS_ARIA_C) == 0
+#undef MBEDTLS_ARIA_C
 #endif
 #if MYNEWT_VAL(MBEDTLS_BLOWFISH_C) == 0
 #undef MBEDTLS_BLOWFISH_C
@@ -225,6 +232,10 @@ extern "C" {
 
 #if MYNEWT_VAL(MBEDTLS_POLY1305_C) == 0
 #undef MBEDTLS_POLY1305_C
+#endif
+
+#if MYNEWT_VAL(MBEDTLS_CMAC_C) == 0
+#undef MBEDTLS_CMAC_C
 #endif
 
 #if MYNEWT_VAL(MBEDTLS_CIPHER_MODE_CBC) == 0
@@ -257,6 +268,12 @@ extern "C" {
 #endif
 #if MYNEWT_VAL(MBEDTLS_SHA256_C) == 0
 #undef MBEDTLS_SHA256_C
+#endif
+#if MYNEWT_VAL(MBEDTLS_MD2_C) == 0
+#undef MBEDTLS_MD2_C
+#endif
+#if MYNEWT_VAL(MBEDTLS_MD4_C) == 0
+#undef MBEDTLS_MD4_C
 #endif
 #if MYNEWT_VAL(MBEDTLS_MD5_C) == 0
 #undef MBEDTLS_MD5_C
