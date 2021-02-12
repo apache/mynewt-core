@@ -85,6 +85,7 @@ static struct os_eventq compat_lines_queue;
 static int esc_state;
 static int nlip_state;
 static int echo = MYNEWT_VAL(CONSOLE_ECHO);
+static int console_is_interactive = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
 static bool rx_stalled;
 
@@ -128,6 +129,7 @@ console_out_nolock(int c)
 void
 console_echo(int on)
 {
+    console_is_interactive = on;
     echo = on;
 }
 
@@ -469,6 +471,10 @@ console_prompt_set(const char *prompt, const char *line)
     }
     trailing_chars = 0;
 
+    if (!console_is_interactive) {
+        return;
+    }
+
     locked = console_lock(1000) == OS_OK;
 
     console_switch_to_prompt();
@@ -517,31 +523,33 @@ console_write(const char *str, int cnt)
         return;
     }
 
-    if (cnt >= 2 && str[0] == CONSOLE_NLIP_DATA_START1 &&
-        str[1] == CONSOLE_NLIP_DATA_START2) {
-        g_is_output_nlip = 1;
-    }
+    if (MYNEWT_VAL(CONSOLE_NLIP)) {
+        if (cnt >= 2 && str[0] == CONSOLE_NLIP_DATA_START1 &&
+            str[1] == CONSOLE_NLIP_DATA_START2) {
+            g_is_output_nlip = 1;
+        }
 
-    /* From the shell the first byte is always \n followed by the
-     * actual pkt start bytes, hence checking byte 1 and 2
-     */
-    if (cnt >= 3 && str[1] == CONSOLE_NLIP_PKT_START1 &&
-        str[2] == CONSOLE_NLIP_PKT_START2) {
-        g_is_output_nlip = 1;
-    }
+        /* From the shell the first byte is always \n followed by the
+         * actual pkt start bytes, hence checking byte 1 and 2
+         */
+        if (cnt >= 3 && str[1] == CONSOLE_NLIP_PKT_START1 &&
+            str[2] == CONSOLE_NLIP_PKT_START2) {
+            g_is_output_nlip = 1;
+        }
 
-    /* If the byte string is non nlip and we are silencing non nlip bytes,
-     * do not let it go out on the console
-     */
-    if (!g_is_output_nlip && g_console_silence_non_nlip) {
-        goto done;
+        /* If the byte string is non nlip and we are silencing non nlip bytes,
+         * do not let it go out on the console
+         */
+        if (!g_is_output_nlip && g_console_silence_non_nlip) {
+            goto done;
+        }
     }
 
     console_switch_to_logs();
     console_filter_write(str, cnt);
 
 done:
-    if (cnt > 0 && str[cnt - 1] == '\n') {
+    if (MYNEWT_VAL(CONSOLE_NLIP) && cnt > 0 && str[cnt - 1] == '\n') {
         g_is_output_nlip = 0;
     }
     (void)console_unlock();
@@ -672,7 +680,7 @@ insert_char(char *pos, char c)
         return;
     }
 
-    if (echo) {
+    if (console_is_interactive) {
         if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none) &&
             MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection) {
             cursor_clear_line();
@@ -700,7 +708,7 @@ insert_char(char *pos, char c)
     end = trailing_chars;
 
     while (end-- > 0) {
-        if (echo) {
+        if (console_is_interactive) {
             console_out_nolock(tmp);
         }
         c = *pos;
@@ -709,7 +717,7 @@ insert_char(char *pos, char c)
     }
 
     /* Move cursor back to right place */
-    if (echo) {
+    if (console_is_interactive) {
         cursor_backward(trailing_chars);
     }
 }
@@ -981,7 +989,7 @@ handle_nlip(uint8_t byte)
         insert_char(&input->line[cur], byte);
         if (byte == '\n') {
             input->line[cur] = '\0';
-            console_echo(1);
+            console_is_interactive = echo;
             nlip_state = 0;
 
             console_handle_line();
@@ -991,7 +999,7 @@ handle_nlip(uint8_t byte)
         if (byte == CONSOLE_NLIP_PKT_START2) {
             nlip_state = NLIP_PKT_START2;
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_is_interactive = 0;
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1);
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START2);
         } else {
@@ -1003,7 +1011,7 @@ handle_nlip(uint8_t byte)
         if (byte == CONSOLE_NLIP_DATA_START2) {
             nlip_state = NLIP_DATA_START2;
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_is_interactive = 0;
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1);
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START2);
         } else {
@@ -1017,8 +1025,15 @@ handle_nlip(uint8_t byte)
         } else if (byte == CONSOLE_NLIP_PKT_START1) {
             nlip_state = NLIP_PKT_START1;
         } else {
-            /* For old code compatibility end of lines characters pass through */
-            handled = g_console_ignore_non_nlip && byte != '\r' && byte != '\n';
+            if (!g_console_ignore_non_nlip) {
+                handled = 0;
+            } else if ((byte == '\r' || byte == '\n') && MYNEWT_VAL(CONSOLE_NLIP_ECHO_LF)) {
+                /* For old code compatibility end of lines characters pass through */
+                if (0 == console_lock(1000)) {
+                    console_out_nolock(byte);
+                    console_unlock();
+                }
+            }
         }
         break;
     }
@@ -1039,7 +1054,7 @@ console_append_char(char *line, uint8_t byte)
         return 1;
     }
 
-    if (echo) {
+    if (console_is_interactive) {
         /* Echo back to console */
         console_switch_to_prompt();
         console_out_nolock(byte);
@@ -1082,7 +1097,17 @@ console_handle_char(uint8_t byte)
     }
     input = current_line_ev->ev_arg;
 
-    if (handle_nlip(byte)) {
+    if (MYNEWT_VAL(CONSOLE_NLIP) && handle_nlip(byte)) {
+        return 0;
+    }
+
+    if (!console_is_interactive) {
+        if (byte == '\r' || byte == '\n') {
+            input->line[cur + trailing_chars] = '\0';
+            console_handle_line();
+        } else {
+            insert_char(&input->line[cur], byte);
+        }
         return 0;
     }
 
