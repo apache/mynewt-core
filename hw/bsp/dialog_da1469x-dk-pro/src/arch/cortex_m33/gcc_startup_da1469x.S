@@ -272,6 +272,13 @@ Reset_Handler:
 /* Default interrupt handler */
     .type   Default_Handler, %function
 Default_Handler:
+#if MYNEWT_VAL(MCU_MTB_ENABLE)
+    /* Disable MTB, otherwise it will quickly fill up buffer with infinite loop branch. */
+    ldr     r1, =MTB_POSITION_REG
+    ldr     r2, [r1, #4]
+    bic     r2, #0x80000000
+    str     r2, [r1, #4]
+#endif
     ldr     r1, =SYS_CTRL_REG
     ldrh    r2, [r1, #0]
     orrs    r2, r2, #0x80   /* DEBUGGER_ENABLE */
