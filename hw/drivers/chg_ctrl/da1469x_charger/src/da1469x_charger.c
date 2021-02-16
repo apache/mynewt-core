@@ -27,6 +27,7 @@
 #include <bsp/bsp.h>
 #if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
 #include <charge-control/charge_control.h>
+#include <mcu/da1469x_prail.h>
 #endif
 
 int
@@ -127,6 +128,18 @@ static void
 da1469x_vbus_state_changed_event_cb(struct os_event *ev)
 {
     assert(ev);
+#if MYNEWT_VAL(MCU_DCDC_ENABLE)
+    /*
+     * If VBUS is present turn off DCDC so charging current is higher.
+     * When devices is fully charged as long as VBUS is present battery will
+     * no be used to power DCDC so it will not deplete.
+     */
+    if ((CRG_TOP->ANA_STATUS_REG & CRG_TOP_ANA_STATUS_REG_VBUS_AVAILABLE_Msk) != 0) {
+        da1469x_prail_dcdc_disable();
+    } else {
+        da1469x_prail_dcdc_restore();
+    }
+#endif
     NVIC_SetPendingIRQ(CHARGER_STATE_IRQn);
 }
 
