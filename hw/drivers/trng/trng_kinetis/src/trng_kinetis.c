@@ -191,6 +191,7 @@ kinetis_trng_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 
 #if USE_RNGA
         RNGA_Init(RNG);
+        RNGA_Seed(RNG, SIM->UIDL);
 #elif USE_TRNG
         (void)TRNG_GetDefaultConfig(&default_config);
         TRNG_Init(TRNG0, &default_config);
