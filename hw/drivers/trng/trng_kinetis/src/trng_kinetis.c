@@ -168,7 +168,6 @@ trng_poller_handler(void *arg)
                 }
                 os_mutex_release(&rng_cache_mu);
             }
-            os_time_delay(1);
         } else {
             (void)os_eventq_get(&rng_evtq);
         }
