@@ -78,6 +78,35 @@ static struct test_vectors aes_128_ecb_vectors = {
         },
     },
 };
+
+static struct test_vectors aes_256_ecb_vectors = {
+    .name = "AES-256-ECB",
+    .algo = CRYPTO_ALGO_AES,
+    .mode = CRYPTO_MODE_ECB,
+    .key = "\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81"
+           "\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
+    .keylen = 256,
+    .iv = NULL,
+    .len = 4,
+    .vectors = {
+        {
+            .plain = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
+            .cipher = "\xf3\xee\xd1\xbd\xb5\xd2\xa0\x3c\x06\x4b\x5a\x7e\x3d\xb1\x81\xf8",
+        },
+        {
+            .plain = "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51",
+            .cipher = "\x59\x1c\xcb\x10\xd4\x10\xed\x26\xdc\x5b\xa7\x4a\x31\x36\x28\x70",
+        },
+        {
+            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef",
+            .cipher = "\xb6\xed\x21\xb9\x9c\xa6\xf4\xf9\xf1\x53\xe7\xb1\xbe\xaf\xed\x1d",
+        },
+        {
+            .plain = "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10",
+            .cipher = "\x23\x30\x4b\x7a\x39\xf9\xf3\xff\x06\x7d\x8d\x8f\x9e\x24\xec\xc7",
+        },
+    },
+};
 #endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB) */
 
 #if MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC)
@@ -108,6 +137,36 @@ static struct test_vectors aes_128_cbc_vectors = {
         },
     },
 };
+
+static struct test_vectors aes_256_cbc_vectors = {
+    .name = "AES-256-CBC",
+    .algo = CRYPTO_ALGO_AES,
+    .mode = CRYPTO_MODE_CBC,
+    .key = "\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81"
+           "\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
+    .keylen = 256,
+    .iv = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F",
+    .len = 4,
+    .vectors = {
+        {
+            .plain = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
+            .cipher = "\xf5\x8c\x4c\x04\xd6\xe5\xf1\xba\x77\x9e\xab\xfb\x5f\x7b\xfb\xd6",
+        },
+        {
+            .plain = "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51",
+            .cipher = "\x9c\xfc\x4e\x96\x7e\xdb\x80\x8d\x67\x9f\x77\x7b\xc6\x70\x2c\x7d",
+        },
+        {
+            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef",
+            .cipher = "\x39\xf2\x33\x69\xa9\xd9\xba\xcf\xa5\x30\xe2\x63\x04\x23\x14\x61",
+        },
+        {
+            .plain = "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10",
+            .cipher = "\xb2\xeb\x05\xe2\xc3\x9b\xe9\xfc\xda\x6c\x19\x07\x8c\x6a\x9d\x1b",
+        },
+    },
+};
+
 #endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC) */
 
 #if MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR)
@@ -142,17 +201,53 @@ static struct test_vectors aes_128_ctr_vectors = {
         },
     },
 };
+
+static struct test_vectors aes_256_ctr_vectors = {
+    .name = "AES-256-CTR",
+    .algo = CRYPTO_ALGO_AES,
+    .mode = CRYPTO_MODE_CTR,
+    .key = "\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81"
+           "\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
+    .keylen = 256,
+    .iv = "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff",
+    .len = 4,
+    .vectors = {
+        {
+            .plain = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
+            .cipher = "\x60\x1e\xc3\x13\x77\x57\x89\xa5\xb7\xa7\xf5\x04\xbb\xf3\xd2\x28",
+            .sz = AES_BLOCK_LEN,
+        },
+        {
+            .plain = "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51",
+            .cipher = "\xf4\x43\xe3\xca\x4d\x62\xb5\x9a\xca\x84\xe9\x90\xca\xca\xf5\xc5",
+            .sz = AES_BLOCK_LEN,
+        },
+        {
+            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11",
+            .cipher = "\x2b\x09\x30\xda\xa2\x3d\xe9\x4c",
+            .sz = 8,
+        },
+        {
+            .plain = "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10",
+            .cipher = "\xdf\xc9\xc5\x8d\xb6\x7a\xad\xa6\x13\xc2\xdd\x08\x45\x79\x41\xa6",
+            .sz = AES_BLOCK_LEN,
+        },
+    },
+};
 #endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR) */
 
 static struct test_vectors *all_tests[] = {
 #if MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB)
     &aes_128_ecb_vectors,
+    &aes_256_ecb_vectors,
 #endif
 #if MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC)
     &aes_128_cbc_vectors,
+    &aes_256_cbc_vectors,
 #endif
 #if MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR)
     &aes_128_ctr_vectors,
+    &aes_256_ctr_vectors,
 #endif
     NULL,
 };
@@ -444,6 +539,8 @@ run_concurrency_test(struct crypto_dev *crypto)
 struct inplace_test {
     uint16_t mode;
     char *name;
+    const char *key;
+    uint32_t keylen;
     char *iv;
     char *expected;
 };
@@ -451,26 +548,58 @@ struct inplace_test {
 void
 run_inplace_test(struct crypto_dev *crypto)
 {
-    const char *key = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
+    const char *key128 = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
+    const char *key256 = "\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81"
+                         "\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4";
     const char *inbuf = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a";
     struct inplace_test data[] = {
         {
             .mode = CRYPTO_MODE_ECB,
             .name = "AES-128-ECB",
+            .key = key128,
+            .keylen = 128,
             .iv = NULL,
             .expected = "\x3a\xd7\x7b\xb4\x0d\x7a\x36\x60\xa8\x9e\xca\xf3\x24\x66\xef\x97",
         },
         {
+            .mode = CRYPTO_MODE_ECB,
+            .name = "AES-256-ECB",
+            .key = key256,
+            .keylen = 256,
+            .iv = NULL,
+            .expected = "\xf3\xee\xd1\xbd\xb5\xd2\xa0\x3c\x06\x4b\x5a\x7e\x3d\xb1\x81\xf8",
+        },
+        {
             .mode = CRYPTO_MODE_CBC,
             .name = "AES-128-CBC",
+            .key = key128,
+            .keylen = 128,
             .iv = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F",
             .expected = "\x76\x49\xab\xac\x81\x19\xb2\x46\xce\xe9\x8e\x9b\x12\xe9\x19\x7d",
         },
         {
+            .mode = CRYPTO_MODE_CBC,
+            .name = "AES-256-CBC",
+            .key = key256,
+            .keylen = 256,
+            .iv = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F",
+            .expected = "\xf5\x8c\x4c\x04\xd6\xe5\xf1\xba\x77\x9e\xab\xfb\x5f\x7b\xfb\xd6",
+        },
+        {
             .mode = CRYPTO_MODE_CTR,
             .name = "AES-128-CTR",
+            .key = key128,
+            .keylen = 128,
             .iv = "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff",
             .expected = "\x87\x4d\x61\x91\xb6\x20\xe3\x26\x1b\xef\x68\x64\x99\x0d\xb6\xce",
+        },
+        {
+            .mode = CRYPTO_MODE_CTR,
+            .name = "AES-256-CTR",
+            .key = key256,
+            .keylen = 256,
+            .iv = "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff",
+            .expected = "\x60\x1e\xc3\x13\x77\x57\x89\xa5\xb7\xa7\xf5\x04\xbb\xf3\xd2\x28",
         },
     };
     uint8_t i;
@@ -486,7 +615,7 @@ run_inplace_test(struct crypto_dev *crypto)
 
         printf("%s enc: ", data[i].name);
         (void)crypto_encrypt_custom(crypto, CRYPTO_ALGO_AES, data[i].mode,
-                key, 128, ivcopy, buf, buf, AES_BLOCK_LEN);
+                data[i].key, data[i].keylen, ivcopy, buf, buf, AES_BLOCK_LEN);
         if (memcmp(buf, data[i].expected, AES_BLOCK_LEN) == 0) {
             printf("ok\n");
         } else {
@@ -498,7 +627,7 @@ run_inplace_test(struct crypto_dev *crypto)
 
         printf("%s dec: ", data[i].name);
         (void)crypto_decrypt_custom(crypto, CRYPTO_ALGO_AES, data[i].mode,
-                key, 128, ivcopy, buf, buf, AES_BLOCK_LEN);
+                data[i].key, data[i].keylen, ivcopy, buf, buf, AES_BLOCK_LEN);
         if (memcmp(buf, inbuf, AES_BLOCK_LEN) == 0) {
             printf("ok\n");
         } else {
@@ -519,15 +648,17 @@ struct iov_data {
     uint16_t mode;
     char *name;
     char *key;
+    uint32_t keylen;
     char *iv;
     uint32_t iovlen;
     struct iov_data_block iov[];
 };
 
-static struct iov_data ecb_iovd = {
+static struct iov_data aes128_ecb_iovd = {
     .mode = CRYPTO_MODE_ECB,
     .name = "AES-128-ECB",
     .key = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
+    .keylen = 128,
     .iv = NULL,
     .iovlen = 3,
     .iov = {
@@ -551,10 +682,40 @@ static struct iov_data ecb_iovd = {
     },
 };
 
-static struct iov_data cbc_iovd = {
+static struct iov_data aes256_ecb_iovd = {
+    .mode = CRYPTO_MODE_ECB,
+    .name = "AES-256-ECB",
+    .key = "\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81"
+           "\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
+    .keylen = 256,
+    .iv = NULL,
+    .iovlen = 3,
+    .iov = {
+        {
+            .plain = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
+            .cipher = "\xf3\xee\xd1\xbd\xb5\xd2\xa0\x3c\x06\x4b\x5a\x7e\x3d\xb1\x81\xf8",
+            .len = AES_BLOCK_LEN,
+        },
+        {
+            .plain = "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51",
+            .cipher = "\x59\x1c\xcb\x10\xd4\x10\xed\x26\xdc\x5b\xa7\x4a\x31\x36\x28\x70",
+            .len = AES_BLOCK_LEN,
+        },
+        {
+            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef"
+                     "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10",
+            .cipher = "\xb6\xed\x21\xb9\x9c\xa6\xf4\xf9\xf1\x53\xe7\xb1\xbe\xaf\xed\x1d"
+                      "\x23\x30\x4b\x7a\x39\xf9\xf3\xff\x6\x7d\x8d\x8f\x9e\x24\xec\xc7",
+            .len = AES_BLOCK_LEN * 2,
+        },
+    },
+};
+
+static struct iov_data aes128_cbc_iovd = {
     .mode = CRYPTO_MODE_CBC,
     .name = "AES-128-CBC",
     .key = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
+    .keylen = 128,
     .iv = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F",
     .iovlen = 3,
     .iov = {
@@ -578,10 +739,40 @@ static struct iov_data cbc_iovd = {
     },
 };
 
-static struct iov_data ctr_iovd = {
+static struct iov_data aes256_cbc_iovd = {
+    .mode = CRYPTO_MODE_CBC,
+    .name = "AES-256-CBC",
+    .key = "\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81"
+           "\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
+    .keylen = 256,
+    .iv = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F",
+    .iovlen = 3,
+    .iov = {
+        {
+            .plain = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
+            .cipher = "\xf5\x8c\x4c\x04\xd6\xe5\xf1\xba\x77\x9e\xab\xfb\x5f\x7b\xfb\xd6",
+            .len = AES_BLOCK_LEN,
+        },
+        {
+            .plain = "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51"
+                     "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef",
+            .cipher = "\x9c\xfc\x4e\x96\x7e\xdb\x80\x8d\x67\x9f\x77\x7b\xc6\x70\x2c\x7d"
+                      "\x39\xf2\x33\x69\xa9\xd9\xba\xcf\xa5\x30\xe2\x63\x04\x23\x14\x61",
+            .len = AES_BLOCK_LEN * 2,
+        },
+        {
+            .plain = "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10",
+            .cipher = "\xb2\xeb\x05\xe2\xc3\x9b\xe9\xfc\xda\x6c\x19\x07\x8c\x6a\x9d\x1b",
+            .len = AES_BLOCK_LEN,
+        },
+    },
+};
+
+static struct iov_data aes128_ctr_iovd = {
     .mode = CRYPTO_MODE_CTR,
     .name = "AES-128-CTR",
     .key = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
+    .keylen = 128,
     .iv = "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff",
     .iovlen = 3,
     .iov = {
@@ -605,10 +796,42 @@ static struct iov_data ctr_iovd = {
     },
 };
 
+static struct iov_data aes256_ctr_iovd = {
+    .mode = CRYPTO_MODE_CTR,
+    .name = "AES-256-CTR",
+    .key = "\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81"
+           "\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
+    .keylen = 256,
+    .iv = "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff",
+    .iovlen = 3,
+    .iov = {
+        {
+            .plain = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
+                     "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51",
+            .cipher = "\x60\x1e\xc3\x13\x77\x57\x89\xa5\xb7\xa7\xf5\x04\xbb\xf3\xd2\x28"
+                      "\xf4\x43\xe3\xca\x4d\x62\xb5\x9a\xca\x84\xe9\x90\xca\xca\xf5\xc5",
+            .len = AES_BLOCK_LEN * 2,
+        },
+        {
+            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef",
+            .cipher = "\x2b\x09\x30\xda\xa2\x3d\xe9\x4c\xe8\x70\x17\xba\x2d\x84\x98\x8d",
+            .len = AES_BLOCK_LEN,
+        },
+        {
+            .plain = "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10",
+            .cipher = "\xdf\xc9\xc5\x8d\xb6\x7a\xad\xa6\x13\xc2\xdd\x08\x45\x79\x41\xa6",
+            .len = AES_BLOCK_LEN,
+        },
+    },
+};
+
 static struct iov_data *all_iovd[] = {
-    &ecb_iovd,
-    &cbc_iovd,
-    &ctr_iovd,
+    &aes128_ecb_iovd,
+    &aes256_ecb_iovd,
+    &aes128_cbc_iovd,
+    &aes256_cbc_iovd,
+    &aes128_ctr_iovd,
+    &aes256_ctr_iovd,
     NULL,
 };
 
@@ -643,7 +866,7 @@ run_iovec_test(struct crypto_dev *crypto)
         fail = false;
         len = 0;
         total = crypto_encryptv_custom(crypto, CRYPTO_ALGO_AES, iovp->mode,
-                iovp->key, 128, iv, iov, iovp->iovlen);
+                iovp->key, iovp->keylen, iv, iov, iovp->iovlen);
         for (i = 0; i < iovp->iovlen; i++) {
             if (memcmp(iovp->iov[i].cipher, iov[i].iov_base, iov[i].iov_len) != 0) {
                 fail = true;
@@ -676,7 +899,7 @@ run_iovec_test(struct crypto_dev *crypto)
         fail = false;
         len = 0;
         total = crypto_decryptv_custom(crypto, CRYPTO_ALGO_AES, iovp->mode,
-                iovp->key, 128, iv, iov, iovp->iovlen);
+                iovp->key, iovp->keylen, iv, iov, iovp->iovlen);
         for (i = 0; i < iovp->iovlen; i++) {
             if (memcmp(iovp->iov[i].plain, iov[i].iov_base, iov[i].iov_len) != 0) {
                 fail = true;
