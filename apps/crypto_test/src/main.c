@@ -46,6 +46,12 @@ struct test_vectors {
 
 static struct os_mutex mtx;
 
+#if (MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB) || \
+     MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC) || \
+     MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR))
+#define RUN_VECTOR_TESTS 1
+#endif
+
 /*
  * Test vectors from "NIST Special Publication 800-38A"
  */
@@ -236,6 +242,7 @@ static struct test_vectors aes_256_ctr_vectors = {
 };
 #endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR) */
 
+#if RUN_VECTOR_TESTS
 static struct test_vectors *all_tests[] = {
 #if MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB)
     &aes_128_ecb_vectors,
@@ -251,6 +258,7 @@ static struct test_vectors *all_tests[] = {
 #endif
     NULL,
 };
+#endif
 
 void
 run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
@@ -326,10 +334,13 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
     }
 }
 
-#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
+#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK) || MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)
 extern uint8_t aes_128_key[];
 extern uint8_t aes_128_input[];
 extern uint8_t aes_128_ecb_expected[];
+#endif
+
+#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
 extern uint8_t aes_128_cbc_expected[];
 extern uint8_t aes_128_cbc_iv[];
 extern uint8_t aes_128_ctr_expected[];
@@ -460,6 +471,7 @@ run_ctr_bench(struct crypto_dev *crypto, uint8_t iter)
 }
 #endif /* MYNEWT_VAL(CRYPTOTEST_BENCHMARK) */
 
+#if MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)
 static void
 lock(void)
 {
@@ -478,7 +490,6 @@ unlock(void)
     assert(rc == 0);
 }
 
-#if MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)
 static void
 concurrency_test_handler(void *arg)
 {
@@ -930,7 +941,9 @@ main(void)
     struct tc_aes_key_sched_struct tc_aes;
     int iterations;
 #endif
+#if RUN_VECTOR_TESTS || MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
     int i;
+#endif
     int rc;
 
     sysinit();
@@ -941,10 +954,12 @@ main(void)
     rc = os_mutex_init(&mtx);
     assert(rc == 0);
 
+#if RUN_VECTOR_TESTS
     printf("=== Test vectors ===\n");
     for (i = 0; all_tests[i] != NULL; i++) {
         run_test_vectors(crypto, all_tests[i]);
     }
+#endif
 
 #if MYNEWT_VAL(CRYPTOTEST_INPLACE)
     printf("\n=== In-place encrypt/decrypt ===\n");
