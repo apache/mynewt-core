@@ -356,7 +356,7 @@ static int
 da1469x_uart_create(struct uart_dev *dev, const char *name, uint8_t priority,
                     const struct da1469x_uart_cfg *cfg)
 {
-    return os_dev_create(&dev->ud_dev, "uart0",
+    return os_dev_create(&dev->ud_dev, name,
                          OS_DEV_INIT_PRIMARY, priority, uart_hal_init,
                          (void *)cfg);
 }
