@@ -68,28 +68,44 @@ kinetis_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
     return 0;
 }
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 static int
 kinetis_hash_update(struct hash_dev *hash, void *ctx, uint16_t algo,
-        const void *inbuf, uint32_t inlen)
+                    const void *inbuf, uint32_t inlen)
 {
     uint32_t i;
     uint32_t remain;
     struct hash_sha256_context *sha256ctx;
     uint8_t *u8p;
+    uint32_t len;
 
     sha256ctx = (struct hash_sha256_context *)ctx;
     i = 0;
     remain = inlen;
     u8p = (uint8_t *)inbuf;
 
+    if (sha256ctx->remain > 0) {
+        len = MIN(SHA256_BLOCK_LEN - sha256ctx->remain, inlen);
+        memcpy(&sha256ctx->pad[sha256ctx->remain], &u8p[0], len);
+        sha256ctx->remain += len;
+        remain -= len;
+
+        if (sha256ctx->remain == SHA256_BLOCK_LEN) {
+            cau_sha256_hash_n(sha256ctx->pad, 1, sha256ctx->output);
+            sha256ctx->remain = 0;
+            sha256ctx->len += SHA256_BLOCK_LEN;
+            i = len;
+        }
+    }
+
     while (remain >= SHA256_BLOCK_LEN) {
         cau_sha256_hash_n((const unsigned char *)&u8p[i], 1,
                 sha256ctx->output);
         remain -= SHA256_BLOCK_LEN;
         i += SHA256_BLOCK_LEN;
+        sha256ctx->len += SHA256_BLOCK_LEN;
     }
-
-    sha256ctx->len += i;
 
     if (remain > 0) {
         memcpy(sha256ctx->pad, &u8p[i], remain);
