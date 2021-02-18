@@ -57,3 +57,5 @@ syscfg.vals:
 
     # Always use non-blocking API
     SPI_HAL_USE_NOBLOCK: 1
+
+    BLE_HCI_TRANSPORT: nrf5340
