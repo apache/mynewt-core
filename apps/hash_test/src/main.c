@@ -254,6 +254,71 @@ run_stream_test(struct hash_dev *hash)
     }
 }
 
+void
+run_varlength_sha256_test(struct hash_dev *hash)
+{
+    struct hash_generic_context ctx;
+    int i;
+    int rc;
+    uint16_t algo;
+    char *string;
+    uint8_t outbuf[SHA256_DIGEST_LEN];
+
+    char *strings[] = {
+        "All that is gold does not glitter,",
+        "Not all those who wander are lost;",
+        "The old that is strong does not wither,",
+        "Deep roots are not reached by the frost.",
+        "From the ashes a fire shall be woken,",
+        "A light from the shadows shall spring;",
+        "Renewed shall be blade that was broken,",
+        "The crownless again shall be king.",
+    };
+
+    uint8_t digest[SHA256_DIGEST_LEN] = "\x83\x6c\x57\x9d\x0c\x13\xec\x71"
+                                        "\x9f\x1d\x38\xf7\x34\xeb\x09\x4f"
+                                        "\x83\x6e\xe9\x06\xc7\xda\x78\x71"
+                                        "\x04\x87\x2b\xcf\x2d\x09\x84\x3d";
+
+    algo = HASH_ALGO_SHA256;
+
+    if (!hash_has_support(hash, algo)) {
+        printf("unsupported\n");
+        return;
+    }
+
+    rc = hash_custom_start(hash, &ctx, algo);
+    if (rc) {
+        printf("failure\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof strings / sizeof strings[0]; i++) {
+        string = strings[i];
+        printf("  %s: ", string);
+
+        rc = hash_custom_update(hash, &ctx, algo, string, strlen(string));
+        if (rc) {
+            printf("failure\n");
+            return;
+        } else {
+            printf("ok\n");
+        }
+    }
+
+    rc = hash_custom_finish(hash, &ctx, algo, outbuf);
+    if (rc) {
+        printf("failure\n");
+        return;
+    }
+
+    if (memcmp(outbuf, digest, SHA256_DIGEST_LEN) == 0) {
+        printf("digest: ok\n");
+    } else {
+        printf("digest: invalid\n");
+    }
+}
+
 typedef void (* hash_start_func_t)(void *, void *);
 typedef void (* hash_update_func_t)(void *, const uint8_t *, uint32_t);
 typedef void (* hash_finish_func_t)(void *, uint8_t *);
@@ -428,6 +493,9 @@ main(void)
 
     printf("\n=== SHA-256 of 1000000 'a' letters ===\n");
     run_stream_test(hash);
+
+    printf("\n=== SHA-256 of variable length strings ===\n");
+    run_varlength_sha256_test(hash);
 
     mbedtls_sha256_init(&mbed_sha256);
     tc_sha256_init(&tc_sha256);
