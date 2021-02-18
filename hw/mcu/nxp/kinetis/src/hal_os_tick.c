@@ -23,23 +23,21 @@
 #include <hal/hal_os_tick.h>
 
 #include "mcu/cmsis_nvic.h"
+#include "fsl_clock.h"
 
-#include "fsl_pit.h"
-
-static void nxp_pit0_timer_handler(void)
+static void
+sys_tick_handler(void)
 {
     uint32_t sr;
 
     OS_ENTER_CRITICAL(sr);
-
-    /* Clear interrupt flag.*/
-    PIT_ClearStatusFlags(PIT, kPIT_Chnl_0, PIT_TFLG_TIF_MASK);
     os_time_advance(1);
 
     OS_EXIT_CRITICAL(sr);
 }
 
-void os_tick_idle(os_time_t ticks)
+void
+os_tick_idle(os_time_t ticks)
 {
     OS_ASSERT_CRITICAL();
 
@@ -47,37 +45,32 @@ void os_tick_idle(os_time_t ticks)
     __WFI();
 }
 
-void os_tick_init(uint32_t os_ticks_per_sec, int prio)
+void
+os_tick_init(uint32_t os_ticks_per_sec, int prio)
 {
-    pit_config_t pitConfig;
     uint32_t sr;
 
-    uint32_t ticks_per_ostick = 1000000U / os_ticks_per_sec; /* 1000/s */
-
-    PIT_GetDefaultConfig(&pitConfig);
-    pitConfig.enableRunInDebug = true;
-    PIT_Init(PIT, &pitConfig);
-
-    /* Clear interrupt flag.*/
-    PIT_ClearStatusFlags(PIT, kPIT_Chnl_0, PIT_TFLG_TIF_MASK);
-
-    /* Set timer period for channel 0 */
-    PIT_SetTimerPeriod(PIT, kPIT_Chnl_0, USEC_TO_COUNT(ticks_per_ostick, CLOCK_GetFreq(kCLOCK_BusClk)));
-
-    /* Enable timer interrupts for channel 0 */
-    PIT_EnableInterrupts(PIT, kPIT_Chnl_0, kPIT_TimerInterruptEnable);
-
-    /* disable interrupts */
+    /* Disable interrupts */
     OS_ENTER_CRITICAL(sr);
 
-    /* Set isr in vector table and enable interrupt */
-    NVIC_SetPriority(PIT0_IRQn, prio);
-    NVIC_SetVector(PIT0_IRQn, (uint32_t)nxp_pit0_timer_handler);
-    /* Enable at the NVIC */
-    EnableIRQ(PIT0_IRQn);
+    /* Disable SysTick timer */
+    SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
+    /* Initialize Reload value */
+    SysTick->LOAD = CLOCK_GetFreq(SystemCoreClock) / os_ticks_per_sec;
+    SysTick->VAL = 0UL;
+    /* Set clock source to processor clock */
+    SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
+    /* Enable SysTick IRQ */
+    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
 
-    /* Start channel 0 */
-    PIT_StartTimer(PIT, kPIT_Chnl_0);
+    /* Set isr in vector table and enable interrupt */
+    NVIC_SetPriority(SysTick_IRQn, prio);
+    NVIC_SetVector(SysTick_IRQn, (uint32_t) sys_tick_handler);
+    /* Enable at the NVIC */
+    EnableIRQ(SysTick_IRQn);
+
+    /* Enable SysTick timer */
+    SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 
     OS_EXIT_CRITICAL(sr);
 }

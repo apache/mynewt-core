@@ -32,5 +32,6 @@
 
 FILE_NAME=$BIN_BASENAME.elf
 TARGET=k64f
+EXTRA_GDB_CMDS="mem 0x20030000 0xffffffff rw nocache"
 
 pyocd_debug
