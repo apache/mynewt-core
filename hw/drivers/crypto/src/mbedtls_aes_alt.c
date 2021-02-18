@@ -94,9 +94,44 @@ int
 mbedtls_aes_crypt_ecb(mbedtls_aes_context *ctx, int mode,
                       const unsigned char input[16], unsigned char output[16])
 {
-    int ret = crypto_encrypt_aes_ecb(ctx->crypto, ctx->key, ctx->keylen,
+    int ret;
+
+    switch (mode) {
+    case MBEDTLS_AES_ENCRYPT:
+        ret = crypto_encrypt_aes_ecb(ctx->crypto, ctx->key, ctx->keylen,
                                      (const uint8_t *)input, (uint8_t *)output, AES_BLOCK_LEN);
+        break;
+    case MBEDTLS_AES_DECRYPT:
+        ret = crypto_decrypt_aes_ecb(ctx->crypto, ctx->key, ctx->keylen,
+                                     (const uint8_t *)input, (uint8_t *)output, AES_BLOCK_LEN);
+        break;
+    default:
+        return -1;
+    }
+
     return (ret == AES_BLOCK_LEN) ? 0 : -1;
+}
+
+int
+mbedtls_aes_crypt_cbc(mbedtls_aes_context *ctx, int mode, size_t length, unsigned char iv[16],
+                      const unsigned char *input, unsigned char *output)
+{
+    int ret;
+
+    switch (mode) {
+    case MBEDTLS_AES_ENCRYPT:
+        ret = crypto_encrypt_aes_cbc(ctx->crypto, ctx->key, ctx->keylen, (uint8_t *)iv,
+                                     (uint8_t *)input, (uint8_t *)output, length);
+        break;
+    case MBEDTLS_AES_DECRYPT:
+        ret = crypto_decrypt_aes_cbc(ctx->crypto, ctx->key, ctx->keylen, (uint8_t *)iv,
+                                     (uint8_t *)input, (uint8_t *)output, length);
+        break;
+    default:
+        return -1;
+    }
+
+    return (ret == length) ? 0 : -1;
 }
 
 #endif /* MYNEWT_VAL(MBEDTLS_AES_ALT) */
