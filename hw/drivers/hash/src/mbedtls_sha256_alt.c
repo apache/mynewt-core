@@ -42,7 +42,7 @@ mbedtls_sha256_free(mbedtls_sha256_context *ctx)
 
 void
 mbedtls_sha256_clone(mbedtls_sha256_context *dst,
-        const mbedtls_sha256_context *src)
+                     const mbedtls_sha256_context *src)
 {
     memcpy(dst, src, sizeof(*dst));
 }
@@ -57,14 +57,16 @@ mbedtls_sha256_starts_ret(mbedtls_sha256_context *ctx, int is224)
     return hash_sha256_start(&ctx->sha256ctx, ctx->hash);
 }
 
-int mbedtls_sha256_update_ret(mbedtls_sha256_context *ctx,
-        const unsigned char *input, size_t ilen)
+int
+mbedtls_sha256_update_ret(mbedtls_sha256_context *ctx,
+                          const unsigned char *input, size_t ilen)
 {
     return hash_sha256_update(&ctx->sha256ctx, input, ilen);
 }
 
-int mbedtls_sha256_finish_ret(mbedtls_sha256_context *ctx,
-        unsigned char output[32])
+int
+mbedtls_sha256_finish_ret(mbedtls_sha256_context *ctx,
+                          unsigned char output[32])
 {
     return hash_sha256_finish(&ctx->sha256ctx, output);
 }
@@ -83,16 +85,29 @@ mbedtls_sha256_starts(mbedtls_sha256_context *ctx, int is224)
     (void)hash_sha256_start(&ctx->sha256ctx, ctx->hash);
 }
 
-void mbedtls_sha256_update(mbedtls_sha256_context *ctx,
-        const unsigned char *input, size_t ilen)
+void
+mbedtls_sha256_update(mbedtls_sha256_context *ctx,
+                      const unsigned char *input, size_t ilen)
 {
     (void)hash_sha256_update(&ctx->sha256ctx, input, ilen);
 }
 
-void mbedtls_sha256_finish(mbedtls_sha256_context *ctx,
-        unsigned char output[32])
+void
+mbedtls_sha256_finish(mbedtls_sha256_context *ctx,
+                      unsigned char output[32])
 {
     (void)hash_sha256_finish(&ctx->sha256ctx, output);
+}
+
+int
+mbedtls_internal_sha256_process(mbedtls_sha256_context *ctx,
+                                const unsigned char data[64])
+{
+    /*
+     * Note: This function is only called by SHA-224 functions, only
+     * needed for building, shouldn't ever be called in practice.
+     */
+    assert(0);
 }
 
 #endif /* MYNEWT_VAL(MBEDTLS_SHA256_ALT) */
