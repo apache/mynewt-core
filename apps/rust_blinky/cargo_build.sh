@@ -17,6 +17,7 @@ set -eu
 # limitations under the License.
 #
 
+# Map mynewt architecture to cargo target
 if [[ ${MYNEWT_VAL_ARCH_NAME} == '"cortex_m0"' ]]; then
   TARGET="thumbv6m-none-eabi"
 elif [[ ${MYNEWT_VAL_ARCH_NAME} == '"cortex_m3"' ]]; then
@@ -32,5 +33,16 @@ else
   exit 1
 fi
 
-cargo build --target="${TARGET}" --target-dir="${MYNEWT_PKG_BIN_DIR}"
-cp "${MYNEWT_PKG_BIN_DIR}"/${TARGET}/debug/*.a "${MYNEWT_PKG_BIN_ARCHIVE}"
+# Map mynewt build profile to cargo build profile
+if [[ ${MYNEWT_BUILD_PROFILE} == 'debug' ]]; then
+  # mynewt debug profile -> cargo debug profile
+  CARGO_PROFILE="debug"
+  CARGO_ARGS=""
+else
+  # all other mynewt profiles -> cargo release profile
+  CARGO_PROFILE="release"
+  CARGO_ARGS="--release"
+fi
+
+cargo build --target="${TARGET}" --target-dir="${MYNEWT_PKG_BIN_DIR}" ${CARGO_ARGS}
+cp "${MYNEWT_PKG_BIN_DIR}"/${TARGET}/${CARGO_PROFILE}/*.a "${MYNEWT_PKG_BIN_ARCHIVE}"
