@@ -44,8 +44,6 @@ stm32_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
 {
     uint32_t algomask;
 
-    (void)ctx;
-
     if (!(algo & g_algos)) {
         return -1;
     }
@@ -64,6 +62,7 @@ stm32_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
         return -1;
     }
 
+    ((struct hash_sha2_context *)ctx)->remain = 0;
     HASH->CR = algomask | HASH_CR_INIT | HASH_DATATYPE_8B;
 
     return 0;
@@ -71,18 +70,43 @@ stm32_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
 
 static int
 stm32_hash_update(struct hash_dev *hash, void *ctx, uint16_t algo,
-        const void *inbuf, uint32_t inlen)
+                  const void *inbuf, uint32_t inlen)
 {
     uint32_t *u32p;
-    int i;
+    uint8_t *u8p;
+    uint32_t remain;
+    struct hash_sha2_context *sha2ctx;
+    uint8_t statesz;
 
-    (void)ctx;
+    sha2ctx = (struct hash_sha2_context *)ctx;
+    statesz = sizeof sha2ctx->state;
 
-    u32p = (uint32_t *)inbuf;
-    for (i = 0; i < (inlen + 3) / 4; i++) {
-        HASH->DIN = u32p[i];
+    remain = inlen;
+    u8p = (uint8_t *)inbuf;
+    if (sha2ctx->remain) {
+        while (sha2ctx->remain < statesz && remain) {
+            sha2ctx->state[sha2ctx->remain++] = *(u8p++);
+            remain--;
+        }
+        if (sha2ctx->remain == statesz) {
+            HASH->DIN = *((uint32_t *)sha2ctx->state);
+            sha2ctx->remain = 0;
+        }
     }
-    __HAL_HASH_SET_NBVALIDBITS(inlen);
+
+    u32p = (uint32_t *)u8p;
+    while (remain >= statesz) {
+        HASH->DIN = *(u32p++);
+        remain -= statesz;
+    }
+
+    if (remain) {
+        u8p = (uint8_t *)u32p;
+        while (sha2ctx->remain < statesz && remain) {
+            sha2ctx->state[sha2ctx->remain++] = *u8p++;
+            remain--;
+        }
+    }
 
     return 0;
 }
@@ -94,8 +118,14 @@ stm32_hash_finish(struct hash_dev *hash, void *ctx, uint16_t algo,
     uint8_t digestsz;
     uint32_t *u32p;
     int i;
+    struct hash_sha2_context *sha2ctx;
 
-    (void)ctx;
+    sha2ctx = (struct hash_sha2_context *)ctx;
+
+    if (sha2ctx->remain) {
+        HASH->DIN = *((uint32_t *)sha2ctx->state);
+    }
+    __HAL_HASH_SET_NBVALIDBITS(sha2ctx->remain);
 
     switch (algo) {
     case HASH_ALGO_SHA224:

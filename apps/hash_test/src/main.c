@@ -210,19 +210,21 @@ run_stream_test(struct hash_dev *hash)
     uint8_t outbuf[HASH_MAX_DIGEST_LEN];
     struct hash_generic_context ctx;
     struct stream_data *stream;
+    uint16_t algo;
     int i, d;
     int rc;
 
-    for (d = 0; d < sizeof(streams)/sizeof(streams[0]); d++) {
+    for (d = 0; d < ARRAY_SIZE(streams); d++) {
         stream = &streams[d];
         printf("%s: ", stream->name);
+        algo = stream->algo;
 
-        if (!hash_has_support(hash, stream->algo)) {
+        if (!hash_has_support(hash, algo)) {
             printf("unsupported\n");
             continue;
         }
 
-        rc = hash_custom_start(hash, &ctx, stream->algo);
+        rc = hash_custom_start(hash, &ctx, algo);
         if (rc) {
             printf("failure\n");
             continue;
@@ -234,14 +236,14 @@ run_stream_test(struct hash_dev *hash)
          * XXX no test needed because 1000000 is a multiple of 64
          */
         for (i = 0; i < 1000000; i += 64) {
-            rc = hash_custom_update(hash, &ctx, stream->algo, inbuf, 64);
+            rc = hash_custom_update(hash, &ctx, algo, inbuf, 64);
             if (rc) {
                 printf("failure\n");
                 continue;
             }
         }
 
-        rc = hash_custom_finish(hash, &ctx, stream->algo, outbuf);
+        rc = hash_custom_finish(hash, &ctx, algo, outbuf);
         if (rc) {
             printf("failure\n");
         }
@@ -254,15 +256,37 @@ run_stream_test(struct hash_dev *hash)
     }
 }
 
+static struct stream_data varlengths[] = {
+    {
+        .name = "SHA-224",
+        .algo = HASH_ALGO_SHA224,
+        .digestlen = SHA224_DIGEST_LEN,
+        .digest = "\x10\x71\xb0\x36\x71\x08\xed\x21"
+                  "\x68\x9f\x3f\x81\x6a\xa8\x45\xa9"
+                  "\xa3\xa5\x65\x7e\xeb\x53\xc1\x63"
+                  "\x6d\xfa\x81\xae",
+    },
+    {
+        .name = "SHA-256",
+        .algo = HASH_ALGO_SHA256,
+        .digestlen = SHA256_DIGEST_LEN,
+        .digest = "\x83\x6c\x57\x9d\x0c\x13\xec\x71"
+                  "\x9f\x1d\x38\xf7\x34\xeb\x09\x4f"
+                  "\x83\x6e\xe9\x06\xc7\xda\x78\x71"
+                  "\x04\x87\x2b\xcf\x2d\x09\x84\x3d",
+    },
+};
+
 void
-run_varlength_sha256_test(struct hash_dev *hash)
+run_varlength_test(struct hash_dev *hash)
 {
     struct hash_generic_context ctx;
-    int i;
+    int i, j;
     int rc;
-    uint16_t algo;
     char *string;
-    uint8_t outbuf[SHA256_DIGEST_LEN];
+    uint8_t outbuf[HASH_MAX_DIGEST_LEN];
+    struct stream_data *varlength;
+    uint16_t algo;
 
     char *strings[] = {
         "All that is gold does not glitter,",
@@ -275,49 +299,132 @@ run_varlength_sha256_test(struct hash_dev *hash)
         "The crownless again shall be king.",
     };
 
-    uint8_t digest[SHA256_DIGEST_LEN] = "\x83\x6c\x57\x9d\x0c\x13\xec\x71"
-                                        "\x9f\x1d\x38\xf7\x34\xeb\x09\x4f"
-                                        "\x83\x6e\xe9\x06\xc7\xda\x78\x71"
-                                        "\x04\x87\x2b\xcf\x2d\x09\x84\x3d";
+    for (j = 0; j < ARRAY_SIZE(varlengths); j++) {
+        varlength = &varlengths[j];
+        printf("%s: ", varlength->name);
+        algo = varlength->algo;
 
-    algo = HASH_ALGO_SHA256;
+        if (!hash_has_support(hash, algo)) {
+            printf("unsupported\n");
+            continue;
+        }
 
-    if (!hash_has_support(hash, algo)) {
-        printf("unsupported\n");
-        return;
-    }
-
-    rc = hash_custom_start(hash, &ctx, algo);
-    if (rc) {
-        printf("failure\n");
-        return;
-    }
-
-    for (i = 0; i < sizeof strings / sizeof strings[0]; i++) {
-        string = strings[i];
-        printf("  %s: ", string);
-
-        rc = hash_custom_update(hash, &ctx, algo, string, strlen(string));
+        rc = hash_custom_start(hash, &ctx, algo);
         if (rc) {
             printf("failure\n");
-            return;
+            continue;
+        }
+
+        printf("\n");
+        for (i = 0; i < ARRAY_SIZE(strings); i++) {
+            string = strings[i];
+            printf("  %s\n", string);
+
+            rc = hash_custom_update(hash, &ctx, algo, string, strlen(string));
+            if (rc) {
+                break;
+            }
+        }
+
+        if (rc) {
+            printf("failure\n");
+            continue;
         } else {
             printf("ok\n");
         }
-    }
 
-    rc = hash_custom_finish(hash, &ctx, algo, outbuf);
-    if (rc) {
-        printf("failure\n");
-        return;
-    }
+        rc = hash_custom_finish(hash, &ctx, algo, outbuf);
+        if (rc) {
+            printf("failure\n");
+            break;
+        }
 
-    if (memcmp(outbuf, digest, SHA256_DIGEST_LEN) == 0) {
-        printf("digest: ok\n");
-    } else {
-        printf("digest: invalid\n");
+        printf("DIGEST: ");
+        if (memcmp(outbuf, varlength->digest, varlength->digestlen) == 0) {
+            printf("valid\n");
+        } else {
+            printf("invalid\n");
+        }
     }
 }
+
+static struct stream_data bytewrites[] = {
+    {
+        .name = "SHA-224",
+        .algo = HASH_ALGO_SHA224,
+        .digestlen = SHA224_DIGEST_LEN,
+        .digest = "\x13\xb3\x1a\xd9\x15\xd8\x44\x69"
+                  "\x51\x9f\xad\xba\xd4\xa2\xc8\x52"
+                  "\xb5\x29\x18\xaa\xd5\xdb\xa3\x5f"
+                  "\x91\xbb\x62\xe1",
+    },
+    {
+        .name = "SHA-256",
+        .algo = HASH_ALGO_SHA256,
+        .digestlen = SHA256_DIGEST_LEN,
+        .digest = "\xe8\xd9\x5c\xc2\xb4\xbc\x19\x8c"
+                  "\x54\xb4\x0b\xd2\x14\xdf\x95\x8a"
+                  "\xfb\x65\xf5\xe7\x3d\x2c\x2e\xaf"
+                  "\xe0\x59\x3c\xf5\xc6\x35\xc1\xf0",
+    },
+};
+
+void
+run_bytewrite_test(struct hash_dev *hash)
+{
+    struct hash_generic_context ctx;
+    int i, j;
+    int rc;
+    uint8_t outbuf[HASH_MAX_DIGEST_LEN];
+    struct stream_data *bytewrite;
+    uint16_t algo;
+
+    char byte = 'a';
+
+    for (j = 0; j < ARRAY_SIZE(bytewrites); j++) {
+        bytewrite = &bytewrites[j];
+        printf("%s: ", bytewrite->name);
+        algo = bytewrite->algo;
+
+        if (!hash_has_support(hash, algo)) {
+            printf("unsupported\n");
+            continue;
+        }
+
+        rc = hash_custom_start(hash, &ctx, algo);
+        if (rc) {
+            printf("failure\n");
+            continue;
+        }
+
+        for (i = 0; i < 257; i++) {
+            rc = hash_custom_update(hash, &ctx, algo, &byte, 1);
+            if (rc) {
+                break;
+            }
+        }
+        if (rc) {
+            printf("failure\n");
+            continue;
+        } else {
+            printf("ok\n");
+        }
+
+        rc = hash_custom_finish(hash, &ctx, algo, outbuf);
+        if (rc) {
+            printf("failure\n");
+            break;
+        }
+
+        printf("DIGEST: ");
+        if (memcmp(outbuf, bytewrite->digest, bytewrite->digestlen) == 0) {
+            printf("valid\n");
+        } else {
+            printf("invalid\n");
+        }
+    }
+}
+
 
 typedef void (* hash_start_func_t)(void *, void *);
 typedef void (* hash_update_func_t)(void *, const uint8_t *, uint32_t);
@@ -491,11 +598,14 @@ main(void)
         run_nist_vectors(hash, all_tests[i]);
     }
 
-    printf("\n=== SHA-256 of 1000000 'a' letters ===\n");
+    printf("\n=== SHA-2 of 1000000 'a' letters ===\n");
     run_stream_test(hash);
 
-    printf("\n=== SHA-256 of variable length strings ===\n");
-    run_varlength_sha256_test(hash);
+    printf("\n=== SHA-2 of variable length strings ===\n");
+    run_varlength_test(hash);
+
+    printf("\n=== SHA-2 of multiple byte writes ===\n");
+    run_bytewrite_test(hash);
 
     mbedtls_sha256_init(&mbed_sha256);
     tc_sha256_init(&tc_sha256);

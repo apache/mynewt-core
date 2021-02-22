@@ -23,15 +23,32 @@
 #include "hash/hash.h"
 
 /*
- * On STM32 the SDK already handles context...
+ * XXX: the STM32 SDK handles context, so here we just have to need to
+ *      properly implement the expected interface. Whenever updating these
+ *      structs always maintain them in sync because only hash_sha2_context
+ *      is used internally.
+ * NOTE: In the STM32 only the finish operation is able to write less than
+ *      a word (32-bit) so a bit of internal state must be maintained.
  */
+
+#define STATESZ sizeof(uint32_t)
 
 struct hash_sha224_context {
     void *dev;
+    uint8_t remain;
+    uint8_t state[STATESZ];
 };
 
 struct hash_sha256_context {
     void *dev;
+    uint8_t remain;
+    uint8_t state[STATESZ];
+};
+
+struct hash_sha2_context {
+    void *dev;
+    uint8_t remain;
+    uint8_t state[STATESZ];
 };
 
 #endif /* __HASH_CONTEXT_H__ */
