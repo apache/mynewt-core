@@ -53,6 +53,9 @@ static struct os_eventq compat_lines_queue;
 
 static int nlip_state;
 static int echo = MYNEWT_VAL(CONSOLE_ECHO);
+#if MYNEWT_VAL(CONSOLE_NLIP_RESTORE_ECHO)
+static uint8_t restore_echo;
+#endif
 
 static uint8_t cur, end;
 static struct os_eventq *avail_queue;
@@ -66,6 +69,25 @@ int __attribute__((weak))
 console_out_nolock(int c)
 {
     return c;
+}
+
+static void
+console_nlip_disable_echo(void)
+{
+#if MYNEWT_VAL(CONSOLE_NLIP_RESTORE_ECHO)
+    restore_echo = echo;
+#endif
+    console_echo(0);
+}
+
+static void
+console_nlip_enable_echo(void)
+{
+#if MYNEWT_VAL(CONSOLE_NLIP_RESTORE_ECHO)
+    console_echo(restore_echo);
+#else
+    console_echo(1);
+#endif
 }
 
 void
@@ -165,7 +187,7 @@ console_write(const char *str, int cnt)
 
     /* If the byte string is non nlip and we are silencing non nlip bytes,
      * do not let it go out on the console
-     */ 
+     */
     if (!g_is_output_nlip && g_console_silence_non_nlip) {
         goto done;
     }
@@ -310,19 +332,18 @@ console_handle_char(uint8_t byte)
                 console_compat_rx_cb();
             }
 #endif
-
             input = NULL;
             ev = NULL;
-            console_echo(1);
+            console_nlip_enable_echo();
             return 0;
         /* Ignore characters if there's no more buffer space */
         } else if (byte == CONSOLE_NLIP_PKT_START2) {
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_nlip_disable_echo();
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, end);
         } else if (byte == CONSOLE_NLIP_DATA_START2) {
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_nlip_disable_echo();
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, end);
         }
 

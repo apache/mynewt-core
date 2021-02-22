@@ -41,6 +41,9 @@ syscfg.defs:
     CONSOLE_ECHO:
         description: 'Default console echo'
         value: 1
+    CONSOLE_NLIP_RESTORE_ECHO:
+        description: 'Restore echo setting after NLIP commands'
+        value: 0
     CONSOLE_COMPAT:
         description: 'Console backward compatibility'
         value: 1
