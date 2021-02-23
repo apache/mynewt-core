@@ -1683,7 +1683,7 @@ bme680_spi_read(struct sensor *sensor, uint8_t dev_id, uint8_t reg_addr,
     struct sensor_itf *interface = SENSOR_GET_ITF(sensor);
 
     hal_gpio_write(interface->si_cs_pin, 0);
-    hal_spi_tx_val(interface->si_num, reg_addr | 0x80);
+    (void)hal_spi_tx_val(interface->si_num, reg_addr | 0x80);
     /* Use reg_data for the txbuf as well.
     The contents don't matter since we're reading */
     hal_spi_txrx(interface->si_num, reg_data, reg_data, len);
@@ -1699,7 +1699,7 @@ bme680_spi_write(struct sensor *sensor, uint8_t dev_id, uint8_t reg_addr,
     struct sensor_itf *interface = SENSOR_GET_ITF(sensor);
 
     hal_gpio_write(interface->si_cs_pin, 0);
-    hal_spi_tx_val(interface->si_num, reg_addr);
+    (void)hal_spi_tx_val(interface->si_num, reg_addr);
     hal_spi_txrx(interface->si_num, reg_data, NULL, len);
     hal_gpio_write(interface->si_cs_pin, 1);
 
@@ -1988,7 +1988,10 @@ bme680_config(struct bme680 *bme680, struct bme680_cfg *cfg)
     }
     bme680->cfg.delay_ms = bme680_delay_ms;
     bme680->cfg.sensor = &bme680->sensor;
-    sensor_set_type_mask(&bme680->sensor, bme680->cfg.s_mask);
+    rc = sensor_set_type_mask(&bme680->sensor, bme680->cfg.s_mask);
+    if (rc != 0) {
+        goto err;
+    }
 
     rc = bme680_internal_init(&bme680->cfg);
     if (rc != 0) {
