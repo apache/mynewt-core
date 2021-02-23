@@ -88,12 +88,12 @@ hal_system_clock_start(void)
 
 #if MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFSYNTH)
     /* Must turn on HFLCK for synthesized 32768 crystal */
-    if ((NRF_CLOCK_S->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
+    if ((NRF_CLOCK_NS->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
         (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) {
-        NRF_CLOCK_S->EVENTS_HFCLKSTARTED = 0;
-        NRF_CLOCK_S->TASKS_HFCLKSTART = 1;
+        NRF_CLOCK_NS->EVENTS_HFCLKSTARTED = 0;
+        NRF_CLOCK_NS->TASKS_HFCLKSTART = 1;
         while (1) {
-            if ((NRF_CLOCK_S->EVENTS_HFCLKSTARTED) != 0) {
+            if ((NRF_CLOCK_NS->EVENTS_HFCLKSTARTED) != 0) {
                 break;
             }
         }
