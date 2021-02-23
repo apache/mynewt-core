@@ -512,7 +512,7 @@ bus_node_unlock(struct os_dev *node)
     /* In auto PM we should disable bus device on last unlock */
     if ((bdev->pm_mode == BUS_PM_MODE_AUTO) &&
         (os_mutex_get_level(&bdev->lock) == 1)) {
-        if (bdev->pm_opts.pm_mode_auto.disable_tmo) {
+        if (bdev->pm_opts.pm_mode_auto.disable_tmo == 0) {
             bus_dev_disable(bdev);
         } else {
             os_callout_reset(&bdev->inactivity_tmo,
