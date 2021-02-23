@@ -2448,9 +2448,14 @@ bmp3_get_fifo_data(const struct bmp3_dev *dev)
             BMP388_LOG_ERROR("*****fifo_len added timefifo length is %d\n", fifo_len);
 #endif
         }
-        /* Update the fifo length in the fifo structure */
-        dev->fifo->data.byte_count = fifo_len;
+
+        if (fifo_len > sizeof(fifo->data.buffer)) {
+            rslt = BMP3_E_INVALID_LEN;
+        }
+
         if (rslt == BMP3_OK) {
+            /* Update the fifo length in the fifo structure */
+            dev->fifo->data.byte_count = fifo_len;
             /* Read the fifo data */
             rslt = bmp3_get_regs(BMP3_FIFO_DATA_ADDR, fifo->data.buffer, fifo_len, dev);
         }
