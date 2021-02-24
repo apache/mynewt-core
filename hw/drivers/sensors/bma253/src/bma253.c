@@ -4097,6 +4097,10 @@ self_test_axis(const struct bma253 * bma253,
     struct accel_data accel_pos_lo;
     int rc;
 
+    if (axis != AXIS_X && axis != AXIS_Y && axis != AXIS_Z) {
+        return SYS_EINVAL;
+    }
+
     rc = self_test_nudge(bma253,
                          SELF_TEST_AMPL_HIGH,
                          SELF_TEST_SIGN_NEGATIVE,
