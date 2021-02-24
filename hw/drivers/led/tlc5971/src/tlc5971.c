@@ -49,12 +49,18 @@ tlc5971_open(struct os_dev *odev, uint32_t wait, void *arg)
     spi_cfg.word_size = HAL_SPI_WORD_SIZE_8BIT;
 
     spi_num = dev->tlc_itf.tpi_spi_num;
-    hal_spi_disable(spi_num);
+    rc = hal_spi_disable(spi_num);
+    if (rc) {
+        return rc;
+    }
     rc = hal_spi_config(spi_num, &spi_cfg);
     if (rc) {
         return rc;
     }
-    hal_spi_enable(spi_num);
+    rc = hal_spi_enable(spi_num);
+    if (rc) {
+        return (rc);
+    }
 
     dev->is_enabled = true;
     return 0;

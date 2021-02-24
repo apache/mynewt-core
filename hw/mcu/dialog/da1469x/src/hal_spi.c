@@ -257,7 +257,10 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
 
     spi->spi_type  = spi_type;
 
-    hal_spi_disable(spi_num);
+    rc = hal_spi_disable(spi_num);
+    if (rc) {
+        return rc;
+    }
 
     if (spi_type == HAL_SPI_TYPE_MASTER && SPI_MASTER_CODE) {
         rc = hal_spi_init_master(spi, (struct da1469x_hal_spi_cfg *)cfg);

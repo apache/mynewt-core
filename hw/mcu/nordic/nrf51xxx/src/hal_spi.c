@@ -976,8 +976,14 @@ hal_spi_abort(int spi_num)
         }
     } else {
         /* Only way I can see doing this is to disable, then re-enable */
-        hal_spi_disable(spi_num);
-        hal_spi_enable(spi_num);
+        rc = hal_spi_disable(spi_num);
+        if (rc) {
+            goto err;
+        }
+        rc = hal_spi_enable(spi_num);
+        if (rc) {
+            goto err;
+        }
     }
 
 err:
