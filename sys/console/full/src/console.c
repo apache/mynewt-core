@@ -87,6 +87,9 @@ static int nlip_state;
 static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
 static bool rx_stalled;
+#if MYNEWT_VAL(CONSOLE_NLIP_RESTORE_ECHO)
+static uint8_t restore_echo;
+#endif
 
 /* Cursor position in input line */
 static uint16_t cur;
@@ -114,6 +117,25 @@ static char console_prompt[MYNEWT_VAL(CONSOLE_PROMPT_MAX_LEN)];
 static uint16_t prompt_len;
 /* Current history line, 0 no history line */
 static history_handle_t history_line;
+
+static void
+console_nlip_disable_echo(void)
+{
+#if MYNEWT_VAL(CONSOLE_NLIP_RESTORE_ECHO)
+    restore_echo = echo;
+#endif
+    console_echo(0);
+}
+
+static void
+console_nlip_enable_echo(void)
+{
+#if MYNEWT_VAL(CONSOLE_NLIP_RESTORE_ECHO)
+    console_echo(restore_echo);
+#else
+    console_echo(1);
+#endif
+}
 
 /*
  * Default implementation in case all consoles are disabled - we just ignore any
@@ -981,7 +1003,7 @@ handle_nlip(uint8_t byte)
         insert_char(&input->line[cur], byte);
         if (byte == '\n') {
             input->line[cur] = '\0';
-            console_echo(1);
+            console_nlip_enable_echo();
             nlip_state = 0;
 
             console_handle_line();
@@ -991,7 +1013,7 @@ handle_nlip(uint8_t byte)
         if (byte == CONSOLE_NLIP_PKT_START2) {
             nlip_state = NLIP_PKT_START2;
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_nlip_disable_echo();
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1);
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START2);
         } else {
@@ -1003,7 +1025,7 @@ handle_nlip(uint8_t byte)
         if (byte == CONSOLE_NLIP_DATA_START2) {
             nlip_state = NLIP_DATA_START2;
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_nlip_disable_echo();
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1);
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START2);
         } else {
