@@ -2677,6 +2677,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         low_g_int_cfg_set.hyster_g = cfg->low_g_int_cfg.hyster_g;
 
         rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg_set);
+        BMA253_LOG_ERROR("set low g INT setting: %d\n", rc);
     }
 
     if (notif_cfg->int_cfg == BMA253_ORIENT_INT) {
@@ -2686,7 +2687,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         orient_int_cfg.orient_mode = cfg->orient_int_cfg.orient_mode;
         orient_int_cfg.orient_blocking = cfg->orient_int_cfg.orient_blocking;
         rc = bma253_set_orient_int_cfg(bma253, &orient_int_cfg);
-        BMA253_LOG_ERROR("set ORIENT INT seting: %d\n", rc);
+        BMA253_LOG_ERROR("set ORIENT INT setting: %d\n", rc);
     }
 
     /*set parameter for int*/
@@ -4602,6 +4603,7 @@ bma253_stream_read(struct sensor *sensor,
 
         if (bma253->hw_cfg_pending) {
             rc = bma253_exec_pending_hw_cfg(bma253);
+            BMA253_LOG_ERROR("error bma253_exec_pending_hw_cfg: %d\n", rc);
         }
 
         if (bma253->ev_enabled) {
@@ -4945,6 +4947,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     int rc = 0;
+    int rc2 = 0;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable_org;
     struct int_enable int_enable = { 0 };
@@ -5007,7 +5010,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
 
     rc = bma253_get_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     int_enable.s_tap_int_enable         = tap_type == BMA253_TAP_TYPE_SINGLE;
@@ -5020,7 +5023,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
 
     rc = bma253_set_int_latch(bma253, false, INT_LATCH_LATCHED);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     pdd->registered_mask |= BMA253_NOTIFY_MASK;
@@ -5031,6 +5034,9 @@ bma253_wait_for_tap(struct bma253 * bma253,
     pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
 
     rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
+    if (rc != 0) {
+        goto done;
+    }
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -5043,7 +5049,10 @@ done:
     pdd->interrupt = NULL;
     disable_intpin(bma253);
     /* Restore previous routing */
-    rc = bma253_set_int_routes(bma253, &int_routes_org);
+    rc2 = bma253_set_int_routes(bma253, &int_routes_org);
+    if (rc == 0) {
+        rc = rc2;
+    }
 
     return rc;
 #else
@@ -5102,6 +5111,7 @@ sensor_driver_read(struct sensor *sensor,
 
     if (cfg->read_mode == BMA253_READ_M_POLL) {
         rc = bma253_poll_read(sensor, sensor_type, data_func, data_arg, timeout);
+        BMA253_LOG_ERROR("error bma253_poll_read: %d\n", rc);
     } else {
         fifo_cfg.fifo_mode = FIFO_MODE_FIFO;
         fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
@@ -5111,6 +5121,7 @@ sensor_driver_read(struct sensor *sensor,
         bma253_dump_reg(bma253);
 
         rc = bma253_stream_read(sensor, sensor_type, data_func, data_arg, timeout);
+        BMA253_LOG_ERROR("error bma253_stream_read: %d\n", rc);
     }
 
     OS_ENTER_CRITICAL(interrupt->lock);
