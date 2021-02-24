@@ -777,34 +777,20 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
 }
 
 int
-bma253_get_high_g_int_status(const struct bma253 * bma253,
-                      uint8_t * int_status)
+bma253_get_high_g_int_status(const struct bma253 *bma253,
+                             uint8_t *int_status)
 {
-    int rc = 0;
-
-    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_3,
-                       int_status, 4);
-    if (rc != 0) {
-        return rc;
-    }
-	return rc;
+    return get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_3,
+                         int_status, 4);
 }
 
 
 int
-bma253_get_int_status(const struct bma253 * bma253,
-                      bma253_int_stat_t * int_status)
+bma253_get_int_status(const struct bma253 *bma253,
+                      bma253_int_stat_t *int_status)
 {
-    int rc;
-
-    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_0,
-                       (uint8_t*)int_status, 4);
-
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
+    return get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_0,
+                         (uint8_t*)int_status, 4);
 }
 
 int
