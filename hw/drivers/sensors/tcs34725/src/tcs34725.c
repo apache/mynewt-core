@@ -690,6 +690,7 @@ tcs34725_get_rawdata(struct sensor_itf *itf, uint16_t *r, uint16_t *g,
             break;
         case TCS34725_INTEGRATIONTIME_700MS:
             STATS_INC(g_tcs34725stats, samples_700ms);
+            break;
         default:
             STATS_INC(g_tcs34725stats, samples_userdef);
         break;
