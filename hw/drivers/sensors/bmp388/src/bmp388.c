@@ -3094,12 +3094,10 @@ bmp388_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
 
     /* If the read isn't looking for pressure data, don't do anything. */
     if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_TEMPERATURE))) {
-        rc = SYS_EINVAL;
         goto err;
     }
 
     if (cfg->read_mode.mode != BMP388_READ_M_POLL) {
-        rc = SYS_EINVAL;
         goto err;
     }
 
