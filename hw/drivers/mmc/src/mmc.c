@@ -208,7 +208,10 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     }
 
     hal_spi_set_txrx_cb(mmc->spi_num, NULL, NULL);
-    hal_spi_enable(mmc->spi_num);
+    rc = hal_spi_enable(mmc->spi_num);
+    if (rc) {
+        return (rc);
+    }
 
     /**
      * NOTE: The state machine below follows:

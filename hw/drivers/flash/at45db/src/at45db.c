@@ -446,7 +446,6 @@ at45db_init(const struct hal_flash *hal_flash_dev)
     }
 
     hal_spi_set_txrx_cb(dev->spi_num, NULL, NULL);
-    hal_spi_enable(dev->spi_num);
-
-    return 0;
+    rc = hal_spi_enable(dev->spi_num);
+    return (rc);
 }

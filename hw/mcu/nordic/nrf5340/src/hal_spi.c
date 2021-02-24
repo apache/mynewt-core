@@ -718,7 +718,10 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         goto err;
     }
 
-    hal_spi_disable(spi_num);
+    rc = hal_spi_disable(spi_num);
+    if (rc) {
+        goto err;
+    }
 
     if (spi_type == HAL_SPI_TYPE_MASTER) {
         rc = hal_spi_init_master(spi, (struct nrf5340_hal_spi_cfg *)cfg,
@@ -1092,8 +1095,14 @@ hal_spi_abort(int spi_num)
         }
     } else {
         /* Only way I can see doing this is to disable, then re-enable */
-        hal_spi_disable(spi_num);
-        hal_spi_enable(spi_num);
+        rc = hal_spi_disable(spi_num);
+        if (rc) {
+            goto err;
+        }
+        rc = hal_spi_enable(spi_num);
+        if (rc) {
+            goto err;
+        }
     }
 
 err:

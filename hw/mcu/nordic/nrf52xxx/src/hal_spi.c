@@ -744,7 +744,10 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         goto err;
     }
 
-    hal_spi_disable(spi_num);
+    rc = hal_spi_disable(spi_num);
+    if (rc) {
+        goto err;
+    }
 
     if (spi_type == HAL_SPI_TYPE_MASTER) {
         rc = hal_spi_init_master(spi, (struct nrf52_hal_spi_cfg *)cfg,
@@ -1036,7 +1039,10 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
         spim = hal_spi->nhs_spi.spim;
         enabled = spim->ENABLE;
         if (enabled == SPIM_ENABLE_ENABLE_Enabled) {
-            hal_spi_disable(spi_num);
+            rc = hal_spi_disable(spi_num);
+            if (rc) {
+                goto err;
+            }
             enabled = 0;
         }
 
@@ -1276,8 +1282,14 @@ hal_spi_abort(int spi_num)
         }
     } else {
         /* Only way I can see doing this is to disable, then re-enable */
-        hal_spi_disable(spi_num);
-        hal_spi_enable(spi_num);
+        rc = hal_spi_disable(spi_num);
+        if (rc) {
+            goto err;
+        }
+        rc = hal_spi_enable(spi_num);
+        if (rc) {
+            goto err;
+        }
     }
 
 err:

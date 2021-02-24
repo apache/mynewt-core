@@ -466,7 +466,14 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         return EINVAL;
     }
 
-    hal_spi_disable(spi_num);
+    rc = hal_spi_disable(spi_num);
+    if (rc) {
+        return rc;
+    }
+    rc = hal_spi_enable(spi_num);
+    if (rc) {
+        return rc;
+    }
 
     return hal_spi_init_master(spi, (struct nrf5340_net_hal_spi_cfg *)cfg);
 #endif
@@ -476,7 +483,10 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         return EINVAL;
     }
 
-    hal_spi_disable(spi_num);
+    rc = hal_spi_disable(spi_num);
+    if (rc) {
+        return rc;
+    }
 
     return hal_spi_init_slave(spi, (struct nrf5340_net_hal_spi_cfg *)cfg);
 #endif
@@ -815,8 +825,14 @@ hal_spi_abort(int spi_num)
 
 #if MYNEWT_VAL(SPI_0_SLAVE)
     /* Only way I can see doing this is to disable, then re-enable */
-    hal_spi_disable(spi_num);
-    hal_spi_enable(spi_num);
+    rc = hal_spi_disable(spi_num);
+    if (rc) {
+        return rc;
+    }
+    rc = hal_spi_enable(spi_num);
+    if (rc) {
+        return rc;
+    }
 #endif
 
     return 0;
