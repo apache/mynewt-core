@@ -4227,6 +4227,7 @@ bma2xx_wait_for_tap(struct bma2xx *bma2xx,
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
     int rc = 0;
+    int rc2 = 0;
     enum bma2xx_power_mode request_power[3];
     struct int_enable int_enable_org;
     struct int_enable int_enable = { 0 };
@@ -4313,7 +4314,10 @@ done:
     pdd->interrupt = NULL;
     disable_intpin(bma2xx);
     /* Restore previous routing */
-    rc = bma2xx_set_int_routes(bma2xx, &int_routes_org);
+    rc2 = bma2xx_set_int_routes(bma2xx, &int_routes_org);
+    if (rc == 0) {
+        rc = rc2;
+    }
 
     return rc;
 #else
