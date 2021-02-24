@@ -1141,15 +1141,15 @@ int lsm6dso_set_tap_cfg(struct sensor_itf *itf,
     }
 
     reg &= ~LSM6DSO_TAP_THS_Y_MASK;
-    reg |= cfg->tap_ths & LSM6DSO_TAP_THS_Y_MASK;
+    reg |= LSM6DSO_SHIFT_DATA_MASK(cfg->tap_ths, LSM6DSO_TAP_THS_Y_MASK);
 
     rc = lsm6dso_writelen(itf, LSM6DSO_TAP_CFG2_ADDR, &reg, 1);
     if (rc) {
         return rc;
     }
 
-    reg = cfg->tap_ths & LSM6DSO_TAP_THS_X_MASK;
-    reg |= cfg->tap_prio & LSM6DSO_TAP_PRIORITY_MASK;
+    reg = LSM6DSO_SHIFT_DATA_MASK(cfg->tap_ths, LSM6DSO_TAP_THS_X_MASK);
+    reg |= LSM6DSO_SHIFT_DATA_MASK(cfg->tap_prio, LSM6DSO_TAP_PRIORITY_MASK);
 
     rc = lsm6dso_writelen(itf, LSM6DSO_TAP_CFG1_ADDR, &reg, 1);
     if (rc) {
