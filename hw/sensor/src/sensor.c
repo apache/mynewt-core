@@ -1970,6 +1970,11 @@ sensor_set_thresh(const char *devname, struct sensor_type_traits *stt)
     struct sensor *sensor;
     int rc;
 
+    if (stt == NULL) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
     sensor = sensor_get_type_traits_byname(devname, &stt_tmp,
                                            stt->stt_sensor_type);
     if (!sensor) {
@@ -1977,7 +1982,7 @@ sensor_set_thresh(const char *devname, struct sensor_type_traits *stt)
         goto err;
     }
 
-    if (!stt_tmp && stt) {
+    if (!stt_tmp) {
         rc = sensor_insert_type_trait(sensor, stt);
         stt_tmp = stt;
     } else if (stt_tmp) {
