@@ -20,6 +20,7 @@ MEMORY
 {
   FLASH (rx) : ORIGIN = 0x01000000, LENGTH = 0x4000
   RAM (rwx) : ORIGIN = 0x21000000, LENGTH = 0x10000
+  IPC (rw)  : ORIGIN = 0x20000400, LENGTH = 0
 }
 
 /* The bootloader does not contain an image header */
