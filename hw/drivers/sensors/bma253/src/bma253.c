@@ -5423,10 +5423,10 @@ void bma253_dump_reg(struct bma253 * bma253)
     uint8_t regv;
 
     for (i = REG_ADDR_FIFO_STATUS; i < (REG_ADDR_FIFO_CONFIG_0 + 1); i++) {
-        get_register(bma253, i, &regv);
+        (void)get_register(bma253, i, &regv);
     }
 
-    get_register(bma253, REG_ADDR_FIFO_CONFIG_1, &regv);
+    (void)get_register(bma253, REG_ADDR_FIFO_CONFIG_1, &regv);
 }
 
 static int
