@@ -221,8 +221,8 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
 
     hal_gpio_write(mmc->ss_pin, 0);
 
-    /* send the required >= 74 clock cycles */
-    for (i = 0; i < 74; i++) {
+    /* send the required >= 74 clock cycles (10 bytes, 80 clock cycles). */
+    for (i = 0; i < 10; i++) {
         hal_spi_tx_val(mmc->spi_num, 0xff);
     }
 
