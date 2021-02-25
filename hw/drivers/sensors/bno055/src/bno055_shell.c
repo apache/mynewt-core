@@ -150,7 +150,7 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
             }
             offsetdata[i] = val;
             tok = strtok(0, ":");
-        } while(i++ < 11 && tok);
+        } while(++i < 11 && tok);
 
         bso.bso_acc_off_x  = offsetdata[0];
         bso.bso_acc_off_y  = offsetdata[1];
