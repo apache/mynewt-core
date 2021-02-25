@@ -789,6 +789,8 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
     sensor = sensor_mgr_find_next_bydevname(name, NULL);
     if (!sensor) {
         console_printf("Sensor %s not found!\n", name);
+        rc = SYS_EINVAL;
+        goto done;
     }
 
     if (!strcmp(type_string, "single")) {
