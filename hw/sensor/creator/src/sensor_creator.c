@@ -1093,7 +1093,7 @@ config_bno055_sensor(void)
 {
     int rc;
     struct os_dev *dev;
-    struct bno055_cfg bcfg;
+    struct bno055_cfg bcfg = {0};
 
     dev = (struct os_dev *) os_dev_open("bno055_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
@@ -1243,18 +1243,11 @@ config_lps33hw_sensor(void)
 {
     int rc;
     struct os_dev *dev;
-    struct lps33hw_cfg cfg;
+    struct lps33hw_cfg cfg = {0};
 
     cfg.mask = SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE;
     cfg.data_rate = LPS33HW_1HZ;
     cfg.lpf = LPS33HW_LPF_DISABLED;
-    cfg.int_cfg.pin = 0;
-    cfg.int_cfg.data_rdy = 0;
-    cfg.int_cfg.pressure_low = 0;
-    cfg.int_cfg.pressure_high = 0;
-    cfg.int_cfg.active_low = 0;
-    cfg.int_cfg.open_drain = 0;
-    cfg.int_cfg.latched = 0;
 
     dev = (struct os_dev *) os_dev_open("lps33hw_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
@@ -1277,18 +1270,11 @@ config_lps33thw_sensor(void)
 {
     int rc;
     struct os_dev *dev;
-    struct lps33thw_cfg cfg;
+    struct lps33thw_cfg cfg = {0};
 
     cfg.mask = SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE;
     cfg.data_rate = LPS33THW_1HZ;
     cfg.lpf = LPS33THW_LPF_DISABLED;
-    cfg.int_cfg.pin = 0;
-    cfg.int_cfg.data_rdy = 0;
-    cfg.int_cfg.pressure_low = 0;
-    cfg.int_cfg.pressure_high = 0;
-    cfg.int_cfg.active_low = 0;
-    cfg.int_cfg.open_drain = 0;
-    cfg.int_cfg.latched = 0;
 
     dev = (struct os_dev *) os_dev_open("lps33thw_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
@@ -1421,7 +1407,7 @@ config_lis2ds12_sensor(void)
 {
     int rc;
     struct os_dev *dev;
-    struct lis2ds12_cfg cfg;
+    struct lis2ds12_cfg cfg = {0};
 
     dev = (struct os_dev *) os_dev_open("lis2ds12_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
@@ -1487,7 +1473,7 @@ int
 config_bma2xx_sensor(void)
 {
     struct os_dev * dev;
-    struct bma2xx_cfg cfg;
+    struct bma2xx_cfg cfg = {0};
     int rc;
 
     dev = os_dev_open("bma2xx_0", OS_TIMEOUT_NEVER, NULL);
@@ -1578,7 +1564,7 @@ int
 config_bme680_sensor(void)
 {
     struct os_dev * dev;
-    struct bme680_cfg cfg;
+    struct bme680_cfg cfg = {0};
     int rc;
 
     dev = os_dev_open("bme680_0", OS_TIMEOUT_NEVER, NULL);
@@ -1619,7 +1605,7 @@ config_kxtj3_sensor(void)
 {
     int rc;
     struct os_dev *dev;
-    struct kxtj3_cfg cfg;
+    struct kxtj3_cfg cfg = {0};
 
     dev = (struct os_dev *) os_dev_open("kxtj3_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
@@ -1684,7 +1670,7 @@ int
 config_icp101xx_sensor(void)
 {
     struct os_dev * dev;
-    struct icp101xx_cfg cfg;
+    struct icp101xx_cfg cfg = {0};
     int rc;
 
     dev = os_dev_open("icp101xx_0", OS_TIMEOUT_NEVER, NULL);
