@@ -377,6 +377,12 @@ extern "C" {
 #undef MBEDTLS_SSL_DTLS_BADMAC_LIMIT
 #endif
 
+#if MYNEWT_VAL(MBEDTLS_MPI_MAX_SIZE) == 0
+#define MBEDTLS_MPI_MAX_SIZE 1024
+#else
+#define MBEDTLS_MPI_MAX_SIZE MYNEWT_VAL(MBEDTLS_MPI_MAX_SIZE)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

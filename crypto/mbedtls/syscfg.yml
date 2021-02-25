@@ -188,3 +188,7 @@ syscfg.defs:
   # SSL/TLS support
   MBEDTLS_SSL_TLS_C:
     value: 0
+
+  # MPI
+  MBEDTLS_MPI_MAX_SIZE:
+    value: 1024
