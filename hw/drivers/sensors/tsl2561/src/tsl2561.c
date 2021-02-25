@@ -692,7 +692,7 @@ tsl2561_calculate_lux(uint16_t broadband, uint16_t ir, struct tsl2561_cfg *cfg)
     ratio = (ratio1 + 1) >> 1;
 
 #if MYNEWT_VAL(TSL2561_PACKAGE_CS)
-    if ((ratio >= 0) && (ratio <= TSL2561_LUX_K1C)) {
+    if (ratio <= TSL2561_LUX_K1C) {
         b = TSL2561_LUX_B1C;
         m = TSL2561_LUX_M1C;
     } else if (ratio <= TSL2561_LUX_K2C) {
@@ -713,12 +713,12 @@ tsl2561_calculate_lux(uint16_t broadband, uint16_t ir, struct tsl2561_cfg *cfg)
     } else if (ratio <= TSL2561_LUX_K7C) {
         b = TSL2561_LUX_B7C;
         m = TSL2561_LUX_M7C;
-    } else if (ratio > TSL2561_LUX_K8C) {
+    } else {
         b = TSL2561_LUX_B8C;
         m = TSL2561_LUX_M8C;
     }
 #else
-    if ((ratio >= 0) && (ratio <= TSL2561_LUX_K1T)) {
+    if (ratio <= TSL2561_LUX_K1T) {
         b = TSL2561_LUX_B1T;
         m = TSL2561_LUX_M1T;
     } else if (ratio <= TSL2561_LUX_K2T) {
@@ -739,7 +739,7 @@ tsl2561_calculate_lux(uint16_t broadband, uint16_t ir, struct tsl2561_cfg *cfg)
     } else if (ratio <= TSL2561_LUX_K7T) {
         b = TSL2561_LUX_B7T;
         m = TSL2561_LUX_M7T;
-    } else if (ratio > TSL2561_LUX_K8T) {
+    } else {
         b = TSL2561_LUX_B8T;
         m = TSL2561_LUX_M8T;
     }
@@ -748,7 +748,7 @@ tsl2561_calculate_lux(uint16_t broadband, uint16_t ir, struct tsl2561_cfg *cfg)
     temp = ((channel0 * b) - (channel1 * m));
 
     /* Do not allow negative lux value */
-    if (temp < 0) {
+    if ((int64_t)temp < 0) {
         temp = 0;
     }
     /* Round lsb (2^(LUX_SCALE-1)) */
