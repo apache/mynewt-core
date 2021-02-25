@@ -159,11 +159,11 @@ tsl2561_shell_cmd_gain(int argc, char **argv)
     /* Update the gain */
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 1, 16, &rc);
-        /* Make sure gain is 1 ot 16 */
+        /* Make sure gain is 1 or 16 */
         if (rc || ((val != 1) && (val != 16))) {
             return tsl2561_shell_err_invalid_arg(argv[2]);
         }
-        rc = tsl2561_set_gain(&g_sensor_itf, val ?
+        rc = tsl2561_set_gain(&g_sensor_itf, val == 16 ?
                               TSL2561_LIGHT_GAIN_16X : TSL2561_LIGHT_GAIN_1X);
         if (rc) {
             console_printf("Setting gain failed rc:%d", rc);
