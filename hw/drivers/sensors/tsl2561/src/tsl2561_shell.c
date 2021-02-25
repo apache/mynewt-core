@@ -140,7 +140,7 @@ tsl2561_shell_cmd_gain(int argc, char **argv)
 {
     uint8_t val;
     uint8_t gain;
-    int rc;
+    int rc = 0;
 
     if (argc > 3) {
         return tsl2561_shell_err_too_many_args(argv[1]);
@@ -179,7 +179,7 @@ tsl2561_shell_cmd_time(int argc, char **argv)
 {
     uint8_t time;
     long val;
-    int rc;
+    int rc = 0;
 
     if (argc > 3) {
         return tsl2561_shell_err_too_many_args(argv[1]);
