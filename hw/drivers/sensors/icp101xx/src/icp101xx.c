@@ -498,9 +498,7 @@ read_raw_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int32_t *raw_
 
     /* Restart next measurement */
     rc = send_measurement_command(icp101xx, cfg);
-    if (rc) {
-        goto err;
-    }
+
 err:
     return rc;
 }
