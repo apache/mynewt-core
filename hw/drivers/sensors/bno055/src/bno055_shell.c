@@ -228,11 +228,12 @@ bno055_shell_cmd_read(int argc, char **argv)
     uint16_t samples = 1;
     uint16_t val;
     int rc;
-    void *databuf;
-    struct sensor_quat_data *sqd;
-    struct sensor_euler_data *sed;
-    struct sensor_accel_data *sad;
-    int8_t *temp;
+    union {
+        struct sensor_quat_data sqd;
+        struct sensor_euler_data sed;
+        struct sensor_accel_data sad;
+    } data;
+    uint8_t temp;
     int type;
     char tmpstr[13];
 
@@ -240,11 +241,6 @@ bno055_shell_cmd_read(int argc, char **argv)
     if (argc > 4) {
         return bno055_shell_err_too_many_args(argv[1]);
     }
-
-    /* Since this is the biggest struct, malloc space for it */
-    databuf = malloc(sizeof(*sqd));
-    assert(databuf != NULL);
-
 
     /* Check if more than one sample requested */
     if (argc == 4) {
@@ -267,56 +263,50 @@ bno055_shell_cmd_read(int argc, char **argv)
     while(samples--) {
 
         if (type == SENSOR_TYPE_ROTATION_VECTOR) {
-            rc = bno055_get_quat_data(g_sensor_itf, databuf);
+            rc = bno055_get_quat_data(g_sensor_itf, &data.sqd);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
                 goto err;
             }
-            sqd = databuf;
 
-            console_printf("x:%s ", sensor_ftostr(sqd->sqd_x, tmpstr, 13));
-            console_printf("y:%s ", sensor_ftostr(sqd->sqd_y, tmpstr, 13));
-            console_printf("z:%s ", sensor_ftostr(sqd->sqd_z, tmpstr, 13));
-            console_printf("w:%s\n", sensor_ftostr(sqd->sqd_w, tmpstr, 13));
+            console_printf("x:%s ", sensor_ftostr(data.sqd.sqd_x, tmpstr, 13));
+            console_printf("y:%s ", sensor_ftostr(data.sqd.sqd_y, tmpstr, 13));
+            console_printf("z:%s ", sensor_ftostr(data.sqd.sqd_z, tmpstr, 13));
+            console_printf("w:%s\n", sensor_ftostr(data.sqd.sqd_w, tmpstr, 13));
 
         } else if (type == SENSOR_TYPE_EULER) {
-            rc = bno055_get_vector_data(g_sensor_itf, databuf, type);
+            rc = bno055_get_vector_data(g_sensor_itf, &data.sed, type);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
                 goto err;
             }
-            sed = databuf;
 
-            console_printf("h:%s ", sensor_ftostr(sed->sed_h, tmpstr, 13));
-            console_printf("r:%s ", sensor_ftostr(sed->sed_r, tmpstr, 13));
-            console_printf("p:%s\n", sensor_ftostr(sed->sed_p, tmpstr, 13));
+            console_printf("h:%s ", sensor_ftostr(data.sed.sed_h, tmpstr, 13));
+            console_printf("r:%s ", sensor_ftostr(data.sed.sed_r, tmpstr, 13));
+            console_printf("p:%s\n", sensor_ftostr(data.sed.sed_p, tmpstr, 13));
 
         } else if (type == SENSOR_TYPE_TEMPERATURE) {
-            rc = bno055_get_temp(g_sensor_itf, databuf);
+            rc = bno055_get_temp(g_sensor_itf, &temp);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
                 goto err;
             }
-            temp = databuf;
 
-            console_printf("Temperature:%u\n", *temp);
+            console_printf("Temperature:%u\n", temp);
         } else {
-            rc = bno055_get_vector_data(g_sensor_itf, databuf, type);
+            rc = bno055_get_vector_data(g_sensor_itf, &data.sad, type);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
                 goto err;
             }
-            sad = databuf;
 
-            console_printf("x:%s ", sensor_ftostr(sad->sad_x, tmpstr, 13));
-            console_printf("y:%s ", sensor_ftostr(sad->sad_y, tmpstr, 13));
-            console_printf("z:%s\n", sensor_ftostr(sad->sad_z, tmpstr, 13));
+            console_printf("x:%s ", sensor_ftostr(data.sad.sad_x, tmpstr, 13));
+            console_printf("y:%s ", sensor_ftostr(data.sad.sad_y, tmpstr, 13));
+            console_printf("z:%s\n", sensor_ftostr(data.sad.sad_z, tmpstr, 13));
         }
     }
 
-    free(databuf);
-
-    return 0;
+    rc = 0;
 err:
     return rc;
 }
