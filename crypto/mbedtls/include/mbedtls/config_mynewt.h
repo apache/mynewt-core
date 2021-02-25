@@ -57,6 +57,7 @@ extern "C" {
 #define MBEDTLS_ECDSA_SIGN_ALT          /* Enable alternative sign() */
 #define MBEDTLS_ECDSA_VERIFY_ALT        /* Enable alternative verify() */
 #define MBEDTLS_ECDSA_GENKEY_ALT        /* Enable alternative genkey() */
+#define MBEDTLS_BIGNUM_ALT              /* Enable alternative MPI implementation */
 
 /**
  * \name SECTION: Module configuration options
@@ -381,6 +382,10 @@ extern "C" {
 #define MBEDTLS_MPI_MAX_SIZE 1024
 #else
 #define MBEDTLS_MPI_MAX_SIZE MYNEWT_VAL(MBEDTLS_MPI_MAX_SIZE)
+#endif
+
+#if MYNEWT_VAL(MBEDTLS_BIGNUM_ALT) == 0
+#undef MBEDTLS_BIGNUM_ALT
 #endif
 
 #ifdef __cplusplus

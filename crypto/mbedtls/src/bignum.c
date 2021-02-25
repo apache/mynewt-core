@@ -74,6 +74,8 @@
 
 #include <string.h>
 
+#if !defined(MBEDTLS_BIGNUM_ALT)
+
 #if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
 #else
@@ -2956,5 +2958,7 @@ cleanup:
 }
 
 #endif /* MBEDTLS_SELF_TEST */
+
+#endif /* !MBEDTLS_BIGNUM_ALT */
 
 #endif /* MBEDTLS_BIGNUM_C */

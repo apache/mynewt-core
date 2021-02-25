@@ -192,3 +192,5 @@ syscfg.defs:
   # MPI
   MBEDTLS_MPI_MAX_SIZE:
     value: 1024
+  MBEDTLS_BIGNUM_ALT:
+    value: 0
