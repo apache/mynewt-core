@@ -37,6 +37,22 @@ syscfg.defs:
             allows for some automatic management of bus device state instead of
             implementing this manually.
         value: 0
+    BUS_PM_MODE:
+        description: >
+            Default power management mode for bus drivers.  When set to AUTO
+            bus drivers will take care of turning off controllers when they
+            are not needed for some time.
+            When set to MANUAL bus driver will not enable/disable controllers
+            leaving it to the application code.
+            This setting is only valid when BUS_PM == 1.
+        choices:
+            - AUTO
+            - MANUAL
+        value: AUTO
+    BUS_PM_INACTIVITY_TMO:
+        description: >
+            Default inactivity time after which bus controller will be disabled (in ticks).
+        value: 1
 
     BUS_STATS:
         description: >
