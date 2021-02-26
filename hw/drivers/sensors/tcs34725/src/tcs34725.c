@@ -852,7 +852,7 @@ tcs34725_calc_colortemp_lux(struct sensor_itf *itf,
     g_comp = scd->scd_g - scd->scd_ir;
     b_comp = scd->scd_b - scd->scd_ir;
 
-    scd->scd_cratio = (float)scd->scd_ir / (float)scd->scd_c;
+    scd->scd_cratio = scd->scd_c == 0 ? 1.0f : (float)scd->scd_ir / (float)scd->scd_c;
 
     scd->scd_saturation = ((256 - atime) > 63) ? 65535 : 1024 * (256 - atime);
 
