@@ -256,7 +256,9 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
     odev->od_handlers.od_suspend = bus_dev_suspend_func;
     odev->od_handlers.od_resume = bus_dev_resume_func;
 
-    bus_dev_enable(bdev);
+    if (!MYNEWT_VAL(BUS_PM) || MYNEWT_VAL_CHOICE(BUS_PM_MODE, MANUAL)) {
+        bus_dev_enable(bdev);
+    }
 
     return 0;
 }
