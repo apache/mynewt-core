@@ -238,6 +238,10 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
     /* XXX allow custom eventq */
     os_callout_init(&bdev->inactivity_tmo, os_eventq_dflt_get(),
                     bus_dev_inactivity_tmo_func, odev);
+    bdev->pm_mode = MYNEWT_VAL_CHOICE(BUS_PM_MODE, AUTO) ? BUS_PM_MODE_AUTO : BUS_PM_MODE_MANUAL;
+    if (MYNEWT_VAL_CHOICE(BUS_PM_MODE, AUTO)) {
+        bdev->pm_opts.pm_mode_auto.disable_tmo = MYNEWT_VAL(BUS_PM_INACTIVITY_TMO);
+    }
 #endif
 
 #if MYNEWT_VAL(BUS_STATS)
