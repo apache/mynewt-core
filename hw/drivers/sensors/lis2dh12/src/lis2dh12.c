@@ -815,7 +815,7 @@ lis2dh12_set_rate(struct sensor_itf *itf, uint8_t rate)
      * for a reset of the filter block before switching to
      * normal/high-performance mode from power down mode
      */
-    if (rate != LIS2DH12_DATA_RATE_0HZ || rate != LIS2DH12_DATA_RATE_L_1620HZ) {
+    if (rate != LIS2DH12_DATA_RATE_0HZ && rate != LIS2DH12_DATA_RATE_L_1620HZ) {
 
         rc = lis2dh12_readlen(itf, LIS2DH12_REG_REFERENCE, &reg, 1);
         if (rc) {
