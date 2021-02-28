@@ -72,6 +72,25 @@ const struct stm32_uart_cfg os_bsp_uart0_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(UART_1)
+/*
+   If flying wires are connected as in the discovery kit user manual
+   (Figure 6. ST-LINK VCP connection to USART2), logging via the ST-LINK
+   virtual COM port can be achieved by setting CONSOLE_UART_DEV to uart1.
+ */
+const struct stm32_uart_cfg os_bsp_uart1_cfg = {
+    .suc_uart = USART2,
+    .suc_rcc_reg = &RCC->APB1ENR,
+    .suc_rcc_dev = RCC_APB1ENR_USART2EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_1_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_1_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_1_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_1_PIN_CTS),
+    .suc_pin_af = GPIO_AF7_USART2,
+    .suc_irqn = USART2_IRQn,
+};
+#endif
+
 #if MYNEWT_VAL(I2C_0)
 const struct stm32_hal_i2c_cfg os_bsp_i2c0_cfg = {
     .hic_i2c = I2C1,
