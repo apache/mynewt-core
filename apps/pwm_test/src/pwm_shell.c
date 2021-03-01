@@ -102,14 +102,15 @@ cmd_test_suite(int argc, char **argv)
     int pin = -1;
     int i;
     struct pwm_dev *pwm_dev;
+    char *tok_ptr;
 
     for (i = 1; i < argc; i++) {
         if (strncmp(argv[i], "dev=", 4) == 0) {
-            pwm = strtok(argv[i], "=");
-            pwm = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            pwm = strtok_r(NULL, "=", &tok_ptr);
         } else if (strncmp(argv[i], "pin=", 4) == 0) {
-            tmp = strtok(argv[i], "=");
-            tmp = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            tmp = strtok_r(NULL, "=", &tok_ptr);
             pin = atoi(tmp);
         } else {
             console_printf("Unknown parameter %s, use help\n", argv[i]);
@@ -192,30 +193,31 @@ cmd_start(int argc, char **argv)
     int top;
     struct pwm_dev *dev;
     struct pwm_chan_cfg chan_conf = { 0 };
+    char *tok_ptr;
 
     for (i = 1; i < argc; i++) {
         if (strncmp(argv[i], "dev=", 4) == 0) {
-            pwm = strtok(argv[i], "=");
-            pwm = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            pwm = strtok_r(NULL, "=", &tok_ptr);
         } else if (strncmp(argv[i], "freq=", 5) == 0) {
-            tmp = strtok(argv[i], "=");
-            tmp = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            tmp = strtok_r(NULL, "=", &tok_ptr);
             freq = atoi(tmp);
         } else if (strncmp(argv[i], "dc=", 3) == 0) {
-            tmp = strtok(argv[i], "=");
-            tmp = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            tmp = strtok_r(NULL, "=", &tok_ptr);
             dc = atoi(tmp);
             if (dc > 100 || dc < 0) {
                 console_printf("Incorrect duty cycle. See help.\n");
                 return 0;
             }
         } else if (strncmp(argv[i], "pin=", 4) == 0) {
-            tmp = strtok(argv[i], "=");
-            tmp = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            tmp = strtok_r(NULL, "=", &tok_ptr);
             pin = atoi(tmp);
         } else if (strncmp(argv[i], "chan=", 5) == 0) {
-            tmp = strtok(argv[i], "=");
-            tmp = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            tmp = strtok_r(NULL, "=", &tok_ptr);
             chan = atoi(tmp);
         } else {
             console_printf("Unknown parameter %s, use help\n", argv[i]);
@@ -283,11 +285,12 @@ cmd_stop(int argc, char **argv)
     char *pwm = "pwm0";
     int i;
     int rc;
+    char *tok_ptr;
 
     for (i = 1; i < argc; i++) {
         if (strncmp(argv[i], "dev=", 4) == 0) {
-            pwm = strtok(argv[i], "=");
-            pwm = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            pwm = strtok_r(NULL, "=", &tok_ptr);
         } else {
             console_printf("Unknown parameter %s, use help\n", argv[i]);
             return 0;
@@ -344,26 +347,27 @@ cmd_reconf(int argc, char **argv)
     int top;
     int dc = 50;
     int chan = 0;
+    char *tok_ptr;
 
     for (i = 1; i < argc; i++) {
         if (strncmp(argv[i], "dev=", 4) == 0) {
-            pwm = strtok(argv[i], "=");
-            pwm = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            pwm = strtok_r(NULL, "=", &tok_ptr);
         } else if (strncmp(argv[i], "freq=", 5) == 0) {
-            tmp = strtok(argv[i], "=");
-            tmp = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            tmp = strtok_r(NULL, "=", &tok_ptr);
             freq = atoi(tmp);
         }  else if (strncmp(argv[i], "dc=", 3) == 0) {
-            tmp = strtok(argv[i], "=");
-            tmp = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            tmp = strtok_r(NULL, "=", &tok_ptr);
             dc = atoi(tmp);
             if (dc > 100 || dc < 0) {
                 console_printf("Incorrect duty cycle. See help.\n");
                 return 0;
             }
         } else if (strncmp(argv[i], "chan=", 5) == 0) {
-            tmp = strtok(argv[i], "=");
-            tmp = strtok(NULL, "=");
+            (void)strtok_r(argv[i], "=", &tok_ptr);
+            tmp = strtok_r(NULL, "=", &tok_ptr);
             chan = atoi(tmp);
         } else {
             console_printf("Unknown parameter %s, use help\n", argv[i]);

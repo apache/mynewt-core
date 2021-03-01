@@ -536,14 +536,15 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
     sensor_type_t type;
     char tmpstr[COAP_MAX_URI] = {0};
     const char s[2] = "/";
+    char *tok_ptr;
 
     memcpy(tmpstr, (char *)&(request->resource->uri.os_str[1]),
            request->resource->uri.os_sz - 1);
 
     /* Parse the sensor device name from the uri  */
-    devname = strtok(tmpstr, s);
+    devname = strtok_r(tmpstr, s, &tok_ptr);
 
-    typename = strtok(NULL, s);
+    (void)strtok_r(NULL, s, &tok_ptr);
 
     /* Look up sensor by name */
     sensor = sensor_mgr_find_next_bydevname(devname, NULL);
