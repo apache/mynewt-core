@@ -299,6 +299,7 @@ MK82F25615_features.h
 system_MK82F25615.h
 system_MK82F25615.c
 fsl_clock.h
+fsl_ftfx_controller.c
 
 # LWIP - BSD License.
 lwip_base
