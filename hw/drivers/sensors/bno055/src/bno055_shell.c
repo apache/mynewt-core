@@ -115,6 +115,7 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
     uint16_t val;
     uint16_t offsetdata[11] = {0};
     char *tok;
+    char *tok_ptr;
 
     rc = 0;
     if (argc > 3) {
@@ -141,7 +142,7 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
                        bso.bso_gyro_off_z, bso.bso_acc_radius,
                        bso.bso_mag_radius);
     } else if (argc == 3) {
-        tok = strtok(argv[2], ":");
+        tok = strtok_r(argv[2], ":", &tok_ptr);
         i = 0;
         do {
             val = parse_ll_bounds(tok, 0, UINT16_MAX, &rc);
@@ -149,7 +150,7 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
                 return bno055_shell_err_invalid_arg(argv[2]);
             }
             offsetdata[i] = val;
-            tok = strtok(0, ":");
+            tok = strtok_r(NULL, ":", &tok_ptr);
         } while(++i < 11 && tok);
 
         bso.bso_acc_off_x  = offsetdata[0];
