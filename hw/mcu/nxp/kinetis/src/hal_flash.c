@@ -114,8 +114,6 @@ kinetis_flash_write(const struct hal_flash *dev,
         }
     }
     return 0;
-    /* return FLASH_Program(&kinetis_config, address, (uint8_t *)src, len) == */
-    /*     kStatus_Success ? 0 : -1; */
 }
 
 static int
