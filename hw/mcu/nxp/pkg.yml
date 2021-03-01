@@ -45,10 +45,12 @@ pkg.ign_files.BSP_MK8XF:
     - "fsl_uart*"
     - "fsl_enet*"
     - "fsl_flexcan*"
+    - "fsl_ftfx_controller.c"
 
 pkg.ign_files.BSP_MK81F:
     - "fsl_pdb*"
     - "fsl_sai*"
+    - "fsl_ftfx_controller.c"
 
 pkg.src_dirs.BSP_KINETIS:
     - "src/ext/nxp-kinetis-sdk/drivers"

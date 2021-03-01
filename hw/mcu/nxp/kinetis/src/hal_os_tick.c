@@ -25,17 +25,6 @@
 #include "mcu/cmsis_nvic.h"
 #include "fsl_clock.h"
 
-static void
-sys_tick_handler(void)
-{
-    uint32_t sr;
-
-    OS_ENTER_CRITICAL(sr);
-    os_time_advance(1);
-
-    OS_EXIT_CRITICAL(sr);
-}
-
 void
 os_tick_idle(os_time_t ticks)
 {
@@ -65,7 +54,6 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
 
     /* Set isr in vector table and enable interrupt */
     NVIC_SetPriority(SysTick_IRQn, prio);
-    NVIC_SetVector(SysTick_IRQn, (uint32_t) sys_tick_handler);
     /* Enable at the NVIC */
     EnableIRQ(SysTick_IRQn);
 
