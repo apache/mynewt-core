@@ -47,6 +47,7 @@
 #define OSDP_CONTAINER_OF(ptr, type, field) \
     ((type *)(((char *)(ptr)) - OFFSET_OF(type, field)))
 
+#define U16_STR_SZ (sizeof("65535"))
 /*
  #define MAX(a,b) ({ \
         __typeof__ (a) _a = (a); \
@@ -83,31 +84,6 @@
 #endif
 
 /**
- * @brief Check p to be not NULL before calling safe_free()
- *
- * @param p pointer to be free-ed
- */
-void safe_free(void *p);
-
-/**
- * @brief safe_* variants of the standard alloc methods do a check on the
- * returned pointer and will call exit() if any of the returned NULL. The
- * safe_free() method will check if pointer is NULL before calling safe_free().
- */
-void  safe_free(void *p);
-void *safe_malloc(size_t size);
-void *safe_calloc(size_t count, size_t size);
-void *safe_realloc(void *data, size_t size);
-void *safe_strdup(const char *s);
-void *safe_realloc_zero(void *data, size_t old_size, size_t new_size);
-
-/**
- * @brief Rounds up 32-bit v to nearest power of 2. If v is already a power
- * of 2 it is returned unmodified.
- */
-uint32_t round_up_pow2(uint32_t v);
-
-/**
  * @brief Dumps an array of bytes in HEX and ASCII formats for debugging. `head`
  * is string that is printed before the actual bytes are dumped.
  *
@@ -140,5 +116,15 @@ int char2hex(char c, uint8_t *x);
  * @return     The length of the binary array, or 0 if an error occurred.
  */
 size_t hex2bin(const char *hex, size_t hexlen, uint8_t *buf, size_t buflen);
+
+/**
+ * @brief      Convert unsigned 16bit number to string.
+ *
+ * @param num     The unsigned 16bit number to convert.
+ * @param str     Input buffer enough for UINT16_MAX including null terminator.
+ *
+ * @return     Pointer to start of string.
+ */
+char *u16_to_str(uint16_t num, char *str);
 
 #endif /* _OSDP_UTILS_H_ */

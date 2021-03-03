@@ -8,7 +8,6 @@
 #define _OSDP_H_
 
 #include <stdint.h>
-#include "osdp/list.h"
 
 #ifdef __cplusplus
 extern "C" {
