@@ -193,6 +193,41 @@ osdp_refresh_handler(struct os_event *ev)
 }
 
 /*
+ * Stop OSDP library. Called by application
+ */
+void
+osdp_stop(void)
+{
+    int rc;
+    struct osdp *ctx;
+    struct osdp_device *od = &osdp_device;
+
+    ctx = osdp_get_ctx();
+    assert(ctx);
+
+    /* Stop timer */
+    os_callout_stop(&osdp_refresh_timer);
+
+    /* Cleanup */
+#if MYNEWT_VAL(OSDP_MODE_PD)
+    osdp_pd_teardown(ctx);
+#else
+    osdp_cp_teardown(ctx);
+#endif
+
+    /* Stop uart */
+    assert(od->uart);
+    rc = os_dev_close((struct os_dev *)od->uart);
+    assert(rc == 0);
+
+    /* Flush circular buffers */
+    osdp_uart_flush((void *)od);
+
+    /* Reset OSDP context */
+    memset(&osdp_ctx, 0, sizeof(struct osdp_ctx));
+}
+
+/*
  * Start OSDP. Called by application
  */
 void
