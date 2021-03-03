@@ -477,17 +477,19 @@ mcu_gpio_enter_sleep(void)
         return;
     }
 
-    /* Save pins states and their latched values */
-    g_mcu_gpio_data_latch_state[0] = GPIO->P0_DATA_REG;
-    g_mcu_gpio_data_latch_state[1] = GPIO->P1_DATA_REG;
+    if (da1469x_pd_get_ref_cnt(MCU_PD_DOMAIN_COM) == 1) {
+        /* Save pins states and their latched values */
+        g_mcu_gpio_data_latch_state[0] = GPIO->P0_DATA_REG;
+        g_mcu_gpio_data_latch_state[1] = GPIO->P1_DATA_REG;
 
-    g_mcu_gpio_latch_state[0] = CRG_TOP->P0_PAD_LATCH_REG;
-    g_mcu_gpio_latch_state[1] = CRG_TOP->P1_PAD_LATCH_REG;
+        g_mcu_gpio_latch_state[0] = CRG_TOP->P0_PAD_LATCH_REG;
+        g_mcu_gpio_latch_state[1] = CRG_TOP->P1_PAD_LATCH_REG;
 
-    da1469x_retreg_update(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
+        da1469x_retreg_update(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
 
-    CRG_TOP->P0_RESET_PAD_LATCH_REG = CRG_TOP_P0_PAD_LATCH_REG_P0_LATCH_EN_Msk;
-    CRG_TOP->P1_RESET_PAD_LATCH_REG = CRG_TOP_P1_PAD_LATCH_REG_P1_LATCH_EN_Msk;
+        CRG_TOP->P0_RESET_PAD_LATCH_REG = CRG_TOP_P0_PAD_LATCH_REG_P0_LATCH_EN_Msk;
+        CRG_TOP->P1_RESET_PAD_LATCH_REG = CRG_TOP_P1_PAD_LATCH_REG_P1_LATCH_EN_Msk;
+    }
 
     da1469x_pd_release(MCU_PD_DOMAIN_COM);
 #endif
@@ -503,13 +505,15 @@ mcu_gpio_exit_sleep(void)
 
     da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
 
-    da1469x_retreg_restore(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
+    if (da1469x_pd_get_ref_cnt(MCU_PD_DOMAIN_COM) == 1) {
+        da1469x_retreg_restore(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
 
-    /* Set pins states to their latched values */
-    GPIO->P0_DATA_REG = g_mcu_gpio_data_latch_state[0];
-    GPIO->P1_DATA_REG = g_mcu_gpio_data_latch_state[1];
+        /* Set pins states to their latched values */
+        GPIO->P0_DATA_REG = g_mcu_gpio_data_latch_state[0];
+        GPIO->P1_DATA_REG = g_mcu_gpio_data_latch_state[1];
 
-    CRG_TOP->P0_PAD_LATCH_REG = g_mcu_gpio_latch_state[0];
-    CRG_TOP->P1_PAD_LATCH_REG = g_mcu_gpio_latch_state[1];
+        CRG_TOP->P0_PAD_LATCH_REG = g_mcu_gpio_latch_state[0];
+        CRG_TOP->P1_PAD_LATCH_REG = g_mcu_gpio_latch_state[1];
+    }
 #endif
 }
