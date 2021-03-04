@@ -104,7 +104,7 @@ osdp_phy_packet_init(struct osdp_pd *pd, uint8_t *buf, int max_len)
     pd_mode = ISSET_FLAG(pd, PD_FLAG_PD_MODE);
     exp_len = sizeof(struct osdp_packet_header) + 64; /* 64 is estimated */
     if (max_len < exp_len) {
-        OSDP_LOG_ERROR("packet_init: out of space! CMD: %02x", pd->cmd_id);
+        OSDP_LOG_ERROR("packet_init: out of space! CMD: %02x\n", pd->cmd_id);
         return OSDP_ERR_PKT_FMT;
     }
 
@@ -160,13 +160,13 @@ osdp_phy_packet_finalize(struct osdp_pd *pd, uint8_t *buf,
 
     /* Do a sanity check only; we expect expect header to be prefilled */
     if ((unsigned long)len <= sizeof(struct osdp_packet_header)) {
-        OSDP_LOG_ERROR("PKT_F: Invalid header");
+        OSDP_LOG_ERROR("PKT_F: Invalid header\n");
         return OSDP_ERR_PKT_FMT;
     }
 
     if (ISSET_FLAG(pd, PD_FLAG_PKT_HAS_MARK)) {
         if (buf[0] != OSDP_PKT_MARK) {
-            OSDP_LOG_ERROR("PKT_F: MARK validation failed! ID: 0x%02x",
+            OSDP_LOG_ERROR("PKT_F: MARK validation failed! ID: 0x%02x\n",
           is_cmd ? pd->cmd_id : pd->reply_id);
             return OSDP_ERR_PKT_FMT;
         }
@@ -177,7 +177,7 @@ osdp_phy_packet_finalize(struct osdp_pd *pd, uint8_t *buf,
     }
     pkt = (struct osdp_packet_header *)buf;
     if (pkt->som != OSDP_PKT_SOM) {
-        OSDP_LOG_ERROR("PKT_F: header SOM validation failed! ID: 0x%02x",
+        OSDP_LOG_ERROR("PKT_F: header SOM validation failed! ID: 0x%02x\n",
         is_cmd ? pd->cmd_id : pd->reply_id);
         return OSDP_ERR_PKT_FMT;
     }
@@ -247,7 +247,7 @@ osdp_phy_packet_finalize(struct osdp_pd *pd, uint8_t *buf,
     return len;
 
 out_of_space_error:
-    OSDP_LOG_ERROR("PKT_F: Out of buffer space! CMD(%02x)", pd->cmd_id);
+    OSDP_LOG_ERROR("PKT_F: Out of buffer space! CMD(%02x)\n", pd->cmd_id);
     return OSDP_ERR_PKT_FMT;
 }
 
@@ -276,13 +276,13 @@ osdp_phy_check_packet(struct osdp_pd *pd, uint8_t *buf, int len,
 
     /* validate packet header */
     if (pkt->som != OSDP_PKT_SOM) {
-        OSDP_LOG_ERROR("Invalid SOM 0x%02x", pkt->som);
+        OSDP_LOG_ERROR("Invalid SOM 0x%02x\n", pkt->som);
         return OSDP_ERR_PKT_FMT;
     }
 
     if (!ISSET_FLAG(pd, PD_FLAG_PD_MODE) &&
         !(pkt->pd_address & 0x80)) {
-        OSDP_LOG_ERROR("Reply without address MSB set!", pkt->pd_address);
+        OSDP_LOG_ERROR("Reply without address MSB set!\n", pkt->pd_address);
         return OSDP_ERR_PKT_FMT;
     }
 
@@ -297,19 +297,21 @@ osdp_phy_check_packet(struct osdp_pd *pd, uint8_t *buf, int len,
 
     /* validate CRC/checksum */
     if (pkt->control & PKT_CONTROL_CRC) {
-        cur = (buf[pkt_len - 1] << 8) | buf[pkt_len - 2];
-        comp = osdp_compute_crc16(buf, pkt_len - 2);
+        pkt_len -= 2; /* consume CRC */
+        cur = (buf[pkt_len + 1] << 8) | buf[pkt_len];
+        comp = osdp_compute_crc16(buf, pkt_len);
         if (comp != cur) {
-            OSDP_LOG_ERROR("Invalid crc 0x%04x/0x%04x", comp, cur);
+            OSDP_LOG_ERROR("Invalid crc 0x%04x/0x%04x\n", comp, cur);
             pd->reply_id = REPLY_NAK;
             pd->ephemeral_data[0] = OSDP_PD_NAK_MSG_CHK;
             return OSDP_ERR_PKT_CHECK;
         }
     } else {
-        cur = buf[pkt_len - 1];
-        comp = osdp_compute_checksum(buf, pkt_len - 1);
+        pkt_len -= 1; /* consume checksum */
+        cur = buf[pkt_len];
+        comp = osdp_compute_checksum(buf, pkt_len);
         if (comp != cur) {
-            OSDP_LOG_ERROR("Invalid checksum %02x/%02x", comp, cur);
+            OSDP_LOG_ERROR("Invalid checksum %02x/%02x\n", comp, cur);
             pd->reply_id = REPLY_NAK;
             pd->ephemeral_data[0] = OSDP_PD_NAK_MSG_CHK;
             return OSDP_ERR_PKT_CHECK;
@@ -321,7 +323,7 @@ osdp_phy_check_packet(struct osdp_pd *pd, uint8_t *buf, int len,
     if (pd_addr != pd->address && pd_addr != 0x7F) {
         /* not addressed to us and was not broadcasted */
         if (!ISSET_FLAG(pd, PD_FLAG_PD_MODE)) {
-            OSDP_LOG_ERROR("Invalid pd address %d", pd_addr);
+            OSDP_LOG_ERROR("Invalid pd address %d\n", pd_addr);
             return OSDP_ERR_PKT_FMT;
         }
         return OSDP_ERR_PKT_SKIP;
@@ -347,15 +349,27 @@ osdp_phy_check_packet(struct osdp_pd *pd, uint8_t *buf, int len,
              * TODO: PD must resend the last response if CP send the
              * same sequence number again.
              */
-            OSDP_LOG_ERROR("seq-repeat/reply-resend not supported!");
+            OSDP_LOG_ERROR("seq-repeat/reply-resend not supported!\n");
             pd->reply_id = REPLY_NAK;
             pd->ephemeral_data[0] = OSDP_PD_NAK_SEQ_NUM;
             return OSDP_ERR_PKT_FMT;
         }
+    } else {
+        if (comp == 0) {
+            /**
+             * Check for receiving a busy reply from the PD which would
+             * have a sequence number of 0, come in an unsecured packet
+             * of minimum length, and have the reply ID REPLY_BUSY.
+             */
+            if ((pkt_len == 6) && (pkt->data[0] == REPLY_BUSY)) {
+                pd->seq_number -= 1;
+                return OSDP_ERR_PKT_BUSY;
+            }
+        }
     }
     cur = osdp_phy_get_seq_number(pd, ISSET_FLAG(pd, PD_FLAG_PD_MODE));
     if (cur != comp && !ISSET_FLAG(pd, PD_FLAG_SKIP_SEQ_CHECK)) {
-        OSDP_LOG_ERROR("packet seq mismatch %d/%d", cur, comp);
+        OSDP_LOG_ERROR("packet seq mismatch %d/%d\n", cur, comp);
         pd->reply_id = REPLY_NAK;
         pd->ephemeral_data[0] = OSDP_PD_NAK_SEQ_NUM;
         return OSDP_ERR_PKT_FMT;
@@ -387,13 +401,13 @@ osdp_phy_decode_packet(struct osdp_pd *pd, uint8_t *buf, int len,
     if (pkt->control & PKT_CONTROL_SCB) {
         if (ISSET_FLAG(pd, PD_FLAG_PD_MODE) &&
             !ISSET_FLAG(pd, PD_FLAG_SC_CAPABLE)) {
-            OSDP_LOG_ERROR("PD is not SC capable");
+            OSDP_LOG_ERROR("PD is not SC capable\n");
             pd->reply_id = REPLY_NAK;
             pd->ephemeral_data[0] = OSDP_PD_NAK_SC_UNSUP;
             return OSDP_ERR_PKT_FMT;
         }
         if (pkt->data[1] < SCS_11 || pkt->data[1] > SCS_18) {
-            OSDP_LOG_ERROR("Invalid SB Type");
+            OSDP_LOG_ERROR("Invalid SB Type\n");
             pd->reply_id = REPLY_NAK;
             pd->ephemeral_data[0] = OSDP_PD_NAK_SC_COND;
             return OSDP_ERR_PKT_FMT;
@@ -415,7 +429,7 @@ osdp_phy_decode_packet(struct osdp_pd *pd, uint8_t *buf, int len,
         len -= pkt->data[0]; /* consume security block */
     } else {
         if (ISSET_FLAG(pd, PD_FLAG_SC_ACTIVE)) {
-            OSDP_LOG_ERROR("Received plain-text message in SC");
+            OSDP_LOG_ERROR("Received plain-text message in SC\n");
             pd->reply_id = REPLY_NAK;
             pd->ephemeral_data[0] = OSDP_PD_NAK_SC_COND;
             return OSDP_ERR_PKT_FMT;
@@ -430,7 +444,7 @@ osdp_phy_decode_packet(struct osdp_pd *pd, uint8_t *buf, int len,
         osdp_compute_mac(pd, is_cmd, buf, mac_offset);
         mac = is_cmd ? pd->sc.c_mac : pd->sc.r_mac;
         if (memcmp(buf + mac_offset, mac, 4) != 0) {
-            OSDP_LOG_ERROR("Invalid MAC; discarding SC");
+            OSDP_LOG_ERROR("Invalid MAC; discarding SC\n");
             CLEAR_FLAG(pd, PD_FLAG_SC_ACTIVE);
             pd->reply_id = REPLY_NAK;
             pd->ephemeral_data[0] = OSDP_PD_NAK_SC_COND;
@@ -444,19 +458,28 @@ osdp_phy_decode_packet(struct osdp_pd *pd, uint8_t *buf, int len,
              * Only the data portion of message (after id byte)
              * is encrypted. While (en/de)crypting, we must skip
              * header (6), security block (2) and cmd/reply id (1)
-             * bytes if cmd/reply has no data, use SCS_15/SCS_16.
+             * bytes.
              *
              * At this point, the header and security block is
              * already consumed. So we can just skip the cmd/reply
              * ID (data[0])  when calling osdp_decrypt_data().
              */
             len = osdp_decrypt_data(pd, is_cmd, data + 1, len - 1);
-            if (len <= 0) {
-                OSDP_LOG_ERROR("Failed at decrypt; discarding SC");
+            if (len < 0) {
+                OSDP_LOG_ERROR("Failed at decrypt; discarding SC\n");
                 CLEAR_FLAG(pd, PD_FLAG_SC_ACTIVE);
                 pd->reply_id = REPLY_NAK;
                 pd->ephemeral_data[0] = OSDP_PD_NAK_SC_COND;
                 return OSDP_ERR_PKT_FMT;
+            }
+            if (len == 0) {
+                /**
+                 * If cmd/reply has no data, PD "should" have
+                 * used SCS_15/SCS_16 but we will be tolerant
+                 * towards those faulty implementations.
+                 */
+                OSDP_LOG_INFO("Received encrypted data block with 0 "
+                    "length; tolerating non-conformance!\n");
             }
             len += 1; /* put back cmd/reply ID */
         }

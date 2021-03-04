@@ -17,10 +17,8 @@
 
 #define OSDP_PD_POLL_TIMEOUT_MS        (1000 / MYNEWT_VAL(OSDP_PD_POLL_RATE))
 #define OSDP_CMD_RETRY_WAIT_MS         (MYNEWT_VAL(OSDP_CMD_RETRY_WAIT_SEC) * 1000)
-
-#if MYNEWT_VAL(OSDP_SC_ENABLED)
 #define OSDP_PD_SC_RETRY_MS            (MYNEWT_VAL(OSDP_SC_RETRY_WAIT_SEC) * 1000)
-#endif
+#define OSDP_ONLINE_RETRY_WAIT_MAX_MS  (MYNEWT_VAL(OSDP_ONLINE_RETRY_WAIT_MAX_SEC) * 1000)
 
 #define CMD_POLL_LEN                   1
 #define CMD_LSTAT_LEN                  1
@@ -424,7 +422,6 @@ cp_build_command(struct osdp_pd *pd, uint8_t *buf, int max_len)
         if (smb == NULL) {
             break;
         }
-        osdp_get_rand(pd->sc.cp_random, 8);
         smb[0] = 3;     /* length */
         smb[1] = SCS_11; /* type */
         smb[2] = ISSET_FLAG(pd, PD_FLAG_SC_USE_SCBKD) ? 0 : 1;
@@ -739,7 +736,7 @@ cp_send_command(struct osdp_pd *pd)
 
     if (MYNEWT_VAL(OSDP_PACKET_TRACE)) {
         if (pd->cmd_id != CMD_POLL) {
-            osdp_dump(pd->rx_buf, pd->rx_buf_len,
+            osdp_dump(pd->rx_buf, len,
           "OSDP: PD[%d]: Sent\n", pd->offset);
         }
     }
@@ -794,18 +791,33 @@ cp_process_reply(struct osdp_pd *pd)
 }
 
 static inline void
+cp_set_state(struct osdp_pd *pd, enum osdp_state_e state)
+{
+    pd->state = state;
+    CLEAR_FLAG(pd, PD_FLAG_AWAIT_RESP);
+}
+
+static inline void
+cp_set_online(struct osdp_pd *pd)
+{
+    cp_set_state(pd, OSDP_CP_STATE_ONLINE);
+    pd->wait_ms = 0;
+}
+
+static inline void
 cp_set_offline(struct osdp_pd *pd)
 {
     CLEAR_FLAG(pd, PD_FLAG_SC_ACTIVE);
     pd->state = OSDP_CP_STATE_OFFLINE;
     pd->tstamp = osdp_millis_now();
-}
-
-static inline void
-cp_set_state(struct osdp_pd *pd, enum osdp_state_e state)
-{
-    pd->state = state;
-    CLEAR_FLAG(pd, PD_FLAG_AWAIT_RESP);
+    if (pd->wait_ms == 0) {
+        pd->wait_ms = 1000; /* retry after 1 second initially */
+    } else {
+        pd->wait_ms <<= 1;
+        if (pd->wait_ms > OSDP_ONLINE_RETRY_WAIT_MAX_MS) {
+            pd->wait_ms = OSDP_ONLINE_RETRY_WAIT_MAX_MS;
+        }
+    }
 }
 
 static int
@@ -957,7 +969,7 @@ state_update(struct osdp_pd *pd)
         }
         break;
     case OSDP_CP_STATE_OFFLINE:
-        if (osdp_millis_since(pd->tstamp) > OSDP_CMD_RETRY_WAIT_MS) {
+        if (osdp_millis_since(pd->tstamp) > pd->wait_ms) {
             cp_set_state(pd, OSDP_CP_STATE_INIT);
             osdp_phy_state_reset(pd);
         }
@@ -999,7 +1011,7 @@ state_update(struct osdp_pd *pd)
             "to ENFORCE_SECURE\n");
             cp_set_offline(pd);
         } else {
-            cp_set_state(pd, OSDP_CP_STATE_ONLINE);
+            cp_set_online(pd);
         }
         break;
     case OSDP_CP_STATE_SC_INIT:
@@ -1020,7 +1032,7 @@ state_update(struct osdp_pd *pd)
             if (ISSET_FLAG(pd, PD_FLAG_SC_SCBKD_DONE)) {
                 OSDP_LOG_INFO("SC Failed. Online without SC\n");
                 pd->sc_tstamp = osdp_millis_now();
-                cp_set_state(pd, OSDP_CP_STATE_ONLINE);
+                cp_set_online(pd);
                 break;
             }
             SET_FLAG(pd, PD_FLAG_SC_USE_SCBKD);
@@ -1039,7 +1051,7 @@ state_update(struct osdp_pd *pd)
                 OSDP_LOG_ERROR("CHLNG failed. Online without SC\n");
                 pd->sc_tstamp = osdp_millis_now();
                 osdp_phy_state_reset(pd);
-                cp_set_state(pd, OSDP_CP_STATE_ONLINE);
+                cp_set_online(pd);
             }
             break;
         }
@@ -1058,7 +1070,7 @@ state_update(struct osdp_pd *pd)
                 OSDP_LOG_ERROR("SCRYPT failed. Online without SC\n");
                 osdp_phy_state_reset(pd);
                 pd->sc_tstamp = osdp_millis_now();
-                cp_set_state(pd, OSDP_CP_STATE_ONLINE);
+                cp_set_online(pd);
             }
             break;
         }
@@ -1069,7 +1081,7 @@ state_update(struct osdp_pd *pd)
         }
         OSDP_LOG_INFO("SC Active\n");
         pd->sc_tstamp = osdp_millis_now();
-        cp_set_state(pd, OSDP_CP_STATE_ONLINE);
+        cp_set_online(pd);
         break;
     case OSDP_CP_STATE_SET_SCBK:
         if (cp_cmd_dispatcher(pd, CMD_KEYSET) != 0) {

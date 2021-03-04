@@ -10,7 +10,6 @@
 #include "osdp/osdp_common.h"
 
 #define TAG "SC: "
-
 #define OSDP_SC_EOM_MARKER             0x80  /* End of Message Marker */
 
 /* Default key as specified in OSDP specification */
@@ -167,15 +166,16 @@ osdp_decrypt_data(struct osdp_pd *pd, int is_cmd, uint8_t *data, int length)
 
     osdp_decrypt(pd->sc.s_enc, iv, data, length);
 
-    while (data[length - 1] == 0x00) {
+    length--;
+    while (length && data[length] == 0x00) {
         length--;
     }
-    if (data[length - 1] != OSDP_SC_EOM_MARKER) {
+    if (data[length] != OSDP_SC_EOM_MARKER) {
         return -1;
     }
-    data[length - 1] = 0;
+    data[length] = 0;
 
-    return length - 1;
+    return length;
 }
 
 int
@@ -256,5 +256,7 @@ osdp_sc_init(struct osdp_pd *pd)
         pd->sc.pd_client_uid[5] = BYTE_1(pd->id.serial_number);
         pd->sc.pd_client_uid[6] = BYTE_2(pd->id.serial_number);
         pd->sc.pd_client_uid[7] = BYTE_3(pd->id.serial_number);
+    } else {
+        osdp_get_rand(pd->sc.cp_random, 8);
     }
 }
