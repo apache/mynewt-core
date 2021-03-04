@@ -700,6 +700,11 @@ uint32_t osdp_get_sc_status_mask(osdp_t *ctx);
  */
 void osdp_init(osdp_pd_info_t *info, uint8_t *scbk);
 
+/**
+ * @brief Stop OSDP library.
+ */
+void osdp_stop(void);
+
 #ifdef __cplusplus
 }
 #endif
