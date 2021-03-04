@@ -44,6 +44,10 @@ syscfg.defs:
         description: 'Time in seconds to wait after a secure channel failure, and before
           retrying to establish it.'
 
+    OSDP_ONLINE_RETRY_WAIT_MAX_SEC:
+        value: 300
+        description: 'Upper limit in seconds for the CP to wait and retry communication.'
+
     OSDP_RESP_TOUT_MS:
         value: 200
         description: 'Response timeout in milliseconds.'

@@ -222,6 +222,13 @@ enum osdp_state_e {
 };
 
 enum osdp_pkt_errors_e {
+    /* Define the busy error to a +ve value to indicate no error.  Also set it
+     * to 2 which is the value of OSDP_CP_ERR_RETRY_CMD which is the error
+     * code returned by cp_decode_response() after decoding the busy reply
+     * packet.  This thus allows a busy reply packet to be detected and
+     * handled without needing the usual additional decoding step. */
+    OSDP_ERR_PKT_BUSY  = 2,
+
     OSDP_ERR_PKT_NONE  = 0,
     OSDP_ERR_PKT_FMT   = -1,
     OSDP_ERR_PKT_WAIT  = -2,
@@ -285,6 +292,7 @@ struct osdp_pd {
     /* PD state management */
     int state;
     int phy_state;
+    uint32_t wait_ms;
 
     int64_t tstamp;
     int64_t sc_tstamp;
@@ -345,24 +353,8 @@ void osdp_phy_state_reset(struct osdp_pd *pd);
 int osdp_phy_packet_get_data_offset(struct osdp_pd *p, const uint8_t *buf);
 uint8_t *osdp_phy_packet_get_smb(struct osdp_pd *p, const uint8_t *buf);
 
-/* from osdp_common.c */
-int64_t osdp_millis_now(void);
-int64_t osdp_millis_since(int64_t last);
-/* void osdp_dump(const char *head, uint8_t *buf, int len); */
-uint16_t osdp_compute_crc16(const uint8_t *buf, size_t len);
-int osdp_device_lock(struct os_mutex *lock);
-void osdp_device_unlock(struct os_mutex *lock);
-
 /* from osdp.c */
 struct osdp *osdp_get_ctx();
-
-/* from osdp_cp.c */
-#if MYNEWT_VAL(OSDP_MODE_CP)
-int osdp_extract_address(int *address);
-#endif
-
-void osdp_encrypt(uint8_t *key, uint8_t *iv, uint8_t *data, int len);
-void osdp_decrypt(uint8_t *key, uint8_t *iv, uint8_t *data, int len);
 
 /* from osdp_sc.c */
 void osdp_compute_scbk(struct osdp_pd *pd, uint8_t *master_key, uint8_t *scbk);
@@ -377,7 +369,17 @@ int osdp_encrypt_data(struct osdp_pd *pd, int is_cmd, uint8_t *data, int len);
 int osdp_compute_mac(struct osdp_pd *pd, int is_cmd,
                      const uint8_t *data, int len);
 void osdp_sc_init(struct osdp_pd *pd);
-void osdp_get_rand(uint8_t *buf, int len);
+
+/* from osdp_common.c */
+__attribute__((weak)) int64_t osdp_millis_now(void);
+int64_t osdp_millis_since(int64_t last);
+/* void osdp_dump(const char *head, uint8_t *buf, int len); */
+uint16_t osdp_compute_crc16(const uint8_t *buf, size_t len);
+__attribute__((weak)) void osdp_encrypt(uint8_t *key, uint8_t *iv, uint8_t *data, int len);
+__attribute__((weak)) void osdp_decrypt(uint8_t *key, uint8_t *iv, uint8_t *data, int len);
+__attribute__((weak)) void osdp_get_rand(uint8_t *buf, int len);
+int osdp_device_lock(struct os_mutex *lock);
+void osdp_device_unlock(struct os_mutex *lock);
 
 /**
  * @brief This method is used to setup a device in PD mode. Application must
