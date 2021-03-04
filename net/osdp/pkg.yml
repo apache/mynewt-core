@@ -17,9 +17,13 @@
 #
 
 pkg.name: net/osdp
-pkg.description: "OSDP implementation"
-pkg.author: ""
-pkg.homepage: ""
+pkg.description: >
+    This package is a mynewt port of libOSDP library
+    available at https://github.com/goToMain/libosdp
+    It is currently at par with commit hash
+    aaba129fe6ad71d61b8526bd8a9b3778b93c9b26
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - osdp
 
