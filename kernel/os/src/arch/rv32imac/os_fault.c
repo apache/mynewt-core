@@ -19,7 +19,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "os/mynewt.h"
 #include "os_priv.h"
