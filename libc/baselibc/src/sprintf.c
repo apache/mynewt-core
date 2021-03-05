@@ -3,7 +3,6 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdint.h>
 
 int sprintf(char *buffer, const char *format, ...)

@@ -18,7 +18,6 @@
  */
 
 #include <stdint.h>
-#include <unistd.h>
 
 #include "os/mynewt.h"
 #include "console/console.h"
