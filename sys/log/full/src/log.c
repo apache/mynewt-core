@@ -1122,3 +1122,13 @@ log_fill_current_img_hash(struct log_entry_hdr *hdr)
 
     return SYS_ENOTSUP;
 }
+
+uint32_t
+log_get_last_index(struct log *log)
+{
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
+    return g_log_info.li_next_index;
+#else
+    return log->l_idx;
+#endif
+}

@@ -675,6 +675,15 @@ uint8_t log_get_level(const struct log *log);
  */
 void log_set_max_entry_len(struct log *log, uint16_t max_entry_len);
 
+/**
+ * Return last entry index in log.
+ *
+ * @param log Log to check last entry index from.
+ *
+ * @return last entry index
+ */
+uint32_t log_get_last_index(struct log *log);
+
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 /**
  * Return information about log storage
