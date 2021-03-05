@@ -37,62 +37,68 @@
 #error QSPI_FLASH_SECTOR_COUNT must be set to the correct value in bsp syscfg.yml
 #endif
 
-uint32_t lut[FSL_FEATURE_QSPI_LUT_DEPTH] = {
-    /* Seq0 :Quad Read */
-    /* CMD:        0xEB - Quad Read, Single pad */
-    /* ADDR:       0x18 - 24bit address, Quad pads */
-    /* DUMMY:      0x06 - 6 clock cyles, Quad pads */
-    /* READ:       0x80 - Read 128 bytes, Quad pads */
-    /* JUMP_ON_CS: 0 */
-    [0] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, 0xEB, QSPI_ADDR, QSPI_PAD_4, 0x18),
-    [1] = QSPI_LUT_SEQ(QSPI_DUMMY, QSPI_PAD_4, 0x06, QSPI_READ, QSPI_PAD_4, 0x80),
-    [2] = QSPI_LUT_SEQ(QSPI_JMP_ON_CS, QSPI_PAD_1, 0x0, 0, 0, 0),
+#define AHB_BUFFER_SIZE        MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE)
+#define QSPI_HAS_CLR           FSL_FEATURE_QSPI_SOCCR_HAS_CLR_LPCAC
+#define qspi_tx_buffer_full(x) (QSPI_GetStatusFlags(x) & kQSPI_TxBufferFull)
+#define qspi_in_use(x)         (QSPI_GetStatusFlags(x) & (kQSPI_Busy | kQSPI_IPAccess))
+#define qspi_is_busy(x)        (QSPI_GetStatusFlags(x) & kQSPI_Busy)
 
-    /* Seq1: Write Enable */
-    /* CMD:      0x06 - Write Enable, Single pad */
-    [4] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, 0x06, 0, 0, 0),
+#define SZ32K (32 * 1024)
+#define SZ64K (64 * 1024)
 
-    /* Seq2: Erase All */
-    /* CMD:    0x60 - Erase All chip, Single pad */
-    [8] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, 0x60, 0, 0, 0),
+#define LUT_CMD_READ                   0
+#define LUT_CMD_WRITE_ENABLE           4
+#define LUT_CMD_PAGE_PROGRAM           8
+#define LUT_CMD_READ_STATUS            12
+#define LUT_CMD_WRITE_STATUS           16
+#define LUT_CMD_ERASE_SECTOR           24
+#define LUT_CMD_ERASE_BLOCK32K         28
+#define LUT_CMD_ERASE_BLOCK64K         32
+#define LUT_CMD_ERASE_CHIP             36
 
-    /* Seq3: Read Status */
-    /* CMD:    0x05 - Read Status, single pad */
-    /* READ:   0x01 - Read 1 byte */
-    [12] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, 0x05, QSPI_READ, QSPI_PAD_1, 0x1),
+#define MX25U3235F_CMD_WRSR            0x01
+#define MX25U3235F_CMD_PP              0x02
+#define MX25U3235F_CMD_RDSR            0x05
+#define MX25U3235F_CMD_WREN            0x06
+#define MX25U3235F_CMD_SE              0x20
+#define MX25U3235F_CMD_BE32K           0x52
+#define MX25U3235F_CMD_CE              0x60
+#define MX25U3235F_CMD_BE              0xD8
+#define MX25U3235F_CMD_4READ           0xEB
 
-    /* Seq4: Page Program */
-    /* CMD:    0x02 - Page Program, Single pad */
-    /* ADDR:   0x18 - 24bit address, Single pad */
-    /* WRITE:  0x80 - Write 128 bytes at one pass, Single pad */
-    [16] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, 0x02, QSPI_ADDR, QSPI_PAD_1, 0x18),
-    [17] = QSPI_LUT_SEQ(QSPI_WRITE, QSPI_PAD_1, 0x80, 0, 0, 0),
+static struct os_mutex g_mtx;
 
-    /* Seq5: Write Register */
-    /* CMD:    0x01 - Write Status Register, single pad */
-    /* WRITE:  0x01 - Write 1 byte of data, single pad */
-    [20] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, 0x01, QSPI_WRITE, QSPI_PAD_1, 0x1),
+uint32_t MX25U3235F_LUT[FSL_FEATURE_QSPI_LUT_DEPTH] = {
 
-    /* Seq6: Read Config Register */
-    /* CMD:  0x15 - Read Config register, single pad */
-    /* READ: 0x01 - Read 1 byte */
-    [24] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, 0x15, QSPI_READ, QSPI_PAD_1, 0x1),
+    [LUT_CMD_READ + 0] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_4READ, QSPI_ADDR, QSPI_PAD_4, 24),
+    [LUT_CMD_READ + 1] = QSPI_LUT_SEQ(QSPI_DUMMY, QSPI_PAD_4, 6, QSPI_READ, QSPI_PAD_4, 128),
+    [LUT_CMD_READ + 2] = QSPI_LUT_SEQ(QSPI_JMP_ON_CS, QSPI_PAD_1, 0, 0, 0, 0),
 
-    /* Seq7: Erase Sector */
-    /* CMD:  0x20 - Sector Erase, single pad */
-    /* ADDR: 0x18 - 24 bit address, single pad */
-    [28] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, 0x20, QSPI_ADDR, QSPI_PAD_1, 0x18),
+    [LUT_CMD_WRITE_ENABLE] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_WREN, 0, 0, 0),
 
-    /* Match MISRA rule */
-    [63] = 0
+    [LUT_CMD_PAGE_PROGRAM + 0] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_PP, QSPI_ADDR, QSPI_PAD_1, 24),
+    [LUT_CMD_PAGE_PROGRAM + 1] = QSPI_LUT_SEQ(QSPI_WRITE, QSPI_PAD_1, 128, 0, 0, 0),
+
+    [LUT_CMD_READ_STATUS] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_RDSR, QSPI_READ, QSPI_PAD_1, 1),
+
+    [LUT_CMD_WRITE_STATUS] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_WRSR, QSPI_WRITE, QSPI_PAD_1, 1),
+
+    [LUT_CMD_ERASE_SECTOR] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_SE, QSPI_ADDR, QSPI_PAD_1, 24),
+
+    [LUT_CMD_ERASE_BLOCK32K] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_BE32K, QSPI_ADDR, QSPI_PAD_1, 24),
+
+    [LUT_CMD_ERASE_BLOCK64K] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_BE, QSPI_ADDR, QSPI_PAD_1, 24),
+
+    [LUT_CMD_ERASE_CHIP] = QSPI_LUT_SEQ(QSPI_CMD, QSPI_PAD_1, MX25U3235F_CMD_CE, 0, 0, 0),
+
 };
 
-qspi_flash_config_t g_qspi_flash_cfg = {
-    .flashA1Size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) / 2,
+static qspi_flash_config_t g_qspi_flash_cfg = {
+    .flashA1Size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
     .flashA2Size = 0,
 #if (FSL_FEATURE_QSPI_SUPPORT_PARALLEL_MODE)
-    .flashB1Size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) / 2,
-    .flashB2Size = 0,
+    .flashA1Size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
+    .flashA2Size = 0,
 #endif
 #if (!FSL_FEATURE_QSPI_HAS_NO_TDH)
     .dataHoldTime = 0,
@@ -106,35 +112,26 @@ qspi_flash_config_t g_qspi_flash_cfg = {
 };
 
 static void
-check_if_finished(void)
+wait_until_finished(void)
 {
-    uint32_t val = 0;
-    /* Check WIP bit */
+    uint32_t val;
+
     do {
-        while (QSPI_GetStatusFlags(QuadSPI0) & kQSPI_Busy);
+        while (qspi_is_busy(QuadSPI0));
         QSPI_ClearFifo(QuadSPI0, kQSPI_RxFifo);
-        QSPI_ExecuteIPCommand(QuadSPI0, 12U);
-        while (QSPI_GetStatusFlags(QuadSPI0) & kQSPI_Busy);
+        QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_READ_STATUS);
+        while (qspi_is_busy(QuadSPI0));
+        /* val & 1 == WIP */
         val = QuadSPI0->RBDR[0];
         /* Clear ARDB area */
         QSPI_ClearErrorFlag(QuadSPI0, kQSPI_RxBufferDrain);
-    } while (val & 0x1);
+    } while (val & 1);
 }
 
 static void
 cmd_write_enable()
 {
-    while (QSPI_GetStatusFlags(QuadSPI0) & kQSPI_Busy);
-    QSPI_ExecuteIPCommand(QuadSPI0, 4U);
-}
-
-static void
-read_page(uint32_t address, uint32_t *dst)
-{
-    int i;
-    for (i = 0; i < MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE) / 4; i++) {
-        dst[i] = ((uint32_t *)address)[i];
-    }
+    QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_WRITE_ENABLE);
 }
 
 static int
@@ -143,53 +140,27 @@ nxp_qspi_read(const struct hal_flash *dev,
               void *dst,
               uint32_t num_bytes)
 {
-    uint32_t npages;
-    if ((address % dev->hf_align) != 0) {
-        return OS_EINVAL;
-    }
-    if ((num_bytes % MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE)) != 0) {
-        return OS_EINVAL;
+    uint32_t amount;
+
+    while (qspi_in_use(QuadSPI0));
+
+    os_mutex_pend(&g_mtx, OS_TIMEOUT_NEVER);
+
+    /*
+     * The RM mentions that a read using AHB can never be bigger than the
+     * configured buffer size, but it is not clear if a buffer reset is
+     * required; it seems to work without it.
+     */
+    while (num_bytes) {
+        amount = MIN(num_bytes, AHB_BUFFER_SIZE);
+        memcpy(dst, (void *)(FSL_FEATURE_QSPI_AMBA_BASE + address), amount);
+        dst = (uint8_t *)dst + amount;
+        address += amount;
+        num_bytes -= amount;
     }
 
-    npages = num_bytes / MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
-    while (npages) {
-        read_page(address,  dst);
-        npages--;
-        address += MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
-    }
+    os_mutex_release(&g_mtx);
     return 0;
-}
-
-static void
-write_page(uint32_t dest_addr, uint32_t *src_addr)
-{
-    uint32_t leftLongWords = 0;
-
-    while (QSPI_GetStatusFlags(QuadSPI0) & kQSPI_Busy);
-    QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
-
-    QSPI_SetIPCommandAddress(QuadSPI0, dest_addr);
-    cmd_write_enable();
-    while (QSPI_GetStatusFlags(QuadSPI0) & kQSPI_Busy);
-
-    /* First write some data into TXFIFO to prevent from underrun */
-    QSPI_WriteBlocking(QuadSPI0, src_addr, FSL_FEATURE_QSPI_TXFIFO_DEPTH * 4);
-    src_addr += FSL_FEATURE_QSPI_TXFIFO_DEPTH;
-
-    /* Start the program */
-    QSPI_SetIPCommandSize(QuadSPI0, MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE));
-    QSPI_ExecuteIPCommand(QuadSPI0, 16U);
-
-    leftLongWords = MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE) - 16 * sizeof(uint32_t);
-    QSPI_WriteBlocking(QuadSPI0, src_addr, leftLongWords);
-
-    /* Wait until flash finished program */
-    check_if_finished();
-    while (QSPI_GetStatusFlags(QuadSPI0) & (kQSPI_Busy | kQSPI_IPAccess));
-
-#if defined(FSL_FEATURE_QSPI_SOCCR_HAS_CLR_LPCAC) && (FSL_FEATURE_QSPI_SOCCR_HAS_CLR_LPCAC)
-    QSPI_ClearCache(QuadSPI0);
-#endif
 }
 
 static int
@@ -198,41 +169,136 @@ nxp_qspi_write(const struct hal_flash *dev,
                const void *src,
                uint32_t num_bytes)
 {
-    uint32_t npages;
-    if ((address % dev->hf_align) != 0) {
-        return OS_EINVAL;
-    }
-    if ((num_bytes % MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE)) != 0) {
+    uint8_t align;
+    uint32_t page_size;
+    uint32_t size;
+    uint8_t pad[4];
+    uint8_t pad_amount;
+    uint8_t pad_total;
+    int32_t remaining;
+    uint32_t *src32;
+    int i;
+
+    align = dev->hf_align;
+    if (address % align) {
         return OS_EINVAL;
     }
 
-    npages = num_bytes / MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
-    while (npages) {
-        write_page(address, (uint32_t *) src);
-        npages--;
-        address += MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
+    os_mutex_pend(&g_mtx, OS_TIMEOUT_NEVER);
+
+    page_size = MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
+    while (num_bytes) {
+        /*
+         * Each iteration of this loop should write to one page in flash
+         */
+        size = MIN(num_bytes, page_size - (address % page_size));
+
+        while (qspi_is_busy(QuadSPI0));
+        QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
+
+        QSPI_SetIPCommandAddress(QuadSPI0, FSL_FEATURE_QSPI_AMBA_BASE + address);
+        cmd_write_enable();
+        while (qspi_is_busy(QuadSPI0));
+
+        /*
+         * Before starting a write run the TXFIFO must have at least 4 longwords
+         * to prevent from underrun, if not enough data is available just pad with
+         * 0xff
+         */
+        pad_total = 0;
+        remaining = size;
+        for (i = 0; i < 4 && !qspi_tx_buffer_full(QuadSPI0); i++) {
+            pad_amount = MIN(remaining, 4);
+            memcpy(&pad[0], src, pad_amount);
+            memset(&pad[size], 0xff, sizeof(pad) - pad_amount);
+
+            QSPI_WriteData(QuadSPI0, *((uint32_t *)pad));
+
+            src += pad_amount;
+            remaining -= pad_amount;
+            pad_total += pad_amount;
+        }
+
+        QSPI_SetIPCommandSize(QuadSPI0, size);
+        QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_PAGE_PROGRAM);
+
+        remaining = size - pad_total;
+        src32 = (uint32_t *)src;
+        while (remaining > 0) {
+            if (qspi_tx_buffer_full(QuadSPI0)) {
+                continue;
+            }
+            QSPI_WriteData(QuadSPI0, *src32++);
+            remaining -= 4;
+        }
+
+        wait_until_finished();
+        while (qspi_in_use(QuadSPI0));
+
+#if QSPI_HAS_CLR
+        QSPI_ClearCache(QuadSPI0);
+#endif
+
+        src = (uint8_t *)src32;
+        address += size;
+        num_bytes -= size;
     }
+
+    while (qspi_in_use(QuadSPI0));
+    QSPI_SoftwareReset(QuadSPI0);
+    while (qspi_in_use(QuadSPI0));
+
+    os_mutex_release(&g_mtx);
+
     return 0;
 }
 
 static int
 nxp_qspi_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
-    sector_address = sector_address / MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
-    sector_address *= MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
+    while (qspi_is_busy(QuadSPI0));
 
-    while (QSPI_GetStatusFlags(QuadSPI0) & kQSPI_Busy);
+    os_mutex_pend(&g_mtx, OS_TIMEOUT_NEVER);
 
     QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
-    QSPI_SetIPCommandAddress(QuadSPI0, sector_address);
+    QSPI_SetIPCommandAddress(QuadSPI0, FSL_FEATURE_QSPI_AMBA_BASE + sector_address);
     cmd_write_enable();
-    QSPI_ExecuteIPCommand(QuadSPI0, 28U);
-    check_if_finished();
+    QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_SECTOR);
+    wait_until_finished();
+    while (qspi_in_use(QuadSPI0));
 
-#if defined(FSL_FEATURE_QSPI_SOCCR_HAS_CLR_LPCAC) && (FSL_FEATURE_QSPI_SOCCR_HAS_CLR_LPCAC)
+#if QSPI_HAS_CLR
     QSPI_ClearCache(QuadSPI0);
 #endif
+
+    QSPI_SoftwareReset(QuadSPI0);
+
+    os_mutex_release(&g_mtx);
+
     return 0;
+}
+
+void
+nxp_qspi_erase_chip(void)
+{
+    while (qspi_in_use(QuadSPI0));
+
+    os_mutex_pend(&g_mtx, OS_TIMEOUT_NEVER);
+
+    QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
+    QSPI_SetIPCommandAddress(QuadSPI0, FSL_FEATURE_QSPI_AMBA_BASE);
+    cmd_write_enable();
+    QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_CHIP);
+    wait_until_finished();
+    while (qspi_in_use(QuadSPI0));
+
+#if QSPI_HAS_CLR
+    QSPI_ClearCache(QuadSPI0);
+#endif
+
+    QSPI_SoftwareReset(QuadSPI0);
+
+    os_mutex_release(&g_mtx);
 }
 
 static int
@@ -240,28 +306,45 @@ nxp_qspi_erase(const struct hal_flash *dev,
                uint32_t address,
                uint32_t size)
 {
-    uint32_t nsects;
+    uint32_t erased_size;
 
-    address = address / MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
-    address *= MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
-    nsects = size / MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
-    nsects += size % MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
+    if (address % MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) ||
+        size % MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE)) {
+        return -1;
+    }
 
-    while (nsects) {
-        while (QSPI_GetStatusFlags(QuadSPI0) & kQSPI_Busy);
+    os_mutex_pend(&g_mtx, OS_TIMEOUT_NEVER);
+
+    while (size) {
+        while (qspi_is_busy(QuadSPI0));
         QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
-        QSPI_SetIPCommandAddress(QuadSPI0, address);
+        QSPI_SetIPCommandAddress(QuadSPI0, FSL_FEATURE_QSPI_AMBA_BASE + address);
         cmd_write_enable();
-        QSPI_ExecuteIPCommand(QuadSPI0, 28U);
-        check_if_finished();
+        if (size >= SZ64K) {
+            QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_BLOCK64K);
+            erased_size = SZ64K;
+        } else if (size >= SZ32K) {
+            QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_BLOCK32K);
+            erased_size = SZ32K;
+        } else {
+            QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_SECTOR);
+            erased_size = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
+        }
+        wait_until_finished();
+        while (qspi_in_use(QuadSPI0));
 
-#if defined(FSL_FEATURE_QSPI_SOCCR_HAS_CLR_LPCAC) &&  \
-        (FSL_FEATURE_QSPI_SOCCR_HAS_CLR_LPCAC)
+#if QSPI_HAS_CLR
         QSPI_ClearCache(QuadSPI0);
 #endif
-        nsects--;
-        address += MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
+
+        address += erased_size;
+        size -= erased_size;
     }
+
+    QSPI_SoftwareReset(QuadSPI0);
+
+    os_mutex_release(&g_mtx);
+
     return 0;
 }
 
@@ -273,33 +356,32 @@ nxp_qspi_sector_info(const struct hal_flash *dev,
 {
     *address = idx * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
     *sz = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
-
     return 0;
 }
 
-/* Enable Quad mode */
 static void
 enable_quad_mode(void)
 {
-    uint32_t val[4] = {0x40U, 0, 0, 0};
-
-    while (QSPI_GetStatusFlags(QuadSPI0) & kQSPI_Busy);
     QSPI_SetIPCommandAddress(QuadSPI0, FSL_FEATURE_QSPI_AMBA_BASE);
 
-    /* Clear Tx FIFO */
     QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
 
-    /* Write enable */
     cmd_write_enable();
 
-    /* Write data into TX FIFO, needs to write at least 16 bytes of data */
-    QSPI_WriteBlocking(QuadSPI0, val, 16U);
+    /*
+     * Set QE bit to enable quad mode.
+     *
+     * XXX need extra writes to fill the FIFO
+     */
+    QSPI_WriteData(QuadSPI0, 0xffffff40);
+    QSPI_WriteData(QuadSPI0, 0xffffffff);
+    QSPI_WriteData(QuadSPI0, 0xffffffff);
+    QSPI_WriteData(QuadSPI0, 0xffffffff);
 
-    /* Set seq id, write register */
-    QSPI_ExecuteIPCommand(QuadSPI0, 20);
+    QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_WRITE_STATUS);
 
-    /* Wait until finished */
-    check_if_finished();
+    wait_until_finished();
+    while (qspi_in_use(QuadSPI0));
 }
 
 static int
@@ -307,33 +389,38 @@ nxp_qspi_init(const struct hal_flash *dev)
 {
     qspi_config_t qspi_cfg = {0};
 
-    /*Get QSPI default settings and configure the qspi */
+#if MYNEWT_VAL(QSPIA_ENABLE)
+    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPIA_PIN_SCK), MYNEWT_VAL(QSPIA_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPIA_PIN_SS), MYNEWT_VAL(QSPIA_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPIA_PIN_DIO0), MYNEWT_VAL(QSPIA_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPIA_PIN_DIO1), MYNEWT_VAL(QSPIA_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPIA_PIN_DIO2), MYNEWT_VAL(QSPIA_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPIA_PIN_DIO3), MYNEWT_VAL(QSPIA_MUX));
+#endif
+
+#if MYNEWT_VAL(QSPIB_ENABLE)
+    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPIB_PIN_SCK), MYNEWT_VAL(QSPIB_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPIB_PIN_SS), MYNEWT_VAL(QSPIB_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPIB_PIN_DIO0), MYNEWT_VAL(QSPIB_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPIB_PIN_DIO1), MYNEWT_VAL(QSPIB_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPIB_PIN_DIO2), MYNEWT_VAL(QSPIB_MUX));
+    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPIB_PIN_DIO3), MYNEWT_VAL(QSPIB_MUX));
+#endif
+
     QSPI_GetDefaultQspiConfig(&qspi_cfg);
-
-    /*Set AHB buffer size for reading data through AHB bus */
-    qspi_cfg.AHBbufferSize[3] = MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
-
-    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPI_PIN_SCKA), MYNEWT_VAL(QSPIA_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPI_PIN_SSA), MYNEWT_VAL(QSPIA_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPI_PIN_DIOA0), MYNEWT_VAL(QSPIA_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPI_PIN_DIOA1), MYNEWT_VAL(QSPIA_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPI_PIN_DIOA2), MYNEWT_VAL(QSPIA_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIA_PORT), MYNEWT_VAL(QSPI_PIN_DIO3A), MYNEWT_VAL(QSPIA_MUX));
-
-    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPI_PIN_SCKB), MYNEWT_VAL(QSPIB_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPI_PIN_SSB), MYNEWT_VAL(QSPIB_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPI_PIN_DIOB0), MYNEWT_VAL(QSPIB_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPI_PIN_DIOB1), MYNEWT_VAL(QSPIB_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPI_PIN_DIOB2), MYNEWT_VAL(QSPIB_MUX));
-    PORT_SetPinMux(MYNEWT_VAL(QSPIB_PORT), MYNEWT_VAL(QSPI_PIN_DIOBA), MYNEWT_VAL(QSPIB_MUX));
-
     qspi_cfg.baudRate = MYNEWT_VAL(QSPI_SCK_FREQ);
+
+    /* Set AHB buffer size for reading data through AHB bus */
+    qspi_cfg.AHBbufferSize[3] = AHB_BUFFER_SIZE;
+
     QSPI_Init(QuadSPI0, &qspi_cfg, CLOCK_GetFreq(kCLOCK_McgPll0Clk));
 
-    memcpy(g_qspi_flash_cfg.lookuptable, lut, sizeof(lut));
+    memcpy(g_qspi_flash_cfg.lookuptable, MX25U3235F_LUT, sizeof(MX25U3235F_LUT));
     QSPI_SetFlashConfig(QuadSPI0, &g_qspi_flash_cfg);
 
-#if FSL_FEATURE_QSPI_SOCCR_HAS_CLR_LPCAC
+    os_mutex_init(&g_mtx);
+
+#if QSPI_HAS_CLR
     QSPI_ClearCache(QuadSPI0);
 #endif
 
@@ -347,16 +434,16 @@ static const struct hal_flash_funcs nxp_qspi_funcs = {
     .hff_erase_sector = nxp_qspi_erase_sector,
     .hff_sector_info = nxp_qspi_sector_info,
     .hff_init = nxp_qspi_init,
-    .hff_erase = nxp_qspi_erase
+    .hff_erase = nxp_qspi_erase,
 };
 
 const struct hal_flash nxp_qspi_dev = {
     .hf_itf = &nxp_qspi_funcs,
-    .hf_base_addr = FSL_FEATURE_QSPI_AMBA_BASE,
+    .hf_base_addr = 0,
     .hf_size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
     .hf_sector_cnt = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT),
-    .hf_align = 8,
+    .hf_align = MYNEWT_VAL(QSPI_FLASH_MIN_WRITE_SIZE),
     .hf_erased_val = 0xff,
 };
 
-#endif
+#endif /* MYNEWT_VAL(QSPI_ENABLE) */

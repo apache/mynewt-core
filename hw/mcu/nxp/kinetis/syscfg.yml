@@ -16,7 +16,7 @@
 # under the License.
 #
 
-syscfg.defs:        
+syscfg.defs:
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
@@ -350,7 +350,7 @@ syscfg.defs:
 
     QSPI_ENABLE:
         description: 'NXP QSPI'
-        value: 0
+        value: 'MYNEWT_VAL_QSPIA_ENABLE || MYNEWT_VAL_QSPIB_ENABLE'
     QSPI_DDR_MODE:
         description: >
             Use Double Data Rate mode.
@@ -369,56 +369,68 @@ syscfg.defs:
         description: 'SPI 0=Mode0 or 1=Mode3'
         value: 0
     QSPI_FLASH_SECTOR_SIZE:
-        description: 'QSPI sector size.'
+        description: 'QSPI flash sector size.'
         value: 0
     QSPI_FLASH_PAGE_SIZE:
-        description: 'QSPI sector size.'
+        description: 'QSPI flash page size.'
         value: 0
     QSPI_FLASH_SECTOR_COUNT:
-        description: 'QSPI sector count'
+        description: 'QSPI flash sector count'
         value: 0
+    QSPI_FLASH_MIN_WRITE_SIZE:
+        description: 'QSPI flash write alignment'
+        value: 0
+    QSPIA_ENABLE:
+        description: 'Enable QSPIA'
+        value: 0
+    QSPIA_PORT:
+        description: 'Port for QSPIA pins'
+        value: -1
     QSPIA_MUX:
         description: 'Mux for QSPIA pins'
         value: -1
-    QSPI_PIN_SSA:
+    QSPIA_PIN_SS:
         description: 'SS pin for QSPIA'
         value: -1
-    QSPI_PIN_SCKA:
+    QSPIA_PIN_SCK:
         description: 'SCK pin for QSPIA'
         value: -1
-    QSPI_PIN_DIO0A:
+    QSPIA_PIN_DIO0:
         description: 'DIO0 pin for QSPIA'
         value: -1
-    QSPI_PIN_DIO1A:
+    QSPIA_PIN_DIO1:
         description: 'DIO1 pin for QSPIA'
         value: -1
-    QSPI_PIN_DIO2A:
+    QSPIA_PIN_DIO2:
         description: 'DIO2 pin for QSPIA'
         value: -1
-    QSPI_PIN_DIO3A:
+    QSPIA_PIN_DIO3:
         description: 'DIO3 pin for QSPIA'
         value: -1
+    QSPIB_ENABLE:
+        description: 'Enable QSPIB'
+        value: 0
     QSPIB_PORT:
         description: 'Port for QSPIB pins'
         value: -1
     QSPIB_MUX:
         description: 'Mux for QSPIB pins'
         value: -1
-    QSPI_PIN_SSB:
+    QSPIB_PIN_SS:
         description: 'SS pin for QSPIB'
         value: -1
-    QSPI_PIN_SCKB:
+    QSPIB_PIN_SCK:
         description: 'SCK pin for QSPIB'
         value: -1
-    QSPI_PIN_DIO0B:
+    QSPIB_PIN_DIO0:
         description: 'DIO0 pin for QSPIB'
         value: -1
-    QSPI_PIN_DIO1B:
+    QSPIB_PIN_DIO1:
         description: 'DIO1 pin for QSPIB'
         value: -1
-    QSPI_PIN_DIO2B:
+    QSPIB_PIN_DIO2:
         description: 'DIO2 pin for QSPIB'
         value: -1
-    QSPI_PIN_DIO3B:
+    QSPIB_PIN_DIO3:
         description: 'DIO3 pin for QSPIB'
         value: -1
