@@ -40,6 +40,7 @@ pkg.deps.LOG_CLI:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/util/parse"
 
 pkg.deps.LOG_CONSOLE:
     - "@apache-mynewt-mcumgr/cborattr"

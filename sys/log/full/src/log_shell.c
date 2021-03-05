@@ -27,6 +27,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <parse/parse.h>
+#include <ctype.h>
 
 #include "cbmem/cbmem.h"
 #include "log/log.h"
@@ -101,47 +103,69 @@ shell_log_dump_cmd(int argc, char **argv)
 {
     struct log *log;
     struct log_offset log_offset;
-    bool last = false;
-    bool list_only;
+    bool list_only = false;
+    char *log_name = NULL;
+    uint32_t log_last_index = 0;
+    uint32_t log_limit = 0;
+    bool stream;
+    bool partial_match = false;
+    int i;
     int rc;
 
-    list_only = ((argc > 1) && !strcmp(argv[1], "-l"));
+    for (i = 1; i < argc; ++i) {
+        if (0 == strcmp(argv[i], "-l")) {
+            list_only = true;
+            break;
+        }
+        if (isdigit(argv[i][0])) {
+            log_limit = parse_ll_bounds(argv[i], 1, 1000000, &rc);
+        } else {
+            log_name = argv[i];
+            if ('*' == log_name[strlen(log_name) - 1]) {
+                partial_match = true;
+                log_name[strlen(log_name) - 1] = '\0';
+            }
+        }
+    }
 
     log = NULL;
-    do {
+    while (1) {
         log = log_list_get_next(log);
         if (log == NULL) {
             break;
         }
 
-        if (log->l_log->log_type == LOG_TYPE_STREAM) {
-            continue;
-        }
+        stream = log->l_log->log_type == LOG_TYPE_STREAM;
 
         if (list_only) {
-            console_printf("%s\n", log->l_name);
+            console_printf("%s%s\n", log->l_name,
+                           stream ? " (stream)" : "");
             continue;
         }
 
-        if (argc > 1) {
-            if (strcmp(log->l_name, argv[1])) {
-                continue;
-            }
-            last = true;
+        if (stream ||
+            (log_name != NULL && ((partial_match && (log->l_name != strstr(log->l_name, log_name))) ||
+                                  (!partial_match && 0 != strcmp(log->l_name, log_name))))) {
+            continue;
         }
 
         console_printf("Dumping log %s\n", log->l_name);
 
         log_offset.lo_arg = NULL;
         log_offset.lo_ts = 0;
-        log_offset.lo_index = 0;
+        log_last_index = log_get_last_index(log);
+        if (log_limit == 0 || log_last_index < log_limit) {
+            log_offset.lo_index = 0;
+        } else {
+            log_offset.lo_index = log_last_index - log_limit;
+        }
         log_offset.lo_data_len = 0;
 
         rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
         if (rc != 0) {
             goto err;
         }
-    } while (!last);
+    }
 
     return (0);
 err:
