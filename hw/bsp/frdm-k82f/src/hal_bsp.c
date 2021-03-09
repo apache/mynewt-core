@@ -162,7 +162,7 @@ hal_bsp_flash_dev(uint8_t id)
     if (id == 0) {
         return &kinetis_flash_dev;
     }
-#if MYNEWT_VAL(ENC_FLASH_DEV)
+#if MYNEWT_VAL(QSPI_ENABLE)
     if (id == 1) {
         return &nxp_qspi_dev;
     }
@@ -196,7 +196,8 @@ hal_bsp_power_state(int state)
  * memory allocation failed. This function changes to compare __HeapLimit with
  * heap end.
  */
-void *_sbrk(int incr)
+void *
+_sbrk(int incr)
 {
     extern char end __asm("end");
     extern char heap_limit __asm("__HeapLimit");
