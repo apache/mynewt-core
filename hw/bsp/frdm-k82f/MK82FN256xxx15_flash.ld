@@ -36,8 +36,8 @@ IMGHDR_SIZE = DEFINED(_imghdr_size) ? _imghdr_size : 0x20;
 /* Specify the memory areas */
 MEMORY
 {
-  m_interrupts          (RX)  : ORIGIN = 0x00008000, LENGTH = 0x00000430
-  FLASH                 (RX)  : ORIGIN = 0x00008430, LENGTH = 0x00040000 - 0x8430
+  m_interrupts          (RX)  : ORIGIN = 0x00006000, LENGTH = 0x00000430
+  FLASH                 (RX)  : ORIGIN = 0x00006430, LENGTH = 0x00040000 - 0x6430
   RAM                   (RWX)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00040000
 }
 
