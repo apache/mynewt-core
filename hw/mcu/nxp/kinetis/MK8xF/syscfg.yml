@@ -23,5 +23,5 @@ syscfg.defs:
         value: 1
 
 syscfg.vals:
-    MCU_FLASH_MIN_WRITE_SIZE: 4
+    MCU_FLASH_MIN_WRITE_SIZE: 8
     OS_TICKS_PER_SEC: 1000
