@@ -695,6 +695,17 @@ available under the "3-clause BSD" license. Bundled files are:
     * hw/mcu/dialog/include/CMAC.h
     * hw/mcu/dialog/include/system_CMAC.h
 
-This product bundles part of tinyusb which is available under the MIT license. Bundled files are:
+This product bundles part of tinyusb which is available under the MIT license.
+Bundled files are:
     * hw/usb/tinyusb/std_descriptors/include/tusb_config.h
     * hw/usb/tinyusb/std_descriptors/src/std_descriptors.c
+
+This product bundles LittleFS, which is available under the "3-clause BSD"
+license. Bundled files are:
+    * fs/littlefs/include/littlefs/lfs.h
+    * fs/littlefs/include/littlefs/lfs_util.h
+    * fs/littlefs/src/lfs.c
+    * fs/littlefs/src/lfs_util.c
+    * fs/littlefs/DESIGN.md
+    * fs/littlefs/README.md
+    * fs/littlefs/SPEC.md
