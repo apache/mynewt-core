@@ -320,10 +320,10 @@ nxp_qspi_erase(const struct hal_flash *dev,
         QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
         QSPI_SetIPCommandAddress(QuadSPI0, FSL_FEATURE_QSPI_AMBA_BASE + address);
         cmd_write_enable();
-        if (size >= SZ64K) {
+        if (size >= SZ64K && (address % SZ64K) == 0) {
             QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_BLOCK64K);
             erased_size = SZ64K;
-        } else if (size >= SZ32K) {
+        } else if (size >= SZ32K && (address % SZ32K) == 0) {
             QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_BLOCK32K);
             erased_size = SZ32K;
         } else {
