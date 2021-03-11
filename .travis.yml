@@ -22,7 +22,7 @@ _addons: &addon_conf
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - gcc-7-multilib
+      - gcc-8-multilib
       - linux-libc-dev:i386
 
 go:
@@ -150,7 +150,7 @@ before_install:
   - if [ "${TEST}" != "RAT" && "${TEST}" != "STYLE" ]; then go version; fi
 
 install:
-  - git clone https://github.com/JuulLabs-OSS/mynewt-travis-ci $HOME/ci
+  - git clone https://github.com/utzig/mynewt-travis-ci -b linux-gcc-8 $HOME/ci
   - chmod +x $HOME/ci/*.sh
   - |
     if [ "${TEST}" == "RAT" ]; then
