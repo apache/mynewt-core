@@ -269,7 +269,9 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     }
 
     if (hf->hf_itf->hff_erase) {
-        hf->hf_itf->hff_erase(hf, address, num_bytes);
+        if (hf->hf_itf->hff_erase(hf, address, num_bytes)) {
+            return SYS_EIO;
+        }
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
         assert(hal_flash_isempty_no_buf(id, address, num_bytes) == 1);
 #endif
