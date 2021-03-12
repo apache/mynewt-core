@@ -531,3 +531,11 @@ system_nrf5340.c
 gcc_startup_nrf5340.s
 system_nrf5340_net.c
 gcc_startup_nrf5340_net.s
+
+# LittleFS - BSD License
+lfs.c
+lfs_util.c
+lfs.h
+lfs_util.h
+DESIGN.md
+SPEC.md

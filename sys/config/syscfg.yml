@@ -22,12 +22,14 @@ syscfg.defs:
         value: 0
         restrictions:
             - '!CONFIG_NFFS'
+            - '!CONFIG_LITTLEFS'
             - '!CONFIG_FCB2'
             - 'CONFIG_FCB_FLASH_AREA'
     CONFIG_NFFS:
         description: 'Config default storage is in NFFS'
         value: 0
         restrictions:
+            - '!CONFIG_LITTLEFS'
             - '!CONFIG_FCB'
             - '!CONFIG_FCB2'
     CONFIG_FCB2:
@@ -36,7 +38,16 @@ syscfg.defs:
         restrictions:
             - '!CONFIG_FCB'
             - '!CONFIG_NFFS'
+            - '!CONFIG_LITTLEFS'
             - 'CONFIG_FCB_FLASH_AREA'
+    CONFIG_LITTLEFS:
+        description: 'Config default storage is in littefs'
+        value: 0
+        restrictions:
+            - '!CONFIG_NFFS'
+            - '!CONFIG_FCB'
+            - '!CONFIG_FCB2'
+
     CONFIG_MGMT:
         description: 'SMP access to config'
         value: 0
