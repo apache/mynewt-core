@@ -84,6 +84,8 @@ static void spiflash_release_power_down_generic(struct spiflash_dev *dev) __attr
     STD_FLASH_CHIP(name, JEDEC_MFC_ADESTO, typ, cap, spiflash_release_power_down_generic)
 #define EON_CHIP(name, typ, cap) \
     STD_FLASH_CHIP(name, JEDEC_MFC_EON, typ, cap, spiflash_release_power_down_generic)
+#define XTX_CHIP(name, typ, cap) \
+    STD_FLASH_CHIP(name, JEDEC_MFC_XTX, typ, cap, spiflash_release_power_down_generic)
 
 static struct spiflash_chip supported_chips[] = {
 #if MYNEWT_VAL(SPIFLASH_MANUFACTURER) && MYNEWT_VAL(SPIFLASH_MEMORY_TYPE) && MYNEWT_VAL(SPIFLASH_MEMORY_CAPACITY)
@@ -573,6 +575,9 @@ static struct spiflash_chip supported_chips[] = {
 #endif
 #if MYNEWT_VAL(SPIFLASH_EON2580B)
     EON_CHIP(EN80B, 0x30, FLASH_CAPACITY_8MBIT),
+#endif
+#if MYNEWT_VAL(SPIFLASH_XT25F32B)
+    XTX_CHIP(XT25F32B, 0x40, FLASH_CAPACITY_32MBIT),
 #endif
 
     { {0} },
