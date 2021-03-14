@@ -126,6 +126,7 @@ struct spiflash_chip {
 #define JEDEC_MFC_MICROCHIP         0xBF
 #define JEDEC_MFC_ADESTO            0x1F
 #define JEDEC_MFC_EON               0x1C
+#define JEDEC_MFC_XTX               0x0B
 
 #define FLASH_CAPACITY_256KBIT      0x09
 #define FLASH_CAPACITY_512KBIT      0x10

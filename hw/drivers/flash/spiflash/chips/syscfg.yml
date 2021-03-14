@@ -500,3 +500,6 @@ syscfg.defs:
     SPIFLASH_EON2580B:
         description: Add support for EON2580B
         value: 0
+    SPIFLASH_XT25F32B:
+        description: Add support for XT25F32B
+        value: 0
