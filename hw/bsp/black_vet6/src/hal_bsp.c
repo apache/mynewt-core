@@ -261,14 +261,15 @@ const struct stm32_eth_cfg os_bsp_eth0_cfg = {
     .sec_port_mask[2] = (1 << 1) | (1 << 4) | (1 << 5),
 
     /*
-     * PORTG
-     *   PG11 - ETH_RMII_TXEN
-     *   PG13 - ETH_RMII_TXD0
-     *   PG14 - ETH_RMII_TXD1
+     * PORTB
+     *   PB11 - ETH_RMII_TXEN
+     *   PB12 - ETH_RMII_TXD0
+     *   PB13 - ETH_RMII_TXD1
      */
-    .sec_port_mask[6] = (1 << 11) | (1 << 13) | (1 << 14),
-    .sec_phy_type = SMSC_8710_RMII,
-    .sec_phy_irq = MCU_GPIO_PORTA(3)
+    .sec_port_mask[1] = (1 << 11) | (1 << 12) | (1 << 13),
+    .sec_phy_type = MYNEWT_VAL(STM32_ETH_PHY_TYPE),
+    .sec_phy_irq = MYNEWT_VAL(STM32_ETH_PHY_IRQ),
+    .sec_phy_addr = MYNEWT_VAL(STM32_ETH_PHY_ADDR),
 };
 #endif
 static const struct hal_bsp_mem_dump dump_cfg[] = {
