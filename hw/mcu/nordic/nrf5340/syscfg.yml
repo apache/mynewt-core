@@ -413,7 +413,7 @@ syscfg.vals:
     OS_TICKS_PER_SEC: 128
 
 syscfg.restrictions:
-    - "!UART_0 || (UART_0_PIN_TX && UART_0_PIN_RX)"
-    - "!UART_1 || (UART_1_PIN_TX && UART_1_PIN_RX)"
-    - "!UART_2 || (UART_2_PIN_TX && UART_2_PIN_RX)"
-    - "!UART_3 || (UART_3_PIN_TX && UART_3_PIN_RX)"
+    - "!UART_0 || (UART_0_PIN_TX != -1 && UART_0_PIN_RX != -1)"
+    - "!UART_1 || (UART_1_PIN_TX != -1 && UART_1_PIN_RX != -1)"
+    - "!UART_2 || (UART_2_PIN_TX != -1 && UART_2_PIN_RX != -1)"
+    - "!UART_3 || (UART_3_PIN_TX != -1 && UART_3_PIN_RX != -1)"
