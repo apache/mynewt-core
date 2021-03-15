@@ -30,7 +30,8 @@
 
 struct fe310_hal_tmr {
     void *pwm_regs;         /* Pointer to timer registers */
-    uint32_t value;         /* Acumulated timer value, incremented on CMP0 */
+    uint32_t value;         /* Accumulated timer value, incremented on CMP0 */
+    uint16_t pwms;          /* Value of register pwms taken when value was set */
     uint8_t max_scale;      /* Max value for pwmcfg.pwmscale 7 (for PMW0) or 15 (for PWM1/2) */
     uint8_t pwmxcmp0_int;   /* PWMxCMP0 interrupt number */
     TAILQ_HEAD(hal_timer_qhead, hal_timer) sht_timers;
@@ -38,17 +39,23 @@ struct fe310_hal_tmr {
 
 #if MYNEWT_VAL(TIMER_0)
 struct fe310_hal_tmr fe310_pwm2 = {
-    (uint32_t *) PWM2_CTRL_ADDR, 0, 15, INT_PWM2_BASE
+    .pwm_regs = (uint32_t *)PWM2_CTRL_ADDR,
+    .max_scale = 15,
+    .pwmxcmp0_int = INT_PWM2_BASE,
 };
 #endif
 #if MYNEWT_VAL(TIMER_1)
 struct fe310_hal_tmr fe310_pwm1 = {
-    (uint32_t *) PWM1_CTRL_ADDR, 0, 15, INT_PWM1_BASE
+    .pwm_regs = (uint32_t *)PWM1_CTRL_ADDR,
+    .max_scale = 15,
+    .pwmxcmp0_int = INT_PWM1_BASE,
 };
 #endif
 #if MYNEWT_VAL(TIMER_2)
 struct fe310_hal_tmr fe310_pwm0 = {
-    (uint32_t *) PWM0_CTRL_ADDR, 0, 7, INT_PWM0_BASE
+    .pwm_regs = (uint32_t *)PWM0_CTRL_ADDR,
+    .max_scale = 7,
+    .pwmxcmp0_int = INT_PWM0_BASE,
 };
 #endif
 
@@ -80,7 +87,8 @@ hal_timer_cnt(struct fe310_hal_tmr *tmr)
     uint32_t regs = (uint32_t) tmr->pwm_regs;
 
     __HAL_DISABLE_INTERRUPTS(sr);
-    cnt = _REG32(regs, PWM_S) + tmr->value;
+    tmr->pwms = _REG32(regs, PWM_S);
+    cnt = tmr->pwms + tmr->value;
     /* Check if just overflowed */
     if (_REG32(regs, PWM_CFG) & PWM_CMP0) {
         cnt += _REG32(regs, PWM_CMP0) + 1;
@@ -94,13 +102,18 @@ static void
 fe310_tmr_check_first(struct fe310_hal_tmr *tmr)
 {
     struct hal_timer *ht;
+    uint32_t cnt;
+    int32_t ticks;
 
     ht = TAILQ_FIRST(&tmr->sht_timers);
     if (ht) {
-        uint32_t cnt = hal_timer_cnt(tmr);
-        int32_t ticks = (int32_t)(ht->expiry - cnt);
-        if (ticks < _REG32(tmr->pwm_regs, PWM_CMP0)) {
-            _REG32(tmr->pwm_regs, PWM_CMP1) = ticks;
+        cnt = hal_timer_cnt(tmr);
+        ticks = (int32_t)(ht->expiry - cnt);
+        /*
+         * Setup CMP1 only when it would need to fire before CMP0.
+         */
+        if (tmr->pwms + ticks < _REG32(tmr->pwm_regs, PWM_CMP0)) {
+            _REG32(tmr->pwm_regs, PWM_CMP1) = tmr->pwms + ticks;
             plic_enable_interrupt(tmr->pwmxcmp0_int + 1);
             return;
         }
@@ -138,7 +151,7 @@ fe310_pwm_cmp0_handler(int num)
     int pwm_num = (num - INT_PWM0_BASE) >> 2;
     int timer_num = pwm_to_timer[pwm_num];
     struct fe310_hal_tmr *tmr = fe310_tmr_devs[timer_num];
-    /* Turn of CMPxIP */
+    /* Clear interrupt flag CMP0IP */
     _REG32(tmr->pwm_regs, PWM_CFG) &= ~PWM_CFG_CMP0IP;
     tmr->value += _REG32(tmr->pwm_regs, PWM_CMP0) + 1;
     fe310_tmr_cbs(tmr);
@@ -150,7 +163,8 @@ fe310_pwm_cmp1_handler(int num)
     int pwm_num = (num - INT_PWM0_BASE) >> 2;
     int timer_num = pwm_to_timer[pwm_num];
     struct fe310_hal_tmr *tmr = fe310_tmr_devs[timer_num];
-    /* Turn of CMPxIP */
+    /* Clear interrupt flag CMP1IP */
+    _REG32(tmr->pwm_regs, PWM_CMP1) = _REG32(tmr->pwm_regs, PWM_CMP0);
     _REG32(tmr->pwm_regs, PWM_CFG) &= ~PWM_CFG_CMP1IP;
     fe310_tmr_cbs(tmr);
 }
@@ -168,10 +182,9 @@ fe310_pwm_cmp1_handler(int num)
 int
 hal_timer_init(int timer_num, void *cfg)
 {
-    struct fe310_hal_tmr *tmr;
+    (void)cfg;
 
-    if (timer_num >= FE310_HAL_TIMER_MAX || !(tmr = fe310_tmr_devs[timer_num]) ||
-        (cfg == NULL)) {
+    if (timer_num >= FE310_HAL_TIMER_MAX || (fe310_tmr_devs[timer_num] == NULL)) {
         return -1;
     }
 
