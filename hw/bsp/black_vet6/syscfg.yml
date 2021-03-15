@@ -25,6 +25,19 @@ syscfg.defs:
         description: 'Number of flash sectors for a non-linear STM32 MCU.'
         value: 8
 
+    STM32_ETH_PHY_TYPE:
+        description: >
+            PHY type that can be found in enum in file stm32_eth_cfg.h.
+        value: SMSC_8710_RMII
+    STM32_ETH_PHY_ADDR:
+        description: >
+            PHY address.
+        value: 0
+    STM32_ETH_PHY_IRQ:
+        description: >
+            RMII interrupt pin.
+        value: -1
+
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
