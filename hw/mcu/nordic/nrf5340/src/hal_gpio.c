@@ -285,8 +285,8 @@ hal_gpio_irq_setup(void)
     static uint8_t irq_setup = 0;
 
     if (!irq_setup) {
-        NVIC_SetVector(GPIOTE1_IRQn, (uint32_t)hal_gpio_irq_handler);
-        NVIC_EnableIRQ(GPIOTE1_IRQn);
+        NVIC_SetVector(GPIOTE0_IRQn, (uint32_t)hal_gpio_irq_handler);
+        NVIC_EnableIRQ(GPIOTE0_IRQn);
         irq_setup = 1;
 
 #if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
