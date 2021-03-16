@@ -6,7 +6,7 @@ three types of commands:
 
 1. pre_build_cmds (run before the build)
 2. pre_link_cmds (run after compilation, before linking)
-3. post_build_cmds (run after the build)
+3. post_link_cmds (run after linking)
 
 Example
 ~~~~~~~
@@ -22,8 +22,8 @@ Example (apps/blinky/pkg.yml):
     pkg.pre_link_cmds:
         scripts/pre_link.sh: 500
 
-    pkg.post_build_cmds:
-        scripts/post_build.sh: 100
+    pkg.post_link_cmds:
+        scripts/post_link.sh: 100
 
 
 For each command, the string on the left specifies the command to run.
@@ -37,7 +37,7 @@ When newt builds this example, it performs the following sequence:
 - [compile]
 - scripts/pre_link.sh
 - [link]
-- scripts/post_build.sh
+- scripts/post_link.sh
 
 If other packages specify custom commands, those commands would also be
 executed during the above sequence.  For example, if another package
