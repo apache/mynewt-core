@@ -129,6 +129,9 @@ typedef enum
                                                                                    and BleIeee802154_250Kbit modes when possible
                                                                                    preamble has been received. */
 #endif
+#if defined(RADIO_INTENSET_CTEPRESENT_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_RADIO_EVENT_CTEPRESENT = offsetof(NRF_RADIO_Type, EVENTS_CTEPRESENT)  /**< CTE is present. */
+#endif
 } nrf_radio_event_t;
 
 /** @brief RADIO interrupts. */
@@ -184,6 +187,9 @@ typedef enum
 #endif
 #if defined(RADIO_INTENSET_SYNC_Msk) || defined(__NRFX_DOXYGEN__)
     NRF_RADIO_INT_SYNC_MASK       = RADIO_INTENSET_SYNC_Msk,       /**< Interrupt on SYNC event. */
+#endif
+#if defined(RADIO_INTENSET_CTEPRESENT_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_RADIO_INT_CTEPRESENT_MASK = RADIO_INTENSET_CTEPRESENT_Msk  /**< Interrupt on CTEPRESENT event. */
 #endif
 } nrf_radio_int_mask_t;
 
@@ -284,7 +290,25 @@ typedef enum
     NRF_RADIO_TXPOWER_POS2DBM  = RADIO_TXPOWER_TXPOWER_Pos2dBm,  /**< 2 dBm. */
 #endif
     NRF_RADIO_TXPOWER_0DBM     = RADIO_TXPOWER_TXPOWER_0dBm,     /**< 0 dBm. */
+#if defined(RADIO_TXPOWER_TXPOWER_Neg1dBm) || defined(__NRFX_DOXYGEN__)
+    NRF_RADIO_TXPOWER_NEG1DBM  = RADIO_TXPOWER_TXPOWER_Neg1dBm,  /**< -1 dBm. */
+#endif
+#if defined(RADIO_TXPOWER_TXPOWER_Neg2dBm) || defined(__NRFX_DOXYGEN__)
+    NRF_RADIO_TXPOWER_NEG2DBM  = RADIO_TXPOWER_TXPOWER_Neg2dBm,  /**< -2 dBm. */
+#endif
+#if defined(RADIO_TXPOWER_TXPOWER_Neg3dBm) || defined(__NRFX_DOXYGEN__)
+    NRF_RADIO_TXPOWER_NEG3DBM  = RADIO_TXPOWER_TXPOWER_Neg3dBm,  /**< -3 dBm. */
+#endif
     NRF_RADIO_TXPOWER_NEG4DBM  = RADIO_TXPOWER_TXPOWER_Neg4dBm,  /**< -4 dBm. */
+#if defined(RADIO_TXPOWER_TXPOWER_Neg5dBm) || defined(__NRFX_DOXYGEN__)
+    NRF_RADIO_TXPOWER_NEG5DBM  = RADIO_TXPOWER_TXPOWER_Neg5dBm,  /**< -5 dBm. */
+#endif
+#if defined(RADIO_TXPOWER_TXPOWER_Neg6dBm) || defined(__NRFX_DOXYGEN__)
+    NRF_RADIO_TXPOWER_NEG6DBM  = RADIO_TXPOWER_TXPOWER_Neg6dBm,  /**< -6 dBm. */
+#endif
+#if defined(RADIO_TXPOWER_TXPOWER_Neg7dBm) || defined(__NRFX_DOXYGEN__)
+    NRF_RADIO_TXPOWER_NEG7DBM  = RADIO_TXPOWER_TXPOWER_Neg7dBm,  /**< -7 dBm. */
+#endif
     NRF_RADIO_TXPOWER_NEG8DBM  = RADIO_TXPOWER_TXPOWER_Neg8dBm,  /**< -8 dBm. */
     NRF_RADIO_TXPOWER_NEG12DBM = RADIO_TXPOWER_TXPOWER_Neg12dBm, /**< -12 dBm. */
     NRF_RADIO_TXPOWER_NEG16DBM = RADIO_TXPOWER_TXPOWER_Neg16dBm, /**< -16 dBm. */
@@ -370,6 +394,119 @@ typedef struct
     bool big_endian;                  /**< On air endianness of packet. */
     bool whiteen;                     /**< Enable or disable packet whitening. */
 } nrf_radio_packet_conf_t;
+
+#if defined(RADIO_DFEMODE_DFEOPMODE_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Direction Finding operation modes. */
+typedef enum
+{
+    NRF_RADIO_DFE_OP_MODE_AOD = RADIO_DFEMODE_DFEOPMODE_AoD, /**< Angle-of-Departure mode. */
+    NRF_RADIO_DFE_OP_MODE_AOA = RADIO_DFEMODE_DFEOPMODE_AoA, /**< Angle-of-Arrival mode. */
+} nrf_radio_dfe_op_mode_t;
+#endif
+
+#if defined(RADIO_DFESTATUS_SWITCHINGSTATE_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief States of Direction Finding switching state machine. */
+typedef enum
+{
+    NRF_RADIO_DFE_SWITCH_STATE_IDLE      = RADIO_DFESTATUS_SWITCHINGSTATE_Idle,      /**< Switching state Idle. */
+    NRF_RADIO_DFE_SWITCH_STATE_OFFSET    = RADIO_DFESTATUS_SWITCHINGSTATE_Offset,    /**< Switching state Offset. */
+    NRF_RADIO_DFE_SWITCH_STATE_GUARD     = RADIO_DFESTATUS_SWITCHINGSTATE_Guard,     /**< Switching state Guard. */
+    NRF_RADIO_DFE_SWITCH_STATE_REF       = RADIO_DFESTATUS_SWITCHINGSTATE_Ref,       /**< Switching state Ref. */
+    NRF_RADIO_DFE_SWITCH_STATE_SWITCHING = RADIO_DFESTATUS_SWITCHINGSTATE_Switching, /**< Switching state Switching. */
+    NRF_RADIO_DFE_SWITCH_STATE_ENDING    = RADIO_DFESTATUS_SWITCHINGSTATE_Ending,    /**< Switching state Ending. */
+} nrf_radio_dfe_switch_state_t;
+
+/** @brief States of Direction Finding sampling state machine. */
+typedef enum
+{
+    NRF_RADIO_DFE_SAMPLE_STATE_IDLE     = RADIO_DFESTATUS_SAMPLINGSTATE_Idle,     /**< Sampling state Idle. */
+    NRF_RADIO_DFE_SAMPLE_STATE_SAMPLING = RADIO_DFESTATUS_SAMPLINGSTATE_Sampling, /**< Sampling state Sampling. */
+} nrf_radio_dfe_sample_state_t;
+#endif
+
+#if defined(RADIO_CTEINLINECONF_S0CONF_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Valid ranges of CTE time, expressed in 8 us units. */
+typedef enum
+{
+    NRF_RADIO_CTEINLINE_TIME_RANGE_20 = RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_20, /**< 20 units time range. */
+    NRF_RADIO_CTEINLINE_TIME_RANGE_31 = RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_31, /**< 31 units time range. */
+    NRF_RADIO_CTEINLINE_TIME_RANGE_63 = RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_63, /**< 63 units time range. */
+} nrf_radio_cteinline_time_range_t;
+
+/** @brief Spacing between samples for the samples in the switching period. */
+typedef enum
+{
+    NRF_RADIO_CTEINLINE_RX_MODE_125NS = RADIO_CTEINLINECONF_CTEINLINERXMODE1US_125ns, /**< 125 ns spacing. */
+    NRF_RADIO_CTEINLINE_RX_MODE_250NS = RADIO_CTEINLINECONF_CTEINLINERXMODE1US_250ns, /**< 250 ns spacing. */
+    NRF_RADIO_CTEINLINE_RX_MODE_500NS = RADIO_CTEINLINECONF_CTEINLINERXMODE1US_500ns, /**< 500 ns spacing. */
+    NRF_RADIO_CTEINLINE_RX_MODE_1US   = RADIO_CTEINLINECONF_CTEINLINERXMODE1US_1us,   /**< 1 us spacing. */
+    NRF_RADIO_CTEINLINE_RX_MODE_2US   = RADIO_CTEINLINECONF_CTEINLINERXMODE1US_2us,   /**< 2 us spacing. */
+    NRF_RADIO_CTEINLINE_RX_MODE_4US   = RADIO_CTEINLINECONF_CTEINLINERXMODE1US_4us,   /**< 4 us spacing. */
+} nrf_radio_cteinline_rx_mode_t;
+
+/** @brief Configuration for CTE inline mode */
+typedef struct
+{
+    bool                             enable;       /**< Enable or disable parsing of CTEInfo from received packet. */
+    bool                             info_in_s1;   /**< Indicates whether CTEInfo is in S1 byte or not. */
+    bool                             err_handling; /**< Enable or disable switching and sampling when CRC is not OK. */
+    nrf_radio_cteinline_time_range_t time_range;   /**< Maximum range of CTE time. */
+    nrf_radio_cteinline_rx_mode_t    rx1us;        /**< Spacing between samples during switching period for AoD 1 us. */
+    nrf_radio_cteinline_rx_mode_t    rx2us;        /**< Spacing between samples during switching period for AoD 2 us or AoA 4 us. */
+    uint8_t                          s0_pattern;   /**< S0 bit pattern to match. */
+    uint8_t                          s0_mask;      /**< S0 bit mask to set which bit to match. */
+} nrf_radio_cteinline_conf_t;
+#endif // defined(RADIO_CTEINLINECONF_S0CONF_Msk) || defined(__NRFX_DOXYGEN__)
+
+#if defined(RADIO_DFECTRL1_NUMBEROF8US_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief State when CTE extension is added and antenna switching/sampling is done. */
+typedef enum
+{
+    NRF_RADIO_DFECTRL_EXTENSION_CRC     = RADIO_DFECTRL1_DFEINEXTENSION_CRC,     /**< AoA/AoD procedure triggered at end of CRC. */
+    NRF_RADIO_DFECTRL_EXTENSION_PAYLOAD = RADIO_DFECTRL1_DFEINEXTENSION_Payload, /**< Antenna switching/sampling done in the packet payload. */
+} nrf_radio_dfectrl_extension_t;
+
+/** @brief Interval between antenna changes in the switching state. */
+typedef enum
+{
+    NRF_RADIO_DFECTRL_SWITCH_SPACING_1US = RADIO_DFECTRL1_TSWITCHSPACING_1us, /**< 1 us interval between antenna change. */
+    NRF_RADIO_DFECTRL_SWITCH_SPACING_2US = RADIO_DFECTRL1_TSWITCHSPACING_2us, /**< 2 us interval between antenna change. */
+    NRF_RADIO_DFECTRL_SWITCH_SPACING_4US = RADIO_DFECTRL1_TSWITCHSPACING_4us, /**< 4 us interval between antenna change. */
+} nrf_radio_dfectrl_switch_spacing_t;
+
+/** @brief Interval between samples. */
+typedef enum
+{
+    NRF_RADIO_DFECTRL_SAMPLE_SPACING_125NS = RADIO_DFECTRL1_TSAMPLESPACING_125ns, /**< 125 ns interval between samples. */
+    NRF_RADIO_DFECTRL_SAMPLE_SPACING_250NS = RADIO_DFECTRL1_TSAMPLESPACING_250ns, /**< 250 ns interval between samples. */
+    NRF_RADIO_DFECTRL_SAMPLE_SPACING_500NS = RADIO_DFECTRL1_TSAMPLESPACING_500ns, /**< 500 ns interval between samples. */
+    NRF_RADIO_DFECTRL_SAMPLE_SPACING_1US   = RADIO_DFECTRL1_TSAMPLESPACING_1us,   /**< 1 us interval between samples. */
+    NRF_RADIO_DFECTRL_SAMPLE_SPACING_2US   = RADIO_DFECTRL1_TSAMPLESPACING_2us,   /**< 2 us interval between samples. */
+    NRF_RADIO_DFECTRL_SAMPLE_SPACING_4US   = RADIO_DFECTRL1_TSAMPLESPACING_4us,   /**< 4 us interval between samples. */
+} nrf_radio_dfectrl_sample_spacing_t;
+
+/** @brief Direction finding sample type. */
+typedef enum
+{
+    NRF_RADIO_DFECTRL_SAMPLE_TYPE_IQ       = RADIO_DFECTRL1_SAMPLETYPE_IQ,       /**< Complex samples in I and Q. */
+    NRF_RADIO_DFECTRL_SAMPLE_TYPE_MAGPHASE = RADIO_DFECTRL1_SAMPLETYPE_MagPhase, /**< Complex samples as magnitude and phase. */
+} nrf_radio_dfectrl_sample_type_t;
+
+/** @brief Direction finding configuration. */
+typedef struct
+{
+    uint8_t                            dfe_len;        /**< Length of the AoA/AoD procedure in number of 8 µs units. */
+    nrf_radio_dfectrl_extension_t      extension;      /**< State in which CTE extension is added and antenna switching/sampling is done. */
+    nrf_radio_dfectrl_switch_spacing_t switch_spacing; /**< Interval between antenna changes in the switching state. */
+    nrf_radio_dfectrl_sample_spacing_t spacing_ref;    /**< Interval between samples in the reference period. */
+    nrf_radio_dfectrl_sample_type_t    sample_type;    /**< Indicates whether to sample I/Q or magnitude/phase. */
+    nrf_radio_dfectrl_sample_spacing_t sample_spacing; /**< Interval between samples in the switching period. */
+    uint8_t                            gain_steps;     /**< Number of gain steps lowering the total gain at the start of CTE . */
+    int16_t                            switch_offset;  /**< Signed value offset after the end of the CRC before starting switching expressed in 16 Mhz cycles. */
+    int16_t                            sample_offset;  /**< Signed value offset before starting sampling expressed in 16 Mhz cycles
+                                                        *   relative to the beginning of the reference state. */
+} nrf_radio_dfectrl_conf_t;
+#endif // defined(RADIO_DFECTRL1_NUMBEROF8US_Msk) || defined(__NRFX_DOXYGEN__)
 
 /**
  * @brief Function for activating a specific RADIO task.
@@ -482,6 +619,52 @@ NRF_STATIC_INLINE void nrf_radio_int_disable(NRF_RADIO_Type * p_reg, uint32_t ma
  * @return Mask of enabled interrupts.
  */
 NRF_STATIC_INLINE uint32_t nrf_radio_int_enable_check(NRF_RADIO_Type const * p_reg, uint32_t mask);
+
+#if defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for setting the subscribe configuration for a given
+ *        RADIO task.
+ *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
+ * @param[in] task    Task for which to set the configuration.
+ * @param[in] channel Channel through which to subscribe events.
+ */
+NRF_STATIC_INLINE void nrf_radio_subscribe_set(NRF_RADIO_Type * p_reg,
+                                               nrf_radio_task_t task,
+                                               uint8_t          channel);
+
+/**
+ * @brief Function for clearing the subscribe configuration for a given
+ *        RADIO task.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task for which to clear the configuration.
+ */
+NRF_STATIC_INLINE void nrf_radio_subscribe_clear(NRF_RADIO_Type * p_reg,
+                                                 nrf_radio_task_t task);
+
+/**
+ * @brief Function for setting the publish configuration for a given
+ *        RADIO event.
+ *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
+ * @param[in] event   Event for which to set the configuration.
+ * @param[in] channel Channel through which to publish the event.
+ */
+NRF_STATIC_INLINE void nrf_radio_publish_set(NRF_RADIO_Type *  p_reg,
+                                             nrf_radio_event_t event,
+                                             uint8_t           channel);
+
+/**
+ * @brief Function for clearing the publish configuration for a given
+ *        RADIO event.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] event Event for which to clear the configuration.
+ */
+NRF_STATIC_INLINE void nrf_radio_publish_clear(NRF_RADIO_Type *  p_reg,
+                                               nrf_radio_event_t event);
+#endif // defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
 
 /**
  * @brief Function for getting CRC status of last received packet.
@@ -1036,6 +1219,167 @@ NRF_STATIC_INLINE void nrf_radio_cca_configure(NRF_RADIO_Type *     p_reg,
  */
 NRF_STATIC_INLINE void nrf_radio_power_set(NRF_RADIO_Type * p_reg, bool radio_power);
 
+#if defined(RADIO_CTESTATUS_CTETIME_Msk) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for getting the CTE time parsed from received packet.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return CTE time.
+ */
+NRF_STATIC_INLINE uint32_t nrf_radio_cte_time_get(NRF_RADIO_Type const * p_reg);
+
+/**
+ * @brief Function for getting the CTE type parsed from received packet.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return CTE type.
+ */
+NRF_STATIC_INLINE uint32_t nrf_radio_cte_type_get(NRF_RADIO_Type const * p_reg);
+
+/**
+ * @brief Function for getting the CTE RFU parsed from received packet.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return CTE RFU.
+ */
+NRF_STATIC_INLINE uint32_t nrf_radio_cte_rfu_get(NRF_RADIO_Type const * p_reg);
+#endif // defined(RADIO_CTESTATUS_CTETIME_Msk) || defined(__NRFX_DOXYGEN__)
+
+#if defined(RADIO_DFESTATUS_SWITCHINGSTATE_Msk) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for getting the current state of DFE switching state machine.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return State of switching state machine.
+ */
+NRF_STATIC_INLINE
+nrf_radio_dfe_switch_state_t nrf_radio_dfe_switch_state_get(NRF_RADIO_Type const * p_reg);
+
+/**
+ * @brief Function for getting the current state of DFE sampling state machine.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return State of sampling state machine.
+ */
+NRF_STATIC_INLINE
+nrf_radio_dfe_sample_state_t nrf_radio_dfe_sample_state_get(NRF_RADIO_Type const * p_reg);
+#endif
+
+#if defined(RADIO_CTEINLINECONF_S0CONF_Msk) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for setting the configuration of CTE inline mode.
+ *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
+ * @param[in] p_config Pointer to the structure with CTE inline mode configuration.
+ */
+NRF_STATIC_INLINE void nrf_radio_cteinline_configure(NRF_RADIO_Type *                   p_reg,
+                                                     nrf_radio_cteinline_conf_t const * p_config);
+#endif
+
+#if defined(RADIO_DFECTRL1_NUMBEROF8US_Msk) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for setting the direction finding configuration.
+ *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
+ * @param[in] p_config Pointer to the structure with direction finding configuration.
+ */
+NRF_STATIC_INLINE void nrf_radio_dfectrl_configure(NRF_RADIO_Type *                 p_reg,
+                                                   nrf_radio_dfectrl_conf_t const * p_config);
+#endif
+
+#if defined(RADIO_SWITCHPATTERN_SWITCHPATTERN_Msk) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for configuring the specified GPIO pin for antenna control.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] pin   Pin number.
+ * @param[in] pos   Position of the pin in the switching pattern
+ *                  configured with @ref nrf_radio_dfe_pattern_add()
+                    or @ref nrf_radio_dfe_patterns_add().
+ */
+NRF_STATIC_INLINE void nrf_radio_dfe_pattern_pin_set(NRF_RADIO_Type * p_reg,
+                                                     uint32_t         pin,
+                                                     uint8_t          pos);
+
+/**
+ * @brief Function for adding single pattern to the array of GPIO patterns for antenna control.
+ *
+ * The GPIO pattern array size is 40 entries. This function configures single pattern consisting of 8 pins.
+ * To set subsequent pattern, call this function again.
+ * To get total number of currently configured patterns use @ref nrf_radio_dfe_pattern_cnt_get().
+ * To clear the array of GPIO patterns use @ref nrf_radio_dfe_pattern_clear().
+ *
+ * @warning A minimum number of 3 patterns must be written.
+ *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
+ * @param[in] pin_mask Bitmask specifying pins to be used in this switching pattern.
+ *                     Each bit corresponds to the index of the pin
+                       configured with @ref nrf_radio_dfe_pattern_pin_set().
+ */
+NRF_STATIC_INLINE void nrf_radio_dfe_pattern_add(NRF_RADIO_Type * p_reg, uint8_t pin_mask);
+
+/**
+ * @brief Function for adding multiple patterns to the array of GPIO patterns for antenna control.
+ *
+ * @param[in] p_reg       Pointer to the structure of registers of the peripheral.
+ * @param[in] p_pin_masks Pointer to the array of bitmasks specifying pins
+ *                        to be used in subsequent switching patterns.
+ * @param[in] length      Bitmask array length.
+ *
+ * @sa nrf_radio_dfe_pattern_add()
+ */
+NRF_STATIC_INLINE void nrf_radio_dfe_patterns_add(NRF_RADIO_Type * p_reg,
+                                                  uint8_t const *  p_pin_masks,
+                                                  size_t           length);
+
+/**
+ * @brief Function for getting number of currently configured GPIO patterns for antenna control.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return Number of patterns.
+ */
+NRF_STATIC_INLINE uint32_t nrf_radio_dfe_pattern_cnt_get(NRF_RADIO_Type const * p_reg);
+
+/**
+ * @brief Function for clearing all of the currently configured GPIO patterns for antenna control.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ */
+NRF_STATIC_INLINE void nrf_radio_dfe_pattern_clear(NRF_RADIO_Type * p_reg);
+#endif // defined(RADIO_SWITCHPATTERN_SWITCHPATTERN_Msk) || defined(__NRFX_DOXYGEN__)
+
+#if defined(RADIO_DFEPACKET_PTR_PTR_Msk) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for setting the buffer for storing IQ samples or magnitude and phase pairs
+ *        of the samples.
+ *
+ * @note Each sample or pair is stored on a 32-bit word.
+ *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
+ * @param[in] p_buffer Pointer to the buffer for storing IQ samples
+ *                     or magnitude and phase of the samples.
+ * @param[in] length   Maximum number of samples to receive.
+ */
+NRF_STATIC_INLINE void nrf_radio_dfe_buffer_set(NRF_RADIO_Type * p_reg,
+                                                uint32_t *       p_buffer,
+                                                size_t           length);
+
+/**
+ * @brief Function for getting the number of stored IQ samples or magnitude and phase pairs
+ *        of the samples during last transaction.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @retval Amount of samples.
+ */
+NRF_STATIC_INLINE uint32_t nrf_radio_dfe_amount_get(NRF_RADIO_Type const * p_reg);
+#endif
 
 #ifndef NRF_DECLARE_ONLY
 
@@ -1101,6 +1445,36 @@ NRF_STATIC_INLINE uint32_t nrf_radio_int_enable_check(NRF_RADIO_Type const * p_r
 {
     return p_reg->INTENSET & mask;
 }
+
+#if defined(DPPI_PRESENT)
+NRF_STATIC_INLINE void nrf_radio_subscribe_set(NRF_RADIO_Type * p_reg,
+                                               nrf_radio_task_t task,
+                                               uint8_t          channel)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) =
+            ((uint32_t)channel | RADIO_SUBSCRIBE_TXEN_EN_Msk);
+}
+
+NRF_STATIC_INLINE void nrf_radio_subscribe_clear(NRF_RADIO_Type * p_reg,
+                                                 nrf_radio_task_t task)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) = 0;
+}
+
+NRF_STATIC_INLINE void nrf_radio_publish_set(NRF_RADIO_Type *  p_reg,
+                                             nrf_radio_event_t event,
+                                             uint8_t           channel)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) =
+            ((uint32_t)channel | RADIO_PUBLISH_READY_EN_Msk);
+}
+
+NRF_STATIC_INLINE void nrf_radio_publish_clear(NRF_RADIO_Type *  p_reg,
+                                               nrf_radio_event_t event)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) = 0;
+}
+#endif // defined(DPPI_PRESENT)
 
 NRF_STATIC_INLINE bool nrf_radio_crc_status_check(NRF_RADIO_Type const * p_reg)
 {
@@ -1521,6 +1895,137 @@ NRF_STATIC_INLINE void nrf_radio_power_set(NRF_RADIO_Type * p_reg, bool radio_po
 {
     p_reg->POWER = (uint32_t) radio_power;
 }
+
+#if defined(RADIO_CTESTATUS_CTETIME_Msk)
+NRF_STATIC_INLINE uint32_t nrf_radio_cte_time_get(NRF_RADIO_Type const * p_reg)
+{
+    return ((p_reg->CTESTATUS & RADIO_CTESTATUS_CTETIME_Msk) >> RADIO_CTESTATUS_CTETIME_Pos);
+}
+
+NRF_STATIC_INLINE uint32_t nrf_radio_cte_type_get(NRF_RADIO_Type const * p_reg)
+{
+    return ((p_reg->CTESTATUS & RADIO_CTESTATUS_CTETYPE_Msk) >> RADIO_CTESTATUS_CTETYPE_Pos);
+}
+
+NRF_STATIC_INLINE uint32_t nrf_radio_cte_rfu_get(NRF_RADIO_Type const * p_reg)
+{
+    return ((p_reg->CTESTATUS & RADIO_CTESTATUS_RFU_Msk) >> RADIO_CTESTATUS_RFU_Pos);
+}
+#endif
+
+#if defined(RADIO_DFESTATUS_SWITCHINGSTATE_Msk)
+NRF_STATIC_INLINE
+nrf_radio_dfe_switch_state_t nrf_radio_dfe_switch_state_get(NRF_RADIO_Type const * p_reg)
+{
+    return (nrf_radio_dfe_switch_state_t)((p_reg->DFESTATUS & RADIO_DFESTATUS_SWITCHINGSTATE_Msk) >>
+                                          RADIO_DFESTATUS_SWITCHINGSTATE_Pos);
+}
+
+NRF_STATIC_INLINE
+nrf_radio_dfe_sample_state_t nrf_radio_dfe_sample_state_get(NRF_RADIO_Type const * p_reg)
+{
+    return (nrf_radio_dfe_sample_state_t)((p_reg->DFESTATUS & RADIO_DFESTATUS_SAMPLINGSTATE_Msk) >>
+                                          RADIO_DFESTATUS_SAMPLINGSTATE_Pos);
+}
+#endif
+
+#if defined(RADIO_CTEINLINECONF_S0CONF_Msk)
+NRF_STATIC_INLINE void nrf_radio_cteinline_configure(NRF_RADIO_Type *                   p_reg,
+                                                     nrf_radio_cteinline_conf_t const * p_config)
+{
+    p_reg->CTEINLINECONF = (((p_config->enable ?
+                                  RADIO_CTEINLINECONF_CTEINLINECTRLEN_Enabled :
+                                  RADIO_CTEINLINECONF_CTEINLINECTRLEN_Disabled) <<
+                                  RADIO_CTEINLINECONF_CTEINLINECTRLEN_Pos ) |
+                            ((p_config->info_in_s1 ?
+                                  RADIO_CTEINLINECONF_CTEINFOINS1_InS1 :
+                                  RADIO_CTEINLINECONF_CTEINFOINS1_NotInS1) <<
+                                  RADIO_CTEINLINECONF_CTEINFOINS1_Pos ) |
+                            ((p_config->err_handling ?
+                                  RADIO_CTEINLINECONF_CTEERRORHANDLING_Yes :
+                                  RADIO_CTEINLINECONF_CTEERRORHANDLING_No) <<
+                                  RADIO_CTEINLINECONF_CTEERRORHANDLING_Pos ) |
+                            ((uint32_t)p_config->time_range <<
+                                 RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_Pos) |
+                            ((uint32_t)p_config->rx1us <<
+                                 RADIO_CTEINLINECONF_CTEINLINERXMODE1US_Pos) |
+                            ((uint32_t)p_config->rx2us <<
+                                 RADIO_CTEINLINECONF_CTEINLINERXMODE2US_Pos) |
+                            ((uint32_t)p_config->s0_pattern << RADIO_CTEINLINECONF_S0CONF_Pos) |
+                            ((uint32_t)p_config->s0_mask << RADIO_CTEINLINECONF_S0MASK_Pos));
+}
+#endif
+
+#if defined(RADIO_DFECTRL1_NUMBEROF8US_Msk)
+NRF_STATIC_INLINE void nrf_radio_dfectrl_configure(NRF_RADIO_Type *                 p_reg,
+                                                   nrf_radio_dfectrl_conf_t const * p_config)
+{
+    p_reg->DFECTRL1 = ((((uint32_t)p_config->dfe_len << RADIO_DFECTRL1_NUMBEROF8US_Pos) &
+                            RADIO_DFECTRL1_NUMBEROF8US_Msk) |
+                       ((uint32_t)p_config->extension << RADIO_DFECTRL1_DFEINEXTENSION_Pos) |
+                       ((uint32_t)p_config->switch_spacing << RADIO_DFECTRL1_TSWITCHSPACING_Pos) |
+                       ((uint32_t)p_config->spacing_ref << RADIO_DFECTRL1_TSAMPLESPACINGREF_Pos) |
+                       ((uint32_t)p_config->sample_type << RADIO_DFECTRL1_SAMPLETYPE_Pos) |
+                       ((uint32_t)p_config->sample_spacing << RADIO_DFECTRL1_TSAMPLESPACING_Pos) |
+                       (((uint32_t)p_config->gain_steps << RADIO_DFECTRL1_AGCBACKOFFGAIN_Pos) &
+                            RADIO_DFECTRL1_AGCBACKOFFGAIN_Msk));
+
+    p_reg->DFECTRL2 = ((((uint32_t)p_config->switch_offset << RADIO_DFECTRL2_TSWITCHOFFSET_Pos) &
+                            RADIO_DFECTRL2_TSWITCHOFFSET_Msk) |
+                       (((uint32_t)p_config->sample_offset << RADIO_DFECTRL2_TSAMPLEOFFSET_Pos) &
+                            RADIO_DFECTRL2_TSAMPLEOFFSET_Msk));
+}
+#endif
+
+#if defined(RADIO_SWITCHPATTERN_SWITCHPATTERN_Msk)
+NRF_STATIC_INLINE void nrf_radio_dfe_pattern_pin_set(NRF_RADIO_Type * p_reg,
+                                                     uint32_t         pin,
+                                                     uint8_t          pos)
+{
+    p_reg->PSEL.DFEGPIO[pos] = pin;
+}
+
+NRF_STATIC_INLINE void nrf_radio_dfe_pattern_add(NRF_RADIO_Type * p_reg, uint8_t pin_mask)
+{
+    p_reg->SWITCHPATTERN = (uint32_t)pin_mask;
+}
+
+NRF_STATIC_INLINE void nrf_radio_dfe_patterns_add(NRF_RADIO_Type * p_reg,
+                                                  uint8_t const *  p_pin_masks,
+                                                  size_t           length)
+{
+    for (size_t i = 0; i < length; i++)
+    {
+        nrf_radio_dfe_pattern_add(p_reg, p_pin_masks[i]);
+    }
+}
+
+NRF_STATIC_INLINE uint32_t nrf_radio_dfe_pattern_cnt_get(NRF_RADIO_Type const * p_reg)
+{
+    return p_reg->SWITCHPATTERN;
+}
+
+NRF_STATIC_INLINE void nrf_radio_dfe_pattern_clear(NRF_RADIO_Type * p_reg)
+{
+    p_reg->CLEARPATTERN = RADIO_CLEARPATTERN_CLEARPATTERN_Clear <<
+                          RADIO_CLEARPATTERN_CLEARPATTERN_Pos;
+}
+#endif
+
+#if defined(RADIO_DFEPACKET_PTR_PTR_Msk)
+NRF_STATIC_INLINE void nrf_radio_dfe_buffer_set(NRF_RADIO_Type * p_reg,
+                                                uint32_t *       p_buffer,
+                                                size_t           length)
+{
+    p_reg->DFEPACKET.PTR    = (uint32_t)p_buffer;
+    p_reg->DFEPACKET.MAXCNT = length;
+}
+
+NRF_STATIC_INLINE uint32_t nrf_radio_dfe_amount_get(NRF_RADIO_Type const * p_reg)
+{
+    return p_reg->DFEPACKET.AMOUNT;
+}
+#endif
 
 #endif // NRF_DECLARE_ONLY
 

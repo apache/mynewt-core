@@ -47,17 +47,17 @@
 #error "Not supported."
 #endif
 
-#define FORBIDDEN_HANDLER_ADDRESS ((nrfx_gpiote_evt_handler_t)UINT32_MAX)
-#define PIN_NOT_USED              (-1)
-#define PIN_USED                  (-2)
-#define NO_CHANNELS               (-1)
-#define POLARITY_FIELD_POS        (6)
-#define POLARITY_FIELD_MASK       (0xC0)
+#define UNALLOCATED_HANDLER_ADDRESS ((nrfx_gpiote_evt_handler_t)UINT32_MAX)
+#define ALLOCATED_HANDLER_ADDRESS   ((nrfx_gpiote_evt_handler_t)(UINT32_MAX-1))
+#define PIN_NOT_USED                (-1)
+#define PIN_USED                    (-2)
+#define NO_CHANNELS                 (-1)
+#define POLARITY_FIELD_POS          (6)
+#define POLARITY_FIELD_MASK         (0xC0)
 
 /* Check if every pin can be encoded on provided number of bits. */
 NRFX_STATIC_ASSERT(MAX_PIN_NUMBER <= (1 << POLARITY_FIELD_POS));
 
-/*lint -save -e571*/ /* Suppress "Warning 571: Suspicious cast" */
 typedef struct
 {
     nrfx_gpiote_evt_handler_t handlers[GPIOTE_CH_NUM + NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS];
@@ -65,6 +65,7 @@ typedef struct
     int8_t                    port_handlers_pins[NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS];
     uint8_t                   configured_pins[((MAX_PIN_NUMBER)+7) / 8];
     nrfx_drv_state_t          state;
+    uint32_t                  allocated_channels_mask;
 } gpiote_control_block_t;
 
 static gpiote_control_block_t m_cb;
@@ -149,7 +150,15 @@ static int8_t channel_port_get(uint32_t pin)
 
 static nrfx_gpiote_evt_handler_t channel_handler_get(uint32_t channel)
 {
-    return m_cb.handlers[channel];
+    if ((m_cb.handlers[channel] != UNALLOCATED_HANDLER_ADDRESS)
+        && (m_cb.handlers[channel] != ALLOCATED_HANDLER_ADDRESS))
+    {
+        return m_cb.handlers[channel];
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 static nrfx_gpiote_pin_t port_handler_pin_get(uint32_t handler_idx)
@@ -164,38 +173,63 @@ static nrf_gpiote_polarity_t port_handler_polarity_get(uint32_t handler_idx)
     return (nrf_gpiote_polarity_t)((pin_and_polarity & POLARITY_FIELD_MASK) >> POLARITY_FIELD_POS);
 }
 
-static int8_t channel_port_alloc(uint32_t pin, nrfx_gpiote_evt_handler_t handler, bool channel)
+static bool low_accuracy_channel_alloc(uint8_t channel_id)
 {
-    int8_t   channel_id = NO_CHANNELS;
-    uint32_t i;
+    bool ret = false;
 
-    uint32_t start_idx = channel ? 0 : GPIOTE_CH_NUM;
-    uint32_t end_idx   =
-        channel ? GPIOTE_CH_NUM : (GPIOTE_CH_NUM + NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS);
-
-    // critical section
-
-    for (i = start_idx; i < end_idx; i++)
+    NRFX_CRITICAL_SECTION_ENTER();
+    if (m_cb.handlers[channel_id] == UNALLOCATED_HANDLER_ADDRESS)
     {
-        if (m_cb.handlers[i] == FORBIDDEN_HANDLER_ADDRESS)
+        m_cb.handlers[channel_id] = ALLOCATED_HANDLER_ADDRESS;
+        ret = true;
+    }
+    NRFX_CRITICAL_SECTION_EXIT();
+
+    return ret;
+}
+
+static int8_t accuracy_channel_alloc(bool hi_accuracy)
+{
+    int8_t channel_id = NO_CHANNELS;
+
+    if (hi_accuracy)
+    {
+        uint8_t i;
+        if (nrfx_gpiote_channel_alloc(&i) == NRFX_SUCCESS)
         {
-            pin_in_use_by_te_set(pin, i, handler, channel);
             channel_id = i;
-            break;
         }
     }
-    // critical section
+    else
+    {
+        for (uint8_t i = GPIOTE_CH_NUM; i < (GPIOTE_CH_NUM + NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS); i++)
+        {
+            if (low_accuracy_channel_alloc(i))
+            {
+                channel_id = i;
+                break;
+            }
+        }
+    }
+
     return channel_id;
 }
 
 
 static void channel_free(uint8_t channel_id)
 {
-    m_cb.handlers[channel_id] = FORBIDDEN_HANDLER_ADDRESS;
+    NRFX_CRITICAL_SECTION_ENTER();
+    m_cb.handlers[channel_id] = UNALLOCATED_HANDLER_ADDRESS;
+
     if (channel_id >= GPIOTE_CH_NUM)
     {
         m_cb.port_handlers_pins[channel_id - GPIOTE_CH_NUM] = (int8_t)PIN_NOT_USED;
     }
+    else
+    {
+        nrfx_gpiote_channel_free(channel_id);
+    }
+    NRFX_CRITICAL_SECTION_EXIT();
 }
 
 
@@ -254,7 +288,7 @@ void nrfx_gpiote_uninit(void)
     uint32_t i;
 
     for (i = 0; i < MAX_PIN_NUMBER; i++)
-    {   
+    {
         if (nrf_gpio_pin_present_check(i))
         {
             if (pin_in_use_as_non_task_out(i))
@@ -274,9 +308,78 @@ void nrfx_gpiote_uninit(void)
     NRFX_LOG_INFO("Uninitialized.");
 }
 
+static bool is_allocated_channel(uint8_t index)
+{
+    return m_cb.allocated_channels_mask & (1UL << index);
+}
 
-nrfx_err_t nrfx_gpiote_out_init(nrfx_gpiote_pin_t                pin,
-                                nrfx_gpiote_out_config_t const * p_config)
+static bool is_app_channel(uint8_t index)
+{
+    return NRFX_GPIOTE_APP_CHANNELS_MASK & (1UL << index);
+}
+
+static void channel_allocated_set(uint8_t index)
+{
+    m_cb.allocated_channels_mask |= (1UL << index);
+}
+
+static void channel_allocated_clr(uint8_t index)
+{
+    m_cb.allocated_channels_mask &= ~(1UL << index);
+}
+
+nrfx_err_t nrfx_gpiote_channel_free(uint8_t channel)
+{
+    nrfx_err_t err_code = NRFX_SUCCESS;
+
+    if (!is_app_channel(channel))
+    {
+        err_code = NRFX_ERROR_INVALID_PARAM;
+    }
+    else
+    {
+        NRFX_CRITICAL_SECTION_ENTER();
+        channel_allocated_clr(channel);
+        NRFX_CRITICAL_SECTION_EXIT();
+    }
+
+    NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
+    return err_code;
+}
+
+nrfx_err_t nrfx_gpiote_channel_alloc(uint8_t * p_channel)
+{
+    nrfx_err_t err_code = NRFX_ERROR_NO_MEM;
+    uint32_t mask = NRFX_GPIOTE_APP_CHANNELS_MASK;
+
+    for (uint8_t ch_idx = 0; mask != 0; ch_idx++)
+    {
+        NRFX_CRITICAL_SECTION_ENTER();
+        if ((mask & (1UL << ch_idx)) && (!is_allocated_channel(ch_idx)))
+        {
+            channel_allocated_set(ch_idx);
+            *p_channel = ch_idx;
+            err_code = NRFX_SUCCESS;
+        }
+        NRFX_CRITICAL_SECTION_EXIT();
+
+        if (err_code == NRFX_SUCCESS)
+        {
+            NRFX_LOG_INFO("Allocated channel: %d.", ch_idx);
+            break;
+        }
+
+        mask &= ~(1UL << ch_idx);
+    }
+
+    NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
+    return err_code;
+}
+
+static nrfx_err_t gpiote_out_init(nrfx_gpiote_pin_t                pin,
+                                  nrfx_gpiote_out_config_t const * p_config,
+                                  bool                             prealloc,
+                                  uint8_t                          channel)
 {
     NRFX_ASSERT(nrf_gpio_pin_present_check(pin));
     NRFX_ASSERT(m_cb.state == NRFX_DRV_STATE_INITIALIZED);
@@ -292,12 +395,22 @@ nrfx_err_t nrfx_gpiote_out_init(nrfx_gpiote_pin_t                pin,
     {
         if (p_config->task_pin)
         {
-            int8_t channel = channel_port_alloc(pin, NULL, true);
+            int8_t ch = NO_CHANNELS;
 
-            if (channel != NO_CHANNELS)
+            if (prealloc)
             {
+                ch = channel;
+            }
+            else
+            {
+                ch = accuracy_channel_alloc(true);
+            }
+
+            if (ch != NO_CHANNELS)
+            {
+                pin_in_use_by_te_set(pin, ch, NULL, true);
                 nrf_gpiote_task_configure(NRF_GPIOTE,
-                                          (uint32_t)channel,
+                                          (uint32_t)ch,
                                           pin,
                                           p_config->action,
                                           p_config->init_state);
@@ -306,6 +419,13 @@ nrfx_err_t nrfx_gpiote_out_init(nrfx_gpiote_pin_t                pin,
             {
                 err_code = NRFX_ERROR_NO_MEM;
             }
+        }
+        else if (prealloc)
+        {
+            /* Calling this function with preallocated channel
+             * does not make sense when task_pin is false.
+             */
+            err_code = NRFX_ERROR_INVALID_PARAM;
         }
         else
         {
@@ -328,10 +448,27 @@ nrfx_err_t nrfx_gpiote_out_init(nrfx_gpiote_pin_t                pin,
         }
     }
 
+    return err_code;
+}
+
+nrfx_err_t nrfx_gpiote_out_init(nrfx_gpiote_pin_t                pin,
+                                nrfx_gpiote_out_config_t const * p_config)
+{
+    nrfx_err_t err_code = gpiote_out_init(pin, p_config, false, 0);
+
     NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
     return err_code;
 }
 
+nrfx_err_t nrfx_gpiote_out_prealloc_init(nrfx_gpiote_pin_t                pin,
+                                         nrfx_gpiote_out_config_t const * p_config,
+                                         uint8_t                          channel)
+{
+    nrfx_err_t err_code = gpiote_out_init(pin, p_config, true, channel);
+
+    NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
+    return err_code;
+}
 
 void nrfx_gpiote_out_uninit(nrfx_gpiote_pin_t pin)
 {
@@ -506,15 +643,22 @@ void nrfx_gpiote_clr_task_trigger(nrfx_gpiote_pin_t pin)
 
 #endif // defined(GPIOTE_FEATURE_CLR_PRESENT)
 
-nrfx_err_t nrfx_gpiote_in_init(nrfx_gpiote_pin_t               pin,
-                               nrfx_gpiote_in_config_t const * p_config,
-                               nrfx_gpiote_evt_handler_t       evt_handler)
+static nrfx_err_t gpiote_in_init(nrfx_gpiote_pin_t               pin,
+                                 nrfx_gpiote_in_config_t const * p_config,
+                                 nrfx_gpiote_evt_handler_t       evt_handler,
+                                 bool                            prealloc,
+                                 uint8_t                         channel)
 {
     NRFX_ASSERT(nrf_gpio_pin_present_check(pin));
     NRFX_ASSERT(m_cb.state == NRFX_DRV_STATE_INITIALIZED);
     NRFX_ASSERT(p_config);
 
     nrfx_err_t err_code = NRFX_SUCCESS;
+
+    if (prealloc && !p_config->hi_accuracy)
+    {
+        return NRFX_ERROR_INVALID_PARAM;
+    }
 
     /* Only one GPIOTE channel can be assigned to one physical pin. */
     if (pin_in_use_by_gpiote(pin))
@@ -523,9 +667,21 @@ nrfx_err_t nrfx_gpiote_in_init(nrfx_gpiote_pin_t               pin,
     }
     else
     {
-        int8_t channel = channel_port_alloc(pin, evt_handler, p_config->hi_accuracy);
-        if (channel != NO_CHANNELS)
+        int8_t ch = NO_CHANNELS;
+
+        if (prealloc)
         {
+            ch = channel;
+        }
+        else
+        {
+            ch = accuracy_channel_alloc(p_config->hi_accuracy);
+        }
+
+        if (ch != NO_CHANNELS)
+        {
+            pin_in_use_by_te_set(pin, ch, evt_handler, p_config->hi_accuracy);
+
             if (!p_config->skip_gpio_setup)
             {
                 if (p_config->is_watcher)
@@ -541,12 +697,12 @@ nrfx_err_t nrfx_gpiote_in_init(nrfx_gpiote_pin_t               pin,
 
             if (p_config->hi_accuracy)
             {
-                nrf_gpiote_event_configure(NRF_GPIOTE, (uint32_t)channel, pin, p_config->sense);
+                nrf_gpiote_event_configure(NRF_GPIOTE, (uint32_t)ch, pin, p_config->sense);
             }
             else
             {
-                m_cb.port_handlers_pins[channel - GPIOTE_CH_NUM] |= (p_config->sense) <<
-                                                                    POLARITY_FIELD_POS;
+                m_cb.port_handlers_pins[ch - GPIOTE_CH_NUM] |= (p_config->sense) <<
+                                                                POLARITY_FIELD_POS;
             }
         }
         else
@@ -554,6 +710,30 @@ nrfx_err_t nrfx_gpiote_in_init(nrfx_gpiote_pin_t               pin,
             err_code = NRFX_ERROR_NO_MEM;
         }
     }
+
+    return err_code;
+}
+
+nrfx_err_t nrfx_gpiote_in_init(nrfx_gpiote_pin_t               pin,
+                               nrfx_gpiote_in_config_t const * p_config,
+                               nrfx_gpiote_evt_handler_t       evt_handler)
+{
+    nrfx_err_t err_code;
+
+    err_code = gpiote_in_init(pin, p_config, evt_handler, false, 0);
+
+    NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
+    return err_code;
+}
+
+nrfx_err_t nrfx_gpiote_in_prealloc_init(nrfx_gpiote_pin_t               pin,
+                                        nrfx_gpiote_in_config_t const * p_config,
+                                        uint8_t                         channel,
+                                        nrfx_gpiote_evt_handler_t       evt_handler)
+{
+    nrfx_err_t err_code;
+
+    err_code = gpiote_in_init(pin, p_config, evt_handler, true, channel);
 
     NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
     return err_code;
@@ -886,6 +1066,4 @@ void nrfx_gpiote_irq_handler(void)
     }
 }
 
-
-/*lint -restore*/
 #endif // NRFX_CHECK(NRFX_GPIOTE_ENABLED)

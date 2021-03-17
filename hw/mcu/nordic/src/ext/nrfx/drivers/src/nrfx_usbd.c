@@ -453,7 +453,7 @@ bool nrfx_usbd_consumer(
     size_t ep_size,
     size_t data_size)
 {
-    nrfx_usbd_transfer_t * p_transfer = p_context;
+    nrfx_usbd_transfer_t * p_transfer = (nrfx_usbd_transfer_t *)p_context;
     NRFX_ASSERT(ep_size >= data_size);
     NRFX_ASSERT((p_transfer->p_data.rx == NULL) ||
         nrfx_is_in_ram(p_transfer->p_data.rx));
@@ -492,7 +492,7 @@ bool nrfx_usbd_feeder_ram(
     void * p_context,
     size_t ep_size)
 {
-    nrfx_usbd_transfer_t * p_transfer = p_context;
+    nrfx_usbd_transfer_t * p_transfer = (nrfx_usbd_transfer_t *)p_context;
     NRFX_ASSERT(nrfx_is_in_ram(p_transfer->p_data.tx));
 
     size_t tx_size = p_transfer->size;
@@ -525,7 +525,7 @@ bool nrfx_usbd_feeder_ram_zlp(
     void * p_context,
     size_t ep_size)
 {
-    nrfx_usbd_transfer_t * p_transfer = p_context;
+    nrfx_usbd_transfer_t * p_transfer = (nrfx_usbd_transfer_t *)p_context;
     NRFX_ASSERT(nrfx_is_in_ram(p_transfer->p_data.tx));
 
     size_t tx_size = p_transfer->size;
@@ -555,7 +555,7 @@ bool nrfx_usbd_feeder_ram_zlp(
  */
 bool nrfx_usbd_feeder_flash(nrfx_usbd_ep_transfer_t * p_next, void * p_context, size_t ep_size)
 {
-    nrfx_usbd_transfer_t * p_transfer = p_context;
+    nrfx_usbd_transfer_t * p_transfer = (nrfx_usbd_transfer_t *)p_context;
     NRFX_ASSERT(!nrfx_is_in_ram(p_transfer->p_data.tx));
 
     size_t tx_size  = p_transfer->size;
@@ -590,7 +590,7 @@ bool nrfx_usbd_feeder_flash(nrfx_usbd_ep_transfer_t * p_next, void * p_context, 
  */
 bool nrfx_usbd_feeder_flash_zlp(nrfx_usbd_ep_transfer_t * p_next, void * p_context, size_t ep_size)
 {
-    nrfx_usbd_transfer_t * p_transfer = p_context;
+    nrfx_usbd_transfer_t * p_transfer = (nrfx_usbd_transfer_t *)p_context;
     NRFX_ASSERT(!nrfx_is_in_ram(p_transfer->p_data.tx));
 
     size_t tx_size  = p_transfer->size;
@@ -1116,7 +1116,7 @@ static void ev_sof_handler(void)
 {
     nrfx_usbd_evt_t evt =  {
             NRFX_USBD_EVT_SOF,
-            .data = { .sof = { .framecnt = nrf_usbd_framecntr_get(NRF_USBD) }}
+            .data = { .sof = { .framecnt = (uint16_t)nrf_usbd_framecntr_get(NRF_USBD) }}
     };
 
     /* Process isochronous endpoints */

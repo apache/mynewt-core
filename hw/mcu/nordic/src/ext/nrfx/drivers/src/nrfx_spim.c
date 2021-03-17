@@ -493,6 +493,8 @@ nrfx_err_t nrfx_spim_xfer_dcx(nrfx_spim_t const *           p_instance,
                               uint32_t                      flags,
                               uint8_t                       cmd_length)
 {
+    (void)flags;
+
     NRFX_ASSERT(cmd_length <= NRF_SPIM_DCX_CNT_ALL_CMD);
     nrf_spim_dcx_cnt_set((NRF_SPIM_Type *)p_instance->p_reg, cmd_length);
     return nrfx_spim_xfer(p_instance, p_xfer_desc, 0);

@@ -241,22 +241,25 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 /** @brief Bitmask that defines DPPI channels that are reserved for use outside of the nrfx library. */
-#define NRFX_DPPI_CHANNELS_USED  0
+#define NRFX_DPPI_CHANNELS_USED   0
 
 /** @brief Bitmask that defines DPPI groups that are reserved for use outside of the nrfx library. */
-#define NRFX_DPPI_GROUPS_USED    0
+#define NRFX_DPPI_GROUPS_USED     0
 
 /** @brief Bitmask that defines PPI channels that are reserved for use outside of the nrfx library. */
-#define NRFX_PPI_CHANNELS_USED  0
+#define NRFX_PPI_CHANNELS_USED    0
 
 /** @brief Bitmask that defines PPI groups that are reserved for use outside of the nrfx library. */
-#define NRFX_PPI_GROUPS_USED    0
+#define NRFX_PPI_GROUPS_USED      0
+
+/** @brief Bitmask that defines GPIOTE channels that are reserved for use outside of the nrfx library. */
+#define NRFX_GPIOTE_CHANNELS_USED 0
 
 /** @brief Bitmask that defines EGU instances that are reserved for use outside of the nrfx library. */
-#define NRFX_EGUS_USED          0
+#define NRFX_EGUS_USED            0
 
 /** @brief Bitmask that defines TIMER instances that are reserved for use outside of the nrfx library. */
-#define NRFX_TIMERS_USED        0
+#define NRFX_TIMERS_USED          0
 
 /** @} */
 

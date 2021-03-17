@@ -161,9 +161,9 @@ typedef struct
  */
 #define NRFX_GPIOTE_CONFIG_OUT_TASK_LOW              \
     {                                                \
+        .action     = NRF_GPIOTE_POLARITY_HITOLO,    \
         .init_state = NRF_GPIOTE_INITIAL_VALUE_HIGH, \
         .task_pin   = true,                          \
-        .action     = NRF_GPIOTE_POLARITY_HITOLO,    \
     }
 
 /**
@@ -187,6 +187,20 @@ typedef struct
         .init_state = init_high ? NRF_GPIOTE_INITIAL_VALUE_HIGH : NRF_GPIOTE_INITIAL_VALUE_LOW, \
         .task_pin   = true,                                                                     \
     }
+
+#if !defined (NRFX_GPIOTE_CHANNELS_USED) || defined(__NRFX_DOXYGEN__)
+/** @brief Bitmask that defines GPIOTE channels that are reserved for use outside of the nrfx library. */
+#define NRFX_GPIOTE_CHANNELS_USED 0
+#endif
+
+#if (GPIOTE_CH_NUM == 4) || defined(__NRFX_DOXYGEN__)
+/** @brief Bitfield representing all GPIOTE channels available to the application. */
+#define NRFX_GPIOTE_APP_CHANNELS_MASK ((uint32_t)0x0000000F & ~(NRFX_GPIOTE_CHANNELS_USED))
+#elif (GPIOTE_CH_NUM == 8)
+#define NRFX_GPIOTE_APP_CHANNELS_MASK ((uint32_t)0x000000FF & ~(NRFX_GPIOTE_CHANNELS_USED))
+#else
+#error Unsupported number of GPIOTE channels.
+#endif
 
 /** @brief Pin. */
 typedef uint32_t nrfx_gpiote_pin_t;
@@ -227,6 +241,30 @@ bool nrfx_gpiote_is_init(void);
 void nrfx_gpiote_uninit(void);
 
 /**
+ * @brief Function for allocating a GPIOTE channel.
+ * @details This function allocates the first unused GPIOTE channel from
+ *          pool defined in @ref NRFX_GPIOTE_APP_CHANNELS_MASK.
+ *
+ * @param[out] p_channel Pointer to the GPIOTE channel that has been allocated.
+ *
+ * @retval NRFX_SUCCESS      The channel was successfuly allocated.
+ * @retval NRFX_ERROR_NO_MEM There is no available channel to be used.
+ */
+nrfx_err_t nrfx_gpiote_channel_alloc(uint8_t * p_channel);
+
+/**
+ * @brief Function for freeing a GPIOTE channel.
+ * @details This function frees a GPIOTE channel that was allocated using
+ *          @ref nrfx_gpiote_channel_alloc.
+ *
+ * @param[in] channel GPIOTE channel to be freed.
+ *
+ * @retval NRFX_SUCCESS             The channel was successfully freed.
+ * @retval NRFX_ERROR_INVALID_PARAM The channel is not user-configurable.
+ */
+nrfx_err_t nrfx_gpiote_channel_free(uint8_t channel);
+
+/**
  * @brief Function for initializing a GPIOTE output pin.
  * @details The output pin can be controlled by the CPU or by PPI. The initial
  * configuration specifies which mode is used. If PPI mode is used, the driver
@@ -242,6 +280,25 @@ void nrfx_gpiote_uninit(void);
  */
 nrfx_err_t nrfx_gpiote_out_init(nrfx_gpiote_pin_t                pin,
                                 nrfx_gpiote_out_config_t const * p_config);
+
+/**
+ * @brief Function for initializing a GPIOTE output pin with preallocated channel.
+ * @details The output pin can be controlled by PPI.
+ *
+ * @param[in] pin      Pin.
+ * @param[in] p_config Initial configuration.
+ * @param[in] channel  GPIOTE channel allocated with @ref nrfx_gpiote_channel_alloc.
+ *
+ * @retval NRFX_SUCCESS             Initialization was successful.
+ * @retval NRFX_ERROR_BUSY          The pin is already used.
+ * @retval NRFX_ERROR_INVALID_PARAM Pin is configured to not be controlled by
+                                    the GPIOTE task and cannot be used with
+                                    preallocated channel.
+                                    Use @ref nrfx_gpiote_out_init instead.
+ */
+nrfx_err_t nrfx_gpiote_out_prealloc_init(nrfx_gpiote_pin_t                pin,
+                                         nrfx_gpiote_out_config_t const * p_config,
+                                         uint8_t                          channel);
 
 /**
  * @brief Function for uninitializing a GPIOTE output pin.
@@ -381,6 +438,27 @@ nrfx_err_t nrfx_gpiote_in_init(nrfx_gpiote_pin_t               pin,
                                nrfx_gpiote_evt_handler_t       evt_handler);
 
 /**
+ * @brief Function for initializing a GPIOTE input pin with preallocated channel.
+ * @details The input pin can act in higher accuracy (high frequency clock required)
+ * mode.
+ *
+ * @param[in] pin         Pin.
+ * @param[in] p_config    Initial configuration.
+ * @param[in] channel     GPIOTE channel allocated with @ref nrfx_gpiote_channel_alloc.
+ * @param[in] evt_handler User function to be called when the configured transition occurs.
+ *
+ * @retval NRFX_SUCCESS             Initialization was successful.
+ * @retval NRFX_ERROR_BUSY          The pin is already used.
+ * @retval NRFX_ERROR_INVALID_PARAM Pin is configured to not be controlled by
+                                    the GPIOTE task and cannot be used with
+                                    preallocated channel.
+                                    Use @ref nrfx_gpiote_in_init instead.
+ */
+nrfx_err_t nrfx_gpiote_in_prealloc_init(nrfx_gpiote_pin_t               pin,
+                                        nrfx_gpiote_in_config_t const * p_config,
+                                        uint8_t                         channel,
+                                        nrfx_gpiote_evt_handler_t       evt_handler);
+/**
  * @brief Function for uninitializing a GPIOTE input pin.
  * @details The driver frees the GPIOTE channel if the input pin was using one.
  *
@@ -474,8 +552,42 @@ void nrfx_gpiote_set_task_trigger(nrfx_gpiote_pin_t pin);
 void nrfx_gpiote_clr_task_trigger(nrfx_gpiote_pin_t pin);
 #endif // defined(GPIOTE_FEATURE_CLR_PRESENT) || defined(__NRFX_DOXYGEN__)
 
-/** @} */
+#if NRF_GPIOTE_HAS_LATENCY
+/**
+ * @brief Function for setting the latency setting.
+ *
+ * @note Available for event mode with rising or falling edge detection on the pin.
+ *       Toggle task mode can only be used with low latency setting.
+ *
+ * @param[in] latency Latency setting to be set.
+ */
+NRFX_STATIC_INLINE void nrfx_gpiote_latency_set(nrf_gpiote_latency_t latency);
 
+/**
+ * @brief Function for retrieving the latency setting.
+ *
+ * @return Latency setting.
+ */
+NRFX_STATIC_INLINE nrf_gpiote_latency_t nrfx_gpiote_latency_get(void);
+#endif
+
+#ifndef NRFX_DECLARE_ONLY
+
+#if NRF_GPIOTE_HAS_LATENCY
+NRFX_STATIC_INLINE void nrfx_gpiote_latency_set(nrf_gpiote_latency_t latency)
+{
+    nrf_gpiote_latency_set(NRF_GPIOTE, latency);
+}
+
+NRFX_STATIC_INLINE nrf_gpiote_latency_t nrfx_gpiote_latency_get(void)
+{
+    return nrf_gpiote_latency_get(NRF_GPIOTE);
+}
+#endif // NRF_GPIOTE_HAS_LATENCY
+
+#endif // NRFX_DECLARE_ONLY
+
+/** @} */
 
 void nrfx_gpiote_irq_handler(void);
 

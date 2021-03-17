@@ -118,6 +118,15 @@ typedef enum
     NRF_LPCOMP_EVENT_CROSS = offsetof(NRF_LPCOMP_Type, EVENTS_CROSS)  /**< Input voltage crossed the threshold in any direction. */
 } nrf_lpcomp_event_t;
 
+/** @brief LPCOMP interrupts. */
+typedef enum
+{
+    NRF_LPCOMP_INT_READY_MASK = LPCOMP_INTENSET_READY_Msk, /**< Interrupt on READY event. */
+    NRF_LPCOMP_INT_DOWN_MASK  = LPCOMP_INTENSET_DOWN_Msk,  /**< Interrupt on DOWN event. */
+    NRF_LPCOMP_INT_UP_MASK    = LPCOMP_INTENSET_UP_Msk,    /**< Interrupt on UP event. */
+    NRF_LPCOMP_INT_CROSS_MASK = LPCOMP_INTENSET_CROSS_Msk  /**< Interrupt on CROSS event. */
+} nrf_lpcomp_int_mask_t;
+
 /** @brief LPCOMP shortcut masks. */
 typedef enum
 {

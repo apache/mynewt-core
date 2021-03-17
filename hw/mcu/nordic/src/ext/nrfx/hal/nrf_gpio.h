@@ -542,9 +542,11 @@ NRF_STATIC_INLINE NRF_GPIO_Type * nrf_gpio_pin_port_decode(uint32_t * p_pin)
         default:
             NRFX_ASSERT(0);
 #if defined(P0_FEATURE_PINS_PRESENT)
+        /* FALLTHROUGH */
         case 0: return NRF_P0;
 #endif
 #if defined(P1_FEATURE_PINS_PRESENT)
+        /* FALLTHROUGH */
         case 1: return NRF_P1;
 #endif
     }
