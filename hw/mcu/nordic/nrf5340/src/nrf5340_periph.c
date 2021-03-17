@@ -88,7 +88,7 @@ static const struct nrf5340_uart_cfg os_bsp_uart1_cfg = {
 };
 #endif
 #if MYNEWT_VAL(UART_2)
-static struct uart_dev os_bsp_uart0;
+static struct uart_dev os_bsp_uart2;
 static const struct nrf5340_uart_cfg os_bsp_uart2_cfg = {
     .suc_pin_tx = MYNEWT_VAL(UART_2_PIN_TX),
     .suc_pin_rx = MYNEWT_VAL(UART_2_PIN_RX),
@@ -97,7 +97,7 @@ static const struct nrf5340_uart_cfg os_bsp_uart2_cfg = {
 };
 #endif
 #if MYNEWT_VAL(UART_3)
-static struct uart_dev os_bsp_uart0;
+static struct uart_dev os_bsp_uart3;
 static const struct nrf5340_uart_cfg os_bsp_uart3_cfg = {
     .suc_pin_tx = MYNEWT_VAL(UART_3_PIN_TX),
     .suc_pin_rx = MYNEWT_VAL(UART_3_PIN_RX),
