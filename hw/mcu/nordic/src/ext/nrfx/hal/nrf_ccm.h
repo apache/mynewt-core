@@ -357,6 +357,52 @@ NRF_STATIC_INLINE void nrf_ccm_datarate_override_set(NRF_CCM_Type *     p_reg,
                                                      nrf_ccm_datarate_t datarate);
 #endif // defined(CCM_RATEOVERRIDE_RATEOVERRIDE_Pos) || defined(__NRFX_DOXYGEN__)
 
+#if defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for setting the subscribe configuration for a given
+ *        CCM task.
+ *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
+ * @param[in] task    Task for which to set the configuration.
+ * @param[in] channel Channel through which to subscribe events.
+ */
+NRF_STATIC_INLINE void nrf_ccm_subscribe_set(NRF_CCM_Type * p_reg,
+                                             nrf_ccm_task_t task,
+                                             uint8_t        channel);
+
+/**
+ * @brief Function for clearing the subscribe configuration for a given
+ *        CCM task.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task for which to clear the configuration.
+ */
+NRF_STATIC_INLINE void nrf_ccm_subscribe_clear(NRF_CCM_Type * p_reg,
+                                               nrf_ccm_task_t task);
+
+/**
+ * @brief Function for setting the publish configuration for a given
+ *        CCM event.
+ *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
+ * @param[in] event   Event for which to set the configuration.
+ * @param[in] channel Channel through which to publish the event.
+ */
+NRF_STATIC_INLINE void nrf_ccm_publish_set(NRF_CCM_Type *  p_reg,
+                                           nrf_ccm_event_t event,
+                                           uint8_t         channel);
+
+/**
+ * @brief Function for clearing the publish configuration for a given
+ *        CCM event.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] event Event for which to clear the configuration.
+ */
+NRF_STATIC_INLINE void nrf_ccm_publish_clear(NRF_CCM_Type *  p_reg,
+                                             nrf_ccm_event_t event);
+#endif // defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
+
 #ifndef NRF_DECLARE_ONLY
 
 NRF_STATIC_INLINE void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg,
@@ -533,6 +579,36 @@ NRF_STATIC_INLINE void nrf_ccm_datarate_override_set(NRF_CCM_Type *     p_reg,
     p_reg->RATEOVERRIDE = ((uint32_t)datarate << CCM_RATEOVERRIDE_RATEOVERRIDE_Pos);
 }
 #endif
+
+#if defined(DPPI_PRESENT)
+NRF_STATIC_INLINE void nrf_ccm_subscribe_set(NRF_CCM_Type * p_reg,
+                                             nrf_ccm_task_t task,
+                                             uint8_t        channel)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) =
+            ((uint32_t)channel | CCM_SUBSCRIBE_KSGEN_EN_Msk);
+}
+
+NRF_STATIC_INLINE void nrf_ccm_subscribe_clear(NRF_CCM_Type * p_reg,
+                                               nrf_ccm_task_t task)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) = 0;
+}
+
+NRF_STATIC_INLINE void nrf_ccm_publish_set(NRF_CCM_Type *  p_reg,
+                                           nrf_ccm_event_t event,
+                                           uint8_t         channel)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) =
+            ((uint32_t)channel | CCM_PUBLISH_ENDKSGEN_EN_Msk);
+}
+
+NRF_STATIC_INLINE void nrf_ccm_publish_clear(NRF_CCM_Type *  p_reg,
+                                             nrf_ccm_event_t event)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) = 0;
+}
+#endif // defined(DPPI_PRESENT)
 
 #endif // NRF_DECLARE_ONLY
 

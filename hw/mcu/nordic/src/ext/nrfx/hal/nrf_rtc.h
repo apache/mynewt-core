@@ -48,6 +48,9 @@ extern "C" {
 /** @brief Macro for getting the number of compare channels available in a given RTC instance. */
 #define NRF_RTC_CC_CHANNEL_COUNT(id)  NRFX_CONCAT_3(RTC, id, _CC_NUM)
 
+/** @brief Maximum value of the RTC counter. */
+#define NRF_RTC_COUNTER_MAX RTC_COUNTER_COUNTER_Msk
+
 /** @brief Input frequency of the RTC instance. */
 #define RTC_INPUT_FREQ 32768
 
@@ -67,10 +70,16 @@ extern "C" {
 /** @brief RTC tasks. */
 typedef enum
 {
-    NRF_RTC_TASK_START            = offsetof(NRF_RTC_Type,TASKS_START),     /**< Start. */
-    NRF_RTC_TASK_STOP             = offsetof(NRF_RTC_Type,TASKS_STOP),      /**< Stop. */
-    NRF_RTC_TASK_CLEAR            = offsetof(NRF_RTC_Type,TASKS_CLEAR),     /**< Clear. */
-    NRF_RTC_TASK_TRIGGER_OVERFLOW = offsetof(NRF_RTC_Type,TASKS_TRIGOVRFLW),/**< Trigger overflow. */
+    NRF_RTC_TASK_START            = offsetof(NRF_RTC_Type,TASKS_START),      /**< Start. */
+    NRF_RTC_TASK_STOP             = offsetof(NRF_RTC_Type,TASKS_STOP),       /**< Stop. */
+    NRF_RTC_TASK_CLEAR            = offsetof(NRF_RTC_Type,TASKS_CLEAR),      /**< Clear. */
+    NRF_RTC_TASK_TRIGGER_OVERFLOW = offsetof(NRF_RTC_Type,TASKS_TRIGOVRFLW), /**< Trigger overflow. */
+#if defined(RTC_TASKS_CAPTURE_TASKS_CAPTURE_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_RTC_TASK_CAPTURE_0        = offsetof(NRF_RTC_Type,TASKS_CAPTURE[0]), /**< Capture the counter value on channel 0. */
+    NRF_RTC_TASK_CAPTURE_1        = offsetof(NRF_RTC_Type,TASKS_CAPTURE[1]), /**< Capture the counter value on channel 1. */
+    NRF_RTC_TASK_CAPTURE_2        = offsetof(NRF_RTC_Type,TASKS_CAPTURE[2]), /**< Capture the counter value on channel 2. */
+    NRF_RTC_TASK_CAPTURE_3        = offsetof(NRF_RTC_Type,TASKS_CAPTURE[3]), /**< Capture the counter value on channel 3. */
+#endif
 } nrf_rtc_task_t;
 
 /** @brief RTC events. */

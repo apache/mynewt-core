@@ -177,8 +177,8 @@ void nrfx_comp_start(uint32_t comp_int_mask, uint32_t comp_shorts_mask)
     NRFX_ASSERT(m_state == NRFX_DRV_STATE_INITIALIZED);
     nrf_comp_int_enable(NRF_COMP, comp_int_mask);
     nrf_comp_shorts_enable(NRF_COMP, comp_shorts_mask);
-    nrf_comp_task_trigger(NRF_COMP, NRF_COMP_TASK_START);
     m_state = NRFX_DRV_STATE_POWERED_ON;
+    nrf_comp_task_trigger(NRF_COMP, NRF_COMP_TASK_START);
     NRFX_LOG_INFO("Enabled.");
 }
 

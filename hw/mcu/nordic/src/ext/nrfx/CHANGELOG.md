@@ -1,6 +1,25 @@
 # Changelog
 All notable changes to this project are documented in this file.
 
+## [2.4.0] - 2020-11-13
+### Added
+- Added the channel allocator feature in the GPIOTE driver.
+- Added support for registers associated with the Direction Finding feature in the RADIO HAL.
+- Added support for the SUBSCRIBE and PUBLISH registers in the following HALs: AAR, CCM, ECB, RADIO, and RNG.
+- Added support for the LATENCY register present on nRF5340 in the GPIOTE driver and the GPIOTE HAL.
+- Implemented workaround for nRF53 Series anomaly 53 in the POWER driver.
+
+### Changed
+- Updated MDK to 8.37.0.
+
+### Fixed
+- Fixed unused parameters in the PPI, CLOCK, SPIM and POWER drivers to resolve compilation warnings, such as 'flags' in the SPIM driver.
+- Fixed a race condition in the COMP driver when interrupt occured before update of the driver internal state.
+- Fixed minor C++ compilation warnings in the drivers.
+- Fixed implementation of workaround for nRF52 Series anomaly 197 in the POWER HAL, which was applied in incorrect configuration.
+- Fixed implementation of workaround for nRF53 Series anomaly 4 in the CLOCK driver, which was applied in incorrect configuration.
+- Fixed the incorrect signature of the nrf_clock_alwaysrun_set() function.
+
 ## [2.3.0] - 2020-08-19
 ### Added
 - Added support for nRF52805.

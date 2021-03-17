@@ -63,6 +63,17 @@ static bool nrf91_errata_31(void) __UNUSED;
 static bool nrf91_errata_32(void) __UNUSED;
 static bool nrf91_errata_33(void) __UNUSED;
 
+/* ========= Errata 1 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_1_PRESENT 1
+#else
+    #define NRF91_ERRATA_1_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_1_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_1_ENABLE_WORKAROUND NRF91_ERRATA_1_PRESENT
+#endif
+
 static bool nrf91_errata_1(void)
 {
     #ifndef NRF91_SERIES
@@ -89,6 +100,17 @@ static bool nrf91_errata_1(void)
         return false;
     #endif
 }
+
+/* ========= Errata 2 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_2_PRESENT 1
+#else
+    #define NRF91_ERRATA_2_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_2_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_2_ENABLE_WORKAROUND NRF91_ERRATA_2_PRESENT
+#endif
 
 static bool nrf91_errata_2(void)
 {
@@ -117,6 +139,17 @@ static bool nrf91_errata_2(void)
     #endif
 }
 
+/* ========= Errata 4 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_4_PRESENT 1
+#else
+    #define NRF91_ERRATA_4_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_4_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_4_ENABLE_WORKAROUND NRF91_ERRATA_4_PRESENT
+#endif
+
 static bool nrf91_errata_4(void)
 {
     #ifndef NRF91_SERIES
@@ -143,6 +176,17 @@ static bool nrf91_errata_4(void)
         return false;
     #endif
 }
+
+/* ========= Errata 6 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_6_PRESENT 1
+#else
+    #define NRF91_ERRATA_6_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_6_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_6_ENABLE_WORKAROUND NRF91_ERRATA_6_PRESENT
+#endif
 
 static bool nrf91_errata_6(void)
 {
@@ -171,6 +215,17 @@ static bool nrf91_errata_6(void)
     #endif
 }
 
+/* ========= Errata 7 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_7_PRESENT 1
+#else
+    #define NRF91_ERRATA_7_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_7_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_7_ENABLE_WORKAROUND NRF91_ERRATA_7_PRESENT
+#endif
+
 static bool nrf91_errata_7(void)
 {
     #ifndef NRF91_SERIES
@@ -197,6 +252,17 @@ static bool nrf91_errata_7(void)
         return false;
     #endif
 }
+
+/* ========= Errata 8 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_8_PRESENT 1
+#else
+    #define NRF91_ERRATA_8_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_8_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_8_ENABLE_WORKAROUND NRF91_ERRATA_8_PRESENT
+#endif
 
 static bool nrf91_errata_8(void)
 {
@@ -225,6 +291,17 @@ static bool nrf91_errata_8(void)
     #endif
 }
 
+/* ========= Errata 9 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_9_PRESENT 1
+#else
+    #define NRF91_ERRATA_9_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_9_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_9_ENABLE_WORKAROUND NRF91_ERRATA_9_PRESENT
+#endif
+
 static bool nrf91_errata_9(void)
 {
     #ifndef NRF91_SERIES
@@ -251,6 +328,17 @@ static bool nrf91_errata_9(void)
         return false;
     #endif
 }
+
+/* ========= Errata 10 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_10_PRESENT 1
+#else
+    #define NRF91_ERRATA_10_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_10_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_10_ENABLE_WORKAROUND NRF91_ERRATA_10_PRESENT
+#endif
 
 static bool nrf91_errata_10(void)
 {
@@ -279,6 +367,17 @@ static bool nrf91_errata_10(void)
     #endif
 }
 
+/* ========= Errata 12 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_12_PRESENT 1
+#else
+    #define NRF91_ERRATA_12_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_12_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_12_ENABLE_WORKAROUND NRF91_ERRATA_12_PRESENT
+#endif
+
 static bool nrf91_errata_12(void)
 {
     #ifndef NRF91_SERIES
@@ -305,6 +404,17 @@ static bool nrf91_errata_12(void)
         return false;
     #endif
 }
+
+/* ========= Errata 14 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_14_PRESENT 1
+#else
+    #define NRF91_ERRATA_14_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_14_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_14_ENABLE_WORKAROUND NRF91_ERRATA_14_PRESENT
+#endif
 
 static bool nrf91_errata_14(void)
 {
@@ -333,6 +443,17 @@ static bool nrf91_errata_14(void)
     #endif
 }
 
+/* ========= Errata 15 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_15_PRESENT 1
+#else
+    #define NRF91_ERRATA_15_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_15_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_15_ENABLE_WORKAROUND NRF91_ERRATA_15_PRESENT
+#endif
+
 static bool nrf91_errata_15(void)
 {
     #ifndef NRF91_SERIES
@@ -359,6 +480,17 @@ static bool nrf91_errata_15(void)
         return false;
     #endif
 }
+
+/* ========= Errata 16 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_16_PRESENT 1
+#else
+    #define NRF91_ERRATA_16_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_16_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_16_ENABLE_WORKAROUND NRF91_ERRATA_16_PRESENT
+#endif
 
 static bool nrf91_errata_16(void)
 {
@@ -387,6 +519,17 @@ static bool nrf91_errata_16(void)
     #endif
 }
 
+/* ========= Errata 17 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_17_PRESENT 1
+#else
+    #define NRF91_ERRATA_17_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_17_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_17_ENABLE_WORKAROUND NRF91_ERRATA_17_PRESENT
+#endif
+
 static bool nrf91_errata_17(void)
 {
     #ifndef NRF91_SERIES
@@ -413,6 +556,17 @@ static bool nrf91_errata_17(void)
         return false;
     #endif
 }
+
+/* ========= Errata 20 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_20_PRESENT 1
+#else
+    #define NRF91_ERRATA_20_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_20_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_20_ENABLE_WORKAROUND NRF91_ERRATA_20_PRESENT
+#endif
 
 static bool nrf91_errata_20(void)
 {
@@ -441,6 +595,17 @@ static bool nrf91_errata_20(void)
     #endif
 }
 
+/* ========= Errata 21 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_21_PRESENT 1
+#else
+    #define NRF91_ERRATA_21_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_21_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_21_ENABLE_WORKAROUND NRF91_ERRATA_21_PRESENT
+#endif
+
 static bool nrf91_errata_21(void)
 {
     #ifndef NRF91_SERIES
@@ -467,6 +632,17 @@ static bool nrf91_errata_21(void)
         return false;
     #endif
 }
+
+/* ========= Errata 23 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_23_PRESENT 1
+#else
+    #define NRF91_ERRATA_23_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_23_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_23_ENABLE_WORKAROUND NRF91_ERRATA_23_PRESENT
+#endif
 
 static bool nrf91_errata_23(void)
 {
@@ -495,6 +671,17 @@ static bool nrf91_errata_23(void)
     #endif
 }
 
+/* ========= Errata 24 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_24_PRESENT 1
+#else
+    #define NRF91_ERRATA_24_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_24_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_24_ENABLE_WORKAROUND NRF91_ERRATA_24_PRESENT
+#endif
+
 static bool nrf91_errata_24(void)
 {
     #ifndef NRF91_SERIES
@@ -521,6 +708,17 @@ static bool nrf91_errata_24(void)
         return false;
     #endif
 }
+
+/* ========= Errata 26 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_26_PRESENT 1
+#else
+    #define NRF91_ERRATA_26_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_26_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_26_ENABLE_WORKAROUND NRF91_ERRATA_26_PRESENT
+#endif
 
 static bool nrf91_errata_26(void)
 {
@@ -549,6 +747,17 @@ static bool nrf91_errata_26(void)
     #endif
 }
 
+/* ========= Errata 27 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_27_PRESENT 1
+#else
+    #define NRF91_ERRATA_27_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_27_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_27_ENABLE_WORKAROUND NRF91_ERRATA_27_PRESENT
+#endif
+
 static bool nrf91_errata_27(void)
 {
     #ifndef NRF91_SERIES
@@ -575,6 +784,17 @@ static bool nrf91_errata_27(void)
         return false;
     #endif
 }
+
+/* ========= Errata 28 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_28_PRESENT 1
+#else
+    #define NRF91_ERRATA_28_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_28_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_28_ENABLE_WORKAROUND NRF91_ERRATA_28_PRESENT
+#endif
 
 static bool nrf91_errata_28(void)
 {
@@ -603,6 +823,17 @@ static bool nrf91_errata_28(void)
     #endif
 }
 
+/* ========= Errata 29 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_29_PRESENT 1
+#else
+    #define NRF91_ERRATA_29_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_29_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_29_ENABLE_WORKAROUND NRF91_ERRATA_29_PRESENT
+#endif
+
 static bool nrf91_errata_29(void)
 {
     #ifndef NRF91_SERIES
@@ -629,6 +860,17 @@ static bool nrf91_errata_29(void)
         return false;
     #endif
 }
+
+/* ========= Errata 30 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_30_PRESENT 1
+#else
+    #define NRF91_ERRATA_30_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_30_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_30_ENABLE_WORKAROUND NRF91_ERRATA_30_PRESENT
+#endif
 
 static bool nrf91_errata_30(void)
 {
@@ -657,6 +899,17 @@ static bool nrf91_errata_30(void)
     #endif
 }
 
+/* ========= Errata 31 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_31_PRESENT 1
+#else
+    #define NRF91_ERRATA_31_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_31_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_31_ENABLE_WORKAROUND NRF91_ERRATA_31_PRESENT
+#endif
+
 static bool nrf91_errata_31(void)
 {
     #ifndef NRF91_SERIES
@@ -684,6 +937,17 @@ static bool nrf91_errata_31(void)
     #endif
 }
 
+/* ========= Errata 32 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_32_PRESENT 1
+#else
+    #define NRF91_ERRATA_32_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_32_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_32_ENABLE_WORKAROUND NRF91_ERRATA_32_PRESENT
+#endif
+
 static bool nrf91_errata_32(void)
 {
     #ifndef NRF91_SERIES
@@ -710,6 +974,17 @@ static bool nrf91_errata_32(void)
         return false;
     #endif
 }
+
+/* ========= Errata 33 ========= */
+#if    defined (NRF9160_XXAA) || defined (DEVELOP_IN_NRF9160)
+    #define NRF91_ERRATA_33_PRESENT 1
+#else
+    #define NRF91_ERRATA_33_PRESENT 0
+#endif
+
+#ifndef NRF91_ERRATA_33_ENABLE_WORKAROUND
+    #define NRF91_ERRATA_33_ENABLE_WORKAROUND NRF91_ERRATA_33_PRESENT
+#endif
 
 static bool nrf91_errata_33(void)
 {

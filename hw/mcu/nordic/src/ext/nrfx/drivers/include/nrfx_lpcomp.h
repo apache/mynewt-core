@@ -76,7 +76,7 @@ typedef struct
     .hal    = {  NRF_LPCOMP_REF_SUPPLY_4_8,                        \
                  NRF_LPCOMP_DETECT_CROSS,                          \
                  NRF_LPCOMP_HYST_NOHYST },                         \
-    .input  = _input,                                              \
+    .input  = (nrf_lpcomp_input_t)_input,                          \
     .interrupt_priority = NRFX_LPCOMP_DEFAULT_CONFIG_IRQ_PRIORITY  \
 }
 #else
@@ -84,7 +84,7 @@ typedef struct
 {                                                                  \
     .hal    = {  NRF_LPCOMP_REF_SUPPLY_4_8,                        \
                  NRF_LPCOMP_DETECT_CROSS },                        \
-    .input  = _input,                                              \
+    .input  = (nrf_lpcomp_input_t)_input,                          \
     .interrupt_priority = NRFX_LPCOMP_DEFAULT_CONFIG_IRQ_PRIORITY  \
 }
 #endif

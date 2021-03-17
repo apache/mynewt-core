@@ -35,8 +35,40 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* MDK version */
 #define MDK_MAJOR_VERSION   8 
-#define MDK_MINOR_VERSION   35 
+#define MDK_MINOR_VERSION   37 
 #define MDK_MICRO_VERSION   0 
+
+   
+/* Define coprocessor domains */
+#if defined (NRF5340_XXAA_APPLICATION) || defined (NRF5340_XXAA_NETWORK)
+    #ifndef NRF5340_XXAA
+        #define NRF5340_XXAA
+    #endif
+#endif
+#if defined (NRF5340_XXAA_APPLICATION)
+    #ifndef NRF_APPLICATION
+        #define NRF_APPLICATION
+    #endif
+#endif
+#if defined (NRF5340_XXAA_NETWORK)
+    #ifndef NRF_NETWORK
+        #define NRF_NETWORK
+    #endif
+#endif
+
+/* Apply compatibility macros for old nRF5340 macros */
+#if defined(NRF5340_XXAA)
+    #if defined (NRF_APPLICATION)
+        #ifndef NRF5340_XXAA_APPLICATION
+            #define NRF5340_XXAA_APPLICATION
+        #endif
+    #endif
+    #if defined (NRF_NETWORK)
+        #ifndef NRF5340_XXAA_NETWORK
+            #define NRF5340_XXAA_NETWORK
+        #endif
+    #endif
+#endif
 
 /* Define NRF51_SERIES for common use in nRF51 series devices. Only if not previously defined. */
 #if defined (NRF51) ||\
@@ -72,7 +104,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 /* Define NRF53_SERIES for common use in nRF53 series devices. */
-#if defined (NRF5340_XXAA_APPLICATION) || defined (NRF5340_XXAA_NETWORK)
+#if defined (NRF5340_XXAA)
     #ifndef NRF53_SERIES
         #define NRF53_SERIES
     #endif
@@ -82,37 +114,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #if defined (NRF9160_XXAA)
     #ifndef NRF91_SERIES    
         #define NRF91_SERIES
-    #endif
-#endif
-   
-/* Define coprocessor domains */
-#if defined (NRF5340_XXAA_APPLICATION) || defined (NRF5340_XXAA_NETWORK)
-    #ifndef NRF5340_XXAA
-        #define NRF5340_XXAA
-    #endif
-#endif
-#if defined (NRF5340_XXAA_APPLICATION)
-    #ifndef NRF_APPLICATION
-        #define NRF_APPLICATION
-    #endif
-#endif
-#if defined (NRF5340_XXAA_NETWORK)
-    #ifndef NRF_NETWORK
-        #define NRF_NETWORK
-    #endif
-#endif
-
-/* Apply compatibility macros for old nRF5340 macros */
-#if defined(NRF5340_XXAA)
-    #if defined (NRF_APPLICATION)
-        #ifndef NRF5340_XXAA_APPLICATION
-            #define NRF5340_XXAA_APPLICATION
-        #endif
-    #endif
-    #if defined (NRF_NETWORK)
-        #ifndef NRF5340_XXAA_NETWORK
-            #define NRF5340_XXAA_NETWORK
-        #endif
     #endif
 #endif
 

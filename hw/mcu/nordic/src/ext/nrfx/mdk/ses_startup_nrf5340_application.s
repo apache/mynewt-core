@@ -55,193 +55,64 @@
 
   .section .init, "ax"
   .align 0
-  
-/************************************************************************************
- * Default Exception Handlers                                                       *
- ************************************************************************************/
 
-
-  .thumb_func
-  .weak   NMI_Handler
-NMI_Handler:
-  b     .
-
-  .thumb_func
-  .weak   HardFault_Handler
-HardFault_Handler:
-  b     .
-
-  .thumb_func
-  .weak   MemoryManagement_Handler
-MemoryManagement_Handler:
-  b     .
-
-  .thumb_func
-  .weak   BusFault_Handler
-BusFault_Handler:
-  b     .
-
-  .thumb_func
-  .weak   UsageFault_Handler
-UsageFault_Handler:
-  b     .
-
-  .thumb_func
-  .weak   SecureFault_Handler
-SecureFault_Handler:
-  b     .
-
-  .thumb_func
-  .weak   SVC_Handler
-SVC_Handler:
-  b     .
-
-  .thumb_func
-  .weak   DebugMon_Handler
-DebugMon_Handler:
-  b     .
-
-  .thumb_func
-  .weak   PendSV_Handler
-PendSV_Handler:
-  b     .
-
-  .thumb_func
-  .weak   SysTick_Handler
-SysTick_Handler:
-  b     .
-
-  .thumb_func
-  .weak   Dummy_Handler
-Dummy_Handler:
-  b     .
 
 /************************************************************************************
- * Default Interrupt Handlers                                                       *
+ * Macros                                                                           *
  ************************************************************************************/
- 
-.weak FPU_IRQHandler
-.thumb_set FPU_IRQHandler, Dummy_Handler
 
-.weak CACHE_IRQHandler
-.thumb_set CACHE_IRQHandler, Dummy_Handler
+// Directly place a vector (word) in the vector table
+.macro VECTOR Name=
+        .section .vectors, "ax"
+        .code 16
+        .word \Name
+.endm
 
-.weak SPU_IRQHandler
-.thumb_set SPU_IRQHandler, Dummy_Handler
+// Declare an exception handler with a weak definition
+.macro EXC_HANDLER Name=
+        // Insert vector in vector table
+        .section .vectors, "ax"
+        .word \Name
+        // Insert dummy handler in init section
+        .section .init.\Name, "ax"
+        .thumb_func
+        .weak \Name
+        .balign 2
+\Name:
+        1: b 1b   // Endless loop
+.endm
 
-.weak CLOCK_POWER_IRQHandler
-.thumb_set CLOCK_POWER_IRQHandler, Dummy_Handler
+// Declare an interrupt handler with a weak definition
+.macro ISR_HANDLER Name=
+        // Insert vector in vector table
+        .section .vectors, "ax"
+        .word \Name
+        // Insert dummy handler in init section
+#if defined(__OPTIMIZATION_SMALL)
+        .section .init, "ax"
+        .weak \Name
+        .thumb_set \Name,Dummy_Handler
+#else
+        .section .init.\Name, "ax"
+        .thumb_func
+        .weak \Name
+        .balign 2
+\Name:
+        1: b 1b   // Endless loop
+#endif
+.endm
 
-.weak SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-.thumb_set SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler, Dummy_Handler
+// Place a reserved vector in vector table
+.macro ISR_RESERVED
+        .section .vectors, "ax"
+        .word 0
+.endm
 
-.weak SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
-.thumb_set SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler, Dummy_Handler
-
-.weak SPIM4_IRQHandler
-.thumb_set SPIM4_IRQHandler, Dummy_Handler
-
-.weak SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
-.thumb_set SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler, Dummy_Handler
-
-.weak SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
-.thumb_set SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler, Dummy_Handler
-
-.weak GPIOTE0_IRQHandler
-.thumb_set GPIOTE0_IRQHandler, Dummy_Handler
-
-.weak SAADC_IRQHandler
-.thumb_set SAADC_IRQHandler, Dummy_Handler
-
-.weak TIMER0_IRQHandler
-.thumb_set TIMER0_IRQHandler, Dummy_Handler
-
-.weak TIMER1_IRQHandler
-.thumb_set TIMER1_IRQHandler, Dummy_Handler
-
-.weak TIMER2_IRQHandler
-.thumb_set TIMER2_IRQHandler, Dummy_Handler
-
-.weak RTC0_IRQHandler
-.thumb_set RTC0_IRQHandler, Dummy_Handler
-
-.weak RTC1_IRQHandler
-.thumb_set RTC1_IRQHandler, Dummy_Handler
-
-.weak WDT0_IRQHandler
-.thumb_set WDT0_IRQHandler, Dummy_Handler
-
-.weak WDT1_IRQHandler
-.thumb_set WDT1_IRQHandler, Dummy_Handler
-
-.weak COMP_LPCOMP_IRQHandler
-.thumb_set COMP_LPCOMP_IRQHandler, Dummy_Handler
-
-.weak EGU0_IRQHandler
-.thumb_set EGU0_IRQHandler, Dummy_Handler
-
-.weak EGU1_IRQHandler
-.thumb_set EGU1_IRQHandler, Dummy_Handler
-
-.weak EGU2_IRQHandler
-.thumb_set EGU2_IRQHandler, Dummy_Handler
-
-.weak EGU3_IRQHandler
-.thumb_set EGU3_IRQHandler, Dummy_Handler
-
-.weak EGU4_IRQHandler
-.thumb_set EGU4_IRQHandler, Dummy_Handler
-
-.weak EGU5_IRQHandler
-.thumb_set EGU5_IRQHandler, Dummy_Handler
-
-.weak PWM0_IRQHandler
-.thumb_set PWM0_IRQHandler, Dummy_Handler
-
-.weak PWM1_IRQHandler
-.thumb_set PWM1_IRQHandler, Dummy_Handler
-
-.weak PWM2_IRQHandler
-.thumb_set PWM2_IRQHandler, Dummy_Handler
-
-.weak PWM3_IRQHandler
-.thumb_set PWM3_IRQHandler, Dummy_Handler
-
-.weak PDM0_IRQHandler
-.thumb_set PDM0_IRQHandler, Dummy_Handler
-
-.weak I2S0_IRQHandler
-.thumb_set I2S0_IRQHandler, Dummy_Handler
-
-.weak IPC_IRQHandler
-.thumb_set IPC_IRQHandler, Dummy_Handler
-
-.weak QSPI_IRQHandler
-.thumb_set QSPI_IRQHandler, Dummy_Handler
-
-.weak NFCT_IRQHandler
-.thumb_set NFCT_IRQHandler, Dummy_Handler
-
-.weak GPIOTE1_IRQHandler
-.thumb_set GPIOTE1_IRQHandler, Dummy_Handler
-
-.weak QDEC0_IRQHandler
-.thumb_set QDEC0_IRQHandler, Dummy_Handler
-
-.weak QDEC1_IRQHandler
-.thumb_set QDEC1_IRQHandler, Dummy_Handler
-
-.weak USBD_IRQHandler
-.thumb_set USBD_IRQHandler, Dummy_Handler
-
-.weak USBREGULATOR_IRQHandler
-.thumb_set USBREGULATOR_IRQHandler, Dummy_Handler
-
-.weak KMU_IRQHandler
-.thumb_set KMU_IRQHandler, Dummy_Handler
-
-.weak CRYPTOCELL_IRQHandler
-.thumb_set CRYPTOCELL_IRQHandler, Dummy_Handler
+// Place a reserved vector in vector table
+.macro ISR_RESERVED_DUMMY
+        .section .vectors, "ax"
+        .word Dummy_Handler
+.endm
 
 /************************************************************************************
  * Reset Handler Extensions                                                         *
@@ -253,7 +124,7 @@ Dummy_Handler:
 
   .thumb_func
 nRFInitialize:
-  b afterInitialize
+  bx lr
  
  
 /************************************************************************************
@@ -266,264 +137,264 @@ nRFInitialize:
   .extern __stack_end__
 
 _vectors:
-  .word __stack_end__
-  .word Reset_Handler
-  .word NMI_Handler
-  .word HardFault_Handler
-  .word MemoryManagement_Handler
-  .word BusFault_Handler
-  .word UsageFault_Handler
-  .word SecureFault_Handler
-  .word 0                           /*Reserved */
-  .word 0                           /*Reserved */
-  .word 0                           /*Reserved */
-  .word SVC_Handler
-  .word DebugMon_Handler
-  .word 0                           /*Reserved */
-  .word PendSV_Handler
-  .word SysTick_Handler
+  VECTOR        __stack_end__
+  VECTOR        Reset_Handler
+  EXC_HANDLER   NMI_Handler
+  EXC_HANDLER   HardFault_Handler
+  EXC_HANDLER   MemoryManagement_Handler
+  EXC_HANDLER   BusFault_Handler
+  EXC_HANDLER   UsageFault_Handler
+  EXC_HANDLER   SecureFault_Handler
+  ISR_RESERVED                           /*Reserved */
+  ISR_RESERVED                           /*Reserved */
+  ISR_RESERVED                           /*Reserved */
+  EXC_HANDLER   SVC_Handler
+  EXC_HANDLER   DebugMon_Handler
+  ISR_RESERVED                           /*Reserved */
+  EXC_HANDLER   PendSV_Handler
+  EXC_HANDLER   SysTick_Handler
 
 /* External Interrupts */
-  .word   FPU_IRQHandler
-  .word   CACHE_IRQHandler
-  .word   0                           /*Reserved */
-  .word   SPU_IRQHandler
-  .word   0                           /*Reserved */
-  .word   CLOCK_POWER_IRQHandler
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-  .word   SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
-  .word   SPIM4_IRQHandler
-  .word   SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
-  .word   SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
-  .word   GPIOTE0_IRQHandler
-  .word   SAADC_IRQHandler
-  .word   TIMER0_IRQHandler
-  .word   TIMER1_IRQHandler
-  .word   TIMER2_IRQHandler
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   RTC0_IRQHandler
-  .word   RTC1_IRQHandler
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   WDT0_IRQHandler
-  .word   WDT1_IRQHandler
-  .word   COMP_LPCOMP_IRQHandler
-  .word   EGU0_IRQHandler
-  .word   EGU1_IRQHandler
-  .word   EGU2_IRQHandler
-  .word   EGU3_IRQHandler
-  .word   EGU4_IRQHandler
-  .word   EGU5_IRQHandler
-  .word   PWM0_IRQHandler
-  .word   PWM1_IRQHandler
-  .word   PWM2_IRQHandler
-  .word   PWM3_IRQHandler
-  .word   0                           /*Reserved */
-  .word   PDM0_IRQHandler
-  .word   0                           /*Reserved */
-  .word   I2S0_IRQHandler
-  .word   0                           /*Reserved */
-  .word   IPC_IRQHandler
-  .word   QSPI_IRQHandler
-  .word   0                           /*Reserved */
-  .word   NFCT_IRQHandler
-  .word   0                           /*Reserved */
-  .word   GPIOTE1_IRQHandler
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   QDEC0_IRQHandler
-  .word   QDEC1_IRQHandler
-  .word   0                           /*Reserved */
-  .word   USBD_IRQHandler
-  .word   USBREGULATOR_IRQHandler
-  .word   0                           /*Reserved */
-  .word   KMU_IRQHandler
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   CRYPTOCELL_IRQHandler
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
-  .word   0                           /*Reserved */
+  ISR_HANDLER   FPU_IRQHandler
+  ISR_HANDLER   CACHE_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   SPU_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   CLOCK_POWER_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+  ISR_HANDLER   SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
+  ISR_HANDLER   SPIM4_IRQHandler
+  ISR_HANDLER   SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
+  ISR_HANDLER   SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+  ISR_HANDLER   GPIOTE0_IRQHandler
+  ISR_HANDLER   SAADC_IRQHandler
+  ISR_HANDLER   TIMER0_IRQHandler
+  ISR_HANDLER   TIMER1_IRQHandler
+  ISR_HANDLER   TIMER2_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   RTC0_IRQHandler
+  ISR_HANDLER   RTC1_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   WDT0_IRQHandler
+  ISR_HANDLER   WDT1_IRQHandler
+  ISR_HANDLER   COMP_LPCOMP_IRQHandler
+  ISR_HANDLER   EGU0_IRQHandler
+  ISR_HANDLER   EGU1_IRQHandler
+  ISR_HANDLER   EGU2_IRQHandler
+  ISR_HANDLER   EGU3_IRQHandler
+  ISR_HANDLER   EGU4_IRQHandler
+  ISR_HANDLER   EGU5_IRQHandler
+  ISR_HANDLER   PWM0_IRQHandler
+  ISR_HANDLER   PWM1_IRQHandler
+  ISR_HANDLER   PWM2_IRQHandler
+  ISR_HANDLER   PWM3_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   PDM0_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   I2S0_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   IPC_IRQHandler
+  ISR_HANDLER   QSPI_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   NFCT_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   GPIOTE1_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   QDEC0_IRQHandler
+  ISR_HANDLER   QDEC1_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   USBD_IRQHandler
+  ISR_HANDLER   USBREGULATOR_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   KMU_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_HANDLER   CRYPTOCELL_IRQHandler
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
+  ISR_RESERVED_DUMMY                           /*Reserved */
 _vectors_end:
 
 #ifdef VECTORS_IN_RAM
@@ -534,3 +405,16 @@ _vectors_end:
 _vectors_ram:
   .space _vectors_end - _vectors, 0
 #endif
+
+/*********************************************************************
+*
+*  Dummy handler to be used for reserved interrupt vectors
+*  and weak implementation of interrupts.
+*
+*/
+        .section .init.Dummy_Handler, "ax"
+        .thumb_func
+        .weak Dummy_Handler
+        .balign 2
+Dummy_Handler:
+        1: b 1b   // Endless loop

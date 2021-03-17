@@ -436,6 +436,8 @@ void nrfx_clock_calibration_timer_start(uint8_t interval)
     nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_CTTO);
     nrf_clock_int_enable(NRF_CLOCK, NRF_CLOCK_INT_CTTO_MASK);
     nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_CTSTART);
+#else
+    (void)interval;
 #endif
 }
 
@@ -458,31 +460,46 @@ nrfx_err_t nrfx_clock_divider_set(nrf_clock_domain_t domain,
             switch (div)
             {
                 case NRF_CLOCK_HFCLK_DIV_2:
-                    NRFX_CRITICAL_SECTION_ENTER();
+#if !defined(NRF_TRUSTZONE_NONSECURE)
                     if (nrf53_errata_4())
                     {
+                        NRFX_CRITICAL_SECTION_ENTER();
                         __DSB();
-                    }
-                    nrf_clock_hfclk_div_set(NRF_CLOCK, div);
-                    if (nrf53_errata_4())
-                    {
+
+                        nrf_clock_hfclk_div_set(NRF_CLOCK, div);
+
                         *(volatile uint32_t *)0x5084450C = 0x0;
                         *(volatile uint32_t *)0x50026548 = 0x0;
                         *(volatile uint32_t *)0x50081EE4 = 0x0D;
+
+                        NRFX_CRITICAL_SECTION_EXIT();
                     }
-                    NRFX_CRITICAL_SECTION_EXIT();
+                    else
+#endif
+                    {
+                        nrf_clock_hfclk_div_set(NRF_CLOCK, div);
+                    }
                     break;
                 case NRF_CLOCK_HFCLK_DIV_1:
-                    NRFX_CRITICAL_SECTION_ENTER();
+#if !defined(NRF_TRUSTZONE_NONSECURE)
                     if (nrf53_errata_4())
                     {
+                        NRFX_CRITICAL_SECTION_ENTER();
                         __DSB();
+
                         *(volatile uint32_t *)0x5084450C = 0x4040;
                         *(volatile uint32_t *)0x50026548 = 0x40;
                         *(volatile uint32_t *)0x50081EE4 = 0x4D;
+
+                        nrf_clock_hfclk_div_set(NRF_CLOCK, div);
+
+                        NRFX_CRITICAL_SECTION_EXIT();
                     }
-                    nrf_clock_hfclk_div_set(NRF_CLOCK, div);
-                    NRFX_CRITICAL_SECTION_EXIT();
+                    else
+#endif
+                    {
+                        nrf_clock_hfclk_div_set(NRF_CLOCK, div);
+                    }
                     break;
                 default:
                     return NRFX_ERROR_INVALID_PARAM;

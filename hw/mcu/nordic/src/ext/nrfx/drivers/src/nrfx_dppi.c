@@ -74,7 +74,7 @@ static bool group_is_allocated(nrf_dppi_channel_group_t group)
 void nrfx_dppi_free(void)
 {
     uint32_t mask = m_allocated_groups;
-    nrf_dppi_channel_group_t group = NRF_DPPI_CHANNEL_GROUP0;
+    uint8_t group_idx = NRF_DPPI_CHANNEL_GROUP0;
 
     // Disable all channels
     nrf_dppi_channels_disable(NRF_DPPIC, m_allocated_channels);
@@ -82,12 +82,13 @@ void nrfx_dppi_free(void)
     // Clear all groups configurations
     while (mask)
     {
+        nrf_dppi_channel_group_t group = (nrf_dppi_channel_group_t)group_idx;
         if (mask & DPPI_BIT_SET(group))
         {
             nrf_dppi_group_clear(NRF_DPPIC, group);
             mask &= ~DPPI_BIT_SET(group);
         }
-        group++;
+        group_idx++;
     }
 
     // Clear all allocated channels.
@@ -184,7 +185,7 @@ nrfx_err_t nrfx_dppi_group_alloc(nrf_dppi_channel_group_t * p_group)
 
     // Get mask of available DPPI groups
     uint32_t remaining_groups = DPPI_AVAILABLE_GROUPS_MASK & ~(m_allocated_groups);
-    nrf_dppi_channel_group_t group = NRF_DPPI_CHANNEL_GROUP0;
+    uint8_t group_idx = NRF_DPPI_CHANNEL_GROUP0;
 
     if (!remaining_groups)
     {
@@ -194,11 +195,12 @@ nrfx_err_t nrfx_dppi_group_alloc(nrf_dppi_channel_group_t * p_group)
     }
 
     // Find first free group
-    while (!(remaining_groups & DPPI_BIT_SET(group)))
+    while (!(remaining_groups & DPPI_BIT_SET((nrf_dppi_channel_group_t)group_idx)))
     {
-        group++;
+        group_idx++;
     }
 
+    nrf_dppi_channel_group_t group = (nrf_dppi_channel_group_t)group_idx;
     m_allocated_groups |= DPPI_BIT_SET(group);
     *p_group = group;
 

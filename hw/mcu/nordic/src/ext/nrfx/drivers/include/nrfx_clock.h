@@ -284,7 +284,7 @@ NRFX_STATIC_INLINE nrf_clock_hfclk_div_t nrfx_clock_divider_get(nrf_clock_domain
 #endif
         default:
             NRFX_ASSERT(0);
-            return 0;
+            return (nrf_clock_hfclk_div_t)0;
     }
 }
 #endif // NRF_CLOCK_HAS_HFCLK_DIV || NRF_CLOCK_HAS_HFCLK_192M

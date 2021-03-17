@@ -52,21 +52,36 @@ extern "C" {
 #define GPIOTE_CONFIG_PORT_PIN_Msk GPIOTE_CONFIG_PSEL_Msk
 #endif
 
+#if defined(GPIOTE_LATENCY_LATENCY_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Presence of the latency setting. */
+#define NRF_GPIOTE_HAS_LATENCY 1
+#else
+#define NRF_GPIOTE_HAS_LATENCY 0
+#endif
 
  /** @brief Polarity for the GPIOTE channel. */
 typedef enum
 {
-  NRF_GPIOTE_POLARITY_LOTOHI = GPIOTE_CONFIG_POLARITY_LoToHi,       ///<  Low to high.
-  NRF_GPIOTE_POLARITY_HITOLO = GPIOTE_CONFIG_POLARITY_HiToLo,       ///<  High to low.
-  NRF_GPIOTE_POLARITY_TOGGLE = GPIOTE_CONFIG_POLARITY_Toggle        ///<  Toggle.
+    NRF_GPIOTE_POLARITY_LOTOHI = GPIOTE_CONFIG_POLARITY_LoToHi, /**< Low to high. */
+    NRF_GPIOTE_POLARITY_HITOLO = GPIOTE_CONFIG_POLARITY_HiToLo, /**< High to low. */
+    NRF_GPIOTE_POLARITY_TOGGLE = GPIOTE_CONFIG_POLARITY_Toggle, /**< Toggle. */
 } nrf_gpiote_polarity_t;
 
 /** @brief Initial output value for the GPIOTE channel. */
 typedef enum
 {
-  NRF_GPIOTE_INITIAL_VALUE_LOW  = GPIOTE_CONFIG_OUTINIT_Low,       ///<  Low to high.
-  NRF_GPIOTE_INITIAL_VALUE_HIGH = GPIOTE_CONFIG_OUTINIT_High       ///<  High to low.
+    NRF_GPIOTE_INITIAL_VALUE_LOW  = GPIOTE_CONFIG_OUTINIT_Low,  /**< Low to high. */
+    NRF_GPIOTE_INITIAL_VALUE_HIGH = GPIOTE_CONFIG_OUTINIT_High, /**< High to low. */
 } nrf_gpiote_outinit_t;
+
+#if NRF_GPIOTE_HAS_LATENCY
+/** @brief Latency setting. */
+typedef enum
+{
+    NRF_GPIOTE_LATENCY_LOWPOWER   = GPIOTE_LATENCY_LATENCY_LowPower,   /**< Low Power. */
+    NRF_GPIOTE_LATENCY_LOWLATENCY = GPIOTE_LATENCY_LATENCY_LowLatency, /**< Low Latency. */
+} nrf_gpiote_latency_t;
+#endif
 
 /** @brief GPIOTE tasks. */
 typedef enum
@@ -419,6 +434,29 @@ NRF_STATIC_INLINE nrf_gpiote_task_t nrf_gpiote_clr_task_get(uint8_t index);
  */
 NRF_STATIC_INLINE nrf_gpiote_event_t nrf_gpiote_in_event_get(uint8_t index);
 
+#if NRF_GPIOTE_HAS_LATENCY
+/**
+ * @brief Function for setting the latency setting.
+ *
+ * @note Available for event mode with rising or falling edge detection on the pin.
+ *       Toggle task mode can only be used with low latency setting.
+ *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
+ * @param[in] latency Latency setting to be set.
+ */
+NRF_STATIC_INLINE void nrf_gpiote_latency_set(NRF_GPIOTE_Type *    p_reg,
+                                              nrf_gpiote_latency_t latency);
+
+/**
+ * @brief Function for retrieving the latency setting.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return Latency setting.
+ */
+NRF_STATIC_INLINE nrf_gpiote_latency_t nrf_gpiote_latency_get(NRF_GPIOTE_Type const * p_reg);
+#endif
+
 #ifndef NRF_DECLARE_ONLY
 
 NRF_STATIC_INLINE void nrf_gpiote_task_trigger(NRF_GPIOTE_Type * p_reg, nrf_gpiote_task_t task)
@@ -609,6 +647,19 @@ NRF_STATIC_INLINE nrf_gpiote_event_t nrf_gpiote_in_event_get(uint8_t index)
     return (nrf_gpiote_event_t)NRFX_OFFSETOF(NRF_GPIOTE_Type, EVENTS_IN[index]);
 }
 
+#if NRF_GPIOTE_HAS_LATENCY
+NRF_STATIC_INLINE void nrf_gpiote_latency_set(NRF_GPIOTE_Type *    p_reg,
+                                              nrf_gpiote_latency_t latency)
+{
+    p_reg->LATENCY = (latency << GPIOTE_LATENCY_LATENCY_Pos) & GPIOTE_LATENCY_LATENCY_Msk;
+}
+
+NRF_STATIC_INLINE nrf_gpiote_latency_t nrf_gpiote_latency_get(NRF_GPIOTE_Type const * p_reg)
+{
+    return (nrf_gpiote_latency_t)((p_reg->LATENCY & GPIOTE_LATENCY_LATENCY_Msk) >>
+                                  GPIOTE_LATENCY_LATENCY_Pos);
+}
+#endif // NRF_GPIOTE_HAS_LATENCY
 #endif // NRF_DECLARE_ONLY
 
 /** @} */

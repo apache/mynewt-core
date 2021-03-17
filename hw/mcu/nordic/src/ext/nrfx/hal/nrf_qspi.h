@@ -792,31 +792,31 @@ NRF_STATIC_INLINE void nrf_qspi_cinstrdata_set(NRF_QSPI_Type *       p_reg,
     {
         case NRF_QSPI_CINSTR_LEN_9B:
             reg |= ((uint32_t)p_tx_data_8[7]) << QSPI_CINSTRDAT1_BYTE7_Pos;
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_8B:
             reg |= ((uint32_t)p_tx_data_8[6]) << QSPI_CINSTRDAT1_BYTE6_Pos;
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_7B:
             reg |= ((uint32_t)p_tx_data_8[5]) << QSPI_CINSTRDAT1_BYTE5_Pos;
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_6B:
             reg |= ((uint32_t)p_tx_data_8[4]);
             p_reg->CINSTRDAT1 = reg;
             reg = 0;
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_5B:
             reg |= ((uint32_t)p_tx_data_8[3]) << QSPI_CINSTRDAT0_BYTE3_Pos;
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_4B:
             reg |= ((uint32_t)p_tx_data_8[2]) << QSPI_CINSTRDAT0_BYTE2_Pos;
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_3B:
             reg |= ((uint32_t)p_tx_data_8[1]) << QSPI_CINSTRDAT0_BYTE1_Pos;
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_2B:
             reg |= ((uint32_t)p_tx_data_8[0]);
             p_reg->CINSTRDAT0 = reg;
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_1B:
             /* Send only opcode. Case to avoid compiler warnings. */
             break;
@@ -837,28 +837,28 @@ NRF_STATIC_INLINE void nrf_qspi_cinstrdata_get(NRF_QSPI_Type const * p_reg,
     {
         case NRF_QSPI_CINSTR_LEN_9B:
             p_rx_data_8[7] = (uint8_t)(reg1 >> QSPI_CINSTRDAT1_BYTE7_Pos);
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_8B:
             p_rx_data_8[6] = (uint8_t)(reg1 >> QSPI_CINSTRDAT1_BYTE6_Pos);
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_7B:
             p_rx_data_8[5] = (uint8_t)(reg1 >> QSPI_CINSTRDAT1_BYTE5_Pos);
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_6B:
             p_rx_data_8[4] = (uint8_t)(reg1);
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_5B:
             p_rx_data_8[3] = (uint8_t)(reg0 >> QSPI_CINSTRDAT0_BYTE3_Pos);
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_4B:
             p_rx_data_8[2] = (uint8_t)(reg0 >> QSPI_CINSTRDAT0_BYTE2_Pos);
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_3B:
             p_rx_data_8[1] = (uint8_t)(reg0 >> QSPI_CINSTRDAT0_BYTE1_Pos);
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_2B:
             p_rx_data_8[0] = (uint8_t)(reg0);
-            /* fall-through */
+            /* FALLTHROUGH */
         case NRF_QSPI_CINSTR_LEN_1B:
             /* Send only opcode. Case to avoid compiler warnings. */
             break;

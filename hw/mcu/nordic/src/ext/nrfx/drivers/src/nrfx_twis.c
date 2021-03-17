@@ -506,7 +506,7 @@ nrfx_err_t nrfx_twis_init(nrfx_twis_t const *        p_instance,
     nrfx_twis_config_pin(p_config->scl, p_config->scl_pull);
     nrfx_twis_config_pin(p_config->sda, p_config->sda_pull);
 
-    nrf_twis_config_addr_mask_t addr_mask = (nrf_twis_config_addr_mask_t)0;
+    uint32_t addr_mask = 0;
     if (0 == (p_config->addr[0] | p_config->addr[1]))
     {
         addr_mask = NRF_TWIS_CONFIG_ADDRESS0_MASK;
@@ -534,7 +534,7 @@ nrfx_err_t nrfx_twis_init(nrfx_twis_t const *        p_instance,
     nrf_twis_pins_set          (p_reg, p_config->scl, p_config->sda);
     nrf_twis_address_set       (p_reg, 0, p_config->addr[0]);
     nrf_twis_address_set       (p_reg, 1, p_config->addr[1]);
-    nrf_twis_config_address_set(p_reg, addr_mask);
+    nrf_twis_config_address_set(p_reg, (nrf_twis_config_addr_mask_t)addr_mask);
 
     /* Clear semaphore */
     if (!NRFX_TWIS_NO_SYNC_MODE)
@@ -616,7 +616,6 @@ void nrfx_twis_disable(nrfx_twis_t const * p_instance)
  *
  * This is the reason for the function below to be implemented in assembly.
  */
-//lint -save -e578
 #if defined (__CC_ARM )
 static __ASM uint32_t nrfx_twis_error_get_and_clear_internal(uint32_t volatile * perror)
 {
@@ -675,7 +674,6 @@ static uint32_t nrfx_twis_error_get_and_clear_internal(uint32_t volatile * perro
 #else
     #error Unknown compiler
 #endif
-//lint -restore
 
 uint32_t nrfx_twis_error_get_and_clear(nrfx_twis_t const * p_instance)
 {

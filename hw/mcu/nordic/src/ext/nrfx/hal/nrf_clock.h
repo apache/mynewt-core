@@ -635,9 +635,9 @@ NRF_STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hfclk192m_src_get(NRF_CLOCK_Type c
  * @param[in] domain    Clock domain.
  * @param[in] alwaysrun Ensure the clock is always running.
  */
-NRF_STATIC_INLINE void nrf_clock_alwaysrun_set(NRF_CLOCK_Type const * p_reg,
-                                               nrf_clock_domain_t     domain,
-                                               bool                   alwaysrun);
+NRF_STATIC_INLINE void nrf_clock_alwaysrun_set(NRF_CLOCK_Type *   p_reg,
+                                               nrf_clock_domain_t domain,
+                                               bool               alwaysrun);
 /**
  * @brief Function for checking if the clock domain is configured to always run.
  *
@@ -966,34 +966,32 @@ NRF_STATIC_INLINE void nrf_clock_cal_timer_timeout_set(NRF_CLOCK_Type * p_reg, u
 #endif
 
 #if NRF_CLOCK_HAS_ALWAYSRUN
-NRF_STATIC_INLINE void nrf_clock_alwaysrun_set(NRF_CLOCK_Type const * p_reg,
-                                               nrf_clock_domain_t     domain,
-                                               bool                   alwaysrun)
+NRF_STATIC_INLINE void nrf_clock_alwaysrun_set(NRF_CLOCK_Type *   p_reg,
+                                               nrf_clock_domain_t domain,
+                                               bool               alwaysrun)
 {
-    /* ALWAYSRUN registers should be R/W, but are marked as read-only.
-     * Redefine them as R/W as a workaround. */
     switch (domain)
     {
         case NRF_CLOCK_DOMAIN_LFCLK:
-            *(volatile uint32_t *)(&p_reg->LFCLKALWAYSRUN) =
+            p_reg->LFCLKALWAYSRUN =
                 ((alwaysrun << CLOCK_LFCLKALWAYSRUN_ALWAYSRUN_Pos)
                  & CLOCK_LFCLKALWAYSRUN_ALWAYSRUN_Msk);
             break;
         case NRF_CLOCK_DOMAIN_HFCLK:
-            *(volatile uint32_t *)(&p_reg->HFCLKALWAYSRUN) =
+            p_reg->HFCLKALWAYSRUN =
                 ((alwaysrun << CLOCK_HFCLKALWAYSRUN_ALWAYSRUN_Pos)
                  & CLOCK_HFCLKALWAYSRUN_ALWAYSRUN_Msk);
             break;
 #if NRF_CLOCK_HAS_HFCLK192M
         case NRF_CLOCK_DOMAIN_HFCLK192M:
-            *(volatile uint32_t *)(&p_reg->HFCLK192MALWAYSRUN) =
+            p_reg->HFCLK192MALWAYSRUN =
                 ((alwaysrun << CLOCK_HFCLK192MALWAYSRUN_ALWAYSRUN_Pos)
                  & CLOCK_HFCLK192MALWAYSRUN_ALWAYSRUN_Msk);
             break;
 #endif
 #if NRF_CLOCK_HAS_HFCLKAUDIO
         case NRF_CLOCK_DOMAIN_HFCLKAUDIO:
-            *(volatile uint32_t *)(&p_reg->HFCLKAUDIOALWAYSRUN) =
+            p_reg->HFCLKAUDIOALWAYSRUN =
                 ((alwaysrun << CLOCK_HFCLKAUDIOALWAYSRUN_ALWAYSRUN_Pos)
                  & CLOCK_HFCLKAUDIOALWAYSRUN_ALWAYSRUN_Msk);
             break;

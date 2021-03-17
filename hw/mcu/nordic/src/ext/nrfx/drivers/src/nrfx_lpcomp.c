@@ -64,10 +64,10 @@ static void lpcomp_execute_handler(nrf_lpcomp_event_t event, uint32_t event_mask
 
 void nrfx_lpcomp_irq_handler(void)
 {
-    lpcomp_execute_handler(NRF_LPCOMP_EVENT_READY, LPCOMP_INTENSET_READY_Msk);
-    lpcomp_execute_handler(NRF_LPCOMP_EVENT_DOWN,  LPCOMP_INTENSET_DOWN_Msk);
-    lpcomp_execute_handler(NRF_LPCOMP_EVENT_UP,    LPCOMP_INTENSET_UP_Msk);
-    lpcomp_execute_handler(NRF_LPCOMP_EVENT_CROSS, LPCOMP_INTENSET_CROSS_Msk);
+    lpcomp_execute_handler(NRF_LPCOMP_EVENT_READY, NRF_LPCOMP_INT_READY_MASK);
+    lpcomp_execute_handler(NRF_LPCOMP_EVENT_DOWN,  NRF_LPCOMP_INT_DOWN_MASK);
+    lpcomp_execute_handler(NRF_LPCOMP_EVENT_UP,    NRF_LPCOMP_INT_UP_MASK);
+    lpcomp_execute_handler(NRF_LPCOMP_EVENT_CROSS, NRF_LPCOMP_INT_CROSS_MASK);
 }
 
 nrfx_err_t nrfx_lpcomp_init(nrfx_lpcomp_config_t const * p_config,
@@ -106,15 +106,15 @@ nrfx_err_t nrfx_lpcomp_init(nrfx_lpcomp_config_t const * p_config,
     switch (p_config->hal.detection)
     {
         case NRF_LPCOMP_DETECT_UP:
-            nrf_lpcomp_int_enable(NRF_LPCOMP, LPCOMP_INTENSET_UP_Msk);
+            nrf_lpcomp_int_enable(NRF_LPCOMP, NRF_LPCOMP_INT_UP_MASK);
             break;
 
         case NRF_LPCOMP_DETECT_DOWN:
-            nrf_lpcomp_int_enable(NRF_LPCOMP, LPCOMP_INTENSET_DOWN_Msk);
+            nrf_lpcomp_int_enable(NRF_LPCOMP, NRF_LPCOMP_INT_DOWN_MASK);
             break;
 
         case NRF_LPCOMP_DETECT_CROSS:
-            nrf_lpcomp_int_enable(NRF_LPCOMP, LPCOMP_INTENSET_CROSS_Msk);
+            nrf_lpcomp_int_enable(NRF_LPCOMP, NRF_LPCOMP_INT_CROSS_MASK);
             break;
 
         default:

@@ -435,10 +435,10 @@ nrfx_err_t nrfx_saadc_buffer_set(nrf_saadc_value_t * p_buffer, uint16_t size)
 
         case NRF_SAADC_STATE_ADV_MODE_SAMPLE_STARTED:
             nrf_saadc_buffer_init(NRF_SAADC, p_buffer, size);
-            /* fall-through */
+            /* FALLTHROUGH */
 
         case NRF_SAADC_STATE_ADV_MODE:
-            /* fall-through */
+            /* FALLTHROUGH */
 
         case NRF_SAADC_STATE_ADV_MODE_SAMPLE:
             if (m_cb.p_buffer_primary)
@@ -720,7 +720,7 @@ static void saadc_event_started_handle(void)
                                       m_cb.p_buffer_secondary,
                                       m_cb.size_secondary);
             }
-            /* fall-through */
+            /* FALLTHROUGH */
 
         case NRF_SAADC_STATE_ADV_MODE_SAMPLE_STARTED:
             if (!m_cb.p_buffer_secondary)

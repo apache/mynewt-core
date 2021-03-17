@@ -28,6 +28,7 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #include "nrf.h"
 #include "nrf_erratas.h"
 #include "system_nrf5340_application.h"
+#include "system_nrf53_approtect.h"
 
 /*lint ++flb "Enter library region" */
 
@@ -228,6 +229,10 @@ void SystemInit(void)
         /* Allow Non-Secure code to run FPU instructions.
          * If only the secure code should control FPU power state these registers should be configured accordingly in the secure application code. */
         SCB->NSACR |= (3UL << 10);
+
+        /* Handle fw-branch APPROTECT setup. */
+        nrf53_handle_approtect();
+
     #endif
 
     /* Enable the FPU if the compiler used floating point unit instructions. __FPU_USED is a MACRO defined by the
