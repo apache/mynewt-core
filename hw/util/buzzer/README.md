@@ -43,7 +43,7 @@ Add the dependency to your package:
 
 ```
 pkg.deps:
-    - "@apache-mynewt-core/hw/drivers/buzzer"
+    - "@apache-mynewt-core/hw/util/buzzer"
 ```
 
 ## License

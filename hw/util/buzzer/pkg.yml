@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: "hw/drivers/buzzer"
+pkg.name: "hw/util/buzzer"
 pkg.description: "Tone generator with the PWM peripheral"
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
