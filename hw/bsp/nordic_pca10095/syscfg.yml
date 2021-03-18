@@ -59,5 +59,25 @@ syscfg.vals:
 
     BLE_HCI_TRANSPORT: nrf5340
 
+    QSPI_FLASH_SECTOR_SIZE: 4096
+    QSPI_FLASH_SECTOR_COUNT: 2048
+    QSPI_PIN_CS: 18
+    QSPI_PIN_SCK: 17
+    QSPI_PIN_DIO0: 13
+    QSPI_PIN_DIO1: 14
+    QSPI_PIN_DIO2: 15
+    QSPI_PIN_DIO3: 16
+    # QUAD IO Read (opcode EBh)
+    QSPI_READOC: 4
+    # QUAD IO Page prorgram (opcode 38h)
+    QSPI_WRITEOC: 3
+
+    # Set 192M to 192MHz
+    MCU_HFCLCK192_DIV: 1
+    # Set QSPI clock divider to (6 = (2 * (QSPI_SCK_FREQ + 1)) resulting in 32MHz QSPI clock
+    QSPI_SCK_FREQ: 2
+
+    QSPI_XIP_OFFSET: 0x10000000
+
 syscfg.vals.!BOOT_LOADER:
     MCU_LFCLK_SOURCE: LFXO
