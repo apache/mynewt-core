@@ -126,4 +126,11 @@ hal_system_clock_start(void)
         }
     }
 #endif
+    if (MYNEWT_VAL(MCU_HFCLCK192_DIV) == 1) {
+        NRF_CLOCK_S->HFCLK192MCTRL = 0;
+    } else if (MYNEWT_VAL(MCU_HFCLCK192_DIV) == 2) {
+        NRF_CLOCK_S->HFCLK192MCTRL = 1;
+    } else if (MYNEWT_VAL(MCU_HFCLCK192_DIV) == 4) {
+        NRF_CLOCK_S->HFCLK192MCTRL = 2;
+    }
 }
