@@ -53,6 +53,12 @@ syscfg.defs:
             When enabled, asm(bkpt) will be ignored. If not set, it will hit
             the breakpoint wherever it gets called, For example, reset and crash
        value: 0
+    MCU_HFCLCK192_DIV:
+        description: >
+            Divider of 192MHz clock that is used for QSPI.
+            Default value 4, clock runs at 48MHz.
+        range: 1,2,4
+        value: 4
 
 # MCU peripherals definitions
     ADC_0:
