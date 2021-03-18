@@ -27,7 +27,7 @@
 #define BUZZER_PWM_CHAN 0
 
 #if BUZZER_PIN >= 0
-struct pwm_dev* _pwm_dev;
+struct pwm_dev *_pwm_dev;
 #endif
 
 /***
@@ -87,13 +87,10 @@ void
 buzzer_tone_on(uint32_t freq)
 {
 #if BUZZER_PIN >= 0
-    if (freq == 0)
-    {
+    if (freq == 0) {
         /* stop PWM */
         pwm_set_duty_cycle(_pwm_dev, BUZZER_PWM_CHAN, 0);
-    }
-    else
-    {
+    } else {
         /* set frequency */
         pwm_set_frequency(_pwm_dev, freq);
 
