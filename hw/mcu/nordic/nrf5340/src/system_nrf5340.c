@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2009-2018 ARM Limited. All rights reserved.
+Copyright (c) 2009-2020 ARM Limited. All rights reserved.
 
     SPDX-License-Identifier: Apache-2.0
 
@@ -29,6 +29,7 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #include <nrf_erratas.h>
 #include <system_nrf5340_application.h>
 #include <mcu/cmsis_nvic.h>
+#include "system_nrf53_approtect.h"
 
 /*lint ++flb "Enter library region" */
 
@@ -77,6 +78,18 @@ void SystemInit(void)
         #if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
           SAU->CTRL |= (1 << SAU_CTRL_ALLNS_Pos);
         #endif
+
+        /* Workaround for Errata 97 "ERASEPROTECT, APPROTECT, or startup problems" found at the Errata document
+           for your device located at https://infocenter.nordicsemi.com/index.jsp  */
+        if (nrf53_errata_97())
+        {
+            if (*((volatile uint32_t *)0x50004A20ul) == 0)
+            {
+                *((volatile uint32_t *)0x50004A20ul) = 0xDul;
+                *((volatile uint32_t *)0x5000491Cul) = 0x1ul;
+                *((volatile uint32_t *)0x5000491Cul) = 0x0ul;
+            }
+        }
 
         /* Trimming of the device. Copy all the trimming values from FICR into the target addresses. Trim
          until one ADDR is not initialized. */
@@ -217,6 +230,10 @@ void SystemInit(void)
         /* Allow Non-Secure code to run FPU instructions.
          * If only the secure code should control FPU power state these registers should be configured accordingly in the secure application code. */
         SCB->NSACR |= (3UL << 10);
+
+        /* Handle fw-branch APPROTECT setup. */
+        nrf53_handle_approtect();
+
     #endif
 
     /* Enable the FPU if the compiler used floating point unit instructions. __FPU_USED is a MACRO defined by the
