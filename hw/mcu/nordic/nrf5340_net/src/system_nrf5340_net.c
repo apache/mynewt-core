@@ -29,6 +29,7 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #include <nrf_erratas.h>
 #include <system_nrf5340_network.h>
 #include <mcu/cmsis_nvic.h>
+#include <system_nrf53_approtect.h>
 
 /*lint ++flb "Enter library region" */
 
@@ -82,7 +83,10 @@ void SystemInit(void)
         if (NRF_RESET_NS->RESETREAS & RESET_RESETREAS_RESETPIN_Msk){
             NRF_RESET_NS->RESETREAS = ~RESET_RESETREAS_RESETPIN_Msk;
         }
-    }    
+    }
+
+    /* Handle fw-branch APPROTECT setup. */
+    nrf53_handle_approtect();
 
     SystemCoreClockUpdate();
 
