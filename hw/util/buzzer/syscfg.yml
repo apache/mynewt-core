@@ -20,7 +20,7 @@ syscfg.defs:
 
     BUZZER_SYSINIT_STAGE:
         description: >
-            Sysinit stage for console functionality.
+            Sysinit stage for buzzer functionality.
         value: 95
 
     BUZZER_PIN:
