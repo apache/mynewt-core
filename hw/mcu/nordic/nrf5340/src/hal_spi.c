@@ -294,7 +294,7 @@ nrf5340_spi3_irq_handler(void)
 {
     os_trace_isr_enter();
     if (nrf5340_hal_spi3.spi_type == HAL_SPI_TYPE_MASTER) {
-#if MYNEWT_VAL(SPI_2_MASTER)
+#if MYNEWT_VAL(SPI_3_MASTER)
         nrf5340_irqm_handler(&nrf5340_hal_spi3);
 #endif
     } else {
@@ -311,8 +311,8 @@ void
 nrf5340_spi4_irq_handler(void)
 {
     os_trace_isr_enter();
-    if (nrf5340_hal_spi3.spi_type == HAL_SPI_TYPE_MASTER) {
-        nrf5340_irqm_handler(&nrf5340_hal_spi3);
+    if (nrf5340_hal_spi4.spi_type == HAL_SPI_TYPE_MASTER) {
+        nrf5340_irqm_handler(&nrf5340_hal_spi4);
     }
     os_trace_isr_exit();
 }
