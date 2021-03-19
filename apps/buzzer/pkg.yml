@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: apps/buzzer/beep
+pkg.name: apps/buzzer
 pkg.type: app
 pkg.description: Example app which generates beeps using a buzzer on PWM pin.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
