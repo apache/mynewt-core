@@ -593,6 +593,11 @@ lwip_recvfrom(struct mn_socket *ms, struct os_mbuf **mp,
 #endif
             }
         }
+#if LWIP_TCP
+        if (s->ls_type == MN_SOCK_STREAM) {
+            tcp_recved(s->ls_pcb.tcp, m->omp_len);
+        }
+#endif
         UNLOCK_TCPIP_CORE();
         return 0;
     } else {
