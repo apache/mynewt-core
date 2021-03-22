@@ -84,14 +84,13 @@ int
 hal_gpio_init_out(int pin, int val)
 {
     gpio_pin_config_t gconfig;
-    port_pin_config_t pconfig;
 
     gconfig.pinDirection = kGPIO_DigitalOutput;
-    pconfig.mux = kPORT_MuxAsGpio;
+    gconfig.outputLogic = (uint8_t) val;
 
     CLOCK_EnableClock(s_portClocks[GPIO_PORT(pin)]);
-    PORT_SetPinConfig(s_portBases[GPIO_PORT(pin)], GPIO_INDEX(pin), &pconfig);
     GPIO_PinInit(s_gpioBases[GPIO_PORT(pin)], GPIO_INDEX(pin), &gconfig);
+    PORT_SetPinMux(s_portBases[GPIO_PORT(pin)], GPIO_INDEX(pin), kPORT_MuxAsGpio);
 
     return 0;
 }
