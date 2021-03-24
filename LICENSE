@@ -421,6 +421,8 @@ This product bundles parts of stm32l0xx, which is available under the
     * hw/mcu/stm/stm32l0xx/src/ext/
     * hw/bsp/b-l072z-lrwan1/include/bsp/stm32l0xx_hal_conf.h
     * hw/bsp/b-l072z-lrwan1/src/arch/cortex_m0/startup_stm32l072xx.s
+    * hw/bsp/nucleo-l073rz/include/bsp/stm32l0xx_hal_conf.h
+    * hw/bsp/nucleo-l073rz/src/arch/cortex_m0/startup_stm32l073xx.s
     
 This product bundles parts of stm32l4xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
@@ -561,6 +563,7 @@ which is available under the "modified Tcl/Tk" license.  Bundled files are:
     * hw/bsp/vbluno52/nrf52xxaa.ld
     * hw/bsp/vbluno52/split-vbluno52.ld
     * hw/bsp/vbluno52/vbluno52_no_boot.ld
+    * hw/bsp/pinetime/boot-pinetime.ld
 
 This product bundles part of NXP/FreeScale SDK, which is available
 under the "3-clause BSD" license. Bundled files are:
@@ -585,6 +588,13 @@ This product bundles part of NXP frdm-k64f, which is available under the
     * hw/bsp/frdm-k64f/src/clock_config.c
     * hw/bsp/frdm-k64f/src/clock_config.h
     * hw/bsp/frdm-k64f/src/arch/cortex_m4/startup_MK64F12.S
+
+This product bundles part of NXP Kinetis mk64f12, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/nxp/kinetis/MK64F12/include/MK64F12.h
+    * hw/mcu/nxp/kinetis/MK64F12/include/MK64F12_features.h
+    * hw/mcu/nxp/kinetis/MK64F12/include/system_MK64F12.h
+    * hw/mcu/nxp/kinetis/MK64F12/src/system_MK64F12.c
 
 This product bundles part of mips architecture and ci40, which is available
 under the "3-clause BSD" license.  Bundled files are:
