@@ -133,6 +133,7 @@ boot-nrf91xxaa.ld
 nordic_pca10090_no_boot.ld
 nrf91xxaa.ld
 nrf91_ram_resident.ld
+boot-pinetime.ld
 
 # STM32 HAL - BSD License
 stm32_driver_mod_i2c_v1.c
@@ -539,3 +540,13 @@ lfs.h
 lfs_util.h
 DESIGN.md
 SPEC.md
+
+# OSDP library - APL2 license
+osdp
+
+# nucleo-l073rz BSP - BSD License
+stm32l0xx_hal_conf.h
+startup_stm32l073xx.s
+
+# MK64F12 SDK - BSD License
+MK64F12
