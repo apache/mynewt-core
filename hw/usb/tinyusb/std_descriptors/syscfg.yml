@@ -135,7 +135,7 @@ syscfg.defs:
         value:
     USBD_BTH_EVENT_EP_INTERVAL:
         description: BTH event endpoint interval
-        value:
+        value: 1
     USBD_BTH_DATA_IN_EP:
         description: BTH data in endpoint number
         value:
