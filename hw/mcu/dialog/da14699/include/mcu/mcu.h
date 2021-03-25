@@ -119,6 +119,9 @@ typedef enum {
 #define MCU_GPIO_PORT1(pin)		((1 * 32) + (pin))
 #define MCU_DMA_CHAN_MAX                    8
 
+#define MCU_PIN_USB_DP                      MCU_GPIO_PORT0(14)
+#define MCU_PIN_USB_DM                      MCU_GPIO_PORT0(15)
+
 #define MCU_PIN_GPADC_SEL0               MCU_GPIO_PORT1(9)
 #define MCU_PIN_GPADC_SEL1               MCU_GPIO_PORT0(25)
 #define MCU_PIN_GPADC_SEL2               MCU_GPIO_PORT0(8)

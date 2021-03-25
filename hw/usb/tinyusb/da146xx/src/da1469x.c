@@ -41,6 +41,6 @@ tinyusb_hardware_init(void)
     /* Use PLL96 / 2 clock not HCLK */
     CRG_TOP->CLK_CTRL_REG &= ~CRG_TOP_CLK_CTRL_REG_USB_CLK_SRC_Msk;
 
-    mcu_gpio_set_pin_function(14, MCU_GPIO_MODE_INPUT, MCU_GPIO_FUNC_USB);
-    mcu_gpio_set_pin_function(15, MCU_GPIO_MODE_INPUT, MCU_GPIO_FUNC_USB);
+    mcu_gpio_set_pin_function(MCU_PIN_USB_DP, MCU_GPIO_MODE_INPUT, MCU_GPIO_FUNC_USB);
+    mcu_gpio_set_pin_function(MCU_PIN_USB_DM, MCU_GPIO_MODE_INPUT, MCU_GPIO_FUNC_USB);
 }
