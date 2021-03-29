@@ -93,13 +93,31 @@ uint32_t MX25U3235F_LUT[FSL_FEATURE_QSPI_LUT_DEPTH] = {
 
 };
 
+#if MYNEWT_VAL(QSPIB_ENABLE) && !(FSL_FEATURE_QSPI_SUPPORT_PARALLEL_MODE)
+#error "This device has no parallel mode support (please disable QSPIB)"
+#endif
+
+/*
+ * XXX: This driver currently has the following limitations:
+ *      * QSPIA and QSPIB must use a QSPI flash of the same size (and model).
+ *      * Flashes with dual-die package are not supported.
+ */
+
 static qspi_flash_config_t g_qspi_flash_cfg = {
+#if MYNEWT_VAL(QSPIA_ENABLE)
     .flashA1Size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
+#else
+    .flashA1Size = 0,
+#endif
     .flashA2Size = 0,
 #if (FSL_FEATURE_QSPI_SUPPORT_PARALLEL_MODE)
-    .flashA1Size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
-    .flashA2Size = 0,
+#if MYNEWT_VAL(QSPIB_ENABLE)
+    .flashB1Size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
+#else
+    .flashB1Size = 0,
 #endif
+    .flashB2Size = 0,
+#endif /* (FSL_FEATURE_QSPI_SUPPORT_PARALLEL_MODE) */
 #if (!FSL_FEATURE_QSPI_HAS_NO_TDH)
     .dataHoldTime = 0,
 #endif
@@ -281,22 +299,33 @@ nxp_qspi_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 void
 nxp_qspi_erase_chip(void)
 {
+    int chips = (MYNEWT_VAL(QSPIA_ENABLE) ? 1 : 0) +
+                (MYNEWT_VAL(QSPIB_ENABLE) ? 1 : 0);
+    uint32_t address;
+
     while (qspi_in_use(QuadSPI0));
 
     os_mutex_pend(&g_mtx, OS_TIMEOUT_NEVER);
 
-    QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
-    QSPI_SetIPCommandAddress(QuadSPI0, FSL_FEATURE_QSPI_AMBA_BASE);
-    cmd_write_enable();
-    QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_CHIP);
-    wait_until_finished();
-    while (qspi_in_use(QuadSPI0));
+    address = FSL_FEATURE_QSPI_AMBA_BASE;
+    while (chips > 0) {
+        QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
+        QSPI_SetIPCommandAddress(QuadSPI0, address);
+        cmd_write_enable();
+        QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_ERASE_CHIP);
+        wait_until_finished();
+        while (qspi_in_use(QuadSPI0));
 
 #if QSPI_HAS_CLR
-    QSPI_ClearCache(QuadSPI0);
+        QSPI_ClearCache(QuadSPI0);
 #endif
 
-    QSPI_SoftwareReset(QuadSPI0);
+        QSPI_SoftwareReset(QuadSPI0);
+
+        address += MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) *
+                   MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT);
+        chips--;
+    }
 
     os_mutex_release(&g_mtx);
 }
@@ -362,26 +391,37 @@ nxp_qspi_sector_info(const struct hal_flash *dev,
 static void
 enable_quad_mode(void)
 {
-    QSPI_SetIPCommandAddress(QuadSPI0, FSL_FEATURE_QSPI_AMBA_BASE);
+    int chips = (MYNEWT_VAL(QSPIA_ENABLE) ? 1 : 0) +
+                (MYNEWT_VAL(QSPIB_ENABLE) ? 1 : 0);
+    uint32_t address;
 
-    QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
+    address = FSL_FEATURE_QSPI_AMBA_BASE;
+    while (chips > 0) {
+        QSPI_SetIPCommandAddress(QuadSPI0, address);
 
-    cmd_write_enable();
+        QSPI_ClearFifo(QuadSPI0, kQSPI_TxFifo);
 
-    /*
-     * Set QE bit to enable quad mode.
-     *
-     * XXX need extra writes to fill the FIFO
-     */
-    QSPI_WriteData(QuadSPI0, 0xffffff40);
-    QSPI_WriteData(QuadSPI0, 0xffffffff);
-    QSPI_WriteData(QuadSPI0, 0xffffffff);
-    QSPI_WriteData(QuadSPI0, 0xffffffff);
+        cmd_write_enable();
 
-    QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_WRITE_STATUS);
+        /*
+         * Set QE bit to enable quad mode.
+         *
+         * XXX need extra writes to fill the FIFO
+         */
+        QSPI_WriteData(QuadSPI0, 0xffffff40);
+        QSPI_WriteData(QuadSPI0, 0xffffffff);
+        QSPI_WriteData(QuadSPI0, 0xffffffff);
+        QSPI_WriteData(QuadSPI0, 0xffffffff);
 
-    wait_until_finished();
-    while (qspi_in_use(QuadSPI0));
+        QSPI_ExecuteIPCommand(QuadSPI0, LUT_CMD_WRITE_STATUS);
+
+        wait_until_finished();
+        while (qspi_in_use(QuadSPI0));
+
+        address += MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) *
+                   MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT);
+        chips--;
+    }
 }
 
 static int
@@ -440,8 +480,16 @@ static const struct hal_flash_funcs nxp_qspi_funcs = {
 const struct hal_flash nxp_qspi_dev = {
     .hf_itf = &nxp_qspi_funcs,
     .hf_base_addr = 0,
-    .hf_size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
-    .hf_sector_cnt = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT),
+    .hf_size =
+#if MYNEWT_VAL(QSPIA_ENABLE) && MYNEWT_VAL(QSPIB_ENABLE)
+        2 *
+#endif
+        MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
+    .hf_sector_cnt =
+#if MYNEWT_VAL(QSPIA_ENABLE) && MYNEWT_VAL(QSPIB_ENABLE)
+        2 *
+#endif
+        MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT),
     .hf_align = MYNEWT_VAL(QSPI_FLASH_MIN_WRITE_SIZE),
     .hf_erased_val = 0xff,
 };
