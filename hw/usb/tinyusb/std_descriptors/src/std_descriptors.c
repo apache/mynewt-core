@@ -65,8 +65,9 @@ const uint8_t desc_hid_report[] = {
  * Descriptor contents must exist long enough for transfer to complete
  */
 const uint8_t *
-tud_hid_descriptor_report_cb(void)
+tud_hid_descriptor_report_cb(uint8_t itf)
 {
+    (void)itf;
     return desc_hid_report;
 }
 
@@ -76,9 +77,10 @@ tud_hid_descriptor_report_cb(void)
  * Return zero will cause the stack to STALL request
  */
 uint16_t
-tud_hid_get_report_cb(uint8_t report_id, hid_report_type_t report_type, uint8_t *buffer, uint16_t reqlen)
+tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t *buffer, uint16_t reqlen)
 {
     /* TODO: not implemented yet */
+    (void)itf;
     (void)report_id;
     (void)report_type;
     (void)buffer;
@@ -92,8 +94,10 @@ tud_hid_get_report_cb(uint8_t report_id, hid_report_type_t report_type, uint8_t 
  * received data on OUT endpoint ( Report ID = 0, Type = 0 )
  */
 void
-tud_hid_set_report_cb(uint8_t report_id, hid_report_type_t report_type, const uint8_t *report, uint16_t report_size)
+tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, const uint8_t *report,
+                      uint16_t report_size)
 {
+    (void)itf;
     (void)report_id;
     (void)report_type;
     (void)report_size;
