@@ -74,3 +74,7 @@ syscfg.defs:
         description: >
             End of charge current settings, 4-35 (%).
         value: 7
+    DA1469X_CHARGER_NTC_VALUE:
+        description: >
+            NTC value in ohms.
+        value: 15000
