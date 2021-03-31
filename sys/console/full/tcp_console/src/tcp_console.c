@@ -1,0 +1,201 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+#include <os/mynewt.h>
+
+#include <console/console.h>
+#include <mn_socket/mn_socket.h>
+
+static struct os_event rx_receive_event;
+static struct os_event tx_flush_event;
+struct os_mbuf *tcp_console_out_buf;
+
+static struct mn_socket *server_socket;
+static struct mn_socket *console_socket;
+
+static void
+tcp_console_flush(void)
+{
+    int rc;
+
+    if (tcp_console_out_buf != NULL && console_socket != NULL) {
+        rc = mn_sendto(console_socket, tcp_console_out_buf, NULL);
+        /* If data was sent, forget about buffer, otherwise keep buffer
+         * and add more data into it */
+        if (rc == 0) {
+            tcp_console_out_buf = NULL;
+        }
+    }
+}
+
+static void
+tcp_console_schedule_tx_flush(void)
+{
+    os_eventq_put(os_eventq_dflt_get(), &tx_flush_event);
+}
+
+static void
+tcp_console_write(int c)
+{
+    uint8_t buf[1] = { (uint8_t)c };
+
+    /* If current mbuf was full, try to send it to client */
+    if (tcp_console_out_buf != NULL && OS_MBUF_TRAILINGSPACE(tcp_console_out_buf) == 0) {
+        tcp_console_flush();
+        /*
+         * This may not succeed it socket is not writable yet, mbuf will be still present
+         * and additional data will be appended.
+         */
+    }
+    if (tcp_console_out_buf == NULL) {
+        tcp_console_out_buf = os_msys_get_pkthdr(0, 0);
+    }
+
+    os_mbuf_append(tcp_console_out_buf, buf, 1);
+
+    /* If mbuf was just filled up try to send it to client. */
+    if (OS_MBUF_TRAILINGSPACE(tcp_console_out_buf) == 0) {
+        tcp_console_flush();
+    }
+}
+
+int
+console_out_nolock(int c)
+{
+    tcp_console_write(c);
+
+    if ('\n' == c) {
+        tcp_console_write('\r');
+    }
+
+    /*
+     * Scheduling flush means that event will be process just after everything
+     * else is done. Usually it means that data will be flushed after full
+     * console_printf().
+     */
+    tcp_console_schedule_tx_flush();
+
+    return c;
+}
+
+void
+console_rx_restart(void)
+{
+    os_eventq_put(os_eventq_dflt_get(), &rx_receive_event);
+}
+
+static void
+tx_flush_ev_cb(struct os_event *ev)
+{
+    tcp_console_flush();
+}
+
+static void
+rx_ev_cb(struct os_event *ev)
+{
+    /* TODO: Check if this really needed */
+}
+
+static void
+tcp_console_readable(void *arg, int err)
+{
+    struct os_mbuf *m;
+    int rc;
+    (void)rc;
+
+    if (err == MN_ECONNABORTED) {
+        if (console_socket) {
+            mn_close(console_socket);
+            console_socket = NULL;
+        }
+    } else if (err == 0) {
+        assert(console_socket != NULL);
+        rc = mn_recvfrom(console_socket, &m, NULL);
+        assert(rc == 0);
+        for (int i = 0; i < m->om_len; ++i) {
+            console_handle_char(m->om_data[i]);
+        }
+        os_mbuf_free_chain(m);
+    }
+}
+
+static void
+tcp_console_writable(void *arg, int err)
+{
+    if (err == 0) {
+        tcp_console_flush();
+    }
+}
+
+static const union mn_socket_cb tcp_console_cbs = {
+    .socket.readable = tcp_console_readable,
+    .socket.writable = tcp_console_writable,
+};
+
+static int
+tcp_console_newconn(void *arg, struct mn_socket *new)
+{
+    mn_socket_set_cbs(new, NULL, &tcp_console_cbs);
+    if (console_socket != NULL) {
+        mn_close(console_socket);
+    }
+    console_socket = new;
+    return 0;
+}
+
+static const union mn_socket_cb server_listen_cbs = {
+    .listen.newconn = tcp_console_newconn,
+};
+
+int
+tcp_console_pkg_init(void)
+{
+    struct mn_sockaddr_in sin = {0};
+    int rc;
+
+    rx_receive_event.ev_cb = rx_ev_cb;
+    tx_flush_event.ev_cb = tx_flush_ev_cb;
+
+    /* Create normal TCP socket */
+    rc = mn_socket(&server_socket, MN_PF_INET, MN_SOCK_STREAM, 0);
+    assert(rc == 0);
+
+    sin.msin_len = sizeof(sin);
+    sin.msin_family = MN_AF_INET;
+    sin.msin_port = htons(MYNEWT_VAL(TCP_CONSOLE_PORT));
+
+    /* Bind it to all interfaces */
+    rc = mn_bind(server_socket, (struct mn_sockaddr *)&sin);
+    assert(rc == 0);
+
+    mn_socket_set_cbs(server_socket, NULL, &server_listen_cbs);
+
+    /* Get ready for incoming connections */
+    rc = mn_listen(server_socket, 2);
+    assert(rc == 0);
+
+    return 0;
+}
+
+int
+tcp_console_is_init(void)
+{
+    /* TODO: Console check what should be returned */
+    return 1;
+}
