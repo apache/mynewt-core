@@ -373,11 +373,53 @@ static const char *const tdie_max[] = {
     NULL,
 };
 
+/*
+ * When pull-up resistor for NTC is different then 15k code needs to
+ * recalculate temperature settings. It uses table with voltages measured
+ * at NTC for values from -10 to 53 deg C and converts voltage to
+ * to values that would be measured IF recommended 15K resistor was used.
+ */
+#if MYNEWT_VAL(DA1469X_CHARGER_NTC_VALUE) != 15000
+static const uint16_t Vntc_tab[] = {
+    2253, 2225, 2197, 2169, 2140, 2111, 2081, 2051, 2021, 1990,
+    1960, 1929, 1898, 1866, 1835, 1804, 1772, 1741, 1709, 1678,
+    1646, 1615, 1584, 1553, 1522, 1488, 1461, 1431, 1401, 1371,
+    1336, 1313, 1284, 1256, 1228, 1200, 1173, 1146, 1120, 1094,
+    1068, 1043, 1018,  994,  970,  947,  924,  902,  880,  858,
+     837,  817,  796,  777,  758,  729,  711,  694,  676,  659,
+     643,  627,  611,  596,  581,  570,  556,  542,  529,  509,
+     505,  492,  480,  468,  456,  445
+};
+#endif
+
 static const char *
 tbat_temp(const struct reg_field *field, uint32_t reg_val, char *buf)
 {
     int val = (int)((reg_val & field->fld_mask) >> field->fld_pos);
+#if MYNEWT_VAL(DA1469X_CHARGER_NTC_VALUE) != 15000
+    int lo = 0;
+    int hi = ARRAY_SIZE(Vntc_tab);
+    /* Actual V at NTC */
+    uint32_t Vntc = Vntc_tab[val];
+    uint32_t Rntc = (Vntc * MYNEWT_VAL(DA1469X_CHARGER_NTC_VALUE)) / (3000 - Vntc);
+    /* Value of V at NTC that would be measured if 15K resistor was used. */
+    uint32_t Vntc2 = 3000 * Rntc / (Rntc + 15000);
 
+    /* Binary search for voltage table */
+    while (lo < hi) {
+        val = lo + (hi - lo) / 2;
+        if (Vntc_tab[val] < Vntc2) {
+            hi = val;
+        } else if (Vntc_tab[val] > Vntc2 && lo < val) {
+            lo = val;
+        } else {
+            break;
+        }
+    }
+    if (val < ARRAY_SIZE(Vntc_tab) && (Vntc_tab[val] - Vntc2) > (Vntc2 - Vntc_tab[val + 1])) {
+        ++val;
+    }
+#endif
     val -= 10;
     sprintf(buf, "%d C", val);
     return buf;
