@@ -154,7 +154,7 @@ ipc_nrf5340_init(void)
 {
     int i;
 
-#if MYNEWT_VAL(BSP_NRF5340)
+#if MYNEWT_VAL(MCU_APP_CORE)
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
     unsigned int gpios[] = { MYNEWT_VAL(IPC_NRF5340_NET_GPIO) };
     NRF_GPIO_Type *nrf_gpio;
@@ -182,7 +182,7 @@ ipc_nrf5340_init(void)
     NVIC_SetVector(IPC_IRQn, (uint32_t)ipc_nrf5340_isr);
     NVIC_EnableIRQ(IPC_IRQn);
 
-#if MYNEWT_VAL(BSP_NRF5340)
+#if MYNEWT_VAL(MCU_APP_CORE)
     /* this allows netcore to access appcore RAM */
     NRF_SPU_S->EXTDOMAIN[0].PERM = SPU_EXTDOMAIN_PERM_SECATTR_Secure << SPU_EXTDOMAIN_PERM_SECATTR_Pos;
 
