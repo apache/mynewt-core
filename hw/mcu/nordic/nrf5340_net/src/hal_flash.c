@@ -131,7 +131,7 @@ nrf5340_net_flash_sector_info(const struct hal_flash *dev, int idx,
                               uint32_t *address, uint32_t *sz)
 {
     assert(idx < nrf5340_net_flash_dev.hf_sector_cnt);
-    *address = idx * NRF5340_NET_FLASH_SECTOR_SZ;
+    *address = dev->hf_base_addr + idx * NRF5340_NET_FLASH_SECTOR_SZ;
     *sz = NRF5340_NET_FLASH_SECTOR_SZ;
     return 0;
 }
