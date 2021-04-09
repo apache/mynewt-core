@@ -1,0 +1,27 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    NET_CORE_IMAGE_TARGET_NAME:
+        description: >
+            Target name to build for NET core binary for single image build.
+            Default is set for nordic_pca10095 bsp and could be changed,
+            although right now this targets could be used for other bsp
+            that are based on NRF5340 since target build just BLE controller
+            without anything specific to pca10095 board.
+        value: "@apache-mynewt-nimble/targets/nordic_pca10095-blehci"
