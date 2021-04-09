@@ -25,6 +25,7 @@
 #include <flash_map/flash_map.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash.h>
+#include <hal/hal_flash_int.h>
 #include <hal/hal_system.h>
 #include <mcu/nrf5340_net_hal.h>
 #include <mcu/nrf5340_net_periph.h>
@@ -49,6 +50,11 @@ hal_bsp_flash_dev(uint8_t id)
     if (id == 0) {
         return &nrf5340_net_flash_dev;
     }
+#if MCUBOOT_MYNEWT
+    if (id == 1) {
+        return &nrf5340_net_vflash_dev.nv_flash;
+    }
+#endif
 
     return NULL;
 }
