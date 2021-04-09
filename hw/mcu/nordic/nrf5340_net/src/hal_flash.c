@@ -121,9 +121,53 @@ out:
 static int
 nrf5340_net_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
-    uint32_t val = 0xffffffff;
+    int sr;
+    int rc;
 
-    return nrf5340_net_flash_write(dev, sector_address, &val, sizeof(val));
+    sector_address &= ~(NRF5340_NET_FLASH_SECTOR_SZ - 1);
+
+    if (nrf5340_net_flash_wait_ready()) {
+        return -1;
+    }
+    __HAL_DISABLE_INTERRUPTS(sr);
+
+    NRF_NVMC_NS->CONFIG = NVMC_CONFIG_WEN_Een; /* Enable erase OP */
+    *(uint32_t *)sector_address = 0xFFFFFFFF;
+
+    rc = nrf5340_net_flash_wait_ready();
+
+    NRF_NVMC_NS->CONFIG = NVMC_CONFIG_WEN_Ren;
+    __HAL_ENABLE_INTERRUPTS(sr);
+
+    return rc;
+}
+
+static int
+nrf5340_net_flash_erase(const struct hal_flash *dev, uint32_t address,
+                        uint32_t num_bytes)
+{
+    uint32_t sector_address;
+
+    if (address + num_bytes < dev->hf_base_addr ||
+        address > dev->hf_base_addr + dev->hf_size) {
+        return -1;
+    }
+
+    sector_address = address & ~(NRF5340_NET_FLASH_SECTOR_SZ - 1);
+    num_bytes += address - sector_address;
+    num_bytes = (num_bytes + NRF5340_NET_FLASH_SECTOR_SZ - 1) & ~(NRF5340_NET_FLASH_SECTOR_SZ - 1);
+    if (sector_address < dev->hf_base_addr) {
+        num_bytes -= dev->hf_base_addr - sector_address;
+        sector_address = dev->hf_base_addr;
+    }
+
+    while (num_bytes > 0 && sector_address < dev->hf_base_addr + dev->hf_size) {
+        nrf5340_net_flash_erase_sector(dev, sector_address);
+        num_bytes -= NRF5340_NET_FLASH_SECTOR_SZ;
+        sector_address += NRF5340_NET_FLASH_SECTOR_SZ;
+    }
+
+    return 0;
 }
 
 static int
@@ -147,7 +191,8 @@ static const struct hal_flash_funcs nrf5340_net_flash_funcs = {
     .hff_write = nrf5340_net_flash_write,
     .hff_erase_sector = nrf5340_net_flash_erase_sector,
     .hff_sector_info = nrf5340_net_flash_sector_info,
-    .hff_init = nrf5340_net_flash_init
+    .hff_init = nrf5340_net_flash_init,
+    .hff_erase = nrf5340_net_flash_erase,
 };
 
 const struct hal_flash nrf5340_net_flash_dev = {
