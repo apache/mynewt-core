@@ -101,3 +101,6 @@ pkg.deps.I2C_2':
 
 pkg.deps.I2C_3':
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
+
+pkg.deps.NRF5340_EMBED_NET_CORE:
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/net_core_image"
