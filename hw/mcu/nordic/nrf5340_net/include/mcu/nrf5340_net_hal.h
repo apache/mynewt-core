@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include <hal/hal_flash_int.h>
+
 /* Helper functions to enable/disable interrupts. */
 #define __HAL_DISABLE_INTERRUPTS(x)                     \
     do {                                                \
@@ -46,7 +48,14 @@ struct nrf5340_net_uart_cfg {
 };
 const struct nrf5340_net_uart_cfg *bsp_uart_config(void);
 
-struct hal_flash;
+struct nrf5340_vflash {
+    struct hal_flash nv_flash;
+    const uint8_t *nv_image_address;
+    uint32_t nv_image_size;
+    const struct flash_area *nv_slot1;
+};
+extern struct nrf5340_vflash nrf5340_net_vflash_dev;
+
 extern const struct hal_flash nrf5340_net_flash_dev;
 
 /* SPI configuration (used for both master and slave) */
