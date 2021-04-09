@@ -31,6 +31,19 @@
 #define IPC_MAX_CHANS MYNEWT_VAL(IPC_NRF5340_CHANNELS)
 #define IPC_BUF_SIZE MYNEWT_VAL(IPC_NRF5340_BUF_SZ)
 
+#if MYNEWT_VAL(MCU_APP_CORE) && MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
+/*
+ * For combine build (app and net) network core image will be included in application
+ * image only if it is referenced. Those to symbols are used to force linker to
+ * include network core image.
+ * Those are used also to provide net core image data (and its size) to virtual
+ * flash driver that is used by bootloader to bring network image from application
+ * flash to network flash slot 1.
+ */
+extern uint8_t _binary_net_core_img_start;
+extern uint8_t _binary_net_core_img_end;
+#endif
+
 struct ipc_channel {
     ipc_nrf5340_recv_cb cb;
     void *user_data;
@@ -153,6 +166,18 @@ ipc_nrf5340_init(void)
     NRF_GPIO_Type *nrf_gpio;
 #endif
 
+#if MYNEWT_VAL(MCU_APP_CORE) && MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
+    /*
+     * Get network core image size and placement in application flash.
+     * Then pass those two values in NRF_IPC GPMEM registers to be used
+     * by virtual flash driver on network side.
+     */
+    if (&_binary_net_core_img_end - &_binary_net_core_img_start > 32) {
+        NRF_IPC->GPMEM[0] = (uint32_t)&_binary_net_core_img_start;
+        NRF_IPC->GPMEM[1] = &_binary_net_core_img_end - &_binary_net_core_img_start;
+    }
+#endif
+
     /* Make sure network core if off when we set up IPC */
     NRF_RESET_S->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
     memset(shms, 0, sizeof(shms));
@@ -165,6 +190,19 @@ ipc_nrf5340_init(void)
             GPIO_PIN_CNF_MCUSEL_NetworkMCU << GPIO_PIN_CNF_MCUSEL_Pos;
     }
 #endif
+#endif
+
+#if MYNEWT_VAL(MCU_NET_CORE)
+    /*
+     * When network core IPCs starts it clears GPMEM from APP core registers
+     * So IPC nows that netcore is running.
+     * This is a workaround that is needed till application side code waits
+     * on IPC for network core controller to sent NOP first.
+     */
+#define NRF_APP_IPC_NS                  ((NRF_IPC_Type *)0x4002A000)
+#define NRF_APP_IPC_S                   ((NRF_IPC_Type *)0x5002A000)
+    NRF_APP_IPC_S->GPMEM[0] = 0;
+    NRF_APP_IPC_S->GPMEM[1] = 0;
 #endif
 
     /* Enable IPC channels */
@@ -184,6 +222,24 @@ ipc_nrf5340_init(void)
 
     /* Start Network Core */
     NRF_RESET_S->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
+#endif
+#if MYNEWT_VAL(MCU_APP_CORE) && MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
+    /*
+     * TODO: Remove below workaround:
+     * For now app core waits for NET core to start.
+     * It is needed for case when network core was updated with new
+     * image and due to several second delay caused by bootloader
+     * copy image application starts to send HCI reset requests via
+     * IPC and network HCI transport is not really ready to handle
+     * more then one command.
+     */
+    if (&_binary_net_core_img_end - &_binary_net_core_img_start > 32) {
+        /*
+         * Application side prepared image for net core.
+         * When net core starts it's ipc_nrf5340_init() will clear those.
+         */
+        while (NRF_IPC->GPMEM[1]);
+    }
 #endif
 }
 
