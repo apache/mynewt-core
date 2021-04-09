@@ -45,10 +45,10 @@ bsp.flash_map:
             device: 0
             offset: 0x01008000
             size: 100kB
-        # TODO this should map to app flash
+        # This maps to app flash and uses vflash
         FLASH_AREA_IMAGE_1:
-            device: 0
-            offset: 0x01021000
+            device: 1
+            offset: 0x00000000
             size: 100kB
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
