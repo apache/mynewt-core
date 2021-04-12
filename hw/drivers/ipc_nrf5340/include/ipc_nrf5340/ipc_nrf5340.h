@@ -48,7 +48,8 @@ void ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data);
 
 /**
  * Sends data over specified IPC channel. IPC uses ring buffer for data passing.
- * If there is not enough space to store data -ENOMEM error is returned.
+ * If IPC_NRF5340_BLOCKING_WRITE is not enable and there is not enough space to
+ * store data SYS_ENOMEM error is returned.
  *
  * @param channel     IPC channel number to send on
  * @param data        Data to be sent over IPC. If this is NULL only signal is

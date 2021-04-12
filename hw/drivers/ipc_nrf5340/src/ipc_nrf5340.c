@@ -51,18 +51,12 @@ ipc_nrf5340_shm_get_data_length(uint16_t head, uint16_t tail)
     return ((unsigned int)(head - tail)) % IPC_BUF_SIZE;
 }
 
-static int
+/* this function assumes that there is enough space for data */
+static void
 ipc_nrf5340_shm_write(struct ipc_shm *shm, const void *data, uint16_t data_len)
 {
     uint16_t head = shm->head;
     uint16_t len;
-
-    /* check if data will fit */
-    while (data_len + ipc_nrf5340_shm_get_data_length(head, shm->tail) >= IPC_BUF_SIZE) {
-#if !MYNEWT_VAL(IPC_NRF5340_BLOCKING_WRITE)
-        return -ENOMEM;
-#endif
-    }
 
     len = min(data_len, IPC_BUF_SIZE - head);
     memcpy(shm->buf + head, data, len);
@@ -76,8 +70,6 @@ ipc_nrf5340_shm_write(struct ipc_shm *shm, const void *data, uint16_t data_len)
     head %= IPC_BUF_SIZE;
 
     shm->head = head;
-
-    return 0;
 }
 
 static uint16_t
@@ -212,17 +204,39 @@ ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data)
 int
 ipc_nrf5340_send(int channel, const void *data, uint16_t len)
 {
-    int rc = 0;
+    struct ipc_shm *shm;
+    uint16_t frag_len;
+    uint16_t space;
 
     assert(channel < IPC_MAX_CHANS);
+    shm = &shms[channel];
 
     if (data && len) {
-        rc = ipc_nrf5340_shm_write(&shms[channel], data, len);
+        while (len) {
+            do {
+                space = IPC_BUF_SIZE - 1;
+                space -= ipc_nrf5340_shm_get_data_length(shm->head, shm->tail);
+#if !MYNEWT_VAL(IPC_NRF5340_BLOCKING_WRITE)
+                /* assert since that will always fail for non-blocking write
+                 * indicating use error
+                 */
+                assert(len < IPC_BUF_SIZE);
+                if (len > space) {
+                    return SYS_ENOMEM;
+                }
+#endif
+            } while (space == 0);
+
+            frag_len = min(len, space);
+            ipc_nrf5340_shm_write(shm, data, frag_len);
+            NRF_IPC->TASKS_SEND[channel] = 1;
+
+            data += frag_len;
+            len -= frag_len;
+        }
     }
 
-    NRF_IPC->TASKS_SEND[channel] = 1;
-
-    return rc;
+    return 0;
 }
 
 uint16_t
