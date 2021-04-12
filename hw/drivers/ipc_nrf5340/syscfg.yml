@@ -28,6 +28,7 @@ syscfg.defs:
             Shared memory ring buffer size used for IPC (per enabled channel).
             It is recommended to use size which is power of two.
         value: 256
+        range: 2..65535
 
     IPC_NRF5340_BLOCKING_WRITE:
         description: >
