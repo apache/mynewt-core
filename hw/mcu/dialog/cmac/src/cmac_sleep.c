@@ -41,6 +41,7 @@ static __IOM uint32_t * const retained_regs[] = {
     &CMAC->CM_LL_INT_MSK_SET_REG,
     &CMAC->CM_LL_INT_SEL_REG,
     &CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG,
+    &CMAC->CM_LL_TIMER1_36_10_EQ_Z_REG,
     &CMAC->CM_LL_TIMER1_EQ_X_HI_REG,
     &CMAC->CM_LL_TIMER1_EQ_X_LO_REG,
     &CMAC->CM_ERROR_DIS_REG,
@@ -213,6 +214,7 @@ cmac_sleep(void)
 {
     bool switch_to_slp;
     bool deep_sleep;
+    bool w4_wrap = false;
     uint32_t wakeup_at;
     uint32_t sleep_usecs;
     uint32_t sleep_lp_ticks;
@@ -241,6 +243,24 @@ cmac_sleep(void)
 
     if (ble_rf_try_recalibrate(sleep_usecs)) {
         goto skip_sleep;
+    }
+
+    /*
+     * HAL timer will wrap around sooner than LLT and we need to compensate for
+     * this. LLT value where HAL wraps back to 0 is 0x1e84800000 so we need to
+     * check if we will sleep past this value and wakeup earlier if needed. Then
+     * we can manually wrap around LLT so everything should work as expected.
+     *
+     * XXX: recalculate sleep time instead of waiting on wfi for wrap around to
+     *      happen (this can take up to 2m).
+     */
+
+    if (cmac_timer_read_hi() + (sleep_usecs >> 10) + 1 >=
+        (LLT_AT_HAL_WRAP_AROUND_VAL >> 10)) {
+        switch_to_slp = false;
+        deep_sleep = false;
+        w4_wrap = true;
+        goto do_sleep;
     }
 
     sleep_lp_ticks = cmac_timer_usecs_to_lp_ticks(sleep_usecs);
@@ -280,6 +300,11 @@ do_sleep:
     } else {
         MCU_DIAG_SER('s');
         os_arch_cmac_wfi();
+    }
+
+    if (w4_wrap &&
+        (CMAC->CM_LL_INT_STAT_REG & CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_36_10_EQ_Z_SEL_Msk)) {
+        cmac_timer_wrap_llt();
     }
 
     if (deep_sleep) {

@@ -27,10 +27,13 @@
 extern "C" {
 #endif
 
+#define LLT_AT_HAL_WRAP_AROUND_VAL  (0x1e84800000)
+
 extern int8_t g_cmac_pdc_cmac2sys;
 
 void cmac_sleep(void);
 void cmac_sleep_recalculate(void);
+void cmac_timer_wrap_llt(void);
 
 #ifdef __cplusplus
 }

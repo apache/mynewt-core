@@ -26,6 +26,7 @@
 #include "cmac_driver/cmac_shared.h"
 #include "os/os.h"
 #include "CMAC.h"
+#include "cmac_priv.h"
 
 /*
  * Least common multiple for 1/128 (os_tick) and 1/1000000 (ll_timer) is 2s, so
@@ -65,6 +66,15 @@ LL_TIMER2LLC_IRQHandler(void)
     CMAC->CM_LL_INT_STAT_REG = int_stat;
     CMAC->CM_EXC_STAT_REG = CMAC_CM_EXC_STAT_REG_EXC_LL_TIMER2LLC_Msk;
     cm_ll_int_stat_reg = 0;
+
+    if (int_stat & CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_36_10_EQ_Z_SEL_Msk) {
+        /*
+         * Trigger both other comparators on wrap around to make sure we did not
+         * miss anything.
+         */
+        int_stat |= CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_EQ_X_SEL_Msk |
+                    CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+    }
 
     if (int_stat & CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_EQ_X_SEL_Msk) {
         cmac_timer_int_hal_timer();
@@ -313,11 +323,14 @@ cmac_timer_init(void)
      * They are used for hal_timer and os_tick respectively.
      */
     CMAC->CM_LL_INT_SEL_REG |= CMAC_CM_LL_INT_SEL_REG_LL_TIMER1_EQ_X_SEL_Msk |
-                               CMAC_CM_LL_INT_SEL_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+                               CMAC_CM_LL_INT_SEL_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk |
+                               CMAC_CM_LL_INT_SEL_REG_LL_TIMER1_36_10_EQ_Z_SEL_Msk;
 
     switch_to_llt();
 
-    CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+    CMAC->CM_LL_TIMER1_36_10_EQ_Z_REG = LLT_AT_HAL_WRAP_AROUND_VAL >> 10;
+    CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk |
+                                  CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_36_10_EQ_Z_SEL_Msk;
     CMAC->CM_LL_INT_STAT_REG = UINT32_MAX;
 
     NVIC_DisableIRQ(LL_TIMER2LLC_IRQn);
@@ -456,6 +469,12 @@ cmac_timer_next_at(void)
         to_next = min(to_next, reg32 - val32);
     }
 
+    /*
+     * Note: we use 36_10_EQ_Z to handle HAL/LLT wrap around but no need to
+     * handle it here since it does not trigger TIMER2LLC interrupt and is
+     * handled in sleep code.
+     */
+
     /* XXX add handling if any other comparator is used */
 
     return val32 + to_next;
@@ -486,4 +505,47 @@ cmac_timer_usecs_to_lp_ticks(uint32_t usecs)
 #else
     return (usecs * g_cmac_timer_slp.conv) >> 15;
 #endif
+}
+
+void cmac_timer_wrap_llt(void)
+{
+    uint32_t new_ll_timer_36;
+    uint32_t new_ll_timer_09;
+
+    /* Enable event on 1MHz tick and wait for 1st event to synchronize */
+    CMAC->CM_CTRL2_REG |= CMAC_CM_CTRL2_REG_RXEV_ON_1MHZ_Msk;
+    __SEV();
+    __WFE();
+    __WFE();
+    CMAC->CM_EV_LATCHED_REG = 1;
+
+    /*
+     * Code below has strict time constraints: we use 2 ticks to read and then
+     * calculate new value of LL Timer which we apply in 3rd tick. If we fail to
+     * do any of these steps timely, LL Timer will be set incorrectly.
+     */
+
+    /* 1st tick - read current LL Timer value */
+    new_ll_timer_36 = CMAC->CM_LL_TIMER1_36_10_REG;
+    new_ll_timer_09 = CMAC->CM_LL_TIMER1_9_0_REG;
+    __WFE();
+
+    /* 2nd tick - calculate new LL Timer value */
+    new_ll_timer_36 -= LLT_AT_HAL_WRAP_AROUND_VAL >> 10;
+    new_ll_timer_09 += 2;
+    new_ll_timer_36 += new_ll_timer_09 >> 10;
+    new_ll_timer_09 %= 1024;
+    __WFE();
+
+    /* 3rd tick - write compensated value */
+    CMAC->CM_LL_TIMER1_36_10_REG = new_ll_timer_36;
+    CMAC->CM_LL_TIMER1_9_0_REG = new_ll_timer_09;
+
+#ifndef NDEBUG
+    __WFE();
+    assert(!COMP_TICK_HAS_PASSED(4));
+    assert(COMP_TICK_HAS_PASSED(3));
+#endif
+
+    CMAC->CM_CTRL2_REG &= ~CMAC_CM_CTRL2_REG_RXEV_ON_1MHZ_Msk;
 }
