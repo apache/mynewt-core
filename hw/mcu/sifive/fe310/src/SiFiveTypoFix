@@ -370,7 +370,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     }
 
     while (received < len) {
-        if (sent < len && (sent - received) < FE310_SPI_FIFO_LENGHT &&
+        if (sent < len && (sent - received) < FE310_SPI_FIFO_LENGTH &&
             !(_REG32(spi->spi_base, SPI_REG_TXFIFO) & SPI_TXFIFO_FULL)) {
             _REG32(spi->spi_base, SPI_REG_TXFIFO) = ((uint8_t *)txbuf)[sent++];
         }
