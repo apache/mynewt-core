@@ -36,7 +36,6 @@
 void
 hal_system_init(void)
 {
-
 #if MYNEWT_VAL(MCU_ICACHE_ENABLED)
     NRF_NVMC_S->ICACHECNF = 1;
 #endif
@@ -81,7 +80,6 @@ hal_debugger_connected(void)
 void
 hal_system_clock_start(void)
 {
-
 #if MYNEWT_VAL(MCU_LFCLK_SOURCE)
     uint32_t regmsk;
     uint32_t regval;

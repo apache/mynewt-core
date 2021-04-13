@@ -30,6 +30,11 @@ pkg.deps:
     - "@apache-mynewt-core/hw/cmsis-core"
     - "@apache-mynewt-core/hw/hal"
 
+pkg.deps.BUS_DRIVER_PRESENT:
+    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
+    - "@apache-mynewt-core/hw/bus/drivers/i2c_common"
+    - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
+
 pkg.cflags.NFC_PINS_AS_GPIO: 
     - '-DCONFIG_NFCT_PINS_AS_GPIOS=1'
 
