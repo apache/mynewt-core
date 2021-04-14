@@ -20,6 +20,10 @@ syscfg.defs:
         description: 'Maximum number of expected flash areas'
         value: 10
 
+    FLASH_MAP_SUPPORT_MFG:
+        description: 'Enable use of flash map stored in manufacturing meta region'
+        value: 0
+
     FLASH_MAP_SYSINIT_STAGE:
         description: >
             Sysinit stage for flash map functionality.
