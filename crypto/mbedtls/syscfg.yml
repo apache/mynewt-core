@@ -48,6 +48,8 @@ syscfg.defs:
     value: 0
   MBEDTLS_ECP_DP_CURVE25519:
     value: 0
+  MBEDTLS_ECP_DP_CURVE448:
+    value: 0
   MBEDTLS_ECJPAKE_C:
     value: 0
 
