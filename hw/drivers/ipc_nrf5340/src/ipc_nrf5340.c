@@ -129,7 +129,8 @@ ipc_nrf5340_isr(void)
 
     os_trace_isr_enter();
 
-    irq_pend = NRF_IPC->INTPEND;
+    /* Handle only interrupts that were enabled */
+    irq_pend = NRF_IPC->INTPEND & NRF_IPC->INTEN;
 
     for (i = 0; i < IPC_MAX_CHANS; i++) {
         if (irq_pend & (0x1UL << i)) {
@@ -169,8 +170,11 @@ ipc_nrf5340_init(void)
     /* Enable IPC channels */
     for (i = 0; i < IPC_MAX_CHANS; i++) {
         NRF_IPC->SEND_CNF[i] = (0x01UL << i);
+        NRF_IPC->RECEIVE_CNF[i] = 0;
     }
 
+    NRF_IPC->INTENCLR = 0xFFFF;
+    NVIC_ClearPendingIRQ(IPC_IRQn);
     NVIC_SetVector(IPC_IRQn, (uint32_t)ipc_nrf5340_isr);
     NVIC_EnableIRQ(IPC_IRQn);
 
