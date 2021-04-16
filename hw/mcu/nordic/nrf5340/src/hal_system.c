@@ -36,6 +36,14 @@
 void
 hal_system_init(void)
 {
+#if MYNEWT_VAL(MCU_ICACHE_ENABLED)
+    NRF_NVMC_S->ICACHECNF = 1;
+#endif
+
+#if MYNEWT_VAL(MCU_CACHE_ENABLED)
+    NRF_CACHE_S->ENABLE = 1;
+#endif
+
 #if MYNEWT_VAL(MCU_DCDC_ENABLED)
     NRF_REGULATORS_S->VREGMAIN.DCDCEN = 1;
 

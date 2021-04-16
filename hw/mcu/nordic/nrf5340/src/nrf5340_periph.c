@@ -25,6 +25,10 @@
 #include <nrfx.h>
 #include "hal/hal_spi.h"
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#endif
+
 #if MYNEWT_VAL(ADC_0)
 #include <adc/adc.h>
 #include <adc_nrf52/adc_nrf52.h>

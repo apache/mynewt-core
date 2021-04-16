@@ -37,6 +37,11 @@
 void
 hal_system_init(void)
 {
+
+#if MYNEWT_VAL(MCU_ICACHE_ENABLED)
+    NRF_NVMC->ICACHECNF = 1;
+#endif
+
 #if MYNEWT_VAL(MCU_DCDC_ENABLED)
     NRF_POWER->DCDCEN = 1;
 #endif

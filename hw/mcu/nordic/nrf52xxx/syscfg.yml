@@ -92,6 +92,10 @@ syscfg.defs:
             the breakpoint wherever it gets called, For example, reset and crash
        value: 0
 
+    MCU_ICACHE_ENABLED:
+       description: >
+            Enabled Instruction code cache
+       value: 0
 
 # MCU peripherals definitions
     I2C_0:
