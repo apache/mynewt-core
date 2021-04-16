@@ -273,7 +273,7 @@ hal_uart_blocking_tx(int port, uint8_t data)
     USART_TypeDef *regs;
 
     u = uart_by_port(port);
-    if (!u || u->u_open) {
+    if (!u || !u->u_open) {
         return;
     }
 
