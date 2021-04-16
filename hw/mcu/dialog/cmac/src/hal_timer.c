@@ -49,7 +49,7 @@ hal_timer_expiry_get(struct hal_timer *timer)
 {
     uint64_t ret;
 
-    ret = (uint64_t)POINTER_TO_UINT(timer->bsp_timer) << 10;
+    ret = (uint64_t)POINTER_TO_UINT(timer->bsp_timer) << 32;
     ret |= timer->expiry;
 
     return ret;
@@ -58,8 +58,8 @@ hal_timer_expiry_get(struct hal_timer *timer)
 static inline void
 hal_timer_expiry_set(struct hal_timer *timer, uint64_t val)
 {
-    timer->expiry = val & 0x3ff;
-    timer->bsp_timer = UINT_TO_POINTER(val >> 10);
+    timer->expiry = val;
+    timer->bsp_timer = UINT_TO_POINTER(val >> 32);
 }
 
 static void
@@ -208,7 +208,24 @@ hal_timer_stop(struct hal_timer *timer)
 uint32_t
 hal_timer_read(int timer_num)
 {
+    uint64_t llt;
+    uint32_t val;
+
     assert(timer_num == 0);
 
-    return cmac_timer_convert_llt2hal(cmac_timer_read64());
+    llt = cmac_timer_read64();
+    val = cmac_timer_convert_llt2hal(llt);
+
+    __disable_irq();
+
+    /*
+     * Store current LLT value and converted HAL timer value, we'll use it as
+     * a base for subsequent HAL->LLT conversions.
+     */
+    g_cmac_timer_ctrl.hal_last_val = val;
+    g_cmac_timer_ctrl.hal_to_llt_corr = llt;
+
+    __enable_irq();
+
+    return val;
 }

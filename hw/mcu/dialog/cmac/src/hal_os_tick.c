@@ -65,6 +65,7 @@ os_tick_handle_tick(void)
 
     cur_tick = cmac_timer_get_hal_os_tick();
     delta = cur_tick - g_os_tick_last;
+
     os_time_advance(delta);
 
     g_os_tick_last = cur_tick;

@@ -49,6 +49,7 @@ struct cmac_timer_slp {
 };
 
 static struct cmac_timer_slp g_cmac_timer_slp;
+struct cmac_timer_ctrl g_cmac_timer_ctrl;
 
 static cmac_timer_int_func_t *cmac_timer_int_hal_timer;
 static cmac_timer_int_func_t *cmac_timer_int_hal_os_tick;
@@ -283,7 +284,7 @@ cmac_timer_get_hal_os_tick(void)
     uint32_t rem_val;
     uint32_t ret;
 
-    val = (uint64_t)cmac_timer_read_hi() << 10;
+    val = cmac_timer_read64();
 
     if (SYNC_TICK_VAL_INTERVAL == 2000000) {
         while (val >= sync_tick_val_next) {
