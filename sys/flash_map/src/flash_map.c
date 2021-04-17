@@ -25,7 +25,9 @@
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
+#if MYNEWT_VAL(FLASH_MAP_SUPPORT_MFG)
 #include "mfg/mfg.h"
+#endif
 #include "flash_map/flash_map.h"
 
 const struct flash_area *flash_map;
@@ -360,6 +362,7 @@ flash_area_id_to_image_slot(int area_id)
  *
  * @return                      0 on success; nonzero on failure.
  */
+#if MYNEWT_VAL(FLASH_MAP_SUPPORT_MFG)
 static int
 flash_map_read_mfg(int max_areas,
                    struct flash_area *out_areas, int *out_num_areas)
@@ -405,6 +408,7 @@ flash_map_read_mfg(int max_areas,
         (*out_num_areas)++;
     }
 }
+#endif
 
 /**
  * Determines if the specified flash area overlaps any areas in the flash map.
@@ -487,9 +491,11 @@ flash_map_add_new_dflt_areas(void)
 void
 flash_map_init(void)
 {
+#if MYNEWT_VAL(FLASH_MAP_SUPPORT_MFG)
     static struct flash_area mfg_areas[MYNEWT_VAL(FLASH_MAP_MAX_AREAS)];
-
     int num_areas;
+#endif
+
     int rc;
 
     /* Ensure this function only gets called by sysinit. */
@@ -509,6 +515,7 @@ flash_map_init(void)
     flash_map = sysflash_map_dflt;
     flash_map_entries = sizeof sysflash_map_dflt / sizeof sysflash_map_dflt[0];
 
+#if MYNEWT_VAL(FLASH_MAP_SUPPORT_MFG)
     /* Attempt to read the flash map from the manufacturing meta regions.  On
      * success, use the new flash map instead of the default hardcoded one.
      */
@@ -519,6 +526,7 @@ flash_map_init(void)
     }
     flash_map = mfg_areas;
     flash_map_entries = num_areas;
+#endif
 
     /* The hardcoded flash map may contain new areas that aren't present in the
      * manufacturing flash map.  Try including them if they don't overlap with

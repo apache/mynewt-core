@@ -27,8 +27,10 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/sys/defs"
-    - "@apache-mynewt-core/sys/mfg"
     - "@apache-mynewt-core/sys/log/modlog"
+
+pkg.deps.FLASH_MAP_SUPPORT_MFG:
+    - "@apache-mynewt-core/sys/mfg"
 
 pkg.init:
     flash_map_init: 'MYNEWT_VAL(FLASH_MAP_SYSINIT_STAGE)'
