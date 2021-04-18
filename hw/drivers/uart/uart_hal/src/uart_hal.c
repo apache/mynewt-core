@@ -178,7 +178,7 @@ uart_hal_init(struct os_dev *odev, void *arg)
     dev = (struct uart_dev *)odev;
 
     ch = odev->od_name[strlen(odev->od_name) - 1];
-    if (!isdigit((int) ch)) {
+    if (!isdigit((unsigned char)ch)) {
         return OS_EINVAL;
     }
     uart_hal_dev_set_id(dev, ch - '0');

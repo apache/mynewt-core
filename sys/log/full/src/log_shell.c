@@ -117,7 +117,7 @@ shell_log_dump_cmd(int argc, char **argv)
             list_only = true;
             break;
         }
-        if (isdigit(argv[i][0])) {
+        if (isdigit((unsigned char)argv[i][0])) {
             log_limit = parse_ll_bounds(argv[i], 1, 1000000, &rc);
         } else {
             log_name = argv[i];
