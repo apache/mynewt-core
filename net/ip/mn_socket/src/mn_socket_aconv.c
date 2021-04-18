@@ -224,7 +224,7 @@ mn_inet_pton(int af, const char *src, void *dst)
             if (cnt > 4) {
                 return 0;
             }
-            if (isdigit(*ch_src)) {
+            if (isdigit((unsigned char)*ch_src)) {
                 val = val * 10 + *ch_src - '0';
                 if (val > 255) {
                     return 0;

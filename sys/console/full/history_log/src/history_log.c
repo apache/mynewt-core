@@ -140,9 +140,9 @@ console_history_add_to_cache(const char *line)
     }
 
     /* Trim from spaces */
-    while (isspace(*line)) {
+    while (isspace((unsigned char)*line)) {
         line++;
-    };
+    }
 
     len = strlen(line);
     if (len == 0) {
@@ -153,7 +153,7 @@ console_history_add_to_cache(const char *line)
      * Trim trailing spaces. It does not touch input buffer, it just
      * corrects len variable.
      */
-    while (isspace(line[len - 1])) {
+    while (isspace((unsigned char)line[len - 1])) {
         len--;
     }
 

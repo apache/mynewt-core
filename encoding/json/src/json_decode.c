@@ -86,7 +86,7 @@ json_skip_ws(struct json_buffer *jb)
 
     do {
         c = jb->jb_read_next(jb);
-    } while (isspace((int) c));
+    } while (isspace((unsigned char) c));
 
     jb->jb_read_prev(jb);
 }
