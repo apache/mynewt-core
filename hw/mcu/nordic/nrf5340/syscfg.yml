@@ -67,16 +67,10 @@ syscfg.defs:
             Default value 4, clock runs at 48MHz.
         range: 1,2,4
         value: 4
- 
+
     MCU_CACHE_ENABLED:
         description: >
             Enable instruction and data cache
-            Default value is 0, so disabled.
-        value: 0
-
-    MCU_ICACHE_ENABLED:
-        description: >
-            Enable instruction code cache
             Default value is 0, so disabled.
         value: 0
 
@@ -181,7 +175,7 @@ syscfg.defs:
     UART_3_PIN_CTS:
         description: 'CTS pin for UART3'
         value: -1
-        
+
     TIMER_0:
         description: 'Enable nRF5340 Timer 0'
         value:  1
@@ -316,7 +310,7 @@ syscfg.defs:
     SPI_0_SLAVE_PIN_SS:
         description: 'SS pin for SPI_0_SLAVE'
         value: ''
-        
+
     SPI_1_MASTER:
         description: 'Enable nRF5340 SPI Master 1'
         value: 0
