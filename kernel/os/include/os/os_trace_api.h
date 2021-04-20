@@ -68,7 +68,7 @@ static inline uint32_t
 os_trace_module_register(os_trace_module_t *m, const char *name,
                          uint32_t num_events, void (* send_desc_func)(void))
 {
-    char *desc = "M=???";
+    char *desc;
 
     asprintf(&desc, "M=%s", name);
 
