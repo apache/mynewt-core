@@ -62,11 +62,6 @@ _reset_handler:
     la a1, _heap_end
     call _sbrkInit
 
-    /* Call global constructors */
-    la a0, __libc_fini_array
-    call atexit
-    call __libc_init_array
-
     call SystemInit
     call _start
     call _fini
