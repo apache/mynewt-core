@@ -26,3 +26,13 @@ syscfg.defs:
         defunct: 1
         description: 'Use OS_CRASH_FILE_LINE instead'
         value: 0
+
+    BASELIBC_EXECUTE_GLOBAL_CONSTRUCTORS:
+        description: >
+            Set to 1 if project contains C++ files with global objects that
+            that need constructors to be executed before main().
+            Setting this to 0 reduces code size if there is no need for global
+            constructors call.
+            It is still possible to use C++ code when this is set to 0 but
+            global variable can be in wrong state.
+        value: 1

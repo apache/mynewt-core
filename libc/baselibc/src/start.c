@@ -21,12 +21,22 @@
 #include "os/mynewt.h"
 
 extern int main(int argc, char **argv);
+void __libc_init_array(void);
 
 /*
  * Rudimentary startup function.
  */
 void _start(void)
 {
+    /*
+     * Run global objects constructors.
+     * Call to this function is ofter found in startup files.
+     * mynewt did not use this pattern hence we have single place
+     * for all MCU just here
+     */
+    if (MYNEWT_VAL(BASELIBC_EXECUTE_GLOBAL_CONSTRUCTORS)) {
+        __libc_init_array();
+    }
 #if !MYNEWT_VAL(OS_SCHEDULING)
     int rc;
 
@@ -38,7 +48,29 @@ void _start(void)
 #endif
 }
 
-void
+__attribute__((weak)) void
 _init(void)
 {
+}
+
+extern void (*__preinit_array_start[])(void);
+extern void (*__preinit_array_end[])(void);
+extern void (*__init_array_start[])(void);
+extern void (*__init_array_end[])(void);
+
+void
+__libc_init_array(void)
+{
+    size_t count;
+    size_t i;
+
+    count = __preinit_array_end - __preinit_array_start;
+    for (i = 0; i < count; i++)
+        __preinit_array_start[i]();
+
+    _init();
+
+    count = __init_array_end - __init_array_start;
+    for (i = 0; i < count; i++)
+        __init_array_start[i]();
 }
