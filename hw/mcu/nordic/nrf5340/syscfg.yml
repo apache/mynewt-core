@@ -68,6 +68,13 @@ syscfg.defs:
         range: 1,2,4
         value: 4
 
+    MCU_HFCLK_DIV:
+        description: >
+            Divider of 128MHz system clock.
+            Default value 2, clock runs at 64MHz.
+        range: 1,2
+        value: 2
+
     MCU_CACHE_ENABLED:
         description: >
             Enable instruction and data cache

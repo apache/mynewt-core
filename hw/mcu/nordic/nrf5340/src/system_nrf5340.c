@@ -25,6 +25,7 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <syscfg/syscfg.h>
 #include <nrf.h>
 #include <nrf_erratas.h>
 #include <system_nrf5340_application.h>
@@ -244,6 +245,12 @@ void SystemInit(void)
         __DSB();
         __ISB();
     #endif
+
+    if (MYNEWT_VAL(MCU_HFCLK_DIV) == 1) {
+        NRF_CLOCK_S->HFCLKCTRL = CLOCK_HFCLKCTRL_HCLK_Div1 << CLOCK_HFCLKCTRL_HCLK_Pos;
+    } else {
+        NRF_CLOCK_S->HFCLKCTRL = CLOCK_HFCLKCTRL_HCLK_Div2 << CLOCK_HFCLKCTRL_HCLK_Pos;
+    }
 
     SystemCoreClockUpdate();
 
