@@ -579,6 +579,9 @@ static struct spiflash_chip supported_chips[] = {
 #if MYNEWT_VAL(SPIFLASH_XT25F32B)
     XTX_CHIP(XT25F32B, 0x40, FLASH_CAPACITY_32MBIT),
 #endif
+#if MYNEWT_VAL(SPIFLASH_XM25QH32B)
+    MICRON_CHIP(XM25QH32B, 0x40, FLASH_CAPACITY_32MBIT),
+#endif
 
     { {0} },
 };
