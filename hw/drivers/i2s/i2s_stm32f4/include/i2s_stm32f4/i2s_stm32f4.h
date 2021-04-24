@@ -23,6 +23,10 @@
 #include <stm32f4xx_hal.h>
 #include <i2s_stm32f4/stm32_pin_cfg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct i2s;
 struct i2s_cfg;
 struct stm32_spi_cfg;
@@ -271,5 +275,9 @@ I2S_SD_PIN_DECLARE(5, A, 10)
 I2S_SD_PIN_DECLARE(5, B, 8)
 I2S_SD_PIN_DECLARE(5, E, 6)
 I2S_SD_PIN_DECLARE(5, E, 14)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _I2S_STM32_H */

@@ -22,6 +22,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct da1469x_dma_buffer {
     uint16_t size;
     uint8_t *buffer;
@@ -65,5 +69,9 @@ struct i2s_cfg {
     /* DMA buffers, should be set with I2S_DA1469X_DMA_BUFFER(). */
     struct da1469x_dma_buffer *dma_memory;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _I2S_DA1469X_H */

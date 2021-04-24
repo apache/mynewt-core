@@ -20,6 +20,10 @@
 #ifndef _HW_DRIVERS_I2S_DRIVER_H
 #define _HW_DRIVERS_I2S_DRIVER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct i2s;
 struct i2s_cfg;
 struct i2s_sample_buffer;
@@ -39,5 +43,9 @@ int i2s_init(struct i2s *i2s, struct i2s_buffer_pool *pool);
 void i2s_driver_state_changed(struct i2s *i2s, enum i2s_state);
 void i2s_driver_buffer_put(struct i2s *i2s, struct i2s_sample_buffer *buffer);
 struct i2s_sample_buffer *i2s_driver_buffer_get(struct i2s *i2s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _HW_DRIVERS_I2S_DRIVER_H */

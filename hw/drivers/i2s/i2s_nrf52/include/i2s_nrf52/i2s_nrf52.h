@@ -24,6 +24,10 @@
 #include <nrfx/nrfx.h>
 #include <nrfx/drivers/include/nrfx_i2s.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct i2s;
 
 struct i2s_cfg {
@@ -33,5 +37,9 @@ struct i2s_cfg {
 
     struct i2s_buffer_pool *pool;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _I2S_NRF52_H */
