@@ -23,6 +23,10 @@
 #include <stdint.h>
 #include <os/os_dev.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * I2S API does not specify this structure. It is used by i2s_create() and is defined
  * by specific driver.
@@ -268,5 +272,9 @@ i2s_get_sample_rate(struct i2s *i2s)
 {
     return i2s->sample_rate;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _HW_DRIVERS_I2S_H */

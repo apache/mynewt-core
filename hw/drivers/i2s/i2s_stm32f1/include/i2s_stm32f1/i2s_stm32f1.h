@@ -23,6 +23,10 @@
 #include <mcu/stm32_hal.h>
 #include <i2s_stm32f1/stm32_pin_cfg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Structure with I2S config, needed for i2s_create() */
 struct i2s_cfg {
     /* Value I2S_MODE_xxxxxx */
@@ -117,5 +121,9 @@ I2S_WS_PIN_DECLARE(3, A, 15)
 I2S_SD_PIN_DECLARE(3, B, 5)
 /* I2S3 possible MCK pins */
 I2S_PIN_DECLARE(3, C, 7)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _I2S_STM32F1_H */
