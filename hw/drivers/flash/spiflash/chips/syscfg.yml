@@ -503,3 +503,6 @@ syscfg.defs:
     SPIFLASH_XT25F32B:
         description: Add support for XT25F32B
         value: 0
+    SPIFLASH_XM25QH32B:
+        description: Add support for XM25QH32B
+        value: 0
