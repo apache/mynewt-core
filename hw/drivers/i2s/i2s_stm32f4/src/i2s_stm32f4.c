@@ -277,6 +277,9 @@ i2s_init_pins(struct stm32_i2s_pins *pins)
     hal_gpio_init_stm(pins->ck_pin->pin, (GPIO_InitTypeDef *)&pins->ck_pin->hal_init);
     hal_gpio_init_stm(pins->ws_pin->pin, (GPIO_InitTypeDef *)&pins->ws_pin->hal_init);
     hal_gpio_init_stm(pins->sd_pin->pin, (GPIO_InitTypeDef *)&pins->sd_pin->hal_init);
+    if (pins->mck_pin) {
+        hal_gpio_init_stm(pins->mck_pin->pin, (GPIO_InitTypeDef *)&pins->mck_pin->hal_init);
+    }
 #if I2S_FULLDUPLEX_SUPPORT
     if (pins->ext_sd_pin) {
         hal_gpio_init_stm(pins->ext_sd_pin->pin, (GPIO_InitTypeDef *)&pins->ext_sd_pin->hal_init);
@@ -333,7 +336,7 @@ stm32_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
     stm32_i2s->hi2s.Init.Mode = cfg->mode;
     stm32_i2s->hi2s.Init.Standard = cfg->standard;
     stm32_i2s->hi2s.Init.DataFormat = cfg->data_format;
-    stm32_i2s->hi2s.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
+    stm32_i2s->hi2s.Init.MCLKOutput = (cfg->pins.mck_pin) ? I2S_MCLKOUTPUT_ENABLE : I2S_MCLKOUTPUT_DISABLE;
     stm32_i2s->hi2s.Init.AudioFreq = cfg->sample_rate;
     stm32_i2s->hi2s.Init.CPOL = I2S_CPOL_LOW;
 #if I2S_FULLDUPLEX_SUPPORT

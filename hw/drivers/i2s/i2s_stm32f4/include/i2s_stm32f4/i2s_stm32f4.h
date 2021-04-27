@@ -36,6 +36,7 @@ struct stm32_i2s_pins {
     stm32_pin_cfg_t ws_pin;
     stm32_pin_cfg_t sd_pin;
     stm32_pin_cfg_t ext_sd_pin;
+    stm32_pin_cfg_t mck_pin;
 };
 
 #define I2S_PIN(n, port, pin) &(I2S ## n ## _P ## port ## pin)
