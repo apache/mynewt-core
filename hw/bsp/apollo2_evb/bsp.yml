@@ -23,7 +23,7 @@ bsp.name: "Apollo EVB"
 bsp.url: https://www.ambiqmicro.com/mcu/
 bsp.maker: "Ambiq micro"
 bsp.arch: cortex_m4
-bsp.compiler: compiler/arm-none-eabi-m4 
+bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
     - "hw/bsp/apollo2_evb/apollo2.ld"
     - "@apache-mynewt-core/hw/mcu/ambiq/apollo2/apollo2.ld"

@@ -18,7 +18,7 @@
 #
 
 pkg.name: hw/mcu/dialog
-pkg.description: Common MCU definitions for Dialog DA1469x series chips 
+pkg.description: Common MCU definitions for Dialog DA1469x series chips
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:

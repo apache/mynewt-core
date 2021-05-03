@@ -18,7 +18,7 @@
 #
 
 pkg.name: hw/drivers/chg_ctrl/bq24040
-pkg.description: 
+pkg.description:
 pkg.keywords:
     - Charge Controller
     - bq24040

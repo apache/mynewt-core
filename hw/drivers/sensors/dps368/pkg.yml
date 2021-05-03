@@ -36,7 +36,6 @@ pkg.deps:
     - "@apache-mynewt-core/hw/sensor"
     - "@apache-mynewt-core/sys/log/modlog"
 
-    
 pkg.deps.!BUS_DRIVER_PRESENT:
     - "@apache-mynewt-core/hw/util/i2cn"
 pkg.deps.BUS_DRIVER_PRESENT:
@@ -47,4 +46,3 @@ pkg.req_apis:
 
 pkg.deps.DPS368_CLI:
     - "@apache-mynewt-core/util/parse"
-    

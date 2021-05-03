@@ -86,7 +86,7 @@ syscfg.defs:
         description: 'enable Button B'
         value: 0
 
-syscfg.defs.BLE_CONTROLLER: 
+syscfg.defs.BLE_CONTROLLER:
     TIMER_0:
         value: 0
     TIMER_3:
@@ -107,4 +107,4 @@ syscfg.vals.BLE_CONTROLLER:
     BLE_LL_RFMGMT_ENABLE_TIME: 0
     # synthesized 32k clock has 250ppm accuracy
     BLE_LL_OUR_SCA: 250
-    BLE_LL_MASTER_SCA: 1 
+    BLE_LL_MASTER_SCA: 1

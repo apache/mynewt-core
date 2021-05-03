@@ -65,4 +65,4 @@ bsp.flash_map:
             device: 0
             offset: 0x08006000
             size: 8kB
-            
+
