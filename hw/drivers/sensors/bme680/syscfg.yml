@@ -17,8 +17,8 @@
 #
 
 # Package: hw/drivers/sensors/bme680
- 
- syscfg.defs:
+
+syscfg.defs:
     BME680_FLOATING_POINT_COMPENSATION:
         description: 'Enable floating point compensation'
         value: 0

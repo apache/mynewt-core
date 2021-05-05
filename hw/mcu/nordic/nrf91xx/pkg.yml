@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -25,7 +25,7 @@ pkg.keywords:
     - nrf91
     - nrfx
 
-pkg.deps: 
+pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic"
     - "@apache-mynewt-core/hw/cmsis-core"
     - "@apache-mynewt-core/hw/hal"
@@ -34,7 +34,7 @@ pkg.deps.BUS_DRIVER_PRESENT:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
 
-pkg.cflags.GPIO_AS_PIN_RESET: 
+pkg.cflags.GPIO_AS_PIN_RESET:
     - '-DCONFIG_GPIO_AS_PINRESET=1'
 
 pkg.deps.UART_0:

@@ -26,4 +26,3 @@ syscfg.vals:
     IMGMGR_DUMMY_HDR: 1
     LOG_MGMT: 0
     IMG_MGMT: 0
-    

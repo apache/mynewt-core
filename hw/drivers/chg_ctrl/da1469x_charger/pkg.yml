@@ -18,7 +18,7 @@
 #
 
 pkg.name: hw/drivers/chg_ctrl/da1469x_charger
-pkg.description: 
+pkg.description:
 pkg.keywords:
     - Charge Controller
     - DA1469x

@@ -75,7 +75,7 @@ syscfg.defs:
         description: >
             Datetime command enabled, read 1,
             write 2, read/write 3 (default)
-        value: 3 
+        value: 3
 
     SHELL_BRIDGE:
         description: >

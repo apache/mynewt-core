@@ -37,7 +37,7 @@ syscfg.defs:
         value: 2
     BQ27Z561_I2C_TIMEOUT_TICKS:
         description: >
-            Number of OS ticks to wait for each I2C transaction to complete.            
+            Number of OS ticks to wait for each I2C transaction to complete.
         value: 6
     BQ27Z561_SYSINIT_STAGE:
         description: >

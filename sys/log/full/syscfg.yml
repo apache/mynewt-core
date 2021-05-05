@@ -34,7 +34,7 @@ syscfg.defs:
 
     LOG_FLAGS_IMAGE_HASH:
         description: >
-            Enable logging of the first 4 bytes of the image hash. 0 - disable; 
+            Enable logging of the first 4 bytes of the image hash. 0 - disable;
             1 - enable.
         value: 0
 

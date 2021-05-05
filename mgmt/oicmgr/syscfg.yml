@@ -33,5 +33,5 @@ syscfg.defs:
 
     OICMGR_OIC_RESOURCE_NAME:
         description: >
-            The OMP OIC Resource name. 
+            The OMP OIC Resource name.
         value: '"x.mynewt.nmgr"'

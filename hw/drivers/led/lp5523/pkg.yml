@@ -25,7 +25,7 @@ pkg.keywords:
     - led
     - texas
     - lp5523
-        
+
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"

@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -25,7 +25,7 @@ pkg.keywords:
     - nrf53
     - nrfx
 
-pkg.deps: 
+pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic"
     - "@apache-mynewt-core/hw/cmsis-core"
     - "@apache-mynewt-core/hw/hal"
@@ -35,10 +35,10 @@ pkg.deps.BUS_DRIVER_PRESENT:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_common"
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
 
-pkg.cflags.NFC_PINS_AS_GPIO: 
+pkg.cflags.NFC_PINS_AS_GPIO:
     - '-DCONFIG_NFCT_PINS_AS_GPIOS=1'
 
-pkg.cflags.GPIO_AS_PIN_RESET: 
+pkg.cflags.GPIO_AS_PIN_RESET:
     - '-DCONFIG_GPIO_AS_PINRESET=1'
 
 pkg.deps.UART_0:
@@ -92,10 +92,10 @@ pkg.deps.SPI_4_MASTER:
 
 pkg.deps.I2C_0':
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
-    
+
 pkg.deps.I2C_1':
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
-    
+
 pkg.deps.I2C_2':
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
 
