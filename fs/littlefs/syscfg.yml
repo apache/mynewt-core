@@ -36,6 +36,16 @@ syscfg.defs:
             must have the same size.
         value: -1
 
+    LITTLEFS_MIGRATE_V1:
+        description: >
+            Enable support for migrating LFSv1 filesystems to v2.
+        value: 0
+
+    LITTLEFS_READONLY:
+        description: >
+            Build LittleFS without write support.
+        value: 0
+
     LITTLEFS_BLOCK_COUNT:
         description: >
             Number of blocks/sectors use by this partition.
