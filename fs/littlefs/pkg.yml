@@ -33,5 +33,11 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/flash_map"
 
+pkg.cflags.LITTLEFS_MIGRATE_V1:
+    - -DLFS_MIGRATE
+
+pkg.cflags.LITTLEFS_READONLY:
+    - -DLFS_READONLY
+
 pkg.init:
     littlefs_pkg_init: 'MYNEWT_VAL(LITTLEFS_SYSINIT_STAGE)'
