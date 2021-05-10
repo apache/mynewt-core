@@ -682,7 +682,10 @@ da1469x_open_battery_adc(const char *dev_name, uint32_t wait)
     if (adc) {
         /* call adc_chan_config to setup correct multiplier so read returns
          * value in mV */
-        adc_chan_config((struct adc_dev *)adc, 0, NULL);
+        if (adc_chan_config((struct adc_dev *)adc, 0, NULL)) {
+            os_dev_close(adc);
+            adc = NULL;
+        }
     }
     return adc;
 }

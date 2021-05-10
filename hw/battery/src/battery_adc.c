@@ -118,8 +118,11 @@ battery_adc_open(struct os_dev *dev, uint32_t timeout, void *arg)
         (char *)bat_adc->cfg.adc_dev_name, timeout, bat_adc->cfg.adc_open_arg);
     if (bat_adc->adc_dev) {
         /* Setup channel configuration to use for battery voltage */
-        adc_chan_config(bat_adc->adc_dev, bat_adc->cfg.channel,
-                bat_adc->cfg.adc_channel_cfg);
+        rc = adc_chan_config(bat_adc->adc_dev, bat_adc->cfg.channel,
+                             bat_adc->cfg.adc_channel_cfg);
+        if (rc) {
+            return rc;
+        }
 
         /* Additional GPIO needed before measurement ? */
         if (bat_adc->cfg.activation_pin_needed &&
