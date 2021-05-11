@@ -17,6 +17,14 @@
 #
 
 syscfg.defs:
+    MCU_TARGET:
+        description: >
+            Specifies target MCU.
+        value: nRF5340_NET
+        restrictions:
+            - $notnull
+        choices:
+            - nRF5340_NET
     MCU_NET_CORE:
         description: >
             Constant value always set to 1.  It allows to have common
