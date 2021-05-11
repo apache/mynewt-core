@@ -17,39 +17,17 @@
 # under the License.
 #
 
-pkg.name: hw/usb/tinyusb
-pkg.description: >
-    Package provides task for TinyUSB.
-    This package requires API TINYUSB_HW_INIT that will
-    provide function tinyusb_hardware_init().
-
+pkg.name: hw/usb/tinyusb/nrf53
+pkg.description: Hardware initialization for Tinyusb
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - usb
     - tinyusb
 
+pkg.apis:
+    - TINYUSB_HW_INIT
+
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@tinyusb/tinyusb"
-
-pkg.init:
-    tinyusb_start: 'MYNEWT_VAL(USBD_SYSINIT_STAGE)'
-
-pkg.deps.USBD_STD_DESCRIPTORS:
-    - "@apache-mynewt-core/hw/usb/tinyusb/std_descriptors"
-pkg.deps.'MCU_TARGET == "nRF52840"':
-    - "@apache-mynewt-core/hw/usb/tinyusb/nrf5x"
-pkg.deps.'MCU_TARGET == "nRF5340_APP"':
-    - "@apache-mynewt-core/hw/usb/tinyusb/nrf53"
-pkg.deps.MCU_STM32F4:
-    - "@apache-mynewt-core/hw/usb/tinyusb/synopsys"
-pkg.deps.MCU_STM32L4:
-    - "@apache-mynewt-core/hw/usb/tinyusb/synopsys"
-pkg.deps.MCU_STM32F1:
-    - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev"
-pkg.deps.'(MCU_TARGET == "DA14691" || MCU_TARGET == "DA14695" || MCU_TARGET == "DA14697" || MCU_TARGET == "DA14699")':
-    - "@apache-mynewt-core/hw/usb/tinyusb/da146xx"
-
-pkg.req_apis:
-    - TINYUSB_HW_INIT
