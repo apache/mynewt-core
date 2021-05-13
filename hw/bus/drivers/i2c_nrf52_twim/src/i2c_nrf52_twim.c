@@ -657,11 +657,11 @@ bus_i2c_nrf52_twim_dev_init_func(struct os_dev *odev, void *arg)
 
 #if MYNEWT_VAL(I2C_NRF52_TWIM_STAT)
     asprintf(&stats_name, "i2c_nrf52_twim%d", cfg->i2c_num);
-    /* XXX should we assert or return error on failure? */
-    stats_init_and_reg(STATS_HDR(dd->stats),
-                       STATS_SIZE_INIT_PARMS(dd->stats, STATS_SIZE_32),
-                       STATS_NAME_INIT_PARMS(twim_stats_section),
-                       stats_name);
+    rc = stats_init_and_reg(STATS_HDR(dd->stats),
+                            STATS_SIZE_INIT_PARMS(dd->stats, STATS_SIZE_32),
+                            STATS_NAME_INIT_PARMS(twim_stats_section),
+                            stats_name);
+    assert(rc == 0);
 #endif
 
     rc = bus_dev_init_func(odev, (void*)&bus_i2c_nrf52_twim_ops);

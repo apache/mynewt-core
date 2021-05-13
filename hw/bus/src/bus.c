@@ -226,6 +226,7 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
     struct bus_dev_ops *ops = arg;
 #if MYNEWT_VAL(BUS_STATS)
     char *stats_name;
+    int rc;
 #endif
 
     BUS_DEBUG_POISON_DEV(bdev);
@@ -246,11 +247,11 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
 
 #if MYNEWT_VAL(BUS_STATS)
     asprintf(&stats_name, "bd_%s", odev->od_name);
-    /* XXX should we assert or return error on failure? */
-    stats_init_and_reg(STATS_HDR(bdev->stats),
-                       STATS_SIZE_INIT_PARMS(bdev->stats, STATS_SIZE_32),
-                       STATS_NAME_INIT_PARMS(bus_stats_section),
-                       stats_name);
+    rc = stats_init_and_reg(STATS_HDR(bdev->stats),
+                            STATS_SIZE_INIT_PARMS(bdev->stats, STATS_SIZE_32),
+                            STATS_NAME_INIT_PARMS(bus_stats_section),
+                            stats_name);
+    assert(rc == 0);
 #endif
 
     odev->od_handlers.od_suspend = bus_dev_suspend_func;
@@ -305,11 +306,11 @@ bus_node_init_func(struct os_dev *odev, void *arg)
 
 #if MYNEWT_VAL(BUS_STATS_PER_NODE)
     asprintf(&stats_name, "bn_%s", odev->od_name);
-    /* XXX should we assert or return error on failure? */
-    stats_init_and_reg(STATS_HDR(bnode->stats),
-                       STATS_SIZE_INIT_PARMS(bnode->stats, STATS_SIZE_32),
-                       STATS_NAME_INIT_PARMS(bus_stats_section),
-                       stats_name);
+    rc = stats_init_and_reg(STATS_HDR(bnode->stats),
+                            STATS_SIZE_INIT_PARMS(bnode->stats, STATS_SIZE_32),
+                            STATS_NAME_INIT_PARMS(bus_stats_section),
+                            stats_name);
+    assert(rc == 0);
 #endif
 
     if (bnode->callbacks.init) {
