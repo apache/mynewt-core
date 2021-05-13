@@ -27,7 +27,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#else
 
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))
@@ -35,6 +35,7 @@ extern "C" {
 
 #ifndef max
 #define max(a, b) ((a)>(b)?(a):(b))
+#endif
 #endif
 
 #define os_get_return_addr() (__builtin_return_address(0))
