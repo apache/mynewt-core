@@ -525,7 +525,7 @@
 // <e> NRFX_I2S_ENABLED - nrfx_i2s - I2S peripheral driver.
 //==========================================================
 #ifndef NRFX_I2S_ENABLED
-#define NRFX_I2S_ENABLED 0
+#define NRFX_I2S_ENABLED 1
 #endif
 
 // <o> NRFX_I2S_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority.
