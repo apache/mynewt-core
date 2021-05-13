@@ -707,11 +707,11 @@ bus_i2c_da1469x_dev_init_func(struct os_dev *odev, void *arg)
 
 #if MYNEWT_VAL(I2C_DA1469X_STAT)
     asprintf(&stats_name, "i2c_da1469x_%d", cfg->i2c_num);
-    /* XXX should we assert or return error on failure? */
-    stats_init_and_reg(STATS_HDR(dd->stats),
-                       STATS_SIZE_INIT_PARMS(dd->stats, STATS_SIZE_32),
-                       STATS_NAME_INIT_PARMS(i2c_da1469x_stats_section),
-                       stats_name);
+    rc = stats_init_and_reg(STATS_HDR(dd->stats),
+                            STATS_SIZE_INIT_PARMS(dd->stats, STATS_SIZE_32),
+                            STATS_NAME_INIT_PARMS(i2c_da1469x_stats_section),
+                            stats_name);
+    assert(rc == 0);
 #endif
 
     rc = bus_dev_init_func(odev, (void*)&bus_i2c_da1469x_dma_ops);
