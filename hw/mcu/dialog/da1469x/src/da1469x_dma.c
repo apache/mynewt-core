@@ -291,10 +291,21 @@ da1469x_dma_configure(struct da1469x_dma_regs *chan,
 int
 da1469x_dma_write_peripheral(struct da1469x_dma_regs *chan, const void *mem, uint16_t size)
 {
+    uint32_t dma_mem;
+
     if (chan == NULL || mem == NULL || size == 0 || chan->DMA_B_START_REG == 0) {
         return SYS_EINVAL;
     }
-    chan->DMA_A_START_REG = (uint32_t)mem;
+    /*
+     * DMA can't access QSPI flash in cached region 0x16000000-0x18000000.
+     * It can access same area uncached which is 0x36000000-0x38000000.
+     */
+    if (MCU_MEM_QSPIF_M_RANGE_ADDRESS(mem)) {
+        dma_mem = (uint32_t)mem + 0x20000000;
+    } else {
+        dma_mem = (uint32_t)mem;
+    }
+    chan->DMA_A_START_REG = dma_mem;
     chan->DMA_INT_REG = size - 1;
     chan->DMA_LEN_REG = size - 1;
     chan->DMA_CTRL_REG |= DMA_DMA0_CTRL_REG_DMA_ON_Msk;
