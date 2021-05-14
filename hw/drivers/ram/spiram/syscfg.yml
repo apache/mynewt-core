@@ -1,0 +1,86 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    SPIRAM_LOCK_TIMEOUT:
+        description: >
+            Timeout (in ms) to lock device.
+        value: 1000
+
+    SPIRAM_0:
+        description: >
+            Create SPI RAM device instance.
+        value: 0
+
+    SPIRAM_0_NAME:
+        description: >
+            SPI RAM device name.
+        value: '"spiram0"'
+
+    SPIRAM_0_BAUDRATE:
+        description: >
+            SPI RAM clock speed in kHz.
+        value: 4000
+
+    SPIRAM_0_CS_PIN:
+        description: >
+            Chip select pin for SPI RAM.
+        value: -1
+
+    SPIRAM_0_SPI_BUS:
+        description: >
+            SPI interface bus name for SPI RAM.
+        value : '"spi0"'
+
+    SPIRAM_0_SPI_NUM:
+        description: >
+            SPI interface used for SPI RAM.
+        value: 0
+
+    SPIRAM_0_SIZE:
+        description: >
+            SPI RAM size in bytes.
+        value:
+
+    SPIRAM_0_ADDRESS_BYTES:
+        description: >
+            SPI RAM number of bytes of address.
+        range: 2,3,4
+        value: 3
+
+    SPIRAM_0_DUMMY_BYTES:
+        description: >
+            SPI RAM number of dummy bytes to send after address during read command.
+        value: 0
+
+    SPIRAM_0_WRITE_ENABLE_CMD:
+        description: >
+            Command to send before write can be executed.
+            0 - no command will be send.
+        value: 0
+
+    SPIRAM_0_HIBERNATE_CMD:
+        description: >
+            Command to send to hibernate RAM.
+            0 - no command will be send.
+        value: 0
+
+    SPIRAM_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for creation of SPI RAM.
+        value: 200
