@@ -532,7 +532,7 @@ hal_spi_enable(int spi_num)
     rc = 0;
     STM32_HAL_SPI_RESOLVE(spi_num, spi);
 
-    /* XXX power up */
+    __HAL_SPI_ENABLE(&spi->handle);
 err:
     return rc;
 }
@@ -554,7 +554,7 @@ hal_spi_disable(int spi_num)
     rc = 0;
     STM32_HAL_SPI_RESOLVE(spi_num, spi);
 
-    /* XXX power down */
+    __HAL_SPI_DISABLE(&spi->handle);
 err:
     return rc;
 }
