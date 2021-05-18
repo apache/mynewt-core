@@ -595,15 +595,47 @@ static struct sensor_itf i2c_0_itf_lpst = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LIS2DW12_OFB)
+#if MYNEWT_VAL(LIS2DW12_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(LIS2DW12_OFB_I2C_NUM) >= 0
+static const struct bus_i2c_node_cfg lis2dw12_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(LIS2DW12_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(LIS2DW12_OFB_ITF_ADDR),
+    .freq = MYNEWT_VAL(LIS2DW12_OFB_BAUDRATE),
+};
+#elif MYNEWT_VAL(LIS2DW12_OFB_SPI_NUM) >= 0
+static const struct bus_spi_node_cfg lis2dw12_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(LIS2DW12_OFB_BUS),
+    },
+    .pin_cs = MYNEWT_VAL(LIS2DW12_OFB_CS),
+    .mode = BUS_SPI_MODE_3,
+    .data_order = BUS_SPI_DATA_ORDER_MSB,
+    .freq = MYNEWT_VAL(LIS2DW12_OFB_BAUDRATE),
+};
+#endif
+static struct sensor_itf lis2dw12_itf = {
+    .si_ints = {
+        { MYNEWT_VAL(LIS2DW12_OFB_INT1_PIN_HOST), 1,
+          MYNEWT_VAL(LIS2DW12_OFB_INT_CFG_ACTIVE)},
+        { -1, 0, 0 },
+    }
+};
+#else
+#if MYNEWT_VAL(LIS2DW12_OFB_I2C_NUM) >= 0
 static struct sensor_itf i2c_0_itf_lis2dw12 = {
     .si_type = SENSOR_ITF_I2C,
-    .si_num  = 0,
-    .si_addr = 0x18,
+    .si_num = MYNEWT_VAL(LIS2DW12_OFB_I2C_NUM),
+    .si_addr = MYNEWT_VAL(LIS2DW12_OFB_ITF_ADDR),
     .si_ints = {
-        { MYNEWT_VAL(LIS2DW12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE),
-          MYNEWT_VAL(LIS2DW12_INT1_CFG_ACTIVE)}}
+        { MYNEWT_VAL(LIS2DW12_OFB_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_OFB_INT1_PIN_DEVICE),
+          MYNEWT_VAL(LIS2DW12_OFB_INT_CFG_ACTIVE)}
+    }
 };
+#endif
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LIS2DS12_OFB)
@@ -1910,9 +1942,21 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(LIS2DW12_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(LIS2DW12_OFB_I2C_NUM) >= 0
+    rc = lis2dw12_create_i2c_sensor_dev((struct bus_i2c_node *)&lis2dw12, "lis2dw12_0",
+                                        &lis2dw12_node_cfg, &lis2dw12_itf);
+    assert(rc == 0);
+#elif MYNEWT_VAL(LIS2DW12_OFB_SPI_NUM) >= 0
+    rc = lis2dw12_create_spi_sensor_dev((struct bus_spi_node *)&lis2dw12, "lis2dw12_0",
+                                        &lis2dw12_node_cfg, &lis2dw12_itf);
+    assert(rc == 0);
+#endif
+#else
     rc = os_dev_create((struct os_dev *) &lis2dw12, "lis2dw12_0",
       OS_DEV_INIT_PRIMARY, 0, lis2dw12_init, (void *)&i2c_0_itf_lis2dw12);
     assert(rc == 0);
+#endif
 #endif
 
 #if MYNEWT_VAL(LIS2DH12_OFB)
