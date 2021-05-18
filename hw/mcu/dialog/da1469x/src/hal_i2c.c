@@ -165,7 +165,8 @@ i2c_init_hw(const struct da1469x_hal_i2c *i2c, int pin_scl, int pin_sda)
     mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN, i2c->sda_func);
 
     /* Configure I2C_CON_REG, first configure to master */
-    i2c_con_reg = (1 << I2C_I2C_CON_REG_I2C_MASTER_MODE_Pos);
+    i2c_con_reg = (1 << I2C_I2C_CON_REG_I2C_MASTER_MODE_Pos) |
+                  (1 << I2C_I2C_CON_REG_I2C_SLAVE_DISABLE_Pos);
 
     /* Use 7-bit addressing */
     i2c_con_reg &= ~(1 << I2C_I2C_CON_REG_I2C_10BITADDR_MASTER_Pos);

@@ -680,6 +680,7 @@ bus_i2c_da1469x_dev_init_func(struct os_dev *odev, void *arg)
 
     i2c_hw->regs->I2C_CON_REG = (1U << I2C_I2C_CON_REG_I2C_MASTER_MODE_Pos) |
                                 (1U << I2C_I2C_CON_REG_I2C_SPEED_Pos) |
+                                (1U << I2C_I2C_CON_REG_I2C_SLAVE_DISABLE_Pos) |
                                 (1U << I2C_I2C_CON_REG_I2C_RESTART_EN_Pos);
 
     i2c_hw->regs->I2C_INTR_MASK_REG = 0;
