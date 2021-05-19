@@ -26,5 +26,5 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
 
-pkg.init:
+pkg.init.SPIRAM_0:
     spiram_init: 'MYNEWT_VAL(SPIRAM_SYSINIT_STAGE)'
