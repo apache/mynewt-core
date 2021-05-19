@@ -167,16 +167,15 @@ spiram_write(struct spiram_dev *dev, uint32_t addr, void *buf, uint32_t size)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
         rc = bus_node_lock((struct os_dev *)&dev->dev,
                            BUS_NODE_LOCK_DEFAULT_TIMEOUT);
-        if (rc) {
-            goto end;
-        }
-        rc = bus_node_write((struct os_dev *)&dev->dev,
-                            cmd, dev->characteristics->address_bytes + 1,
-                            BUS_NODE_LOCK_DEFAULT_TIMEOUT, BUS_F_NOSTOP);
         if (rc == 0) {
-            rc = bus_node_simple_write((struct os_dev *)&dev->dev, buf, size);
+            rc = bus_node_write((struct os_dev *)&dev->dev,
+                                cmd, dev->characteristics->address_bytes + 1,
+                                BUS_NODE_LOCK_DEFAULT_TIMEOUT, BUS_F_NOSTOP);
+            if (rc == 0) {
+                rc = bus_node_simple_write((struct os_dev *)&dev->dev, buf, size);
+            }
+            (void)bus_node_unlock((struct os_dev *)&dev->dev);
         }
-        (void)bus_node_unlock((struct os_dev *)&dev->dev);
 #else
         spiram_cs_activate(dev);
         rc = hal_spi_txrx(dev->spi_num, cmd, NULL, dev->characteristics->address_bytes + 1);
@@ -186,7 +185,6 @@ spiram_write(struct spiram_dev *dev, uint32_t addr, void *buf, uint32_t size)
         spiram_cs_deactivate(dev);
 #endif
     }
-end:
     if (locked) {
         spiram_unlock(dev);
     }
