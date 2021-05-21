@@ -43,6 +43,11 @@ extern "C" {
 #define OSDP_FLAG_INSTALL_MODE         0x00020000
 
 /**
+ * @brief When set, the PD will not set up secure mode capability.
+ */
+#define OSDP_FLAG_NON_SECURE_MODE      0x00040000
+
+/**
  * @brief Various PD capability function codes.
  */
 enum osdp_pd_cap_function_code_e {

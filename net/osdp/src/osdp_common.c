@@ -199,8 +199,11 @@ osdp_get_status_mask(osdp_t *ctx)
             }
         }
     } else {
-        /* PD is stateless */
-        mask = 1;
+        /* PD state is either online or offline based on whether it got polled from CP */
+        pd = TO_PD(ctx, 0);
+        if (ISSET_FLAG(pd, PD_FLAG_CP_POLL_ACTIVE)) {
+            mask = 1;
+        }
     }
 
     return mask;
