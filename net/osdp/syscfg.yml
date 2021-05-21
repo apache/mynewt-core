@@ -56,6 +56,10 @@ syscfg.defs:
         value: 400
         description: 'Timeout in milliseconds for secure mode session.'
 
+    OSDP_PD_IDLE_TIMEOUT_MS:
+        value: 800
+        description: 'Idle line timeout. PD has not heard a POLL from CP for this duration.'
+
     OSDP_DEVICE_LOCK_TIMEOUT_MS:
         value: 20
         description: 'Event/Command mutex timeout in milliseconds'

@@ -61,11 +61,6 @@ static struct osdp_pd_cap osdp_pd_cap[] = {
         1, /* The PD supports the 16-bit CRC-16 mode */
         0, /* N/A */
     },
-    {
-        OSDP_PD_CAP_COMMUNICATION_SECURITY,
-        1, /* (Bit-0) AES128 support */
-        0, /* N/A */
-    },
     { -1, 0, 0 } /* Sentinel */
 };
 
@@ -356,6 +351,7 @@ pd_decode_command(struct osdp_pd *pd, uint8_t *buf, int len)
             pd->reply_id = REPLY_ACK;
         }
         ret = OSDP_PD_ERR_NONE;
+        SET_FLAG(pd, PD_FLAG_CP_POLL_ACTIVE);
         break;
     case CMD_LSTAT:
         ASSERT_LENGTH(len, CMD_LSTAT_DATA_LEN);
@@ -999,6 +995,12 @@ osdp_update(struct osdp_pd *pd)
             OSDP_LOG_INFO("PD SC session timeout!\n");
             CLEAR_FLAG(pd, PD_FLAG_SC_ACTIVE);
         }
+        /* When secure mode is inactive check if CP is polling */
+        if (ISSET_FLAG(pd, PD_FLAG_CP_POLL_ACTIVE) &&
+            osdp_millis_since(pd->tstamp) > MYNEWT_VAL(OSDP_PD_IDLE_TIMEOUT_MS)) {
+            OSDP_LOG_INFO("PD CP-poll timeout!\n");
+            CLEAR_FLAG(pd, PD_FLAG_CP_POLL_ACTIVE);
+        }
         ret = pd->channel.recv(pd->channel.data, pd->rx_buf,
               sizeof(pd->rx_buf));
         if (ret <= 0) {
@@ -1110,16 +1112,29 @@ osdp_pd_setup(struct osdp_ctx *osdp_ctx, osdp_pd_info_t *info, uint8_t *scbk)
             OSDP_LOG_ERROR("SCBK must be provided in ENFORCE_SECURE\n");
             goto error;
         }
-        OSDP_LOG_WARN("SCBK not provided. PD is in INSTALL_MODE\n");
-        SET_FLAG(pd, OSDP_FLAG_INSTALL_MODE);
+        if (!ISSET_FLAG(pd, OSDP_FLAG_NON_SECURE_MODE)) {
+            OSDP_LOG_WARN("SCBK not provided. PD is in INSTALL_MODE\n");
+            SET_FLAG(pd, OSDP_FLAG_INSTALL_MODE);
+        } else {
+            OSDP_LOG_WARN("Setting up in non-secure mode\n");
+            /* Non secure mode */
+        }
     } else {
         memcpy(pd->sc.scbk, scbk, 16);
     }
-    SET_FLAG(pd, PD_FLAG_SC_CAPABLE);
+
+    /* Set secure capability based on non-secure flag */
+    if (!ISSET_FLAG(pd, OSDP_FLAG_NON_SECURE_MODE)) {
+        OSDP_LOG_INFO("PD is SC capable!\n");
+        SET_FLAG(pd, PD_FLAG_SC_CAPABLE);
+    }
+
     if (IS_ENABLED(CONFIG_OSDP_SKIP_MARK_BYTE)) {
         SET_FLAG(pd, PD_FLAG_PKT_SKIP_MARK);
     }
+    /* Set capabilities based on application */
     osdp_pd_set_attributes(pd, info->cap, &info->id);
+    /* Set implicit capabilities */
     osdp_pd_set_attributes(pd, osdp_pd_cap, NULL);
 
     SET_FLAG(pd, PD_FLAG_PD_MODE); /* used in checks in phy */
