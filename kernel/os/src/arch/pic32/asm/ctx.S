@@ -166,7 +166,8 @@
 #define CTX_FP64_REG(r) CTX_FP_OFFS(r)
 #define CTX_FP_FCSR CTX_FP_OFFS(32)
 
-#define TASK_STACK_TOP (4)
+#define TASK_STACK_BOTTOM   (4)
+#define TASK_STACK_SIZE     (8)
 
 .macro _fpctx_save
     sdc1	$f0, CTX_FP_REG(0)(k0)
@@ -243,7 +244,10 @@ _general_exception_context:
 
     # Save FPU context to FPU user
     beqz    k0, load                    # if there is an FPU user
-    lw      k0, TASK_STACK_TOP(k0)      # get FPU user stack top
+    lhu     k1, TASK_STACK_SIZE(k0)     # k1 = stack size in words
+    sll     k1, k1, 2                   # k1 = stack size in bytes
+    lw      k0, TASK_STACK_BOTTOM(k0)   # k0 = stack bottom
+    add     k0, k1, k0                  # k0 = FPU user stack top
     _fpctx_save
     lw      k1, g_current_task          # get current task
 
@@ -252,7 +256,10 @@ load:
     beqz    k1, return                  # if there is a current task
     la      k0, g_fpu_user
     sw      k1, 0(k0)                   # set FPU user to current task
-    lw      k0, TASK_STACK_TOP(k1)      # get current task stack top
+    lhu     k0, TASK_STACK_SIZE(k1)     # k0 = stack size in words
+    sll     k0, k0, 2                   # k0 = stack size in bytes
+    lw      k1, TASK_STACK_BOTTOM(k1)   # k1 = stack bottom
+    add     k0, k1, k0                  # k0 = current task stack top
     _fpctx_load
 
 return :
