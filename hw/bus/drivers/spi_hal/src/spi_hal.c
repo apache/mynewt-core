@@ -191,6 +191,66 @@ bus_spi_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
     return rc;
 }
 
+static int
+bus_spi_write_read(struct bus_dev *bdev, struct bus_node *bnode,
+                   const uint8_t *wbuf, uint16_t wlength,
+                   uint8_t *rbuf, uint16_t rlength,
+                   os_time_t timeout, uint16_t flags)
+{
+    struct bus_spi_hal_dev *dev = (struct bus_spi_hal_dev *)bdev;
+    struct bus_spi_node *node = (struct bus_spi_node *)bnode;
+    int rc;
+    uint8_t buf[16];
+
+    BUS_DEBUG_VERIFY_DEV(&dev->spi_dev);
+    BUS_DEBUG_VERIFY_NODE(node);
+
+    hal_gpio_write(node->pin_cs, 0);
+
+    /* XXX update HAL to accept const instead */
+
+#if MYNEWT_VAL(SPI_HAL_USE_NOBLOCK)
+    if (wlength + rlength <= sizeof(buf)) {
+        memcpy(buf, wbuf, wlength);
+        memset(buf + wlength, 0, rlength);
+        rc = hal_spi_txrx_noblock(dev->spi_dev.cfg.spi_num, buf, buf, wlength + rlength);
+        if (rc == 0) {
+            os_sem_pend(&dev->sem, OS_TIMEOUT_NEVER);
+            memcpy(rbuf, buf + wlength, rlength);
+        }
+    } else {
+        rc = hal_spi_txrx_noblock(dev->spi_dev.cfg.spi_num, (uint8_t *)wbuf, NULL, wlength);
+        if (rc == 0) {
+            os_sem_pend(&dev->sem, OS_TIMEOUT_NEVER);
+            memset(rbuf, 0, rlength);
+            rc = hal_spi_txrx_noblock(dev->spi_dev.cfg.spi_num, rbuf, rbuf, rlength);
+            if (rc == 0) {
+                os_sem_pend(&dev->sem, OS_TIMEOUT_NEVER);
+            }
+        }
+    }
+#else
+    if (wlength + rlength <= sizeof(buf)) {
+        memcpy(buf, wbuf, wlength);
+        rc = hal_spi_txrx(dev->spi_dev.cfg.spi_num, buf, buf, wlength + rlength);
+        if (rc == 0) {
+            memcpy(rbuf, buf + wlength, rlength);
+        }
+    } else {
+        rc = hal_spi_txrx(dev->spi_dev.cfg.spi_num, (uint8_t *)wbuf, NULL, wlength);
+        if (rc == 0) {
+            rc = hal_spi_txrx(dev->spi_dev.cfg.spi_num, NULL, rbuf, rlength);
+        }
+    }
+#endif
+
+    if (!(flags & BUS_F_NOSTOP)) {
+        hal_gpio_write(node->pin_cs, 1);
+    }
+
+    return rc;
+}
+
 static int bus_spi_disable(struct bus_dev *bdev)
 {
     struct bus_spi_dev *spi_dev = (struct bus_spi_dev *)bdev;
@@ -213,6 +273,7 @@ static const struct bus_dev_ops bus_spi_ops = {
     .read = bus_spi_read,
     .write = bus_spi_write,
     .disable = bus_spi_disable,
+    .write_read = bus_spi_write_read,
 };
 
 int
