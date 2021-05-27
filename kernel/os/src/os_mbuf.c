@@ -966,7 +966,7 @@ os_mbuf_widen(struct os_mbuf *om, uint16_t off, uint16_t len)
      */
     edge_om = os_mbuf_off(om, off, &sub_off);
     if (edge_om == NULL) {
-        return SYS_EINVAL;
+        return OS_EINVAL;
     }
 
     /* If the mbuf has sufficient capacity for the gap, just make room within
@@ -994,7 +994,7 @@ os_mbuf_widen(struct os_mbuf *om, uint16_t off, uint16_t len)
         if (cur == NULL) {
             /* Free only the mbufs that this function allocated. */
             os_mbuf_free_chain(first_new);
-            return SYS_ENOMEM;
+            return OS_ENOMEM;
         }
 
         /* Remember the start of the chain of new mbufs. */
@@ -1022,7 +1022,7 @@ os_mbuf_widen(struct os_mbuf *om, uint16_t off, uint16_t len)
                         edge_om->om_len - sub_off);
     if (rc != 0) {
         os_mbuf_free_chain(first_new);
-        return SYS_ENOMEM;
+        return OS_ENOMEM;
     }
     edge_om->om_len = sub_off;
 
