@@ -63,6 +63,11 @@ struct bus_dev_ops {
                   uint16_t length, os_time_t timeout,  uint16_t flags);
     /* Disable bus device */
     int (* disable)(struct bus_dev *bus);
+    /* Write data to node */
+    int (* write_read)(struct bus_dev *dev, struct bus_node *node,
+                       const uint8_t *wbuf, uint16_t wlength,
+                       uint8_t *rbuf, uint16_t rlength,
+                       os_time_t timeout,  uint16_t flags);
 };
 
 /**

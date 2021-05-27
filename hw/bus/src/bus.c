@@ -420,24 +420,34 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
         goto done;
     }
 
-    /*
-     * XXX we probably should pass flags here but with some of them stripped,
-     * e.g. BUS_F_NOSTOP should not be present here, but since we do not have
-     * too many flags now (like we literally have only one flag) let's just pass
-     * no flags for now
-     */
-    BUS_STATS_INC(bdev, bnode, write_ops);
-    rc = bdev->dops->write(bdev, bnode, wbuf, wlength, timeout, BUS_F_NOSTOP);
-    if (rc) {
-        BUS_STATS_INC(bdev, bnode, write_errors);
-        goto done;
-    }
+    if (bdev->dops->write_read) {
+        BUS_STATS_INC(bdev, bnode, write_ops);
+        BUS_STATS_INC(bdev, bnode, read_ops);
+        rc = bdev->dops->write_read(bdev, bnode, wbuf, wlength, rbuf, rlength, timeout, flags);
+        if (rc) {
+            BUS_STATS_INC(bdev, bnode, write_errors);
+            BUS_STATS_INC(bdev, bnode, read_errors);
+        }
+    } else {
+        /*
+         * XXX we probably should pass flags here but with some of them stripped,
+         * e.g. BUS_F_NOSTOP should not be present here, but since we do not have
+         * too many flags now (like we literally have only one flag) let's just pass
+         * no flags for now
+         */
+        BUS_STATS_INC(bdev, bnode, write_ops);
+        rc = bdev->dops->write(bdev, bnode, wbuf, wlength, timeout, BUS_F_NOSTOP);
+        if (rc) {
+            BUS_STATS_INC(bdev, bnode, write_errors);
+            goto done;
+        }
 
-    BUS_STATS_INC(bdev, bnode, read_ops);
-    rc = bdev->dops->read(bdev, bnode, rbuf, rlength, timeout, flags);
-    if (rc) {
-        BUS_STATS_INC(bdev, bnode, read_errors);
-        goto done;
+        BUS_STATS_INC(bdev, bnode, read_ops);
+        rc = bdev->dops->read(bdev, bnode, rbuf, rlength, timeout, flags);
+        if (rc) {
+            BUS_STATS_INC(bdev, bnode, read_errors);
+            goto done;
+        }
     }
 
 done:
