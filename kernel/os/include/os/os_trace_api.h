@@ -219,16 +219,19 @@ os_trace_isr_exit(void)
 static inline void
 os_trace_task_info(const struct os_task *t)
 {
+    (void)t;
 }
 
 static inline void
 os_trace_task_create(const struct os_task *t)
 {
+    (void)t;
 }
 
 static inline void
 os_trace_task_start_exec(const struct os_task *t)
 {
+    (void)t;
 }
 
 static inline void
@@ -239,11 +242,14 @@ os_trace_task_stop_exec(void)
 static inline void
 os_trace_task_start_ready(const struct os_task *t)
 {
+    (void)t;
 }
 
 static inline void
 os_trace_task_stop_ready(const struct os_task *t, unsigned reason)
 {
+    (void)t;
+    (void)reason;
 }
 
 static inline void
@@ -254,11 +260,13 @@ os_trace_idle(void)
 static inline void
 os_trace_user_start(unsigned id)
 {
+    (void)id;
 }
 
 static inline void
 os_trace_user_stop(unsigned id)
 {
+    (void)id;
 }
 
 #endif /* !MYNEWT_VAL(OS_SYSVIEW) */
@@ -268,31 +276,44 @@ os_trace_user_stop(unsigned id)
 static inline void
 os_trace_api_void(unsigned id)
 {
+    (void)id;
 }
 
 static inline void
 os_trace_api_u32(unsigned id, uint32_t p0)
 {
+    (void)id;
+    (void)p0;
 }
 
 static inline void
 os_trace_api_u32x2(unsigned id, uint32_t p0, uint32_t p1)
 {
+    (void)id;
+    (void)p0;
+    (void)p1;
 }
 
 static inline void
 os_trace_api_u32x3(unsigned id, uint32_t p0, uint32_t p1, uint32_t p2)
 {
+    (void)id;
+    (void)p0;
+    (void)p1;
+    (void)p2;
 }
 
 static inline void
 os_trace_api_ret(unsigned id)
 {
+    (void)id;
 }
 
 static inline void
 os_trace_api_ret_u32(unsigned id, uint32_t return_value)
 {
+    (void)id;
+    (void)return_value;
 }
 
 #endif /* !MYNEWT_VAL(OS_SYSVIEW) || defined(OS_TRACE_DISABLE_FILE_API) */
