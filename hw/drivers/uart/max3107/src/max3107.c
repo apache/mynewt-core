@@ -261,6 +261,12 @@ max3107_compute_clock_config(uint32_t clockf, uint32_t br, struct max3107_clock_
     return best_br;
 }
 
+uint32_t
+max3107_get_real_baudrate(struct max3107_dev *dev)
+{
+    return dev->real_baudrate;
+}
+
 int
 max3107_config_uart(struct max3107_dev *dev, const struct uart_conf_port *conf)
 {
@@ -283,7 +289,7 @@ max3107_config_uart(struct max3107_dev *dev, const struct uart_conf_port *conf)
     } else {
         dev->regs.clock.brg_config = 0;
     }
-    max3107_compute_clock_config(dev->cfg.osc_freq, conf->uc_speed, &dev->regs.clock);
+    dev->real_baudrate = max3107_compute_clock_config(dev->cfg.osc_freq, conf->uc_speed, &dev->regs.clock);
 
     rc = max3107_write_regs(dev, MAX3107_REG_PLLCONFIG, &dev->regs.clock.pll_config, 5);
     if (rc) {

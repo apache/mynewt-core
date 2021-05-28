@@ -232,6 +232,8 @@ struct max3107_dev {
 
     struct max3107_cfg cfg;
 
+    uint32_t real_baudrate;
+
     const struct max3107_client *client;
     bool writable_notified;
     bool readable_notified;

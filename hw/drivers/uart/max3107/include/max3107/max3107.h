@@ -121,6 +121,18 @@ int max3107_write(struct max3107_dev *dev, const void *buf, size_t size);
 int max3107_read(struct max3107_dev *dev, void *buf, size_t size);
 
 /**
+ * Get real baudrate of the UART
+ *
+ * Baudrate requested during opening of the device may not be possible with
+ * clock that is supplied to max3107.
+ * User can check what is the actual value baudrate calling this function.
+ *
+ * @param dev - device to check baudrate
+ * @return baudrate of the device
+ */
+uint32_t max3107_get_real_baudrate(struct max3107_dev *dev);
+
+/**
  * Returns number of bytes in RX FIFO that can be read.
  *
  * @param dev - MAX3107 device
