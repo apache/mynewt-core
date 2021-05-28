@@ -624,17 +624,21 @@ static struct sensor_itf lis2dw12_itf = {
     }
 };
 #else
+static struct sensor_itf lis2dw12_itf = {
 #if MYNEWT_VAL(LIS2DW12_OFB_I2C_NUM) >= 0
-static struct sensor_itf i2c_0_itf_lis2dw12 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num = MYNEWT_VAL(LIS2DW12_OFB_I2C_NUM),
     .si_addr = MYNEWT_VAL(LIS2DW12_OFB_ITF_ADDR),
+#elif MYNEWT_VAL(LIS2DW12_OFB_SPI_NUM) >= 0
+    .si_type = SENSOR_ITF_SPI,
+    .si_num = MYNEWT_VAL(LIS2DW12_OFB_SPI_NUM),
+    .si_cs_pin = MYNEWT_VAL(BME280_OFB_CS),
+#endif
     .si_ints = {
         { MYNEWT_VAL(LIS2DW12_OFB_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_OFB_INT1_PIN_DEVICE),
           MYNEWT_VAL(LIS2DW12_OFB_INT_CFG_ACTIVE)}
     }
 };
-#endif
 #endif
 #endif
 
@@ -1953,8 +1957,8 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 #else
-    rc = os_dev_create((struct os_dev *) &lis2dw12, "lis2dw12_0",
-      OS_DEV_INIT_PRIMARY, 0, lis2dw12_init, (void *)&i2c_0_itf_lis2dw12);
+    rc = os_dev_create((struct os_dev *)&lis2dw12, "lis2dw12_0",
+                       OS_DEV_INIT_PRIMARY, 0, lis2dw12_init, (void *)&lis2dw12_itf);
     assert(rc == 0);
 #endif
 #endif
