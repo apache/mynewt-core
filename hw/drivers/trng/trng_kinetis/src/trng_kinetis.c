@@ -46,13 +46,13 @@ static uint8_t rng_cache[ MYNEWT_VAL(KINETIS_TRNG_CACHE_LEN) ];
 static uint16_t rng_cache_out;
 static uint16_t rng_cache_in;
 static struct os_mutex rng_cache_mu;
-static os_stack_t *pstack;
 static bool running;
 static struct os_eventq rng_evtq;
 
 #define TRNG_POLLER_PRIO (8)
 #define TRNG_POLLER_STACK_SIZE OS_STACK_ALIGN(64)
-static struct os_task poller_task;
+static struct os_task trng_poller_task;
+OS_TASK_STACK_DEFINE(trng_poller_stack, TRNG_POLLER_STACK_SIZE);
 
 static inline void
 kinetis_trng_start(void)
@@ -220,11 +220,9 @@ kinetis_trng_dev_init(struct os_dev *dev, void *arg)
     os_eventq_init(&rng_evtq);
     os_mutex_init(&rng_cache_mu);
 
-    pstack = malloc(sizeof(os_stack_t) * TRNG_POLLER_STACK_SIZE);
-    assert(pstack);
-
-    rc = os_task_init(&poller_task, "trng_poller", trng_poller_handler, NULL,
-            TRNG_POLLER_PRIO, OS_WAIT_FOREVER, pstack, TRNG_POLLER_STACK_SIZE);
+    rc = os_task_init(&trng_poller_task, "trng_poller", trng_poller_handler, NULL,
+            TRNG_POLLER_PRIO, OS_WAIT_FOREVER, trng_poller_stack,
+            TRNG_POLLER_STACK_SIZE);
     if (rc) {
         return rc;
     }
