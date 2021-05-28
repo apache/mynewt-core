@@ -194,7 +194,7 @@ syscfg.defs:
         range: 0x18,0x19
     LIS2DW12_OFB_I2C_NUM:
         description: 'I2C interface used for LIS2DW12'
-        value: -1
+        value: 0
         restrictions:
             - '(LIS2DW12_OFB == 0) ||
             ((LIS2DW12_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
@@ -212,6 +212,9 @@ syscfg.defs:
             ((LIS2DW12_OFB_SPI_NUM == 2) && (SPI_2_MASTER == 1)) ||
             ((LIS2DW12_OFB_SPI_NUM == 3) && (SPI_3_MASTER == 1)) ||
             ((LIS2DW12_OFB_SPI_NUM == -1))'
+    LIS2DW12_OFB_CS:
+        description: 'SPI CS pin for LIS2DW12'
+        value: -1
     LIS2DW12_OFB_INT1_PIN_HOST:
         description: 'Host pin for LIS2DW12 INT1 pin'
         value: -1
