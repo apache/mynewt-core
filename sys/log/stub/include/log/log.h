@@ -43,17 +43,25 @@ static inline int
 log_register(const char *name, struct log *log, const struct log_handler *h,
              void *arg, uint8_t level)
 {
+    (void)name;
+    (void)log;
+    (void)h;
+    (void)arg;
+    (void)level;
     return 0;
 }
 
 static inline void
 log_set_append_cb(struct log *log, log_append_cb *cb)
 {
+    (void)log;
+    (void)cb;
 }
 
 static inline struct log *
 log_find(const char *name)
 {
+    (void)name;
     return NULL;
 }
 
@@ -61,6 +69,12 @@ static inline int
 log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
                  void *data, uint16_t len)
 {
+    (void)log;
+    (void)module;
+    (void)level;
+    (void)etype;
+    (void)data;
+    (void)len;
     return 0;
 }
 
@@ -68,6 +82,11 @@ static inline int
 log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
                               uint8_t etype, struct os_mbuf **om_ptr)
 {
+    (void)log;
+    (void)module;
+    (void)level;
+    (void)etype;
+    (void)om_ptr;
     return 0;
 }
 
@@ -75,6 +94,11 @@ static inline int
 log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
                       uint8_t etype, struct os_mbuf *om)
 {
+    (void)log;
+    (void)module;
+    (void)level;
+    (void)etype;
+    (void)om;
     os_mbuf_free_chain(om);
     return 0;
 }
@@ -83,6 +107,11 @@ static inline int
 log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
                              uint8_t etype, struct os_mbuf *om)
 {
+    (void)log;
+    (void)module;
+    (void)level;
+    (void)etype;
+    (void)om;
     return 0;
 }
 
@@ -90,6 +119,11 @@ static inline int
 log_append_mbuf_body(struct log *log, uint8_t module, uint8_t level,
                      uint8_t etype, struct os_mbuf *om)
 {
+    (void)log;
+    (void)module;
+    (void)level;
+    (void)etype;
+    (void)om;
     os_mbuf_free_chain(om);
     return 0;
 }
@@ -101,11 +135,14 @@ log_init(void)
 
 static inline void log_set_level(struct log *log, uint8_t level)
 {
+    (void)log;
+    (void)level;
     return;
 }
 
 static inline uint8_t log_get_level(const struct log *log)
 {
+    (void)log;
     return 0;
 }
 
@@ -121,6 +158,8 @@ static inline uint8_t log_get_level(const struct log *log)
 static inline void
 log_set_max_entry_len(struct log *log, uint16_t max_entry_len)
 {
+    (void)log;
+    (void)max_entry_len;
     return;
 }
 
