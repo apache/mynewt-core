@@ -632,7 +632,7 @@ static struct sensor_itf lis2dw12_itf = {
 #elif MYNEWT_VAL(LIS2DW12_OFB_SPI_NUM) >= 0
     .si_type = SENSOR_ITF_SPI,
     .si_num = MYNEWT_VAL(LIS2DW12_OFB_SPI_NUM),
-    .si_cs_pin = MYNEWT_VAL(BME280_OFB_CS),
+    .si_cs_pin = MYNEWT_VAL(LIS2DW12_OFB_CS),
 #endif
     .si_ints = {
         { MYNEWT_VAL(LIS2DW12_OFB_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_OFB_INT1_PIN_DEVICE),
