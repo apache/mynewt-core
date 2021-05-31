@@ -70,25 +70,112 @@ struct hal_uart {
 };
 
 /* UART configurations */
-static struct hal_uart uarts[FSL_FEATURE_SOC_LPUART_COUNT];
+#define UART_CNT (((uint8_t)(MYNEWT_VAL(UART_0) != 0)) + \
+                  ((uint8_t)(MYNEWT_VAL(UART_1) != 0)) + \
+                  ((uint8_t)(MYNEWT_VAL(UART_2) != 0)) + \
+                  ((uint8_t)(MYNEWT_VAL(UART_3) != 0)) + \
+                  ((uint8_t)(MYNEWT_VAL(UART_4) != 0)))
 
-static uint8_t const s_uartExists[] = NXP_UART_EXISTS;
-static uint8_t const s_uartEnabled[] = NXP_UART_ENABLED;
+static struct hal_uart uarts[UART_CNT];
+static struct hal_uart *
+uart_by_port(int port)
+{
+    int index;
+
+    (void)index;
+    (void)uarts;
+
+    index = 0;
+#if MYNEWT_VAL(UART_0)
+    if (port == 0) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_1)
+    if (port == 1) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_2)
+#   if FSL_FEATURE_SOC_LPUART_COUNT < 3
+#       error "UART_2 is not supported on this MCU"
+#   endif
+    if (port == 2) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_3)
+#   if FSL_FEATURE_SOC_LPUART_COUNT < 4
+#       error "UART_3 is not supported on this MCU"
+#   endif
+    if (port == 3) {
+        return &uarts[index];
+    }
+    index++;
+#endif
+#if MYNEWT_VAL(UART_4)
+#   if FSL_FEATURE_SOC_LPUART_COUNT < 5
+#       error "UART_4 is not supported on this MCU"
+#   endif
+    if (port == 4) {
+        return &uarts[index];
+    }
+#endif
+    return NULL;
+};
+
 static LPUART_Type *const s_uartBases[] = LPUART_BASE_PTRS;
-static clock_name_t s_uartClocks[] = NXP_UART_CLOCKS;
 static uint8_t const s_uartIRQ[] = LPUART_RX_TX_IRQS;
 static PORT_Type *const s_uartPort[] = NXP_UART_PORTS;
 static clock_ip_name_t const s_uartPortClocks[] = NXP_UART_PORT_CLOCKS;
 static uint8_t const s_uartPIN_RX[] = NXP_UART_PIN_RX;
 static uint8_t const s_uartPIN_TX[] = NXP_UART_PIN_TX;
 
+#if MYNEWT_VAL(UART_0)
 static void uart_irq0(void);
+#endif
+#if MYNEWT_VAL(UART_1)
 static void uart_irq1(void);
+#endif
+#if MYNEWT_VAL(UART_2)
 static void uart_irq2(void);
+#endif
+#if MYNEWT_VAL(UART_3)
 static void uart_irq3(void);
+#endif
+#if MYNEWT_VAL(UART_4)
 static void uart_irq4(void);
-static void (*s_uartirqs[])(void) = {
-    uart_irq0, uart_irq1, uart_irq2, uart_irq3, uart_irq4
+#endif
+
+static void (*const s_uartirqs[])(void) = {
+#if MYNEWT_VAL(UART_0)
+    uart_irq0,
+#else
+    NULL,
+#endif
+#if MYNEWT_VAL(UART_1)
+    uart_irq1,
+#else
+    NULL,
+#endif
+#if MYNEWT_VAL(UART_2)
+    uart_irq2,
+#else
+    NULL,
+#endif
+#if MYNEWT_VAL(UART_3)
+    uart_irq3,
+#else
+    NULL,
+#endif
+#if MYNEWT_VAL(UART_4)
+    uart_irq4,
+#else
+    NULL,
+#endif
 };
 
 /*
@@ -148,10 +235,10 @@ hal_uart_init_cbs(int port,
 {
     struct hal_uart *u;
 
-    if (port >= FSL_FEATURE_SOC_LPUART_COUNT) {
+    u = uart_by_port(port);
+    if (!u) {
         return -1;
     }
-    u = &uarts[port];
     u->u_rx_func = rx_func;
     u->u_tx_func = tx_func;
     u->u_tx_done = tx_done;
@@ -165,11 +252,8 @@ hal_uart_blocking_tx(int port, uint8_t byte)
 {
     struct hal_uart *u;
 
-    if (port >= FSL_FEATURE_SOC_LPUART_COUNT) {
-        return;
-    }
-    u = &uarts[port];
-    if (!u->u_configured || !u->u_open) {
+    u = uart_by_port(port);
+    if (!u || !u->u_configured || !u->u_open) {
         return;
     }
 
@@ -205,11 +289,8 @@ hal_uart_start_tx(int port)
     int data = -1;
     int rc;
 
-    if (port >= FSL_FEATURE_SOC_LPUART_COUNT) {
-        return;
-    }
-    u = &uarts[port];
-    if (!u->u_configured || !u->u_open) {
+    u = uart_by_port(port);
+    if (!u || !u->u_configured || !u->u_open) {
         return;
     }
 
@@ -248,11 +329,8 @@ hal_uart_start_rx(int port)
     os_sr_t sr;
     int rc = 0;
 
-    if (port >= FSL_FEATURE_SOC_LPUART_COUNT) {
-        return;
-    }
-    u = &uarts[port];
-    if (!u->u_configured || !u->u_open) {
+    u = uart_by_port(port);
+    if (!u || !u->u_configured || !u->u_open) {
         return;
     }
 
@@ -279,8 +357,8 @@ uart_irq_handler(int port)
     uint32_t status;
     uint8_t data;
 
-    u = &uarts[port];
-    if (u->u_configured && u->u_open) {
+    u = uart_by_port(port);
+    if (u && u->u_configured && u->u_open) {
         status = LPUART_GetStatusFlags(u->u_base);
         /* Check for RX data */
         if (status & (kLPUART_RxDataRegFullFlag | kLPUART_RxOverrunFlag)) {
@@ -305,35 +383,45 @@ uart_irq_handler(int port)
     }
 }
 
+#if MYNEWT_VAL(UART_0)
 static void
 uart_irq0(void)
 {
     uart_irq_handler(0);
 }
+#endif
 
+#if MYNEWT_VAL(UART_1)
 static void
 uart_irq1(void)
 {
     uart_irq_handler(1);
 }
+#endif
 
+#if MYNEWT_VAL(UART_2)
 static void
 uart_irq2(void)
 {
     uart_irq_handler(2);
 }
+#endif
 
+#if MYNEWT_VAL(UART_3)
 static void
 uart_irq3(void)
 {
     uart_irq_handler(3);
 }
+#endif
 
+#if MYNEWT_VAL(UART_4)
 static void
 uart_irq4(void)
 {
     uart_irq_handler(4);
 }
+#endif
 
 int
 hal_uart_config(int port,
@@ -346,11 +434,8 @@ hal_uart_config(int port,
     struct hal_uart *u;
     lpuart_config_t uconfig;
 
-    if (port >= FSL_FEATURE_SOC_LPUART_COUNT) {
-        return -1;
-    }
-    u = &uarts[port];
-    if (!u->u_configured || u->u_open) {
+    u = uart_by_port(port);
+    if (!u || !u->u_configured || u->u_open) {
         return -1;
     }
 
@@ -427,11 +512,8 @@ hal_uart_close(int port)
 {
     struct hal_uart *u;
 
-    if (port >= FSL_FEATURE_SOC_LPUART_COUNT) {
-        return -1;
-    }
-    u = &uarts[port];
-    if (!u->u_open) {
+    u = uart_by_port(port);
+    if (!u || !u->u_open) {
         return -1;
     }
 
@@ -450,27 +532,26 @@ hal_uart_close(int port)
 int
 hal_uart_init(int port, void *cfg)
 {
-    if (s_uartExists[port]) {
-        if (s_uartEnabled[port]) {
-            uarts[port].u_base = s_uartBases[port];
-            uarts[port].clk_src = s_uartClocks[port];
-            uarts[port].u_irq = s_uartIRQ[port];
-            uarts[port].p_base = s_uartPort[port];
-            uarts[port].p_clock = s_uartPortClocks[port];
-            uarts[port].u_pin_rx = s_uartPIN_RX[port];
-            uarts[port].u_pin_tx = s_uartPIN_TX[port];
-            uarts[port].ur_tx.ur_buf = uarts[port].tx_buffer;
-            uarts[port].ur_tx.ur_size = TX_BUF_SZ;
-            uarts[port].ur_tx.ur_head = 0;
-            uarts[port].ur_tx.ur_tail = 0;
-            uarts[port].ur_rx.ur_buf = uarts[port].rx_buffer;
-            uarts[port].ur_rx.ur_size = RX_BUF_SZ;
-            uarts[port].ur_rx.ur_head = 0;
-            uarts[port].ur_rx.ur_tail = 0;
-            uarts[port].u_configured = 1;
-        } else {
-            uarts[port].u_configured = 0;
-        }
+    struct hal_uart *u;
+
+    u = uart_by_port(port);
+    if (u) {
+        u->u_base = s_uartBases[port];
+        u->clk_src = kCLOCK_Osc0ErClk;
+        u->u_irq = s_uartIRQ[port];
+        u->p_base = s_uartPort[port];
+        u->p_clock = s_uartPortClocks[port];
+        u->u_pin_rx = s_uartPIN_RX[port];
+        u->u_pin_tx = s_uartPIN_TX[port];
+        u->ur_tx.ur_buf = u->tx_buffer;
+        u->ur_tx.ur_size = TX_BUF_SZ;
+        u->ur_tx.ur_head = 0;
+        u->ur_tx.ur_tail = 0;
+        u->ur_rx.ur_buf = u->rx_buffer;
+        u->ur_rx.ur_size = RX_BUF_SZ;
+        u->ur_rx.ur_head = 0;
+        u->ur_rx.ur_tail = 0;
+        u->u_configured = 1;
     }
 
     return 0;

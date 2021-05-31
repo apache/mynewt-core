@@ -24,24 +24,6 @@
 extern "C" {
 #endif
 
-#define NXP_UART_EXISTS      { 1, \
-                               1, \
-                               (FSL_FEATURE_SOC_LPUART_COUNT > 2U), \
-                               (FSL_FEATURE_SOC_LPUART_COUNT > 3U), \
-                               (FSL_FEATURE_SOC_LPUART_COUNT > 4U) }
-
-#define NXP_UART_ENABLED     { MYNEWT_VAL(UART_0), \
-                               MYNEWT_VAL(UART_1), \
-                               MYNEWT_VAL(UART_2), \
-                               MYNEWT_VAL(UART_3), \
-                               MYNEWT_VAL(UART_4) }
-
-#define NXP_UART_CLOCKS      { kCLOCK_Osc0ErClk, \
-                               kCLOCK_Osc0ErClk, \
-                               kCLOCK_Osc0ErClk, \
-                               kCLOCK_Osc0ErClk, \
-                               kCLOCK_Osc0ErClk }
-
 #define NXP_UART_PORTS       { MYNEWT_VAL(UART_0_PORT), \
                                MYNEWT_VAL(UART_1_PORT), \
                                MYNEWT_VAL(UART_2_PORT), \
