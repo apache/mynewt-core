@@ -311,7 +311,7 @@ _dinit_clear:
 
 _dinit_end:
         addu    SRC,3
-        addiu   LEN,$0,0xFFFFFFFC
+        addiu   LEN,$0,-4
         and     SRC,LEN,SRC
         lw      DST,0(SRC)
         bne     DST,$0,0b
