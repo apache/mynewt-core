@@ -102,7 +102,7 @@ spiram_write_enable(struct spiram_dev *dev)
 int
 spiram_read(struct spiram_dev *dev, uint32_t addr, void *buf, uint32_t size)
 {
-    uint8_t cmd[5] = { SPIRAM_READ };
+    uint8_t cmd[6] = { SPIRAM_READ };
     int i;
     int rc;
     int cmd_size = 1 + dev->characteristics->address_bytes + dev->characteristics->dummy_bytes;
@@ -147,7 +147,7 @@ spiram_read(struct spiram_dev *dev, uint32_t addr, void *buf, uint32_t size)
 int
 spiram_write(struct spiram_dev *dev, uint32_t addr, void *buf, uint32_t size)
 {
-    uint8_t cmd[4] = { SPIRAM_WRITE };
+    uint8_t cmd[5] = { SPIRAM_WRITE };
     int rc;
     int i;
     bool locked;

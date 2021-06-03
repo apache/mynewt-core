@@ -66,6 +66,7 @@ syscfg.defs:
     SPIRAM_0_DUMMY_BYTES:
         description: >
             SPI RAM number of dummy bytes to send after address during read command.
+        range: 0,1
         value: 0
 
     SPIRAM_0_WRITE_ENABLE_CMD:
