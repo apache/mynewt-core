@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-#include "os/mynewt.h"
+#include <syscfg/syscfg.h>
 
 #undef MBEDTLS_HAVE_TIME /* we have no time.h */
 #undef MBEDTLS_HAVE_TIME_DATE
