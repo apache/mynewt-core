@@ -25,13 +25,14 @@ syscfg.defs:
             - $notnull
         choices:
             - nRF5340_APP
+
     MCU_APP_CORE:
         description: >
             Constant value always set to 1.  It allows to have common
             packages for network and application core that do have
             some differences depending on which core they are build for.
         value: 1
-        restriction: MCU_NET_CORE==0
+
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
@@ -87,6 +88,12 @@ syscfg.defs:
         description: >
             Enable instruction and data cache
             Default value is 0, so disabled.
+        value: 0
+
+    MCU_NRF5340_EN_APPROTECT_USERHANDLING:
+        description: >
+            This needs to be set by the BSP/App/Target if the
+            MCU/BSP wants to handle APPROTECT on its own.
         value: 0
 
 # MCU peripherals definitions

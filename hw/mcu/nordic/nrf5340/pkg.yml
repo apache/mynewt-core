@@ -104,3 +104,6 @@ pkg.deps.I2C_3':
 
 pkg.deps.NRF5340_EMBED_NET_CORE:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/net_core_image"
+
+pkg.cflags.MCU_NRF5340_EN_APPROTECT_USERHANDLING:
+    - "-DENABLE_APPROTECT_USER_HANDLING"
