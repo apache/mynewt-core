@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,18 +16,8 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/uart/max3107
-pkg.description: UART driver for MAX3107 chip
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-pkg.apis:
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/drivers/uart"
-
-pkg.deps.MAX3107_0:
-    - "@apache-mynewt-core/hw/drivers/uart/max3107/max3107_0"
-
-pkg.deps.MAX3107_SHELL:
-    - "@apache-mynewt-core/hw/drivers/uart/max3107/shell"
+syscfg.defs:
+    MAX3107_SHELL_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for creation of MAX3107 shell commands.
+        value: 500
