@@ -22,6 +22,11 @@ syscfg.defs:
             Create MAX3107 device instance.
         value: 0
 
+    MAX3107_SHELL:
+        description: >
+            Enable CLI for MAX3107.
+        value: 0
+
     MAX3107_UART_RX_BUFFER_SIZE:
         description: >
             Driver buffer used for reading data out of device FIFO,

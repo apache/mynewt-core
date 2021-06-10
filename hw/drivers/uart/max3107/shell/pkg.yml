@@ -17,18 +17,19 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/uart/max3107
-pkg.description: UART driver for MAX3107 chip
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.name: hw/drivers/uart/max3107/shell
+pkg.description: Shell commands for for the MAX3107
+pkg.author: "Apache Mynewt"
 pkg.keywords:
-pkg.apis:
+    - uart
+    - shell
+
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/drivers/uart"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/util/parse"
+    - "@apache-mynewt-core/util/streamer"
+    - "@apache-mynewt-core/hw/drivers/uart/max3107"
 
-pkg.deps.MAX3107_0:
-    - "@apache-mynewt-core/hw/drivers/uart/max3107/max3107_0"
-
-pkg.deps.MAX3107_SHELL:
-    - "@apache-mynewt-core/hw/drivers/uart/max3107/shell"
+pkg.init:
+    max3107_shell_init: 'MYNEWT_VAL(MAX3107_SHELL_SYSINIT_STAGE)'
