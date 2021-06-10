@@ -17,15 +17,11 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/uart/max3107
-pkg.description: UART driver for MAX3107 chip
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.name: hw/drivers/uart/max3107/max3107_0
+pkg.description: Package adds single instance of MAX3107 device.
+pkg.author: "Apache Mynewt"
 pkg.keywords:
-pkg.apis:
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/drivers/uart"
+    - uart
 
-pkg.deps.MAX3107_0:
-    - "@apache-mynewt-core/hw/drivers/uart/max3107/max3107_0"
+pkg.init:
+    max3107_0_init: 'MYNEWT_VAL(MAX3107_0_SYSINIT_STAGE)'
