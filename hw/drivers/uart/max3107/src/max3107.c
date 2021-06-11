@@ -31,6 +31,20 @@
 #include <max3107/max3107.h>
 
 #include <uart/uart.h>
+#include <stats/stats.h>
+
+#if MYNEWT_VAL(MAX3107_STATS)
+STATS_NAME_START(max3107_stats_section)
+        STATS_NAME(max3107_stats_section, lock_timeouts)
+        STATS_NAME(max3107_stats_section, uart_read_ops)
+        STATS_NAME(max3107_stats_section, uart_read_errors)
+        STATS_NAME(max3107_stats_section, uart_breaks)
+        STATS_NAME(max3107_stats_section, uart_read_bytes)
+        STATS_NAME(max3107_stats_section, uart_write_ops)
+        STATS_NAME(max3107_stats_section, uart_write_errors)
+        STATS_NAME(max3107_stats_section, uart_write_bytes)
+STATS_NAME_END(bus_stats_section)
+#endif
 
 static inline int
 max3107_lock(struct max3107_dev *dev)
@@ -126,6 +140,10 @@ max3107_write_regs(struct max3107_dev *dev, uint8_t addr, const uint8_t *buf, ui
 
     rc = max3107_lock(dev);
     locked = rc == 0;
+
+    if (!locked) {
+        MAX3107_STATS_INC(dev->stats, lock_timeouts);
+    }
 
     if (size && locked) {
         /* For writes set MSB */
@@ -398,6 +416,8 @@ max3107_read(struct max3107_dev *dev, void *buf, size_t size)
 {
     int rc = 0;
 
+    MAX3107_STATS_INC(dev->stats, uart_read_ops);
+
     if (dev->regs.fifo.rx_fifo_lvl == 0) {
         /* Read number of bytes currently in RX FIFO first. */
         rc = max3107_read_regs(dev, MAX3107_REG_RXFIFOLVL, &dev->regs.fifo.rx_fifo_lvl, 1);
@@ -409,6 +429,7 @@ max3107_read(struct max3107_dev *dev, void *buf, size_t size)
             rc = max3107_read_fifo(dev, buf, size);
         }
         if (rc == 0) {
+            MAX3107_STATS_INCN(dev->stats, uart_read_bytes, size);
             dev->readable_notified = false;
             /* Update FIFO level for potential future use. */
             dev->regs.fifo.rx_fifo_lvl -= size;
@@ -418,6 +439,8 @@ max3107_read(struct max3107_dev *dev, void *buf, size_t size)
              */
             dev->recheck_rx_fifo_level = dev->regs.fifo.rx_fifo_lvl == 0;
             rc = (int)size;
+        } else {
+            MAX3107_STATS_INC(dev->stats, uart_read_errors);
         }
     }
     return rc;
@@ -429,6 +452,7 @@ max3107_write(struct max3107_dev *dev, const void *buf, size_t size)
     size_t fifo_space = 128 - dev->regs.fifo.tx_fifo_lvl;
     int rc = 0;
 
+    MAX3107_STATS_INC(dev->stats, uart_write_ops);
     /*
      * If FIFO level was read before and there is enough data, there is
      * no need to check FIFO level again.
@@ -441,9 +465,13 @@ max3107_write(struct max3107_dev *dev, const void *buf, size_t size)
     if (rc == 0) {
         size = min(size, fifo_space);
         if (size) {
+            MAX3107_STATS_INCN(dev->stats, uart_write_bytes, size);
             rc = max3107_write_fifo(dev, buf, size);
             dev->regs.fifo.tx_fifo_lvl += size;
             dev->writable_notified = false;
+            if (rc) {
+                MAX3107_STATS_INC(dev->stats, uart_write_errors);
+            }
         }
         if (rc == 0) {
             rc = (int)size;
@@ -486,11 +514,13 @@ max3107_isr_cb(struct max3107_dev *dev)
     }
 
     if (dev->regs.ints.lsr & LSR_RXBREAK) {
+        MAX3107_STATS_INC(dev->stats, uart_breaks);
         if (dev->client && dev->client->break_detected) {
             dev->client->break_detected(dev);
         }
     }
     if (dev->regs.ints.lsr & (LSR_RXERROOR)) {
+        MAX3107_STATS_INC(dev->stats, uart_read_errors);
         if (dev->client && dev->client->error) {
             dev->client->error(dev, (max3107_error_t)(dev->regs.ints.lsr & LSR_RXERROOR));
         }
@@ -957,6 +987,13 @@ max3107_dev_create_spi(struct max3107_dev *max3107_dev, const char *name, const 
     if (cfg->ldoen_pin >= 0) {
         hal_gpio_init_out(cfg->ldoen_pin, 0);
     }
+#if MYNEWT_VAL(MAX3107_STATS)
+    rc = stats_init_and_reg(STATS_HDR(max3107_dev->stats),
+                            STATS_SIZE_INIT_PARMS(max3107_dev->stats, STATS_SIZE_32),
+                            STATS_NAME_INIT_PARMS(max3107_stats_section),
+                            name);
+    assert(rc == 0);
+#endif
 
     bus_node_set_callbacks((struct os_dev *)max3107_dev, &cbs);
 
@@ -1028,6 +1065,13 @@ max3107_dev_create_spi(struct max3107_dev *max3107_dev, const char *name, const 
     if (cfg->ldoen_pin >= 0) {
         hal_gpio_init_out(cfg->ldoen_pin, 0);
     }
+#if MYNEWT_VAL(MAX3107_STATS)
+    rc = stats_init_and_reg(STATS_HDR(max3107_dev->stats),
+                            STATS_SIZE_INIT_PARMS(max3107_dev->stats, STATS_SIZE_32),
+                            STATS_NAME_INIT_PARMS(max3107_stats_section),
+                            name);
+    assert(rc == 0);
+#endif
 
     rc = os_dev_create(&max3107_dev->dev, name, OS_DEV_INIT_SECONDARY, 0, max3107_init_func, NULL);
     if (rc == 0) {

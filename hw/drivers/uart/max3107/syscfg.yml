@@ -144,6 +144,11 @@ syscfg.defs:
             Timeout for locking device.
         value: 1000
 
+    MAX3107_STATS:
+        description: >
+            Turn on stats collecting for MAX3107 devices.
+        value: 0
+
     MAX3107_SYSINIT_STAGE:
         description: >
             Sysinit stage for creation of MAX3107.

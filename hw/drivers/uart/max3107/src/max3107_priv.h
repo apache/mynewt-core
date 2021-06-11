@@ -23,6 +23,9 @@
 #include <stdint.h>
 #include <uart/uart.h>
 #include <hal/hal_spi.h>
+#if MYNEWT_VAL(MAX3107_STATS)
+#include "stats/stats.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -222,6 +225,28 @@ struct max3107_regs {
     struct max3107_clock_cfg clock;
 } __attribute__((packed));
 
+#if MYNEWT_VAL(MAX3107_STATS)
+STATS_SECT_START(max3107_stats_section)
+    STATS_SECT_ENTRY(lock_timeouts)
+    STATS_SECT_ENTRY(uart_read_ops)
+    STATS_SECT_ENTRY(uart_read_errors)
+    STATS_SECT_ENTRY(uart_breaks)
+    STATS_SECT_ENTRY(uart_read_bytes)
+    STATS_SECT_ENTRY(uart_write_ops)
+    STATS_SECT_ENTRY(uart_write_errors)
+    STATS_SECT_ENTRY(uart_write_bytes)
+STATS_SECT_END
+
+#define MAX3107_STATS_INC STATS_INC
+#define MAX3107_STATS_INCN STATS_INCN
+
+#else
+
+#define MAX3107_STATS_INC(__sectvarname, __var)  do {} while (0)
+#define MAX3107_STATS_INCN(__sectvarname, __var, __n)  do {} while (0)
+
+#endif
+
 struct max3107_dev {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     struct bus_spi_node dev;
@@ -254,6 +279,9 @@ struct max3107_dev {
     uint8_t tx_buf[MYNEWT_VAL(MAX3107_UART_TX_BUFFER_SIZE)];
     uint8_t rx_buf_count;
     uint8_t tx_buf_count;
+#if MYNEWT_VAL(MAX3107_STATS)
+    STATS_SECT_DECL(max3107_stats_section) stats;
+#endif
 };
 
 #ifdef __cplusplus
