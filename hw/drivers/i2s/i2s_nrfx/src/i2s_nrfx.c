@@ -170,10 +170,10 @@ i2s_driver_stop(struct i2s *i2s)
 {
     struct i2s_sample_buffer *buffer;
 
-    i2s_nrfx.running = false;
-    nrfx_i2s_stop();
-
-    assert(i2s_nrfx.i2s->state == I2S_STATE_STOPPED);
+    if (i2s_nrfx.running) {
+        i2s_nrfx.running = false;
+        nrfx_i2s_stop();
+    }
 
     while (NULL != (buffer = i2s_driver_buffer_get(i2s))) {
         i2s_driver_buffer_put(i2s, buffer);
