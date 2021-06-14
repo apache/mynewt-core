@@ -180,7 +180,6 @@ i2s_close(struct i2s *i2s)
 int
 i2s_write(struct i2s *i2s, void *samples, uint32_t sample_buffer_size)
 {
-    uint32_t sample_pair_size = (i2s->sample_size_in_bytes * 2);
     size_t sample_count;
     struct i2s_sample_buffer *buffer;
 
@@ -193,15 +192,16 @@ i2s_write(struct i2s *i2s, void *samples, uint32_t sample_buffer_size)
     }
 
     /* Calculate buffer size */
-    sample_count = sample_buffer_size / sample_pair_size;
+    sample_count = sample_buffer_size / i2s->sample_size_in_bytes;
     if (buffer->capacity < sample_count) {
         sample_count = buffer->capacity;
     }
 
-    sample_buffer_size = sample_count * sample_pair_size;
+    sample_buffer_size = sample_count * i2s->sample_size_in_bytes;
 
     /* Move data to buffer */
     memcpy(buffer->sample_data, samples, sample_buffer_size);
+    buffer->sample_count = sample_count;
 
     /* Pass buffer to output device */
     i2s_buffer_put(i2s, buffer);
