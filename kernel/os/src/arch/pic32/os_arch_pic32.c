@@ -60,15 +60,23 @@ struct os_task *g_fpu_task;
 
 struct os_task_t* g_fpu_user;
 
+static uint32_t last_compare;
+
 static void timer_handler(void);
 
 /* core timer interrupt */
 void __attribute__((interrupt(IPL1AUTO),
 vector(_CORE_TIMER_VECTOR))) isr_core_timer(void)
 {
+    uint32_t compare;
+
     timer_handler();
-    _CP0_SET_COMPARE(_CP0_GET_COMPARE() + OS_TICK_PERIOD);
     IFS0CLR = _IFS0_CTIF_MASK;
+    compare = _CP0_GET_COMPARE();
+    do {
+        compare += OS_TICK_PERIOD;
+        _CP0_SET_COMPARE(compare);
+    } while ((int32_t)(compare - _CP0_GET_COUNT()) <= 0);
 }
 
 /* context switch interrupt, in ctx.S */
@@ -79,7 +87,11 @@ isr_sw0(void);
 static void
 timer_handler(void)
 {
-    os_time_advance(1);
+    uint32_t compare = _CP0_GET_COMPARE();
+    if (last_compare != compare) {
+        os_time_advance((compare - last_compare) / OS_TICK_PERIOD);
+        last_compare = compare;
+    }
 }
 
 void
