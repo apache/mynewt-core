@@ -228,6 +228,10 @@ Reset_Handler:
     strlt   r0, [r1], #4
     blt    .LC3
 
+    ldr     r0, =__HeapBase
+    ldr     r1, =__HeapLimit
+    bl      _sbrkInit
+
 /* Call system initialization and startup routines */
     ldr    r0, =SystemInit
     blx    r0
