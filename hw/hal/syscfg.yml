@@ -42,7 +42,11 @@ syscfg.defs:
             If set to 0 software breakpoints placed with HAL_DEBUG_BREAK macro will not
             be executed.
         value: 1
-
+    HAL_SBRK:
+        description: >
+            If set HAL provides standard implementation of _sbrk function.
+            It also provides _sbrkInit function that sets up heap space for malloc.
+        value: 1
 syscfg.vals.OS_DEBUG_MODE:
     HAL_FLASH_VERIFY_WRITES: 1
     HAL_FLASH_VERIFY_ERASES: 1
