@@ -292,7 +292,7 @@ flash_speed_test_cli(const struct shell_cmd *cmd, int argc, char **argv,
           "Speed test, hal_flash_read(%d, 0x%x%s, %d)\n",
           flash_dev, (unsigned int)addr, move?"..":"", (unsigned int)sz);
         cnt = flash_speed_test(flash_dev, addr, sz, move);
-        streamer_printf(streamer, "%d\n", cnt >> 1);
+        streamer_printf(streamer, "%d (%d kB/s)\n", cnt >> 1, (cnt * sz) >> 11);
     } else {
         uint32_t sizes[] = {
             1, 2, 4, 8, 16, 24, 32, 48, 64, 96, 128, 192, 256
@@ -301,10 +301,11 @@ flash_speed_test_cli(const struct shell_cmd *cmd, int argc, char **argv,
         streamer_printf(streamer,
           "Speed test, hal_flash_read(%d, 0x%x%s, X)\n",
           flash_dev, (unsigned int)addr, move?"..":"");
+        streamer_printf(streamer, " X  reads/s  kB/s\n");
 
         for (i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
             cnt = flash_speed_test(flash_dev, addr, sizes[i], move);
-            streamer_printf(streamer, "%3d %d\n", (int)sizes[i], cnt >> 1);
+            streamer_printf(streamer, "%3d %7d %5d\n", (int)sizes[i], cnt >> 1, (cnt * sizes[i]) >> 11);
             os_time_delay(OS_TICKS_PER_SEC / 8);
         }
     }
