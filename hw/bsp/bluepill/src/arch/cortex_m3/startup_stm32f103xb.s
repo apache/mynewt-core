@@ -122,6 +122,10 @@ LoopFillZeroCoreBss:
   cmp   r2, r3
   bcc   FillZeroCoreBss
 
+  ldr   r0, =__HeapBase
+  ldr   r1, =__HeapLimit
+  bl    _sbrkInit
+
 /* Call the clock system intitialization function.*/
   bl  SystemInit
 /* Call libc's entry point.*/
