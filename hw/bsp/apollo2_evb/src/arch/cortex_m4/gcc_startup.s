@@ -166,6 +166,7 @@ Reset_Handler:
 
     LDR     R0, =__HeapBase
     LDR     R1, =__HeapLimit
+    BL      _sbrkInit
 
     LDR     R0, =SystemInit
     BLX     R0
