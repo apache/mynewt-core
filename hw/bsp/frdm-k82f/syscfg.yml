@@ -93,3 +93,6 @@ syscfg.vals:
     CRYPTO_HW_AES_CTR: 1
 
     BOOTUTIL_SWAP_USING_MOVE: 1
+
+    # BSP uses private version of _sbrk
+    HAL_SBRK: 0

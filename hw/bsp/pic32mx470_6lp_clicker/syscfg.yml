@@ -59,3 +59,6 @@ syscfg.vals:
     I2C_0: 1
     SPI_0_MASTER: 1
     SPI_1_MASTER: 1
+
+    # BSP uses private version of _sbrk
+    HAL_SBRK: 0
