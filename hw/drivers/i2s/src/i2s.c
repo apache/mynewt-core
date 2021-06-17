@@ -32,6 +32,7 @@ i2s_open_handler(struct os_dev *dev, uint32_t timout, void *arg)
     struct i2s *i2s;
     struct i2s_client *client = (struct i2s_client *)arg;
     struct i2s_sample_buffer *buffer;
+    int rc;
 
     if (dev->od_flags & OS_DEV_F_STATUS_OPEN) {
         return OS_EBUSY;
@@ -52,7 +53,14 @@ i2s_open_handler(struct os_dev *dev, uint32_t timout, void *arg)
             i2s_buffer_put(i2s, buffer);
         }
     } else {
-        i2s_start(i2s);
+        rc = i2s_start(i2s);
+        /*
+         * No buffers on opening output I2S stream is to be expected
+         * and is not error preventing device usage.
+         */
+        if (rc != OS_OK && rc != I2S_ERR_NO_BUFFER) {
+            return rc;
+        }
     }
 
     return OS_OK;
