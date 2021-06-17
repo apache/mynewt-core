@@ -17,6 +17,10 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
+
+#if MYNEWT_VAL(HAL_SBRK) && MYNEWT_VAL(BSP_SIMULATED)
+
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -58,3 +62,5 @@ _sbrk(int incr)
     }
     return result;
 }
+
+#endif

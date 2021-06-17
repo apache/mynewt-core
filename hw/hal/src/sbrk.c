@@ -19,7 +19,7 @@
 
 #include <syscfg/syscfg.h>
 
-#if MYNEWT_VAL(HAL_SBRK)
+#if MYNEWT_VAL(HAL_SBRK) && !MYNEWT_VAL(BSP_SIMULATED)
 
 static char *sbrk_base;
 static char *sbrk_limit;
