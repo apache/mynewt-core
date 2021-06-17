@@ -456,6 +456,7 @@ bus_i2c_nrf91_twim_read(struct bus_dev *bdev, struct bus_node *bnode,
          * XXX we may use PPI to workaround for missing shortcut but it's
          * probably not really that useful and not worth the effort.
          */
+        assert(0);
         return SYS_ENOTSUP;
     }
 

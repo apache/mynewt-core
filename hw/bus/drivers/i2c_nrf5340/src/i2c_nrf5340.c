@@ -260,6 +260,7 @@ bus_i2c_nrf5340_read(struct bus_dev *bdev, struct bus_node *bnode,
          * stop after receiving last byte - return not supported if NOSTOP was
          * requested for this read.
          */
+        assert(0);
         return SYS_ENOTSUP;
     }
 
