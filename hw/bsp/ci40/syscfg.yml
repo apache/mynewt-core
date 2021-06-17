@@ -32,3 +32,6 @@ syscfg.defs:
 
 syscfg.vals:
     CONSOLE_UART_DEV: '"uart1"'
+
+    # BSP uses private version of _sbrk
+    HAL_SBRK: 0
