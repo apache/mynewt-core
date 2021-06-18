@@ -34,11 +34,17 @@ hal_flash_init(void)
     const struct hal_flash *hf;
     uint8_t i;
     int rc = 0;
+    const uint8_t max_id = MYNEWT_VAL(HAL_FLASH_MAX_DEVICE_COUNT) ? MYNEWT_VAL(HAL_FLASH_MAX_DEVICE_COUNT) : 0xFF;
 
-    for (i = 0; ; i++) {
+    for (i = 0; i < max_id; i++) {
         hf = hal_bsp_flash_dev(i);
         if (!hf) {
-            break;
+            if (MYNEWT_VAL(HAL_FLASH_MAX_DEVICE_COUNT) == 0) {
+                /* Max device count not set, stop at first NULL value returned */
+                break;
+            } else {
+                continue;
+            }
         }
         if (hf->hf_itf->hff_init(hf)) {
             rc = SYS_EIO;
