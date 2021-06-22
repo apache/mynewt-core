@@ -174,7 +174,7 @@ static int
 nrf5340_net_flash_sector_info(const struct hal_flash *dev, int idx,
                               uint32_t *address, uint32_t *sz)
 {
-    assert(idx < nrf5340_net_flash_dev.hf_sector_cnt);
+    assert(idx < nrf5340_flash_dev.hf_sector_cnt);
     *address = dev->hf_base_addr + idx * NRF5340_NET_FLASH_SECTOR_SZ;
     *sz = NRF5340_NET_FLASH_SECTOR_SZ;
     return 0;
@@ -195,7 +195,7 @@ static const struct hal_flash_funcs nrf5340_net_flash_funcs = {
     .hff_erase = nrf5340_net_flash_erase,
 };
 
-const struct hal_flash nrf5340_net_flash_dev = {
+const struct hal_flash nrf5340_flash_dev = {
     .hf_itf = &nrf5340_net_flash_funcs,
     .hf_base_addr = 0x01000000,
     .hf_size = 256 * 1024, /* XXX read from factory info? */
