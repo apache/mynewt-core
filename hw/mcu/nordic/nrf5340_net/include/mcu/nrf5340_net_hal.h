@@ -56,7 +56,7 @@ struct nrf5340_vflash {
 };
 extern struct nrf5340_vflash nrf5340_net_vflash_dev;
 
-extern const struct hal_flash nrf5340_net_flash_dev;
+extern const struct hal_flash nrf5340_flash_dev;
 
 /* SPI configuration (used for both master and slave) */
 struct nrf5340_net_hal_spi_cfg {
