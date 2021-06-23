@@ -46,6 +46,7 @@ syscfg.vals:
     #Net Core DCDC is enabled from application core
     #MCU_DCDC_ENABLED: 1
     MCU_LFCLK_SOURCE: LFXO
+    FLASH_MAP_SYSINIT_STAGE: 15
 
     # Always use non-blocking API
     SPI_HAL_USE_NOBLOCK: 1
