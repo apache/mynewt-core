@@ -59,6 +59,18 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
         streamer_printf(streamer, "flash <flash-id> read <offset> <size> -- reads bytes from flash \n");
         streamer_printf(streamer, "flash <flash-id> write <offset>  <size>  -- writes incrementing data pattern 0-8 to flash \n");
         streamer_printf(streamer, "flash <flash-id> erase <offset> <size> -- erases flash \n");
+        streamer_printf(streamer, "flash area -- shows flash areas \n");
+        return 0;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "area") == 0) {
+        streamer_printf(streamer, "AreaID FlashId     Offset     Size\n");
+        for (i = 0; i < ARRAY_SIZE(sysflash_map_dflt); ++i) {
+            streamer_printf(streamer, "%6u %7u 0x%08x 0x%06x\n", sysflash_map_dflt[i].fa_id,
+                            sysflash_map_dflt[i].fa_device_id,
+                            (unsigned)sysflash_map_dflt[i].fa_off,
+                            (unsigned)sysflash_map_dflt[i].fa_size);
+        }
         return 0;
     }
 
