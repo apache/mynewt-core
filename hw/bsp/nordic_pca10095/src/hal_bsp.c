@@ -54,6 +54,11 @@ hal_bsp_flash_dev(uint8_t id)
         return &nrf5340_qspi_dev;
     }
 #endif
+#if MYNEWT_VAL(IPC_NRF5340_FLASH_CLIENT)
+    if (id == 2) {
+        return ipc_flash();
+    }
+#endif
     return NULL;
 }
 
