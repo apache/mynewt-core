@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <stdarg.h>
 #include <errno.h>
 #include <os/os.h>
 #include <ipc_nrf5340/ipc_nrf5340.h>
@@ -155,17 +156,58 @@ ipc_nrf5340_isr(void)
     os_trace_isr_exit();
 }
 
+#if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
+/* https://groups.google.com/g/comp.std.c/c/d-6Mj5Lko_s/m/5fW1bP6T3RIJ
+ * Works for up to 63 and nRF5340 supports 48 (32+16) gpios so we should be good
+ */
+#define PP_NARG(...) PP_NARG_(__VA_ARGS__,PP_RSEQ_N())
+#define PP_NARG_(...) PP_ARG_N(__VA_ARGS__)
+#define PP_ARG_N( \
+         _1, _2, _3, _4, _5, _6, _7, _8, _9,_10,_11,_12,_13,_14,_15,_16,\
+        _17,_18,_19,_20,_21,_22,_23,_24,_25,_26,_27,_28,_29,_30,_31,_32,\
+        _33,_34,_35,_36,_37,_38,_39,_40,_41,_42,_43,_44,_45,_46,_47,_48,\
+        _49,_50,_51,_52,_53,_54,_55,_56,_57,_58,_59,_60,_61,_62,_63,N,...) N
+#define PP_RSEQ_N() \
+        63,62,61,60,59,58,57,56,55,54,53,52,51,50,49,48,47,46,45,44,43,42,41,\
+        40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,\
+        17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
+
+/* https://newbedev.com/how-to-remove-the-enclosing-parentheses-with-macro */
+#define _Args(...) __VA_ARGS__
+#define STRIP_PARENS(X) X
+#define PASS_PARAMETERS(X) STRIP_PARENS(_Args X)
+
+#define NET_GPIO_SETUP(...) ipc_nrf5340_net_gpio_setup(PP_NARG(__VA_ARGS__), __VA_ARGS__)
+
+static void
+ipc_nrf5340_net_gpio_setup(unsigned int cnt, ...)
+{
+    NRF_GPIO_Type *nrf_gpio;
+    unsigned int i;
+    va_list ap;
+    int gpio;
+
+    va_start(ap, cnt);
+
+    /* Configure GPIOs for Networking Core */
+    for (i = 0; i < cnt; i++) {
+        gpio = va_arg(ap, int);
+
+        nrf_gpio = HAL_GPIO_PORT(gpio);
+        nrf_gpio->PIN_CNF[HAL_GPIO_INDEX(gpio)] =
+            GPIO_PIN_CNF_MCUSEL_NetworkMCU << GPIO_PIN_CNF_MCUSEL_Pos;
+    }
+
+    va_end(ap);
+}
+#endif
+
 void
 ipc_nrf5340_init(void)
 {
     int i;
 
 #if MYNEWT_VAL(MCU_APP_CORE)
-#if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
-    unsigned int gpios[] = { MYNEWT_VAL(IPC_NRF5340_NET_GPIO) };
-    NRF_GPIO_Type *nrf_gpio;
-#endif
-
 #if MYNEWT_VAL(MCU_APP_CORE) && MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
     /*
      * Get network core image size and placement in application flash.
@@ -184,11 +226,7 @@ ipc_nrf5340_init(void)
 
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
     /* Configure GPIOs for Networking Core */
-    for (i = 0; i < ARRAY_SIZE(gpios); i++) {
-        nrf_gpio = HAL_GPIO_PORT(gpios[i]);
-        nrf_gpio->PIN_CNF[HAL_GPIO_INDEX(gpios[i])] =
-            GPIO_PIN_CNF_MCUSEL_NetworkMCU << GPIO_PIN_CNF_MCUSEL_Pos;
-    }
+    NET_GPIO_SETUP(PASS_PARAMETERS(MYNEWT_VAL(IPC_NRF5340_NET_GPIO)));
 #endif
 #endif
 
