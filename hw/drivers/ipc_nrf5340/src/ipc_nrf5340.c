@@ -249,6 +249,8 @@ ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data)
     assert(channel < IPC_MAX_CHANS);
 
     if (cb) {
+        assert(ipcs[channel].cb == NULL);
+
         ipcs[channel].cb = cb;
         ipcs[channel].user_data = user_data;
         NRF_IPC->RECEIVE_CNF[channel] = (0x1UL << channel);
