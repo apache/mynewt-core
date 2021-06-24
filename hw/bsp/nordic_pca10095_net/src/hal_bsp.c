@@ -34,12 +34,18 @@
 /*
  * What memory to include in coredump.
  */
+#if !MYNEWT_VAL(COREDUMP_SKIP_UNUSED_HEAP)
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
         .hbmd_start = &_ram_start,
         .hbmd_size = RAM_SIZE
     }
 };
+#else
+static struct hal_bsp_mem_dump dump_cfg[2];
+extern uint8_t __StackLimit;
+extern uint8_t __StackTop;
+#endif
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
@@ -62,6 +68,15 @@ hal_bsp_flash_dev(uint8_t id)
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)
 {
+#if MYNEWT_VAL(COREDUMP_SKIP_UNUSED_HEAP)
+    /* Interrupt stack first */
+    dump_cfg[0].hbmd_start = &__StackLimit;
+    dump_cfg[0].hbmd_size = &__StackTop - &__StackLimit;
+    /* RAM from _ram_start to end of used heap */
+    dump_cfg[1].hbmd_start = &_ram_start;
+    dump_cfg[1].hbmd_size = (uint8_t *)_sbrk(0) - &_ram_start;
+#endif
+
     *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
     return dump_cfg;
 }
