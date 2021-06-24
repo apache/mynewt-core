@@ -155,6 +155,11 @@ ipc_nrf5340_isr(void)
     os_trace_isr_exit();
 }
 
+/* Below is to unmangle comma separated GPIO pins from MYNEWT_VAL */
+#define _Args(...) __VA_ARGS__
+#define STRIP_PARENS(X) X
+#define UNMANGLE_MYNEWT_VAL(X) STRIP_PARENS(_Args X)
+
 void
 ipc_nrf5340_init(void)
 {
@@ -162,7 +167,7 @@ ipc_nrf5340_init(void)
 
 #if MYNEWT_VAL(MCU_APP_CORE)
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
-    unsigned int gpios[] = { MYNEWT_VAL(IPC_NRF5340_NET_GPIO) };
+    unsigned int gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(IPC_NRF5340_NET_GPIO)) };
     NRF_GPIO_Type *nrf_gpio;
 #endif
 
