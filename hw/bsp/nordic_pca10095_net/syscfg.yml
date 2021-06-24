@@ -21,6 +21,13 @@ syscfg.defs:
         description: 'Set to indicate that BSP has NRF5340 NET'
         value: 1
 
+    COREDUMP_SKIP_UNUSED_HEAP:
+        description: >
+            Store whole RAM in crash dump.
+            When 1 only part of heap that was used will be dumped, that
+            can reduce size of crash dump.
+        value: 0
+
 syscfg.vals:
     # Set default pins for peripherals
     UART_0_PIN_TX: 20
