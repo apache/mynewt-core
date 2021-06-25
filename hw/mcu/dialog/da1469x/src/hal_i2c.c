@@ -236,6 +236,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
     const struct da1469x_hal_i2c_cfg *da1469x_cfg = usercfg;
     const struct da1469x_hal_i2c *i2c;
+    int rc;
 
     i2c = hal_i2c_resolve(i2c_num);
     if (!i2c) {
@@ -248,7 +249,12 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
 
     i2c_init_hw(i2c, da1469x_cfg->pin_scl, da1469x_cfg->pin_sda);
 
-    return i2c_config(i2c, da1469x_cfg->frequency);
+    rc = i2c_config(i2c, da1469x_cfg->frequency);
+    if (rc == 0) {
+        rc = hal_i2c_enable(i2c_num);
+    }
+
+    return rc;
 }
 
 static uint32_t
