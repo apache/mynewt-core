@@ -466,26 +466,12 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         return EINVAL;
     }
 
-    rc = hal_spi_disable(spi_num);
-    if (rc) {
-        return rc;
-    }
-    rc = hal_spi_enable(spi_num);
-    if (rc) {
-        return rc;
-    }
-
     return hal_spi_init_master(spi, (struct nrf5340_net_hal_spi_cfg *)cfg);
 #endif
 
 #if MYNEWT_VAL(SPI_0_SLAVE)
     if (spi_type != HAL_SPI_TYPE_SLAVE) {
         return EINVAL;
-    }
-
-    rc = hal_spi_disable(spi_num);
-    if (rc) {
-        return rc;
     }
 
     return hal_spi_init_slave(spi, (struct nrf5340_net_hal_spi_cfg *)cfg);
