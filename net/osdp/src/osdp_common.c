@@ -79,7 +79,7 @@ osdp_encrypt(uint8_t *key, uint8_t *iv, uint8_t *data, int len)
             len, /* inlen: input len */
             iv, /* iv: IV start */
             &s) == TC_CRYPTO_FAIL) {
-            OSDP_LOG_ERROR("CBC ENCRYPT - Failed");
+            OSDP_LOG_ERROR("osdp: sc: CBC ENCRYPT - Failed");
         }
 
         /* copy ciphertext from offset */
@@ -87,7 +87,7 @@ osdp_encrypt(uint8_t *key, uint8_t *iv, uint8_t *data, int len)
 
     } else {
         if (tc_aes_encrypt(data, data, &s) == TC_CRYPTO_FAIL) {
-            OSDP_LOG_ERROR("ECB ENCRYPT - Failed\n");
+            OSDP_LOG_ERROR("osdp: sc: ECB ENCRYPT - Failed\n");
         }
     }
 }
@@ -116,13 +116,13 @@ osdp_decrypt(uint8_t *key, uint8_t *iv, uint8_t *data, int len)
             len + TC_AES_BLOCK_SIZE, /* inlen: total length of input, iv + buffer length */
             scratch_buf1, /* iv: offset to IV in input buffer */
             &s) == TC_CRYPTO_FAIL) {
-            OSDP_LOG_ERROR("CBC DECRYPT - Failed\n");
+            OSDP_LOG_ERROR("osdp: sc: CBC DECRYPT - Failed\n");
         }
         /* Copy decrypted data into output buffer */
         memcpy(data, scratch_buf1, len);
     } else {
         if (tc_aes_decrypt(data, data, &s) == TC_CRYPTO_FAIL) {
-            OSDP_LOG_ERROR("ECB DECRYPT - Failed\n");
+            OSDP_LOG_ERROR("osdp: sc: ECB DECRYPT - Failed\n");
         }
     }
 }
@@ -137,7 +137,7 @@ osdp_get_rand(uint8_t *buf, int len)
 #elif MYNEWT_VAL(TRNG)
     trng = (struct trng_dev *) os_dev_open("trng", OS_WAIT_FOREVER, NULL);
     if (trng == NULL) {
-        OSDP_LOG_ERROR("Could not open TRNG\n");
+        OSDP_LOG_ERROR("osdp: sc: Could not open TRNG\n");
         buf = NULL;
     }
 

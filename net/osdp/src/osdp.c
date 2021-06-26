@@ -277,5 +277,5 @@ osdp_init(osdp_pd_info_t *info, uint8_t *scbk)
 
     os_callout_reset(&osdp_refresh_timer, OSDP_REFRESH_INTERVAL);
 
-    OSDP_LOG_INFO("OSDP OK\n");
+    OSDP_LOG_INFO("osdp: init OK\n");
 }
