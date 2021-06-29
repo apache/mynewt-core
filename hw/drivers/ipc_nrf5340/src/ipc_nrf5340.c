@@ -162,7 +162,7 @@ ipc_nrf5340_init(void)
 
 #if MYNEWT_VAL(MCU_APP_CORE)
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
-    uint64_t gpios = MYNEWT_VAL(IPC_NRF5340_NET_GPIO);
+    unsigned int gpios[] = { MYNEWT_VAL(IPC_NRF5340_NET_GPIO) };
     NRF_GPIO_Type *nrf_gpio;
 #endif
 
@@ -183,14 +183,11 @@ ipc_nrf5340_init(void)
     memset(shms, 0, sizeof(shms));
 
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
-    /* Configure GPIOs for Networking Core, nrf5340 has 48 GPIOs */
-    for (i = 0; i < 48; i++) {
-        if (gpios & 0x1) {
-            nrf_gpio = HAL_GPIO_PORT(i);
-            nrf_gpio->PIN_CNF[HAL_GPIO_INDEX(i)] =
-                GPIO_PIN_CNF_MCUSEL_NetworkMCU << GPIO_PIN_CNF_MCUSEL_Pos;
-        }
-        gpios >>= 1;
+    /* Configure GPIOs for Networking Core */
+    for (i = 0; i < ARRAY_SIZE(gpios); i++) {
+        nrf_gpio = HAL_GPIO_PORT(gpios[i]);
+        nrf_gpio->PIN_CNF[HAL_GPIO_INDEX(gpios[i])] =
+            GPIO_PIN_CNF_MCUSEL_NetworkMCU << GPIO_PIN_CNF_MCUSEL_Pos;
     }
 #endif
 #endif
