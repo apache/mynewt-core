@@ -52,6 +52,7 @@
 #define OSDP_PD_ERR_GENERIC           -1
 #define OSDP_PD_ERR_REPLY             -2
 #define OSDP_PD_ERR_EMPTY_Q           -3
+#define OSDP_PD_ERR_IGNORE            -4
 
 /* Implicit cababilities */
 static struct osdp_pd_cap osdp_pd_cap[] = {
@@ -963,6 +964,9 @@ pd_receive_packet(struct osdp_pd *pd)
     if (err == OSDP_ERR_PKT_FMT) {
         return OSDP_PD_ERR_GENERIC;
     }
+    if (err == OSDP_ERR_PKT_SKIP) {
+        err = OSDP_PD_ERR_IGNORE;
+    }
     if (err == OSDP_ERR_PKT_NONE) {
         pd->reply_id = 0; /* reset past reply ID so phy can send NAK */
         pd->ephemeral_data[0] = 0; /* reset past NAK reason */
@@ -980,8 +984,12 @@ pd_receive_packet(struct osdp_pd *pd)
     remaining = pd->rx_buf_len - len;
     if (remaining) {
         memmove(pd->rx_buf, pd->rx_buf + len, remaining);
-        pd->rx_buf_len = remaining;
     }
+    /**
+     * Store remaining length that needs to be processed.
+     * State machine will be updated accordingly.
+     */
+    pd->rx_buf_len = remaining;
 
     return err;
 }
@@ -1017,6 +1025,15 @@ osdp_update(struct osdp_pd *pd)
         ret = pd_receive_packet(pd);
         if (ret == OSDP_PD_ERR_NO_DATA &&
             osdp_millis_since(pd->tstamp) < MYNEWT_VAL(OSDP_RESP_TOUT_MS)) {
+            break;
+        }
+        if (ret == OSDP_PD_ERR_IGNORE) {
+            /* Process command if non-empty */
+            if (pd->rx_buf_len > 0) {
+                pd->state = OSDP_PD_STATE_PROCESS_CMD;
+            } else {
+                pd->state = OSDP_PD_STATE_IDLE;
+            }
             break;
         }
         if (ret != OSDP_PD_ERR_NONE && ret != OSDP_PD_ERR_REPLY) {
