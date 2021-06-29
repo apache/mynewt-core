@@ -270,15 +270,17 @@ bus_i2c_nrf5340_read(struct bus_dev *bdev, struct bus_node *bnode,
     nrf_twim->RXD.PTR = (uint32_t)buf;
     nrf_twim->RXD.MAXCNT = length;
     nrf_twim->RXD.LIST = 0;
-    nrf_twim->INTEN = TWIM_INTEN_ERROR_Msk | TWIM_INTENCLR_STOPPED_Msk;
-    nrf_twim->SHORTS = TWIM_SHORTS_LASTRX_STOP_Msk;
 
     nrf_twim->EVENTS_STOPPED = 0;
     nrf_twim->EVENTS_ERROR = 0;
     nrf_twim->EVENTS_SUSPENDED = 0;
     nrf_twim->EVENTS_RXSTARTED = 0;
-    nrf_twim->TASKS_RESUME = 1;
     nrf_twim->EVENTS_LASTRX = 0;
+
+    nrf_twim->INTEN = TWIM_INTEN_ERROR_Msk | TWIM_INTENCLR_STOPPED_Msk;
+    nrf_twim->SHORTS = TWIM_SHORTS_LASTRX_STOP_Msk;
+
+    nrf_twim->TASKS_RESUME = 1;
     nrf_twim->TASKS_STARTRX = 1;
 
     rc = os_sem_pend(&dd->sem, timeout);
@@ -324,7 +326,14 @@ bus_i2c_nrf5340_write(struct bus_dev *bdev, struct bus_node *bnode,
 
     nrf_twim->TXD.PTR = (uint32_t)buf;
     nrf_twim->TXD.LIST = 0;
-    nrf_twim->INTENSET = TWIM_INTEN_ERROR_Msk;
+
+    nrf_twim->EVENTS_ERROR = 0;
+    nrf_twim->EVENTS_STOPPED = 0;
+    nrf_twim->EVENTS_SUSPENDED = 0;
+    nrf_twim->EVENTS_TXSTARTED = 0;
+    nrf_twim->EVENTS_LASTTX = 0;
+
+    nrf_twim->INTEN = TWIM_INTEN_ERROR_Msk;
     if (last_op) {
         nrf_twim->INTENSET = TWIM_INTENSET_STOPPED_Msk;
         nrf_twim->SHORTS = TWIM_SHORTS_LASTTX_STOP_Msk;
@@ -332,13 +341,7 @@ bus_i2c_nrf5340_write(struct bus_dev *bdev, struct bus_node *bnode,
         nrf_twim->INTENSET = TWIM_INTENSET_SUSPENDED_Msk;
         nrf_twim->SHORTS = TWIM_SHORTS_LASTTX_SUSPEND_Msk;
     }
-
-    nrf_twim->EVENTS_ERROR = 0;
-    nrf_twim->EVENTS_STOPPED = 0;
-    nrf_twim->EVENTS_SUSPENDED = 0;
-    nrf_twim->EVENTS_TXSTARTED = 0;
     nrf_twim->TASKS_RESUME = 1;
-    nrf_twim->EVENTS_LASTTX = 0;
     nrf_twim->TASKS_STARTTX = 1;
 
     rc = os_sem_pend(&dd->sem, timeout);
