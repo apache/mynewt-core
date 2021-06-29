@@ -155,7 +155,7 @@ osdp_decrypt_data(struct osdp_pd *pd, int is_cmd, uint8_t *data, int length)
     uint8_t iv[16];
 
     if (length % 16 != 0) {
-        OSDP_LOG_ERROR(TAG "decrypt_pkt invalid len:%d\n", length);
+        OSDP_LOG_ERROR("osdp: sc: decrypt_pkt invalid len:%d\n", length);
         return -1;
     }
 
