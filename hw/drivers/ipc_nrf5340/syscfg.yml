@@ -43,12 +43,11 @@ syscfg.defs:
 
     IPC_NRF5340_NET_GPIO:
         description: >
-            Bitfield with 1s for each GPIO that should be configured for Network
-            Core usage. Can be defined with numeric or with constants from bsp.h
-            eg "(1ULL << LED_1 | 1ULL << LED_2)" or "(1 << 1 | 1ULL << 34)".
-            The "ULL" qualifier is needed for pins > 31.
-            Further GPIO configuration should be done by Network Core.
-        value: 0
+            List of comma separated GPIO that should be configured for Network
+            Core usage. Can be define numeric or with constants from bsp.h
+            eg "LED_1, LED_2" or "1, 2". Further GPIO configuration should be
+            done by Network Core.
+        value: ""
 
 syscfg.restrictions:
     - "!BSP_NRF5340 || BSP_NRF5340_NET_ENABLE"
