@@ -202,28 +202,14 @@ bus_i2c_nrf5340_enable(struct bus_dev *bdev)
 }
 
 static int
-bus_i2c_nrf5340_configure(struct bus_dev *bdev, struct bus_node *bnode)
+bus_i2c_nrf5340_configure_controller(struct bus_i2c_dev *dev, uint8_t address, uint16_t freq)
 {
-    struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
-    struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
-    struct bus_i2c_node *current_node = (struct bus_i2c_node *)bdev->configured_for;
     NRF_TWIM_Type *nrf_twim;
-    int rc;
-
-    BUS_DEBUG_VERIFY_DEV(dev);
-    BUS_DEBUG_VERIFY_NODE(node);
+    int rc = 0;
 
     nrf_twim = twims[dev->cfg.i2c_num].nrf_twim;
 
-    nrf_twim->ADDRESS = node->addr;
-
-    if (current_node && (current_node->freq == node->freq)) {
-        return 0;
-    }
-
-    rc = 0;
-
-    switch (node->freq) {
+    switch (freq) {
     case 100:
         nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K100;
         break;
@@ -240,7 +226,23 @@ bus_i2c_nrf5340_configure(struct bus_dev *bdev, struct bus_node *bnode)
         rc = SYS_EIO;
     }
 
+    if (rc == 0) {
+        nrf_twim->ADDRESS = address;
+    }
+
     return rc;
+}
+
+static int
+bus_i2c_nrf5340_configure(struct bus_dev *bdev, struct bus_node *bnode)
+{
+    struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
+    struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
+
+    BUS_DEBUG_VERIFY_DEV(dev);
+    BUS_DEBUG_VERIFY_NODE(node);
+
+    return bus_i2c_nrf5340_configure_controller(dev, node->addr, node->freq);
 }
 
 static int
