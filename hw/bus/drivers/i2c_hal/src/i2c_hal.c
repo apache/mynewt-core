@@ -178,13 +178,30 @@ static int bus_i2c_disable(struct bus_dev *bdev)
     return 0;
 }
 
-static const struct bus_dev_ops bus_i2c_hal_ops = {
-    .init_node = bus_i2c_init_node,
-    .enable = bus_i2c_enable,
-    .configure = bus_i2c_configure,
-    .read = bus_i2c_read,
-    .write = bus_i2c_write,
-    .disable = bus_i2c_disable,
+static int
+bus_i2c_hal_probe(struct bus_i2c_dev *dev, uint16_t address, os_time_t timeout)
+{
+    int rc;
+
+    rc = os_error_to_sys(os_mutex_pend(&dev->bdev.lock, timeout));
+
+    if (rc == 0) {
+        rc = bus_i2c_translate_hal_error(hal_i2c_master_probe(dev->cfg.i2c_num, address, timeout));
+        os_mutex_release(&dev->bdev.lock);
+    }
+    return rc;
+}
+
+static const struct i2c_dev_ops bus_i2c_hal_ops = {
+    .bus_ops = {
+        .init_node = bus_i2c_init_node,
+        .enable = bus_i2c_enable,
+        .configure = bus_i2c_configure,
+        .read = bus_i2c_read,
+        .write = bus_i2c_write,
+        .disable = bus_i2c_disable,
+    },
+    .probe = bus_i2c_hal_probe,
 };
 
 int
