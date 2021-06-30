@@ -90,6 +90,11 @@ struct bus_i2c_node {
 #endif
 };
 
+struct i2c_dev_ops {
+    struct bus_dev_ops bus_ops;
+    int (*probe)(struct bus_i2c_dev *dev, uint16_t address, os_time_t timeout);
+};
+
 /**
  * Create bus I2C node
  *
@@ -111,6 +116,14 @@ bus_i2c_node_create(const char *name, struct bus_i2c_node *node,
 
     return os_dev_create(odev, name, OS_DEV_INIT_PRIMARY, 1,
                          bus_node_init_func, (void *)cfg);
+}
+
+static inline int
+bus_i2c_probe(struct bus_i2c_dev *dev, uint16_t address, int timeout)
+{
+    struct i2c_dev_ops *i2c_ops = (struct i2c_dev_ops *)dev->bdev.dops;
+
+    return i2c_ops->probe ? i2c_ops->probe(dev, address, timeout) : SYS_ENOTSUP;
 }
 
 #ifdef __cplusplus
