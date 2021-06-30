@@ -413,17 +413,13 @@ i2c_da1469x_enable(struct bus_dev *bdev)
 }
 
 static int
-i2c_da1469x_configure(struct bus_dev *bdev, struct bus_node *bnode)
+i2c_da1469x_configure_controller(struct bus_i2c_dev *dev, uint8_t address, uint16_t freq)
 {
-    struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
-    struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
-    struct bus_i2c_node *current_node = (struct bus_i2c_node *)bdev->configured_for;
     I2C_Type *i2c_regs;
     uint32_t speed;
     int rc = 0;
 
     BUS_DEBUG_VERIFY_DEV(dev);
-    BUS_DEBUG_VERIFY_NODE(node);
 
     i2c_regs = da1469x_i2c[dev->cfg.i2c_num].regs;
 
@@ -431,13 +427,9 @@ i2c_da1469x_configure(struct bus_dev *bdev, struct bus_node *bnode)
         i2c_regs->I2C_ENABLE_REG &= ~(1U << I2C_I2C_ENABLE_REG_I2C_EN_Pos);
     }
 
-    i2c_regs->I2C_TAR_REG = node->addr & I2C_I2C_TAR_REG_IC_TAR_Msk;
+    i2c_regs->I2C_TAR_REG = address & I2C_I2C_TAR_REG_IC_TAR_Msk;
 
-    if (current_node && (current_node->freq == node->freq)) {
-        goto end;
-    }
-
-    switch (node->freq) {
+    switch (freq) {
     case 100:
         speed = 1;
         break;
@@ -455,6 +447,18 @@ i2c_da1469x_configure(struct bus_dev *bdev, struct bus_node *bnode)
                             (speed << I2C_I2C_CON_REG_I2C_SPEED_Pos);
 end:
     return rc;
+}
+
+static int
+i2c_da1469x_configure(struct bus_dev *bdev, struct bus_node *bnode)
+{
+    struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
+    struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
+
+    BUS_DEBUG_VERIFY_DEV(dev);
+    BUS_DEBUG_VERIFY_NODE(node);
+
+    return i2c_da1469x_configure_controller(dev, node->addr, node->freq);
 }
 
 static int
