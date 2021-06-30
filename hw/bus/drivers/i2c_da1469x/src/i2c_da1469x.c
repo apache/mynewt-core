@@ -623,13 +623,97 @@ i2c_da1469x_disable(struct bus_dev *bdev)
     return 0;
 }
 
-static const struct bus_dev_ops bus_i2c_da1469x_dma_ops = {
-    .init_node = i2c_da1469x_init_node,
-    .enable = i2c_da1469x_enable,
-    .configure = i2c_da1469x_configure,
-    .read = i2c_da1469x_read,
-    .write = i2c_da1469x_write,
-    .disable = i2c_da1469x_disable,
+static int
+i2c_da1469x_probe(struct bus_i2c_dev *dev, uint16_t address, os_time_t timeout)
+{
+    I2C_Type *i2c_regs;
+    int rc;
+    int i;
+    int pin_sda;
+    int pin_scl;
+    uint32_t half_clock_ticks = os_cputime_usecs_to_ticks(5);
+    const struct da1469x_i2c_hw *i2c_hw;
+    int nack;
+    bool reenable = false;
+    BUS_DEBUG_VERIFY_DEV(dev);
+
+    rc = os_error_to_sys(os_mutex_pend(&dev->bdev.lock, timeout));
+    if (rc == 0) {
+        i2c_hw = &da1469x_i2c[dev->cfg.i2c_num];
+        i2c_regs = da1469x_i2c[dev->cfg.i2c_num].regs;
+
+        pin_scl = dev->cfg.pin_scl;
+        pin_sda = dev->cfg.pin_sda;
+        if (i2c_regs->I2C_ENABLE_REG & I2C_I2C_ENABLE_REG_I2C_EN_Msk) {
+            i2c_regs->I2C_ENABLE_REG &= ~(1U << I2C_I2C_ENABLE_REG_I2C_EN_Pos);
+            reenable = true;
+        }
+        hal_gpio_write(pin_scl, 1);
+        hal_gpio_write(pin_sda, 1);
+        mcu_gpio_set_pin_function(pin_scl, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN,
+                                  MCU_GPIO_FUNC_GPIO);
+        mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN,
+                                  MCU_GPIO_FUNC_GPIO);
+
+        /* Start condition */
+        hal_gpio_write(pin_sda, 0);
+        hal_gpio_write(pin_scl, 0);
+        address <<= 1;
+        os_cputime_delay_ticks(half_clock_ticks);
+        for (i = 7; i >= 0; --i) {
+            hal_gpio_write(pin_sda, address & (1 << i));
+            os_cputime_delay_ticks(half_clock_ticks);
+            hal_gpio_write(pin_scl, 1);
+            os_cputime_delay_ticks(half_clock_ticks);
+            hal_gpio_write(pin_scl, 0);
+        }
+        mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_INPUT_PULLUP,
+                                  MCU_GPIO_FUNC_GPIO);
+        os_cputime_delay_ticks(half_clock_ticks);
+
+        hal_gpio_write(pin_scl, 1);
+        while (hal_gpio_read(pin_scl) == 0) ;
+        nack = hal_gpio_read(pin_sda);
+        os_cputime_delay_ticks(half_clock_ticks);
+        hal_gpio_write(pin_scl, 0);
+        /* Stop condition */
+        mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT, MCU_GPIO_FUNC_GPIO);
+        hal_gpio_write(pin_sda, 0);
+        os_cputime_delay_ticks(half_clock_ticks);
+        hal_gpio_write(pin_scl, 1);
+        os_cputime_delay_ticks(half_clock_ticks);
+        hal_gpio_write(pin_sda, 1);
+        mcu_gpio_set_pin_function(pin_scl, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN,
+                                  MCU_GPIO_FUNC_GPIO);
+        mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN,
+                                  MCU_GPIO_FUNC_GPIO);
+
+        mcu_gpio_set_pin_function(pin_scl, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN,
+                                  i2c_hw->scl_func);
+        mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN,
+                                  i2c_hw->sda_func);
+        if (reenable) {
+            i2c_regs->I2C_ENABLE_REG |= ~(1U << I2C_I2C_ENABLE_REG_I2C_EN_Pos);
+        }
+        rc = nack ? SYS_ENOENT : 0;
+
+        (void)os_mutex_release(&dev->bdev.lock);
+    }
+
+    return rc;
+}
+
+
+static const struct i2c_dev_ops bus_i2c_da1469x_dma_ops = {
+    .bus_ops = {
+        .init_node = i2c_da1469x_init_node,
+        .enable = i2c_da1469x_enable,
+        .configure = i2c_da1469x_configure,
+        .read = i2c_da1469x_read,
+        .write = i2c_da1469x_write,
+        .disable = i2c_da1469x_disable,
+    },
+    .probe = i2c_da1469x_probe,
 };
 
 int
