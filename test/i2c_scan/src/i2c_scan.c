@@ -23,6 +23,9 @@
 #include <shell/shell.h>
 #include <console/console.h>
 #include <parse/parse.h>
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include <bus/drivers/i2c_common.h>
+#endif
 
 static int i2c_scan_cli_cmd(int argc, char **argv);
 
@@ -30,6 +33,32 @@ static struct shell_cmd i2c_scan_cmd_struct = {
     .sc_cmd = "i2c_scan",
     .sc_cmd_func = i2c_scan_cli_cmd
 };
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static int
+i2c_scan_probe(int i2c_num, uint16_t address, uint32_t timeout)
+{
+    char bus_name[5] = "i2cX";
+    struct bus_i2c_dev *bus;
+    int rc = SYS_EINVAL;
+
+    bus_name[3] = i2c_num + '0';
+
+    bus = (struct bus_i2c_dev *)os_dev_open(bus_name, timeout, NULL);
+    if (bus) {
+        rc = bus_i2c_probe(bus, address, timeout);
+        (void)os_dev_close((struct os_dev *)bus);
+    }
+
+    return rc;
+}
+#else
+static int
+i2c_scan_probe(int i2cnum, uint16_t address, uint32_t timeout)
+{
+    return hal_i2c_master_probe(i2cnum, address, timeout);
+}
+#endif
 
 static int
 i2c_scan_cli_cmd(int argc, char **argv)
@@ -60,7 +89,7 @@ i2c_scan_cli_cmd(int argc, char **argv)
 
     /* Scan all valid I2C addresses (0x08..0x77) */
     for (addr = 0x08; addr < 0x78; addr++) {
-        rc = hal_i2c_master_probe(i2cnum, addr, timeout);
+        rc = i2c_scan_probe(i2cnum, addr, timeout);
         /* Print addr header every 16 bytes */
         if (!(addr % 16)) {
             console_printf("\n%02x: ", addr);
