@@ -580,6 +580,59 @@ bus_i2c_nrf52_twim_write(struct bus_dev *bdev, struct bus_node *bnode,
     return rc;
 }
 
+int
+bus_i2c_nrf52_twim_probe(struct bus_i2c_dev *dev, uint16_t address, os_time_t timeout)
+{
+    struct twim_dev_data *dd;
+    NRF_TWIM_Type *nrf_twim;
+    int rc;
+
+    BUS_DEBUG_VERIFY_DEV(dev);
+
+    rc = os_error_to_sys(os_mutex_pend(&dev->bdev.lock, timeout));
+    if (rc == 0) {
+        rc = bus_i2c_nrf52_twim_configure_controller(dev, address, 100);
+        assert(rc == 0);
+        nrf_twim = twims[dev->cfg.i2c_num].nrf_twim;
+        dd = &twim_devs_data[dev->cfg.i2c_num];
+
+        nrf_twim->TXD.MAXCNT = 0;
+        nrf_twim->TXD.LIST = 0;
+
+        nrf_twim->EVENTS_STOPPED = 0;
+        nrf_twim->EVENTS_ERROR = 0;
+
+        nrf_twim->SHORTS = 0;
+        nrf_twim->INTEN = TWIM_INTEN_ERROR_Msk;
+
+        nrf_twim->TASKS_STARTTX = 1;
+
+        /* Wait for enough time to have NACK detected. */
+        os_cputime_delay_usecs(125);
+
+        /* If semaphore is signaled, there was an error. */
+        rc = os_sem_pend(&dd->sem, 0);
+        /* Stop condition was not automatically send. */
+        nrf_twim->INTEN = TWIM_INTEN_STOPPED_Msk;
+        nrf_twim->TASKS_STOP = 1;
+
+        /*
+         * Previous os_sem_pend() returning OS_TIMEOUT means that
+         * device ACK'ed address.
+         */
+        if (rc == OS_TIMEOUT) {
+            rc = 0;
+        } else {
+            rc = SYS_ENOENT;
+        }
+        /* Wait for STOP condition interrupt. */
+        (void)os_sem_pend(&dd->sem, OS_TICKS_PER_SEC);
+        (void)os_mutex_release(&dev->bdev.lock);
+    }
+
+    return rc;
+}
+
 static int bus_i2c_nrf52_twim_disable(struct bus_dev *bdev)
 {
     struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
@@ -593,13 +646,16 @@ static int bus_i2c_nrf52_twim_disable(struct bus_dev *bdev)
     return 0;
 }
 
-static const struct bus_dev_ops bus_i2c_nrf52_twim_ops = {
-    .init_node = bus_i2c_nrf52_twim_init_node,
-    .enable = bus_i2c_nrf52_twim_enable,
-    .configure = bus_i2c_nrf52_twim_configure,
-    .read = bus_i2c_nrf52_twim_read,
-    .write = bus_i2c_nrf52_twim_write,
-    .disable = bus_i2c_nrf52_twim_disable,
+static const struct i2c_dev_ops bus_i2c_nrf52_twim_ops = {
+    .bus_ops = {
+        .init_node = bus_i2c_nrf52_twim_init_node,
+        .enable = bus_i2c_nrf52_twim_enable,
+        .configure = bus_i2c_nrf52_twim_configure,
+        .read = bus_i2c_nrf52_twim_read,
+        .write = bus_i2c_nrf52_twim_write,
+        .disable = bus_i2c_nrf52_twim_disable,
+    },
+    .probe = bus_i2c_nrf52_twim_probe,
 };
 
 int
