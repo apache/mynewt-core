@@ -233,6 +233,9 @@ bus_i2c_nrf5340_configure(struct bus_dev *bdev, struct bus_node *bnode)
     case 400:
         nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K400;
         break;
+    case 1000:
+        nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K1000;
+        break;
     default:
         rc = SYS_EIO;
     }
