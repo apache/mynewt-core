@@ -29,6 +29,15 @@ syscfg.defs:
         description: 'Enable bit-banger UART 0'
         value: 0
 
+    LIS2DH12_ONB:
+        description: 'Enable DWM1001 onboard LIS2DH12 sensor'
+        value:  0
+
+    DWM1001_DEV_SYSINIT_STAGE_LIS2DH12:
+        description: >
+            Sysinit stage for the DWM1001-dev; initializes the LIS2DH12 sensor.
+        value: 400
+
 syscfg.vals:
     # Enable nRF52832 MCU
     MCU_TARGET: nRF52832
@@ -62,3 +71,6 @@ syscfg.vals.BLE_CONTROLLER:
     OS_CPUTIME_FREQ: 32768
     OS_CPUTIME_TIMER_NUM: 5
     BLE_LL_RFMGMT_ENABLE_TIME: 1500
+
+syscfg.restrictions:
+    - "LIS2DH12_ONB && I2C_0_PIN_SCL == 28 && I2C_0_PIN_SDA == 29"
