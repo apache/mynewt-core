@@ -184,7 +184,7 @@ bus_spi_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
     rc = hal_spi_txrx(dev->spi_dev.cfg.spi_num, (uint8_t *)buf, NULL, length);
 #endif
 
-    if (!(flags & BUS_F_NOSTOP)) {
+    if (rc || !(flags & BUS_F_NOSTOP)) {
         hal_gpio_write(node->pin_cs, 1);
     }
 
@@ -244,7 +244,7 @@ bus_spi_write_read(struct bus_dev *bdev, struct bus_node *bnode,
     }
 #endif
 
-    if (!(flags & BUS_F_NOSTOP)) {
+    if (rc || !(flags & BUS_F_NOSTOP)) {
         hal_gpio_write(node->pin_cs, 1);
     }
 
