@@ -22,13 +22,22 @@ OBJCOPY=${MYNEWT_OBJCOPY_PATH}
 AR=${MYNEWT_AR_PATH}
 NET_CORE_A=${MYNEWT_USER_SRC_DIR}/net_core_img.a
 NET_CORE_O=${MYNEWT_USER_SRC_DIR}/net_core_img.o
+# Default flags for create-image
+CREATE_IMAGE_FLAGS="timestamp"
+
+if [ -z "${MYNEWT_VAL_APPLICATION_VERSION}" ] && [ -z "${MYNEWT_VAL_APPLICATION_SIGNING_KEYS}" ]; then
+  echo Using default create-image flags=$CREATE_IMAGE_FLAGS
+else
+  CREATE_IMAGE_FLAGS="${MYNEWT_VAL_APPLICATION_VERSION} ${MYNEWT_VAL_APPLICATION_SIGNING_KEYS}"
+  echo Using user defined create-image flags=$CREATE_IMAGE_FLAGS
+fi
 
 export WORK_DIR=${MYNEWT_USER_WORK_DIR}
 
 export NEWT_CREATE_IMAGE_OUTPUT=$WORK_DIR/create_image_output
 pushd $MYNEWT_PROJECT_ROOT
 
-${NEWT} create-image ${MYNEWT_VAL_NET_CORE_IMAGE_TARGET_NAME} timestamp -o $NEWT_CREATE_IMAGE_OUTPUT
+${NEWT} create-image ${MYNEWT_VAL_NET_CORE_IMAGE_TARGET_NAME} $CREATE_IMAGE_FLAGS -o $NEWT_CREATE_IMAGE_OUTPUT
 # Extract image name from output
 export NET_CORE_IMG=`awk '/App image successfully generated:/ { print $NF }' $NEWT_CREATE_IMAGE_OUTPUT`
 
