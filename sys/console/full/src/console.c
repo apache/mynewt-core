@@ -710,7 +710,8 @@ insert_char(char *pos, char c)
     if (trailing_chars == 0) {
         *pos = c;
         if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none) &&
-            MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && cur > 1) {
+            MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) &&
+            echo != 0 && cur > 1) {
             history_line = 0;
             console_history_search(pos - cur + 1, HFT_MATCH_PREV);
             return;
