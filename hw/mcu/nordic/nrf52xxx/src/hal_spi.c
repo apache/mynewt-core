@@ -996,7 +996,7 @@ err:
  *
  *     MASTER: master sends all the values in the buffer and stores the
  *             stores the values in the receive buffer if rxbuf is not NULL.
- *             The txbuf parameter cannot be NULL.
+ *             If txbuf parameter is NULL, 0xFF will be written instead.
  *     SLAVE: cannot be called for a slave; returns -1
  *
  * @param spi_num   SPI interface to use
@@ -1018,6 +1018,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     NRF_SPI_Type *spi;
     NRF_SPIM_Type *spim;
     struct nrf52_hal_spi *hal_spi;
+    uint8_t on_null_txbuf_val = 0xFF;
 
     rc = EINVAL;
     if (!len) {
@@ -1027,11 +1028,6 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     NRF52_HAL_SPI_RESOLVE(spi_num, hal_spi);
 
     if (hal_spi->spi_type  == HAL_SPI_TYPE_MASTER) {
-        /* Must have a txbuf for master! */
-        if (txbuf == NULL) {
-            goto err;
-        }
-
         /*
          * If SPIM is enabled, we want to stop, disable, then enable
          * the legacy SPI interface.
@@ -1056,13 +1052,18 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
             spi->EVENTS_READY = 0;
         }
         txd = (uint8_t *)txbuf;
+        if (!txd) {
+            txd = &on_null_txbuf_val;
+        }
         spi->TXD = *txd;
 
         txcnt = len - 1;
         rxd = (uint8_t *)rxbuf;
         for (i = 0; i < len; ++i) {
             if (txcnt) {
-                ++txd;
+                if (txbuf) {
+                    ++txd;
+                }
                 spi->TXD = *txd;
                 --txcnt;
             }
