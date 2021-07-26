@@ -162,7 +162,7 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     struct ctx ctx;
     ctx.regs[3] = (uint32_t)t->t_arg;
     ctx.regs[27] = get_global_pointer();
-    ctx.status = (_CP0_GET_STATUS() & ~_CP0_STATUS_CU1_MASK) | _CP0_STATUS_IE_MASK;
+    ctx.status = (_CP0_GET_STATUS() & ~_CP0_STATUS_CU1_MASK) | _CP0_STATUS_IE_MASK | _CP0_STATUS_EXL_MASK;
     ctx.cause = _CP0_GET_CAUSE();
     ctx.epc = (uint32_t)t->t_func;
     /* copy struct onto the stack */
