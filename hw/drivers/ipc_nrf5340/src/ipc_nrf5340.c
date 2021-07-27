@@ -338,6 +338,30 @@ ipc_nrf5340_init(void)
 }
 #endif
 
+#if MYNEWT_VAL(MCU_APP_CORE)
+void
+ipc_nrf5340_reset(void)
+{
+    int i;
+
+    /* TODO  do we need some reset callback for IPC users? */
+    /* TODO Should we sync this with send ? */
+
+    /* Make sure network core if off when we reset IPC */
+    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
+
+    memset(shms, 0, sizeof(shms));
+
+    for (i = 0; i < IPC_MAX_CHANS; ++i) {
+        shms[i].buf = shms_bufs[i];
+        shms[i].buf_size = IPC_BUF_SIZE;
+    }
+
+    /* Start Network Core */
+    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
+}
+#endif
+
 void
 ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data)
 {

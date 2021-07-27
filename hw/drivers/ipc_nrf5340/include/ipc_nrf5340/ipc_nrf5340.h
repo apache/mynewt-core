@@ -41,6 +41,12 @@ typedef void (*ipc_nrf5340_recv_cb)(int channel, void *user_data);
 void ipc_nrf5340_init(void);
 
 /**
+ * Reset IPC and NetCore. Can be used to re-sync with Network Core without
+ * restarting Application Core.
+ */
+void ipc_nrf5340_reset(void);
+
+/**
  * Enable reception on specified IPC channel. Calling with NULL callback
  * disables reception.
  *
