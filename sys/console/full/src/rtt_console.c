@@ -115,12 +115,6 @@ console_out_nolock(int character)
     return character;
 }
 
-void
-console_rx_restart(void)
-{
-    os_cputime_timer_relative(&rtt_timer, 0);
-}
-
 #if MYNEWT_VAL(CONSOLE_INPUT)
 
 #define RTT_INPUT_POLL_INTERVAL_MIN     10 /* ms */
@@ -153,6 +147,12 @@ rtt_console_poll_func(void *arg)
     }
 
     os_cputime_timer_relative(&rtt_timer, itvl_ms * 1000);
+}
+
+void
+console_rx_restart(void)
+{
+    os_cputime_timer_relative(&rtt_timer, 0);
 }
 #endif
 
