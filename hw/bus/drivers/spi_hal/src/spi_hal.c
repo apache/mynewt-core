@@ -212,7 +212,7 @@ bus_spi_write_read(struct bus_dev *bdev, struct bus_node *bnode,
 #if MYNEWT_VAL(SPI_HAL_USE_NOBLOCK)
     if (wlength + rlength <= sizeof(buf)) {
         memcpy(buf, wbuf, wlength);
-        memset(buf + wlength, 0, rlength);
+        memset(buf + wlength, 0xFF, rlength);
         rc = hal_spi_txrx_noblock(dev->spi_dev.cfg.spi_num, buf, buf, wlength + rlength);
         if (rc == 0) {
             os_sem_pend(&dev->sem, OS_TIMEOUT_NEVER);
@@ -222,7 +222,7 @@ bus_spi_write_read(struct bus_dev *bdev, struct bus_node *bnode,
         rc = hal_spi_txrx_noblock(dev->spi_dev.cfg.spi_num, (uint8_t *)wbuf, NULL, wlength);
         if (rc == 0) {
             os_sem_pend(&dev->sem, OS_TIMEOUT_NEVER);
-            memset(rbuf, 0, rlength);
+            memset(rbuf, 0xFF, rlength);
             rc = hal_spi_txrx_noblock(dev->spi_dev.cfg.spi_num, rbuf, rbuf, rlength);
             if (rc == 0) {
                 os_sem_pend(&dev->sem, OS_TIMEOUT_NEVER);
@@ -239,7 +239,8 @@ bus_spi_write_read(struct bus_dev *bdev, struct bus_node *bnode,
     } else {
         rc = hal_spi_txrx(dev->spi_dev.cfg.spi_num, (uint8_t *)wbuf, NULL, wlength);
         if (rc == 0) {
-            rc = hal_spi_txrx(dev->spi_dev.cfg.spi_num, NULL, rbuf, rlength);
+            memset(rbuf, 0xFF, rlength);
+            rc = hal_spi_txrx(dev->spi_dev.cfg.spi_num, rbuf, rbuf, rlength);
         }
     }
 #endif
