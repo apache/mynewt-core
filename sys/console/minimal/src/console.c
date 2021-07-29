@@ -134,6 +134,7 @@ end:
     return rc;
 }
 
+#if MYNEWT_VAL(CONSOLE_UART)
 int
 console_out(int c)
 {
@@ -150,6 +151,7 @@ console_out(int c)
 
     return rc;
 }
+#endif
 
 void
 console_prompt_set(const char *prompt, const char *line)
