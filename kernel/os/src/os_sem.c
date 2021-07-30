@@ -88,8 +88,16 @@ os_sem_release(struct os_sem *sem)
         rdy->t_flags &= ~OS_TASK_FLAG_SEM_WAIT;
         os_sched_wakeup(rdy);
 
-        /* Schedule if waiting task higher priority */
-        if (current->t_prio > rdy->t_prio) {
+        /*
+         * Schedule if waiting task higher priority.
+         * current->t_prio == rdy->t_prio means that current task
+         * was already put in semaphore waiting list and context
+         * switch may already started, in that case start next
+         * context switch. In worst case scenario second task
+         * switch interrupt will check that there is no need
+         * for switching.
+         */
+        if (current->t_prio >= rdy->t_prio) {
             resched = 1;
         }
     } else {
