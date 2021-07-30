@@ -155,14 +155,19 @@ PendSV_Handler:
         .fnstart
         .cantunwind
 
-        LDR     R3,=g_os_run_list   /* Get highest priority task ready to run */
-        LDR     R2,[R3]             /* Store in R2 */
+        LDR     R1,=g_os_run_list   /* Get highest priority task ready to run */
         LDR     R3,=g_current_task  /* Get current task */
+        CPSID   i                   /* Block interrupts till g_current_task is updated */
+        LDR     R2,[R1]             /* Highest priority task in R2 */
         LDR     R1,[R3]             /* Current task in R1 */
         CMP     R1,R2
         BNE     context_switch
+        CPSIE   i                   /* No context switch needed */
         BX      LR                  /* RETI, no task switch */
 context_switch:
+        STR     R2,[R3]             /* g_current_task = highest ready */
+        CPSIE   i
+
         MRS     R0,PSP              /* Read PSP */
         SUBS    R0,R0,#32
         STMIA   R0!,{R4-R7}         /* Save Old context */
@@ -174,7 +179,6 @@ context_switch:
         SUBS    R0,R0,#32
 
         STR     R0,[R1,#0]          /* Update stack pointer in current task */
-        STR     R2,[R3]             /* g_current_task = highest ready */
 
         LDR     R0,[R2,#0]          /* get stack pointer of task we will start */
         ADDS    R0,R0, #16
