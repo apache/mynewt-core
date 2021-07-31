@@ -194,6 +194,9 @@ os_arch_os_init(void)
         /* vector spacing 0x20  */
         _CP0_SET_INTCTL(_CP0_GET_INTCTL() | (1 << _CP0_INTCTL_VS_POSITION));
 
+        /* Stop core timer while debugger stops */
+        _CP0_BIC_DEBUG(_CP0_DEBUG_COUNTDM_MASK);
+
         /* enable core timer interrupt */
         IEC0SET = _IEC0_CTIE_MASK;
         /* set interrupt priority */
