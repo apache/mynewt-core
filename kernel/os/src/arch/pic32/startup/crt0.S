@@ -47,6 +47,7 @@
 
 #include "xc.h"
 #include <cp0defs.h>
+#include <syscfg/syscfg.h>
 
 #ifdef __LIBBUILD__
    # Replace the standard debugging information with a simple filename. This
@@ -571,6 +572,13 @@ _cache_err_vector:
         .align 2
         .ent _main_entry
 _main_entry:
+#if MYNEWT_VAL_HAL_SBRK
+        la a0,  __HeapBase
+        la a1,  __HeapLimit
+        la t0,  _sbrkInit
+        jalr    t0
+        nop
+#endif
 
 #if defined(CPP_INIT)
         .weak _init
