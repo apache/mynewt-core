@@ -1,0 +1,280 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 4
+    I2C_0:
+        description: 'I2C interface 0'
+        value:  0
+    I2C_0_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  100
+    I2C_1:
+        description: 'I2C interface 1'
+        value:  0
+    I2C_1_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  100
+    I2C_2:
+        description: 'I2C interface 2'
+        value:  0
+    I2C_2_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  100
+    I2C_3:
+        description: 'I2C interface 3'
+        value:  0
+    I2C_3_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  100
+    I2C_4:
+        description: 'I2C interface 4'
+        value:  0
+    I2C_4_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  100
+
+    SPI_0_MASTER:
+        description: 'SPI 0 master'
+        value:  0
+    SPI_0_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value: 0xFF
+    SPI_0_MASTER_PIN_MISO:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value: 0xFF
+    SPI_1_MASTER:
+        description: 'SPI 1 master'
+        value:  0
+    SPI_1_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_MASTER'
+        value: 0xFF
+    SPI_1_MASTER_PIN_MISO:
+        description: 'MOSI pin for SPI_1_MASTER'
+        value: 0xFF
+    SPI_2_MASTER:
+        description: 'SPI 2 master'
+        value:  0
+    SPI_2_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_2_MASTER'
+        value: 0xFF
+    SPI_2_MASTER_PIN_MISO:
+        description: 'MOSI pin for SPI_2_MASTER'
+        value: 0xFF
+    SPI_3_MASTER:
+        description: 'SPI 3 master'
+        value:  0
+    SPI_3_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_3_MASTER'
+        value: 0xFF
+    SPI_3_MASTER_PIN_MISO:
+        description: 'MOSI pin for SPI_3_MASTER'
+        value: 0xFF
+    SPI_4_MASTER:
+        description: 'SPI 4 master'
+        value:  0
+    SPI_4_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_4_MASTER'
+        value: 0xFF
+    SPI_4_MASTER_PIN_MISO:
+        description: 'MOSI pin for SPI_4_MASTER'
+        value: 0xFF
+    SPI_5_MASTER:
+        description: 'SPI 5 master'
+        value:  0
+    SPI_5_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_5_MASTER'
+        value: 0xFF
+    SPI_5_MASTER_PIN_MISO:
+        description: 'MOSI pin for SPI_5_MASTER'
+        value: 0xFF
+
+    UART_0:
+        description: Enable UART_0 (Datasheet peripheral name UART1)
+        value: 0
+    UART_0_PIN_TX:
+        description: 'TX pin for UART_0'
+        value: 0xFF
+    UART_0_PIN_RX:
+        description: 'RX pin for UART_0'
+        value: 0xFF
+    UART_0_PIN_RTS:
+        description: 'RTS pin for UART_0'
+        value: 0xFF
+    UART_0_PIN_CTS:
+        description: 'CTS pin for UART_0'
+        value: 0xFF
+
+    UART_1:
+        description: Enable UART_1 (Datasheet peripheral name UART2)
+        value: 0
+    UART_1_PIN_TX:
+        description: 'TX pin for UART_1'
+        value: 0xFF
+    UART_1_PIN_RX:
+        description: 'RX pin for UART_1'
+        value: 0xFF
+    UART_1_PIN_RTS:
+        description: 'RTS pin for UART_1'
+        value: 0xFF
+    UART_1_PIN_CTS:
+        description: 'CTS pin for UART_1'
+        value: 0xFF
+
+    UART_2:
+        description: Enable UART_2 (Datasheet peripheral name UART3)
+        value: 0
+    UART_2_PIN_TX:
+        description: 'TX pin for UART_2'
+        value: 0xFF
+    UART_2_PIN_RX:
+        description: 'RX pin for UART_2'
+        value: 0xFF
+    UART_2_PIN_RTS:
+        description: 'RTS pin for UART_2'
+        value: 0xFF
+    UART_2_PIN_CTS:
+        description: 'CTS pin for UART_2'
+        value: 0xFF
+
+    UART_3:
+        description: Enable UART_4 (Datasheet peripheral name UART4)
+        value: 0
+    UART_3_PIN_TX:
+        description: 'TX pin for UART_3'
+        value: 0xFF
+    UART_3_PIN_RX:
+        description: 'RX pin for UART_3'
+        value: 0xFF
+    UART_3_PIN_RTS:
+        description: 'RTS pin for UART_3'
+        value: 0xFF
+    UART_3_PIN_CTS:
+        description: 'CTS pin for UART_3'
+        value: 0xFF
+
+    UART_4:
+        description: Enable UART_4 (Datasheet peripheral name UART5)
+        value: 0
+    UART_4_PIN_TX:
+        description: 'TX pin for UART_4'
+        value: 0xFF
+    UART_4_PIN_RX:
+        description: 'RX pin for UART_4'
+        value: 0xFF
+    UART_4_PIN_RTS:
+        description: 'RTS pin for UART_4'
+        value: 0xFF
+    UART_4_PIN_CTS:
+        description: 'CTS pin for UART_4'
+        value: 0xFF
+
+    UART_5:
+        description: Enable UART_5 (Datasheet peripheral name UART6)
+        value: 0
+    UART_5_PIN_TX:
+        description: 'TX pin for UART_5'
+        value: 0xFF
+    UART_5_PIN_RX:
+        description: 'RX pin for UART_5'
+        value: 0xFF
+    UART_5_PIN_RTS:
+        description: 'RTS pin for UART_5'
+        value: 0xFF
+    UART_5_PIN_CTS:
+        description: 'CTS pin for UART_5'
+        value: 0xFF
+
+    TIMER_0:
+        description: "Whether to enable Timer 0"
+        value:  1
+
+    TIMER_1:
+        description: "Whether to enable Timer 1"
+        value:  0
+
+    TIMER_2:
+        description: "Whether to enable Timer 2"
+        value:  0
+
+    TIMER_3:
+        description: "Whether to enable Timer 3"
+        value:  0
+
+    TIMER_4:
+        description: "Whether to enable Timer 4"
+        value:  0
+
+    TIMER_5:
+        description: "Whether to enable Timer 5"
+        value:  0
+
+    TIMER_6:
+        description: "Whether to enable Timer 6"
+        value:  0
+
+    TIMER_7:
+        description: "Whether to enable Timer 7"
+        value:  0
+
+    SYSTEM_CLOCK_OSC_FREQ:
+        descriprion: HS Oscilator/External clock freqency.
+        value:
+    SYSTEM_CLOCK_SRC:
+        description: >
+            Select system clock source, that will affect both CONFIG registers
+            and startup code.
+        value:
+        choices:
+            - FRC_DIV
+            - FRC_PLL
+            - POSC
+            - POSC_PLL
+    SYSTEM_CLOCK_FRC_DIV:
+        description: FRCDIV value
+        range: 1,2,4,6,8,16,32,64,256
+        value: 1
+    SYSTEM_CLOCK_PLLIDIV:
+        description:
+        range: 1..8
+        value:
+    SYSTEM_CLOCK_PLLRANGE:
+        description:
+        range: 1..5
+        value:
+    SYSTEM_CLOCK_PLLMULT:
+        description:
+        range: 1..128
+        value:
+    SYSTEM_CLOCK_PLLODIV:
+        description:
+        range: 2,4,8,16,32
+        value:
+
+    MCU_NO_BOOTLOADER_BUILD:
+        description: >
+            Set this value to 1 when building elf files that are not
+            converted to img files.
+        value: 0
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 1000
