@@ -47,7 +47,7 @@ syscfg.vals:
 
 # The module on the board has +/- 40 ppm crystal. A value of 5 is
 # for crystals in the range of 31 to 50 ppm.
-    BLE_LL_MASTER_SCA: 5
+    BLE_LL_SCA: 40
 
 syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
