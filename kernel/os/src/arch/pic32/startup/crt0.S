@@ -592,6 +592,9 @@ _main_entry:
         nop
 2:
 #endif
+        la      t0, SystemInit
+        jalr    t0
+
         and     a0,a0,0
         and     a1,a1,0
 
@@ -629,3 +632,13 @@ __crt0_exit:
 
         .globl __crt0_exit
         .end _main_entry
+
+        .section .text.SystemInit,code
+        .align 2
+        .weak SystemInit
+        .ent SystemInit
+SystemInit:
+        jr   ra
+        nop
+
+        .end SystemInit
