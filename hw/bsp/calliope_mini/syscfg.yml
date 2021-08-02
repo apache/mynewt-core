@@ -106,5 +106,4 @@ syscfg.vals.BLE_CONTROLLER:
     # need to keep HFXO running all the time to have accurate 32k synthesized clock
     BLE_LL_RFMGMT_ENABLE_TIME: 0
     # synthesized 32k clock has 250ppm accuracy
-    BLE_LL_OUR_SCA: 250
-    BLE_LL_MASTER_SCA: 1
+    BLE_LL_SCA: 250
