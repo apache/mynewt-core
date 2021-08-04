@@ -266,8 +266,9 @@ tud_descriptor_string_cb(uint8_t index, uint16_t langid)
         str = string_desc_arr[index - 2];
 
         char_num = strlen(str);
-        if (char_num >= ARRAY_SIZE(desc_string)) {
-            char_num = ARRAY_SIZE(desc_string);
+        assert(char_num <= ARRAY_SIZE(desc_string) - 1);
+        if (char_num > ARRAY_SIZE(desc_string) - 1) {
+            char_num = ARRAY_SIZE(desc_string) - 1;
         }
 
         for (i = 0; i < char_num; ++i) {
