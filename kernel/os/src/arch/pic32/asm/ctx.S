@@ -25,7 +25,7 @@
 
 #define CTX_ALIGNED_SIZE ((((CTX_SIZE - 1) / OS_STACK_ALIGNMENT) + 1) * \
     OS_STACK_ALIGNMENT)
-#define CTX_OFFS(r) (((r) * 4) - CTX_ALIGNED_SIZE)
+#define CTX_OFFS(r) (((r) * 4))
 
 #if (__mips_isa_rev < 6)
     #define CTX_SIZE (36 * 4)
@@ -44,9 +44,7 @@
 
 .macro _gpctx_save
     .set push
-    .set noat
-    sw      $1, CTX_REG(1)(sp)
-    .set at
+    # at already pushed
     sw      v0, CTX_REG(2)(sp)
     sw      v1, CTX_REG(3)(sp)
     sw      a0, CTX_REG(4)(sp)
@@ -71,39 +69,43 @@
     sw      s7, CTX_REG(23)(sp)
     sw      t8, CTX_REG(24)(sp)
     sw      t9, CTX_REG(25)(sp)
-    sw      k0, CTX_REG(26)(sp)
-    sw      k1, CTX_REG(27)(sp)
+    # k0 already pushed
+    # k1 already pushed
     sw      gp, CTX_REG(28)(sp)
-    # don't bother saving sp
-    sw      fp, CTX_REG(29)(sp)
-    sw      ra, CTX_REG(30)(sp)
+    # save ra in place on sp
+    sw      ra, CTX_REG(29)(sp)
+    sw      fp, CTX_REG(30)(sp)
 
 #if (__mips_isa_rev < 6)
-	mfhi   k0
-    sw	   k0, CTX_HI(sp)
-	mflo   k0
-	sw     k0, CTX_LO(sp)
+    mfhi    k0
+    sw      k0, CTX_HI(sp)
+    mflo    k0
+    sw      k0, CTX_LO(sp)
 #endif
 
     # cp0
     mfc0    k0, _CP0_EPC
-    sw	    k0, CTX_EPC(sp)
+    sw      k0, CTX_EPC(sp)
     mfc0    k0, _CP0_BADVADDR
-	sw	    k0, CTX_BADVADDR(sp)
-    mfc0	k0, _CP0_STATUS
-    # disable co-precessor 1
-    li	    k1, ~_CP0_STATUS_CU1_MASK
-    and	    k0, k0, k1
-	sw	    k0, CTX_STATUS(sp)
+    sw      k0, CTX_BADVADDR(sp)
     mfc0    k0, _CP0_CAUSE
     sw      k0, CTX_CAUSE(sp)
+
+    mfc0    k0, _CP0_STATUS
+    # disable co-precessor 1 on return from context switch
+    ins     k0, $0, _CP0_STATUS_CU1_POSITION, _CP0_STATUS_CU1_LENGTH
+    sw      k0, CTX_STATUS(sp)
+    # enable interrupts with higher priority
+    ins     k0, $0, _CP0_STATUS_EXL_POSITION, _CP0_STATUS_EXL_LENGTH
+    ori     k0, k0, 1 << _CP0_STATUS_IPL_POSITION
+    mtc0    k0, _CP0_STATUS
     .set pop
 .endm
 
 .macro _gpctx_load
     .set push
     .set noat
-    lw     $1, CTX_REG(1)(sp)
+    # at restored at the end of contex switch
     lw     v0, CTX_REG(2)(sp)
     lw     v1, CTX_REG(3)(sp)
     lw     a0, CTX_REG(4)(sp)
@@ -128,31 +130,29 @@
     lw     s7, CTX_REG(23)(sp)
     lw     t8, CTX_REG(24)(sp)
     lw     t9, CTX_REG(25)(sp)
-    # restore k0 last
-    lw     k1, CTX_REG(27)(sp)
+    # restore k0 later
+    # restore k1 later
     lw     gp, CTX_REG(28)(sp)
-    # sp already restored
-    lw     fp, CTX_REG(29)(sp)
-    lw     ra, CTX_REG(30)(sp)
+    # sp already restored ra in place of sp
+    lw     ra, CTX_REG(29)(sp)
+    lw     fp, CTX_REG(30)(sp)
 
     di
 
 #if (__mips_isa_rev < 6)
-    lw	   k0, CTX_HI(sp)
-    mthi   k0
-    lw	   k0, CTX_LO(sp)
-    mtlo   k0
+    lw      k0, CTX_HI(sp)
+    mthi    k0
+    lw      k0, CTX_LO(sp)
+    mtlo    k0
 #endif
 
     # cp0
-    lw     k0, CTX_EPC(sp)
-    mtc0   k0, _CP0_EPC
-    # STATUS here will have EXL set
-    lw     k0, CTX_STATUS(sp)
-    mtc0   k0, _CP0_STATUS
+    lw      k0, CTX_EPC(sp)
+    mtc0    k0, _CP0_EPC
+    # STATUS here will have EXL set and EI cleared
+    lw      k0, CTX_STATUS(sp)
+    mtc0    k0, _CP0_STATUS
     ehb
-    # restore k0
-    lw     k0, CTX_REG(26)(sp)
     .set pop
 .endm
 
@@ -170,45 +170,45 @@
 #define TASK_STACK_SIZE     (8)
 
 .macro _fpctx_save
-    sdc1	$f0, CTX_FP_REG(0)(k0)
-    sdc1	$f2, CTX_FP_REG(2)(k0)
-    sdc1	$f4, CTX_FP_REG(4)(k0)
-    sdc1	$f6, CTX_FP_REG(6)(k0)
-    sdc1	$f8, CTX_FP_REG(8)(k0)
-    sdc1	$f10, CTX_FP_REG(10)(k0)
-    sdc1	$f12, CTX_FP_REG(12)(k0)
-    sdc1	$f14, CTX_FP_REG(14)(k0)
-    sdc1	$f16, CTX_FP_REG(16)(k0)
-    sdc1	$f18, CTX_FP_REG(18)(k0)
-    sdc1	$f20, CTX_FP_REG(20)(k0)
-    sdc1	$f22, CTX_FP_REG(22)(k0)
-    sdc1	$f24, CTX_FP_REG(24)(k0)
-    sdc1	$f26, CTX_FP_REG(26)(k0)
-    sdc1	$f28, CTX_FP_REG(28)(k0)
-    sdc1	$f30, CTX_FP_REG(30)(k0)
-    cfc1	k1, $31
-    sw	    k1, CTX_FP_FCSR(k0)
+    sdc1    $f0, CTX_FP_REG(0)(k0)
+    sdc1    $f2, CTX_FP_REG(2)(k0)
+    sdc1    $f4, CTX_FP_REG(4)(k0)
+    sdc1    $f6, CTX_FP_REG(6)(k0)
+    sdc1    $f8, CTX_FP_REG(8)(k0)
+    sdc1    $f10, CTX_FP_REG(10)(k0)
+    sdc1    $f12, CTX_FP_REG(12)(k0)
+    sdc1    $f14, CTX_FP_REG(14)(k0)
+    sdc1    $f16, CTX_FP_REG(16)(k0)
+    sdc1    $f18, CTX_FP_REG(18)(k0)
+    sdc1    $f20, CTX_FP_REG(20)(k0)
+    sdc1    $f22, CTX_FP_REG(22)(k0)
+    sdc1    $f24, CTX_FP_REG(24)(k0)
+    sdc1    $f26, CTX_FP_REG(26)(k0)
+    sdc1    $f28, CTX_FP_REG(28)(k0)
+    sdc1    $f30, CTX_FP_REG(30)(k0)
+    cfc1    k1, $31
+    sw      k1, CTX_FP_FCSR(k0)
 .endm
 
 .macro _fpctx_load
-    ldc1	$f0, CTX_FP_REG(0)(k0)
-    ldc1	$f2, CTX_FP_REG(2)(k0)
-    ldc1	$f4, CTX_FP_REG(4)(k0)
-    ldc1	$f6, CTX_FP_REG(6)(k0)
-    ldc1	$f8, CTX_FP_REG(8)(k0)
-    ldc1	$f10, CTX_FP_REG(10)(k0)
-    ldc1	$f12, CTX_FP_REG(12)(k0)
-    ldc1	$f14, CTX_FP_REG(14)(k0)
-    ldc1	$f16, CTX_FP_REG(16)(k0)
-    ldc1	$f18, CTX_FP_REG(18)(k0)
-    ldc1	$f20, CTX_FP_REG(20)(k0)
-    ldc1	$f22, CTX_FP_REG(22)(k0)
-    ldc1	$f24, CTX_FP_REG(24)(k0)
-    ldc1	$f26, CTX_FP_REG(26)(k0)
-    ldc1	$f28, CTX_FP_REG(28)(k0)
-    ldc1	$f30, CTX_FP_REG(30)(k0)
+    ldc1    $f0, CTX_FP_REG(0)(k0)
+    ldc1    $f2, CTX_FP_REG(2)(k0)
+    ldc1    $f4, CTX_FP_REG(4)(k0)
+    ldc1    $f6, CTX_FP_REG(6)(k0)
+    ldc1    $f8, CTX_FP_REG(8)(k0)
+    ldc1    $f10, CTX_FP_REG(10)(k0)
+    ldc1    $f12, CTX_FP_REG(12)(k0)
+    ldc1    $f14, CTX_FP_REG(14)(k0)
+    ldc1    $f16, CTX_FP_REG(16)(k0)
+    ldc1    $f18, CTX_FP_REG(18)(k0)
+    ldc1    $f20, CTX_FP_REG(20)(k0)
+    ldc1    $f22, CTX_FP_REG(22)(k0)
+    ldc1    $f24, CTX_FP_REG(24)(k0)
+    ldc1    $f26, CTX_FP_REG(26)(k0)
+    ldc1    $f28, CTX_FP_REG(28)(k0)
+    ldc1    $f30, CTX_FP_REG(30)(k0)
     lw      k0, CTX_FP_FCSR(k0)
-    ctc1	k0, $31
+    ctc1    k0, $31
 .endm
 #endif
 
@@ -234,8 +234,8 @@ _general_exception_context:
 
     # enable co-precessor 1
     mfc0    k0, _CP0_STATUS
-    li	    k1, _CP0_STATUS_CU1_MASK
-    or	    k0, k0, k1
+    li      k1, _CP0_STATUS_CU1_MASK
+    or      k0, k0, k1
     mtc0    k0, _CP0_STATUS
 
     lw      k1, g_current_task          # get current task
@@ -275,24 +275,37 @@ loop:
 .ent isr_sw0
 isr_sw0:
     .set noat
-    rdpgpr  sp, sp
 
+    addiu   sp, sp, -(CTX_SIZE)
     # context switch
-    _gpctx_save                         # save the context
+    sw      k0, CTX_REG(26)(sp)
+    sw      k1, CTX_REG(27)(sp)
+    sw      $1, CTX_REG(1)(sp)
     .set at
-    lw      k0, g_current_task          # get current task
-    beqz    k0, 1f                      # if there is a current task
-    sw      sp, 0(k0)                   # update stored sp
-1:
+
     li      k0, _IFS0_CS0IF_MASK        # clear sw interrupt
     sw      k0, IFS0CLR
 
-    lw      k0, g_os_run_list           # get new task
-    sw      k0, g_current_task          # g_current_task = g_os_run_list
+    lw      k0, g_current_task          # get current task
+    lw      k1, g_os_run_list           # get high prio task to k1
+    beq     k0, k1, same_task_no_switch
+    beqz    k0, no_save_needed          # no current task so far
+    sw      sp, 0(k0)                   # update stored sp
+    _gpctx_save
 
-    lw      sp, 0(k0)                   # restore sp
+    .set at
+no_save_needed:
+
+    sw      k1, g_current_task          # g_current_task = g_os_run_list
+
+    lw      sp, 0(k1)                   # restore sp
     .set noat
     _gpctx_load                         # load the context
-    wrpgpr  sp, sp
+same_task_no_switch:
+    lw      $1, CTX_REG(1)(sp)
+    lw      k0, CTX_REG(26)(sp)
+    lw      k1, CTX_REG(27)(sp)
+    addiu   sp, sp, CTX_SIZE
+
     eret
 .end isr_sw0

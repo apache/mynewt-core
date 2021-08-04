@@ -138,6 +138,8 @@ os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
     int ctx_space = os_bytes_to_stack_aligned_words(sizeof(struct ctx));
+    struct ctx *ctx;
+    int i;
 #if MYNEWT_VAL(HARDFLOAT)
     /* If stack does not have space for the FPU context, assume the
     thread won't use it. */
@@ -157,18 +159,18 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     stack_top -= 4;
 #endif
 
-    os_stack_t *s = stack_top - ctx_space;
+    ctx = ((struct ctx *)stack_top) - 1;
 
-    struct ctx ctx;
-    ctx.regs[3] = (uint32_t)t->t_arg;
-    ctx.regs[27] = get_global_pointer();
-    ctx.status = (_CP0_GET_STATUS() & ~_CP0_STATUS_CU1_MASK) | _CP0_STATUS_IE_MASK | _CP0_STATUS_EXL_MASK;
-    ctx.cause = _CP0_GET_CAUSE();
-    ctx.epc = (uint32_t)t->t_func;
-    /* copy struct onto the stack */
-    memcpy(s, &ctx, sizeof(ctx));
+    for (i = 0; i < 30; ++i) {
+        ctx->regs[i] = 0;
+    }
+    ctx->regs[3] = (uint32_t)t->t_arg;
+    ctx->regs[27] = get_global_pointer();
+    ctx->status = (_CP0_GET_STATUS() & ~_CP0_STATUS_CU1_MASK) | _CP0_STATUS_IE_MASK | _CP0_STATUS_EXL_MASK;
+    ctx->cause = _CP0_GET_CAUSE();
+    ctx->epc = (uint32_t)t->t_func;
 
-    return stack_top;
+    return ctx->regs;
 }
 
 void
