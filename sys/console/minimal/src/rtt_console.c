@@ -33,7 +33,7 @@ static struct hal_timer rtt_timer;
 static const char CR = '\r';
 
 int
-console_out(int character)
+console_out_nolock(int character)
 {
     char c = (char)character;
 
