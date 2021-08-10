@@ -287,6 +287,8 @@ da1469x_clock_sys_pll_enable(void)
         da1469x_delay_us(20);
     }
     if ((CRG_XTAL->PLL_SYS_STATUS_REG & CRG_XTAL_PLL_SYS_STATUS_REG_PLL_LOCK_FINE_Msk) == 0) {
+        /* Enables DXTAL for the system PLL */
+        CRG_XTAL->XTAL32M_CTRL0_REG |= CRG_XTAL_XTAL32M_CTRL0_REG_XTAL32M_DXTAL_SYSPLL_ENABLE_Msk;
         /* Use internal VCO current setting to enable precharge */
         CRG_XTAL->PLL_SYS_CTRL1_REG |= CRG_XTAL_PLL_SYS_CTRL1_REG_PLL_SEL_MIN_CUR_INT_Msk;
         /* Enable precharge */
