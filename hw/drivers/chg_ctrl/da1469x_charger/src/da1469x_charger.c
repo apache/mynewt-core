@@ -23,6 +23,7 @@
 
 #include <os/mynewt.h>
 #include <mcu/mcu.h>
+#include <mcu/da1469x_vbus.h>
 #include <da1469x_charger/da1469x_charger.h>
 #include <bsp/bsp.h>
 #if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
@@ -148,20 +149,9 @@ static struct os_event da1469x_vbus_state_changed_event = {
 };
 
 static void
-da1469x_vbus_isr(void)
+da1469x_charger_vbus_handler(bool present)
 {
-    CRG_TOP->VBUS_IRQ_CLEAR_REG = 1;
     os_eventq_put(os_eventq_dflt_get(), &da1469x_vbus_state_changed_event);
-}
-
-void da1469x_usb_init(void)
-{
-    NVIC_SetVector(VBUS_IRQn, (uint32_t)da1469x_vbus_isr);
-    CRG_TOP->VBUS_IRQ_CLEAR_REG = 1;
-    NVIC_ClearPendingIRQ(VBUS_IRQn);
-    CRG_TOP->VBUS_IRQ_MASK_REG = CRG_TOP_VBUS_IRQ_MASK_REG_VBUS_IRQ_EN_FALL_Msk |
-                                 CRG_TOP_VBUS_IRQ_MASK_REG_VBUS_IRQ_EN_RISE_Msk;
-    NVIC_EnableIRQ(VBUS_IRQn);
 }
 
 static void
@@ -496,7 +486,7 @@ da1469x_charger_init(struct os_dev *dev, void *arg)
     NVIC_ClearPendingIRQ(CHARGER_ERROR_IRQn);
     NVIC_EnableIRQ(CHARGER_ERROR_IRQn);
 
-    da1469x_usb_init();
+    da1469x_vbus_add_handler(da1469x_charger_vbus_handler);
 #endif /* DA1469X_CHARGER_USE_CHARGE_CONTROL */
 
 #if MYNEWT_VAL(DA1469X_CHARGER_CLI)
