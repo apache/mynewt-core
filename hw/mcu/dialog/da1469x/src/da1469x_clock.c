@@ -186,15 +186,15 @@ da1469x_clock_calibrate(uint8_t clock_sel, uint16_t ref_cnt)
     da1469x_pd_acquire(MCU_PD_DOMAIN_PER);
 
     assert(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_XTAL32M_Msk);
-    assert(!(ANAMISC->CLK_REF_SEL_REG & ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk));
+    assert(!(ANAMISC_BIF->CLK_REF_SEL_REG & ANAMISC_BIF_CLK_REF_SEL_REG_REF_CAL_START_Msk));
 
-    ANAMISC->CLK_REF_CNT_REG = ref_cnt;
-    ANAMISC->CLK_REF_SEL_REG = (clock_sel << ANAMISC_CLK_REF_SEL_REG_REF_CLK_SEL_Pos) |
-                               ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk;
+    ANAMISC_BIF->CLK_REF_CNT_REG = ref_cnt;
+    ANAMISC_BIF->CLK_REF_SEL_REG = (clock_sel << ANAMISC_BIF_CLK_REF_SEL_REG_REF_CLK_SEL_Pos) |
+                                   ANAMISC_BIF_CLK_REF_SEL_REG_REF_CAL_START_Msk;
 
-    while (ANAMISC->CLK_REF_SEL_REG & ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk);
+    while (ANAMISC_BIF->CLK_REF_SEL_REG & ANAMISC_BIF_CLK_REF_SEL_REG_REF_CAL_START_Msk);
 
-    ref_val = ANAMISC->CLK_REF_VAL_REG;
+    ref_val = ANAMISC_BIF->CLK_REF_VAL_REG;
 
     da1469x_pd_release(MCU_PD_DOMAIN_PER);
 
