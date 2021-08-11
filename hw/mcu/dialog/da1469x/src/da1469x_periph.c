@@ -23,6 +23,7 @@
 #include "os/os_cputime.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_dma.h"
+#include "mcu/da1469x_vbus.h"
 #include "bsp/bsp.h"
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
@@ -518,6 +519,7 @@ void
 da1469x_periph_create(void)
 {
     da1469x_dma_init();
+    da1469x_vbus_init();
 
     da1469x_periph_create_timers();
     da1469x_periph_create_adc();
