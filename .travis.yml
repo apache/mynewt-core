@@ -128,18 +128,30 @@ matrix:
         - TEST=TEST_ALL
         - VM_AMOUNT=3
         - TARGET_SET=1
+      addons:
+        homebrew:
+          packages:
+          - gcc@5
     - os: osx
       osx_image: xcode9.2
       env:
         - TEST=TEST_ALL
         - VM_AMOUNT=3
         - TARGET_SET=2
+      addons:
+        homebrew:
+          packages:
+          - gcc@5
     - os: osx
       osx_image: xcode9.2
       env:
         - TEST=TEST_ALL
         - VM_AMOUNT=3
         - TARGET_SET=3
+      addons:
+        homebrew:
+          packages:
+          - gcc@5
     - os: windows
       env:
         - TEST=BUILD_TARGETS_WINDOWS
