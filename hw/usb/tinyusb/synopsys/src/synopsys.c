@@ -52,8 +52,13 @@ tinyusb_hardware_init(void)
      * Enable USB OTG clock, force device mode
      */
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
+
+#if MYNEWT_VAL(USB_ID_PIN_ENABLE)
+    hal_gpio_init_af(MCU_GPIO_PORTA(10), GPIO_AF10_OTG_FS, GPIO_PULLUP, GPIO_MODE_AF_OD);
+#else
     USB_OTG_FS->GUSBCFG &= ~USB_OTG_GUSBCFG_FHMOD;
     USB_OTG_FS->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
+#endif
 
 #ifdef USB_OTG_GCCFG_NOVBUSSENS
 #if !MYNEWT_VAL(USB_VBUS_DETECTION_ENABLE)

@@ -31,3 +31,8 @@ syscfg.defs:
         description:
             Set to 1 when PA9 is connected to detect VBus.
         value: 0
+    USB_ID_PIN_ENABLE:
+        description:
+            When set to 1, USB ID pin connected to PA10 is used to select
+            host or device mode.
+        value: 0
