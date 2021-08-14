@@ -72,5 +72,16 @@ tinyusb_hardware_init(void)
     USB_OTG_FS->GCCFG |= ~USB_OTG_GCCFG_VBUSASEN;
     hal_gpio_init_af(MCU_GPIO_PORTA(9), GPIO_AF10_OTG_FS, GPIO_NOPULL, GPIO_MODE_AF_PP);
 #endif
+#elif USB_OTG_GCCFG_VBDEN
+#if MYNEWT_VAL(USB_VBUS_DETECTION_ENABLE)
+    hal_gpio_init_in(MCU_GPIO_PORTA(9), HAL_GPIO_PULL_NONE);
+    USB_OTG_FS->GCCFG |= USB_OTG_GCCFG_VBDEN;
+#else
+    /* PA9- VUSB not used for USB */
+    USB_OTG_FS->GCCFG &= ~USB_OTG_GCCFG_VBDEN;
+    /* B-peripheral session valid override enable */
+    USB_OTG_FS->GOTGCTL |= USB_OTG_GOTGCTL_BVALOEN;
+    USB_OTG_FS->GOTGCTL |= USB_OTG_GOTGCTL_BVALOVAL;
+#endif
 #endif
 }
