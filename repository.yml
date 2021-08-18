@@ -110,8 +110,9 @@ repo.deps:
 
     mcuboot:
         type: github
-        user: JuulLabs-OSS
+        user: mcu-tools
         repo: mcuboot
+        branch: main
         vers:
             master: 0-dev
             mynewt_1_7_0_tag: 1.3.1
