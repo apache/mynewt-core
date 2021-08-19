@@ -36,6 +36,13 @@ syscfg.defs:
         description: 'Enable hash accelerator (CAU)'
         value: 0
 
+    TIMER_0:
+        description: 'Enable Timer 0'
+        value:  1
+    TIMER_1:
+        description: 'Enable Timer 1'
+        value: 0
+
     GPIO_MAX_IRQ:
         description: 'Max number of GPIO pins assigned to IRQs'
         value: 10
