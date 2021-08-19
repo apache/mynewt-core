@@ -30,3 +30,10 @@ syscfg.defs:
         value: 0
         restrictions:
             - '!KINETIS_TRNG_USE_RNGA'
+    KINETIS_TRNG_ENTROPY_DELAY:
+        description: >
+            The configured number is the length, in system clocks, of each
+            entropy sample taken. The  default value is 3200, but it can be
+            reduced for faster sample generation, given the compromise of
+            generating worse entropy.
+        value: 3200
