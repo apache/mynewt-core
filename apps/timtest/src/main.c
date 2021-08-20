@@ -154,14 +154,14 @@ init_tasks(void)
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
-    /* Initialize timer 0 to count at 1 MHz */
+    /* Initialize timer 0 to count at 4 MHz */
     rc = hal_timer_config(TASK1_TIMER_NUM, TASK1_TIMER_FREQ);
     assert(rc == 0);
 
     res = hal_timer_get_resolution(TASK1_TIMER_NUM);
     assert(res == (1000000000 / TASK1_TIMER_FREQ));
 
-    /* Initialize timer 1 to count at 250 kHz */
+    /* Initialize timer 1 to count at 31250 Hz */
     rc = hal_timer_config(TASK2_TIMER_NUM, TASK2_TIMER_FREQ);
     assert(rc == 0);
 
