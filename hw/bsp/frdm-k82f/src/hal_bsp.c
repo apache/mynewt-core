@@ -28,6 +28,9 @@
 #include "hal/hal_flash_int.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
+#if MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1)
+#include "hal/hal_timer.h"
+#endif
 #if MYNEWT_VAL(ENC_FLASH_DEV)
 #include <ef_crypto/ef_crypto.h>
 #endif
@@ -246,6 +249,15 @@ hal_bsp_init(void)
     /* Init pinmux and other hardware setup. */
     init_hardware();
     BOARD_BootClockRUN();
+
+#if MYNEWT_VAL(TIMER_0)
+    rc = hal_timer_init(0, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_1)
+    rc = hal_timer_init(1, NULL);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(HASH)
     rc = os_dev_create(&os_bsp_hash.dev, "hash", OS_DEV_INIT_KERNEL,
