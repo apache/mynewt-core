@@ -30,10 +30,11 @@ extern uint8_t __DATA_ROM;
 #define RAM_SIZE            0x40000
 
 /* RBG LED pins */
-#define LED_RED_PIN         MCU_GPIO_PORTC(8)
-#define LED_GREEN_PIN       MCU_GPIO_PORTC(9)
-#define LED_BLUE_PIN        MCU_GPIO_PORTC(10)
-#define LED_BLINK_PIN       LED_RED_PIN
+#define LED_1               MCU_GPIO_PORTC(8)  /* RGB red */
+#define LED_2               MCU_GPIO_PORTC(9)  /* RGB green */
+#define LED_3               MCU_GPIO_PORTC(10) /* RGB blue */
+
+#define LED_BLINK_PIN       LED_1
 
 #ifdef __cplusplus
 }
