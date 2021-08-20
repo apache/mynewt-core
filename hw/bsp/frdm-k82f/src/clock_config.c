@@ -42,6 +42,8 @@ board: FRDM-K82F
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
 
+#include "os/mynewt.h"
+
 #include "fsl_smc.h"
 #include "clock_config.h"
 
@@ -144,8 +146,12 @@ const mcg_config_t mcgConfig_BOARD_BootClockHSRUN =
     {
         .mcgMode = kMCG_ModePEE,                  /* PEE - PLL Engaged External */
         .irclkEnableMode = kMCG_IrclkEnable,      /* MCGIRCLK enabled, MCGIRCLK disabled in STOP mode */
-        .ircs = kMCG_IrcSlow,                     /* Slow internal reference clock selected */
-        .fcrdiv = 0x0U,                           /* Fast IRC divider: divided by 1 */
+#if MYNEWT_VAL(KINETIS_USE_FAST_MCGIRCLK)
+        .ircs = kMCG_IrcFast,
+#else
+        .ircs = kMCG_IrcSlow,
+#endif
+        .fcrdiv = MYNEWT_VAL(KINETIS_MCGIRCLK_FCRDIV),
         .frdiv = 0x0U,                            /* FLL reference clock divider: divided by 32 */
         .drs = kMCG_DrsLow,                       /* Low frequency range */
         .dmx32 = kMCG_Dmx32Default,               /* DCO has a default range of 25% */
@@ -252,8 +258,12 @@ const mcg_config_t mcgConfig_BOARD_BootClockVLPR =
     {
         .mcgMode = kMCG_ModeBLPI,                 /* BLPI - Bypassed Low Power Internal */
         .irclkEnableMode = kMCG_IrclkEnable,      /* MCGIRCLK enabled, MCGIRCLK disabled in STOP mode */
-        .ircs = kMCG_IrcFast,                     /* Fast internal reference clock selected */
-        .fcrdiv = 0x0U,                           /* Fast IRC divider: divided by 1 */
+#if MYNEWT_VAL(KINETIS_USE_FAST_MCGIRCLK)
+        .ircs = kMCG_IrcFast,
+#else
+        .ircs = kMCG_IrcSlow,
+#endif
+        .fcrdiv = MYNEWT_VAL(KINETIS_MCGIRCLK_FCRDIV),
         .frdiv = 0x0U,                            /* FLL reference clock divider: divided by 1 */
         .drs = kMCG_DrsLow,                       /* Low frequency range */
         .dmx32 = kMCG_Dmx32Default,               /* DCO has a default range of 25% */
@@ -368,8 +378,12 @@ const mcg_config_t mcgConfig_BOARD_BootClockRUN =
     {
         .mcgMode = kMCG_ModePEE,                  /* PEE - PLL Engaged External */
         .irclkEnableMode = kMCG_IrclkEnable,      /* MCGIRCLK enabled, MCGIRCLK disabled in STOP mode */
-        .ircs = kMCG_IrcSlow,                     /* Slow internal reference clock selected */
-        .fcrdiv = 0x0U,                           /* Fast IRC divider: divided by 1 */
+#if MYNEWT_VAL(KINETIS_USE_FAST_MCGIRCLK)
+        .ircs = kMCG_IrcFast,
+#else
+        .ircs = kMCG_IrcSlow,
+#endif
+        .fcrdiv = MYNEWT_VAL(KINETIS_MCGIRCLK_FCRDIV),
         .frdiv = 0x0U,                            /* FLL reference clock divider: divided by 32 */
         .drs = kMCG_DrsLow,                       /* Low frequency range */
         .dmx32 = kMCG_Dmx32Default,               /* DCO has a default range of 25% */

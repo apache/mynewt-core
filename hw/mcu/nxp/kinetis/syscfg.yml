@@ -24,6 +24,17 @@ syscfg.defs:
         value:
         restriction: $notnull
 
+    KINETIS_USE_FAST_MCGIRCLK:
+        description: >
+            Use fast clock for MCGIRCLK. When enabled MCGIRCLK will clock
+            at 4MHz; when disabled 32768Hz.
+        value: 0
+    KINETIS_MCGIRCLK_FCRDIV:
+        description: >
+            Divider for MCGIRCLK. The divider used equals: 1 << value.
+        value: 0
+        range: 0..7
+
     TRNG:
         description: 'Enable True Random Number Generator (RNGA)'
         value: 0

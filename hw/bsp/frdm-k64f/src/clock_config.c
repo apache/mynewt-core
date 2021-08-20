@@ -28,6 +28,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "os/mynewt.h"
+
 #include "fsl_common.h"
 #include "fsl_smc.h"
 
@@ -57,8 +59,12 @@ const clock_config_t g_defaultClockConfigVlpr = {
         {
             .mcgMode = kMCG_ModeBLPI,            /* Work in BLPI mode. */
             .irclkEnableMode = kMCG_IrclkEnable, /* MCGIRCLK enable. */
-            .ircs = kMCG_IrcFast,                /* Select IRC4M. */
-            .fcrdiv = 0U,                        /* FCRDIV is 0. */
+#if MYNEWT_VAL(KINETIS_USE_FAST_MCGIRCLK)
+            .ircs = kMCG_IrcFast,
+#else
+            .ircs = kMCG_IrcSlow,
+#endif
+            .fcrdiv = MYNEWT_VAL(KINETIS_MCGIRCLK_FCRDIV),
 
             .frdiv = 0U,
             .drs = kMCG_DrsLow,         /* Low frequency range. */
@@ -97,8 +103,12 @@ const clock_config_t g_defaultClockConfigRun = {
         {
             .mcgMode = kMCG_ModePEE,             /* Work in PEE mode. */
             .irclkEnableMode = kMCG_IrclkEnable, /* MCGIRCLK enable. */
-            .ircs = kMCG_IrcSlow,                /* Select IRC32k. */
-            .fcrdiv = 0U,                        /* FCRDIV is 0. */
+#if MYNEWT_VAL(KINETIS_USE_FAST_MCGIRCLK)
+            .ircs = kMCG_IrcFast,
+#else
+            .ircs = kMCG_IrcSlow,
+#endif
+            .fcrdiv = MYNEWT_VAL(KINETIS_MCGIRCLK_FCRDIV),
 
             .frdiv = 7U,
             .drs = kMCG_DrsLow,         /* Low frequency range. */
