@@ -28,6 +28,9 @@
 #include "hal/hal_flash_int.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
+#if MYNEWT_VAL(TIMER_0)
+#include "hal/hal_timer.h"
+#endif
 #if MYNEWT_VAL(TRNG)
 #include "trng/trng.h"
 #include "trng_kinetis/trng_kinetis.h"
@@ -206,6 +209,11 @@ hal_bsp_init(void)
     /* Init pinmux and other hardware setup. */
     init_hardware();
     BOARD_BootClockRUN();
+
+#if MYNEWT_VAL(TIMER_0)
+    rc = hal_timer_init(0, NULL);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(TRNG)
     rc = os_dev_create(&os_bsp_trng.dev, "trng",
