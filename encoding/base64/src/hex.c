@@ -49,7 +49,6 @@ hex_format(void *src_v, int src_len, char *dst, int dst_len)
         tgt[0] = hex_bytes[(src[i] >> 4) & 0xf];
         tgt[1] = hex_bytes[src[i] & 0xf];
         tgt += 2;
-        dst_len -= 2;
     }
     *tgt = '\0';
     return dst;
