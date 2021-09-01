@@ -60,6 +60,10 @@ syscfg.defs:
             # Older versions of newt don't export the target name.
             - 'TARGET_NAME'
 
+    ID_OVERRIDE_CONF_HELPERS:
+        description: 'Override config function helpers with alternative implementation'
+        value: 0
+
     ID_SYSINIT_STAGE:
         description: >
             Sysinit stage for ID functionality.

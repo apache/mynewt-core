@@ -32,10 +32,12 @@
 
 #define ID_BASE64_MFG_HASH_SZ  (BASE64_ENCODE_SIZE(MFG_HASH_SZ))
 
+#if !MYNEWT_VAL(ID_OVERRIDE_CONF_HELPERS)
 static char *id_conf_get(int argc, char **argv, char *val, int val_len_max);
 static int id_conf_set(int argc, char **argv, char *val);
 static int id_conf_export(void (*export_func)(char *name, char *val),
   enum conf_export_tgt tgt);
+#endif
 
 #define STAMP_STR(s) STAMP_STR1(s)
 #define STAMP_STR1(str) #str
@@ -48,6 +50,7 @@ const char *id_bsp_str = "";
 const char *id_app_str = "";
 #endif
 
+#if !MYNEWT_VAL(ID_OVERRIDE_CONF_HELPERS)
 #if MYNEWT_VAL(ID_SERIAL_PRESENT)
 char id_serial[ID_SERIAL_MAX_LEN];
 #endif
@@ -60,10 +63,12 @@ char id_manufacturer[ID_MANUFACTURER_MAX_LEN];
 #if MYNEWT_VAL(ID_MODEL_LOCAL)
 char id_model[ID_MODEL_MAX_LEN];
 #endif
+#endif
 
 /** Colon-delimited null-terminated list of base64-encoded mfgimage hashes. */
 char id_mfghash[MYNEWT_VAL(MFG_MAX_MMRS) * (ID_BASE64_MFG_HASH_SZ + 1)];
 
+#if !MYNEWT_VAL(ID_OVERRIDE_CONF_HELPERS)
 struct conf_handler id_conf = {
     .ch_name = "id",
     .ch_get = id_conf_get,
@@ -189,6 +194,7 @@ id_conf_export(void (*export_func)(char *name, char *val),
 #endif /* ID_MODEL_PRESENT */
     return 0;
 }
+#endif
 
 static void
 id_read_mfghash(void)

@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+extern struct conf_handler id_conf;
+
 #if MYNEWT_VAL(ID_SERIAL_PRESENT)
 /*
  * Maximum expected serial number string length.
