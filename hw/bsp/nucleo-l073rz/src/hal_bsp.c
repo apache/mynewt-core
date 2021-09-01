@@ -89,6 +89,20 @@ const struct stm32_hal_i2c_cfg os_bsp_i2c2_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(PWM_0)
+struct stm32_pwm_conf os_bsp_pwm0_cfg = {
+    .tim = TIM3,
+    .irq = TIM3_IRQn,
+};
+#endif
+
+#if MYNEWT_VAL(PWM_1)
+struct stm32_pwm_conf os_bsp_pwm1_cfg = {
+    .tim = TIM2,
+    .irq = TIM2_IRQn,
+};
+#endif
+
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
         .hbmd_start = &_ram_start,
