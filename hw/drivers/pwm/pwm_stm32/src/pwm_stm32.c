@@ -468,7 +468,11 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     switch ((uintptr_t)cfg->tim) {
 #ifdef TIM1
     case (uintptr_t)TIM1:
+#if defined(LL_APB2_GRP1_PERIPH_TIM1)
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
+#elif defined(LL_APB1_GRP2_PERIPH_TIM1)
+        LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM1);
+#endif
         dev->pwm_chan_count = 4;
         break;
 #endif
@@ -543,19 +547,31 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 #endif
 #ifdef TIM15
     case (uintptr_t)TIM15:
+#if defined(LL_APB2_GRP1_PERIPH_TIM15)
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM15);
+#elif defined(LL_APB1_GRP2_PERIPH_TIM15)
+        LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM15);
+#endif
         dev->pwm_chan_count = 2;
         break;
 #endif
 #ifdef TIM16
     case (uintptr_t)TIM16:
+#if defined(LL_APB2_GRP1_PERIPH_TIM16)
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM16);
+#elif defined(LL_APB1_GRP2_PERIPH_TIM16)
+        LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM16);
+#endif
         dev->pwm_chan_count = 1;
         break;
 #endif
 #ifdef TIM17
     case (uintptr_t)TIM17:
+#if defined(LL_APB2_GRP1_PERIPH_TIM17)
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM17);
+#elif defined(LL_APB1_GRP2_PERIPH_TIM17)
+        LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM17);
+#endif
         dev->pwm_chan_count = 1;
         break;
 #endif
