@@ -345,7 +345,7 @@ stm32_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
     LL_TIM_SetPrescaler(pwm->timx, div1);
     LL_TIM_SetAutoReload(pwm->timx, div2);
 
-    return STM32_PWM_ERR_OK;
+    return timer_clock / (div1 + 1) / (div2 + 1);
 }
 
 static int
