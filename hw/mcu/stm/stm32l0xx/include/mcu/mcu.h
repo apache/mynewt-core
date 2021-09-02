@@ -20,6 +20,8 @@
 #ifndef __MCU_MCU_H_
 #define __MCU_MCU_H_
 
+#include <stm32_common/mcu.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,19 +39,6 @@ extern "C" {
     defined(STM32L081xx) || defined(STM32L082xx) || defined(STM32L083xx)
 #define STM32_SYSTEM_MEMORY     0x1FF00000
 #endif
-
-/*
- * Defines for naming GPIOs.
- */
-#define MCU_GPIO_PORTA(pin)	((0 * 16) + (pin))
-#define MCU_GPIO_PORTB(pin)	((1 * 16) + (pin))
-#define MCU_GPIO_PORTC(pin)	((2 * 16) + (pin))
-#define MCU_GPIO_PORTD(pin)	((3 * 16) + (pin))
-#define MCU_GPIO_PORTE(pin)	((4 * 16) + (pin))
-#define MCU_GPIO_PORTF(pin)	((5 * 16) + (pin))
-#define MCU_GPIO_PORTG(pin)	((6 * 16) + (pin))
-#define MCU_GPIO_PORTH(pin)	((7 * 16) + (pin))
-#define MCU_GPIO_PORTI(pin)	((8 * 16) + (pin))
 
 #ifdef __cplusplus
 }
