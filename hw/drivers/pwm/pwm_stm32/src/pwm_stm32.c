@@ -618,5 +618,12 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     LL_TIM_CC_EnablePreload(cfg->tim);
     LL_TIM_SetCounter(pwm->timx, 0);
 
+    /* If using advanced timer, enable main output (MOE). */
+#ifdef IS_TIM_BREAK_INSTANCE
+    if (IS_TIM_BREAK_INSTANCE(pwm->timx)) {
+        LL_TIM_EnableAllOutputs(pwm->timx);
+    }
+#endif
+
     return STM32_PWM_ERR_OK;
 }
