@@ -241,13 +241,13 @@ cmd_start(int argc, char **argv)
     chan_conf.pin = pin;
     rc = pwm_configure_channel(dev, chan, &chan_conf);
     if (rc) {
-        console_printf("Could configure channel %d on %s\n", chan, pwm);
+        console_printf("Could not configure channel %d on %s\n", chan, pwm);
         return 0;
     }
 
    rc = pwm_set_frequency(dev, freq);
    if (rc < 0) {
-       console_printf("Could configure frequency %s\n", pwm);
+       console_printf("Could not configure frequency %s\n", pwm);
        return 0;
    }
 
@@ -257,7 +257,7 @@ cmd_start(int argc, char **argv)
 
    rc = pwm_set_duty_cycle(dev, chan, ((top * dc) / 100));
    if (rc) {
-      console_printf("Could configure duty cycle %d on %s\n", ((top * dc) / 100), pwm);
+      console_printf("Could not configure duty cycle %d on %s\n", ((top * dc) / 100), pwm);
       return 0;
    }
 
