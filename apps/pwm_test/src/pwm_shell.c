@@ -182,7 +182,7 @@ static const struct shell_cmd_help start_help = {
 static int
 cmd_start(int argc, char **argv)
 {
-    uint8_t pin = LED_BLINK_PIN;
+    int pin = LED_BLINK_PIN;
     char *tmp;
     char *pwm = "pwm0";
     int freq = 200;
