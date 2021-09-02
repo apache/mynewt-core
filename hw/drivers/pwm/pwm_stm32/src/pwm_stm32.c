@@ -615,7 +615,6 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     OS_DEV_SETHANDLERS(odev, stm32_pwm_open, stm32_pwm_close);
 
     LL_TIM_EnableARRPreload(cfg->tim);
-    LL_TIM_CC_EnablePreload(cfg->tim);
     LL_TIM_SetCounter(pwm->timx, 0);
 
     /* If using advanced timer, enable main output (MOE). */
