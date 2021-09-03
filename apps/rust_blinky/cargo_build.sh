@@ -22,6 +22,12 @@ if [[ ${MYNEWT_VAL_ARCH_NAME} == '"cortex_m0"' ]]; then
   TARGET="thumbv6m-none-eabi"
 elif [[ ${MYNEWT_VAL_ARCH_NAME} == '"cortex_m3"' ]]; then
   TARGET="thumbv7m-none-eabi"
+elif [[ ${MYNEWT_VAL_ARCH_NAME} == '"cortex_m33"' ]]; then
+  if [[ $MYNEWT_VAL_HARDFLOAT -eq 1 ]]; then
+    TARGET="thumbv8m.main-none-eabihf"
+  else
+    TARGET="thumbv8m.main-none-eabih"
+  fi
 elif [[ ${MYNEWT_VAL_ARCH_NAME} == '"cortex_m4"' || ${MYNEWT_VAL_ARCH_NAME} == '"cortex_m7"' ]]; then
   if [[ $MYNEWT_VAL_HARDFLOAT -eq 1 ]]; then
     TARGET="thumbv7em-none-eabihf"
