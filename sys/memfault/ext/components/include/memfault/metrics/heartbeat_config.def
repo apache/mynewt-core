@@ -1,0 +1,8 @@
+//! The Memfault SDK tracks a few select heartbeat metrics by default to compute
+//! default health statistics for the fleet. All other metrics are provided by the user
+//! of the sdk via the MEMFAULT_METRICS_USER_HEARTBEAT_DEFS_FILE file
+
+// The time since the last heartbeat was collected in ms
+MEMFAULT_METRICS_KEY_DEFINE(MemfaultSdkMetric_IntervalMs, kMemfaultMetricType_Timer)
+// The number of reboots that have taken place since the last heartbeat was collected
+MEMFAULT_METRICS_KEY_DEFINE(MemfaultSdkMetric_UnexpectedRebootCount, kMemfaultMetricType_Unsigned)

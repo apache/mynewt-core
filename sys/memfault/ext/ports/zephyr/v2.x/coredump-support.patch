@@ -1,0 +1,268 @@
+From 2a997541cc6f1d4bb231816cc23ebb820f2448a5 Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Thu, 21 Jan 2021 00:03:55 -0500
+Subject: [PATCH] Backport of "arch: arm: Collect full register state in
+ Cortex-M Exception Stack Frame"
+
+This patch is intended for use on Zephyr 2.2 & 2.3
+
+See the following commit for more details:
+https://github.com/zephyrproject-rtos/zephyr/pull/27496/commits/5c1ea3f96b496a82cea89053eb4d2aedef1cde88
+---
+ arch/Kconfig                           | 15 ++++++++
+ arch/arm/core/aarch32/Kconfig          |  2 ++
+ arch/arm/core/aarch32/cortex_m/fault.c | 17 +++++++++-
+ arch/arm/core/aarch32/fatal.c          | 25 ++++++++++++++
+ arch/arm/core/aarch32/fault_s.S        | 47 +++++++++++++++-----------
+ arch/nios2/Kconfig                     |  1 +
+ include/arch/arm/aarch32/exc.h         | 17 ++++++++++
+ 7 files changed, 103 insertions(+), 21 deletions(-)
+
+diff --git a/arch/Kconfig b/arch/Kconfig
+index 049053ba3b..c7c4012be0 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -321,6 +321,15 @@ config IRQ_OFFLOAD
+ 	  run in interrupt context. Only useful for test cases that need
+ 	  to validate the correctness of kernel objects in IRQ context.
+ 
++
++config EXTRA_EXCEPTION_INFO
++	bool "Collect extra exception info"
++	depends on ARCH_HAS_EXTRA_EXCEPTION_INFO
++	help
++	  This option enables the collection of extra information, such as
++	  register state, when a fault occurs. This information can be useful
++	  to collect for post-mortem analysis and debug of issues.
++
+ endmenu # Interrupt configuration
+ 
+ endmenu
+@@ -350,6 +359,12 @@ config ARCH_HAS_RAMFUNC_SUPPORT
+ config ARCH_HAS_NESTED_EXCEPTION_DETECTION
+ 	bool
+ 
++config ARCH_SUPPORTS_COREDUMP
++	bool
++
++config ARCH_HAS_EXTRA_EXCEPTION_INFO
++	bool
++
+ #
+ # Other architecture related options
+ #
+diff --git a/arch/arm/core/aarch32/Kconfig b/arch/arm/core/aarch32/Kconfig
+index 18368038f3..e3e428c9c7 100644
+--- a/arch/arm/core/aarch32/Kconfig
++++ b/arch/arm/core/aarch32/Kconfig
+@@ -22,6 +22,8 @@ config CPU_CORTEX_M
+ 	select ARCH_HAS_RAMFUNC_SUPPORT
+ 	select ARCH_HAS_NESTED_EXCEPTION_DETECTION
+ 	select SWAP_NONATOMIC
++	select ARCH_HAS_EXTRA_EXCEPTION_INFO
++	imply XIP
+ 	help
+ 	  This option signifies the use of a CPU of the Cortex-M family.
+ 
+diff --git a/arch/arm/core/aarch32/cortex_m/fault.c b/arch/arm/core/aarch32/cortex_m/fault.c
+index 117eb0257c..31822114ae 100644
+--- a/arch/arm/core/aarch32/cortex_m/fault.c
++++ b/arch/arm/core/aarch32/cortex_m/fault.c
+@@ -920,9 +920,11 @@ static inline z_arch_esf_t *get_esf(u32_t msp, u32_t psp, u32_t exc_return,
+  * @param msp MSP value immediately after the exception occurred
+  * @param psp PSP value immediately after the exception occurred
+  * @param exc_return EXC_RETURN value present in LR after exception entry.
++ * @param callee_regs Callee-saved registers (R4-R11, PSP)
+  *
+  */
+-void z_arm_fault(u32_t msp, u32_t psp, u32_t exc_return)
++void z_arm_fault(u32_t msp, u32_t psp, u32_t exc_return,
++	_callee_saved_t *callee_regs)
+ {
+ 	u32_t reason = K_ERR_CPU_EXCEPTION;
+ 	int fault = SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk;
+@@ -950,7 +952,20 @@ void z_arm_fault(u32_t msp, u32_t psp, u32_t exc_return)
+ 	}
+ 
+ 	/* Copy ESF */
++#if !defined(CONFIG_EXTRA_EXCEPTION_INFO)
+ 	memcpy(&esf_copy, esf, sizeof(z_arch_esf_t));
++	ARG_UNUSED(callee_regs);
++#else
++	/* the extra exception info is not present in the original esf
++	 * so we only copy the fields before those.
++	 */
++	memcpy(&esf_copy, esf, offsetof(z_arch_esf_t, extra_info));
++	esf_copy.extra_info = (struct __extra_esf_info) {
++		.callee = callee_regs,
++		.exc_return = exc_return,
++		.msp = msp
++	};
++#endif /* CONFIG_EXTRA_EXCEPTION_INFO */
+ 
+ 	/* Overwrite stacked IPSR to mark a nested exception,
+ 	 * or a return to Thread mode. Note that this may be
+diff --git a/arch/arm/core/aarch32/fatal.c b/arch/arm/core/aarch32/fatal.c
+index dde9efe6f6..297a383b90 100644
+--- a/arch/arm/core/aarch32/fatal.c
++++ b/arch/arm/core/aarch32/fatal.c
+@@ -34,6 +34,18 @@ static void esf_dump(const z_arch_esf_t *esf)
+ 	}
+ 	LOG_ERR("fpscr:  0x%08x", esf->fpscr);
+ #endif
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++	const struct _callee_saved *callee = esf->extra_info.callee;
++
++	if (callee != NULL) {
++		LOG_ERR("r4/v1:  0x%08x  r5/v2:  0x%08x  r6/v3:  0x%08x",
++			callee->v1, callee->v2, callee->v3);
++		LOG_ERR("r7/v4:  0x%08x  r8/v5:  0x%08x  r9/v6:  0x%08x",
++			callee->v4, callee->v5, callee->v6);
++		LOG_ERR("r10/v7: 0x%08x  r11/v8: 0x%08x    psp:  0x%08x",
++			callee->v7, callee->v8, callee->psp);
++	}
++#endif /* CONFIG_EXTRA_EXCEPTION_INFO */
+ 	LOG_ERR("Faulting instruction address (r15/pc): 0x%08x",
+ 		esf->basic.pc);
+ }
+@@ -83,7 +95,20 @@ void z_do_kernel_oops(const z_arch_esf_t *esf)
+ 	}
+ 
+ #endif /* CONFIG_USERSPACE */
++
++#if !defined(CONFIG_EXTRA_EXCEPTION_INFO)
+ 	z_arm_fatal_error(reason, esf);
++#else
++	/* extra exception info is not collected for kernel oops
++	 * path today so we make a copy of the ESF and zero out
++	 * that information
++	 */
++	z_arch_esf_t esf_copy;
++
++	memcpy(&esf_copy, esf, offsetof(z_arch_esf_t, extra_info));
++	esf_copy.extra_info = (struct __extra_esf_info) { 0 };
++	z_arm_fatal_error(reason, &esf_copy);
++#endif /* CONFIG_EXTRA_EXCEPTION_INFO */
+ }
+ 
+ FUNC_NORETURN void arch_syscall_oops(void *ssf_ptr)
+diff --git a/arch/arm/core/aarch32/fault_s.S b/arch/arm/core/aarch32/fault_s.S
+index 4bdd766f67..45fabe06f0 100644
+--- a/arch/arm/core/aarch32/fault_s.S
++++ b/arch/arm/core/aarch32/fault_s.S
+@@ -50,6 +50,7 @@ GTEXT(z_arm_reserved)
+  * - the MSP
+  * - the PSP
+  * - the EXC_RETURN value
++ * - callee saved register state (r4-r11, psp)
+  * as parameters to the z_arm_fault() C function that will perform the
+  * rest of the fault handling (i.e. z_arm_fault(MSP, PSP, EXC_RETURN)).
+  *
+@@ -87,31 +88,37 @@ SECTION_SUBSEC_FUNC(TEXT,__fault,z_arm_data_abort)
+ #endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE */
+ SECTION_SUBSEC_FUNC(TEXT,__fault,z_arm_reserved)
+ 
+-#if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE) || \
+-	defined(CONFIG_ARMV7_M_ARMV8_M_MAINLINE)
+ 	mrs r0, MSP
+ 	mrs r1, PSP
+-	mov r2, lr /* EXC_RETURN */
+-
+ 	push {r0, lr}
+-#elif defined(CONFIG_ARMV7_R)
+-	/*
+-	 * Pass null for the esf to z_arm_fault for now. A future PR will add
+-	 * better exception debug for Cortex-R that subsumes what esf
+-	 * provides.
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++	/* Build _callee_saved_t. To match the struct
++	 * definition we push the psp & then r11-r4
+ 	 */
+-	mov r0, #0
+-#else
+-#error Unknown ARM architecture
+-#endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE || CONFIG_ARMv7_M_ARMV8_M_MAINLINE */
+-
++	push { r1, r2 }
++#if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
++	mov  r3, r11
++	mov  r2, r10
++	push {r2, r3}
++	mov  r3, r9
++	mov  r2, r8
++	push {r2, r3}
++	push {r4-r7}
++#elif defined(CONFIG_ARMV7_M_ARMV8_M_MAINLINE)
++	push {r4-r11}
++#endif
++	mov  r3, sp /* pointer to _callee_saved_t */
++#endif /* CONFIG_EXTRA_EXCEPTION_INFO */
++	mov r2, lr /* EXC_RETURN */
+ 	bl z_arm_fault
+-
+-#if defined(CONFIG_CPU_CORTEX_M)
+-	pop {r0, pc}
+-#elif defined(CONFIG_CPU_CORTEX_R)
+-	pop {r0, lr}
+-	subs pc, lr, #8
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++	/* We do not need to restore any register state here
++	 * because we did not use any callee-saved registers
++	 * in this routine. Therefore, we can just reset
++	 * the MSP to its value prior to entering the function
++	 */
++	add sp, #40
+ #endif
++	pop {r0, pc}
+ 
+ 	.end
+diff --git a/arch/nios2/Kconfig b/arch/nios2/Kconfig
+index f64fd7ad71..3528bc24cb 100644
+--- a/arch/nios2/Kconfig
++++ b/arch/nios2/Kconfig
+@@ -14,6 +14,7 @@ config CPU_NIOS2_GEN2
+ 	bool
+ 	default y
+ 	select BUILD_OUTPUT_HEX
++	select ARCH_HAS_EXTRA_EXCEPTION_INFO
+ 	help
+ 	  This option signifies the use of a Nios II Gen 2 CPU
+ 
+diff --git a/include/arch/arm/aarch32/exc.h b/include/arch/arm/aarch32/exc.h
+index 821654fede..7e39bd091e 100644
+--- a/include/arch/arm/aarch32/exc.h
++++ b/include/arch/arm/aarch32/exc.h
+@@ -44,6 +44,20 @@ GTEXT(z_arm_exc_exit);
+ extern "C" {
+ #endif
+ 
++/* Additional register state that is not stacked by hardware on exception
++ * entry.
++ *
++ * These fields are ONLY valid in the ESF copy passed into z_arm_fatal_error().
++ * When information for a member is unavailable, the field is set to zero.
++ */
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++struct __extra_esf_info {
++	_callee_saved_t *callee;
++	uint32_t msp;
++	uint32_t exc_return;
++};
++#endif /* CONFIG_EXTRA_EXCEPTION_INFO */
++
+ struct __esf {
+ 	struct __basic_sf {
+ 		sys_define_gpr_with_alias(a1, r0);
+@@ -60,6 +74,9 @@ struct __esf {
+ 	u32_t fpscr;
+ 	u32_t undefined;
+ #endif
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++	struct __extra_esf_info extra_info;
++#endif
+ };
+ 
+ typedef struct __esf z_arch_esf_t;
+--
+2.28.0
+

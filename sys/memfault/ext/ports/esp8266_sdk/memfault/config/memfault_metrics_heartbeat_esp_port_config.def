@@ -1,0 +1,12 @@
+#include "sdkconfig.h"
+
+#if CONFIG_MEMFAULT_HEARTBEAT_TRACK_HEAP_USAGE
+MEMFAULT_METRICS_KEY_DEFINE(Heap_FreeSize, kMemfaultMetricType_Unsigned)
+MEMFAULT_METRICS_KEY_DEFINE(Heap_MinFreeSize, kMemfaultMetricType_Unsigned)
+#endif
+
+#if CONFIG_MEMFAULT_HEARTBEAT_TRACK_MAIN_STACK_HWM
+MEMFAULT_METRICS_KEY_DEFINE(MainTask_StackHighWaterMarkWords, kMemfaultMetricType_Unsigned)
+#endif
+
+#include "memfault_metrics_heartbeat_config.def"

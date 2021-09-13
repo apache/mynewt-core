@@ -1,0 +1,26 @@
+From 41018912a63e4c2cb859434e3e459c0412e172ec Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Mon, 26 Jun 2021 11:28:57 -0700
+Subject: [PATCH] Added support for capturing GNU Build Id
+
+---
+ sdk/bsp/ldscripts/ble_projects/sections_da1469x.ld.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/sdk/bsp/ldscripts/ble_projects/sections_da1469x.ld.h b/sdk/bsp/ldscripts/ble_projects/sections_da1469x.ld.h
+index d392ab5..d3d3377 100644
+--- a/sdk/bsp/ldscripts/ble_projects/sections_da1469x.ld.h
++++ b/sdk/bsp/ldscripts/ble_projects/sections_da1469x.ld.h
+@@ -219,6 +219,12 @@ SECTIONS
+                 __zero_table_end__ = .;
+         } > ROM
+ 
++        .note.gnu.build-id :
++        {
++                __start_gnu_build_id_start = .;
++                KEEP(*(.note.gnu.build-id))
++        } > ROM
++
+         __etext = .;
+ 
+         /*

@@ -1,0 +1,39 @@
+From 7838000be3586587795653967cb129af7bd4d826 Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Thu, 15 Apr 2021 15:40:19 -0700
+Subject: [PATCH] Add support for overriding GCC based hard_fault handler to
+ DA145xx SDK 6.0.14.1114.
+
+---
+ sdk/platform/arch/boot/GCC/startup_DA14531.S     | 2 +-
+ sdk/platform/arch/boot/GCC/startup_DA14585_586.S | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sdk/platform/arch/boot/GCC/startup_DA14531.S b/sdk/platform/arch/boot/GCC/startup_DA14531.S
+index e9a1619..af84196 100644
+--- a/sdk/platform/arch/boot/GCC/startup_DA14531.S
++++ b/sdk/platform/arch/boot/GCC/startup_DA14531.S
+@@ -512,8 +512,8 @@ NMI_stacking_used_MSP:
+     .size   NMI_Handler, . - NMI_Handler
+ 
+     .thumb_func
+-    .globl  HardFault_Handler
+     .type   HardFault_Handler, %function
++    .weak   HardFault_Handler
+     .fnstart
+ 
+ @ HardFault handler
+diff --git a/sdk/platform/arch/boot/GCC/startup_DA14585_586.S b/sdk/platform/arch/boot/GCC/startup_DA14585_586.S
+index ac20213..4701ad2 100644
+--- a/sdk/platform/arch/boot/GCC/startup_DA14585_586.S
++++ b/sdk/platform/arch/boot/GCC/startup_DA14585_586.S
+@@ -256,8 +256,8 @@ NMI_stacking_used_MSP:
+     .size	NMI_Handler, . - NMI_Handler
+ 
+ 	.thumb_func
+-	.globl	HardFault_Handler
+ 	.type	HardFault_Handler, %function
++	.weak	HardFault_Handler
+     .fnstart
+ 
+ @ HardFault handler

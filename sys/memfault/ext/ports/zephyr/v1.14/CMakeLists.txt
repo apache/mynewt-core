@@ -1,0 +1,2 @@
+zephyr_library_sources(memfault_fault_handler.c)
+zephyr_include_directories(.)

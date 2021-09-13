@@ -1,0 +1,27 @@
+41a42,43
+> #include "memfault/panics/assert.h"
+> 
+121c123
+<         static char_t const Q_this_module_[] = name_;
+---
+>         // static char_t const Q_this_module_[] = name_;
+136,137c138,139
+<     #define Q_ASSERT(test_) ((test_) \
+<         ? (void)0 : Q_onAssert(&Q_this_module_[0], (int_t)__LINE__))
+---
+>      #define Q_ASSERT(test_) \
+>         MEMFAULT_ASSERT((test_))
+155,156c157,158
+<     #define Q_ASSERT_ID(id_, test_) ((test_) \
+<         ? (void)0 : Q_onAssert(&Q_this_module_[0], (int_t)(id_)))
+---
+>     #define Q_ASSERT_ID(id_, test_) \
+>         MEMFAULT_ASSERT_EXTRA((test_), (id_))
+196c198
+<         Q_onAssert(&Q_this_module_[0], (int_t)__LINE__)
+---
+>         MEMFAULT_ASSERT_RECORD(__LINE__)
+212c214
+<         Q_onAssert(&Q_this_module_[0], (int_t)(id_))
+---
+>         MEMFAULT_ASSERT_RECORD((id_))

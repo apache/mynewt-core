@@ -105,6 +105,12 @@ SECTIONS
         . = ALIGN(4);
     } > FLASH
 
+    .note.gnu.build-id :
+    {
+        __start_gnu_build_id_start = .;
+        KEEP(*(.note.gnu.build-id))
+    } > FLASH
+
 
     .ARM.extab :
     {

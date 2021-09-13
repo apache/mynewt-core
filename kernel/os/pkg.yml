@@ -49,3 +49,6 @@ pkg.deps.OS_CRASH_LOG:
 
 pkg.init:
     os_pkg_init: 'MYNEWT_VAL(OS_SYSINIT_STAGE)'
+
+pkg.deps.SYS_MEMFAULT:
+    - "@apache-mynewt-core/sys/memfault"

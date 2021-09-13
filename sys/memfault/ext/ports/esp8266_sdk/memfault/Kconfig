@@ -1,0 +1,76 @@
+menuconfig MEMFAULT
+   bool "Enable Memfault Integration"
+   default y
+
+if MEMFAULT
+
+    config MEMFAULT_EVENT_COLLECTION_ENABLED
+        bool "Enables collection of Memfault Events (Reboots, Traces, Heartbeats)"
+        default y
+
+    config MEMFAULT_EVENT_HEARTBEATS_ENABLED
+        bool "Enables collection of Memfault Heartbeats"
+        depends on MEMFAULT_EVENT_COLLECTION_ENABLED
+        default y
+
+    config MEMFAULT_HEARTBEAT_TRACK_MAIN_STACK_HWM
+       bool "Enables tracking of stack High Water mark for main (uiT) task"
+       depends on MEMFAULT_EVENT_COLLECTION_ENABLED
+       default y
+
+    config MEMFAULT_HEARTBEAT_TRACK_HEAP_USAGE
+       bool "Enables tracking of heap usage"
+       depends on MEMFAULT_EVENT_COLLECTION_ENABLED
+       default y
+
+    config MEMFAULT_EVENT_STORAGE_RAM_SIZE
+        int "The amount of RAM storage to reserve for Memfault Events"
+        depends on MEMFAULT_EVENT_COLLECTION_ENABLED
+        default 512
+
+    config MEMFAULT_HTTP_CLIENT_BUFFER_SIZE
+        int "The maximum amount of RAM to attempt to for a POST to the Memfault chunks API"
+        default 4096
+
+    config MEMFAULT_CLI_ENABLED
+        bool "Enables the Memfault debug CLI"
+        default y
+        help
+            By default, Memfault will register CLI commands for easily exercising the SDK
+
+    config MEMFAULT_CLI_COREDUMP_STORAGE_TEST_CMD
+        bool "Enables the coredump storage test CLI command"
+        depends on MEMFAULT_CLI_ENABLED
+        default n
+        help
+            By default, Memfault will register CLI commands for easily exercising the SDK
+
+   choice MEMFAULT_COREDUMP_REGIONS
+       prompt "Select the RAM regions to collect in a coredump"
+       default MEMFAULT_COREDUMP_REGIONS_ALL_RAM
+
+       config MEMFAULT_COREDUMP_REGIONS_ALL_RAM
+          bool "Collect all of RAM as part of the coredump"
+
+       config MEMFAULT_COREDUMP_REGIONS_THREADS_ONLY
+          bool "Only collect the RAM necessary to unwind FreeRTOS tasks"
+
+      config MEMFAULT_COREDUMP_REGIONS_CUSTOM
+          bool "Provide custom implementation of memfault_platform_coredump_get_regions()"
+   endchoice
+
+   choice MEMFAULT_COREDUMP_STORAGE
+       prompt "Select location to save a coredump when a crash takes place"
+       default MEMFAULT_COREDUMP_STORAGE_FLASH
+
+       config MEMFAULT_COREDUMP_STORAGE_FLASH
+          bool "Enables saving a coredump to flash storage (OTA slot)"
+          help
+           Provides a port which saves OTA updates in the next available OTA slot. This option
+           requires that an ota slot exists in the projects partitions.csv file.
+
+       config MEMFAULT_COREDUMP_STORAGE_CUSTOM
+          bool "User defined coredump storage region"
+   endchoice
+
+endif # MEMFAULT

@@ -1,0 +1,274 @@
+config MEMFAULT
+        bool "MEMFAULT Support"
+        default n
+        depends on CPU_CORTEX_M
+        select RUNTIME_NMI
+        select EXTRA_EXCEPTION_INFO
+        select DEBUG_THREAD_INFO
+        select OPENOCD_SUPPORT
+        help
+          Enable Zephyr Integration with the Memfault SDK
+          At the moment a port is only provided for Cortex-M based targets
+
+if MEMFAULT
+
+config MEMFAULT_CACHE_FAULT_REGS
+        bool "MEMFAULT Cache ARM fault registers"
+        default y
+        help
+          Save a copy of the ARMv7's fault registers before Zephyr
+          modifies them to provide a more accurate crash analysis
+          in the Memfault Issues view.
+
+config MEMFAULT_USER_CONFIG_ENABLE
+        bool "Enable user configuration of the Memfault SDK"
+        default y
+        help
+          When enabled, a user must add the three Memfault
+          configuration files to their port:
+          memfault_platform_config.h
+          memfault_metrics_heartbeat_config.def
+          memfault_trace_reason_user_config.def
+
+config MEMFAULT_USER_CONFIG_SILENT_FAIL
+        bool "Continue with build even if user configuration of Memfault SDK is missing"
+        default y
+        help
+          When enabled, __has_include is used to conditionally include the three Memfault
+          configuration files to a port if they exist instead of failing to compile if
+          they do not:
+          memfault_platform_config.h
+          memfault_metrics_heartbeat_config.def
+          memfault_trace_reason_user_config.def
+
+config MEMFAULT_COREDUMP_STORAGE_CUSTOM
+        bool
+        default n
+        help
+          Can be used by another Kconfig option to disable the RAM backed
+          coredump implementation using select.
+
+config MEMFAULT_RAM_BACKED_COREDUMP
+        bool "MEMFAULT Ram Backed Coredump"
+        default y if !MEMFAULT_COREDUMP_STORAGE_CUSTOM
+        depends on !MEMFAULT_COREDUMP_STORAGE_CUSTOM
+        help
+          Save a minimal coredump in noinit RAM.
+
+config MEMFAULT_RAM_BACKED_COREDUMP_SIZE
+        int "MEMFAULT Ram Backed Coredump"
+        default 8192
+        depends on MEMFAULT_RAM_BACKED_COREDUMP
+        help
+          The amount of RAM to allocate for saving coredumps
+
+config MEMFAULT_COREDUMP_COLLECT_DATA_REGIONS
+        bool "Include data region in coredump"
+        default y
+        help
+          When enabled, the data region will be captured as part
+          of the coredump. If not enough space is available for all of
+          the data, the coredump will be truncated.
+
+config MEMFAULT_COREDUMP_COLLECT_BSS_REGIONS
+        bool "Include bss region in coredump"
+        default n
+        help
+          When enabled, the bss region will be captured as part
+          of the coredump. If not enough space is available for all of
+          the data, the coredump will be truncated.
+
+config MEMFAULT_SHELL
+        bool "MEMFAULT Shell"
+        default y if SHELL
+        depends on SHELL
+        help
+          CLI Utilities for interfacing with the Memfault SDK
+
+config MEMFAULT_HTTP_ENABLE
+        bool "Enables support for using Memfault's HTTP APIs"
+        default y if SOC_SERIES_NRF91X && TRUSTED_EXECUTION_NONSECURE
+        help
+          Enables support for querying the Memfault API for OTA updates
+          and posting Memfault chunks
+
+config MEMFAULT_LOGGING_ENABLE
+        bool "MEMFAULT Zephyr backend logging Enable [EXPERIMENTAL]"
+        default n
+        help
+          Adds support for routing Zephyr logging calls to the Memfault
+          logging backend.
+
+if MEMFAULT_LOGGING_ENABLE
+
+config MEMFAULT_LOGGING_RAM_SIZE
+        int "Set the size of the Memfault logging storage buffer"
+        default 512
+        depends on MEMFAULT_LOGGING_ENABLE
+        help
+          The Memfault logs will be stored in a static logging storage buffer
+          defined in memfault_logging.c. Adjust this value to ensure enough
+          room for a reasonalbe number of log entries.
+
+endif # MEMFAULT_LOGGING_ENABLE
+
+choice
+    bool "Implementation used to store Memfault Root certificates"
+    default MEMFAULT_ROOT_CERT_STORAGE_NRF9160_MODEM if SOC_SERIES_NRF91X && TRUSTED_EXECUTION_NONSECURE
+    default MEMFAULT_ROOT_CERT_STORAGE_TLS_CREDENTIAL_STORAGE
+
+config MEMFAULT_ROOT_CERT_STORAGE_NRF9160_MODEM
+    bool "Uses the storage on the NRF9160 modem for storing root certificates"
+
+config MEMFAULT_ROOT_CERT_STORAGE_TLS_CREDENTIAL_STORAGE
+    bool "Uses Zephyr's tls_credential_add() API for storing root certificates"
+
+config MEMFAULT_ROOT_CERT_STORAGE_CUSTOM
+    bool "Provide a custom implementation of memfault_root_cert_storage_add()"
+
+endchoice
+
+if MEMFAULT_HTTP_ENABLE
+
+config MEMFAULT_HTTP_MAX_POST_SIZE
+        int "Set the Maximum HTTP Body Size Memfault will use in a POST request"
+        default 0
+        depends on MEMFAULT_HTTP_ENABLE
+        help
+          Some network drivers have bugs which limit the maximum amount of
+          data that can be sent in a single HTTP request. When the value is 0 (default),
+          no size restriction on HTTP post size will be enforced. For a non-zero value,
+          this will be the maximum body length of a posted check. This size is allocated
+          on the stack posting the data.
+
+config MEMFAULT_HTTP_PERIODIC_UPLOAD
+        bool "Enables a work job to periodically push new data to Memfault"
+        default n
+        help
+          This implementation makes use of a k_timer_* and k_work_submit to schedule
+          a background job that periodically checks to see if new Memfault data
+          is available and pushes it to Memfault if so (via a HTTP POST).
+
+choice MEMFAULT_HTTP_PERIODIC_UPLOAD_CONTEXT
+        prompt "Work queue implementation to use for periodic HTTP posting"
+        depends on MEMFAULT_HTTP_PERIODIC_UPLOAD
+        default MEMFAULT_HTTP_PERIODIC_UPLOAD_USE_SYSTEM_WORKQUEUE
+
+config MEMFAULT_HTTP_PERIODIC_UPLOAD_USE_SYSTEM_WORKQUEUE
+        bool "Periodically push new data to Memfault from system workqueue"
+        help
+          When using this feature, make sure CONFIG_SYSTEM_WORKQUEUE_STACK_SIZE
+          is set appropriately for the board's HTTP stack to not cause a stack overflow.
+
+config MEMFAULT_HTTP_PERIODIC_UPLOAD_USE_DEDICATED_WORKQUEUE
+        bool "Periodically push new data to Memfault using a dedicated workqueue"
+        help
+          When using this feature, make sure CONFIG_MEMFAULT_HTTP_DEDICATED_WORKQUEUE_STACK_SIZE
+          is set appropriately for the board's HTTP stack to not cause a stack overflow. A dedicated
+          workqueue over the system workqueue is beneficial if http requests for the network stack
+          in use can block for a long time but comes at the cost of using extra RAM.
+
+endchoice
+
+config MEMFAULT_HTTP_DEDICATED_WORKQUEUE_STACK_SIZE
+        int "Stack size for dedicated http upload queue, in bytes"
+        default 2048
+        depends on MEMFAULT_HTTP_PERIODIC_UPLOAD_USE_DEDICATED_WORKQUEUE
+
+config MEMFAULT_HTTP_PERIODIC_UPLOAD_INTERVAL_SECS
+        int "Interval with which the periodic upload task should run"
+        default 3600
+        depends on MEMFAULT_HTTP_PERIODIC_UPLOAD
+        help
+          The first check will run between [1, 1+MEMFAULT_HTTP_PERIODIC_UPLOAD_INTERVAL_SECS]
+          Subsequent checks will run at MEMFAULT_HTTP_PERIODIC_UPLOAD_INTERVAL_SECS intervals.
+
+endif # MEMFAULT_HTTP_ENABLE
+
+config MEMFAULT_EVENT_STORAGE_SIZE
+       int "Memfault Event Storage RAM Buffer Size"
+       default 1024
+       help
+        The storage area used to batch memfault events before they are flushed
+        to persistent storage or the Memfault Cloud.
+
+config MEMFAULT_COREDUMP_STACK_SIZE_TO_COLLECT
+       int "Maximum amount of bytes to collect for task"
+       default 256
+       help
+        The larger the size, the more stack frames Memfault can recover for tasks. The
+        default setting typically allows for 4 or more frames to be recovered.
+
+config MEMFAULT_COREDUMP_MAX_TRACKED_TASKS
+       int "Maximum amount of tasks to collect in a coredump"
+       default 32
+       help
+        The maximum amount of tasks Memfault will store state for in a coredump.
+
+config MEMFAULT_REBOOT_REASON_GET_CUSTOM
+       bool "Provide a custom implementation for recovering reboot information"
+       default n
+       help
+        User of SDK must provide their own implementation of memfault_reboot_reason_get()
+        when disabled
+
+config MEMFAULT_CLEAR_RESET_REG
+       bool "Whether or not to clear bits in MCU reset reason register"
+       default y
+       help
+        When disabled, the end user is responsible for clearing the reset register. (Bits
+        generally persist across resets)
+
+config MEMFAULT_METRICS
+       bool "Enable the memfault Metrics subsystem"
+       default y
+
+if MEMFAULT_METRICS
+
+config MEMFAULT_METRICS_EXTRA_DEFS_FILE
+       bool "Enable inclusion of additional metrics definition file"
+       default n
+       help
+        Enables inclusion of an additional metric definition file,
+        'memfault_metrics_heartbeat_extra.def'. This can be useful for third party
+        libraries that want to include additional default metrics.
+
+config MEMFAULT_METRICS_TIMER_CUSTOM
+       bool "Provide a custom implementation of Memfault Metric Deps"
+       default n
+       help
+        By default the Memfault SDK makes use of Zephyrs k_timer_* to
+        schedule the heartbeat timer and k_work_* to run the heartbeat callback
+        work. This option can be used to disable that implementation in
+        ports/zephyr/common/memfault_platform_metrics.c and allow for
+        a custom implementation of memfault_platform_metrics_timer_boot() to be provided
+
+config MEMFAULT_METRICS_DEFAULT_SET_ENABLE
+       bool "Enable collection of a default set of metrics by the Zephyr port"
+       default y
+       help
+        By default the Memfault SDK will automatically capture heartbeat metrics
+        to help track how the Zephyr RTOS is operating. For more details about the
+        metrics collected, see ports/zephyr/config/memfault_metrics_heartbeat_zephyr_port_config.def
+        When disabled, no default metrics will be collected.
+
+endif # MEMFAULT_METRICS
+
+config MEMFAULT_SOFTWARE_WATCHDOG_CUSTOM
+       bool "Provide a custom implementation of Software Watchdog"
+       default n
+       help
+        By default Memfault implements a software watchdog implementation. Users can call
+        memfault_software_watchdog_enable() on boot and memfault_software_watchdog_feed()
+        when they feed the hardware watchdog. When the software watchdog expires, Memfault
+        will capture a coredump and then the system will be rebooted. This option can be used
+        to disable the implementation in ports/zephyr/common/memfault_software_watchdog.c
+
+config MEMFAULT_SOFTWARE_WATCHDOG_TIMEOUT_SECS
+       int "The time, in seconds, to configure the software watchdog expiration for"
+       default 15
+
+
+rsource "ncs/Kconfig"
+
+endif # MEMFAULT

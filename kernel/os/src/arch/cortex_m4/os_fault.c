@@ -32,6 +32,12 @@
 #include "reboot/log_reboot.h"
 #endif
 
+#if MYNEWT_VAL(SYS_MEMFAULT)
+#include "memfault/panics/coredump.h"
+#include "memfault/panics/arch/arm/cortex_m.h"
+#include "memfault/panics/platform/coredump.h"
+#endif
+
 struct exception_frame {
     uint32_t r0;
     uint32_t r1;
@@ -193,6 +199,23 @@ os_default_irq(struct trap_frame *tf)
         .pc = tf->ef->pc,
     };
     log_reboot(&lri);
+#endif
+
+#if MYNEWT_VAL(SYS_MEMFAULT)
+    sMfltRegState reg = {
+        .exception_frame = (sMfltExceptionFrame *)tf->ef,
+        .r4 = tf->r4,
+        .r5 = tf->r5,
+        .r6 = tf->r6,
+        .r7 = tf->r7,
+        .r8 = tf->r8,
+        .r9 = tf->r9,
+        .r10 = tf->r10,
+        .r11 = tf->r11,
+        .exc_return = tf->lr,
+    };
+    console_printf("Saving Memfault coredump\n");
+    memfault_fault_handler(&reg, kMfltRebootReason_HardFault);
 #endif
 
 #if MYNEWT_VAL(OS_COREDUMP)

@@ -1,0 +1,47 @@
+config MEMFAULT_NRF_CONNECT_SDK
+        bool "nRF Connect SDK extensions"
+        default y if SOC_SERIES_NRF91X && TRUSTED_EXECUTION_NONSECURE
+        select MEMFAULT_REBOOT_REASON_GET_CUSTOM
+
+if MEMFAULT_NRF_CONNECT_SDK
+
+config MEMFAULT_FOTA
+        bool "Enable Memfault FOTA Library"
+        default n
+        depends on MEMFAULT_HTTP_ENABLE
+        depends on FOTA_DOWNLOAD
+        depends on DOWNLOAD_CLIENT
+        help
+          Adds support for using Memfaults Release Management infrastructure
+          to retrieve binaries to install (https://mflt.io/release-mgmt). If an update
+          is available, the binary will be downloaded and installed using the FOTA Download
+          Client provided in the nRF Connect SDK.
+
+          Note: Enabling this feature currently requires the following update:
+          See https://mflt.io/nrf-fota for more details
+
+config MEMFAULT_NRF_SHELL
+        bool "Enable Memfault NRF Shell"
+        default y if MEMFAULT_SHELL
+        depends on SHELL
+        help
+          CLI Utilities for interfacing with the nRF Connect SDK
+
+if MEMFAULT_FOTA
+
+config MEMFAULT_FOTA_CLI_CMD
+        bool "Enable CLI command for triggering OTA updates"
+        default y
+        depends on MEMFAULT_NRF_SHELL
+
+config MEMFAULT_FOTA_DOWNLOAD_CALLBACK_CUSTOM
+        bool "Add custom handler for receiving OTA events"
+        default n
+        help
+          By default, the Memfault SDK implements a stub for FOTA callback
+          events. An end user can provide their own implementation by enabling
+          this option and implementing memfault_fota_download_callback()
+
+endif # MEMFAULT_FOTA
+
+endif # MEMFAULT_NRF_CONNECT_SDK

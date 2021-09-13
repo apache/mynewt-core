@@ -1,0 +1,53 @@
+From 6c2fc4eb5c013dc0bbc6a0b815bbd5004f8ffb84 Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Mon, 28 Jun 2021 12:14:01 -0700
+Subject: [PATCH] Made fault handlers weak so they can be overridden.
+
+---
+ sdk/bsp/peripherals/src/hw_hard_fault.c          | 4 ++--
+ sdk/bsp/startup/DA1469x/GCC/exception_handlers.S | 2 ++
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/sdk/bsp/peripherals/src/hw_hard_fault.c b/sdk/bsp/peripherals/src/hw_hard_fault.c
+index 4498b55..9cc4309 100644
+--- a/sdk/bsp/peripherals/src/hw_hard_fault.c
++++ b/sdk/bsp/peripherals/src/hw_hard_fault.c
+@@ -179,7 +179,7 @@ void MemManage_Handler(void)
+ #if (dg_configCODE_LOCATION == NON_VOLATILE_IS_FLASH)
+ __attribute__((section("text_retained")))
+ #endif
+-void BusFault_Handler(void)
++__WEAK void BusFault_Handler(void)
+ {
+         volatile uint8_t bus_fault_status_reg;
+         volatile uint32_t bus_fault_addr __UNUSED;
+@@ -202,7 +202,7 @@ void BusFault_Handler(void)
+ #if (dg_configCODE_LOCATION == NON_VOLATILE_IS_FLASH)
+ __attribute__((section("text_retained")))
+ #endif
+-void UsageFault_Handler(void)
++__WEAK void UsageFault_Handler(void)
+ {
+         volatile uint16_t usage_fault_status_reg __UNUSED;
+ 
+diff --git a/sdk/bsp/startup/DA1469x/GCC/exception_handlers.S b/sdk/bsp/startup/DA1469x/GCC/exception_handlers.S
+index c42fb66..639ef55 100644
+--- a/sdk/bsp/startup/DA1469x/GCC/exception_handlers.S
++++ b/sdk/bsp/startup/DA1469x/GCC/exception_handlers.S
+@@ -250,6 +250,7 @@ Reset_Handler:
+                 .align  2
+                 .thumb
+                 .thumb_func
++                .weak   NMI_Handler
+                 .globl  NMI_Handler
+                 .type   NMI_Handler, %function
+ NMI_Handler:
+@@ -268,6 +269,7 @@ NMI_stacking_using_MSP:
+                 .align  2
+                 .thumb
+                 .thumb_func
++                .weak   HardFault_Handler
+                 .globl  HardFault_Handler
+                 .type   HardFault_Handler, %function
+ HardFault_Handler:
+ 

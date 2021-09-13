@@ -1,0 +1,68 @@
+From a8a6f2ece11a14d3cde54a177822e12a871d87e7 Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Tue, 16 Mar 2021 11:06:17 -0400
+Subject: [PATCH] Add support for capturing GNU Build Id to DA1468x
+ SDK1.0.14.1081
+
+For more details, see https://mflt.io/da1468x-gnu-build-id
+---
+ sdk/bsp/ldscripts/ble_projects/sections.ld.h     | 13 ++++++++++++-
+ sdk/bsp/ldscripts/non_ble_projects/sections.ld.h | 13 ++++++++++++-
+ 2 files changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/sdk/bsp/ldscripts/ble_projects/sections.ld.h b/sdk/bsp/ldscripts/ble_projects/sections.ld.h
+index 0fc6add..38a5abd 100644
+--- a/sdk/bsp/ldscripts/ble_projects/sections.ld.h
++++ b/sdk/bsp/ldscripts/ble_projects/sections.ld.h
+@@ -224,10 +224,21 @@ SECTIONS
+         } > ROM
+         __exidx_end = .;
+ 
++#if (dg_configBLACK_ORCA_IC_REV != BLACK_ORCA_IC_REV_A) && (dg_configEXEC_MODE != MODE_IS_CACHED)
++        .note.gnu.build-id : AT ( LOADADDR(.ARM.exidx) + SIZEOF(.ARM.exidx) )
++#else
++        .note.gnu.build-id :
++#endif
++        {
++          /* Integrate build id as described in memfault/core/build_info.h */
++          __start_gnu_build_id_start = .;
++          KEEP(*(.note.gnu.build-id))
++        } > ROM
++
+         /* 16 byte alignment is required. Please do not add anything until the __etext
+          * assignment! */
+ #if (dg_configBLACK_ORCA_IC_REV != BLACK_ORCA_IC_REV_A) && (dg_configEXEC_MODE != MODE_IS_CACHED)
+-        .align_s : AT ( LOADADDR(.ARM.exidx) + SIZEOF(.ARM.exidx) )
++        .align_s : AT ( LOADADDR(.note.gnu.build-id) + SIZEOF(.note.gnu.build-id) )
+ #else
+         .align_s :
+ #endif
+diff --git a/sdk/bsp/ldscripts/non_ble_projects/sections.ld.h b/sdk/bsp/ldscripts/non_ble_projects/sections.ld.h
+index fde1475..6e98d1d 100644
+--- a/sdk/bsp/ldscripts/non_ble_projects/sections.ld.h
++++ b/sdk/bsp/ldscripts/non_ble_projects/sections.ld.h
+@@ -220,10 +220,21 @@ SECTIONS
+         } > ROM
+         __exidx_end = .;
+ 
++#if (dg_configBLACK_ORCA_IC_REV != BLACK_ORCA_IC_REV_A) && (dg_configEXEC_MODE != MODE_IS_CACHED)
++        .note.gnu.build-id : AT ( LOADADDR(.ARM.exidx) + SIZEOF(.ARM.exidx) )
++#else
++        .note.gnu.build-id :
++#endif
++        {
++          /* Integrate build id as described in memfault/core/build_info.h */
++          __start_gnu_build_id_start = .;
++          KEEP(*(.note.gnu.build-id))
++        } > ROM
++
+         /* 16 byte alignment is required. Please do not add anything until the __etext
+          * assignment! */
+ #if (dg_configBLACK_ORCA_IC_REV != BLACK_ORCA_IC_REV_A) && (dg_configEXEC_MODE != MODE_IS_CACHED)
+-        .align_s : AT ( LOADADDR(.ARM.exidx) + SIZEOF(.ARM.exidx) )
++        .align_s : AT ( LOADADDR(.note.gnu.build-id) + SIZEOF(.note.gnu.build-id) )
+ #else
+         .align_s :
+ #endif
+-- 
+2.31.0

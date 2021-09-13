@@ -1,0 +1,50 @@
+From ce55362c0312d2deff080a9a46a6baa72c0532fb Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Thu, 6 May 2021 15:38:37 -0700
+Subject: [PATCH] da145xx: Patch for armcc fault handlers.
+
+---
+ sdk/platform/arch/boot/ARM/startup_DA14531.s     | 2 ++
+ sdk/platform/arch/boot/ARM/startup_DA14585_586.s | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/sdk/platform/arch/boot/ARM/startup_DA14531.s b/sdk/platform/arch/boot/ARM/startup_DA14531.s
+index 54031fe..6029e03 100644
+--- a/sdk/platform/arch/boot/ARM/startup_DA14531.s
++++ b/sdk/platform/arch/boot/ARM/startup_DA14531.s
+@@ -374,6 +374,7 @@ cold_reset
+                 IMPORT NMI_HandlerC
+ NMI_Handler\
+                 PROC
++                EXPORT  NMI_Handler               [WEAK]
+                 movs r0, #4
+                 mov r1, lr
+                 tst r0, r1
+@@ -390,6 +391,7 @@ NMI_stacking_used_MSP
+                 IMPORT HardFault_HandlerC
+ HardFault_Handler\
+                 PROC
++                EXPORT  HardFault_Handler         [WEAK]
+                 movs r0, #4
+                 mov r1, lr
+                 tst r0, r1
+diff --git a/sdk/platform/arch/boot/ARM/startup_DA14585_586.s b/sdk/platform/arch/boot/ARM/startup_DA14585_586.s
+index c7e9382..b8ccb21 100644
+--- a/sdk/platform/arch/boot/ARM/startup_DA14585_586.s
++++ b/sdk/platform/arch/boot/ARM/startup_DA14585_586.s
+@@ -130,6 +130,7 @@ Reset_Handler   PROC
+                 IMPORT NMI_HandlerC
+ NMI_Handler\
+                 PROC
++                EXPORT  NMI_Handler               [WEAK]
+                 movs r0, #4
+                 mov r1, lr
+                 tst r0, r1
+@@ -146,6 +147,7 @@ NMI_stacking_used_MSP
+                 IMPORT HardFault_HandlerC
+ HardFault_Handler\
+                 PROC
++                EXPORT  HardFault_Handler         [WEAK]
+                 movs r0, #4
+                 mov r1, lr
+                 tst r0, r1

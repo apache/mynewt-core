@@ -1,0 +1,44 @@
+From 1d3628ec06e9a7960505516c591d2b0b12a0fc57 Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Mon, 26 Jun 2021 11:44:21 -0700
+Subject: [PATCH] Added memfault specific configuration to freertos config
+ header.
+
+---
+ sdk/free_rtos/include/FreeRTOSConfig.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/sdk/free_rtos/include/FreeRTOSConfig.h b/sdk/free_rtos/include/FreeRTOSConfig.h
+index e0ba35b..87bb5c9 100644
+--- a/sdk/free_rtos/include/FreeRTOSConfig.h
++++ b/sdk/free_rtos/include/FreeRTOSConfig.h
+@@ -46,6 +46,10 @@
+ #include "hw_watchdog.h"
+ #include "../../system/sys_man/sys_clock_mgr_internal.h"
+ 
++#if defined dg_configUSE_MEMFAULT
++#include "memfault/ports/freertos_trace.h"
++#endif
++
+ extern uint32_t SystemCoreClock;
+ 
+ #define configUSE_PREEMPTION			1
+@@ -152,12 +156,17 @@ to exclude the API function. */
+ #define INCLUDE_xTaskGetCurrentTaskHandle       1
+ #endif /* (dg_configSYSTEMVIEW == 1) */
+ 
++#if defined dg_configUSE_MEMFAULT
++void vAssertCalled(const char *file, int line);
++#define configASSERT(x) do { if ((x) == 0) vAssertCalled( __FILE__, __LINE__ ); } while (0);
++#else
+ /* Normal assert() semantics without relying on the provision of an assert.h header file. */
+ #if (dg_configIMAGE_SETUP == DEVELOPMENT_MODE)
+ #define configASSERT( x ) if( ( x ) == 0 ) { taskDISABLE_INTERRUPTS(); hw_watchdog_freeze(); do {} while(1); }
+ #else
+ #define configASSERT( x ) if( ( x ) == 0 ) { }
+ #endif
++#endif
+ 
+ /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
+ standard names - or at least those used in the unmodified vector table. */
+ 

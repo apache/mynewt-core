@@ -1,0 +1,21 @@
+42a43,44
+> #include "memfault/panics/assert.h"
+> 
+99,104c101,102
+<     #define Q_ASSERT_CRIT_(id_, test_) do {               \
+<         if ((test_)) {} else {                            \
+<             QF_CRIT_EXIT_();                              \
+<             Q_onAssert(&Q_this_module_[0], (int_t)(id_)); \
+<         }                                                 \
+<     } while (0)
+---
+>     #define Q_ASSERT_CRIT_(id_, test_) \
+>         MEMFAULT_ASSERT_EXTRA((test_), (id_))
+108,111c106,107
+<     #define Q_ERROR_CRIT_(id_) do {                       \
+<         QF_CRIT_EXIT_();                                  \
+<         Q_onAssert(&Q_this_module_[0], (int_t)(id_));     \
+<     } while (0)
+---
+>     #define Q_ERROR_CRIT_(id_) \
+>         MEMFAULT_ASSERT_RECORD((id_))

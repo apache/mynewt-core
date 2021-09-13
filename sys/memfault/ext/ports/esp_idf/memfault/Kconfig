@@ -1,0 +1,29 @@
+menu "Memfault"
+
+    config MEMFAULT_EVENT_STORAGE_RAM_SIZE
+        int "The amount of RAM storage to reserve for Memfault Events"
+        default 512
+
+
+    config MEMFAULT_LOG_STORAGE_RAM_SIZE
+        int "The amount of RAM storage to allocate for log storage"
+        default 1024
+        help
+            Logs stored in this buffer will be captured as part of a Memfault Coredump
+
+    config MEMFAULT_CLI_ENABLED
+        bool "Enables the Memfault CLI"
+        default y
+        help
+            By default, Memfault will register CLI commands for pushing data,
+            dumping state of the SDK, and performing device updates.
+
+    config MEMFAULT_COREDUMP_USE_OTA_SLOT
+        bool "Enables the use of an OTA slot for coredump storage"
+        default n
+        help
+            By default, Memfault will attempt to use a coredump partition
+            defined in a partitions*.csv file. If the device has already
+            been shipped and the partition table cannot be modified, an
+            OTA slot can be used instead.
+endmenu

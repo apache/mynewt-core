@@ -1,0 +1,15 @@
+#if CONFIG_MEMFAULT_USER_CONFIG_ENABLE
+
+#if CONFIG_MEMFAULT_USER_CONFIG_SILENT_FAIL
+
+# if __has_include("memfault_trace_reason_user_config.def")
+#   include "memfault_trace_reason_user_config.def"
+# endif
+
+#else
+
+#include "memfault_trace_reason_user_config.def"
+
+#endif /* CONFIG_MEMFAULT_USER_CONFIG_SILENT_FAIL */
+
+#endif

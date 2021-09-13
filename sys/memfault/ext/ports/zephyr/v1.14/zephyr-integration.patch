@@ -1,0 +1,229 @@
+From 1d5a0afe4a2dd583fdba05bde618ba76dae10cf5 Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Tue, 3 Dec 2019 23:48:51 -0500
+Subject: [PATCH] Integrate Memfault Firmware SDK into Zephyr RTOS
+
+* Add 'memfault' module to 'ext/lib/memfault'. To add the SDK, create
+  a 'memfault-firmware-sdk' directory to the folder & copy or
+  symlink a clone of https://github.com/memfault/memfault-firmware-sdk.git
+* Extend Zephyr Fault Handler to store extra register as the exception
+  stack frame (using the CONFIG_EXTRA_EXCEPTION_INFO option)
+* Add an option to skip clearing of fault status register information
+  during exception handling (CONFIG_PERSIST_CFSR_STATE). This information
+  can be useful for post-mortem fault analysis
+---
+ arch/arm/core/cortex_m/Kconfig  | 15 ++++++++++
+ arch/arm/core/fault.c           | 26 ++++++++++++-----
+ arch/arm/core/fault_s.S         | 12 +++++++-
+ ext/Kconfig                     |  2 ++
+ include/arch/arm/cortex_m/exc.h | 52 ++++++++++++++++++++++++++-------
+ 7 files changed, 91 insertions(+), 19 deletions(-)
+
+diff --git a/arch/arm/core/cortex_m/Kconfig b/arch/arm/core/cortex_m/Kconfig
+index de38b72f35..9d14681cce 100644
+--- a/arch/arm/core/cortex_m/Kconfig
++++ b/arch/arm/core/cortex_m/Kconfig
+@@ -75,6 +75,21 @@ config CPU_CORTEX_M7
+
+ if CPU_CORTEX_M
+
++config EXTRA_EXCEPTION_INFO
++	bool "Enable collection of callee saved register state"
++	help
++	  Enables preserving callee saved registers as part of the
++	  Exception Stack Frame (z_arch_esf_t) provided to fault handlers.
++	  This can be helpful information to collect in order to recover
++	  accurate backtraces for post-mortem analysis.
++
++config PERSIST_CFSR_STATE
++	bool
++	help
++	  Don't clear the Configurable Fault Status Register (CFSR) as
++	  part of the kernel fault handling. This information can be useful
++	  can be helpful to collect for post-mortem analysis.
++
+ config ISA_THUMB2
+ 	bool
+ 	# Omit prompt to signify "hidden" option
+diff --git a/arch/arm/core/fault.c b/arch/arm/core/fault.c
+index 5734ef4911..d0d946097c 100644
+--- a/arch/arm/core/fault.c
++++ b/arch/arm/core/fault.c
+@@ -240,8 +240,10 @@ static u32_t MpuFault(NANO_ESF *esf, int fromHardFault)
+ 		if ((SCB->CFSR & SCB_CFSR_MMARVALID_Msk) != 0) {
+ 			PR_EXC("  MMFAR Address: 0x%x\n", mmfar);
+ 			if (fromHardFault) {
++#if !defined(CONFIG_PERSIST_CFSR_STATE)
+ 				/* clear SCB_MMAR[VALID] to reset */
+ 				SCB->CFSR &= ~SCB_CFSR_MMARVALID_Msk;
++#endif
+ 			}
+ 		}
+ 	}
+@@ -316,10 +318,10 @@ static u32_t MpuFault(NANO_ESF *esf, int fromHardFault)
+ 		"Stacking error without stack guard / User-mode support\n");
+ #endif /* CONFIG_MPU_STACK_GUARD || CONFIG_USERSPACE */
+ 	}
+-
++#if !defined(CONFIG_PERSIST_CFSR_STATE)
+ 	/* clear MMFSR sticky bits */
+ 	SCB->CFSR |= SCB_CFSR_MEMFAULTSR_Msk;
+-
++#endif
+ 	/* Assess whether system shall ignore/recover from this MPU fault. */
+ 	if (MemoryFaultIsRecoverable(esf)) {
+ 		reason = _NANO_ERR_RECOVERABLE;
+@@ -363,8 +365,10 @@ static int BusFault(NANO_ESF *esf, int fromHardFault)
+ 		if ((SCB->CFSR & SCB_CFSR_BFARVALID_Msk) != 0) {
+ 			PR_EXC("  BFAR Address: 0x%x\n", bfar);
+ 			if (fromHardFault) {
++#if !defined(CONFIG_PERSIST_CFSR_STATE)
+ 				/* clear SCB_CFSR_BFAR[VALID] to reset */
+ 				SCB->CFSR &= ~SCB_CFSR_BFARVALID_Msk;
++#endif
+ 			}
+ 		}
+ 	}
+@@ -473,10 +477,10 @@ static int BusFault(NANO_ESF *esf, int fromHardFault)
+ 		SYSMPU->CESR &= ~sperr;
+ 	}
+ #endif /* defined(CONFIG_ARM_MPU) && defined(CONFIG_CPU_HAS_NXP_MPU) */
+-
++#if !defined(CONFIG_PERSIST_CFSR_STATE)
+ 	/* clear BFSR sticky bits */
+ 	SCB->CFSR |= SCB_CFSR_BUSFAULTSR_Msk;
+-
++#endif
+ 	if (MemoryFaultIsRecoverable(esf)) {
+ 		reason = _NANO_ERR_RECOVERABLE;
+ 	}
+@@ -532,10 +536,10 @@ static u32_t UsageFault(const NANO_ESF *esf)
+ 	if ((SCB->CFSR & SCB_CFSR_UNDEFINSTR_Msk) != 0) {
+ 		PR_FAULT_INFO("  Attempt to execute undefined instruction\n");
+ 	}
+-
++#if !defined(CONFIG_PERSIST_CFSR_STATE)
+ 	/* clear UFSR sticky bits */
+ 	SCB->CFSR |= SCB_CFSR_USGFAULTSR_Msk;
+-
++#endif
+ 	return reason;
+ }
+
+@@ -783,11 +787,19 @@ static void SecureStackDump(const NANO_ESF *secure_esf)
+  * Note: exc_return argument shall only be used by the Fault handler if we are
+  * running a Secure Firmware.
+  */
+-void _Fault(NANO_ESF *esf, u32_t exc_return)
++void _Fault(NANO_ESF *esfp, u32_t exc_return, struct __callee_saved_esf *callee_regs)
+ {
+ 	u32_t reason = _NANO_ERR_HW_EXCEPTION;
+ 	int fault = SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk;
+
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++	NANO_ESF esf_copy = { 0 };
++	memcpy(&esf_copy, esfp, sizeof(*esfp));
++	NANO_ESF *esf = &esf_copy;
++	esf->exception_frame_addr = esfp;
++	esf->callee_regs = callee_regs;
++#endif /* CONFIG_EXTRA_EXCEPTION_INFO */
++
+ 	LOG_PANIC();
+
+ #if defined(CONFIG_ARM_SECURE_FIRMWARE)
+diff --git a/arch/arm/core/fault_s.S b/arch/arm/core/fault_s.S
+index 472fd01da7..6a8c28c712 100644
+--- a/arch/arm/core/fault_s.S
++++ b/arch/arm/core/fault_s.S
+@@ -144,8 +144,18 @@ _s_stack_frame_endif:
+ 	mov r1, lr
+ #endif /* CONFIG_ARM_SECURE_FIRMWARE || CONFIG_ARM_NONSECURE_FIRMWARE */
+ 	push {r0, lr}
+-	bl _Fault
+
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++        /* push the callee-saved registers on the stack and pass them to _Fault
++         * as part of argument 2
++         */
++        push {r4-r11, lr}
++        mov r2, sp
++#endif
++        bl _Fault
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++        pop {r4-r11, lr}
++#endif
+ 	pop {r0, pc}
+
+ 	.end
+diff --git a/include/arch/arm/cortex_m/exc.h b/include/arch/arm/cortex_m/exc.h
+index 87ce5489b1..f9ae1da0db 100644
+--- a/include/arch/arm/cortex_m/exc.h
++++ b/include/arch/arm/cortex_m/exc.h
+@@ -44,23 +44,53 @@ GTEXT(z_ExcExit);
+ #else
+ #include <zephyr/types.h>
+
+-struct __esf {
+-	sys_define_gpr_with_alias(a1, r0);
+-	sys_define_gpr_with_alias(a2, r1);
+-	sys_define_gpr_with_alias(a3, r2);
+-	sys_define_gpr_with_alias(a4, r3);
+-	sys_define_gpr_with_alias(ip, r12);
+-	sys_define_gpr_with_alias(lr, r14);
+-	sys_define_gpr_with_alias(pc, r15);
++#define CALLER_SAVED_REGS \
++	sys_define_gpr_with_alias(a1, r0);  \
++	sys_define_gpr_with_alias(a2, r1);  \
++	sys_define_gpr_with_alias(a3, r2);  \
++	sys_define_gpr_with_alias(a4, r3);  \
++	sys_define_gpr_with_alias(ip, r12); \
++	sys_define_gpr_with_alias(lr, r14); \
++	sys_define_gpr_with_alias(pc, r15); \
+ 	u32_t xpsr;
+-#ifdef CONFIG_FLOAT
+-	float s[16];
+-	u32_t fpscr;
++
++#define CALLER_SAVED_FLOAT_REGS \
++	float s[16]; \
++	u32_t fpscr; \
+ 	u32_t undefined;
++
++struct __esf {
++        CALLER_SAVED_REGS
++#ifdef CONFIG_FLOAT
++        CALLER_SAVED_FLOAT_REGS
+ #endif
+ };
+
++#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
++struct __callee_saved_esf {
++	uint32_t r4;
++	uint32_t r5;
++	uint32_t r6;
++	uint32_t r7;
++	uint32_t r8;
++	uint32_t r9;
++	uint32_t r10;
++	uint32_t r11;
++	uint32_t exc_return;
++};
++struct __extended_esf {
++        CALLER_SAVED_REGS
++#ifdef CONFIG_FLOAT
++        CALLER_SAVED_FLOAT_REGS
++#endif
++	void *exception_frame_addr;
++	struct __callee_saved_esf *callee_regs;
++};
++
++typedef struct __extended_esf NANO_ESF;
++#else
+ typedef struct __esf NANO_ESF;
++#endif
+
+ extern void z_ExcExit(void);
+
+--
+2.21.0
+

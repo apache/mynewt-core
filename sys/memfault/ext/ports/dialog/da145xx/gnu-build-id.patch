@@ -1,0 +1,47 @@
+From 087b3ec1eb25bfe6d955803a80e1e44077a41b25 Mon Sep 17 00:00:00 2001
+From: Memfault Inc <hello@memfault.com>
+Date: Thu, 15 Apr 2021 15:18:41 -0700
+Subject: [PATCH] Add support for capturing GNU Build Id to DA145xx SDK
+ 6.0.14.1114
+
+---
+ sdk/common_project_files/ldscripts/ldscript_DA14531.lds.S     | 7 +++++++
+ sdk/common_project_files/ldscripts/ldscript_DA14585_586.lds.S | 7 +++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/sdk/common_project_files/ldscripts/ldscript_DA14531.lds.S b/sdk/common_project_files/ldscripts/ldscript_DA14531.lds.S
+index 7b0e0d9..596b9b4 100644
+--- a/sdk/common_project_files/ldscripts/ldscript_DA14531.lds.S
++++ b/sdk/common_project_files/ldscripts/ldscript_DA14531.lds.S
+@@ -68,6 +68,13 @@ SECTIONS
+     } > LR_IROM3
+     __exidx_end = .;
+ 
++    .note.gnu.build-id :
++    {
++        /* Integrate build id as described in memfault/core/build_info.h */
++        __start_gnu_build_id_start = .;
++        KEEP(*(.note.gnu.build-id))
++    } > LR_IROM3
++
+     /* To copy multiple ROM to RAM sections,
+      * define __STARTUP_COPY_MULTIPLE in startup_DA14531.S
+      */
+diff --git a/sdk/common_project_files/ldscripts/ldscript_DA14585_586.lds.S b/sdk/common_project_files/ldscripts/ldscript_DA14585_586.lds.S
+index 70c0de3..cbd4f8c 100644
+--- a/sdk/common_project_files/ldscripts/ldscript_DA14585_586.lds.S
++++ b/sdk/common_project_files/ldscripts/ldscript_DA14585_586.lds.S
+@@ -78,6 +78,13 @@ SECTIONS
+     } > LR_IROM3
+     __exidx_end = .;
+ 
++    .note.gnu.build-id :
++    {
++        /* Integrate build id as described in memfault/core/build_info.h */
++        __start_gnu_build_id_start = .;
++        KEEP(*(.note.gnu.build-id))
++    } > LR_IROM3
++
+     /* To copy multiple ROM to RAM sections,
+      * define __STARTUP_COPY_MULTIPLE in startup_DA14585_586.S
+      */
