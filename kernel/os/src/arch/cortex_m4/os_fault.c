@@ -76,7 +76,7 @@ struct coredump_regs {
     uint32_t psr;
 };
 
-#if MYNEWT_VAL(OS_COREDUMP)
+#if MYNEWT_VAL(OS_COREDUMP) && !MYNEWT_VAL(OS_COREDUMP_CB)
 static void
 trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
 {
@@ -161,7 +161,7 @@ os_default_irq(struct trap_frame *tf)
 #if MYNEWT_VAL(OS_CRASH_LOG)
     struct log_reboot_info lri;
 #endif
-#if MYNEWT_VAL(OS_COREDUMP)
+#if MYNEWT_VAL(OS_COREDUMP) && !MYNEWT_VAL(OS_COREDUMP_CB)
     struct coredump_regs regs;
 #endif
 #if MYNEWT_VAL(OS_CRASH_RESTORE_REGS)
@@ -196,8 +196,12 @@ os_default_irq(struct trap_frame *tf)
 #endif
 
 #if MYNEWT_VAL(OS_COREDUMP)
+#if MYNEWT_VAL(OS_COREDUMP_CB)
+    os_coredump_cb(tf);
+#else
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));
+#endif
 #endif
 
 #if MYNEWT_VAL(OS_CRASH_RESTORE_REGS)

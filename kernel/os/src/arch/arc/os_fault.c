@@ -73,7 +73,7 @@ struct coredump_regs {
     uint32_t psr;
 };
 
-#if MYNEWT_VAL(OS_COREDUMP)
+#if MYNEWT_VAL(OS_COREDUMP) && !MYNEWT_VAL(OS_COREDUMP_CB)
 static void
 trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
 {
@@ -154,7 +154,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 void
 os_default_irq(struct trap_frame *tf)
 {
-#if MYNEWT_VAL(OS_COREDUMP)
+#if MYNEWT_VAL(OS_COREDUMP) && !MYNEWT_VAL(OS_COREDUMP_CB)
     struct coredump_regs regs;
 #endif
 
@@ -171,8 +171,12 @@ os_default_irq(struct trap_frame *tf)
       tf->ef->r12, tf->ef->lr, tf->ef->pc, tf->ef->psr);
 
 #if MYNEWT_VAL(OS_COREDUMP)
+#if MYNEWT_VAL(OS_COREDUMP_CB)
+    os_coredump_cb(tf);
+#else
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));
+#endif
 #endif
     hal_system_reset();
 }
