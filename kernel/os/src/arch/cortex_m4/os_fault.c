@@ -32,6 +32,12 @@
 #include "reboot/log_reboot.h"
 #endif
 
+#if MYNEWT_VAL(MEMFAULT_ENABLE)
+#include "memfault/panics/coredump.h"
+#include "memfault/panics/arch/arm/cortex_m.h"
+#include "memfault/panics/platform/coredump.h"
+#endif
+
 struct exception_frame {
     uint32_t r0;
     uint32_t r1;
@@ -80,6 +86,10 @@ struct coredump_regs {
 static void
 trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
 {
+#if MYNEWT_VAL(MEMFAULT_ENABLE)
+    memfault_fault_handler((sMfltRegState *)tf, kMfltRebootReason_HardFault);
+#endif
+
     regs->r0 = tf->ef->r0;
     regs->r1 = tf->ef->r1;
     regs->r2 = tf->ef->r2;

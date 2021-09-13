@@ -190,6 +190,11 @@ syscfg.defs:
             If set, run time is measured in cpu time ticks rather than OS time
             ticks.
         value: 0
+    MEMFAULT_ENABLE:
+        description: 'Enables Memfault SDK features such as Memfault compatible core dumps'
+        value: 0
+        restriction: 
+            - 'OS_COREDUMP if 1'
 
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1
