@@ -77,7 +77,11 @@ struct coredump_regs {
     uint32_t psr;
 };
 
-#if MYNEWT_VAL(OS_COREDUMP)
+#if MYNEWT_VAL(OS_COREDUMP_CB)
+static coredump_cb_t g_coredump_cb;
+#endif
+
+#if MYNEWT_VAL(OS_COREDUMP) && !MYNEWT_VAL(OS_COREDUMP_CB)
 static void
 trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
 {
@@ -122,6 +126,25 @@ struct mtb_state {
     uint32_t mtb_flow_reg;
     uint32_t mtb_base_reg;
 } mtb_state_at_crash;
+#endif
+
+#if MYNEWT_VAL(OS_COREDUMP_CB)
+void
+os_coredump_cb(void *tf)
+{
+    if (g_coredump_cb) {
+        g_coredump_cb(tf);
+    }
+}
+
+void
+os_register_coredump_cb(coredump_cb_t coredump_cb)
+{
+    /* Register callback function */
+    if (!g_coredump_cb) {
+        g_coredump_cb = coredump_cb;
+    }
+}
 #endif
 
 static void
@@ -204,7 +227,7 @@ os_default_irq(struct trap_frame *tf)
 #if MYNEWT_VAL(OS_CRASH_LOG)
     struct log_reboot_info lri;
 #endif
-#if MYNEWT_VAL(OS_COREDUMP)
+#if MYNEWT_VAL(OS_COREDUMP) && !MYNEWT_VAL(OS_COREDUMP_CB)
     struct coredump_regs regs;
 #endif
 #if MYNEWT_VAL(OS_CRASH_RESTORE_REGS)
@@ -243,8 +266,12 @@ os_default_irq(struct trap_frame *tf)
 
 #if MYNEWT_VAL(OS_COREDUMP)
     hal_watchdog_tickle();
+#if MYNEWT_VAL(OS_COREDUMP_CB)
+    os_coredump_cb(tf);
+#else
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));
+#endif
 #endif
 
 #if MYNEWT_VAL(OS_CRASH_RESTORE_REGS)

@@ -17,35 +17,6 @@
  * under the License.
  */
 
-#ifndef _OS_FAULT_H
-#define _OS_FAULT_H
+#pragma once
 
-#include "syscfg/syscfg.h"
-#include "os/os_arch.h"
-#include "hal/hal_system.h"
-#include "hal/hal_debug.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void __assert_func(const char *file, int line, const char *func, const char *e)
-    __attribute((noreturn));
-
-#if MYNEWT_VAL(OS_COREDUMP_CB)
-typedef void (*coredump_cb_t)(void *tf);
-
-void os_register_coredump_cb(coredump_cb_t coredump_cb);
-#endif
-
-#if MYNEWT_VAL(OS_CRASH_FILE_LINE)
-#define OS_CRASH() (HAL_DEBUG_BREAK(), __assert_func(__FILE__, __LINE__, NULL, NULL))
-#else
-#define OS_CRASH() (HAL_DEBUG_BREAK(), __assert_func(NULL, 0, NULL, NULL))
-#endif
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _OS_FAULT_H */
+#include "os/mynewt.h"
