@@ -23,6 +23,7 @@
  *
  */
 
+#include <assert.h>
 #include <syscfg/syscfg.h>
 #include <bsp/bsp.h>
 #include <string.h>
