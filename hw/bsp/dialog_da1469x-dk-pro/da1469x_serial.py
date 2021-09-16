@@ -88,8 +88,17 @@ def load(infile, uart, reset_script):
             som_detected = True
             print("Detected serial boot protocol")
             msg = bytes([0x1])
-            msg += bytes([len(data) & 0xff])
-            msg += bytes([len(data) >> 8])
+
+            if len(data) > 65535:
+                msg += bytes([0x0])
+                msg += bytes([0x0])
+                msg += bytes([len(data) & 0xff])
+                msg += bytes([(len(data) >> 8) & 0xff])
+                msg += bytes([len(data) >> 16])
+            else:
+                msg += bytes([len(data) & 0xff])
+                msg += bytes([len(data) >> 8])
+
             ser.write(msg)
             ser.timeout = 10
             msg = ser.read()
