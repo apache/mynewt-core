@@ -19,15 +19,34 @@
 
 #include <os/mynewt.h>
 #include <mcu/mcu.h>
+#include <mcu/da1469x_vbus.h>
+#include <mcu/da1469x_pd.h>
 
 #include <device/usbd.h>
-#include <tusb.h>
-#include <hal/hal_gpio.h>
+
+static bool vbus_present;
 
 static void
 USBD_IRQHandler(void)
 {
     tud_int_handler(0);
+}
+
+static void
+tinyusb_vbus_changed(bool present)
+{
+    if (vbus_present == present) {
+        return;
+    }
+    vbus_present = present;
+
+    if (present) {
+        da1469x_pd_acquire(MCU_PD_DOMAIN_SYS);
+        tusb_vbus_changed(true);
+    } else {
+        tusb_vbus_changed(false);
+        da1469x_pd_release(MCU_PD_DOMAIN_SYS);
+    }
 }
 
 void
@@ -43,4 +62,13 @@ tinyusb_hardware_init(void)
 
     mcu_gpio_set_pin_function(MCU_PIN_USB_DP, MCU_GPIO_MODE_INPUT, MCU_GPIO_FUNC_USB);
     mcu_gpio_set_pin_function(MCU_PIN_USB_DM, MCU_GPIO_MODE_INPUT, MCU_GPIO_FUNC_USB);
+
+    if (MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, auto)) {
+        /* If VBUS handling is set to 'auto' let da1469x_vbus module handle notification */
+        da1469x_vbus_add_handler(tinyusb_vbus_changed);
+    }
+    else if (MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, ignore)) {
+        /* If VBUS handling is ignored notify TinyUSB that VBUS is on */
+        tinyusb_vbus_changed(true);
+    }
 }

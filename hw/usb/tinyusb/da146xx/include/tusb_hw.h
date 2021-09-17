@@ -23,6 +23,10 @@
 #define CFG_TUSB_MCU OPT_MCU_DA1469X
 
 #include <syscfg/syscfg.h>
+#include <stdbool.h>
+
+/* Function should be exported from TinyUSB */
+void tusb_vbus_changed(bool present);
 
 #if defined(MYNEWT_VAL_USBD_CDC_NOTIFY_EP)
 #define USBD_CDC_NOTIFY_EP      MYNEWT_VAL(USBD_CDC_NOTIFY_EP)
