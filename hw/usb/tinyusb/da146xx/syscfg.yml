@@ -18,6 +18,26 @@
 #
 
 syscfg.defs:
+    DA1469X_USB_VBUS_HANDLING:
+        description: >
+            Selects how VBUS changes should be detected and propagated
+            to TinyUSB stack.
+            - auto - VBUS interrupt handler notifies USB stack about
+                     VBUS changes and shuts down USB when VBUS is off.
+                     Power Domain SYS is acquired when VBUS is present
+                     preventing deep sleep. Deep sleep is possible
+                     when VBUS is not present.
+            - ignore - VBUS is not checked at all. USB stack is notified
+                     at start that VBUS is present.
+                     Suitable for bus-powered devices.
+            - custom - VBUS is not handled by this package at all.  User
+                     code will have to call tusb_vbus_changed() and
+                     take care of SYS Power Domain acquisition.
+        value: auto
+        choices:
+            - auto
+            - ignore
+            - custom
 
 syscfg.restrictions:
     - USBD_EP0_SIZE == 8
