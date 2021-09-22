@@ -196,6 +196,7 @@ nxp_qspi_write(const struct hal_flash *dev,
     int32_t remaining;
     uint32_t *src32;
     int i;
+    os_sr_t sr;
 
     align = dev->hf_align;
     if (address % align) {
@@ -263,8 +264,9 @@ nxp_qspi_write(const struct hal_flash *dev,
     }
 
     while (qspi_in_use(QuadSPI0));
+    OS_ENTER_CRITICAL(sr);
     QSPI_SoftwareReset(QuadSPI0);
-    while (qspi_in_use(QuadSPI0));
+    OS_EXIT_CRITICAL(sr);
 
     os_mutex_release(&g_mtx);
 
@@ -274,6 +276,8 @@ nxp_qspi_write(const struct hal_flash *dev,
 static int
 nxp_qspi_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
+    os_sr_t sr;
+
     while (qspi_is_busy(QuadSPI0));
 
     os_mutex_pend(&g_mtx, OS_TIMEOUT_NEVER);
@@ -289,7 +293,9 @@ nxp_qspi_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
     QSPI_ClearCache(QuadSPI0);
 #endif
 
+    OS_ENTER_CRITICAL(sr);
     QSPI_SoftwareReset(QuadSPI0);
+    OS_EXIT_CRITICAL(sr);
 
     os_mutex_release(&g_mtx);
 
@@ -299,6 +305,8 @@ nxp_qspi_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 void
 nxp_qspi_erase_chip(void)
 {
+    os_sr_t sr;
+
     int chips = (MYNEWT_VAL(QSPIA_ENABLE) ? 1 : 0) +
                 (MYNEWT_VAL(QSPIB_ENABLE) ? 1 : 0);
     uint32_t address;
@@ -320,7 +328,9 @@ nxp_qspi_erase_chip(void)
         QSPI_ClearCache(QuadSPI0);
 #endif
 
+        OS_ENTER_CRITICAL(sr);
         QSPI_SoftwareReset(QuadSPI0);
+        OS_EXIT_CRITICAL(sr);
 
         address += MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) *
                    MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT);
@@ -336,6 +346,7 @@ nxp_qspi_erase(const struct hal_flash *dev,
                uint32_t size)
 {
     uint32_t erased_size;
+    os_sr_t sr;
 
     if (address % MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) ||
         size % MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE)) {
@@ -370,7 +381,9 @@ nxp_qspi_erase(const struct hal_flash *dev,
         size -= erased_size;
     }
 
+    OS_ENTER_CRITICAL(sr);
     QSPI_SoftwareReset(QuadSPI0);
+    OS_EXIT_CRITICAL(sr);
 
     os_mutex_release(&g_mtx);
 
