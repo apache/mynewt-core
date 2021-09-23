@@ -135,6 +135,12 @@ da1469x_sleep(os_time_t ticks)
 #if MYNEWT_VAL_CHOICE(MCU_SYSCLK_SOURCE, PLL96)
     da1469x_clock_pll_wait_to_lock();
     da1469x_clock_sys_pll_switch();
+#else
+    /*
+     * PLL is enabled but XTAL32M still used as system clock.
+     * No need to wait for PLL, switch to XTAL32M it is ready.
+     */
+    da1469x_clock_sys_xtal32m_switch();
 #endif
 #else
     da1469x_clock_sys_xtal32m_switch_safe();
