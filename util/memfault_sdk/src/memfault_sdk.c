@@ -27,18 +27,8 @@
 
 #if MYNEWT_VAL(MEMFAULT_ENABLE)
 #if MYNEWT_VAL(MEMFAULT_COREDUMP_CB)
-static void
-memfault_fault_handler_cb(void *tf) {
+void os_coredump_cb(void *tf) {
     memfault_fault_handler((sMfltRegState *)tf, kMfltRebootReason_HardFault);
 }
 #endif
-
-void
-memfault_sdk_pkg_init(void)
-{
-#if MYNEWT_VAL(MEMFAULT_COREDUMP_CB)
-    /* Register callback function */
-    os_register_coredump_cb(&memfault_fault_handler_cb);
-#endif
-}
 #endif

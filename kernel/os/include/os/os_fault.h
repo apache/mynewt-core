@@ -34,8 +34,6 @@ void __assert_func(const char *file, int line, const char *func, const char *e)
 
 #if MYNEWT_VAL(OS_COREDUMP_CB)
 typedef void (*coredump_cb_t)(void *tf);
-
-void os_register_coredump_cb(coredump_cb_t coredump_cb);
 #endif
 
 #if MYNEWT_VAL(OS_CRASH_FILE_LINE)

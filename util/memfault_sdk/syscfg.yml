@@ -26,8 +26,3 @@ syscfg.defs:
         value: 0
         restriction: 
             - 'OS_COREDUMP_CB if 1'
-    
-    MEMFAULT_SDK_SYSINIT_STAGE:
-        description: >
-            Sysinit stage for memfault.
-        value: 600

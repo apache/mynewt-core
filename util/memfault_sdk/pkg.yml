@@ -26,6 +26,3 @@ pkg.deps:
 
 pkg.deps.MEMFAULT_ENABLE:
     - "@mynewt-memfault-sdk/memfault-firmware-sdk/ports/mynewt"
-
-pkg.init.MEMFAULT_ENABLE:
-    memfault_sdk_pkg_init: 'MYNEWT_VAL(MEMFAULT_SDK_SYSINIT_STAGE)'
