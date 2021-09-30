@@ -145,3 +145,16 @@ syscfg.defs:
     USBD_BTH_DATA_EP_SIZE:
         description: BTH data endpoints size
         value:
+
+    USBD_WINDOWS_COMP_ID:
+        description: >
+            Add Windows compatibility descriptor.
+        value: 0
+    USBD_WINDOWS_COMP_ID_STRING:
+        description: >
+            Windows Compatibility ID String.
+        value: '"WINUSB"'
+    USBD_WINDOWS_COMP_INTERFACE:
+        description: >
+            Interface number associated with USBD_WINDOWS_COMP_ID.
+        value: 0
