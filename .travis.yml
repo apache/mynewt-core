@@ -28,7 +28,7 @@ _addons: &addon_conf
       - linux-libc-dev:i386
 
 go:
-  - "1.12"
+  - "1.16"
 
 git:
   depth: false
