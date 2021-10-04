@@ -209,12 +209,13 @@ uint32_t
 hal_timer_read(int timer_num)
 {
     uint64_t llt;
-    uint32_t val;
+    uint64_t val;
 
     assert(timer_num == 0);
 
     llt = cmac_timer_read64();
     val = cmac_timer_convert_llt2hal(llt);
+    llt = (val * 15625) >> 9;
 
     __disable_irq();
 
