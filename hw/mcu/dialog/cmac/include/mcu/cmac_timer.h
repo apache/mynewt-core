@@ -184,7 +184,7 @@ cmac_timer_write_eq_hal_os_tick(uint64_t val)
 }
 
 /* Convert ll_timer value to hal_timer value */
-static inline uint32_t
+static inline uint64_t
 cmac_timer_convert_llt2hal(uint64_t val)
 {
     return (val << 9) / 15625;
