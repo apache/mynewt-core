@@ -44,10 +44,12 @@ section of your `syscfg.yml` file:
 ```yaml
 syscfg.vals:
     [...]
+    MEMFAULT_ASSERT_CB: 1
     MEMFAULT_COREDUMP_CB: 1
     MEMFAULT_ENABLE: 1
     OS_COREDUMP: 1
     OS_COREDUMP_CB: 1
+    OS_ASSERT_CB: 1
 ```
 
 Other syscfgs you can configure can be found in [syscfg.yml](syscfg.yml)

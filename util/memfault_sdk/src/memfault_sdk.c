@@ -27,8 +27,18 @@
 
 #if MYNEWT_VAL(MEMFAULT_ENABLE)
 #if MYNEWT_VAL(MEMFAULT_COREDUMP_CB)
+
+eMemfaultRebootReason reboot_reason = kMfltRebootReason_HardFault;
+
+#if MYNEWT_VAL(MEMFAULT_ASSERT_CB)
+void os_assert_cb(void)
+{
+    reboot_reason = kMfltRebootReason_Assert;
+}
+#endif
+
 void os_coredump_cb(void *tf) {
-    memfault_fault_handler((sMfltRegState *)tf, kMfltRebootReason_HardFault);
+    memfault_fault_handler((sMfltRegState *)tf, reboot_reason);
 }
 #endif
 #endif

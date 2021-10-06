@@ -25,4 +25,13 @@ syscfg.defs:
         description: 'Enable custom memfault coredump handling cb'
         value: 0
         restriction: 
+            - 'MEMFAULT_ENABLE if 1'
             - 'OS_COREDUMP_CB if 1'
+    
+    MEMFAULT_ASSERT_CB:
+        description: 'Enable custom memfault coredump handling cb'
+        value: 0
+        restriction: 
+            - 'MEMFAULT_ENABLE if 1'
+            - 'MEMFAULT_COREDUMP_CB if 1'
+            - 'OS_ASSERT_CB if 1'
