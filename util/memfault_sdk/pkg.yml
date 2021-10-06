@@ -25,4 +25,4 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
 
 pkg.deps.MEMFAULT_ENABLE:
-    - "@mynewt-memfault-sdk/memfault-firmware-sdk/ports/mynewt"
+    - "@memfault-firmware-sdk/ports/mynewt"

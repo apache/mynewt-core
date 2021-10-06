@@ -18,62 +18,73 @@
 # under the License.
 #
 -->
-To use mynewt-memfault-sdk add following lines to **project.yml**.
+## Overview
+
+To use the memfault-firmware-sdk with mynewt add following lines to
+**project.yml**.
 
 ```yaml
-repository.mynewt-memfault-sdk:
-    type: github
-    vers: 0.0.0
-    user: proxyco
-    repo: mynewt-memfault-sdk
+repository.memfault-firmware-sdk:
+  type: github
+  vers: 0.0.0
+  user: memfault
+  repo: memfault-firmware-sdk
 ```
 
-This dependency will allow you to pull in memfault features
+Adding this dependency will allow you to pull in Memfault features
+
 ```yaml
 pkg.deps:
-    - "@mynewt-memfault-sdk/memfault-firmware-sdk/ports/mynewt"
+  - "@memfault-firmware-sdk/ports/mynewt"
 ```
 
-To use mynewt-memfault-sdk, set this values in **syscfg.vals:** section
+You will also need to enable the following options in the **syscfg.vals:**
+section of your `syscfg.yml` file:
+
 ```yaml
+syscfg.vals:
+    [...]
+    MEMFAULT_COREDUMP_CB: 1
     MEMFAULT_ENABLE: 1
+    OS_COREDUMP: 1
+    OS_COREDUMP_CB: 1
 ```
 
-Other syscfgs you can configure are:
-```yaml
-    MEMFAULT_DEVICE_INFO_SOFTWARE_TYPE:
-        description: A name to represent the firmware running on the MCU.
-        value: '"app-fw"'
-    
-    MEMFAULT_DEVICE_INFO_SOFTWARE_VERS:
-        description: The version of the "software_type" currently running.
-        value: '"1.0.0"'
-    
-    MEMFAULT_DEVICE_INFO_HARDWARE_VERS:
-        description: The revision of hardware for the device. This value must remain the same for a unique device.
-        value: '"dvt1"'
+Other syscfgs you can configure can be found in [syscfg.yml](syscfg.yml)
 
-    MEMFAULT_EVENT_STORAGE_SIZE:
-        description: Storage size for Memfault events
-        value: 1024
-    
-    MEMFAULT_SANITIZE_START:
-        description: Start address of address sanitization range
-        value: 0x00000000
-        restrictions:
-            - $notnull
-    
-    MEMFAULT_SANITIZE_SIZE:
-        description: Size of address sanitization range
-        value: 0xFFFFFFFF
-        restrictions:
-            - $notnull
-    
-    MEMFAULT_DEBUG_LOG_BUFFER_SIZE:
-        description: Size of debug log buffer in bytes
-        value: 128
-    
-    MEMFAULT_MEM_NZ_AREA:
-        description: Memory area that does not get zeroed out at init time
-        value: '".mflt.core.nz"'
+Finally, on boot up initialize the Memfault subsystem from your `main` routine:
+
+```c
+#include "memfault/components.h"
+int
+main(int argc, char **argv)
+{
+// ...
+    memfault_platform_boot();
+// ...
+}
+```
+
+## Using the GNU Build Id for Indexing
+
+We recommend enabling the generation of a unique identifier for your project.
+See https://mflt.io/symbol-file-build-ids for more details.
+
+To enable, add the following compilation flags to your `pkg.yml`:
+
+```
+pkg.lflags:
+  - -Wl,--build-id
+pkg.cflags:
+  - -DMEMFAULT_USE_GNU_BUILD_ID=1
+```
+
+And add the following **after** the `.text` in your targets linker script:
+
+```
+    .note.gnu.build-id :
+    {
+        __start_gnu_build_id_start = .;
+        KEEP(*(.note.gnu.build-id))
+    } > FLASH
 ```
