@@ -44,7 +44,11 @@ extern "C" {
 
 #define CFG_TUSB_RHPORT0_MODE       OPT_MODE_DEVICE
 
+#if MYNEWT_VAL(BOOT_LOADER)
+#define CFG_TUSB_OS                 OPT_OS_NONE
+#else
 #define CFG_TUSB_OS                 OPT_OS_MYNEWT
+#endif
 #define CFG_TUSB_DEBUG              0
 
 /* USB DMA on some MCUs can only access a specific SRAM region with restriction on alignment.
