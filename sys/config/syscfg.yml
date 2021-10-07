@@ -89,6 +89,10 @@ syscfg.defs:
         description: >
             Config CLI commands read 1, write 2, read/write 3
         value: 3
+    CONFIG_MAX_VAL_LEN:
+        description: >
+            Max length of a value stored in the config FCB.
+        value: 256
 
 syscfg.defs.(CONFIG_FCB || CONFIG_FCB2):
     CONFIG_FCB_FLASH_AREA:

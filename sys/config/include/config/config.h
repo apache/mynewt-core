@@ -27,6 +27,7 @@
 #include <os/queue.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,7 +37,7 @@ extern "C" {
 
 #define CONF_MAX_DIR_DEPTH	8	/* max depth of config tree */
 #define CONF_MAX_NAME_LEN	(8 * CONF_MAX_DIR_DEPTH)
-#define CONF_MAX_VAL_LEN	256
+#define CONF_MAX_VAL_LEN	MYNEWT_VAL(CONFIG_MAX_VAL_LEN)
 #define CONF_NAME_SEPARATOR	"/"
 
 #define CONF_NMGR_OP		0
