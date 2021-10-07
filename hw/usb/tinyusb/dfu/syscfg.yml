@@ -1,0 +1,85 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    USBD_DFU_DESCRIPTOR_STRING:
+        description: String for DFU descriptor
+        value: NULL
+    USBD_DFU_SLOT_NAME:
+        description: Name of firmware slot that will be visible in DFU list.
+        value: '"SLOT1"'
+    USBD_DFU_BLOCK_SIZE:
+        description: >
+            Size of block that will be used during upgrade.
+            It must be equal of greater than minimum block size that can be
+            erased.
+            It is flash dependent. For SPIFLASH typical value is 4096.
+            For on-chip flash values can be different.
+        value:
+    USBD_DFU_RESET_AFTER_DOWNLOAD:
+        description: >
+            Reset device after last packet received during DFU.
+        value: 1
+    USBD_DFU_MARK_AS_PENDING:
+        description: >
+            Mark image as pending after download.
+        value: 1
+    USBD_DFU_MARK_AS_CONFIRMED:
+        description: >
+            Mark image as confirmed after download.
+        value: 0
+    USBD_DFU_BLOCK_WRITE_TIME:
+        description: >
+            Time in milliseconds needed for writing block to the device.
+            It is used by DFU protocol to inform host about possible write delay.
+            It can be increased if flash is very slow.
+        value: 1
+    USBD_DFU_RESET_TIMEOUT:
+        description: >
+            Time in milliseconds before devices is reset (when USBD_DFU_RESET_AFTER_DOWNLOAD).
+            Time is required to gracefully finish DFU protocol exchange.
+            Some messages are not propagated to DFU user code (they are internally processed by
+            TinyUSB stack) and rebooting just after download is finished while does not make
+            any harm to DFU process, confuses DFU utilities.
+        value: 1000
+    USBD_DFU_DETACH_TIMEOUT:
+        description: >
+            Time, in milliseconds, that the device will wait after receipt of the
+            DFU_DETACH request.  If this time elapses without a USB reset, then
+            the device will terminate the Reconfiguration phase and revert
+            back to normal operation.  This represents the maximum time that
+            the device can wait (depending on its timers, etc.).  The host may specify a
+            shorter timeout in the DFU_DETACH request.
+        value: 1000
+
+    USBD_DFU_LOG_MODULE:
+        description: 'Numeric module ID to use for DFU log messages.'
+        value: 43
+    USBD_DFU_LOG_LVL:
+        description: 'Minimum level for the DFU log.'
+        value: 1
+
+syscfg.logs:
+    USBD_DFU_LOG:
+        module: MYNEWT_VAL(USBD_DFU_LOG_MODULE)
+        level: MYNEWT_VAL(USBD_DFU_LOG_LVL)
+
+
+syscfg.vals.BOOTLOADER:
+    USBD_DFU_SLOT_NAME: '"SLOT0"'

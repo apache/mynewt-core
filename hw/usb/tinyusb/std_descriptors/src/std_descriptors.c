@@ -184,6 +184,10 @@ enum {
     ITF_NUM_HID,
 #endif
 
+#if CFG_TUD_DFU
+    ITF_NUM_DFU,
+#endif
+
     ITF_NUM_TOTAL
 };
 
@@ -192,6 +196,7 @@ enum {
                              CFG_TUD_MSC * TUD_MSC_DESC_LEN + \
                              CFG_TUD_HID * TUD_HID_DESC_LEN + \
                              CFG_TUD_BTH * TUD_BTH_DESC_LEN + \
+                             CFG_TUD_DFU * TUD_DFU_DESC_LEN(1) + \
                              0)
 
 const uint8_t desc_configuration[] = {
@@ -219,6 +224,10 @@ const uint8_t desc_configuration[] = {
     TUD_HID_DESCRIPTOR(ITF_NUM_HID, HID_IF_STR_IX, HID_PROTOCOL_NONE, sizeof(desc_hid_report),
                        USBD_HID_REPORT_EP, USBD_HID_REPORT_EP_SIZE, USBD_HID_REPORT_EP_INTERVAL),
 #endif
+
+#if CFG_TUD_DFU
+    TUD_DFU_DESCRIPTOR(ITF_NUM_DFU, 1, 8, DFU_ATTR_CAN_DOWNLOAD, CFG_TUD_DFU_DETACH_TIMEOUT, CFG_TUD_DFU_XFER_BUFSIZE),
+#endif
 };
 
 /**
@@ -241,6 +250,7 @@ const char *string_desc_arr[] = {
     MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING),
     MYNEWT_VAL(USBD_HID_DESCRIPTOR_STRING),
     MYNEWT_VAL(USBD_BTH_DESCRIPTOR_STRING),
+    MYNEWT_VAL(USBD_DFU_SLOT_NAME),
 };
 
 static uint16_t desc_string[MYNEWT_VAL(USBD_STRING_DESCRIPTOR_MAX_LENGTH) + 1];

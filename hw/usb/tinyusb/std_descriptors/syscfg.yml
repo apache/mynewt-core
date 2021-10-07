@@ -65,6 +65,9 @@ syscfg.defs:
     USBD_BTH:
         description: Enable BT HCI device
         value: 0
+    USBD_DFU:
+        description: Enable DFU interface
+        value: 0
 
     USBD_CDC_DATA_OUT_EP:
         description: CDC data out endpoint number
