@@ -35,9 +35,10 @@ extern void SysTick_Handler(void);
 
 /*
  * Initial LR indicating basic frame.
- * See ARMv7-M Architecture Ref Manual
+ * Only FType bit is used.
+ * See ARMv8-M Architecture Ref Manual
  */
-#define INITIAL_LR      0xfffffffd;
+#define INITIAL_LR_FPTYPE      0x10;
 
 /*
  * Exception priorities. The higher the number, the lower the priority. A
@@ -51,6 +52,9 @@ extern void SysTick_Handler(void);
 
 /* Stack frame structure */
 struct stack_frame {
+#if MYNEWT_VAL(HARDFLOAT)
+    uint32_t    exc_lr;
+#endif
     uint32_t    r4;
     uint32_t    r5;
     uint32_t    r6;
@@ -59,9 +63,6 @@ struct stack_frame {
     uint32_t    r9;
     uint32_t    r10;
     uint32_t    r11;
-#if MYNEWT_VAL(HARDFLOAT)
-    uint32_t    exc_lr;
-#endif
     uint32_t    r0;
     uint32_t    r1;
     uint32_t    r2;
@@ -200,7 +201,7 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     /* Set function to cache returns from tasks. */
     sf->lr = (uint32_t)os_arch_task_return_handler;
 #if MYNEWT_VAL(HARDFLOAT)
-    sf->exc_lr = INITIAL_LR;
+    sf->exc_lr = INITIAL_LR_FPTYPE;
 #endif
 
     return (s);

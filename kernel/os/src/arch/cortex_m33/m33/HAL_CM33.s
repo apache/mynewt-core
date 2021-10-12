@@ -173,10 +173,10 @@ PendSV_Handler:
 
         MRS     R12,PSP                 /* Read PSP */
 #if MYNEWT_VAL(HARDFLOAT)
-        TST     LR,#0x10                /* is it extended frame? */
+        ANDS    R0,LR,#0x10             /* is it extended frame? */
         IT      EQ
         VSTMDBEQ R12!,{S16-S31}         /* yes; push the regs */
-        STMDB   R12!,{R4-R11,LR}        /* Save Old context */
+        STMDB   R12!,{R0,R4-R11}        /* Save Old context */
 #else
         STMDB   R12!,{R4-R11}           /* Save Old context */
 #endif
@@ -187,12 +187,12 @@ PendSV_Handler:
         MSR     PSPLIM,R12              /* update stack limit register */
         LDR     R12,[R2,#0]             /* get stack pointer of task we will start */
 #if MYNEWT_VAL(HARDFLOAT)
-        LDMIA   R12!,{R4-R11,LR}        /* Restore New Context */
-        TST     LR,#0x10                /* is it extended frame? */
+        LDMIA   R12!,{R0,R4-R11}        /* Restore New Context */
+        ANDS    R0,#0x10                /* is it extended frame? */
         ITTE    EQ
         VLDMIAEQ R12!,{S16-S31}         /* yes; pull the regs */
-        MVNEQ   LR,#~0xFFFFFFED         /* BX treats it as extended */
-        MVNNE   LR,#~0xFFFFFFFD         /* BX treats is as basic frame */
+        BICEQ   LR,#0x10                /* Clear FType bit in LR, BX treats it as extended */
+        ORRNE   LR,#0x10                /* Set FType bit in LR, BX treats it as standard frame */
 #else
         LDMIA   R12!,{R4-R11}           /* Restore New Context */
 #endif
