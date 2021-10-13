@@ -27,6 +27,7 @@
 #include "nrf51.h"
 #include "nrf51_bitfields.h"
 #include "mcu/nrf51_hal.h"
+#include "mcu/nrf51_clock.h"
 
 /* IRQ prototype */
 typedef void (*hal_timer_irq_handler_t)(void);
@@ -681,18 +682,10 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
 
+#if MYNEWT_VAL_CHOICE(MCU_HFCLK_SOURCE, HFXO)
     /* Make sure HFXO is started */
-    if ((NRF_CLOCK->HFCLKSTAT &
-         (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) !=
-        (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) {
-        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-        NRF_CLOCK->TASKS_HFCLKSTART = 1;
-        while (1) {
-            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
-                break;
-            }
-        }
-    }
+    nrf51_clock_hfxo_request();
+#endif
     hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
 
     /* Stop the timer first */

@@ -35,11 +35,25 @@ nrf51_clock_hfxo_request(void)
     int started;
     uint32_t ctx;
 
+#if MYNEWT_VAL_CHOICE(MCU_HFCLK_SOURCE, HFINT)
+    /* Cannot enable/disable hfxo if it is not present */
+    assert(0);
+#endif
+
     started = 0;
     __HAL_DISABLE_INTERRUPTS(ctx);
     assert(nrf51_clock_hfxo_refcnt < 0xff);
     if (nrf51_clock_hfxo_refcnt == 0) {
-        NRF_CLOCK->TASKS_HFCLKSTART = 1;
+        /* Check the current STATE and SRC of HFCLK */
+        if ((NRF_CLOCK->HFCLKSTAT &
+             (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) !=
+            (CLOCK_HFCLKSTAT_SRC_Xtal << CLOCK_HFCLKSTAT_SRC_Pos |
+             CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) {
+            NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+            NRF_CLOCK->TASKS_HFCLKSTART = 1;
+            while (!NRF_CLOCK->EVENTS_HFCLKSTARTED) {
+            }
+        }
         started = 1;
     }
     ++nrf51_clock_hfxo_refcnt;

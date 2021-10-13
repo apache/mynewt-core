@@ -83,29 +83,26 @@ syscfg.defs:
         description: 'reference mV in VDD if used'
         value: 0
 
-# The XTAL_xxx definitions are used to set the clock source used for the low
-# frequency clock. It is required that at least one of these sources is
-# enabled (the bsp should set one of these clock sources).
-    XTAL_32768:
-        description: 'External 32k oscillator LF clock source.'
-        value: 0
+    MCU_HFCLK_SOURCE:
+        description: >
+            Selected source for high frequency clock (HFCLK).
+            Selecting HFXO will still mostly use the HFINT but will switch to HFXO when requested (BLE, certain timers, etc...)
+            Selecting HFINT should only be used in the case where an external 32MHz crystal oscillator is not present.
+        value: HFXO
+        choices:
+            - HFXO
+            - HFINT
         restrictions:
-            - "!XTAL_32768_SYNTH"
-            - "!XTAL_RC"
+            - '(MCU_HFCLK_SOURCE == "HFXO") || (MCU_LFCLK_SOURCE != "LFSYNTH")'
 
-    XTAL_RC:
-        description: 'internal RC LF clock source'
-        value: 0
-        restrictions:
-            - "!XTAL_32768_SYNTH"
-            - "!XTAL_32768"
-
-    XTAL_32768_SYNTH:
-        description: 'Synthesized 32k LF clock source.'
-        value: 0
-        restrictions:
-            - "!XTAL_RC"
-            - "!XTAL_32768"
+    MCU_LFCLK_SOURCE:
+        description: >
+            Selected source for low frequency clock (LFCLK).
+        value:
+        choices:
+            - LFRC      # 32.768 kHz RC oscillator
+            - LFXO      # 32.768 kHz crystal oscillator
+            - LFSYNTH   # 32.768 kHz synthesized from HFCLK
 
 syscfg.vals:
     # The nRF51 microcontroller uses RTC0 for periodic interrupts and it is
