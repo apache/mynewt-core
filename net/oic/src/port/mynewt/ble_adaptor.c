@@ -482,6 +482,9 @@ oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
     }
 
     off = pkt->omp_len - (pkt->omp_len % mtu);
+    if (off == pkt->omp_len) {
+        off -= mtu;
+    }
     while (off >= mtu) {
         n = os_msys_get_pkthdr(mtu, 0);
         if (!n) {
