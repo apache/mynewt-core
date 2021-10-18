@@ -32,6 +32,10 @@ extern "C" {
 void __assert_func(const char *file, int line, const char *func, const char *e)
     __attribute((noreturn));
 
+#if MYNEWT_VAL(OS_COREDUMP_CB)
+typedef void (*coredump_cb_t)(void *tf);
+#endif
+
 #if MYNEWT_VAL(OS_CRASH_FILE_LINE)
 #define OS_CRASH() (HAL_DEBUG_BREAK(), __assert_func(__FILE__, __LINE__, NULL, NULL))
 #else
