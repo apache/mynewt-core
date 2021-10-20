@@ -22,6 +22,10 @@
 #include <ipc_nrf5340/ipc_nrf5340.h>
 #include <ipc_nrf5340/ipc_nrf5340_priv.h>
 #include <nrfx.h>
+#include <hal/hal_gpio.h>
+#include <bsp.h>
+#include <nrf_mutex.h>
+
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
 #include <mcu/nrf5340_hal.h>
 #include <bsp/bsp.h>
@@ -219,7 +223,7 @@ ipc_nrf5340_init(void)
 #endif
 
     /* Make sure network core if off when we set up IPC */
-    NRF_RESET_S->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
+    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
     memset(shms, 0, sizeof(shms));
 
     for (i = 0; i < IPC_MAX_CHANS; ++i) {
@@ -252,11 +256,13 @@ ipc_nrf5340_init(void)
 
     ipc_nrf5340_init_nrf_ipc();
 
-    /* this allows netcore to access appcore RAM */
-    NRF_SPU_S->EXTDOMAIN[0].PERM = SPU_EXTDOMAIN_PERM_SECATTR_Secure << SPU_EXTDOMAIN_PERM_SECATTR_Pos;
+    if (MYNEWT_VAL(MCU_APP_SECURE)) {
+        /* this allows netcore to access appcore RAM */
+        NRF_SPU_S->EXTDOMAIN[0].PERM = SPU_EXTDOMAIN_PERM_SECATTR_Secure << SPU_EXTDOMAIN_PERM_SECATTR_Pos;
+    }
 
     /* Start Network Core */
-    NRF_RESET_S->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
+    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
 
 #if MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
     /*
