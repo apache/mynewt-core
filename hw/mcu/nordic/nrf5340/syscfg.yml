@@ -96,6 +96,12 @@ syscfg.defs:
             MCU/BSP wants to handle APPROTECT on its own.
         value: 0
 
+    MCU_APP_SECURE:
+        description: >
+            Application code to runs in secure mode.
+            This settings must have same value for bootloader and application build.
+        value: 1
+
 # MCU peripherals definitions
     ADC_0:
         description: 'Enable nRF5340 ADC 0'
