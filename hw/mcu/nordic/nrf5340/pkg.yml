@@ -40,6 +40,8 @@ pkg.cflags.NFC_PINS_AS_GPIO:
 
 pkg.cflags.GPIO_AS_PIN_RESET:
     - '-DCONFIG_GPIO_AS_PINRESET=1'
+pkg.cflags:
+    - -mcmse
 
 pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
