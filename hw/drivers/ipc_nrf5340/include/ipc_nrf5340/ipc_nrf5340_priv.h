@@ -16,11 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-MEMORY
-{
-  FLASH (rx) : ORIGIN = 0x01008000, LENGTH = 0x30000
-  RAM (rwx) : ORIGIN = 0x21000000, LENGTH = 0x10000
-}
 
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+#ifndef _HW_DRIVERS_IPC_NRF5340_PRIV_H
+#define _HW_DRIVERS_IPC_NRF5340_PRIV_H
+
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Initialization structure passed from APP core to NET core.
+ * Keeps various parameters that otherwise should be configured on
+ * both sides.
+ */
+struct ipc_shared {
+    /** NET core embedded image address in application flash */
+    void *net_core_image_address;
+    /** NET core embedded image size */
+    uint32_t net_core_image_size;
+    /** Number of IPC channels */
+    uint8_t ipc_channel_count;
+    /* Array of shared memories used for IPC */
+    struct ipc_shm *ipc_shms;
+};
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _HW_DRIVERS_IPC_NRF5340_PRIV_H */

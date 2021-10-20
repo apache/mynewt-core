@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <os/os.h>
 #include <ipc_nrf5340/ipc_nrf5340.h>
+#include <ipc_nrf5340/ipc_nrf5340_priv.h>
 #include <nrfx.h>
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
 #include <mcu/nrf5340_hal.h>
@@ -52,11 +53,24 @@ struct ipc_channel {
 struct ipc_shm {
     volatile uint16_t head;
     volatile uint16_t tail;
-    uint8_t buf[IPC_BUF_SIZE];
+    uint16_t buf_size;
+    uint8_t *buf;
 };
 
 static struct ipc_channel ipcs[IPC_MAX_CHANS];
-static struct ipc_shm __attribute__((section (".ipc"))) shms[IPC_MAX_CHANS];
+#if MYNEWT_VAL(MCU_APP_CORE)
+static struct ipc_shm shms[IPC_MAX_CHANS];
+static uint8_t shms_bufs[IPC_MAX_CHANS][IPC_BUF_SIZE];
+static struct ipc_shared ipc_shared[1];
+
+#else
+static struct ipc_shm *shms;
+static struct ipc_shared *ipc_shared;
+#undef IPC_MAX_CHANS
+#undef IPC_BUF_SIZE
+#define IPC_MAX_CHANS ipc_shared->ipc_channel_count
+#define IPC_BUF_SIZE ipc_shared->ipc_shms->buf_size
+#endif
 
 static uint16_t
 ipc_nrf5340_shm_get_data_length(uint16_t head, uint16_t tail)
@@ -181,8 +195,9 @@ ipc_nrf5340_init_nrf_ipc(void)
 void
 ipc_nrf5340_init(void)
 {
-#if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
     int i;
+
+#if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
 
     unsigned int gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(IPC_NRF5340_NET_GPIO)) };
     NRF_GPIO_Type *nrf_gpio;
@@ -191,18 +206,27 @@ ipc_nrf5340_init(void)
 #if MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
     /*
      * Get network core image size and placement in application flash.
-     * Then pass those two values in NRF_IPC GPMEM registers to be used
+     * Then pass those two values to ipc_shared data to be used
      * by virtual flash driver on network side.
      */
     if (&_binary_net_core_img_end - &_binary_net_core_img_start > 32) {
-        NRF_IPC->GPMEM[0] = (uint32_t)&_binary_net_core_img_start;
-        NRF_IPC->GPMEM[1] = &_binary_net_core_img_end - &_binary_net_core_img_start;
+        ipc_shared->net_core_image_address = (void *)&_binary_net_core_img_start;
+        ipc_shared->net_core_image_size = &_binary_net_core_img_end - &_binary_net_core_img_start;
     }
 #endif
 
     /* Make sure network core if off when we set up IPC */
     NRF_RESET_S->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
     memset(shms, 0, sizeof(shms));
+
+    for (i = 0; i < IPC_MAX_CHANS; ++i) {
+        shms[i].buf = shms_bufs[i];
+        shms[i].buf_size = IPC_BUF_SIZE;
+    }
+    ipc_shared->ipc_channel_count = IPC_MAX_CHANS;
+    ipc_shared->ipc_shms = shms;
+
+    NRF_IPC->GPMEM[0] = (uint32_t)ipc_shared;
 
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
     /* Configure GPIOs for Networking Core */
@@ -236,7 +260,7 @@ ipc_nrf5340_init(void)
          * Application side prepared image for net core.
          * When net core starts it's ipc_nrf5340_init() will clear those.
          */
-        while (NRF_IPC->GPMEM[1]);
+        while (NRF_IPC->GPMEM[0]);
     }
 #endif
 }
@@ -254,8 +278,11 @@ ipc_nrf5340_init(void)
      */
 #define NRF_APP_IPC_NS                  ((NRF_IPC_Type *)0x4002A000)
 #define NRF_APP_IPC_S                   ((NRF_IPC_Type *)0x5002A000)
+    ipc_shared = (struct ipc_shared *)NRF_APP_IPC_S->GPMEM[0];
+    assert(ipc_shared);
+    shms = ipc_shared->ipc_shms;
+    assert(ipc_shared->ipc_channel_count <= ARRAY_SIZE(ipcs));
     NRF_APP_IPC_S->GPMEM[0] = 0;
-    NRF_APP_IPC_S->GPMEM[1] = 0;
 
     ipc_nrf5340_init_nrf_ipc();
 }

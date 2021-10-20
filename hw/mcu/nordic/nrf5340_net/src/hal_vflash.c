@@ -27,6 +27,7 @@
 #include <nrfx_ipc.h>
 #include <bootutil/bootutil.h>
 #include <bootutil/image.h>
+#include <ipc_nrf5340/ipc_nrf5340_priv.h>
 
 #define NRF5340_NET_VFLASH_SECTOR_SZ 2048
 
@@ -217,6 +218,7 @@ static int
 nrf5340_net_vflash_init(const struct hal_flash *dev)
 {
     struct nrf5340_vflash *vflash = (struct nrf5340_vflash *)dev;
+    const struct ipc_shared *ipc_shared = (const struct ipc_shared *)NRF_APP_IPC_S->GPMEM[0];
 
     /*
      * Application side IPC will set GPMEM registers to address and size of
@@ -225,8 +227,10 @@ nrf5340_net_vflash_init(const struct hal_flash *dev)
      * and there no need to provide any data.
      * Set nv_image_size to 0 and all reads will return empty values (0xff)
      */
-    vflash->nv_image_address = (const uint8_t *)NRF_APP_IPC_S->GPMEM[0];
-    vflash->nv_image_size = NRF_APP_IPC_S->GPMEM[1];
+    if (ipc_shared && ipc_shared->net_core_image_address) {
+        vflash->nv_image_address = ipc_shared->net_core_image_address;
+        vflash->nv_image_size = ipc_shared->net_core_image_size;
+    }
 
     return 0;
 }
