@@ -375,6 +375,7 @@ nrf5340_qspi_init(const struct hal_flash *dev)
 
     NRF_QSPI->XIPOFFSET = MYNEWT_VAL(QSPI_XIP_OFFSET);
 
+#if !defined(NRF_TRUSTZONE_NONSECURE)
     /* Workaround for Errata 121: QSPI: Configuration of peripheral requires additional steps */
     if (nrf53_errata_121()) {
         NRF_QSPI->IFTIMING = (NRF_QSPI->IFTIMING & ~(7 << 8)) | (6 << 8);
@@ -385,6 +386,7 @@ nrf5340_qspi_init(const struct hal_flash *dev)
             NRF_QSPI->IFCONFIG0 |= (1 << 16);
         }
     }
+#endif
 
 #if (MYNEWT_VAL(QSPI_READOC) > 2) || (MYNEWT_VAL(QSPI_WRITEOC) > 1)
     NRF_QSPI->PSEL.IO2 = MYNEWT_VAL(QSPI_PIN_DIO2);
