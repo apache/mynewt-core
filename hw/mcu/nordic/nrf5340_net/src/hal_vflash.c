@@ -218,7 +218,7 @@ static int
 nrf5340_net_vflash_init(const struct hal_flash *dev)
 {
     struct nrf5340_vflash *vflash = (struct nrf5340_vflash *)dev;
-    const struct ipc_shared *ipc_shared = (const struct ipc_shared *)NRF_APP_IPC_S->GPMEM[0];
+    const struct ipc_shared *ipc_shared = (const struct ipc_shared *)NRF_APP_IPC_NS->GPMEM[0];
 
     /*
      * Application side IPC will set GPMEM registers to address and size of
