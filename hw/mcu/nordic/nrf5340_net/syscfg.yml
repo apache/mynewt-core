@@ -31,7 +31,7 @@ syscfg.defs:
             packages for network and application core that do have
             some differences depending on which core they are build for.
         value: 1
-        restriction: MCU_APP_CORE==0
+        restrictions: !MCU_APP_CORE
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.

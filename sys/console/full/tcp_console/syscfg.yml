@@ -20,4 +20,4 @@ syscfg.defs:
     TCP_CONSOLE_PORT:
         description: 'Set console TCP port'
         value: 4444
-        restriction: $notnull
+        restrictions: $notnull

@@ -22,7 +22,7 @@ syscfg.defs:
             Specifies the required alignment for internal flash writes.
             Used internally by the newt tool.
         value:
-        restriction: $notnull
+        restrictions: $notnull
 
     TRNG:
         description: 'Enable True Random Number Generator (RNGA)'
