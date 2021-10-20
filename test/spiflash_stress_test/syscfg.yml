@@ -19,7 +19,7 @@
 syscfg.defs:
     SPIFLASH_STRESS_TEST_FLASH_AREA_ID:
         description: 'Flash area ID to use for stress testing'
-        restriction: !null
+        restrictions: $notnull
         value:
     SPIFLASH_STRESS_TEST_STACK_SIZE:
         description: 'Stack size for flash stressing tasks'
