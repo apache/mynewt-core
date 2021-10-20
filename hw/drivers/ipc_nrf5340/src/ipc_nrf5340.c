@@ -160,18 +160,35 @@ ipc_nrf5340_isr(void)
 #define STRIP_PARENS(X) X
 #define UNMANGLE_MYNEWT_VAL(X) STRIP_PARENS(_Args X)
 
-void
-ipc_nrf5340_init(void)
+static void
+ipc_nrf5340_init_nrf_ipc(void)
 {
     int i;
 
+    /* Enable IPC channels */
+    for (i = 0; i < IPC_MAX_CHANS; i++) {
+        NRF_IPC->SEND_CNF[i] = (0x01UL << i);
+        NRF_IPC->RECEIVE_CNF[i] = 0;
+    }
+
+    NRF_IPC->INTENCLR = 0xFFFF;
+    NVIC_ClearPendingIRQ(IPC_IRQn);
+    NVIC_SetVector(IPC_IRQn, (uint32_t)ipc_nrf5340_isr);
+    NVIC_EnableIRQ(IPC_IRQn);
+}
+
 #if MYNEWT_VAL(MCU_APP_CORE)
+void
+ipc_nrf5340_init(void)
+{
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
+    int i;
+
     unsigned int gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(IPC_NRF5340_NET_GPIO)) };
     NRF_GPIO_Type *nrf_gpio;
 #endif
 
-#if MYNEWT_VAL(MCU_APP_CORE) && MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
+#if MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
     /*
      * Get network core image size and placement in application flash.
      * Then pass those two values in NRF_IPC GPMEM registers to be used
@@ -195,40 +212,16 @@ ipc_nrf5340_init(void)
             GPIO_PIN_CNF_MCUSEL_NetworkMCU << GPIO_PIN_CNF_MCUSEL_Pos;
     }
 #endif
-#endif
 
-#if MYNEWT_VAL(MCU_NET_CORE)
-    /*
-     * When network core IPCs starts it clears GPMEM from APP core registers
-     * So IPC nows that netcore is running.
-     * This is a workaround that is needed till application side code waits
-     * on IPC for network core controller to sent NOP first.
-     */
-#define NRF_APP_IPC_NS                  ((NRF_IPC_Type *)0x4002A000)
-#define NRF_APP_IPC_S                   ((NRF_IPC_Type *)0x5002A000)
-    NRF_APP_IPC_S->GPMEM[0] = 0;
-    NRF_APP_IPC_S->GPMEM[1] = 0;
-#endif
+    ipc_nrf5340_init_nrf_ipc();
 
-    /* Enable IPC channels */
-    for (i = 0; i < IPC_MAX_CHANS; i++) {
-        NRF_IPC->SEND_CNF[i] = (0x01UL << i);
-        NRF_IPC->RECEIVE_CNF[i] = 0;
-    }
-
-    NRF_IPC->INTENCLR = 0xFFFF;
-    NVIC_ClearPendingIRQ(IPC_IRQn);
-    NVIC_SetVector(IPC_IRQn, (uint32_t)ipc_nrf5340_isr);
-    NVIC_EnableIRQ(IPC_IRQn);
-
-#if MYNEWT_VAL(MCU_APP_CORE)
     /* this allows netcore to access appcore RAM */
     NRF_SPU_S->EXTDOMAIN[0].PERM = SPU_EXTDOMAIN_PERM_SECATTR_Secure << SPU_EXTDOMAIN_PERM_SECATTR_Pos;
 
     /* Start Network Core */
     NRF_RESET_S->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
-#endif
-#if MYNEWT_VAL(MCU_APP_CORE) && MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
+
+#if MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
     /*
      * TODO: Remove below workaround:
      * For now app core waits for NET core to start.
@@ -247,6 +240,26 @@ ipc_nrf5340_init(void)
     }
 #endif
 }
+#endif
+
+#if MYNEWT_VAL(MCU_NET_CORE)
+void
+ipc_nrf5340_init(void)
+{
+    /*
+     * When network core IPCs starts it clears GPMEM from APP core registers
+     * So IPC knows that netcore is running.
+     * This is a workaround that is needed till application side code waits
+     * on IPC for network core controller to sent NOP first.
+     */
+#define NRF_APP_IPC_NS                  ((NRF_IPC_Type *)0x4002A000)
+#define NRF_APP_IPC_S                   ((NRF_IPC_Type *)0x5002A000)
+    NRF_APP_IPC_S->GPMEM[0] = 0;
+    NRF_APP_IPC_S->GPMEM[1] = 0;
+
+    ipc_nrf5340_init_nrf_ipc();
+}
+#endif
 
 void
 ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data)
