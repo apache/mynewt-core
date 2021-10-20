@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include <nrfx_config.h>
+
 /* Helper functions to enable/disable interrupts. */
 #define __HAL_DISABLE_INTERRUPTS(x)                     \
     do {                                                \
@@ -75,7 +77,7 @@ struct nrf5340_hal_spi_cfg {
  */
 
 #define HAL_GPIO_INDEX(pin)     ((pin) & 0x1F)
-#define HAL_GPIO_PORT(pin)      ((pin) > 31 ? NRF_P1_S : NRF_P0_S)
+#define HAL_GPIO_PORT(pin)      ((pin) > 31 ? NRF_P1 : NRF_P0)
 #define HAL_GPIO_MASK(pin)      (1 << HAL_GPIO_INDEX(pin))
 #define HAL_GPIOTE_PIN_MASK     (0x3FUL << GPIOTE_CONFIG_PSEL_Pos)
 

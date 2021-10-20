@@ -27,6 +27,7 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #include <stdbool.h>
 #include <syscfg/syscfg.h>
 #include <nrf.h>
+#include <nrfx_config.h>
 #include <nrf_erratas.h>
 #include <system_nrf5340_application.h>
 #include <mcu/cmsis_nvic.h>
@@ -62,11 +63,7 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 
 void SystemCoreClockUpdate(void)
 {
-#if defined(NRF_TRUSTZONE_NONSECURE)
-    SystemCoreClock = __SYSTEM_CLOCK_MAX >> (NRF_CLOCK_NS->HFCLKCTRL & (CLOCK_HFCLKCTRL_HCLK_Msk));
-#else
-    SystemCoreClock = __SYSTEM_CLOCK_MAX >> (NRF_CLOCK_S->HFCLKCTRL & (CLOCK_HFCLKCTRL_HCLK_Msk));
-#endif
+    SystemCoreClock = __SYSTEM_CLOCK_MAX >> (NRF_CLOCK->HFCLKCTRL & (CLOCK_HFCLKCTRL_HCLK_Msk));
 }
 
 void SystemInit(void)
@@ -247,9 +244,9 @@ void SystemInit(void)
     #endif
 
     if (MYNEWT_VAL(MCU_HFCLK_DIV) == 1) {
-        NRF_CLOCK_S->HFCLKCTRL = CLOCK_HFCLKCTRL_HCLK_Div1 << CLOCK_HFCLKCTRL_HCLK_Pos;
+        NRF_CLOCK->HFCLKCTRL = CLOCK_HFCLKCTRL_HCLK_Div1 << CLOCK_HFCLKCTRL_HCLK_Pos;
     } else {
-        NRF_CLOCK_S->HFCLKCTRL = CLOCK_HFCLKCTRL_HCLK_Div2 << CLOCK_HFCLKCTRL_HCLK_Pos;
+        NRF_CLOCK->HFCLKCTRL = CLOCK_HFCLKCTRL_HCLK_Div2 << CLOCK_HFCLKCTRL_HCLK_Pos;
     }
 
     SystemCoreClockUpdate();

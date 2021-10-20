@@ -324,28 +324,28 @@ hal_uart_init(int port, void *arg)
     switch (port) {
     #if MYNEWT_VAL(UART_0)
     case 0:
-        u->nrf_uart = NRF_UARTE0_S;
+        u->nrf_uart = NRF_UARTE0;
         u->handler = (uint32_t)uart0_irq_handler;
         u->irqn = SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQn;
         break;
     #endif
     #if MYNEWT_VAL(UART_1)
     case 1:
-        u->nrf_uart = NRF_UARTE1_S;
+        u->nrf_uart = NRF_UARTE1;
         u->handler = (uint32_t)uart1_irq_handler;
         u->irqn = SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQn;
         break;
     #endif
     #if MYNEWT_VAL(UART_2)
     case 2:
-        u->nrf_uart = NRF_UARTE2_S;
+        u->nrf_uart = NRF_UARTE2;
         u->handler = (uint32_t)uart2_irq_handler;
         u->irqn = SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQn;
         break;
     #endif
     #if MYNEWT_VAL(UART_3)
     case 3:
-        u->nrf_uart = NRF_UARTE3_S;
+        u->nrf_uart = NRF_UARTE3;
         u->handler = (uint32_t)uart3_irq_handler;
         u->irqn = SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQn;
         break;

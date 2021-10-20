@@ -18,6 +18,7 @@
  */
 
 #include <nrf.h>
+#include <nrfx_config.h>
 #include <hal/hal_system.h>
 
 enum hal_reset_reason
@@ -30,7 +31,7 @@ hal_reset_cause(void)
         return reason;
     }
 
-    reg = NRF_RESET_S->RESETREAS;
+    reg = NRF_RESET->RESETREAS;
 
     if (reg & (RESET_RESETREAS_DOG0_Msk | RESET_RESETREAS_DOG1_Msk | RESET_RESETREAS_LOCKUP_Msk)) {
         reason = HAL_RESET_WATCHDOG;
@@ -44,7 +45,7 @@ hal_reset_cause(void)
         reason = HAL_RESET_POR; /* could also be brownout */
     }
 
-    NRF_RESET_S->RESETREAS = reg;
+    NRF_RESET->RESETREAS = reg;
 
     return reason;
 }

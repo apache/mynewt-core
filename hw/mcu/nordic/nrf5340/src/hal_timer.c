@@ -454,28 +454,28 @@ hal_timer_init(int timer_num, void *cfg)
 #if MYNEWT_VAL(TIMER_0)
     case 0:
         irq_num = TIMER0_IRQn;
-        hwtimer = NRF_TIMER0_S;
+        hwtimer = NRF_TIMER0;
         irq_isr = nrf5340_timer0_irq_handler;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_1)
     case 1:
         irq_num = TIMER1_IRQn;
-        hwtimer = NRF_TIMER1_S;
+        hwtimer = NRF_TIMER1;
         irq_isr = nrf5340_timer1_irq_handler;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_2)
     case 2:
         irq_num = TIMER2_IRQn;
-        hwtimer = NRF_TIMER2_S;
+        hwtimer = NRF_TIMER2;
         irq_isr = nrf5340_timer2_irq_handler;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_3)
     case 3:
         irq_num = RTC0_IRQn;
-        hwtimer = NRF_RTC0_S;
+        hwtimer = NRF_RTC0;
         irq_isr = nrf5340_timer3_irq_handler;
         bsptimer->tmr_rtc = 1;
         break;
@@ -483,7 +483,7 @@ hal_timer_init(int timer_num, void *cfg)
 #if MYNEWT_VAL(TIMER_4)
     case 4:
         irq_num = RTC1_IRQn;
-        hwtimer = NRF_RTC1_S;
+        hwtimer = NRF_RTC1;
         irq_isr = nrf5340_timer4_irq_handler;
         bsptimer->tmr_rtc = 1;
         break;
@@ -613,13 +613,13 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     __HAL_DISABLE_INTERRUPTS(ctx);
 
     /* Make sure HFXO is started */
-    if ((NRF_CLOCK_S->HFCLKSTAT &
+    if ((NRF_CLOCK->HFCLKSTAT &
          (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) !=
         (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) {
-        NRF_CLOCK_S->EVENTS_HFCLKSTARTED = 0;
-        NRF_CLOCK_S->TASKS_HFCLKSTART = 1;
+        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+        NRF_CLOCK->TASKS_HFCLKSTART = 1;
         while (1) {
-            if ((NRF_CLOCK_S->EVENTS_HFCLKSTARTED) != 0) {
+            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
                 break;
             }
         }

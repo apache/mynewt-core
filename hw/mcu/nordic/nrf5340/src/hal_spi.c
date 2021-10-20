@@ -25,6 +25,7 @@
 #include <hal/hal_spi.h>
 #include <mcu/nrf5340_hal.h>
 #include <nrf.h>
+#include <nrfx_config.h>
 
 #define SPIM_TXD_MAXCNT_MAX 0xffff
 
@@ -347,9 +348,9 @@ hal_spi_config_master(struct nrf5340_hal_spi *spi,
      */
     pin = spim->PSEL.SCK & SPIM_PSEL_SCK_PIN_Msk;
     if (spim->PSEL.SCK & SPIM_PSEL_SCK_PORT_Msk) {
-        port = NRF_P1_S;
+        port = NRF_P1;
     } else {
-        port = NRF_P0_S;
+        port = NRF_P0;
     }
 
     if (settings->data_mode <= HAL_SPI_MODE1) {

@@ -20,6 +20,7 @@
 #include <mcu/cortex_m33.h>
 #include <hal/hal_nvreg.h>
 #include <nrf.h>
+#include <nrfx_config.h>
 
 /* There are two GPREGRET registers on the NRF5340 */
 #define HAL_NVREG_MAX (2)
@@ -31,7 +32,7 @@ void
 hal_nvreg_write(unsigned int reg, uint32_t val)
 {
     if (reg < HAL_NVREG_MAX) {
-        NRF_POWER_S->GPREGRET[reg] = val;
+        NRF_POWER->GPREGRET[reg] = val;
     }
 }
 
@@ -41,7 +42,7 @@ hal_nvreg_read(unsigned int reg)
     uint32_t val = 0;
 
     if (reg < HAL_NVREG_MAX) {
-        val = NRF_POWER_S->GPREGRET[reg];
+        val = NRF_POWER->GPREGRET[reg];
     }
 
     return val;

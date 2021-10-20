@@ -22,6 +22,7 @@
 #include <hal/hal_system.h>
 #include <hal/hal_debug.h>
 #include <nrf.h>
+#include <nrfx_config.h>
 
 /**
  * Function called at startup. Called after BSS and .data initialized but
@@ -41,10 +42,10 @@ hal_system_init(void)
 #endif
 
 #if MYNEWT_VAL(MCU_DCDC_ENABLED)
-    NRF_REGULATORS_S->VREGMAIN.DCDCEN = 1;
+    NRF_REGULATORS->VREGMAIN.DCDCEN = 1;
 
 #if MYNEWT_VAL(BSP_NRF5340_NET_ENABLE)
-    NRF_REGULATORS_S->VREGRADIO.DCDCEN = 1;
+    NRF_REGULATORS->VREGRADIO.DCDCEN = 1;
 #endif
 #endif
 }
@@ -85,8 +86,8 @@ hal_system_clock_start(void)
     regval = CLOCK_LFCLKSTAT_STATE_Running << CLOCK_LFCLKSTAT_STATE_Pos;
 
 #if MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFXO)
-    NRF_P0_S->PIN_CNF[0] |= GPIO_PIN_CNF_MCUSEL_Peripheral << GPIO_PIN_CNF_MCUSEL_Pos;
-    NRF_P0_S->PIN_CNF[1] |= GPIO_PIN_CNF_MCUSEL_Peripheral << GPIO_PIN_CNF_MCUSEL_Pos;
+    NRF_P0->PIN_CNF[0] |= GPIO_PIN_CNF_MCUSEL_Peripheral << GPIO_PIN_CNF_MCUSEL_Pos;
+    NRF_P0->PIN_CNF[1] |= GPIO_PIN_CNF_MCUSEL_Peripheral << GPIO_PIN_CNF_MCUSEL_Pos;
     regval |= CLOCK_LFCLKSTAT_SRC_LFXO << CLOCK_LFCLKSTAT_SRC_Pos;
     clksrc = CLOCK_LFCLKSTAT_SRC_LFXO;
 #elif MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFSYNTH)
@@ -101,12 +102,12 @@ hal_system_clock_start(void)
 
 #if MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFSYNTH)
     /* Must turn on HFLCK for synthesized 32768 crystal */
-    if ((NRF_CLOCK_S->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
+    if ((NRF_CLOCK->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
         (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) {
-        NRF_CLOCK_S->EVENTS_HFCLKSTARTED = 0;
-        NRF_CLOCK_S->TASKS_HFCLKSTART = 1;
+        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+        NRF_CLOCK->TASKS_HFCLKSTART = 1;
         while (1) {
-            if ((NRF_CLOCK_S->EVENTS_HFCLKSTARTED) != 0) {
+            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
                 break;
             }
         }
@@ -114,16 +115,16 @@ hal_system_clock_start(void)
 #endif
 
     /* Check if this clock source is already running */
-    if ((NRF_CLOCK_S->LFCLKSTAT & regmsk) != regval) {
-        NRF_CLOCK_S->TASKS_LFCLKSTOP = 1;
-        NRF_CLOCK_S->EVENTS_LFCLKSTARTED = 0;
-        NRF_CLOCK_S->LFCLKSRC = clksrc;
-        NRF_CLOCK_S->TASKS_LFCLKSTART = 1;
+    if ((NRF_CLOCK->LFCLKSTAT & regmsk) != regval) {
+        NRF_CLOCK->TASKS_LFCLKSTOP = 1;
+        NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
+        NRF_CLOCK->LFCLKSRC = clksrc;
+        NRF_CLOCK->TASKS_LFCLKSTART = 1;
 
         /* Wait here till started! */
         while (1) {
-            if (NRF_CLOCK_S->EVENTS_LFCLKSTARTED) {
-                if ((NRF_CLOCK_S->LFCLKSTAT & regmsk) == regval) {
+            if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
+                if ((NRF_CLOCK->LFCLKSTAT & regmsk) == regval) {
                     break;
                 }
             }
@@ -131,10 +132,10 @@ hal_system_clock_start(void)
     }
 #endif
     if (MYNEWT_VAL(MCU_HFCLCK192_DIV) == 1) {
-        NRF_CLOCK_S->HFCLK192MCTRL = 0;
+        NRF_CLOCK->HFCLK192MCTRL = 0;
     } else if (MYNEWT_VAL(MCU_HFCLCK192_DIV) == 2) {
-        NRF_CLOCK_S->HFCLK192MCTRL = 1;
+        NRF_CLOCK->HFCLK192MCTRL = 1;
     } else if (MYNEWT_VAL(MCU_HFCLCK192_DIV) == 4) {
-        NRF_CLOCK_S->HFCLK192MCTRL = 2;
+        NRF_CLOCK->HFCLK192MCTRL = 2;
     }
 }
