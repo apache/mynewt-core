@@ -21,6 +21,7 @@
 #include <os/mynewt.h>
 #include <hal/hal_os_tick.h>
 #include <nrf.h>
+#include <nrfx_config.h>
 #include <mcu/cmsis_nvic.h>
 
 /* The OS scheduler requires a low-frequency timer. */
@@ -29,7 +30,7 @@
 #endif
 
 #define RTC_FREQ            32768       /* in Hz */
-#define OS_TICK_TIMER       NRF_RTC1_S
+#define OS_TICK_TIMER       NRF_RTC1
 #define OS_TICK_IRQ         RTC1_IRQn
 #define OS_TICK_CMPREG      3
 #define RTC_COMPARE_INT_MASK(ccreg) (1UL << ((ccreg) + 16))
