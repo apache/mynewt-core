@@ -63,6 +63,9 @@ static struct ipc_shm shms[IPC_MAX_CHANS];
 static uint8_t shms_bufs[IPC_MAX_CHANS][IPC_BUF_SIZE];
 static struct ipc_shared ipc_shared[1];
 
+/* Always use unsecure peripheral for IPC */
+#undef NRF_IPC
+#define NRF_IPC NRF_IPC_NS
 #else
 static struct ipc_shm *shms;
 static struct ipc_shared *ipc_shared;
@@ -226,7 +229,17 @@ ipc_nrf5340_init(void)
     ipc_shared->ipc_channel_count = IPC_MAX_CHANS;
     ipc_shared->ipc_shms = shms;
 
-    NRF_IPC->GPMEM[0] = (uint32_t)ipc_shared;
+    if (MYNEWT_VAL(MCU_APP_SECURE)) {
+        /*
+         * When bootloader is secure and application is not all peripherals are
+         * in unsecure mode. This is done by bootloader.
+         * If application runs in secure mode IPC manually chooses to use unsecure version
+         * so NETCORE can always use same peripheral to get shares memory configuration
+         * description from GPMEM[0].
+         */
+        NRF_SPU->PERIPHID[42].PERM &= ~SPU_PERIPHID_PERM_SECATTR_Msk;
+    }
+    NRF_IPC_NS->GPMEM[0] = (uint32_t)ipc_shared;
 
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
     /* Configure GPIOs for Networking Core */
@@ -277,12 +290,11 @@ ipc_nrf5340_init(void)
      * on IPC for network core controller to sent NOP first.
      */
 #define NRF_APP_IPC_NS                  ((NRF_IPC_Type *)0x4002A000)
-#define NRF_APP_IPC_S                   ((NRF_IPC_Type *)0x5002A000)
-    ipc_shared = (struct ipc_shared *)NRF_APP_IPC_S->GPMEM[0];
+    ipc_shared = (struct ipc_shared *)NRF_APP_IPC_NS->GPMEM[0];
     assert(ipc_shared);
     shms = ipc_shared->ipc_shms;
     assert(ipc_shared->ipc_channel_count <= ARRAY_SIZE(ipcs));
-    NRF_APP_IPC_S->GPMEM[0] = 0;
+    NRF_APP_IPC_NS->GPMEM[0] = 0;
 
     ipc_nrf5340_init_nrf_ipc();
 }
