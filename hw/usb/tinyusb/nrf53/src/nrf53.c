@@ -57,18 +57,18 @@ nrf_usbreg_event_get_and_clear(NRF_USBREG_Type *p_reg,
 static void
 USBREG_IRQHandler(void)
 {
-    if (nrf_usbreg_int_enable_check(NRF_USBREGULATOR_S, NRF_USBREG_INT_USBDETECTED) &&
-        (nrf_usbreg_event_get_and_clear(NRF_USBREGULATOR_S, NRF_USBREG_EVENT_USBDETECTED))) {
+    if (nrf_usbreg_int_enable_check(NRF_USBREGULATOR, NRF_USBREG_INT_USBDETECTED) &&
+        (nrf_usbreg_event_get_and_clear(NRF_USBREGULATOR, NRF_USBREG_EVENT_USBDETECTED))) {
         tusb_hal_nrf_power_event(USB_EVT_DETECTED);
     }
 
-    if (nrf_usbreg_int_enable_check(NRF_USBREGULATOR_S, NRF_USBREG_INT_USBREMOVED) &&
-        nrf_usbreg_event_get_and_clear(NRF_USBREGULATOR_S,NRF_USBREG_EVENT_USBREMOVED)) {
+    if (nrf_usbreg_int_enable_check(NRF_USBREGULATOR, NRF_USBREG_INT_USBREMOVED) &&
+        nrf_usbreg_event_get_and_clear(NRF_USBREGULATOR,NRF_USBREG_EVENT_USBREMOVED)) {
         tusb_hal_nrf_power_event(USB_EVT_REMOVED);
     }
 
-    if (nrf_usbreg_int_enable_check(NRF_USBREGULATOR_S, NRF_USBREG_INT_USBPWRRDY) &&
-        nrf_usbreg_event_get_and_clear(NRF_USBREGULATOR_S, NRF_USBREG_EVENT_USBPWRRDY)) {
+    if (nrf_usbreg_int_enable_check(NRF_USBREGULATOR, NRF_USBREG_INT_USBPWRRDY) &&
+        nrf_usbreg_event_get_and_clear(NRF_USBREGULATOR, NRF_USBREG_EVENT_USBPWRRDY)) {
         tusb_hal_nrf_power_event(USB_EVT_READY);
     }
 }
@@ -83,7 +83,7 @@ tinyusb_hardware_init(void)
     /* Setup Power IRQ to detect USB VBUS state (detected, ready, removed) */
     NVIC_SetVector(USBREGULATOR_IRQn, (uint32_t)USBREG_IRQHandler);
     NVIC_SetPriority(USBREGULATOR_IRQn, 7);
-    nrf_usbreg_int_enable(NRF_USBREGULATOR_S,
+    nrf_usbreg_int_enable(NRF_USBREGULATOR,
                           USBREG_INTEN_USBDETECTED_Msk |
                           USBREG_INTEN_USBREMOVED_Msk |
                           USBREG_INTEN_USBPWRRDY_Msk);
@@ -94,7 +94,7 @@ tinyusb_hardware_init(void)
      * USB power may already be ready at this time -> no event generated
      * We need to invoke the handler based on the status initially
      */
-    uint32_t usb_reg = NRF_USBREGULATOR_S->USBREGSTATUS;
+    uint32_t usb_reg = NRF_USBREGULATOR->USBREGSTATUS;
 
     if (usb_reg & USBREG_USBREGSTATUS_VBUSDETECT_Msk) {
         tusb_hal_nrf_power_event(USB_EVT_DETECTED);
