@@ -33,7 +33,7 @@ nrf5340_flash_wait_ready(void)
     int i;
 
     for (i = 0; i < 100000; i++) {
-        if (NRF_NVMC_S->READY == NVMC_READY_READY_Ready) {
+        if (NRF_NVMC->READY == NVMC_READY_READY_Ready) {
             return 0;
         }
     }
@@ -65,7 +65,11 @@ nrf5340_flash_write(const struct hal_flash *dev, uint32_t address,
         return -1;
     }
     __HAL_DISABLE_INTERRUPTS(sr);
+#if MYNEWT_VAL(BOOT_LOADER) || MYNEWT_VAL(MCU_APP_SECURE)
     NRF_NVMC_S->CONFIG = NVMC_CONFIG_WEN_Wen; /* Enable erase OP */
+#else
+    NRF_NVMC_NS->CONFIGNS = NVMC_CONFIGNS_WEN_Wen; /* Enable erase OP */
+#endif
     tmp = address & 0x3;
     if (tmp) {
         if (nrf5340_flash_wait_ready()) {
@@ -113,7 +117,11 @@ nrf5340_flash_write(const struct hal_flash *dev, uint32_t address,
 
     rc = nrf5340_flash_wait_ready();
 out:
+#if MYNEWT_VAL(BOOT_LOADER) || MYNEWT_VAL(MCU_APP_SECURE)
     NRF_NVMC_S->CONFIG = NVMC_CONFIG_WEN_Ren;
+#else
+    NRF_NVMC_NS->CONFIGNS = NVMC_CONFIGNS_WEN_Ren;
+#endif
     __HAL_ENABLE_INTERRUPTS(sr);
     return rc;
 }
@@ -131,12 +139,20 @@ nrf5340_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
     }
     __HAL_DISABLE_INTERRUPTS(sr);
 
+#if MYNEWT_VAL(BOOT_LOADER) || MYNEWT_VAL(MCU_APP_SECURE)
     NRF_NVMC_S->CONFIG = NVMC_CONFIG_WEN_Een; /* Enable erase OP */
+#else
+    NRF_NVMC_NS->CONFIGNS = NVMC_CONFIGNS_WEN_Een; /* Enable erase OP */
+#endif
     *(uint32_t *)sector_address = 0xFFFFFFFF;
 
     rc = nrf5340_flash_wait_ready();
 
+#if MYNEWT_VAL(BOOT_LOADER) || MYNEWT_VAL(MCU_APP_SECURE)
     NRF_NVMC_S->CONFIG = NVMC_CONFIG_WEN_Ren;
+#else
+    NRF_NVMC_NS->CONFIGNS = NVMC_CONFIGNS_WEN_Ren;
+#endif
     __HAL_ENABLE_INTERRUPTS(sr);
 
     return rc;
