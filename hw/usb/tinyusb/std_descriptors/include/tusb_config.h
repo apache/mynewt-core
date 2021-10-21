@@ -80,7 +80,6 @@ extern "C" {
 #define CFG_TUD_USBTMC           0
 #define CFG_TUD_DFU_RT           0
 #define CFG_TUD_DFU              MYNEWT_VAL(USBD_DFU)
-#define CFG_TUD_NET              0
 #define CFG_TUD_BTH              MYNEWT_VAL(USBD_BTH)
 
 /* Minimal number for alternative interfaces that is recognized by Windows as Bluetooth radio controller */
