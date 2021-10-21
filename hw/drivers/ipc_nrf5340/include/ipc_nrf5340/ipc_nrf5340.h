@@ -22,6 +22,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Type of callback called when signal was received on IPC
  *
@@ -104,5 +108,9 @@ uint16_t ipc_nrf5340_available(int channel);
  * @return            Number of bytes consumed from IPC.
  */
 uint16_t ipc_nrf5340_consume(int channel, uint16_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _HW_DRIVERS_IPC_NRF5340_H */
