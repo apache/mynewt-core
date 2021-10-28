@@ -21,6 +21,7 @@
 #include <inttypes.h>
 #include <mcu/cortex_m33.h>
 #include <mcu/nrf5340_hal.h>
+#include <bsp/bsp.h>
 
 #if MCUBOOT_MYNEWT
 #include <bootutil/bootutil.h>
@@ -66,6 +67,8 @@ hal_system_start(void *img_start)
     int bootloader_flash_regions;
     __attribute__((cmse_nonsecure_call, noreturn)) void (* app_reset)(void);
 
+    __disable_irq();
+
     /* Mark selected peripherals as unsecure */
     for (i = 0; i < ARRAY_SIZE(ns_peripheral_ids); ++i) {
         for (j = ns_peripheral_ids[i].first; j <= ns_peripheral_ids[i].last; ++j) {
@@ -102,6 +105,28 @@ hal_system_start(void *img_start)
     /* Move GPIO to non-secure area */
     NRF_SPU->GPIOPORT[0].PERM = 0;
     NRF_SPU->GPIOPORT[1].PERM = 0;
+
+    /*
+     * For now whole RAM is marked as non-secure. To prevent data leak from secure to
+     * non-secure, whole RAM is cleared before starting application code.
+     * Interrupt VTOR for secure world that was previously put in RAM is moved to
+     * flash again.
+     */
+    SCB->VTOR = 0;
+    /*
+     * Normal loop here is inlined by GCC to call to memset hence asm version of
+     * memset that does not use stack (that just get erased).
+     */
+    asm volatile("    add     %1, %1, %0    \n"
+                 "    mov     r0, #0        \n"
+                 "1:  stmia   %0!, {r0}     \n"
+                 "    cmp     %0, %1        \n"
+                 "    blt     1b            \n"
+        :
+        : "r" (&_ram_start), "r" (RAM_SIZE)
+        : "r0");
+    /* Application startup code expects interrupts to be enabled */
+    __enable_irq();
 
     img_data = img_start;
     app_reset = (void *)(img_data[1]);
