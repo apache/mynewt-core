@@ -115,7 +115,9 @@ trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
     regs->pc = tf->ef->pc;
     regs->psr = tf->ef->psr;
 }
+#endif
 
+#if MYNEWT_VAL(OS_COREDUMP)
 struct mtb_state {
     uint32_t mtb_position_reg;
     uint32_t mtb_master_reg;
