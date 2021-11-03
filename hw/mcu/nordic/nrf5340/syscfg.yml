@@ -64,6 +64,21 @@ syscfg.defs:
             Refer to nRF5340 Product Specification document for more details.
         value: 0
 
+    MCU_GPIO_NET:
+        description: >
+            List of comma separated GPIO that should be configured for Network
+            Core usage. Can be define numeric or with constants from bsp.h
+            eg "LED_1, LED_2" or "1, 2". Further GPIO configuration should be
+            done by Network Core.
+        value: ""
+
+    MCU_GPIO_PERIPH:
+        description: >
+            List of comma separated GPIO that should be configured for peripherals
+            dedicated pins (eg oscillator).
+            Can be define numeric or with constants from bsp.h eg "LED_1, LED_2" or "1, 2".
+        value: ""
+
     MCU_DEBUG_IGNORE_BKPT:
        description: >
             When enabled, asm(bkpt) will be ignored. If not set, it will hit
