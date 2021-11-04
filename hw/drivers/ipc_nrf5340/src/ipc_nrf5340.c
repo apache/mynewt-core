@@ -264,24 +264,12 @@ ipc_nrf5340_init(void)
     /* Start Network Core */
     NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
 
-#if MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
     /*
-     * TODO: Remove below workaround:
-     * For now app core waits for NET core to start.
-     * It is needed for case when network core was updated with new
-     * image and due to several second delay caused by bootloader
-     * copy image application starts to send HCI reset requests via
-     * IPC and network HCI transport is not really ready to handle
-     * more then one command.
+     * Waits for NET core to start and init it's side of IPC.
+     * It may take several seconds if there is net core
+     * embedded image in the application flash.
      */
-    if (&_binary_net_core_img_end - &_binary_net_core_img_start > 32) {
-        /*
-         * Application side prepared image for net core.
-         * When net core starts it's ipc_nrf5340_init() will clear those.
-         */
-        while (NRF_IPC->GPMEM[0]);
-    }
-#endif
+    while (NRF_IPC->GPMEM[0]);
 }
 #endif
 
