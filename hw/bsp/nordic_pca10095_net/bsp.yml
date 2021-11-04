@@ -44,12 +44,17 @@ bsp.flash_map:
         FLASH_AREA_IMAGE_0:
             device: 0
             offset: 0x01008000
-            size: 192kB
+            size: 128kB
+        FLASH_AREA_COREDUMP:
+            user_id: 2
+            device: 0
+            offset: 0x01028000
+            size: 68kB
         # This maps to app flash and uses vflash
         FLASH_AREA_IMAGE_1:
             device: 1
             offset: 0x00000000
-            size: 192kB
+            size: 128kB
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
             offset: 0x0103a000
