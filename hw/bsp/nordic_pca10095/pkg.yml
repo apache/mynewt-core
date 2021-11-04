@@ -38,7 +38,7 @@ pkg.deps:
     - "@apache-mynewt-core/libc/baselibc"
     - "@apache-mynewt-core/sys/flash_map"
 
-pkg.deps.BSP_NRF5340_NET_ENABLE:
+pkg.deps.BSP_NRF5340_NET_FLASH_ENABLE:
     - "@apache-mynewt-core/hw/drivers/flash/ipc_nrf5340_flash"
 
 pkg.deps.SOFT_PWM:

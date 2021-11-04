@@ -30,6 +30,12 @@ syscfg.defs:
             When enabled Network Core of nRF5340 is started on init.
        value: 0
 
+    BSP_NRF5340_NET_FLASH_ENABLE:
+        description: >
+            When enabled Application core can use Network core flash
+            with ipc flash driver.
+        value: 0
+
     COREDUMP_SKIP_UNUSED_HEAP:
         description: >
             Store whole RAM in crash dump.
@@ -93,3 +99,13 @@ syscfg.vals.!BOOT_LOADER:
 syscfg.vals.BLE_HOST:
     BLE_HCI_TRANSPORT: nrf5340
     BLE_HS_FLOW_CTRL: 1
+
+syscfg.vals.BSP_NRF5340_NET_ENABLE:
+    BSP_NRF5340_NET_FLASH_ENABLE: 1
+
+syscfg.vals.BSP_NRF5340_NET_FLASH_ENABLE:
+    IPC_NRF5340_CHANNELS: 4
+
+syscfg.restrictions:
+    - '!BSP_NRF5340_NET_FLASH_ENABLE || IPC_NRF5340_CHANNELS >= 4'
+    - '!BSP_NRF5340_NET_FLASH_ENABLE || BSP_NRF5340_NET_ENABLE'
