@@ -63,3 +63,8 @@ bsp.flash_map:
             device: 0
             offset: 0x000fc000
             size: 16kB
+        FLASH_AREA_NET_COREDUMP:
+            user_id: 2
+            device: 2
+            offset: 0x01028000
+            size: 68kB
