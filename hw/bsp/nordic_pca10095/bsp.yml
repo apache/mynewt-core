@@ -31,8 +31,6 @@ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
 bsp.part2linkerscript: "hw/bsp/nordic_pca10095/split-nordic_pca10095.ld"
 bsp.downloadscript: "hw/bsp/nordic_pca10095/nordic_pca10095_download.sh"
 bsp.debugscript: "hw/bsp/nordic_pca10095/nordic_pca10095_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10095/nordic_pca10095_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10095/nordic_pca10095_debug.cmd"
 
 bsp.flash_map:
     areas:
