@@ -33,6 +33,10 @@
 #include "reboot/log_reboot.h"
 #endif
 
+#if MYNEWT_VAL(MEMPROTECT_CLEAR_DATA)
+#include "memprotect/memprotect.h"
+#endif
+
 struct exception_frame {
     uint32_t r0;
     uint32_t r1;
@@ -211,6 +215,10 @@ os_default_irq(struct trap_frame *tf)
 #endif
 #if MYNEWT_VAL(OS_CRASH_RESTORE_REGS)
     uint32_t orig_sp;
+#endif
+
+#if MYNEWT_VAL(MEMPROTECT_CLEAR_DATA)
+    memprotect_clear_data();
 #endif
 
     /* Stop MTB if implemented so interrupt handler execution is not recorded */

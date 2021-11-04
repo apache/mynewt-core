@@ -17,36 +17,12 @@
 # under the License.
 #
 
-pkg.name: kernel/os
-pkg.description: Mynewt operating system core.
+pkg.name: util/memprotect
+pkg.description: Library built to handle protecting sensitive information
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - memprotect
 
 pkg.deps:
-    - "@apache-mynewt-core/sys/sys"
-    - "@apache-mynewt-core/sys/sysdown"
-    - "@apache-mynewt-core/sys/sysinit"
-    - "@apache-mynewt-core/util/mem"
-    - "@apache-mynewt-core/util/memprotect"
-
-pkg.req_apis:
-    - console
-
-pkg.deps.OS_CLI:
-    - "@apache-mynewt-core/sys/shell"
-
-pkg.deps.OS_COREDUMP:
-    - "@apache-mynewt-core/sys/coredump"
-
-pkg.deps.BSP_SIMULATED:
-    - "@apache-mynewt-core/kernel/sim"
-
-pkg.deps.OS_SYSVIEW:
-    - "@apache-mynewt-core/sys/sysview"
-
-pkg.deps.OS_CRASH_LOG:
-    - "@apache-mynewt-core/sys/reboot"    
-
-pkg.init:
-    os_pkg_init: 'MYNEWT_VAL(OS_SYSINIT_STAGE)'
+    - "@apache-mynewt-core/kernel/os"

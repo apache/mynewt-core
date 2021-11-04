@@ -145,6 +145,10 @@ SECTIONS
         *(.data*)
 
         *(.jcr)
+
+        __mynewt_protected_start = .;
+        *(.mynewt_protected*)
+        __mynewt_protected_end = .;
         . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
