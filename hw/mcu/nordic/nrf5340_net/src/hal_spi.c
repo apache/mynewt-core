@@ -691,7 +691,7 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
     }
 
     if (rxbuf != NULL && !nrfx_is_in_ram(rxbuf)) {
-        return SYS_EINVAL;
+        return EINVAL;
     }
 
 #if MYNEWT_VAL(SPI_0_MASTER)
