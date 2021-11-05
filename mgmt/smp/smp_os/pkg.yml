@@ -32,9 +32,6 @@ pkg.deps:
     - "@apache-mynewt-core/encoding/tinycbor"
     - "@apache-mynewt-mcumgr/cborattr"
 
-pkg.deps.LOG_SOFT_RESET:
-    - "@apache-mynewt-core/sys/reboot"
-
 pkg.deps.TIMEPERSIST:
     - "@apache-mynewt-core/time/timepersist"
 
