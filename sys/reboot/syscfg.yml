@@ -59,8 +59,3 @@ syscfg.defs:
     REBOOT_LOG_MOD:
         description: 'Numeric module ID to use for reboot log messages.'
         value: 6
-
-    LOG_SOFT_RESET:
-        description: >
-            Log soft resets.
-        value: 1
