@@ -96,6 +96,12 @@ extern "C" {
 #define CFG_TUD_DFU_XFER_BUFSIZE    256
 #endif
 
+#if MYNEWT_VAL(USBD_DFU_DETACH_TIMEOUT)
+#define CFG_TUD_DFU_DETACH_TIMEOUT  MYNEWT_VAL(USBD_DFU_DETACH_TIMEOUT)
+#else
+#define CFG_TUD_DFU_DETACH_TIMEOUT  1000
+#endif
+
 #ifdef __cplusplus
 }
 #endif
