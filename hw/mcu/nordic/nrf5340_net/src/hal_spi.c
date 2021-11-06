@@ -25,6 +25,7 @@
 #include <hal/hal_spi.h>
 #include <mcu/nrf5340_net_hal.h>
 #include <nrf.h>
+#include <nrfx_common.h>
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
 
@@ -685,7 +686,11 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
 {
     struct nrf5340_net_hal_spi *spi = &nrf5340_net_hal_spi0;
 
-    if (spi_num != 0 || (spi->txrx_cb_func == NULL) || (len == 0)) {
+    if (spi_num != 0 || (spi->txrx_cb_func == NULL) || (len == 0) || !nrfx_is_in_ram(txbuf)) {
+        return EINVAL;
+    }
+
+    if (rxbuf != NULL && !nrfx_is_in_ram(rxbuf)) {
         return EINVAL;
     }
 

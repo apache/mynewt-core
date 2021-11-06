@@ -254,6 +254,10 @@ bus_i2c_nrf5340_read(struct bus_dev *bdev, struct bus_node *bnode,
     BUS_DEBUG_VERIFY_DEV(dev);
     BUS_DEBUG_VERIFY_NODE(node);
 
+    if (!nrfx_is_in_ram(buf)) {
+        return SYS_EINVAL;
+    }
+
     if (flags & BUS_F_NOSTOP) {
         /*
          * There's no shortcut available for LASTRX->SUSPEND so we can only
@@ -315,6 +319,10 @@ bus_i2c_nrf5340_write(struct bus_dev *bdev, struct bus_node *bnode,
 
     BUS_DEBUG_VERIFY_DEV(dev);
     BUS_DEBUG_VERIFY_NODE(node);
+
+    if (!nrfx_is_in_ram(buf)) {
+        return SYS_EINVAL;
+    }
 
     last_op = !(flags & BUS_F_NOSTOP);
 

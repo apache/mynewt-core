@@ -26,6 +26,7 @@
 #include <mcu/nrf5340_hal.h>
 #include <nrf.h>
 #include <nrfx_config.h>
+#include <nrfx_common.h>
 
 #define SPIM_TXD_MAXCNT_MAX 0xffff
 
@@ -961,7 +962,11 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
     rc = EINVAL;
     NRF5340_HAL_SPI_RESOLVE(spi_num, spi);
 
-    if ((spi->txrx_cb_func == NULL) || (len == 0)) {
+    if ((spi->txrx_cb_func == NULL) || (len == 0) || !nrfx_is_in_ram(txbuf)) {
+        goto err;
+    }
+
+    if (rxbuf != NULL && !nrfx_is_in_ram(rxbuf)) {
         goto err;
     }
 
