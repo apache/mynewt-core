@@ -40,6 +40,12 @@ struct ipc_shared {
     uint8_t ipc_channel_count;
     /* Array of shared memories used for IPC */
     struct ipc_shm *ipc_shms;
+    /* Set by netcore during IPC initialization */
+    volatile enum {
+        APP_WAITS_FOR_NET,
+        APP_AND_NET_RUNNING,
+        NET_RESTARTED,
+    } ipc_state;
 };
 
 #ifdef __cplusplus
