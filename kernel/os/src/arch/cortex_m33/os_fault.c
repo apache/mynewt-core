@@ -217,12 +217,12 @@ os_default_irq(struct trap_frame *tf)
     uint32_t orig_sp;
 #endif
 
+    /* Stop MTB if implemented so interrupt handler execution is not recorded */
+    mtb_stop();
+    
 #if MYNEWT_VAL(MEMPROTECT_CLEAR_DATA)
     memprotect_clear_data();
 #endif
-
-    /* Stop MTB if implemented so interrupt handler execution is not recorded */
-    mtb_stop();
 
     console_blocking_mode();
     console_printf("Unhandled interrupt (%ld), exception sp 0x%08lx\n",
