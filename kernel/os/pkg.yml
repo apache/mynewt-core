@@ -46,7 +46,7 @@ pkg.deps.OS_SYSVIEW:
     - "@apache-mynewt-core/sys/sysview"
 
 pkg.deps.OS_CRASH_LOG:
-    - "@apache-mynewt-core/sys/reboot"    
+    - "@apache-mynewt-core/sys/reboot"
 
 pkg.init:
     os_pkg_init: 'MYNEWT_VAL(OS_SYSINIT_STAGE)'
