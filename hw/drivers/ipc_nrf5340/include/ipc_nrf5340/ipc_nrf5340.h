@@ -109,6 +109,15 @@ uint16_t ipc_nrf5340_available(int channel);
  */
 uint16_t ipc_nrf5340_consume(int channel, uint16_t len);
 
+/**
+ * Set function to be called when net core restarts.
+ *
+ * Note: Function will be called from IPC interrupt context.
+ *
+ * @param on_crash - function to be called
+ */
+void ipc_nrf5340_set_net_core_restart_cb(void (*on_restart)(void));
+
 #ifdef __cplusplus
 }
 #endif

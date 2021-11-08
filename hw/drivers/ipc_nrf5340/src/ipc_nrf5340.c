@@ -62,10 +62,21 @@ struct ipc_shm {
 };
 
 static struct ipc_channel ipcs[IPC_MAX_CHANS];
+
+#define NET_CRASH_CHANNEL   15
+
 #if MYNEWT_VAL(MCU_APP_CORE)
 static struct ipc_shm shms[IPC_MAX_CHANS];
 static uint8_t shms_bufs[IPC_MAX_CHANS][IPC_BUF_SIZE];
 static struct ipc_shared ipc_shared[1];
+
+static void (*net_core_restart_cb)(void);
+
+void
+ipc_nrf5340_set_net_core_restart_cb(void (*on_restart)(void))
+{
+    net_core_restart_cb = on_restart;
+}
 
 /* Always use unsecure peripheral for IPC */
 #undef NRF_IPC
@@ -166,6 +177,16 @@ ipc_nrf5340_isr(void)
     /* Handle only interrupts that were enabled */
     irq_pend = NRF_IPC->INTPEND & NRF_IPC->INTEN;
 
+#if MYNEWT_VAL(MCU_APP_CORE)
+    if (ipc_shared->ipc_state == NET_RESTARTED && (irq_pend & (1UL << NET_CRASH_CHANNEL))) {
+        NRF_IPC->EVENTS_RECEIVE[NET_CRASH_CHANNEL] = 0;
+        if (net_core_restart_cb) {
+            net_core_restart_cb();
+        }
+        ipc_shared->ipc_state = APP_AND_NET_RUNNING;
+    }
+#endif
+
     for (i = 0; i < IPC_MAX_CHANS; i++) {
         if (irq_pend & (0x1UL << i)) {
             NRF_IPC->EVENTS_RECEIVE[i] = 0;
@@ -232,6 +253,7 @@ ipc_nrf5340_init(void)
     }
     ipc_shared->ipc_channel_count = IPC_MAX_CHANS;
     ipc_shared->ipc_shms = shms;
+    ipc_shared->ipc_state = APP_WAITS_FOR_NET;
 
     if (MYNEWT_VAL(MCU_APP_SECURE)) {
         /*
@@ -255,6 +277,8 @@ ipc_nrf5340_init(void)
 #endif
 
     ipc_nrf5340_init_nrf_ipc();
+    NRF_IPC->RECEIVE_CNF[NET_CRASH_CHANNEL] = (0x1UL << NET_CRASH_CHANNEL);
+    NRF_IPC->INTENSET = (1UL << NET_CRASH_CHANNEL);
 
     if (MYNEWT_VAL(MCU_APP_SECURE)) {
         /* this allows netcore to access appcore RAM */
@@ -269,7 +293,7 @@ ipc_nrf5340_init(void)
      * It may take several seconds if there is net core
      * embedded image in the application flash.
      */
-    while (NRF_IPC->GPMEM[0]);
+    while (ipc_shared->ipc_state != APP_AND_NET_RUNNING);
 }
 #endif
 
@@ -277,20 +301,32 @@ ipc_nrf5340_init(void)
 void
 ipc_nrf5340_init(void)
 {
-    /*
-     * When network core IPCs starts it clears GPMEM from APP core registers
-     * So IPC knows that netcore is running.
-     * This is a workaround that is needed till application side code waits
-     * on IPC for network core controller to sent NOP first.
-     */
 #define NRF_APP_IPC_NS                  ((NRF_IPC_Type *)0x4002A000)
+    /*
+     * Wait for application core to pass IPC configuration.
+     */
+    while (NRF_APP_IPC_NS->GPMEM[0] == 0) ;
     ipc_shared = (struct ipc_shared *)NRF_APP_IPC_NS->GPMEM[0];
     assert(ipc_shared);
     shms = ipc_shared->ipc_shms;
     assert(ipc_shared->ipc_channel_count <= ARRAY_SIZE(ipcs));
-    NRF_APP_IPC_NS->GPMEM[0] = 0;
 
     ipc_nrf5340_init_nrf_ipc();
+    NRF_IPC->SEND_CNF[NET_CRASH_CHANNEL] = (0x01UL << NET_CRASH_CHANNEL);
+
+    /*
+     * If ipc_state is already APP_AND_NET_RUNNING it means that net core
+     * restarted without app core involvment, notify app core about such
+     * case.
+     */
+    if (ipc_shared->ipc_state == APP_AND_NET_RUNNING) {
+        ipc_shared->ipc_state = NET_RESTARTED;
+        NRF_IPC->TASKS_SEND[NET_CRASH_CHANNEL] = 1;
+        while (ipc_shared->ipc_state == NET_RESTARTED) ;
+    } else if (ipc_shared->ipc_state == APP_WAITS_FOR_NET) {
+        /* Normal start app core waits for net core to initialize IPC, mark net core as ready */
+        ipc_shared->ipc_state = APP_AND_NET_RUNNING;
+    }
 }
 #endif
 
