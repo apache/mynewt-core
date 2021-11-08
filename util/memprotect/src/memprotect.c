@@ -27,9 +27,9 @@ extern int __mynewt_protected_start, __mynewt_protected_end;
 void
 memprotect_clear_data(void)
 {
-    uint32_t * ptr = (uint32_t *) &__mynewt_protected_start, idx;
+    uint32_t * ptr = (uint32_t *) &__mynewt_protected_start;
 
-    for (idx = 0; i < (uint32_t *) &__mynewt_protected_end; idx+= sizeof(* ptr)) {
+    for (uint32_t * idx = 0; idx < (uint32_t *) &__mynewt_protected_end; idx+= sizeof(* ptr)) {
         ptr[idx] = MYNEWT_VAL(MEMPROTECT_PATTERN);
     }
 }
