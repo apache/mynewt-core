@@ -65,10 +65,11 @@ static struct ipc_channel ipcs[IPC_MAX_CHANS];
 
 #define NET_CRASH_CHANNEL   15
 
+__attribute__((section(".ipc"))) static struct ipc_shared ipc_shared[1];
+
 #if MYNEWT_VAL(MCU_APP_CORE)
 static struct ipc_shm shms[IPC_MAX_CHANS];
 static uint8_t shms_bufs[IPC_MAX_CHANS][IPC_BUF_SIZE];
-static struct ipc_shared ipc_shared[1];
 
 static void (*net_core_restart_cb)(void);
 
@@ -78,12 +79,16 @@ ipc_nrf5340_set_net_core_restart_cb(void (*on_restart)(void))
     net_core_restart_cb = on_restart;
 }
 
-/* Always use unsecure peripheral for IPC */
+/* Always use unsecure peripheral for IPC, unless pre-TrusZone bootloader is present in netcore */
 #undef NRF_IPC
+#if MYNEWT_VAL(IPC_NRF5340_PRE_TRUSTZONE_NETCORE_BOOT)
+#define NRF_IPC NRF_IPC_S
+#else
 #define NRF_IPC NRF_IPC_NS
+#endif
+
 #else
 static struct ipc_shm *shms;
-static struct ipc_shared *ipc_shared;
 #undef IPC_MAX_CHANS
 #undef IPC_BUF_SIZE
 #define IPC_MAX_CHANS ipc_shared->ipc_channel_count
@@ -240,6 +245,14 @@ ipc_nrf5340_init(void)
     if (&_binary_net_core_img_end - &_binary_net_core_img_start > 32) {
         ipc_shared->net_core_image_address = (void *)&_binary_net_core_img_start;
         ipc_shared->net_core_image_size = &_binary_net_core_img_end - &_binary_net_core_img_start;
+        /*
+         * For compatibility with first version of vflash driver that stored image address and
+         * image size in NRF_IPC_S.GPMEM[0..1].
+         */
+        if (MYNEWT_VAL(IPC_NRF5340_PRE_TRUSTZONE_NETCORE_BOOT)) {
+            NRF_IPC_S->GPMEM[0] = (uint32_t)&_binary_net_core_img_start;
+            NRF_IPC_S->GPMEM[1] = &_binary_net_core_img_end - &_binary_net_core_img_start;
+        }
     }
 #endif
 
@@ -255,17 +268,15 @@ ipc_nrf5340_init(void)
     ipc_shared->ipc_shms = shms;
     ipc_shared->ipc_state = APP_WAITS_FOR_NET;
 
-    if (MYNEWT_VAL(MCU_APP_SECURE)) {
+    if (MYNEWT_VAL(MCU_APP_SECURE) && !MYNEWT_VAL(IPC_NRF5340_PRE_TRUSTZONE_NETCORE_BOOT)) {
         /*
          * When bootloader is secure and application is not all peripherals are
          * in unsecure mode. This is done by bootloader.
          * If application runs in secure mode IPC manually chooses to use unsecure version
-         * so NETCORE can always use same peripheral to get shares memory configuration
-         * description from GPMEM[0].
+         * so net core can always use same peripheral.
          */
         NRF_SPU->PERIPHID[42].PERM &= ~SPU_PERIPHID_PERM_SECATTR_Msk;
     }
-    NRF_IPC_NS->GPMEM[0] = (uint32_t)ipc_shared;
 
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
     /* Configure GPIOs for Networking Core */
@@ -305,9 +316,6 @@ ipc_nrf5340_init(void)
     /*
      * Wait for application core to pass IPC configuration.
      */
-    while (NRF_APP_IPC_NS->GPMEM[0] == 0) ;
-    ipc_shared = (struct ipc_shared *)NRF_APP_IPC_NS->GPMEM[0];
-    assert(ipc_shared);
     shms = ipc_shared->ipc_shms;
     assert(ipc_shared->ipc_channel_count <= ARRAY_SIZE(ipcs));
 
