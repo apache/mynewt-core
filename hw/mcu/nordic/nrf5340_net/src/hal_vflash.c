@@ -31,6 +31,10 @@
 
 #define NRF5340_NET_VFLASH_SECTOR_SZ 2048
 
+#if !MYNEWT_VAL(IPC_NRF5340_PRE_TRUSTZONE_NETCORE_BOOT)
+__attribute__((section(".ipc"))) static struct ipc_shared ipc_shared[1];
+#endif
+
 #define NRF_APP_IPC_NS                  ((NRF_IPC_Type *)0x4002A000)
 #define NRF_APP_IPC_S                   ((NRF_IPC_Type *)0x5002A000)
 
@@ -218,18 +222,25 @@ static int
 nrf5340_net_vflash_init(const struct hal_flash *dev)
 {
     struct nrf5340_vflash *vflash = (struct nrf5340_vflash *)dev;
-    const struct ipc_shared *ipc_shared = (const struct ipc_shared *)NRF_APP_IPC_NS->GPMEM[0];
+#if MYNEWT_VAL(IPC_NRF5340_PRE_TRUSTZONE_NETCORE_BOOT)
+    const void *img_addr = (const void *)NRF_APP_IPC_S->GPMEM[0];
+    uint32_t image_size = (uint32_t)NRF_APP_IPC_S->GPMEM[1];
+#else
+    const void *img_addr = ipc_shared[0].net_core_image_address;
+    uint32_t image_size = ipc_shared[0].net_core_image_size;
+#endif
 
     /*
-     * Application side IPC will set GPMEM registers to address and size of
+     * Application side IPC will set ipc_share data
+     * (or GPMEM registers) to address and size of
      * memory where net core image is present in application flash.
      * If those values are 0, application image does not have embedded image,
      * and there no need to provide any data.
      * Set nv_image_size to 0 and all reads will return empty values (0xff)
      */
-    if (ipc_shared && ipc_shared->net_core_image_address) {
-        vflash->nv_image_address = ipc_shared->net_core_image_address;
-        vflash->nv_image_size = ipc_shared->net_core_image_size;
+    if (img_addr) {
+        vflash->nv_image_address = img_addr;
+        vflash->nv_image_size = image_size;
     }
 
     return 0;
