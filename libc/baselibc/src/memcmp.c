@@ -8,7 +8,7 @@ int memcmp(const void *s1, const void *s2, size_t n)
 {
     int d = 0;
 
-#if defined(ARCH_cortex_m3) || defined(ARCH_cortex_m4) || defined(ARCH_cortex_m7)
+#if defined(ARCH_cortex_m3) || defined(ARCH_cortex_m4) || defined(ARCH_cortex_m7) || defined(ARCH_cortex_m33)
     asm (".syntax unified                   \n"
          "       push  {r4, r5, r6}         \n"
          "       mov   r5, #0               \n"
