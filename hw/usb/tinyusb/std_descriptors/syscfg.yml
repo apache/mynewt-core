@@ -66,7 +66,17 @@ syscfg.defs:
         description: Enable BT HCI device
         value: 0
     USBD_DFU:
-        description: Enable DFU interface
+        description: >
+            Enable DFU interface in TinyUSB.  This adds USB descriptor to
+            USB configuration.  It does not add TinyUSB callbacks implementation,
+            if standard implementation exposing SLOT1 is required USB_DFU_STD can
+            be additionally specified.
+        value: 0
+    USBD_DFU_STD:
+        description: >
+            Add Mynewt standard DFU interface implementation.
+            It will include hw/tinyusb/dfu package with mynewt standard
+            DFU implementation.
         value: 0
 
     USBD_CDC_DATA_OUT_EP:
