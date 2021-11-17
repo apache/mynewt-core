@@ -24,4 +24,4 @@ syscfg.defs:
             although right now this targets could be used for other bsp
             that are based on NRF5340 since target build just BLE controller
             without anything specific to pca10095 board.
-        value: "@apache-mynewt-nimble/targets/nordic_pca10095-blehci"
+        value: "@apache-mynewt-nimble/targets/nordic_pca10095_net-blehci"
