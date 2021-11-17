@@ -52,6 +52,7 @@ pkg.deps.MCU_STM32F1:
     - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev"
 pkg.deps.'(MCU_TARGET == "DA14691" || MCU_TARGET == "DA14695" || MCU_TARGET == "DA14697" || MCU_TARGET == "DA14699")':
     - "@apache-mynewt-core/hw/usb/tinyusb/da146xx"
-
+pkg.deps.USBD_DFU_STD:
+    - "@apache-mynewt-core/hw/usb/tinyusb/dfu"
 pkg.req_apis:
     - TINYUSB_HW_INIT
