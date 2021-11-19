@@ -163,10 +163,10 @@ nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
     }
 
     if (++(dev->ad_ref_cnt) == 1) {
+        global_adc_dev = dev;
         init_instance_unconf();
         NVIC_SetPriority(SAADC_IRQn, 0);
         NVIC_EnableIRQ(SAADC_IRQn);
-        global_adc_dev = dev;
 
         if (adc_config) {
             switch (adc_config->resolution) {
