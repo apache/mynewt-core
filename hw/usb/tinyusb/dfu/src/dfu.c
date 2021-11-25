@@ -23,6 +23,8 @@
 
 #include <bsp/bsp.h>
 #include <img_mgmt/img_mgmt.h>
+#include <tinyusb/tinyusb.h>
+#include <hal/hal_gpio.h>
 
 /*
  * If DFU is activated from bootloader it writes to SLOT0.
@@ -164,4 +166,22 @@ void
 tud_dfu_detach_cb(void)
 {
     /* TODO: implement detach if needed */
+}
+
+/**
+ * Function called by mcuboot before image verification/swap/and application execution.
+ * If GPIO pin is selected and in active state instead of performing normal startup
+ * TinyUSB with DFU interface is started allowing for application update.
+ */
+void
+boot_preboot(void)
+{
+#if MYNEWT_VAL(USBD_DFU_BOOT_PIN) >= 0
+    hal_gpio_init_in(MYNEWT_VAL(USBD_DFU_BOOT_PIN), MYNEWT_VAL(USBD_DFU_BOOT_PIN_PULL));
+    if (hal_gpio_read(MYNEWT_VAL(USBD_DFU_BOOT_PIN)) == MYNEWT_VAL(USBD_DFU_BOOT_PIN_VALUE)) {
+        hal_gpio_deinit(MYNEWT_VAL(USBD_DFU_BOOT_PIN));
+        tinyusb_start();
+    }
+    hal_gpio_deinit(MYNEWT_VAL(USBD_DFU_BOOT_PIN));
+#endif
 }

@@ -68,6 +68,20 @@ syscfg.defs:
             shorter timeout in the DFU_DETACH request.
         value: 1000
 
+    USBD_DFU_BOOT_PIN:
+        description: >
+            GPIO pin to check during boot for DFU activation.
+        value: -1
+    USBD_DFU_BOOT_PIN_VALUE:
+        description: >
+            GPIO pin value required for DFU activation.
+        value: 0
+    USBD_DFU_BOOT_PIN_PULL:
+        description: >
+            Set to 1 if boot pin needs internal pull-up resistor.
+            Set to 2 if boto pin needs internal pull-down resistor.
+        value: 0
+
     USBD_DFU_LOG_MODULE:
         description: 'Numeric module ID to use for DFU log messages.'
         value: 43
@@ -81,5 +95,6 @@ syscfg.logs:
         level: MYNEWT_VAL(USBD_DFU_LOG_LVL)
 
 
-syscfg.vals.BOOTLOADER:
+syscfg.vals.BOOT_LOADER:
     USBD_DFU_SLOT_NAME: '"SLOT0"'
+    BOOT_PREBOOT: 1
