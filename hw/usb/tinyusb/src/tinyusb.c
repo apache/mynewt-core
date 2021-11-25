@@ -28,8 +28,10 @@
 #define USBD_STACK_SIZE     MYNEWT_VAL(USBD_STACK_SIZE)
 #define USBD_TASK_PRIORITY  MYNEWT_VAL(USBD_TASK_PRIORITY)
 
+#if MYNEWT_VAL(OS_SCHEDULING)
 static struct os_task usbd_task;
 static os_stack_t usbd_stack[OS_STACK_ALIGN(USBD_STACK_SIZE)];
+#endif
 
 /**
  * USB Device Driver task
@@ -59,7 +61,11 @@ tinyusb_start(void)
     /* USB stack initialization */
     tusb_init();
 
+#if MYNEWT_VAL(OS_SCHEDULING)
     /* Create a task for tinyusb device stack */
     os_task_init(&usbd_task, "usbd", tinyusb_device_task, NULL, USBD_TASK_PRIORITY,
                  OS_WAIT_FOREVER, usbd_stack, USBD_STACK_SIZE);
+#else
+    tinyusb_device_task(NULL);
+#endif
 }
