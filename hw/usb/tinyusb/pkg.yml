@@ -33,7 +33,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@tinyusb/tinyusb"
 
-pkg.init:
+pkg.init.OS_SCHEDULING:
     tinyusb_start: 'MYNEWT_VAL(USBD_SYSINIT_STAGE)'
 
 pkg.deps.USBD_STD_DESCRIPTORS:
