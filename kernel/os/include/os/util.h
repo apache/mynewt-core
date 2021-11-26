@@ -35,4 +35,15 @@
 #define ARRAY_SIZE(array) \
         (sizeof(array) / sizeof((array)[0]))
 #endif
+
+#ifdef BUSY_LOOP_HANDLER
+extern void BUSY_LOOP_HANDLER (void);
+#define BUSY_LOOP_BODY BUSY_LOOP_HANDLER ();
+#else
+#define BUSY_LOOP_BODY
+#endif
+#define BUSY_LOOP_BEGIN(x) while (x) {
+#define BUSY_LOOP_END BUSY_LOOP_BODY }
+#define BUSY_LOOP(x) BUSY_LOOP_BEGIN(x) BUSY_LOOP_END
+
 #endif
