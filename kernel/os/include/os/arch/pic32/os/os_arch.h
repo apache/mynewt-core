@@ -46,8 +46,8 @@ typedef uint32_t os_stack_t;
 static inline int
 os_arch_in_isr(void)
 {
-    /* check the EXL bit */
-    return (_CP0_GET_STATUS() & _CP0_STATUS_EXL_MASK) ? 1 : 0;
+    /* CPU handles interrupt when EXL is set or IPL > 0 */
+    return (_CP0_GET_STATUS() & (_CP0_STATUS_EXL_MASK | _CP0_STATUS_IPL_MASK)) ? 1 : 0;
 }
 
 /* Include common arch definitions and APIs */
