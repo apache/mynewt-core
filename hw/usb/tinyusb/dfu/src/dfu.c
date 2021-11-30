@@ -40,6 +40,7 @@
 #if MYNEWT_VAL(USBD_DFU_RESET_AFTER_DOWNLOAD)
 
 struct os_callout delayed_reset_callout;
+struct os_callout auto_confirm_callout;
 
 void
 delayed_reset_cb(struct os_event *event)
@@ -184,4 +185,19 @@ boot_preboot(void)
     }
     hal_gpio_deinit(MYNEWT_VAL(USBD_DFU_BOOT_PIN));
 #endif
+}
+
+void
+auto_confirm_cb(struct os_event *event)
+{
+    img_mgmt_state_confirm();
+}
+
+void
+dfu_init(void)
+{
+    os_callout_init(&auto_confirm_callout, os_eventq_dflt_get(),
+                    auto_confirm_cb, NULL);
+
+    os_callout_reset(&auto_confirm_callout, OS_TICKS_PER_SEC * MYNEWT_VAL(USBD_DFU_AUTO_CONFIRM_TIME));
 }
