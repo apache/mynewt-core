@@ -32,3 +32,6 @@ pkg.deps:
     - "@tinyusb/tinyusb"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@mcuboot/boot/bootutil"
+
+pkg.init.USBD_DFU_AUTO_CONFIRM:
+    dfu_init: 'MYNEWT_VAL(USBD_DFU_SYSINIT_STAGE)'

@@ -44,6 +44,14 @@ syscfg.defs:
         description: >
             Mark image as confirmed after download.
         value: 0
+    USBD_DFU_AUTO_CONFIRM:
+        description: >
+            Confirm image if it runs without crash for some time.
+        value: 0
+    USBD_DFU_AUTO_CONFIRM_TIME:
+        description: >
+            Time in seconds needed for automatic image confirmation.
+        value: 60
     USBD_DFU_BLOCK_WRITE_TIME:
         description: >
             Time in milliseconds needed for writing block to the device.
@@ -82,6 +90,10 @@ syscfg.defs:
             Set to 2 if boto pin needs internal pull-down resistor.
         value: 0
 
+    USBD_DFU_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for DFU functionality.
+        value: 1000
     USBD_DFU_LOG_MODULE:
         description: 'Numeric module ID to use for DFU log messages.'
         value: 43
