@@ -470,7 +470,7 @@ err:
 }
 
 int
-main(void)
+mynewt_main(int argv, char **argv)
 {
     RadioEvents_t radio_events;
     int rc;

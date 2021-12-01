@@ -97,7 +97,7 @@ init_log_instance(void)
 }
 
 int
-main(void)
+mynewt_main(int argv, char **argv)
 {
     struct os_mbuf *om;
     int i;

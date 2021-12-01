@@ -449,7 +449,7 @@ sensor_ble_oic_server_init(void)
  * @return int NOTE: this function should never return!
  */
 int
-main(int argc, char **argv)
+mynewt_main(int argc, char **argv)
 {
 
 #ifdef ARCH_sim

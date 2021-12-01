@@ -309,7 +309,7 @@ test_encryption_wrappers(uint8_t *key, uint8_t len)
 }
 
 int
-main(int argc, char **argv)
+mynewt_main(int argc, char **argv)
 {
     int rc, len;
     uint8_t key_buf[16];
