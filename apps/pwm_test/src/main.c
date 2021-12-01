@@ -172,7 +172,7 @@ pwm_init(struct pwm_dev *pwm_dev, int pin)
 }
 
 int
-main(int argc, char **argv)
+mynewt_main(int argc, char **argv)
 {
     sysinit();
 

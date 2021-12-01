@@ -142,7 +142,7 @@ test_byte_distribution(uint8_t *buf, uint32_t bitlen)
 }
 
 int
-main(void)
+mynewt_main(int argc, char **argv)
 {
     struct trng_dev *trng;
     size_t size;
