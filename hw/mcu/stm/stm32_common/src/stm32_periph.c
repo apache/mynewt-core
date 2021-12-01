@@ -270,6 +270,32 @@ static const struct stm32_hal_spi_cfg os_bsp_spi3_cfg = {
 };
 #endif
 #endif
+#if (MYNEWT_VAL(SPI_4_MASTER) || MYNEWT_VAL(SPI_4_SLAVE))
+#if MYNEWT_VAL(SPI_4_CUSTOM_CFG)
+extern const struct stm32_hal_spi_cfg os_bsp_spi4_cfg;
+#else
+static const struct stm32_hal_spi_cfg os_bsp_spi4_cfg = {
+    .sck_pin = MYNEWT_VAL(SPI_4_PIN_SCK),
+    .mosi_pin = MYNEWT_VAL(SPI_4_PIN_MOSI),
+    .miso_pin = MYNEWT_VAL(SPI_4_PIN_MISO),
+    .ss_pin = MYNEWT_VAL(SPI_4_PIN_SS),
+    .irq_prio = 2,
+};
+#endif
+#endif
+#if (MYNEWT_VAL(SPI_5_MASTER) || MYNEWT_VAL(SPI_5_SLAVE))
+#if MYNEWT_VAL(SPI_5_CUSTOM_CFG)
+extern const struct stm32_hal_spi_cfg os_bsp_spi5_cfg;
+#else
+static const struct stm32_hal_spi_cfg os_bsp_spi5_cfg = {
+    .sck_pin = MYNEWT_VAL(SPI_5_PIN_SCK),
+    .mosi_pin = MYNEWT_VAL(SPI_5_PIN_MOSI),
+    .miso_pin = MYNEWT_VAL(SPI_5_PIN_MISO),
+    .ss_pin = MYNEWT_VAL(SPI_5_PIN_SS),
+    .irq_prio = 2,
+};
+#endif
+#endif
 #endif
 
 #if MYNEWT_VAL(ETH_0)
@@ -552,6 +578,22 @@ stm32_periph_create_spi(void)
 #endif
 #if MYNEWT_VAL(SPI_3_SLAVE)
     rc = hal_spi_init(3, (void *)&os_bsp_spi3_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_4_MASTER)
+    rc = hal_spi_init(4, (void *)&os_bsp_spi4_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_4_SLAVE)
+    rc = hal_spi_init(4, (void *)&os_bsp_spi4_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_5_MASTER)
+    rc = hal_spi_init(5, (void *)&os_bsp_spi5_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SPI_5_SLAVE)
+    rc = hal_spi_init(5, (void *)&os_bsp_spi5_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
 #endif
 }
