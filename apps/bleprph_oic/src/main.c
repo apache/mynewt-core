@@ -362,7 +362,7 @@ static const oc_handler_t omgr_oc_handler = {
  * @return int NOTE: this function should never return!
  */
 int
-main(void)
+mynewt_main(int argc, char **argv)
 {
     int rc;
 

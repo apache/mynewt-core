@@ -191,7 +191,7 @@ init_tasks(void)
  * @return int NOTE: this function should never return!
  */
 int
-main(int argc, char **argv)
+mynewt_main(int argc, char **argv)
 {
     int rc;
 

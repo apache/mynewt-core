@@ -935,7 +935,7 @@ run_iovec_test(struct crypto_dev *crypto)
 #endif /* MYNEWT_VAL(CRYPTOTEST_IOVEC) */
 
 int
-main(void)
+mynewt_main(int argc, char **argv)
 {
     struct crypto_dev *crypto;
 #if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)

@@ -213,7 +213,7 @@ on_rx_error(void)
 }
 
 int
-main(void)
+mynewt_main(int argc, char **argv)
 {
     RadioEvents_t radio_events;
 

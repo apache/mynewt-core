@@ -580,7 +580,7 @@ run_concurrency_test(struct hash_dev *hash)
 }
 
 int
-main(void)
+mynewt_main(int argc, char **argv)
 {
     struct hash_dev *hash;
     struct hash_sha256_context hash_sha256;

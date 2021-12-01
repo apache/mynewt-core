@@ -135,7 +135,7 @@ static const oc_handler_t omgr_oc_handler = {
 };
 
 int
-main(void)
+mynewt_main(int argc, char **argv)
 {
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
