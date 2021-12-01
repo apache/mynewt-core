@@ -82,6 +82,14 @@ int g_os_started;
 #define MIN_IDLE_TICKS  (MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MIN) * OS_TICKS_PER_SEC / 1000)
 #define MAX_IDLE_TICKS  (MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MAX) * OS_TICKS_PER_SEC / 1000)
 
+extern int main(int, char **);
+
+__attribute__((weak)) int
+mynewt_main(int argc, char **argv)
+{
+    return main(argc, argv);
+}
+
 /**
  * Idle operating system task, runs when no other tasks are running.
  * The idle task operates in tickless mode, which means it looks for
