@@ -76,4 +76,40 @@ void tusb_vbus_changed(bool present);
 #define USBD_HID_REPORT_EP_INTERVAL 10
 #endif
 
+#if defined(MYNEWT_VAL_USBD_BTH_EVENT_EP)
+#define USBD_BTH_EVENT_EP       MYNEWT_VAL(USBD_BTH_EVENT_EP)
+#else
+#define USBD_BTH_EVENT_EP       0x81
+#endif
+
+#if defined(MYNEWT_VAL_USBD_BTH_EVENT_EP_SIZE)
+#define BTH_EVENT_EP_SIZE       MYNEWT_VAL(BTH_EVENT_EP_SIZE)
+#else
+#define USBD_BTH_EVENT_EP_SIZE  0x10
+#endif
+
+#if defined(MYNEWT_VAL_USBD_BTH_EVENT_EP_INTERVAL)
+#define USBD_BTH_EVENT_EP_INTERVAL  MYNEWT_VAL(USBD_BTH_EVENT_EP_INTERVAL)
+#else
+#define USBD_BTH_EVENT_EP_INTERVAL 10
+#endif
+
+#if defined(MYNEWT_VAL_USBD_BTH_DATA_OUT_EP)
+#define USBD_BTH_DATA_OUT_EP    MYNEWT_VAL(USBD_BTH_DATA_OUT_EP)
+#else
+#define USBD_BTH_DATA_OUT_EP    0x02
+#endif
+
+#if defined(MYNEWT_VAL_USBD_BTH_DATA_IN_EP)
+#define USBD_BTH_DATA_IN_EP     MYNEWT_VAL(USBD_BTH_DATA_IN_EP)
+#else
+#define USBD_BTH_DATA_IN_EP     0x82
+#endif
+
+#if defined(MYNEWT_VAL_USBD_BTH_DATA_EP_SIZE)
+#define USBD_BTH_DATA_EP_SIZE   MYNEWT_VAL(USBD_BTH_DATA_EP_SIZE)
+#else
+#define USBD_BTH_DATA_EP_SIZE   0x40
+#endif
+
 #endif
