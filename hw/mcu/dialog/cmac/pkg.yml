@@ -31,3 +31,5 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/mcu/dialog"
     - "@apache-mynewt-nimble/nimble/drivers/dialog_cmac"
+
+pkg.cflags: -I@apache-mynewt-core/kernel
