@@ -300,7 +300,11 @@ bool
 tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, const tusb_control_request_t *request)
 {
     if (request->wIndex == 0x04 && request->bRequest == COMPATIBILITY_FEATURE_REQUEST) {
-        return tud_control_xfer(rhport, request, (void *)&windows_compat_id, 40);
+        if (stage == CONTROL_STAGE_SETUP) {
+            return tud_control_xfer(rhport, request, (void *)&windows_compat_id, 40);
+        } else {
+            return true;
+        }
     }
     return false;
 }
