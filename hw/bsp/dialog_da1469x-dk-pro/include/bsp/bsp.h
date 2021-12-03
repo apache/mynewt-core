@@ -87,6 +87,37 @@ extern uint8_t _ram_start;
 #define ARDUINO_PIN_MOSI    ARDUINO_PIN_D11
 #define ARDUINO_PIN_MISO    ARDUINO_PIN_D12
 
+#define MIKROBUS_1_PIN_AN   41
+#define MIKROBUS_1_PIN_CS   20
+#define MIKROBUS_1_PIN_SCK  21
+#define MIKROBUS_1_PIN_MISO 24
+#define MIKROBUS_1_PIN_MOSI 25
+#define MIKROBUS_1_PIN_PWM  33
+#define MIKROBUS_1_PIN_INT  27
+#define MIKROBUS_1_PIN_RX   28
+#define MIKROBUS_1_PIN_TX   29
+#define MIKROBUS_1_PIN_SCL  30
+#define MIKROBUS_1_PIN_SDA  31
+
+#define MIKROBUS_2_PIN_AN   25
+#if MYNEWT_VAL_CHOICE(DA1469X_DK_PRO_REV, 331_O7_B)
+#define MIKROBUS_2_PIN_CS   0
+#define MIKROBUS_2_PIN_SCK  1
+#define MIKROBUS_2_PIN_MISO 2
+#define MIKROBUS_2_PIN_MOSI 3
+#else
+#define MIKROBUS_2_PIN_CS   34
+#define MIKROBUS_2_PIN_SCK  35
+#define MIKROBUS_2_PIN_MISO 36
+#define MIKROBUS_2_PIN_MOSI 37
+#endif
+#define MIKROBUS_2_PIN_PWM  38
+#define MIKROBUS_2_PIN_INT  39
+#define MIKROBUS_2_PIN_RX   40
+#define MIKROBUS_2_PIN_TX   17
+#define MIKROBUS_2_PIN_SCL  18
+#define MIKROBUS_2_PIN_SDA  19
+
 #ifdef __cplusplus
 }
 #endif
