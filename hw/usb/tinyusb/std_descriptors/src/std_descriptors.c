@@ -221,7 +221,7 @@ const uint8_t desc_configuration[] = {
 #endif
 
 #if CFG_TUD_HID
-    TUD_HID_DESCRIPTOR(ITF_NUM_HID, HID_IF_STR_IX, HID_PROTOCOL_NONE, sizeof(desc_hid_report),
+    TUD_HID_DESCRIPTOR(ITF_NUM_HID, HID_IF_STR_IX, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report),
                        USBD_HID_REPORT_EP, USBD_HID_REPORT_EP_SIZE, USBD_HID_REPORT_EP_INTERVAL),
 #endif
 
