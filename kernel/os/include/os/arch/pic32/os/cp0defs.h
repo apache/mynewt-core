@@ -73,10 +73,10 @@
 #define _CP0_VIEW_IPL                          $12, 4
 #define _CP0_SRSMAP2                           $12, 5
 #define _CP0_CAUSE                             $13, 0
-#define _CP0_VIEW_RIPL                         $13, 1
-#define _CP0_NESTEDEXC                         $13, 2
+#define _CP0_VIEW_RIPL                         $13, 4
+#define _CP0_NESTEDEXC                         $13, 5
 #define _CP0_EPC                               $14, 0
-#define _CP0_NESTEDEPC                         $14, 1
+#define _CP0_NESTEDEPC                         $14, 2
 #define _CP0_PRID                              $15, 0
 #define _CP0_EBASE                             $15, 1
 #define _CP0_CDMMBASE                          $15, 2
@@ -95,9 +95,9 @@
 #define _CP0_TRACECONTROL2                     $23, 2
 #define _CP0_USERTRACEDATA                     $23, 3
 #define _CP0_TRACEBPC                          $23, 4
-#define _CP0_DEBUG2                            $23, 5
+#define _CP0_DEBUG2                            $23, 6
 #define _CP0_DEPC                              $24, 0
-#define _CP0_USERTRACEDATA2                    $24, 1
+#define _CP0_USERTRACEDATA2                    $24, 3
 #define _CP0_PERFCNT0_CONTROL                  $25, 0
 #define _CP0_PERFCNT0_COUNT                    $25, 1
 #define _CP0_PERFCNT1_CONTROL                  $25, 2
@@ -163,13 +163,13 @@
 #define _CP0_CAUSE                             13
 #define _CP0_CAUSE_SELECT                      0
 #define _CP0_VIEW_RIPL                         13
-#define _CP0_VIEW_RIPL_SELECT                  1
+#define _CP0_VIEW_RIPL_SELECT                  4
 #define _CP0_NESTEDEXC                         13
-#define _CP0_NESTEDEXC_SELECT                  2
+#define _CP0_NESTEDEXC_SELECT                  5
 #define _CP0_EPC                               14
 #define _CP0_EPC_SELECT                        0
 #define _CP0_NESTEDEPC                         14
-#define _CP0_NESTEDEPC_SELECT                  1
+#define _CP0_NESTEDEPC_SELECT                  2
 #define _CP0_PRID                              15
 #define _CP0_PRID_SELECT                       0
 #define _CP0_EBASE                             15
@@ -207,11 +207,11 @@
 #define _CP0_TRACEBPC                          23
 #define _CP0_TRACEBPC_SELECT                   4
 #define _CP0_DEBUG2                            23
-#define _CP0_DEBUG2_SELEECT                    5
+#define _CP0_DEBUG2_SELEECT                    6
 #define _CP0_DEPC                              24
 #define _CP0_DEPC_SELECT                       0
 #define _CP0_USERTRACEDATA2                    24
-#define _CP0_USERTRACEDATA2_SELECT             1
+#define _CP0_USERTRACEDATA2_SELECT             3
 #define _CP0_PERFCNT                           25
 #define _CP0_PERFCNT0_CONTROL                  25
 #define _CP0_PERFCNT0_CONTROL_SELECT           0
