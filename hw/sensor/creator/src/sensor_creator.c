@@ -32,6 +32,9 @@
 #if MYNEWT_VAL(LSM6DSO_OFB)
 #include <lsm6dso/lsm6dso.h>
 #endif
+#if MYNEWT_VAL(LSM6DSL_OFB)
+#include <lsm6dsl/lsm6dsl.h>
+#endif
 #if MYNEWT_VAL(MPU6050_OFB)
 #include <mpu6050/mpu6050.h>
 #endif
@@ -128,6 +131,10 @@ static struct lsm303dlhc lsm303dlhc;
 
 #if MYNEWT_VAL(LSM6DSO_OFB)
 static struct lsm6dso lsm6dso;
+#endif
+
+#if MYNEWT_VAL(LSM6DSL_OFB)
+static struct lsm6dsl lsm6dsl;
 #endif
 
 #if MYNEWT_VAL(MPU6050_OFB)
@@ -324,6 +331,37 @@ static struct sensor_itf lsm6dso_i2c_itf = {
     .si_addr = MYNEWT_VAL(LSM6DSO_OFB_I2C_ADDR)
 };
 #endif
+#endif
+
+#if MYNEWT_VAL(LSM6DSL_OFB)
+static const struct lsm6dsl_create_dev_cfg lsm6dso_dev_cfg = {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    .node_is_spi = 0,
+    .i2c_cfg = {
+        .node_cfg = {
+            .bus_name = MYNEWT_VAL(LSM6DSL_OFB_I2C_BUS),
+            .lock_timeout_ms = 1000,
+        },
+        .addr = MYNEWT_VAL(LSM6DSL_OFB_I2C_ADDR),
+        .freq = 400,
+    },
+#elif MYNEWT_VAL(LSM6DSL_OFB_I2C_NUM) >= 0
+    .itf = {
+        .si_type = SENSOR_ITF_I2C,
+        .si_num  = MYNEWT_VAL(LSM6DSL_OFB_I2C_NUM),
+        .si_addr = MYNEWT_VAL(LSM6DSL_OFB_I2C_ADDR)
+    },
+#elif MYNEWT_VAL(LSM6DSL_OFB_SPI_NUM) >= 0
+    .itf = {
+        .si_type = SENSOR_ITF_SPI,
+        .si_num  = MYNEWT_VAL(LSM6DSL_OFB_SPI_NUM),
+    },
+#else
+#error LSM6DSL_OFB_SPI_NUM or LSM6DSL_OFB_I2C_NUM must be >= 0
+#endif
+    .int_pin = MYNEWT_VAL(LSM6DSL_OFB_INT1_PIN),
+    .int_active_level = 1,
+};
 #endif
 
 #if MYNEWT_VAL(MPU6050_OFB)
@@ -1086,6 +1124,75 @@ config_lsm6dso_sensor(void)
 #endif
 
 /**
+ * LSM6DSL Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LSM6DSL_OFB)
+static int
+config_lsm6dsl_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lsm6dsl_cfg cfg = {
+        .acc_fs = LSM6DSL_ACCEL_FS_2G,
+        .acc_rate = LSM6DSL_ACCEL_104HZ,
+
+        .gyro_fs = LSM6DSL_GYRO_FS_500DPS,
+        .gyro_rate = LSM6DSL_GYRO_104HZ,
+
+        .read = {
+            .mode = LSM6DSL_READ_STREAM,
+        },
+        .wk = {
+            .hpf_slope = 0, /* Slope filter applied */
+            .wake_up_ths = 5,
+            .wake_up_dur = 2,
+            .sleep_duration = 1,
+            .inactivity = LSM6DSL_INACTIVITY_WITH_GYRO_POWER_DOWN,
+        },
+        .fifo = {
+            .mode = LSM6DSL_FIFO_MODE_CONTINUOUS_VAL,
+            .wtm = 10,
+        },
+        .ff = {
+            .free_fall_dur = 3,
+            .free_fall_ths = 3,
+        },
+        .tap = {
+            /* Time between taps for double tap: 1/104 * 32 * dur = 0,6s */
+            .dur = 1,
+            .en_x = 1,
+            .en_y = 1,
+            .en_z = 1,
+            .en_dtap = 1,
+            .quiet = 0,
+            .shock = 0,
+            .tap_ths = 5
+        },
+        .orientation = {
+            .en_4d = 0,
+            .ths_6d = 0,
+        },
+        .int1_pin_cfg = 0,
+        .int2_pin_cfg = 0,
+        .map_int2_to_int1 = 1,
+        .latched_int = 1,
+        .lc_s_mask = SENSOR_TYPE_ACCELEROMETER | SENSOR_TYPE_GYROSCOPE | SENSOR_TYPE_TEMPERATURE,
+
+    };
+
+    dev = (struct os_dev *)os_dev_open("lsm6dsl_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = lsm6dsl_config((struct lsm6dsl *)dev, &cfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+/**
  * MPU6050 Sensor default configuration used by the creator package
  *
  * @return 0 on success, non-zero on failure
@@ -1793,6 +1900,11 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(LSM6DSL_OFB)
+    rc = lsm6dsl_create_dev(&lsm6dsl, "lsm6dsl_0", &lsm6dso_dev_cfg);
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(MPU6050_OFB)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = mpu6050_create_i2c_sensor_dev(&mpu6050.i2c_node, "mpu6050_0",
@@ -2033,6 +2145,11 @@ sensor_dev_init(void)
 
 #if MYNEWT_VAL(LSM6DSO_OFB)
     rc = config_lsm6dso_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LSM6DSL_OFB)
+    rc = config_lsm6dsl_sensor();
     assert(rc == 0);
 #endif
 

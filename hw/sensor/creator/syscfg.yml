@@ -47,6 +47,42 @@ syscfg.defs:
         description: 'I2C address of LSM6DSO 0x6A or 0x6B'
         value: 0x6A
         range: 0x6A,0x6B
+    LSM6DSL_OFB:
+        description: 'LSM6DSL is present'
+        value : 0
+    LSM6DSL_OFB_I2C_NUM:
+        description: 'I2C interface used for LSM6DSL'
+        value: -1
+        restrictions:
+         - '(LSM6DSL_OFB == 0) || (LSM6DSL_OFB_I2C_NUM == -1) ||
+            ((LSM6DSL_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
+            ((LSM6DSL_OFB_I2C_NUM == 1) && (I2C_1 == 1)) ||
+            ((LSM6DSL_OFB_I2C_NUM == 2) && (I2C_2 == 1)) ||
+            ((LSM6DSL_OFB_I2C_NUM == 3) && (I2C_3 == 1))'
+    LSM6DSL_OFB_SPI_NUM:
+        description: 'SPI interface used for LSM6DSL'
+        value: -1
+        restrictions:
+        - '(LSM6DSL_OFB == 0) || (LSM6DSL_OFB_SPI_NUM == -1) ||
+            ((LSM6DSL_OFB_SPI_NUM == 0) && (SPI_0_MASTER == 1)) ||
+            ((LSM6DSL_OFB_SPI_NUM == 1) && (SPI_1_MASTER == 1)) ||
+            ((LSM6DSL_OFB_SPI_NUM == 2) && (SPI_2_MASTER == 1)) ||
+            ((LSM6DSL_OFB_SPI_NUM == 3) && (SPI_3_MASTER == 1))'
+    LSM6DSL_OFB_CS:
+        description: 'SPI CS pin for LSM6DSL'
+        value: -1
+        restrictions:
+        - '(LSM6DSL_OFB_SPI_NUM >= 0) || (LSM6DSL_OFB_SPI_NUM == -1)'
+    LSM6DSL_OFB_I2C_BUS:
+        description: 'I2C interface used for LSM6DSL'
+        value : '"i2c0"'
+    LSM6DSL_OFB_I2C_ADDR:
+        description: 'I2C address of LSM6DSL 0x6A or 0x6B'
+        value: 0x6A
+        range: 0x6A,0x6B
+    LSM6DSL_OFB_INT1_PIN:
+        description: 'Host interrupt pin for LSM6DSL'
+        value: -1
     MPU6050_OFB:
         description: 'MPU6050 is present'
         value : 0

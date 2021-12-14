@@ -32,6 +32,8 @@ pkg.deps.LSM303DLHC_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lsm303dlhc"
 pkg.deps.LSM6DSO_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lsm6dso"
+pkg.deps.LSM6DSL_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lsm6dsl"
 pkg.deps.MPU6050_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/mpu6050"
 pkg.deps.TSL2561_OFB:
