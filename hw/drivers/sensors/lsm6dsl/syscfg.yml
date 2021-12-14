@@ -1,0 +1,83 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    LSM6DSL_SPI_SUPPORT:
+        description: 'Whether LSM6DSL driver should support SPI interface'
+        value: 1
+    LSM6DSL_I2C_SUPPORT:
+        description: 'Whether LSM6DSL driver should support I2C interface'
+        value: 1
+    LSM6DSL_ITF_LOCK_TMO:
+        description: 'LSM6DSL interface lock timeout in milliseconds'
+        value: 1000
+    LSM6DSL_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.
+        value: 2
+    LSM6DSL_I2C_TIMEOUT_TICKS:
+        description: >
+            Number of OS ticks to wait for each I2C transaction to complete.
+        value: 3
+    LSM6DSL_CLI:
+        description: 'Enable shell support for the LSM6DSL'
+        value: 0
+    LSM6DSL_SHELL_DEV_NAME:
+        description: 'Name of LSM6DSL device to use in shell'
+        value: '"lsm6dsl_0"'
+    LSM6DSL_NOTIF_STATS:
+        description: 'Enable notification stats'
+        value: 1
+    LSM6DSL_INT_ENABLE:
+        description: 'Enable interrupt support, necessary for events'
+        value: 1
+    LSM6DSL_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+    LSM6DSL_INT1_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT1 on device'
+        value: -1
+    LSM6DSL_INT1_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 1
+    LSM6DSL_INT2_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT1 on device'
+        value: -1
+    LSM6DSL_INT2_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 2
+
+    LSM6DSL_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the LSM6DSL package.
+        value: 1000
+
+    ### Log settings.
+
+    LSM6DSL_LOG_MODULE:
+        description: 'Numeric module ID to use for LSM6DSL log messages.'
+        value: 114
+    LSM6DSL_LOG_LVL:
+        description: 'Minimum level for the LSM6DSL log.'
+        value: 1
+
+syscfg.logs:
+    LSM6DSL_LOG:
+        module: MYNEWT_VAL(LSM6DSL_LOG_MODULE)
+        level: MYNEWT_VAL(LSM6DSL_LOG_LVL)
