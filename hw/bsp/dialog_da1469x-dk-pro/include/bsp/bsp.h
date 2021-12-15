@@ -47,12 +47,21 @@ extern uint8_t _ram_start;
 #define BUTTON_1        (6)     /* P0_6 */
 
 /* Arduino pins */
+#if MYNEWT_VAL_CHOICE(DA1469X_DK_PRO_REV, 331_O7_B)
 #define ARDUINO_PIN_D0      0
 #define ARDUINO_PIN_D1      1
 #define ARDUINO_PIN_D2      2
 #define ARDUINO_PIN_D3      3
 #define ARDUINO_PIN_D4      4
 #define ARDUINO_PIN_D5      5
+#else
+#define ARDUINO_PIN_D0      34
+#define ARDUINO_PIN_D1      35
+#define ARDUINO_PIN_D2      36
+#define ARDUINO_PIN_D3      37
+#define ARDUINO_PIN_D4      39
+#define ARDUINO_PIN_D5      40
+#endif
 #define ARDUINO_PIN_D6      17
 #define ARDUINO_PIN_D7      18
 #define ARDUINO_PIN_D8      19

@@ -42,6 +42,15 @@ syscfg.defs:
         description: 'Specifies AES key slot for OTP user data encryption and decryption'
         value: -1
 
+    DA1469X_DK_PRO_REV:
+        description: >
+            Indicates DA14695 Development Kit - Pro hardware revision number.
+            This is used to setup Arduino and Mikrobus pin settings.
+        value: 331_O7_C
+        choices:
+            - 331_O7_B
+            - 331_O7_C
+
 syscfg.defs.BUS_DRIVER_PRESENT:
     BSP_FLASH_SPI_NAME:
         description: 'SPIFLASH device name'
