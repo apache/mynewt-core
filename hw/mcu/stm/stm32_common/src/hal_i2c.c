@@ -28,7 +28,15 @@
 
 #include <mcu/stm32_hal.h>
 
+#if MYNEWT_VAL(I2C_3)
+#define HAL_I2C_MAX_DEVS    4
+#elif MYNEWT_VAL(I2C_2)
 #define HAL_I2C_MAX_DEVS    3
+#elif MYNEWT_VAL(I2C_1)
+#define HAL_I2C_MAX_DEVS    2
+#else
+#define HAL_I2C_MAX_DEVS    1
+#endif
 
 #define I2C_ADDRESS         0xae
 
@@ -52,6 +60,9 @@ static struct stm32_hal_i2c i2c1;
 #if MYNEWT_VAL(I2C_2)
 static struct stm32_hal_i2c i2c2;
 #endif
+#if MYNEWT_VAL(I2C_3)
+static struct stm32_hal_i2c i2c3;
+#endif
 
 static struct stm32_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 #if MYNEWT_VAL(I2C_0)
@@ -61,12 +72,17 @@ static struct stm32_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 #endif
 #if MYNEWT_VAL(I2C_1)
     &i2c1,
-#else
+#elif HAL_I2C_MAX_DEVS > 2
     NULL,
 #endif
 #if MYNEWT_VAL(I2C_2)
     &i2c2,
-#else
+#elif HAL_I2C_MAX_DEVS > 3
+    NULL,
+#endif
+#if MYNEWT_VAL(I2C_3)
+    &i2c3,
+#elif HAL_I2C_MAX_DEVS > 4
     NULL,
 #endif
 };
