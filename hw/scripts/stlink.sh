@@ -41,7 +41,11 @@ stlink_load () {
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    st-flash --reset write $FILE_NAME $FLASH_OFFSET
+    if [ "$STLINK_USE_STM32_PROGRAMMER_CLI" == 1 ] ; then
+      STM32_Programmer_CLI -c port=SWD -d $FILE_NAME $FLASH_OFFSET -rst
+    else
+      st-flash --reset write $FILE_NAME $FLASH_OFFSET
+    fi
     if [ $? -ne 0 ]; then
         exit 1
     fi
