@@ -154,6 +154,9 @@ extern const struct stm32_hal_i2c_cfg os_bsp_i2c1_cfg;
 #if MYNEWT_VAL(I2C_2)
 extern const struct stm32_hal_i2c_cfg os_bsp_i2c2_cfg;
 #endif
+#if MYNEWT_VAL(I2C_3)
+extern const struct stm32_hal_i2c_cfg os_bsp_i2c3_cfg;
+#endif
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 
@@ -496,6 +499,10 @@ stm32_periph_create_i2c(void)
 #endif
 #if MYNEWT_VAL(I2C_2)
     rc = hal_i2c_init(2, (void *)&os_bsp_i2c2_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(I2C_3)
+    rc = hal_i2c_init(3, (void *)&os_bsp_i2c3_cfg);
     assert(rc == 0);
 #endif
 }

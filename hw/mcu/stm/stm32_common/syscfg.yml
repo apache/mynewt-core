@@ -396,6 +396,15 @@ syscfg.defs:
     I2C_2_PIN_SDA:
         description: 'SDA pin for I2C_2'
         value: -1
+    I2C_3:
+        description: 'I2C (TWI) interface 3'
+        value:  0
+    I2C_3_PIN_SCL:
+        description: 'SCL pin for I2C_3'
+        value: -1
+    I2C_3_PIN_SDA:
+        description: 'SDA pin for I2C_3'
+        value: -1
 
     TRNG:
         description: 'True Random Number Generator (RNG)'
