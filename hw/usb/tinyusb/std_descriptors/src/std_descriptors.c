@@ -113,10 +113,12 @@ tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_t
 }
 #endif /* CFG_TUD_HID */
 
+#define USB_BCD     tu_htole16(0x200)
+
 const tusb_desc_device_t desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
-    .bcdUSB             = 0x0200,
+    .bcdUSB             = USB_BCD,
 
 #if CFG_TUD_BTH
     .bDeviceClass       = TUD_BT_APP_CLASS,
@@ -148,6 +150,53 @@ const tusb_desc_device_t desc_device = {
 
     .bNumConfigurations = 0x01
 };
+
+#if TUD_OPT_HIGH_SPEED
+
+/*
+ * device qualifier is mostly similar to device descriptor since we don't change configuration based on speed.
+ */
+tusb_desc_device_qualifier_t const desc_device_qualifier = {
+    .bLength            = sizeof(tusb_desc_device_t),
+    .bDescriptorType    = TUSB_DESC_DEVICE,
+    .bcdUSB             = USB_BCD,
+
+#if CFG_TUD_BTH
+    .bDeviceClass       = TUD_BT_APP_CLASS,
+    .bDeviceSubClass    = TUD_BT_APP_SUBCLASS,
+    .bDeviceProtocol    = TUD_BT_PROTOCOL_PRIMARY_CONTROLLER,
+#elif CFG_TUD_CDC
+    /*
+     * Use Interface Association Descriptor (IAD) for CDC
+     * As required by USB Specs IAD's subclass must be common class (2) and protocol must be IAD (1)
+     */
+    .bDeviceClass       = TUSB_CLASS_MISC,
+    .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
+    .bDeviceProtocol    = MISC_PROTOCOL_IAD,
+#else
+    .bDeviceClass       = 0x00,
+    .bDeviceSubClass    = 0x00,
+    .bDeviceProtocol    = 0x00,
+#endif
+
+    .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
+    .bNumConfigurations = 0x01,
+    .bReserved          = 0x00,
+};
+
+/*
+ * Invoked when received GET DEVICE QUALIFIER DESCRIPTOR request
+ * Application return pointer to descriptor, whose contents must exist long enough for transfer to complete.
+ * device_qualifier descriptor describes information about a high-speed capable device that would
+ * change if the device were operating at the other speed. If not highspeed capable stall this request.
+ */
+const uint8_t *
+tud_descriptor_device_qualifier_cb(void)
+{
+    return (const uint8_t *)&desc_device_qualifier;
+}
+
+#endif
 
 /*
  * Invoked when received GET DEVICE DESCRIPTOR
