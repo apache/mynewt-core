@@ -24,6 +24,8 @@
 
 #include <syscfg/syscfg.h>
 
+#define CFG_TUSB_RHPORT0_SPEED  OPT_MODE_FULL_SPEED
+
 #if defined(MYNEWT_VAL_USBD_CDC_NOTIFY_EP)
 #define USBD_CDC_NOTIFY_EP      MYNEWT_VAL(USBD_CDC_NOTIFY_EP)
 #else

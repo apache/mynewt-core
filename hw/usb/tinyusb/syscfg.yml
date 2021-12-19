@@ -39,3 +39,7 @@ syscfg.defs:
             Include descriptor support. This allows to easily use CDC, MSC, HID device
             functionality.
         value: 1
+    USBD_HIGH_SPEED:
+        description: >
+            Enable USB high speed if device supports it.
+        value: 0
