@@ -73,17 +73,14 @@
 
 #define INIT_L1_CACHE
 #if defined(INIT_L1_CACHE)
-.sdata; .globl __pic32_icache_size; .type __pic32_icache_size,@object; .size __pic32_icache_size,4; __pic32_icache_size:; .word -1
-.sdata; .globl __pic32_icache_linesize; .type __pic32_icache_linesize,@object; .size __pic32_icache_linesize,4; __pic32_icache_linesize:; .word -1
-.sdata; .globl __pic32_icache_ways; .type __pic32_icache_ways,@object; .size __pic32_icache_ways,4; __pic32_icache_ways:; .word 1
+.section .noinit.cache.nz,noload
+    .globl __pic32_icache_size; .type __pic32_icache_size,@object; .size __pic32_icache_size,4; __pic32_icache_size:; .space 4
+    .globl __pic32_icache_linesize; .type __pic32_icache_linesize,@object; .size __pic32_icache_linesize,4; __pic32_icache_linesize:; .space 4
+    .globl __pic32_icache_ways; .type __pic32_icache_ways,@object; .size __pic32_icache_ways,4; __pic32_icache_ways:; .space 4
 
-.sdata; .globl __pic32_dcache_size; .type __pic32_dcache_size,@object; .size __pic32_dcache_size,4; __pic32_dcache_size:; .word -1
-.sdata; .globl __pic32_dcache_linesize; .type __pic32_dcache_linesize,@object; .size __pic32_dcache_linesize,4; __pic32_dcache_linesize:; .word -1
-.sdata; .globl __pic32_dcache_ways; .type __pic32_dcache_ways,@object; .size __pic32_dcache_ways,4; __pic32_dcache_ways:; .word 1
-
-.sdata; .globl __pic32_scache_size; .type __pic32_scache_size,@object; .size __pic32_scache_size,4; __pic32_scache_size:; .word -1
-.sdata; .globl __pic32_scache_linesize; .type __pic32_scache_linesize,@object; .size __pic32_scache_linesize,4; __pic32_scache_linesize:; .word -1
-.sdata; .globl __pic32_scache_ways; .type __pic32_scache_ways,@object; .size __pic32_scache_ways,4; __pic32_scache_ways:; .word 1
+    .globl __pic32_dcache_size; .type __pic32_dcache_size,@object; .size __pic32_dcache_size,4; __pic32_dcache_size:; .space 4
+    .globl __pic32_dcache_linesize; .type __pic32_dcache_linesize,@object; .size __pic32_dcache_linesize,4; __pic32_dcache_linesize:; .space 4
+    .globl __pic32_dcache_ways; .type __pic32_dcache_ways,@object; .size __pic32_dcache_ways,4; __pic32_dcache_ways:; .space 4
 
 .section .cache_init.cache, code
         .set nomips16
@@ -232,28 +229,20 @@ __pic32_init_cache:
 
         /* Initialize primary instruction cache */
         .set noreorder
-4:      la a0,__pic32_init_cache_program_base_addr
-        bne a0,zero,0f
-        /* Use a default if the symbol is not defined */
-        li a0,0x9D000000 /* KSEG0_PROGRAM_BASE */
+4:      la a0,0
 0:      beqz icachesize,8f    # icachesize
-        addu a1,a0,icachesize # limit = base + icachesize
 1:      addu a0,ilinesize  # line size
-        bne a0,a1,1b
+        bne a0,icachesize,1b
         cache Index_Store_Tag_I,-4(a0) # BDSLOT: clear tag
 
 
         /* Initialize primary data cache */
         .set noreorder
-8:      la a0,__pic32_init_cache_data_base_addr
-        bne a0,zero,0f
-        /* Use a default if the symbol is not defined */
-        li a0,0x80000000  /* KSEG_DATA_BASE */
+8:      la a0,0
 
 0:      beqz dcachesize,8f
-        addu a1,a0,dcachesize # limit = base + dcachesize
 1:      addu a0,dlinesize
-        bne a0,a1,1b
+        bne a0,dcachesize,1b
         cache Index_Store_Tag_D,-4(a0) # BDSLOT: clear tag
 
         .set reorder
