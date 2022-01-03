@@ -27,6 +27,8 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/cmsis-core"
+pkg.deps.OS_TICKS_USE_RTC:
+    - "@apache-mynewt-core/time/datetime"
 
 pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
