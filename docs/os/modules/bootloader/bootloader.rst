@@ -385,7 +385,7 @@ images are swapped according to the following procedure:
     2. Iterate the list of sector indices in descending order (i.e., starting
        with the greatest index); current element = "index".
         b. Erase scratch area.
-        c. Copy slot0[index] to scratch area.
+        c. Copy slot1[index] to scratch area.
         d. Write updated swap status (i).
 
         e. Erase slot1[index]
