@@ -32,6 +32,7 @@
 #include <stdbool.h>
 #include "mcu/cmsis_nvic.h"
 #include "nrf.h"
+#include "nrfx.h"
 
 #ifdef NRF52840_XXAA
 #include "system_nrf52840.h"
