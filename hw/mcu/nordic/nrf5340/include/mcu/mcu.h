@@ -46,6 +46,7 @@ extern "C" {
     "I#56=I2S0,I#58=IPC,I#59=QSPI,I#61=NFCT,I#63=GPIOTE1,I#67=QDEC0,"        \
     "I#68=QDEC1,I#70=USBD,I#71=USBREGULATOR,I#73=KMU,I#84=CRYPTOCELL"
 
+#include "nrf5340_clock.h"
 
 #ifdef __cplusplus
 }
