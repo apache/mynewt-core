@@ -62,6 +62,8 @@ extern "C" {
 
 #endif
 
+#include "nrf52_clock.h"
+
 #ifdef __cplusplus
 }
 #endif
