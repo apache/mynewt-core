@@ -43,6 +43,9 @@ int nrf52_clock_hfxo_request(void);
  */
 int nrf52_clock_hfxo_release(void);
 
+#define usb_clock_request() nrf52_clock_hfxo_request()
+#define usb_clock_release() nrf52_clock_hfxo_release()
+
 #ifdef __cplusplus
 }
 #endif
