@@ -20,7 +20,7 @@ syscfg.defs:
     IPC_NRF5340_CHANNELS:
         description: >
             Number of enabled IPC channels
-        value: 2
+        value: 5
         range: 1..16
 
     IPC_NRF5340_BUF_SZ:
@@ -61,3 +61,6 @@ syscfg.defs:
 
 syscfg.restrictions:
     - "!BSP_NRF5340 || BSP_NRF5340_NET_ENABLE"
+
+syscfg.vals.BSP_NRF5340_NET:
+    IPC_NRF5340_CHANNELS: 16
