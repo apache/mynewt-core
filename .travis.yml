@@ -26,6 +26,7 @@ _addons: &addon_conf
     packages:
       - gcc-7-multilib
       - linux-libc-dev:i386
+      - libbsd-dev:i386
 
 go:
   - "1.16"
