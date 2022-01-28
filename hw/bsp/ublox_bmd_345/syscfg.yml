@@ -26,8 +26,7 @@ syscfg.defs:
     BSP_RFX2411_BYPASS_MODE:
         description: >
             Setup RFX2411 in bypass mode.
-            Set to 1 till proper driver is available.
-        value: 1
+        value: 0
 
 syscfg.vals:
     # Enable nRF52840 MCU
@@ -63,8 +62,18 @@ syscfg.vals:
     QSPI_PIN_DIO2: 22
     QSPI_PIN_DIO3: 23
 
+    # RFX2411 PLNA
+    BLE_LL_PA_GPIO: 37
+    BLE_LL_LNA_GPIO: 38
+    SKY66112_PIN_CPS: 36
+    SKY66112_PIN_SEL: 34
+
 syscfg.vals.!BOOT_LOADER:
     MCU_LFCLK_SOURCE: LFXO
+
+syscfg.vals.!BSP_RFX2411_BYPASS_MODE:
+    BLE_LL_PA: 1
+    BLE_LL_LNA: 1
 
 syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
