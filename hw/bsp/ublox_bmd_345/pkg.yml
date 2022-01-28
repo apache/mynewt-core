@@ -40,3 +40,7 @@ pkg.deps:
 
 pkg.deps.SOFT_PWM:
     - "@apache-mynewt-core/hw/drivers/pwm/soft_pwm"
+
+# Use SKY66112 driver for now
+pkg.deps.BLE_CONTROLLER:
+    - "@apache-mynewt-nimble/nimble/drivers/plna/sky66112"

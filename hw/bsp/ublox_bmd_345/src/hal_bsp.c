@@ -102,13 +102,6 @@ hal_bsp_init(void)
     /* Make sure system clocks have started */
     hal_system_clock_start();
 
-#if MYNEWT_VAL(BSP_RFX2411_BYPASS_MODE)
-    /* Configure RFX2411 in bypass mode */
-    hal_gpio_init_out(37, 0);
-    hal_gpio_init_out(38, 0);
-    hal_gpio_init_out(36, 1);
-#endif
-
     /* Create all available nRF52840 peripherals */
     nrf52_periph_create();
 }
