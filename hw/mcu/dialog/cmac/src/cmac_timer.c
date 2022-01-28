@@ -27,15 +27,6 @@
 #include "os/os.h"
 #include "CMAC.h"
 
-/*
- * Least common multiple for 1/128 (os_tick) and 1/1000000 (ll_timer) is 2s, so
- * we want to use 2s as sync interval to guarantee that synced tick value is not
- * rounded. Any other value effectively disables tick sync and enables full
- * recalculation every time.
- */
-#define SYNC_TICK_VAL_INTERVAL              (2000000)
-#define SYNC_TICK_TICKS_PER_VAL_INTERVAL    ((SYNC_TICK_VAL_INTERVAL) / 1000000 * 128)
-
 #define COMP_TICK_HAS_PASSED(_num) \
     (CMAC->CM_EV_LATCHED_REG & \
      (CMAC_CM_EV_LATCHED_REG_EV1C_CLK_1US_X1_Msk << ((_num) - 1)))
@@ -49,7 +40,6 @@ struct cmac_timer_slp {
 };
 
 static struct cmac_timer_slp g_cmac_timer_slp;
-struct cmac_timer_ctrl g_cmac_timer_ctrl;
 
 static cmac_timer_int_func_t *cmac_timer_int_hal_timer;
 static cmac_timer_int_func_t *cmac_timer_int_hal_os_tick;
@@ -60,6 +50,7 @@ void
 LL_TIMER2LLC_IRQHandler(void)
 {
     uint32_t int_stat;
+    uint32_t val;
 
     /* Clear interrupt now since callback may set comparators again */
     int_stat = CMAC->CM_LL_INT_STAT_REG | cm_ll_int_stat_reg;
@@ -72,7 +63,15 @@ LL_TIMER2LLC_IRQHandler(void)
     }
 
     if (int_stat & CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk) {
-        cmac_timer_int_hal_os_tick();
+        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+        CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
+    }
+
+    if (int_stat & CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk) {
+        val = cmac_timer_read_eq_hal_os_tick();
+        if ((int32_t)(val - cmac_timer_read32_msb()) <= 0) {
+            cmac_timer_int_hal_os_tick();
+        }
     }
 }
 
@@ -277,30 +276,7 @@ compensate_ll_timer(uint32_t slept_us)
 uint32_t
 cmac_timer_get_hal_os_tick(void)
 {
-    static uint32_t sync_tick = 0;
-    static uint64_t sync_tick_val = 0;
-    static uint64_t sync_tick_val_next = SYNC_TICK_VAL_INTERVAL;
-    uint64_t val;
-    uint32_t rem_val;
-    uint32_t ret;
-
-    val = cmac_timer_read64();
-
-    if (SYNC_TICK_VAL_INTERVAL == 2000000) {
-        while (val >= sync_tick_val_next) {
-            sync_tick_val = sync_tick_val_next;
-            sync_tick += SYNC_TICK_TICKS_PER_VAL_INTERVAL;
-            sync_tick_val_next += SYNC_TICK_VAL_INTERVAL;
-        }
-
-        rem_val = val - sync_tick_val;
-
-        ret = sync_tick + ((rem_val * 1074) >> 23);
-    } else {
-        ret = (val << 1) / 15625;
-    }
-
-    return ret;
+    return cmac_timer_read32_msb();
 }
 
 void
@@ -309,19 +285,22 @@ cmac_timer_init(void)
     /* Make sure LL Timer does not use limited range */
     assert(CMAC->CM_CTRL2_REG & CMAC_CM_CTRL2_REG_LL_TIMER1_9_0_LIMITED_N_Msk);
 
+    CMAC->CM_LL_TIMER1_EQ_Y_CTRL_REG = 7;
+
     /*
-     * Set EQ_X and 36_10_EQ_Y comparators to trigger LL_TIMER2LLC interrupt.
+     * Set EQ_X and EQ_Y comparators to trigger LL_TIMER2LLC interrupt.
      * They are used for hal_timer and os_tick respectively.
      */
     CMAC->CM_LL_INT_SEL_REG |= CMAC_CM_LL_INT_SEL_REG_LL_TIMER1_EQ_X_SEL_Msk |
-                               CMAC_CM_LL_INT_SEL_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+                               CMAC_CM_LL_INT_SEL_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk |
+                               CMAC_CM_LL_INT_SEL_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
 
     switch_to_llt();
 
-    CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
-    CMAC->CM_LL_INT_STAT_REG = UINT32_MAX;
-
     NVIC_DisableIRQ(LL_TIMER2LLC_IRQn);
+    CMAC->CM_LL_INT_MSK_CLR_REG = UINT32_MAX;
+    CMAC->CM_LL_INT_STAT_REG = UINT32_MAX;
+    NVIC_ClearPendingIRQ(LL_TIMER2LLC_IRQn);
     NVIC_SetPriority(LL_TIMER2LLC_IRQn, 2);
     NVIC_EnableIRQ(LL_TIMER2LLC_IRQn);
 }
@@ -424,7 +403,7 @@ cmac_timer_int_os_tick_register(cmac_timer_int_func_t func)
 void
 cmac_timer_int_os_tick_clear(void)
 {
-    CMAC->CM_LL_INT_STAT_REG = CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+    CMAC->CM_LL_INT_STAT_REG = CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
 }
 
 uint32_t
@@ -452,8 +431,9 @@ cmac_timer_next_at(void)
         to_next = min(to_next, reg32 - val32);
     }
 
-    if (mask & CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk) {
-        reg32 = CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG << 10;
+    if (mask & CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_EQ_Y_SEL_Msk) {
+        reg32 = (CMAC->CM_LL_TIMER1_EQ_Y_HI_REG << 10) |
+                CMAC->CM_LL_TIMER1_EQ_Y_LO_REG;
         to_next = min(to_next, reg32 - val32);
     }
 
