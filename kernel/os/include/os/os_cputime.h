@@ -44,7 +44,13 @@ extern "C" {
  * definition for OS_CPUTIME_FREQ to the desired frequency in your project,
  * target or bsp.
  */
-#if (MYNEWT_VAL(OS_CPUTIME_FREQ) == 1000000)
+#if MYNEWT_VAL(OS_CPUTIME_FREQ) == 15625      ||  \
+    MYNEWT_VAL(OS_CPUTIME_FREQ) == 31250      ||  \
+    MYNEWT_VAL(OS_CPUTIME_FREQ) == 62500      ||  \
+    MYNEWT_VAL(OS_CPUTIME_FREQ) == 125000     ||  \
+    MYNEWT_VAL(OS_CPUTIME_FREQ) == 250000     ||  \
+    MYNEWT_VAL(OS_CPUTIME_FREQ) == 500000     ||  \
+    MYNEWT_VAL(OS_CPUTIME_FREQ) == 1000000
 
 #define OS_CPUTIME_FREQ_1MHZ
 
@@ -143,8 +149,19 @@ void os_cputime_delay_nsecs(uint32_t nsecs);
 #endif
 
 #if defined(OS_CPUTIME_FREQ_1MHZ)
-#define os_cputime_usecs_to_ticks(x)    (x)
-#define os_cputime_ticks_to_usecs(x)    (x)
+
+static inline uint32_t
+os_cputime_usecs_to_ticks(uint32_t usecs)
+{
+    return usecs / (1000000 / MYNEWT_VAL(OS_CPUTIME_FREQ));
+}
+
+static inline uint32_t
+os_cputime_ticks_to_usecs(uint32_t ticks)
+{
+    return ticks * (1000000 / MYNEWT_VAL(OS_CPUTIME_FREQ));
+}
+
 #else
 
 /**
