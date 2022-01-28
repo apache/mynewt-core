@@ -19,7 +19,7 @@
 
 syscfg.vals:
     MSYS_1_BLOCK_SIZE: 308
-    OS_CPUTIME_FREQ: 32768
+    OS_CPUTIME_FREQ: 31250
     BLE_HCI_TRANSPORT: dialog_cmac
 
 syscfg.restrictions:
