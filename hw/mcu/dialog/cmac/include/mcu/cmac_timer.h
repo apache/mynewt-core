@@ -27,23 +27,6 @@
 extern "C" {
 #endif
 
-/*
- * Equals to LLT value after HAL timer wrapped around,
- * i.e. os_cputime(0xffffffff "+1")
- */
-#define CMAC_TIMER_LLT_AT_HAL_WRAP_AROUND_VAL   (0x1e84800000)
-
-#define CMAC_TIMER_HAL_GT(_t1, _t2)             ((int32_t)((_t1) - (_t2)) > 0)
-#define CMAC_TIMER_HAL_LT(_t1, _t2)             ((int32_t)((_t1) - (_t2)) < 0)
-
-struct cmac_timer_ctrl {
-    uint32_t llt_last_hi_val;
-    uint64_t llt_corr;
-
-    uint32_t hal_last_val;
-    uint64_t hal_to_llt_corr;
-};
-
 typedef void (cmac_timer_int_func_t)(void);
 
 extern volatile uint32_t cm_ll_int_stat_reg;
@@ -84,7 +67,7 @@ cmac_timer_read_hi(void)
     return CMAC->CM_LL_TIMER1_36_10_REG;
 }
 
-/* Reads lsb 32-bit value of LL Timer */
+/* Reads lsb 32-bit value of LL Timer (31..0) */
 static inline uint32_t
 cmac_timer_read32(void)
 {
@@ -99,38 +82,34 @@ cmac_timer_read32(void)
     return (hi << 10) | lo;
 }
 
-/* Reads full 37-bit value of LL Timer */
-static inline uint64_t
-cmac_timer_read64(void)
+/* Reads msb 32-bit value of LL Timer (36..5) */
+static inline uint32_t
+cmac_timer_read32_msb(void)
 {
     uint32_t hi;
     uint32_t lo;
-    uint32_t llt_corr;
 
     do {
         hi = cmac_timer_read_hi();
         lo = cmac_timer_read_lo();
     } while (hi != cmac_timer_read_hi());
 
-    __disable_irq();
+    return (hi << 5) | lo >> 5;
+}
 
-    /*
-     * We extend LLT value manually to full 64-bit timer, this gives us plenty
-     * of resolution so we don't really need to care about wrap around. Note
-     * that we keep track of hi-word correction only (bits 63:37) so there is
-     * no need for 64-bit calculations on correction value - final shift by 32
-     * bits is optimized by a compiler to a simple 32-bit operation on hi-word.
-     */
+/* Reads full 37-bit value of LL Timer (36..0) */
+static inline uint64_t
+cmac_timer_read37(void)
+{
+    uint32_t hi;
+    uint32_t lo;
 
-    if (hi < g_cmac_timer_ctrl.llt_last_hi_val) {
-        g_cmac_timer_ctrl.llt_corr += 1 << 5;
-    }
-    g_cmac_timer_ctrl.llt_last_hi_val = hi;
-    llt_corr = g_cmac_timer_ctrl.llt_corr;
+    do {
+        hi = cmac_timer_read_hi();
+        lo = cmac_timer_read_lo();
+    } while (hi != cmac_timer_read_hi());
 
-    __enable_irq();
-
-    return ((uint64_t)llt_corr << 32) | ((uint64_t)hi << 10) | lo;
+    return ((uint64_t)hi << 10) | lo;
 }
 
 static inline void
@@ -142,10 +121,10 @@ cmac_timer_trigger_hal(void)
 
 /* Write comparator value for hal_timer callback */
 static inline void
-cmac_timer_write_eq_hal_timer(uint64_t val)
+cmac_timer_write_eq_hal_timer(uint32_t val)
 {
-    CMAC->CM_LL_TIMER1_EQ_X_HI_REG = val >> 10;
-    CMAC->CM_LL_TIMER1_EQ_X_LO_REG = val;
+    CMAC->CM_LL_TIMER1_EQ_X_HI_REG = val >> 5;
+    CMAC->CM_LL_TIMER1_EQ_X_LO_REG = val << 5;
     CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_EQ_X_SEL_Msk;
 
     /*
@@ -154,7 +133,7 @@ cmac_timer_write_eq_hal_timer(uint64_t val)
      * comparator as triggered so we just use local variable as a "shadow"
      * register.
      */
-    if ((int64_t)(val - cmac_timer_read64()) <= 0) {
+    if ((int32_t)(val - cmac_timer_read32_msb()) <= 0) {
         cm_ll_int_stat_reg = CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_EQ_X_SEL_Msk;
         NVIC_SetPendingIRQ(LL_TIMER2LLC_IRQn);
     }
@@ -167,69 +146,43 @@ cmac_timer_disable_eq_hal_timer(void)
     CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_EQ_X_SEL_Msk;
 }
 
+static inline uint32_t
+cmac_timer_read_eq_hal_os_tick(void)
+{
+    return (CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG << 5) |
+           (CMAC->CM_LL_TIMER1_9_0_EQ_Y_REG >> 5);
+}
+
 /* Write comparator value for hal_os_tick callback */
 static inline void
-cmac_timer_write_eq_hal_os_tick(uint64_t val)
+cmac_timer_write_eq_hal_os_tick(uint32_t val)
 {
-    uint32_t val_hi;
+    uint32_t val_36_10;
 
-    val_hi = (val >> 10) & 0x7ffffff;
+    val_36_10 = val >> 5;
+    CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG = val_36_10;
+    CMAC->CM_LL_TIMER1_9_0_EQ_Y_REG = val << 5;
 
-    CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG = val_hi;
+    /* If msb comparator is set at least 2 "ticks" ahead, we can enable it here
+     * and then enable lsb comparator on match. Otherwise, we need to enable lsb
+     * comparator here to make sure we do not miss a match in case lsb matches
+     * just after msb (we would not be able to switch from msb to lsb comparator
+     * on time).
+     */
+    if ((int32_t)(val_36_10 - CMAC->CM_LL_TIMER1_36_10_REG) >= 2) {
+        CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
+    } else {
+        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+        CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
+    }
 
-    if ((int32_t)(val_hi - cmac_timer_read_hi()) <= 0) {
-        cm_ll_int_stat_reg = CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+    if ((int32_t)(val - cmac_timer_read32_msb()) <= 0) {
+        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
+        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
+        cm_ll_int_stat_reg = CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
         NVIC_SetPendingIRQ(LL_TIMER2LLC_IRQn);
     }
-}
-
-/* Convert ll_timer value to hal_timer value */
-static inline uint64_t
-cmac_timer_convert_llt2hal(uint64_t val)
-{
-    return (val << 9) / 15625;
-}
-
-/* Convert ll_timer value to os_tick value */
-static inline uint32_t
-cmac_timer_convert_llt2tck(uint64_t val)
-{
-    return (val << 1) / 15625;
-}
-
-/* Convert hal_timer value to ll_timer value */
-static inline uint64_t
-cmac_timer_convert_hal2llt(uint32_t val)
-{
-    uint64_t llt;
-    uint32_t v1, v2;
-    int64_t dt;
-
-    /*
-     * Use known HAL timer value and LLT value pair as a base, then apply
-     * correction based on delta between known HAL timer value and value being
-     * converted.
-     */
-
-    __disable_irq();
-
-    v1 = g_cmac_timer_ctrl.hal_last_val;
-    v2 = val;
-    llt = g_cmac_timer_ctrl.hal_to_llt_corr;
-
-    __enable_irq();
-
-    dt = (int32_t)(v2 - v1);
-    llt += (dt * 15625) / 512;
-
-    return llt;
-}
-
-/* Convert os_tick value to ll_timer value */
-static inline uint64_t
-cmac_timer_convert_tck2llt(uint32_t val)
-{
-    return ((uint64_t)val * 15625) >> 1;
 }
 
 #ifdef __cplusplus

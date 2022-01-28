@@ -29,30 +29,11 @@
 #include "cmac_priv.h"
 
 static uint32_t g_os_tick_last;
-static uint32_t g_os_tick_next;
-static uint64_t g_os_tick_next_val;
 
 static void
 os_tick_setup_for_next(uint32_t delta)
 {
-    uint32_t next;
-    uint64_t llt_val;
-
-    next = g_os_tick_last + delta;
-    if (g_os_tick_next == next) {
-        /* Don't waste time calculating the same llt_val again */
-        llt_val = g_os_tick_next_val;
-    } else {
-        /* Round up to next high part ll_timer value */
-        llt_val = cmac_timer_convert_tck2llt(next);
-        llt_val += 1024;
-        llt_val &= ~((uint64_t)0x3ff);
-
-        g_os_tick_next = next;
-        g_os_tick_next_val = llt_val;
-    }
-
-    cmac_timer_write_eq_hal_os_tick(llt_val);
+    cmac_timer_write_eq_hal_os_tick(g_os_tick_last + delta);
 }
 
 static void
@@ -69,7 +50,7 @@ os_tick_handle_tick(void)
     os_time_advance(delta);
 
     g_os_tick_last = cur_tick;
-    os_tick_setup_for_next(1);
+    os_tick_setup_for_next(1024);
 }
 
 static void
@@ -101,7 +82,7 @@ os_tick_idle(os_time_t ticks)
 void
 os_tick_init(uint32_t os_ticks_per_sec, int prio)
 {
-    assert(os_ticks_per_sec == 128);
+    assert(os_ticks_per_sec == 31250);
 
     g_os_tick_last = 0;
 
