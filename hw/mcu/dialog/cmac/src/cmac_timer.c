@@ -431,9 +431,10 @@ cmac_timer_next_at(void)
         to_next = min(to_next, reg32 - val32);
     }
 
-    if (mask & CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_EQ_Y_SEL_Msk) {
-        reg32 = (CMAC->CM_LL_TIMER1_EQ_Y_HI_REG << 10) |
-                CMAC->CM_LL_TIMER1_EQ_Y_LO_REG;
+    if (mask & (CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk |
+                CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk)) {
+        reg32 = (CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG << 10) |
+                CMAC->CM_LL_TIMER1_9_0_EQ_Y_REG;
         to_next = min(to_next, reg32 - val32);
     }
 
