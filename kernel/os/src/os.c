@@ -79,8 +79,8 @@ static struct hal_timer os_wdog_monitor;
  */
 int g_os_started;
 
-#define MIN_IDLE_TICKS  (MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MIN) * OS_TICKS_PER_SEC / 1000)
-#define MAX_IDLE_TICKS  (MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MAX) * OS_TICKS_PER_SEC / 1000)
+#define MIN_IDLE_TICKS  (uint32_t)((uint64_t)MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MIN) * OS_TICKS_PER_SEC / 1000)
+#define MAX_IDLE_TICKS  (uint32_t)((uint64_t)MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MAX) * OS_TICKS_PER_SEC / 1000)
 
 /**
  * Idle operating system task, runs when no other tasks are running.
