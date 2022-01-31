@@ -52,17 +52,22 @@ void
 hal_system_restart(void *img_start)
 {
     int i;
-    int sr;
 
     /*
-     * Disable interrupts, and leave the disabled.
-     * They get re-enabled when system starts coming back again.
+     * NOTE: on reset, PRIMASK should have global interrupts enabled so
+     * the code disables interrupts, clears the interrupt enable bits,
+     * clears any pending interrupts, then enables global interrupts
+     * so processor looks like state it would be in if it reset.
      */
-    __HAL_DISABLE_INTERRUPTS(sr);
+    __disable_irq();
     for (i = 0; i < sizeof(NVIC->ICER) / sizeof(NVIC->ICER[0]); i++) {
         NVIC->ICER[i] = 0xffffffff;
     }
-    (void)sr;
+
+    for (i = 0; i < sizeof(NVIC->ICPR) / sizeof(NVIC->ICPR[0]); i++) {
+        NVIC->ICPR[i] = 0xffffffff;
+    }
+    __enable_irq();
 
     hal_system_start(img_start);
 }
