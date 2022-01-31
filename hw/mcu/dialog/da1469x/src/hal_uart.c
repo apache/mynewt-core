@@ -143,6 +143,12 @@ da1469x_uart_tx_intr_disable(struct da1469x_uart *uart)
 }
 
 static inline void
+da1469x_uart_tx_pthre_intr_disable(struct da1469x_uart *uart)
+{
+    uart->regs->UART2_IER_DLH_REG &= ~UART2_UART2_IER_DLH_REG_PTIME_DLH7_Msk;
+}
+
+static inline void
 da1469x_uart_rx_intr_enable(struct da1469x_uart *uart)
 {
     uart->regs->UART2_IER_DLH_REG |= UART2_UART2_IER_DLH_REG_ERBFI_DLH0_Msk;
@@ -183,15 +189,19 @@ da1469x_uart_isr_thr_empty(struct da1469x_uart *uart)
 
     regs = uart->regs;
 
+    if (!uart->tx_started) {
+        da1469x_uart_tx_intr_disable(uart);
+        if (uart->tx_done) {
+            uart->tx_done(uart->func_arg);
+        }
+        return;
+    }
+
     while (regs->UART2_USR_REG & UART2_UART2_USR_REG_UART_TFNF_Msk) {
         ch = uart->tx_func(uart->func_arg);
         if (ch < 0) {
-            da1469x_uart_tx_intr_disable(uart);
+            da1469x_uart_tx_pthre_intr_disable(uart);
             uart->tx_started = 0;
-            if (uart->tx_done) {
-                uart->tx_done(uart->func_arg);
-            }
-
             break;
         }
 
@@ -571,7 +581,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     /* Enable hardware FIFO */
     regs->UART2_SFE_REG = UART2_UART2_SFE_REG_UART_SHADOW_FIFO_ENABLE_Msk;
     regs->UART2_SRT_REG = 0;
-    regs->UART2_STET_REG = 0;
+    regs->UART2_STET_REG = 3;
 
     /* Enable flow-control if requested and supported */
     if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
