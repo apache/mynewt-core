@@ -74,6 +74,7 @@ syscfg.vals.!BOOT_LOADER:
 syscfg.vals.!BSP_RFX2411_BYPASS_MODE:
     BLE_LL_PA: 1
     BLE_LL_LNA: 1
+    BLE_LL_TX_PWR_DBM: -16
 
 syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
