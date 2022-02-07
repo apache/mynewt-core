@@ -88,6 +88,27 @@ detect_programmer() {
         # extract the VID:PID list for connected USB devices
         USB_DEV=$(lsusb | cut -f6 -d' ')
 
+    elif [ $(which system_profiler) ] ; then
+
+        # extract the VID:PID list for connected USB devices on OSX
+        # and get them in the same format as lsusb from Linux
+        USB_DEV=$(system_profiler SPUSBDataType 2>/dev/null | awk '
+            /^[ \t]+Product ID:/ {
+                # remove leading 0x from hex number
+                sub(/^0x/, "", $3);
+                PID=$3;
+            }
+            /^[ \t]+Vendor ID:/ {
+                # remove leading 0x from hex number
+                sub(/^0x/, "", $3);
+                printf("%s:%s\n", PID, $3);
+            }
+        ')
+
+    fi
+
+    if [ -n "$USB_DEV" ]; then
+
         echo "$USB_DEV" | grep -q -i 'c251:f001'
         [ $? -eq 0 ] && DETECTED_PROGRAMMER='cmsis-dap'
 
