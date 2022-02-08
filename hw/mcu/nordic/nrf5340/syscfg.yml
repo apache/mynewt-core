@@ -54,6 +54,16 @@ syscfg.defs:
             - LFRC      # 32.768 kHz RC oscillator
             - LFXO      # 32.768 kHz crystal oscillator
             - LFSYNTH   # 32.768 kHz synthesized from HFCLK
+    MCU_LFCLK_XO_INTCAP:
+        description: >
+            Control usage of internal load capacitors for 32.768 kHz crystal
+            oscillator.
+        value: external
+        choices:
+            - external  # use external load capacitors
+            - c6pf      # 6pF internal load capacitance
+            - c7pf      # 7pF internal load capacitance
+            - c9pf      # 9pF internal load capacitance
 
     MCU_GPIO_USE_PORT_EVENT:
         description: >
