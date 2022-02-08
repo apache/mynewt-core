@@ -95,6 +95,7 @@ syscfg.vals:
 
 syscfg.vals.!BOOT_LOADER:
     MCU_LFCLK_SOURCE: LFXO
+    MCU_LFCLK_XO_INTCAP: c9pf
 
 syscfg.vals.BLE_HOST:
     BLE_HCI_TRANSPORT: nrf5340
