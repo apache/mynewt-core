@@ -41,7 +41,7 @@ syscfg.defs:
             If set to -1, power domain which controls GPIO pins will be
             always active and thus retaining and restoring of GPIO pins
             state is disabled.
-        value: 4
+        value: 32
     MCU_GPIO_MAX_IRQ:
         description: >
             Maximum number of GPIO interrupts that can be configured at
