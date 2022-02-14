@@ -37,8 +37,10 @@ struct da1469x_uart_hw_data {
     mcu_gpio_func tx_pin_func;
     mcu_gpio_func rts_pin_func;
     mcu_gpio_func cts_pin_func;
-    /* Mask for (RE)SET_CLK_COM_REG */
-    uint8_t clk_com_mask;
+    /* Mask for (RE)SET_CLK_COM_REG clock enable */
+    uint8_t clk_com_enable_mask;
+    /* Mask for (RE)SET_CLK_COM_REG clock selection */
+    uint8_t clk_com_clk_sel_mask;
     void (*isr)(void);
 };
 
@@ -49,7 +51,8 @@ static const struct da1469x_uart_hw_data da1469x_uart0_hw = {
     .tx_pin_func = MCU_GPIO_FUNC_UART_TX,
     .rts_pin_func = MCU_GPIO_FUNC_GPIO,
     .cts_pin_func = MCU_GPIO_FUNC_GPIO,
-    .clk_com_mask = CRG_COM_RESET_CLK_COM_REG_UART_ENABLE_Msk,
+    .clk_com_enable_mask = CRG_COM_RESET_CLK_COM_REG_UART_ENABLE_Msk,
+    .clk_com_clk_sel_mask = 0,
     .isr = da1469x_uart_uart_isr,
 };
 
@@ -60,7 +63,8 @@ static const struct da1469x_uart_hw_data da1469x_uart1_hw = {
     .tx_pin_func = MCU_GPIO_FUNC_UART2_TX,
     .rts_pin_func = MCU_GPIO_FUNC_UART2_RTSN,
     .cts_pin_func = MCU_GPIO_FUNC_UART2_CTSN,
-    .clk_com_mask = CRG_COM_RESET_CLK_COM_REG_UART2_ENABLE_Msk,
+    .clk_com_enable_mask = CRG_COM_RESET_CLK_COM_REG_UART2_ENABLE_Msk,
+    .clk_com_clk_sel_mask = CRG_COM_RESET_CLK_COM_REG_UART2_CLK_SEL_Msk,
     .isr = da1469x_uart_uart2_isr,
 };
 
@@ -71,7 +75,8 @@ static const struct da1469x_uart_hw_data da1469x_uart2_hw = {
     .tx_pin_func = MCU_GPIO_FUNC_UART3_TX,
     .rts_pin_func = MCU_GPIO_FUNC_UART3_RTSN,
     .cts_pin_func = MCU_GPIO_FUNC_UART3_CTSN,
-    .clk_com_mask = CRG_COM_RESET_CLK_COM_REG_UART3_ENABLE_Msk,
+    .clk_com_enable_mask = CRG_COM_RESET_CLK_COM_REG_UART3_ENABLE_Msk,
+    .clk_com_clk_sel_mask = CRG_COM_RESET_CLK_COM_REG_UART3_CLK_SEL_Msk,
     .isr = da1469x_uart_uart3_isr,
 };
 
@@ -258,6 +263,7 @@ da1469x_uart_uart_configure(struct da1469x_uart_dev *dev)
     uint32_t reg;
     UART2_Type *uart = dev->hw->regs;
     IRQn_Type irqn = dev->hw->irqn;
+    uint32_t uart_clock = 32000000;
 
     da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
 
@@ -270,14 +276,31 @@ da1469x_uart_uart_configure(struct da1469x_uart_dev *dev)
     }
 
     /* Reset UART */
-    CRG_COM->RESET_CLK_COM_REG = dev->hw->clk_com_mask;
-    CRG_COM->SET_CLK_COM_REG = dev->hw->clk_com_mask;
+    CRG_COM->RESET_CLK_COM_REG = dev->hw->clk_com_enable_mask;
+    CRG_COM->SET_CLK_COM_REG = dev->hw->clk_com_enable_mask;
+    if (uc->uc_speed > 2000000) {
+        /* System core clock should be 96 MHz */
+        if (!MYNEWT_VAL_CHOICE(MCU_SYSCLK_SOURCE, PLL96)) {
+            assert(0);
+        }
+        uart_clock = 96000000;
+        /* Select DIV1 */
+        CRG_COM->SET_CLK_COM_REG = dev->hw->clk_com_clk_sel_mask;
+    } else {
+        /* Select DIVN, always 32MHz */
+        CRG_COM->RESET_CLK_COM_REG = dev->hw->clk_com_clk_sel_mask;
+    }
     uart->UART2_SRR_REG = UART2_UART2_SRR_REG_UART_UR_Msk |
                           UART2_UART2_SRR_REG_UART_RFR_Msk |
                           UART2_UART2_SRR_REG_UART_XFR_Msk;
 
     /* Configure baudrate */
-    baudrate_cfg = (32000000 - 1 + (uc->uc_speed / 2)) / uc->uc_speed;
+    baudrate_cfg = (uart_clock - 1 + (uc->uc_speed / 2)) / uc->uc_speed;
+
+    /* If requested clock exceeds limit, set maximum baudrate */
+    if (baudrate_cfg < 16) {
+        baudrate_cfg = 16;
+    }
     uart->UART2_LCR_REG |= UART2_UART2_LCR_REG_UART_DLAB_Msk;
     uart->UART2_IER_DLH_REG = (baudrate_cfg >> 12) & 0xff;
     uart->UART2_RBR_THR_DLL_REG = (baudrate_cfg >> 4) & 0xff;
@@ -355,7 +378,7 @@ da1469x_uart_uart_shutdown(struct da1469x_uart_dev *dev)
     NVIC_DisableIRQ(dev->hw->irqn);
     NVIC_ClearPendingIRQ(dev->hw->irqn);
 
-    CRG_COM->RESET_CLK_COM_REG = dev->hw->clk_com_mask;
+    CRG_COM->RESET_CLK_COM_REG = dev->hw->clk_com_enable_mask;
 
     da1469x_pd_release(MCU_PD_DOMAIN_COM);
 }
@@ -377,7 +400,8 @@ da1469x_uart_open(struct os_dev *odev, uint32_t wait, void *arg)
 
     dev->uc = *uc;
 
-    if (uc->uc_speed < 1200 || uc->uc_speed > 1000000) {
+    if (uc->uc_speed < 1200 ||
+        uc->uc_speed > ((dev->hw->regs == (UART2_Type *)UART) ? 2000000 : 6000000)) {
         return OS_INVALID_PARM;
     }
 
