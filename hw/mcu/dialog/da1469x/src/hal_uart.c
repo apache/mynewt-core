@@ -90,6 +90,13 @@ struct da1469x_uart_baudrate {
 };
 
 static const struct da1469x_uart_baudrate da1469x_uart_baudrates[] = {
+#if MYNEWT_VAL_CHOICE(MCU_SYSCLK_SOURCE, PLL96)
+#if MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
+    { 6000000, 0x00000100 },
+    { 3000000, 0x00000200 },
+#endif
+#endif
+    { 2000000, 0x00000100 },
     { 1000000, 0x00000200 },
     {  921600, 0x00000203 },
     {  500000, 0x00000400 },
@@ -523,27 +530,39 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         return SYS_EINVAL;
     }
 
+    /* Check baudrate */
+    baudrate_cfg = da1469x_uart_find_baudrate_cfg(baudrate);
+    if (!baudrate_cfg || ((port == 0) && (baudrate > 2000000))) {
+        return SYS_ENOTSUP;
+    }
+
     switch (port) {
     case 0:
         CRG_COM->SET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART_ENABLE_Msk;
         break;
     case 1:
         CRG_COM->SET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART2_ENABLE_Msk;
-        CRG_COM->RESET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART2_CLK_SEL_Msk;
+        if (baudrate <= 2000000) {
+            /* Use DIVN as clock source */
+            CRG_COM->RESET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART2_CLK_SEL_Msk;
+        } else {
+            /* Use DIV1 as clock source */
+            CRG_COM->SET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART2_CLK_SEL_Msk;
+        }
         break;
     case 2:
         CRG_COM->SET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART3_ENABLE_Msk;
-        CRG_COM->RESET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART3_CLK_SEL_Msk;
+        if (baudrate <= 2000000) {
+            /* Use DIVN as clock source */
+            CRG_COM->RESET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART3_CLK_SEL_Msk;
+        } else {
+            /* Use DIV1 as clock source */
+            CRG_COM->SET_CLK_COM_REG = CRG_COM_SET_CLK_COM_REG_UART3_CLK_SEL_Msk;
+        }
         break;
     default:
         assert(0);
         break;
-    }
-
-    /* Set baudrate */
-    baudrate_cfg = da1469x_uart_find_baudrate_cfg(baudrate);
-    if (!baudrate_cfg) {
-        return SYS_ENOTSUP;
     }
 
     if (uart->cfg->pin_rx >= 0) {
