@@ -49,7 +49,7 @@ extern "C" {
 #else
 #define CFG_TUSB_OS                 OPT_OS_MYNEWT
 #endif
-#define CFG_TUSB_DEBUG              0
+#define CFG_TUSB_DEBUG              MYNEWT_VAL(CFG_TUSB_DEBUG)
 
 /* USB DMA on some MCUs can only access a specific SRAM region with restriction on alignment.
  * Tinyusb use follows macros to declare transferring memory so that they can be put
