@@ -572,6 +572,10 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
          */
         da1469x_uart_set_rx_pin_as_gpio(uart);
     }
+    /* Reset UART before setting up new baudrate */
+    regs->UART2_SRR_REG = UART2_UART2_SRR_REG_UART_UR_Msk |
+                          UART2_UART2_SRR_REG_UART_RFR_Msk |
+                          UART2_UART2_SRR_REG_UART_XFR_Msk;
 
     regs->UART2_LCR_REG |= UART2_UART2_LCR_REG_UART_DLAB_Msk;
     regs->UART2_IER_DLH_REG = (baudrate_cfg >> 16) & 0xff;
