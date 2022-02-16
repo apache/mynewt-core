@@ -171,3 +171,13 @@ syscfg.defs:
         description: >
             Interface number associated with USBD_WINDOWS_COMP_ID.
         value: 0
+
+    CFG_TUSB_DEBUG:
+        description: >
+            When set to value > 0 enables TinyUSB logs and redirects them to Mynewt console.
+            It activates logs created by TU_LOG1, TU_LOG2, TU_LOG3
+        range: 0..3
+        value: 0
+
+syscfg.restrictions:
+    - '(CFG_TUSB_DEBUG == 0) || (USBD_STACK_SIZE >= 400)'
