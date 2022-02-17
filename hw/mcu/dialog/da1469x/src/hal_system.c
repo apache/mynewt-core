@@ -21,6 +21,7 @@
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_clock.h"
 #include "mcu/da1469x_lpclk.h"
+#include "mcu/da1469x_otp.h"
 #include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
@@ -113,6 +114,8 @@ hal_system_clock_start(void)
 #if MYNEWT_VAL_CHOICE(MCU_SYSCLK_SOURCE, PLL96)
     da1469x_clock_pll_wait_to_lock();
     da1469x_clock_sys_pll_switch();
+    /* Need to re-initialize OTP for 96MHz */
+    da1469x_otp_init();
 #endif
 #if MYNEWT_VAL_CHOICE(MCU_SYSCLK_SOURCE, XTAL32M)
     /* Switch to XTAL32M and disable RC32M */
