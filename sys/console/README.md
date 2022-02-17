@@ -34,3 +34,9 @@ For the package, list in the pkg.yml console as the required capability.
 Project builder will then include either sys/console/full or
 sys/console/minimal or sys/console/stub as their choice.
 
+It is possible to include this package and select required library by syscfg value `CONSOLE_MODE` *full*, *stub* or *minimal*.
+
+Following line enables full console.
+```yml
+CONSOLE_MODE: full
+```
