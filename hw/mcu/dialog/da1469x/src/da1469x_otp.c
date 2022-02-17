@@ -120,7 +120,18 @@ da1469x_otp_init(void)
     da1469x_otp_set_mode(OTPC_MODE_STBY);
 
     /* set clk timing */
-    OTPC->OTPC_TIM1_REG = 0x0999101f;  /* 32 MHz default */
+    switch (SystemCoreClock) {
+    default:
+        /* Unsupported sys_clk value, fall-through to default 32MHz */
+        assert(0);
+    case 32000000:
+        OTPC->OTPC_TIM1_REG = 0x0999101f;
+        break;
+    case 96000000:
+        OTPC->OTPC_TIM1_REG = 0x0999515f;
+        break;
+    }
+
     OTPC->OTPC_TIM2_REG = 0xa4040409;
 
     /* Disable OTP clock */
