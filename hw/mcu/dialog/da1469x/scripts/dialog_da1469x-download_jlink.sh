@@ -88,11 +88,11 @@ if [ "$BOOT_LOADER" ]; then
             exit 1
         fi
 
-        ${BSP_PATH}/da1469x_header_tool.py secure --sign ${MYNEWT_VAL_BOOT_SIG_PEM} \
+        ${CORE_PATH}/hw/mcu/dialog/da1469x/scripts/da1469x_header_tool.py secure --sign ${MYNEWT_VAL_BOOT_SIG_PEM} \
             -s${MYNEWT_VAL_BOOT_SIG_SLOT} -d${MYNEWT_VAL_BOOT_AES_SLOT} \
             -E${MYNEWT_VAL_BOOT_AES_KEY} ${IMAGE_FILE} ${FILE_NAME}
     else
-        ${BSP_PATH}/da1469x_header_tool.py nonsecure ${IMAGE_FILE} ${FILE_NAME}
+        ${CORE_PATH}/hw/mcu/dialog/da1469x/scripts/da1469x_header_tool.py nonsecure ${IMAGE_FILE} ${FILE_NAME}
     fi
 
     if [ $? != 0 ]; then
