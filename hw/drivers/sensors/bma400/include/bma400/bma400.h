@@ -25,6 +25,7 @@
 #include <sensor/sensor.h>
 #include <sensor/accel.h>
 #include <sensor/temperature.h>
+#include <hal/hal_gpio.h>
 #include "../../src/bma400_priv.h"
 
 #ifdef __cplusplus
@@ -475,6 +476,7 @@ struct bma400_int {
     bool asleep;
     /* Configured interrupts */
     struct sensor_int ints[2];
+    hal_gpio_irq_trig_t armed_trigger[2];
 };
 
 /* Device private data */
@@ -490,6 +492,7 @@ struct bma400_private_driver_data {
     /* Shadow copy of registers */
     struct bma400_reg_cache cache;
     uint8_t transact;
+    uint8_t woke;
 
     /* Active interrupt state */
     struct bma400_int intr;
