@@ -728,6 +728,31 @@ bma400_set_acc_cfg(struct bma400 *bma400, struct bma400_acc_cfg *cfg)
     return bma400_commit(bma400);
 }
 
+static void
+bma400_arm_interrupt(struct bma400 *bma400, bma400_int_num_t int_num, hal_gpio_irq_trig_t trig)
+{
+    struct bma400_private_driver_data *pdd;
+    pdd = &bma400->pdd;
+    int host_pin;
+    int int_ix = (int)int_num - 1;
+
+    if (int_ix >= 0 && pdd->intr.armed_trigger[int_ix] != trig) {
+        host_pin = pdd->intr.ints[int_ix].host_pin;
+        if (pdd->intr.armed_trigger[int_ix] != HAL_GPIO_TRIG_NONE) {
+            hal_gpio_irq_release(host_pin);
+        }
+
+        pdd->intr.armed_trigger[int_ix] = trig;
+        if (trig != HAL_GPIO_TRIG_NONE) {
+            hal_gpio_irq_init(host_pin,
+                              bma400_interrupt_handler, bma400,
+                              trig,
+                              HAL_GPIO_PULL_NONE);
+            hal_gpio_irq_enable(host_pin);
+        }
+    }
+}
+
 int
 bma400_set_int12_cfg(struct bma400 *bma400, struct bma400_int_pin_cfg *cfg)
 {
@@ -741,9 +766,7 @@ bma400_set_int12_cfg(struct bma400 *bma400, struct bma400_int_pin_cfg *cfg)
             trig = cfg->int1_level ? HAL_GPIO_TRIG_RISING : HAL_GPIO_TRIG_FALLING;
             bma400->pdd.intr.ints[0].host_pin = cfg->int1_host_pin;
             bma400->pdd.intr.ints[0].active = cfg->int1_level;
-            hal_gpio_irq_init(cfg->int1_host_pin,
-                              bma400_interrupt_handler,
-                              bma400, trig, HAL_GPIO_PULL_NONE);
+            bma400_arm_interrupt(bma400, BMA400_INT1_PIN, trig);
         }
     }
     if (cfg->int2_host_pin != bma400->pdd.intr.ints[1].host_pin) {
@@ -754,9 +777,7 @@ bma400_set_int12_cfg(struct bma400 *bma400, struct bma400_int_pin_cfg *cfg)
             trig = cfg->int1_level ? HAL_GPIO_TRIG_RISING : HAL_GPIO_TRIG_FALLING;
             bma400->pdd.intr.ints[1].host_pin = cfg->int2_host_pin;
             bma400->pdd.intr.ints[1].active = cfg->int2_level;
-            hal_gpio_irq_init(cfg->int2_host_pin,
-                              bma400_interrupt_handler,
-                              bma400, trig, HAL_GPIO_PULL_NONE);
+            bma400_arm_interrupt(bma400, BMA400_INT2_PIN, trig);
         }
     }
 
@@ -881,6 +902,10 @@ bma400_set_wakeup(struct bma400 *bma400, struct bma400_wakeup_cfg *cfg)
 
     bma400_set_register_field(bma400, BMA400_REG_INT1_MAP, BMA400_INT1_MAP_WKUP_INT1, cfg->int_num == BMA400_INT1_PIN);
     bma400_set_register_field(bma400, BMA400_REG_INT2_MAP, BMA400_INT2_MAP_WKUP_INT2, cfg->int_num == BMA400_INT2_PIN);
+
+    if (cfg->int_num != BMA400_NO_INT_PIN) {
+        bma400->pdd.allowed_events |= SENSOR_EVENT_TYPE_SLEEP | SENSOR_EVENT_TYPE_WAKEUP;
+    }
 
     return bma400_commit(bma400);
 }
@@ -1658,14 +1683,46 @@ bma400_sensor_handle_interrupt(struct sensor *sensor)
     struct bma400_private_driver_data *pdd;
     struct bma400_int_status int_status;
     int rc;
+    uint8_t woke;
+    int8_t wakeup_pin;
+    int wakeup_pin_state;
+    int16_t host_wakeup_pin;
 
     bma400 = (struct bma400 *)SENSOR_GET_DEVICE(sensor);
+    wakeup_pin = (int8_t)bma400->cfg.wakeup_cfg.int_num - 1;
     pdd = &bma400->pdd;
 
     rc = bma400_get_int_status(bma400, &int_status);
     if (rc != 0) {
         BMA400_LOG_ERROR("Can not read int status err=0x%02x\n", rc);
         return rc;
+    }
+
+    if (wakeup_pin >= 0 &&
+        (pdd->notify_ctx.snec_evtype & (SENSOR_EVENT_TYPE_WAKEUP | SENSOR_EVENT_TYPE_SLEEP)) != 0) {
+        host_wakeup_pin = pdd->intr.ints[wakeup_pin].host_pin;
+        wakeup_pin_state = hal_gpio_read(host_wakeup_pin);
+        woke = wakeup_pin_state == pdd->intr.ints[wakeup_pin].active;
+
+        bma400_arm_interrupt(bma400, bma400->cfg.wakeup_cfg.int_num,
+                             wakeup_pin_state ? HAL_GPIO_TRIG_FALLING : HAL_GPIO_TRIG_RISING);
+
+        if (woke != pdd->woke) {
+            pdd->woke = woke;
+            /*
+             * Wakeup interrupt pin stays active whole time till device goes to sleep,
+             * notify client only once.
+             */
+            if (woke) {
+                if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_WAKEUP) {
+                    sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_WAKEUP);
+                }
+            } else {
+                if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SLEEP) {
+                    sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_SLEEP);
+                }
+            }
+        }
     }
 
     if ((pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SINGLE_TAP) &&
