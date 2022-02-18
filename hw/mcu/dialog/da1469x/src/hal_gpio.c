@@ -83,6 +83,7 @@ struct hal_gpio_irq {
     int pin;
     hal_gpio_irq_handler_t func;
     void *arg;
+    hal_gpio_irq_trig_t trigger;
 };
 
 static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
@@ -287,6 +288,21 @@ hal_gpio_toggle(int pin)
 }
 
 static void
+hal_gpio_trigger_irq_on_next_edge(int pin)
+{
+    int pin_value;
+    do {
+        pin_value = hal_gpio_read(pin);
+        if (pin_value) {
+            WKUP_POL_PX_SET_FALLING(pin);
+        } else {
+            WKUP_POL_PX_SET_RISING(pin);
+        }
+        /* In case pin value changed after it was read, but before edge detection was changed */
+    } while (pin_value != hal_gpio_read(pin));
+}
+
+static void
 hal_gpio_irq_handler(void)
 {
     struct hal_gpio_irq *irq;
@@ -304,12 +320,14 @@ hal_gpio_irq_handler(void)
 
         /* Read latched status value from relevant GPIO port */
         stat = WKUP_STAT(irq->pin);
+        WKUP_CLEAR_PX(pin);
 
         if (irq->func && stat) {
+            if (irq->trigger == HAL_GPIO_TRIG_BOTH) {
+                hal_gpio_trigger_irq_on_next_edge(pin);
+            }
             irq->func(irq->arg);
         }
-
-        WKUP_CLEAR_PX(pin);
     }
 }
 
@@ -384,7 +402,9 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
         WKUP_POL_PX_SET_FALLING(pin);
         break;
     case HAL_GPIO_TRIG_BOTH:
-        /* Not supported */
+        /* Manually handled */
+        hal_gpio_trigger_irq_on_next_edge(pin);
+        break;
     default:
         return -1;
     }
@@ -392,6 +412,7 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
     hal_gpio_irqs[i].pin = pin;
     hal_gpio_irqs[i].func = handler;
     hal_gpio_irqs[i].arg = arg;
+    hal_gpio_irqs[i].trigger = trig;
 
 #if MYNEWT_VAL(MCU_DEEP_SLEEP)
     /*
