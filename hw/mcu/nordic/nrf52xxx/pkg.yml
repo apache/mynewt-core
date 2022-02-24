@@ -30,6 +30,11 @@ pkg.deps:
     - "@apache-mynewt-core/hw/cmsis-core"
     - "@apache-mynewt-core/hw/hal"
 
+pkg.ign_files.'!MCU_COMMON_STARTUP || SPLIT_LOADER':
+    - gcc_startup_cm4.s
+pkg.ign_files.'!MCU_COMMON_STARTUP || !SPLIT_LOADER':
+    - gcc_startup_cm4_split.s
+
 pkg.deps.BUS_DRIVER_PRESENT:
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
 pkg.deps.'BUS_DRIVER_PRESENT && MCU_BUS_DRIVER_I2C_USE_TWIM':

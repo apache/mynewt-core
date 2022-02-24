@@ -97,6 +97,12 @@ syscfg.defs:
             Enabled Instruction code cache
        value: 0
 
+    MCU_COMMON_STARTUP:
+        description: >
+            Enables generic startup code. This allows BSP to not include own
+            startup code.
+        value: 0
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF52xxx I2C (TWI) 0'
