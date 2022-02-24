@@ -101,6 +101,10 @@ syscfg.defs.BLE_CONTROLLER:
         value: 1
 
 syscfg.vals:
+    # Enable nRF51822 MCU and common startup code
+    MCU_TARGET: nRF51822
+    MCU_COMMON_STARTUP: 1
+
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS

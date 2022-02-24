@@ -17,18 +17,13 @@
 #
 
 syscfg.defs:
-    I2C_0:
-        description: 'I2C (TWI) interface 0'
-        value:  0
-        restrictions:
-            - "!SPI_0_MASTER"
-            - "!SPI_0_SLAVE"
-    I2C_1:
-        description: 'I2C (TWI) interface 1'
-        value:  0
-        restrictions:
-            - "!SPI_1_MASTER"
-            - "!SPI_1_SLAVE"
+    MCU_TARGET:
+        description: >
+            Specifies target MCU, shall be set by BSP.
+        value: nRF51822
+        choices:
+            - nRF51822
+            - nRF51822_16K
 
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
@@ -42,6 +37,25 @@ syscfg.defs:
             external circuitry so is defined to be zero by default and
             expected to be overridden by the BSP.
         value: 0
+
+    MCU_COMMON_STARTUP:
+        description: >
+            Enables generic startup code. This allows BSP to not include own
+            startup code.
+        value: 0
+
+    I2C_0:
+        description: 'I2C (TWI) interface 0'
+        value:  0
+        restrictions:
+            - "!SPI_0_MASTER"
+            - "!SPI_0_SLAVE"
+    I2C_1:
+        description: 'I2C (TWI) interface 1'
+        value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
+            - "!SPI_1_SLAVE"
 
     SPI_0_MASTER:
         description: 'SPI 0 master'
