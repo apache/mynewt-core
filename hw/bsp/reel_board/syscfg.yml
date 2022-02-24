@@ -25,7 +25,10 @@ syscfg.defs:
         value: 0
 
 syscfg.vals:
+    # Enable nRF52840 MCU and common startup code
     MCU_TARGET: nRF52840
+    MCU_COMMON_STARTUP: 1
+
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS

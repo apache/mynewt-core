@@ -43,8 +43,9 @@ syscfg.vals.BOOT_LOADER:
 
 # Settings this BSP overrides.
 syscfg.vals:
-    # Enable nRF52832 MCU
+    # Enable nRF52832 MCU and common startup code
     MCU_TARGET: nRF52832
+    MCU_COMMON_STARTUP: 1
 
     # 32.768 kHz crystal oscillator
     MCU_LFCLK_SOURCE: LFXO

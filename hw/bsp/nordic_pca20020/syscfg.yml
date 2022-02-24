@@ -39,8 +39,10 @@ syscfg.defs:
         value: 400
 
 syscfg.vals:
-    # Enable nRF52832 MCU
+    # Enable nRF52832 MCU and common startup code
     MCU_TARGET: nRF52832
+    MCU_COMMON_STARTUP: 1
+
     # There are no pins assigned for UART so disable it
     UART_0: 0
     # Set default pins for peripherals
