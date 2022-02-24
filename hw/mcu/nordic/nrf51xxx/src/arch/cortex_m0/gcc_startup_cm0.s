@@ -33,12 +33,18 @@ NOTE: Template files (including this one) are application specific and therefore
 expected to be copied into the application project folder prior to its use!
 */
 
+#include <syscfg/syscfg.h>
+
     .syntax unified
     .arch armv6-m
 
     .section .stack
     .align 3
+#if MYNEWT_VAL_CHOICE(MCU_TARGET, nRF51822_16K)
     .equ    Stack_Size, 384
+#else
+    .equ    Stack_Size, 432
+#endif
     .globl    __StackTop
     .globl    __StackLimit
 __StackLimit:
@@ -93,7 +99,7 @@ __isr_vector:
     .long   _SPI1_TWI1_IRQHandler
     .long   0                         /*Reserved */
     .long   _GPIOTE_IRQHandler
-    .long   _ADC_IRQHandler
+    .long   ADC_IRQHandler
     .long   _TIMER0_IRQHandler
     .long   _TIMER1_IRQHandler
     .long   _TIMER2_IRQHandler
@@ -179,7 +185,6 @@ Reset_Handler:
     str    r0, [r2,r3]
     bgt    .LC1
 .LC0:
-
     LDR     R0, =__HeapBase
     LDR     R1, =__HeapLimit
     BL      _sbrkInit
@@ -261,7 +266,7 @@ Default_Handler:
     IRQ  _SPI0_TWI0_IRQHandler
     IRQ  _SPI1_TWI1_IRQHandler
     IRQ  _GPIOTE_IRQHandler
-    IRQ  _ADC_IRQHandler
+    IRQ  ADC_IRQHandler
     IRQ  _TIMER0_IRQHandler
     IRQ  _TIMER1_IRQHandler
     IRQ  _TIMER2_IRQHandler

@@ -33,12 +33,18 @@ NOTE: Template files (including this one) are application specific and therefore
 expected to be copied into the application project folder prior to its use!
 */
 
+#include <syscfg/syscfg.h>
+
     .syntax unified
     .arch armv6-m
 
     .section .stack
     .align 3
+#if MYNEWT_VAL_CHOICE(MCU_TARGET, nRF51822_16K)
+    .equ    Stack_Size, 384
+#else
     .equ    Stack_Size, 432
+#endif
     .globl    __StackTop
     .globl    __StackLimit
 __StackLimit:
