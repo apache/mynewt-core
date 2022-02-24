@@ -63,6 +63,12 @@ syscfg.defs:
             the breakpoint wherever it gets called, For example, reset and crash
        value: 0
 
+    MCU_COMMON_STARTUP:
+        description: >
+            Enables generic startup code. This allows BSP to not include own
+            startup code.
+        value: 0
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF91xx I2C 0'

@@ -28,8 +28,10 @@ syscfg.defs:
         value: 0
 
 syscfg.vals:
-    # Enable nRF9160 MCU
+    # Enable nRF9160 MCU and common startup code
     MCU_TARGET: nRF9160
+    MCU_COMMON_STARTUP: 1
+
     # Set default pins for peripherals
 #    UART_0_PIN_TX: 5
 #    UART_0_PIN_RX: 3
