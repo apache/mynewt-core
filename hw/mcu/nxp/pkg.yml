@@ -29,6 +29,13 @@ pkg.keywords:
 
 pkg.type: sdk
 
+pkg.ign_files:
+    # FIXME
+    # This is to prevent linking with both envsim and tda8035 phy which triggers
+    # linker error due to duplicated symbols. If needed, a syscfg can be created
+    # to select phy or smth
+    - "fsl_smartcard*"
+
 pkg.ign_files.BSP_MK64F12:
     - "fsl_cache*"
     - "fsl_flexio*"
