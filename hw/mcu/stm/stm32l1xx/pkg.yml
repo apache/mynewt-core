@@ -29,6 +29,7 @@ pkg.type: sdk
 
 pkg.ign_files:
     - ".*template.*"
+    - stm32l1xx_hal_spi_ex.c
 
 pkg.ign_dirs:
     - "Device"
