@@ -34,3 +34,6 @@ pkg.cflags:
     - -Wno-unused
     - -Wno-error=address
     - -DLWIP_HTTPD_STRNSTR_PRIVATE=0
+
+pkg.ign_files:
+    - fsdata.c
