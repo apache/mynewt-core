@@ -31,7 +31,6 @@
 
 #if MYNEWT_VAL(RUNTEST_CLI)
 #include "shell/shell.h"
-struct shell_cmd runtest_cmd_struct;
 #endif
 
 #if MYNEWT_VAL(RUNTEST_LOG)
