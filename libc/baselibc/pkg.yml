@@ -27,3 +27,6 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
 pkg.req_apis:
     - console
+
+pkg.ign_files.SELFTEST:
+    - start.c
