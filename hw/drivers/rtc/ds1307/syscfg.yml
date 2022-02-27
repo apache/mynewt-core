@@ -1,0 +1,46 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    DS1307_OS_DEV_NAME:
+        description: 'os_dev device name for DS1307'
+        value: '"rtc"'
+
+    DS1307_I2C_NUM:
+        description: 'I2C to use for DS1307'
+        value: 0
+
+    DS1307_CLI:
+        description: 'Enable shell support for the DS1307'
+        value: 0
+
+    ### Log settings.
+
+    DS1307_LOG_MODULE:
+        description: 'Numeric module ID to use for DS1307 log messages.'
+        value: 69
+    DS1307_LOG_LVL:
+        description: 'Minimum level for the DS1307 log.'
+        value: 1
+    DS1307_CLI_SYSINIT_STAGE:
+        description: 'Sysinit stage for the DS1307 shell'
+        value: 500
+syscfg.logs:
+    DS1307_LOG:
+        module: MYNEWT_VAL(DS1307_LOG_MODULE)
+        level: MYNEWT_VAL(DS1307_LOG_LVL)
