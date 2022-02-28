@@ -44,6 +44,14 @@ syscfg.defs:
             configuration when the device is fully operational. Expressed in 2 mA units
             (i.e., 50 = 100 mA).
         value: 100
+    USBD_CONFIGURATION_SELF_POWERED:
+        description: >
+            Set to 1 when produce is self powered USB device.
+        value: 0
+    USBD_CONFIGURATION_REMOTE_WAKEUP:
+        description: >
+            Set to 1 when if USB remote wakeup is supported.
+        value: 0
     USBD_LANGID:
         description: Language ID as specified by usb.org
         value: 0x0409
