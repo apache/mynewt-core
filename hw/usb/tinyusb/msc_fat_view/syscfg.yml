@@ -1,0 +1,45 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MSC_FAT_VIEW_FAT_TYPE:
+        description: Simulated disk FAT type
+        range: 12,16,32
+        value: 16
+    MSC_FAT_VIEW_DISK_SIZE:
+        description: Simulated disk size in kB
+        value: 4096
+    MSC_FAT_VIEW_SECTORS_PER_CLUSTER:
+        description: Simulated disk sectors per cluster
+        value: 1
+
+    MSC_FAT_VIEW_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the usb_msc_fat package.
+        value: 503
+    MSC_FAT_VIEW_VOLUME_NAME:
+        description: >
+            FAT volume name
+        value: '"MYNEWT_DISK"'
+
+syscfg.vals:
+    USBD_MSC: 1
+
+syscfg.restrictions:
+    - "USBD_MSC"
