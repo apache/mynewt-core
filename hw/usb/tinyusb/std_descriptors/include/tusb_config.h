@@ -74,7 +74,11 @@ extern "C" {
 /* ------------- CLASS ------------- */
 #define CFG_TUD_CDC              MYNEWT_VAL(USBD_CDC)
 #define CFG_TUD_HID              MYNEWT_VAL(USBD_HID)
+#if MYNEWT_VAL(USBD_MSC)
+#define CFG_TUD_MSC              1
+#else
 #define CFG_TUD_MSC              0
+#endif
 #define CFG_TUD_MIDI             0
 #define CFG_TUD_VENDOR           0
 #define CFG_TUD_USBTMC           0
@@ -91,6 +95,13 @@ extern "C" {
 
 /* HID buffer size Should be sufficient to hold ID (if any) + Data */
 #define CFG_TUD_HID_BUFSIZE      16
+
+/* MSC Buffer size of Device Mass storage */
+#if MYNEWT_VAL(USBD_MSC_EP_BUFSIZE)
+#define CFG_TUD_MSC_EP_BUFSIZE   MYNEWT_VAL(USBD_MSC_EP_BUFSIZE)
+#else
+#define CFG_TUD_MSC_EP_BUFSIZE   512
+#endif
 
 #ifndef CFG_TUD_DFU_XFER_BUFSIZE
 #define CFG_TUD_DFU_XFER_BUFSIZE    256

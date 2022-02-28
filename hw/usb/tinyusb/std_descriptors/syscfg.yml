@@ -61,7 +61,7 @@ syscfg.defs:
         value: 0
     USBD_MSC:
         description: Enable MSC device
-        value: 0
+        value:
     USBD_BTH:
         description: Enable BT HCI device
         value: 0
@@ -157,6 +157,16 @@ syscfg.defs:
         value:
     USBD_BTH_DATA_EP_SIZE:
         description: BTH data endpoints size
+        value:
+
+    USBD_MSC_DATA_IN_EP:
+        description: MSC data in endpoint number
+        value:
+    USBD_MSC_DATA_OUT_EP:
+        description: MSC data out endpoint number
+        value:
+    USBD_MSC_EP_BUFSIZE:
+        description: MSC data endpoint buffer size
         value:
 
     USBD_WINDOWS_COMP_ID:
