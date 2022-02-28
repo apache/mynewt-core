@@ -173,6 +173,16 @@ syscfg.defs:
         description: BTH data endpoints size
         value:
 
+    USBD_MSC_DATA_IN_EP:
+        description: MSC data in endpoint number
+        value:
+    USBD_MSC_DATA_OUT_EP:
+        description: MSC data out endpoint number
+        value:
+    USBD_MSC_EP_BUFSIZE:
+        description: MSC data endpoint buffer size
+        value:
+
     USBD_WINDOWS_COMP_ID:
         description: >
             Add Windows compatibility descriptor.

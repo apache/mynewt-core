@@ -120,6 +120,13 @@ extern "C" {
 /* HID buffer size Should be sufficient to hold ID (if any) + Data */
 #define CFG_TUD_HID_BUFSIZE      16
 
+/* MSC Buffer size of Device Mass storage */
+#if MYNEWT_VAL(USBD_MSC_EP_BUFSIZE)
+#define CFG_TUD_MSC_EP_BUFSIZE   MYNEWT_VAL(USBD_MSC_EP_BUFSIZE)
+#else
+#define CFG_TUD_MSC_EP_BUFSIZE   512
+#endif
+
 #ifndef CFG_TUD_DFU_XFER_BUFSIZE
 #define CFG_TUD_DFU_XFER_BUFSIZE    256
 #endif
