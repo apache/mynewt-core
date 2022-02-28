@@ -74,4 +74,16 @@
 #define USBD_HID_REPORT_EP_INTERVAL 10
 #endif
 
+#if defined(MYNEWT_VAL_USBD_MSC_DATA_IN_EP)
+#define USBD_MSC_DATA_IN_EP     MYNEWT_VAL(USBD_MSC_DATA_IN_EP)
+#else
+#define USBD_MSC_DATA_IN_EP     0x86
+#endif
+
+#if defined(MYNEWT_VAL_USBD_MSC_DATA_OUT_EP)
+#define USBD_MSC_DATA_OUT_EP     MYNEWT_VAL(USBD_MSC_DATA_OUT_EP)
+#else
+#define USBD_MSC_DATA_OUT_EP     0x06
+#endif
+
 #endif
