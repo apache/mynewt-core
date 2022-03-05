@@ -39,8 +39,18 @@ extern uint8_t _ram_start;
 #define RAM_SIZE            (192 * 1024)
 
 /* LED pins */
-#define LED_BLINK_PIN       MCU_GPIO_PORTB(5)
+#define LED_1               MCU_GPIO_PORTB(5)
 #define LED_2               MCU_GPIO_PORTB(0)
+#define LED_3               MCU_GPIO_PORTB(1)
+#define LED_RED             LED_3
+#define LED_GREEN           LED_2
+#define LED_BLUE            LED_1
+#define LED_BLINK_PIN       LED_1
+
+/* Button pins */
+#define BUTTON_1            MCU_GPIO_PORTC(4)
+#define BUTTON_2            MCU_GPIO_PORTD(0)
+#define BUTTON_3            MCU_GPIO_PORTD(1)
 
 /* Arduino pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTA(3)
