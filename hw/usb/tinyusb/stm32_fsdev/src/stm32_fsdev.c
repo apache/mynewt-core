@@ -55,7 +55,11 @@ tinyusb_hardware_init(void)
      */
 #if MYNEWT_VAL(USB_DP_HAS_EXTERNAL_PULL_UP)
     hal_gpio_init_out(MCU_GPIO_PORTA(12), 0);
+#if MYNEWT_VAL(BOOT_LOADER)
+    os_cputime_delay_usecs(1000);
+#else
     os_time_delay(1);
+#endif
 #endif
     hal_gpio_init_af(MCU_GPIO_PORTA(12), 0, GPIO_NOPULL, GPIO_MODE_AF_PP);
 
