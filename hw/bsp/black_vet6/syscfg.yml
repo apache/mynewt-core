@@ -108,3 +108,5 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM2'
     TIMER_1_TIM: 'TIM3'
     TIMER_2_TIM: 'TIM4'
+
+    USB_DP_HAS_EXTERNAL_PULL_UP: 1
