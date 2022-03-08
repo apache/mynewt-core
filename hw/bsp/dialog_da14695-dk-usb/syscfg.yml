@@ -76,5 +76,6 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
 
-syscfg.vals.'BLE_HCI_TRANSPORT == "dialog_cmac"':
+syscfg.vals.BLE_TRANSPORT:
+    BLE_TRANSPORT_LL: dialog_cmac
     TRNG: 1
