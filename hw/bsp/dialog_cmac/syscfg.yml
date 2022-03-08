@@ -20,7 +20,11 @@
 syscfg.vals:
     MSYS_1_BLOCK_SIZE: 308
     OS_CPUTIME_FREQ: 31250
-    BLE_HCI_TRANSPORT: dialog_cmac
+    BLE_TRANSPORT_HS: dialog_cmac
+    BLE_TRANSPORT_LL: native
 
+# CMAC can only run NimBLE controller
 syscfg.restrictions:
-    - BLE_HCI_TRANSPORT == "dialog_cmac"
+    - BLE_TRANSPORT
+    - BLE_TRANSPORT_HS == "dialog_cmac"
+    - BLE_TRANSPORT_LL == "native"
