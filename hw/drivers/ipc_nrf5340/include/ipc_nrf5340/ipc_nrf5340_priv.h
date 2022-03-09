@@ -46,6 +46,9 @@ struct ipc_shared {
         APP_AND_NET_RUNNING,
         NET_RESTARTED,
     } ipc_state;
+#if MYNEWT_VAL(BLE_TRANSPORT_INT_FLOW_CTL)
+    uint8_t acl_from_ll_count;
+#endif
 };
 
 #ifdef __cplusplus
