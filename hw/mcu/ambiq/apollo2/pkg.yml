@@ -25,6 +25,12 @@ pkg.keywords:
     - ambiq
     - apollo2
 
+pkg.type: sdk
+
+pkg.cflags:
+    - '-DAM_PART_APOLLO2'
+    - '-Wno-enum-compare'
+
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/mcu/ambiq"

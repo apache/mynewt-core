@@ -25,15 +25,7 @@ pkg.keywords:
     - ambiq
     - apollo
     - apollo2
-
-pkg.type: sdk
-
-pkg.src_dirs:
-    - "src/ext/AmbiqSuite/mcu/apollo2/"
-    - "src/ext/AmbiqSuite/utils/"
-
-pkg.cflags:
-    - '-Wno-enum-compare'
+    - apollo3
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
