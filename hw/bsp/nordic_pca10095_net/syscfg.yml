@@ -17,6 +17,8 @@
 #
 
 syscfg.defs:
+    BLE_TRANSPORT_NETCORE: 1
+
     BSP_NRF5340_NET:
         description: 'Set to indicate that BSP has NRF5340 NET'
         value: 1
