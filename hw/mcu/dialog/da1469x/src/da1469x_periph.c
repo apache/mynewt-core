@@ -518,6 +518,14 @@ da1469x_periph_create_charger(void)
 void
 da1469x_periph_create(void)
 {
+    /*
+     * The System watchdog is constantly counting down, automatically started right after POWERUP
+     * To enable no-watchdog build (WATCHDOG_INTERVAL==0) for this MCU, watchdog is frozen at startup.
+     */
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) == 0
+    SYS_WDOG->WATCHDOG_CTRL_REG = SYS_WDOG_WATCHDOG_CTRL_REG_WDOG_FREEZE_EN_Msk;
+    GPREG->SET_FREEZE_REG |= GPREG_SET_FREEZE_REG_FRZ_SYS_WDOG_Msk;
+#endif
     da1469x_dma_init();
     da1469x_vbus_init();
 
