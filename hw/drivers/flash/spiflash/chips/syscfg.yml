@@ -506,3 +506,6 @@ syscfg.defs:
     SPIFLASH_XM25QH32B:
         description: Add support for XM25QH32B
         value: 0
+    SPIFLASH_P25Q32H:
+        description: Add support for P25Q32H
+        value: 0
