@@ -1,0 +1,120 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    BSP_APOLLO3:
+        description: 'Set to indicate that BSP has the APOLLO3 processor'
+        value: 1
+    
+    BUTTON_0_PIN:
+        description: 'Pin for BUTTON0'
+        value: 16
+    BUTTON_1_PIN:
+        description: 'Pin for BUTTON1'
+        value: 18
+    BUTTON_2_PIN:
+        description: 'Pin for BUTTON2'
+        value: 19
+    
+    LED_0_PIN:
+        description: 'Pin for LED0'
+        value: 10
+    LED_1_PIN:
+        description: 'Pin for LED1'
+        value: 30
+    LED_2_PIN:
+        description: 'Pin for LED2'
+        value: 15
+    LED_3_PIN:
+        description: 'Pin for LED3'
+        value: 14
+    LED_4_PIN:
+        description: 'Pin for LED4'
+        value: 17
+        
+    IOS_CE_PIN:
+        description: 'IOS Chip Select'
+        value: 3
+    IOS_MISO_PIN:
+        description: 'IOS MISO line'
+        value: 2
+    IOS_MOSI_PIN:
+        description: 'IOS MOSI line'
+        value: 1
+    IOS_SCK_PIN:
+        description: 'IOS SCK line'
+        value: 0
+    
+    IOS_SCL_PIN:
+        description: 'IOS SCL line'
+        value: 0
+    IOS_SDA_PIN:
+        description: 'IOS SDA line'
+        value: 1
+    
+    PDM_CLK_PIN:
+        description: 'PDM CLK Pin'
+        value: 12
+    PDM_DATA_PIN:
+        description: 'PDM DATA Pin'
+        value: 11
+    
+    SCARD_SCCCLK_PIN:
+        description: 'SCARD SCCCLK Pin'
+        value: 8
+    SCARD_SCCIO_PIN:
+        description: 'SCARD SCCIO Pin'
+        value: 9
+    SCARD_SCCRST_PIN:
+        description: 'SCARD SCCRST Pin'
+        value: 46
+    
+    ITM_SWO_PIN:
+        description: 'ITM Serial Wire Output Pin'
+        value: 41
+
+    SWDCK_PIN:
+        description: 'Cortex Serial Wire DCK Pin'
+        value: 20
+    SWDIO_PIN:
+        description: 'Cortex Serial Wire DIO Pin'
+        value: 21
+
+syscfg.vals:
+    UART_0: 1
+    UART_0_PIN_TX: 22
+    UART_0_PIN_RX: 23
+    UART_0_PIN_RTS: 37
+    UART_0_PIN_CTS: 38
+    
+    UART_1: 1
+    UART_1_PIN_TX: 35
+    UART_1_PIN_RX: 36
+    UART_1_PIN_RTS: 44
+    UART_1_PIN_CTS: 45
+    
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+
+syscfg.vals.BLE_HOST:
+    BLE_HCI_TRANSPORT: apollo3
+    OS_CPUTIME_FREQ: 32768
+    TIMER_0_SOURCE: APOLLO3_TIMER_SOURCE_XT
