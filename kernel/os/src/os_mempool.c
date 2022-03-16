@@ -467,6 +467,31 @@ os_mempool_info_get_next(struct os_mempool *mp, struct os_mempool_info *omi)
     return (cur);
 }
 
+struct os_mempool *
+os_mempool_get(const char *mempool_name, struct os_mempool_info *info)
+{
+    struct os_mempool *mp;
+
+    mp = STAILQ_FIRST(&g_os_mempool_list);
+    while (mp) {
+        if (strcmp(mempool_name, mp->name) == 0) {
+            break;
+        }
+        mp = STAILQ_NEXT(mp, mp_list);
+    }
+
+    if (mp != NULL && info != NULL) {
+        info->omi_block_size = mp->mp_block_size;
+        info->omi_num_blocks = mp->mp_num_blocks;
+        info->omi_num_free = mp->mp_num_free;
+        info->omi_min_free = mp->mp_min_free;
+        info->omi_name[0] = '\0';
+        strncat(info->omi_name, mp->name, sizeof(info->omi_name) - 1);
+    }
+
+    return mp;
+}
+
 void
 os_mempool_module_init(void)
 {
