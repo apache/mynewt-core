@@ -640,13 +640,20 @@ int
 lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect)
 {
     uint8_t reg;
+    int rc;
 
-    reg = 0;
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG0, &reg, 1);
+    if (rc) {
+        goto err;
+    }
 
-    reg |= ((disconnect ? LIS2DH12_CTRL_REG0_SPD : 0) |
-            LIS2DH12_CTRL_REG0_CORR_OP);
+    reg &= ~LIS2DH12_CTRL_REG0_SPD;
+    reg |= (disconnect ? LIS2DH12_CTRL_REG0_SPD : 0);
 
-    return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG0, &reg, 1);
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG0, &reg, 1);
+
+err:
+    return rc;
 }
 
 /**
