@@ -142,6 +142,18 @@ struct os_mempool_info {
 struct os_mempool *os_mempool_info_get_next(struct os_mempool *,
         struct os_mempool_info *);
 
+/**
+ * Get information system memory pool by name.
+ *
+ * @param mempool_name The name of mempool.
+ * @param info         A pointer to the structure to return memory pool information
+ *                     into, can be NULL.
+ *
+ * @return The memory pool found, or NULL when there is no such memory pool.
+ */
+struct os_mempool *os_mempool_get(const char *mempool_name,
+                                  struct os_mempool_info *info);
+
 /*
  * To calculate size of the memory buffer needed for the pool. NOTE: This size
  * is NOT in bytes! The size is the number of os_membuf_t elements required for
