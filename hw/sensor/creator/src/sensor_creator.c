@@ -261,7 +261,7 @@ static const struct bus_i2c_node_cfg bmp280_node_cfg = {
 #endif
 #if MYNEWT_VAL(BMP280_OFB_SPI_NUM) >= 0
 struct bus_spi_node_cfg bmp280_node_cfg = {
-    .node_cfg.bus_name = MYNEWT_VAL(BMP280_OFB_SPI_BUS),
+    .node_cfg.bus_name = MYNEWT_VAL(BMP280_OFB_BUS),
     .pin_cs = MYNEWT_VAL(BMP280_OFB_CS),
     .mode = BUS_SPI_MODE_0,
     .data_order = HAL_SPI_MSB_FIRST,
