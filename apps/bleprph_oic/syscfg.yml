@@ -29,8 +29,8 @@ syscfg.vals:
     LOG_LEVEL: 0
 
     BLE_GATT_WRITE_MAX_ATTRS: 6
-    BLE_HCI_EVT_HI_BUF_COUNT: 4
-    BLE_HCI_EVT_LO_BUF_COUNT: 3
+    BLE_TRANSPORT_EVT_COUNT: 4
+    BLE_TRANSPORT_EVT_DISCARDABLE_COUNT: 3
 
     # Disable central and observer roles.
     BLE_ROLE_BROADCASTER: 1
