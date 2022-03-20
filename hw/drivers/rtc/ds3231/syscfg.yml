@@ -1,0 +1,54 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    DS3231_OS_DEV_NAME:
+        description: 'os_dev device name for DS3231'
+        value: '"rtc"'
+
+    DS3231_INT_PIN:
+        description: 'INT/SQW pin'
+        value:
+
+    DS3231_32KHZ_PIN:
+        description: '32 kHz pin'
+        value:
+
+    DS3231_I2C_NUM:
+        description: 'I2C to use for DS3231'
+        value: 0
+
+    DS3231_CLI:
+        description: 'Enable shell support for the DS3231'
+        value: 0
+
+    ### Log settings.
+
+    DS3231_LOG_MODULE:
+        description: 'Numeric module ID to use for DS3231 log messages.'
+        value: 68
+    DS3231_LOG_LVL:
+        description: 'Minimum level for the DS3231 log.'
+        value: 1
+    DS3231_CLI_SYSINIT_STAGE:
+        description: 'Sysinit stage for the DS3231 shell'
+        value: 500
+syscfg.logs:
+    DS3231_LOG:
+        module: MYNEWT_VAL(DS3231_LOG_MODULE)
+        level: MYNEWT_VAL(DS3231_LOG_LVL)
