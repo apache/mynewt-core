@@ -21,7 +21,7 @@ syscfg.defs:
     BSP_APOLLO3:
         description: 'Set to indicate that BSP has the APOLLO3 processor'
         value: 1
-    
+
     BUTTON_0_PIN:
         description: 'Pin for BUTTON0'
         value: 16
@@ -31,7 +31,7 @@ syscfg.defs:
     BUTTON_2_PIN:
         description: 'Pin for BUTTON2'
         value: 19
-    
+
     LED_0_PIN:
         description: 'Pin for LED0'
         value: 10
@@ -47,7 +47,7 @@ syscfg.defs:
     LED_4_PIN:
         description: 'Pin for LED4'
         value: 17
-        
+
     IOS_CE_PIN:
         description: 'IOS Chip Select'
         value: 3
@@ -60,21 +60,21 @@ syscfg.defs:
     IOS_SCK_PIN:
         description: 'IOS SCK line'
         value: 0
-    
+
     IOS_SCL_PIN:
         description: 'IOS SCL line'
         value: 0
     IOS_SDA_PIN:
         description: 'IOS SDA line'
         value: 1
-    
+
     PDM_CLK_PIN:
         description: 'PDM CLK Pin'
         value: 12
     PDM_DATA_PIN:
         description: 'PDM DATA Pin'
         value: 11
-    
+
     SCARD_SCCCLK_PIN:
         description: 'SCARD SCCCLK Pin'
         value: 8
@@ -84,7 +84,7 @@ syscfg.defs:
     SCARD_SCCRST_PIN:
         description: 'SCARD SCCRST Pin'
         value: 46
-    
+
     ITM_SWO_PIN:
         description: 'ITM Serial Wire Output Pin'
         value: 41
@@ -102,19 +102,20 @@ syscfg.vals:
     UART_0_PIN_RX: 23
     UART_0_PIN_RTS: 37
     UART_0_PIN_CTS: 38
-    
+
     UART_1: 1
     UART_1_PIN_TX: 35
     UART_1_PIN_RX: 36
     UART_1_PIN_RTS: 44
     UART_1_PIN_CTS: 45
-    
+
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
 
 syscfg.vals.BLE_HOST:
-    BLE_HCI_TRANSPORT: apollo3
+    BLE_TRANSPORT_HS: native
+    BLE_TRANSPORT_LL: apollo3
     OS_CPUTIME_FREQ: 32768
     TIMER_0_SOURCE: APOLLO3_TIMER_SOURCE_XT
