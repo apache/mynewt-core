@@ -105,6 +105,17 @@ uint16_t ipc_nrf5340_read_om(int channel, struct os_mbuf *om, uint16_t len);
 uint16_t ipc_nrf5340_available(int channel);
 
 /**
+ * Returns number of continuous data bytes available in IPC ring buffer with
+ * pointer to that data. Should be used only from ipc_nrf5340_recv_cb context.
+ *
+ * @param channel     IPC channel number
+ * @param dptr        Pointer to data buffer
+ *
+ * @return            Number of bytes available in IPC ring buffer
+ */
+uint16_t ipc_nrf5340_available_buf(int channel, void **dptr);
+
+/**
  * Consumes data from IPC ring buffer without copying. Should be used only
  * from ipc_nrf5340_recv_cb context.
  *

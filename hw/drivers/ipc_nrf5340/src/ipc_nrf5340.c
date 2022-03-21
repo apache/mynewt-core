@@ -453,6 +453,24 @@ ipc_nrf5340_available(int channel)
 }
 
 uint16_t
+ipc_nrf5340_available_buf(int channel, void **dptr)
+{
+    struct ipc_shm *shm = &shms[channel];
+    uint16_t head = shm->head;
+    uint16_t tail = shm->tail;
+
+    *dptr = &shm->buf[tail];
+
+    if (head > tail) {
+        return head - tail;
+    } else if (head < tail) {
+        return IPC_BUF_SIZE - tail;
+    }
+
+    return 0;
+}
+
+uint16_t
 ipc_nrf5340_consume(int channel, uint16_t len)
 {
     assert(channel < IPC_MAX_CHANS);
