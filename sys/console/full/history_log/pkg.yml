@@ -27,6 +27,7 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/log/full"
 
 pkg.init:
     console_history_pkg_init: 'MYNEWT_VAL(CONSOLE_HISTORY_LOG_SYSINIT_STAGE)'

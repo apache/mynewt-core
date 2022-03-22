@@ -133,8 +133,8 @@ console_hist_move_to_head(char *line)
     return true;
 }
 
-history_handle_t
-console_history_add(const char *line)
+int
+console_history_add(const char *line, history_handle_t *entry)
 {
     struct console_hist *sh = &console_hist;
     char buf[MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN)];
@@ -142,11 +142,15 @@ console_history_add(const char *line)
 
     len = trim_whitespace(line, buf, sizeof(buf));
     if (len == 0) {
-        return 0;
+        return SYS_EINVAL;
+    }
+
+    if (entry) {
+        *entry = 0;
     }
 
     if (console_hist_move_to_head(buf)) {
-        return 1;
+        return SYS_EALREADY;
     }
 
     strcpy(sh->lines[sh->head], buf);
@@ -154,7 +158,7 @@ console_history_add(const char *line)
     if (!console_hist_is_full()) {
         sh->count++;
     }
-    return 1;
+    return SYS_EOK;
 }
 
 /**
