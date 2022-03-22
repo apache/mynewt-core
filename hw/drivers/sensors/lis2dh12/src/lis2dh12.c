@@ -642,13 +642,18 @@ lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect)
     uint8_t reg;
     int rc;
 
+#if MYNEWT_VAL(LIS2DH12_LIS2DK10_COMPAT)
     rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG0, &reg, 1);
     if (rc) {
         goto err;
     }
-
     reg &= ~LIS2DH12_CTRL_REG0_SPD;
     reg |= (disconnect ? LIS2DH12_CTRL_REG0_SPD : 0);
+#else
+    reg = 0;
+    reg |= ((disconnect ? LIS2DH12_CTRL_REG0_SPD : 0) |
+            LIS2DH12_CTRL_REG0_CORR_OP);
+#endif
 
     rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG0, &reg, 1);
 
