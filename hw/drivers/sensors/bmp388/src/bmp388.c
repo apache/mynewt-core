@@ -2771,7 +2771,7 @@ bmp388_run_self_test(struct bmp388 *bmp388, int *result)
         return rc;
     }
 
-    if (chip_id != BMP3_CHIP_ID) {
+    if ((chip_id != BMP3_CHIP_ID) && (chip_id != BMP390_CHIP_ID)) {
         *result = -1;
         rc = SYS_EINVAL;
         BMP388_LOG_ERROR("******self_test gets BMP388 chipID failed 0x%x\n", chip_id);
@@ -3384,7 +3384,7 @@ bmp388_hybrid_read(struct sensor *sensor,
     os_time_t time_ticks;
     os_time_t stop_ticks = 0;
     uint16_t try_count;
-    
+
 #if MYNEWT_VAL(BMP388_FIFO_ENABLE)
     /* FIFO object to be assigned to device structure */
     struct bmp3_fifo fifo;
@@ -3417,7 +3417,7 @@ bmp388_hybrid_read(struct sensor *sensor,
     }
 
     bmp388 = (struct bmp388 *)SENSOR_GET_DEVICE(sensor);
-    
+
     cfg = &bmp388->cfg;
 
     if (cfg->read_mode.mode != BMP388_READ_M_HYBRID) {
@@ -3434,12 +3434,12 @@ bmp388_hybrid_read(struct sensor *sensor,
             goto error;
         }
 
-        rc = bmp3_fifo_flush(&bmp388->bmp3_dev); 
+        rc = bmp3_fifo_flush(&bmp388->bmp3_dev);
         if(rc) {
             BMP388_LOG_ERROR("fifo flush failed, error=0x%02x\n", rc);
             goto error;
         }
-        
+
         rc = bmp388_set_fifo_cfg(bmp388, cfg->fifo_mode, cfg->fifo_threshold);
         if(rc) {
             BMP388_LOG_ERROR("set fifo failed, error=0x%02x\n", rc);
@@ -3459,14 +3459,14 @@ bmp388_hybrid_read(struct sensor *sensor,
 #endif
         bmp388->bmp388_cfg_complete = true;
     }
-     
-    
+
+
 #if MYNEWT_VAL(BMP388_FIFO_ENABLE)
     bmp388->bmp3_dev.fifo = &fifo;
 
     fifo.data.req_frames = bmp388->bmp3_dev.fifo_watermark_level;
 #endif
-    
+
     if (time_ms != 0) {
         if (time_ms > BMP388_MAX_STREAM_MS) {
             time_ms = BMP388_MAX_STREAM_MS;
@@ -3509,7 +3509,7 @@ bmp388_hybrid_read(struct sensor *sensor,
         BMP388_LOG_ERROR("*****BMP388 FIFO READ FAILED\n");
         goto error;
     }
-   
+
 #if MYNEWT_VAL(BMP388_INT_ENABLE)
     rc = bmp388_clear_int(bmp388);
     if (rc) {
@@ -3525,7 +3525,7 @@ bmp388_hybrid_read(struct sensor *sensor,
     }
 
     rc = bmp3_extract_fifo_data(sensor_data, &bmp388->bmp3_dev);
-    
+
     if (fifo.data.frame_not_available) {
         /* No valid frame read */
         BMP388_LOG_ERROR("*****No valid Fifo Frames %d\n", rc);
@@ -3538,7 +3538,7 @@ bmp388_hybrid_read(struct sensor *sensor,
 
         for(i = 0; i < frame_length; i++) {
             rc = bmp388_do_report(sensor, sensor_type, read_func, read_arg, &sensor_data[i]);
-            
+
             if(rc) {
                 BMP388_LOG_ERROR("*****BMP388_DO_REPORT FAILED %d\n", rc);
                 goto error;
@@ -3554,7 +3554,7 @@ bmp388_hybrid_read(struct sensor *sensor,
 #else /* FIFO NOT ENABLED */
     if (bmp388->cfg.fifo_mode == BMP388_FIFO_M_BYPASS) {
         /* make data is available */
-        try_count = 5; 
+        try_count = 5;
 
 
         do {
@@ -3568,7 +3568,7 @@ bmp388_hybrid_read(struct sensor *sensor,
                     (bmp388->bmp3_dev.status.sensor.drdy_temp)) {
                 break;
             }
-#endif       
+#endif
             delay_msec(2);
 #if FIFOPARSE_DEBUG
             BMP388_LOG_ERROR("*****status %d\n", rc);
@@ -3594,7 +3594,7 @@ bmp388_hybrid_read(struct sensor *sensor,
         BMP388_LOG_INFO("stream time expired\n");
         BMP388_LOG_INFO("you can make BMP388_MAX_STREAM_MS bigger to extend stream time duration\n");
         goto error;
-    } 
+    }
 
     return rc;
 
