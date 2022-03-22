@@ -123,8 +123,8 @@ move(const char *p, history_find_type_t search_type)
     }
 }
 
-static history_handle_t
-console_history_add_to_cache(const char *line)
+static int
+console_history_add_to_cache(const char *line, history_handle_t *entry)
 {
     char *cache_end = history_cache + history_ptr;
     /* Let p1 point to last null-terminator */
@@ -227,7 +227,10 @@ console_history_add_to_cache(const char *line)
         p1 = NEXT_PTR(p1);
     }
 
-    return result;
+    if (entry) {
+        *entry = result;
+    }
+    return 0;
 }
 
 /*
@@ -246,24 +249,24 @@ history_cache_from_log(struct log *log, struct log_offset *log_offset,
     if (hdr->ue_module == MYNEWT_VAL(CONSOLE_HISTORY_LOG_MODULE)) {
         log_read_body(log, dptr, line, 0, len);
         line[len] = '\0';
-        (void)console_history_add_to_cache(line);
+        (void)console_history_add_to_cache(line, NULL);
     }
 
     return 0;
 }
 
-history_handle_t
-console_history_add(const char *line)
+int
+console_history_add(const char *line, history_handle_t *entry)
 {
-    history_handle_t added_line;
+    int rc;
 
-    added_line = console_history_add_to_cache(line);
+    rc = console_history_add_to_cache(line, entry);
 
-    if (added_line > 0 && history_log) {
+    if (rc == 0 && history_log) {
         log_printf(history_log, MYNEWT_VAL(CONSOLE_HISTORY_LOG_MODULE),
                    LOG_LEVEL_MAX, line);
     }
-    return added_line;
+    return rc;
 }
 
 int
