@@ -76,6 +76,10 @@ syscfg.defs:
         description: 'Enables SPI interface support, when set to 0 code size will be reduced'
         value: 1
 
+    LIS2DH12_LIS2DK10_COMPAT:
+        description: 'Enable driver compatibility with LIS2DK10'
+        value: 0
+
 syscfg.restrictions:
     - "(LIS2DH12_ENABLE_I2C == 1) || (LIS2DH12_ENABLE_SPI == 1)"
 
