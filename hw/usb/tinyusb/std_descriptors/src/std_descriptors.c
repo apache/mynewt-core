@@ -267,7 +267,7 @@ const uint8_t desc_configuration[] = {
 
 #if CFG_TUD_MSC
     /* TODO: MSC not handled yet */
-    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, MSC_IF_STR_IX, EPNUM_MSC_OUT, EPNUM_MSC_IN,
+    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, MSC_IF_STR_IX, USBD_MSC_DATA_OUT_EP, USBD_MSC_DATA_IN_EP,
                        (CFG_TUSB_RHPORT0_MODE & OPT_MODE_HIGH_SPEED) ? 512 : 64),
 #endif
 
