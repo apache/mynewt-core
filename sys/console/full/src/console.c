@@ -1187,7 +1187,7 @@ console_handle_char(uint8_t byte)
                 console_filter_out('\n');
             }
             if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none)) {
-                console_history_add(input->line);
+                console_history_add(input->line, NULL);
                 history_line = 0;
                 if (MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH)) {
                     trailing_selection = 0;

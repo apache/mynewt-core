@@ -44,12 +44,13 @@ typedef intptr_t history_handle_t;
  * Implemented by history provider.
  *
  * @param line text to add to history
+ * @param entry pointer to variable that will receive history entry
  *
- * @return handle to new entry added to history
+ * @return SYS_EOK - if line was added
  *         SYS_EINVAL - line was empty or null
  *         SYS_EALREADY - line was already at the end of history
  */
-history_handle_t console_history_add(const char *line);
+int console_history_add(const char *line, history_handle_t *entry);
 
 /**
  * Finds element in history.
