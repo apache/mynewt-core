@@ -25,7 +25,7 @@ syscfg.defs:
     USBD_TASK_PRIORITY:
         description: >
             USBD task priority
-        value: 'OS_TASK_PRI_HIGHEST + 2'
+        value: raw("OS_TASK_PRI_HIGHEST + 2")
     USBD_STACK_SIZE:
         description: >
             Stack size for usbd task
