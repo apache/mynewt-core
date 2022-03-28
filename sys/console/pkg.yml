@@ -24,7 +24,7 @@ pkg.keywords:
 
 pkg.deps.'CONSOLE_MODE=="full"':
     - "@apache-mynewt-core/sys/console/full"
-pkg.deps.'CONSOLE_MODE=="minimal":
+pkg.deps.'CONSOLE_MODE=="minimal"':
     - "@apache-mynewt-core/sys/console/minimal"
-pkg.deps.'CONSOLE_MODE=="stub":
+pkg.deps.'CONSOLE_MODE=="stub"':
     - "@apache-mynewt-core/sys/console/stub"
