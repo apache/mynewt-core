@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -83,6 +85,20 @@ typedef struct
     nrf_twi_frequency_t frequency;          ///< TWI frequency.
     uint8_t             interrupt_priority; ///< Interrupt priority.
     bool                hold_bus_uninit;    ///< Hold pull up state on GPIO pins after uninit.
+    bool                skip_gpio_cfg;      ///< Skip GPIO configuration of pins.
+                                            /**< When set to true, the driver does not modify
+                                             *   any GPIO parameters of the used pins. Those
+                                             *   parameters are supposed to be configured
+                                             *   externally before the driver is initialized. */
+    bool                skip_psel_cfg;      ///< Skip pin selection configuration.
+                                            /**< When set to true, the driver does not modify
+                                             *   pin select registers in the peripheral.
+                                             *   Those registers are supposed to be set up
+                                             *   externally before the driver is initialized.
+                                             *   @note When both GPIO configuration and pin
+                                             *   selection are to be skipped, the structure
+                                             *   fields that specify pins can be omitted,
+                                             *   as they are ignored anyway. */
 } nrfx_twi_config_t;
 
 /**

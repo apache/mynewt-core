@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2013 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2013 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -119,9 +121,67 @@ typedef struct
     nrfx_drv_state_t           state;           //!< driver initialization state.
     volatile nrfx_spis_state_t spi_state;       //!< SPI slave state.
     void *                     p_context;       //!< Context set on initialization.
+    bool                       skip_gpio_cfg;
 } spis_cb_t;
 
 static spis_cb_t m_cb[NRFX_SPIS_ENABLED_COUNT];
+
+static void configure_pins(NRF_SPIS_Type *            p_spis,
+                           nrfx_spis_config_t const * p_config)
+{
+    if (!p_config->skip_gpio_cfg)
+    {
+        nrf_gpio_cfg(p_config->sck_pin,
+                     NRF_GPIO_PIN_DIR_INPUT,
+                     NRF_GPIO_PIN_INPUT_CONNECT,
+                     NRF_GPIO_PIN_NOPULL,
+                     NRF_GPIO_PIN_S0S1,
+                     NRF_GPIO_PIN_NOSENSE);
+
+        if (p_config->mosi_pin != NRFX_SPIS_PIN_NOT_USED)
+        {
+            nrf_gpio_cfg(p_config->mosi_pin,
+                         NRF_GPIO_PIN_DIR_INPUT,
+                         NRF_GPIO_PIN_INPUT_CONNECT,
+                         NRF_GPIO_PIN_NOPULL,
+                         NRF_GPIO_PIN_S0S1,
+                         NRF_GPIO_PIN_NOSENSE);
+        }
+
+        if (p_config->miso_pin != NRFX_SPIS_PIN_NOT_USED)
+        {
+            nrf_gpio_cfg(p_config->miso_pin,
+                         NRF_GPIO_PIN_DIR_INPUT,
+                         NRF_GPIO_PIN_INPUT_CONNECT,
+                         NRF_GPIO_PIN_NOPULL,
+                         p_config->miso_drive,
+                         NRF_GPIO_PIN_NOSENSE);
+        }
+
+        nrf_gpio_cfg(p_config->csn_pin,
+                     NRF_GPIO_PIN_DIR_INPUT,
+                     NRF_GPIO_PIN_INPUT_CONNECT,
+                     p_config->csn_pullup,
+                     NRF_GPIO_PIN_S0S1,
+                     NRF_GPIO_PIN_NOSENSE);
+    }
+
+    if (!p_config->skip_psel_cfg)
+    {
+        uint32_t mosi_pin = (p_config->mosi_pin != NRFX_SPIS_PIN_NOT_USED)
+                            ? p_config->mosi_pin
+                            : NRF_SPIS_PIN_NOT_CONNECTED;
+        uint32_t miso_pin = (p_config->miso_pin != NRFX_SPIS_PIN_NOT_USED)
+                            ? p_config->miso_pin
+                            : NRF_SPIS_PIN_NOT_CONNECTED;
+
+        nrf_spis_pins_set(p_spis,
+                          p_config->sck_pin,
+                          mosi_pin,
+                          miso_pin,
+                          p_config->csn_pin);
+    }
+}
 
 nrfx_err_t nrfx_spis_init(nrfx_spis_t const *        p_instance,
                           nrfx_spis_config_t const * p_config,
@@ -178,55 +238,9 @@ nrfx_err_t nrfx_spis_init(nrfx_spis_t const *        p_instance,
     }
 #endif // NRFX_CHECK(NRFX_PRS_ENABLED)
 
-    // Configure the SPI pins for input.
-    uint32_t mosi_pin;
-    uint32_t miso_pin;
+    p_cb->skip_gpio_cfg = p_config->skip_gpio_cfg;
 
-    if (p_config->miso_pin != NRFX_SPIS_PIN_NOT_USED)
-    {
-        nrf_gpio_cfg(p_config->miso_pin,
-                     NRF_GPIO_PIN_DIR_INPUT,
-                     NRF_GPIO_PIN_INPUT_CONNECT,
-                     NRF_GPIO_PIN_NOPULL,
-                     p_config->miso_drive,
-                     NRF_GPIO_PIN_NOSENSE);
-        miso_pin = p_config->miso_pin;
-    }
-    else
-    {
-        miso_pin = NRF_SPIS_PIN_NOT_CONNECTED;
-    }
-
-    if (p_config->mosi_pin != NRFX_SPIS_PIN_NOT_USED)
-    {
-        nrf_gpio_cfg(p_config->mosi_pin,
-                     NRF_GPIO_PIN_DIR_INPUT,
-                     NRF_GPIO_PIN_INPUT_CONNECT,
-                     NRF_GPIO_PIN_NOPULL,
-                     NRF_GPIO_PIN_S0S1,
-                     NRF_GPIO_PIN_NOSENSE);
-        mosi_pin = p_config->mosi_pin;
-    }
-    else
-    {
-        mosi_pin = NRF_SPIS_PIN_NOT_CONNECTED;
-    }
-
-    nrf_gpio_cfg(p_config->csn_pin,
-                 NRF_GPIO_PIN_DIR_INPUT,
-                 NRF_GPIO_PIN_INPUT_CONNECT,
-                 p_config->csn_pullup,
-                 NRF_GPIO_PIN_S0S1,
-                 NRF_GPIO_PIN_NOSENSE);
-
-    nrf_gpio_cfg(p_config->sck_pin,
-                 NRF_GPIO_PIN_DIR_INPUT,
-                 NRF_GPIO_PIN_INPUT_CONNECT,
-                 NRF_GPIO_PIN_NOPULL,
-                 NRF_GPIO_PIN_S0S1,
-                 NRF_GPIO_PIN_NOSENSE);
-
-    nrf_spis_pins_set(p_spis, p_config->sck_pin, mosi_pin, miso_pin, p_config->csn_pin);
+    configure_pins(p_spis, p_config);
 
     nrf_spis_rx_buffer_set(p_spis, NULL, 0);
     nrf_spis_tx_buffer_set(p_spis, NULL, 0);
@@ -303,19 +317,22 @@ void nrfx_spis_uninit(nrfx_spis_t const * p_instance)
     nrf_spis_int_disable(p_spis, DISABLE_ALL);
     #undef  DISABLE_ALL
 
-    nrf_gpio_cfg_default(nrf_spis_sck_pin_get(p_spis));
-    nrf_gpio_cfg_default(nrf_spis_csn_pin_get(p_spis));
-
-    uint32_t miso_pin = nrf_spis_miso_pin_get(p_spis);
-    if (miso_pin != NRF_SPIS_PIN_NOT_CONNECTED)
+    if (!p_cb->skip_gpio_cfg)
     {
-        nrf_gpio_cfg_default(miso_pin);
-    }
+        nrf_gpio_cfg_default(nrf_spis_sck_pin_get(p_spis));
+        nrf_gpio_cfg_default(nrf_spis_csn_pin_get(p_spis));
 
-    uint32_t mosi_pin = nrf_spis_mosi_pin_get(p_spis);
-    if (mosi_pin != NRF_SPIS_PIN_NOT_CONNECTED)
-    {
-        nrf_gpio_cfg_default(mosi_pin);
+        uint32_t miso_pin = nrf_spis_miso_pin_get(p_spis);
+        if (miso_pin != NRF_SPIS_PIN_NOT_CONNECTED)
+        {
+            nrf_gpio_cfg_default(miso_pin);
+        }
+
+        uint32_t mosi_pin = nrf_spis_mosi_pin_get(p_spis);
+        if (mosi_pin != NRF_SPIS_PIN_NOT_CONNECTED)
+        {
+            nrf_gpio_cfg_default(mosi_pin);
+        }
     }
 
 #if NRFX_CHECK(NRFX_PRS_ENABLED)

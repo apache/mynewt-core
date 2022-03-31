@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -94,16 +96,26 @@ typedef struct
     uint8_t output_pins[NRF_PWM_CHANNEL_COUNT]; ///< Pin numbers for individual output channels (optional).
                                                 /**< Use @ref NRFX_PWM_PIN_NOT_USED
                                                  *   if a given output channel is not needed. */
-    uint8_t            irq_priority; ///< Interrupt priority.
-    nrf_pwm_clk_t      base_clock;   ///< Base clock frequency.
-    nrf_pwm_mode_t     count_mode;   ///< Operating mode of the pulse generator counter.
-    uint16_t           top_value;    ///< Value up to which the pulse generator counter counts.
-    nrf_pwm_dec_load_t load_mode;    ///< Mode of loading sequence data from RAM.
-    nrf_pwm_dec_step_t step_mode;    ///< Mode of advancing the active sequence.
-    bool               skip_gpio_cfg; ///< Skip the GPIO configuration
-                                      /**< When this flag is set, the user is responsible for
-                                       *   providing the proper configuration of the output pins,
-                                       *   as the driver does not touch it at all. */
+    uint8_t            irq_priority;  ///< Interrupt priority.
+    nrf_pwm_clk_t      base_clock;    ///< Base clock frequency.
+    nrf_pwm_mode_t     count_mode;    ///< Operating mode of the pulse generator counter.
+    uint16_t           top_value;     ///< Value up to which the pulse generator counter counts.
+    nrf_pwm_dec_load_t load_mode;     ///< Mode of loading sequence data from RAM.
+    nrf_pwm_dec_step_t step_mode;     ///< Mode of advancing the active sequence.
+    bool               skip_gpio_cfg; ///< Skip GPIO configuration of pins.
+                                      /**< When set to true, the driver does not modify
+                                       *   any GPIO parameters of the used pins. Those
+                                       *   parameters are supposed to be configured
+                                       *   externally before the driver is initialized. */
+    bool               skip_psel_cfg; ///< Skip pin selection configuration.
+                                      /**< When set to true, the driver does not modify
+                                       *   pin select registers in the peripheral.
+                                       *   Those registers are supposed to be set up
+                                       *   externally before the driver is initialized.
+                                       *   @note When both GPIO configuration and pin
+                                       *   selection are to be skipped, the structure
+                                       *   fields that specify pins can be omitted,
+                                       *   as they are ignored anyway. */
 } nrfx_pwm_config_t;
 
 /**

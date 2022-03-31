@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2017 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -77,6 +79,24 @@ extern "C" {
  * the whole analyzed code.
  */
 #define NRFX_CHECK(module_enabled)  (module_enabled)
+
+/**
+ * @brief Macro for creating unsigned integer with bit position @p x set.
+ *
+ * @param[in] x Bit position to be set.
+ *
+ * @return Unsigned integer with requested bit position set.
+ */
+#define NRFX_BIT(x) (1UL << (x))
+
+/**
+ * @brief Macro for returning bit mask or 0 if @p x is 0.
+ *
+ * @param[in] x Bit mask size. Bit mask has bits 0 through x-1 (inclusive) set.
+ *
+ * @return Bit mask.
+ */
+#define NRFX_BIT_MASK(x) (NRFX_BIT(x) - 1UL)
 
 /**
  * @brief Macro for concatenating two tokens in macro expansion.

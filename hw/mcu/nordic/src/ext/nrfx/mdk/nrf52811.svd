@@ -8,7 +8,9 @@
   <version>1</version>
   <description>nRF52811 reference description for radio MCU with ARM 32-bit Cortex-M4 Microcontroller </description>
   <licenseText>
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.\n
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.\n
+\n
+SPDX-License-Identifier: BSD-3-Clause\n
 \n
 Redistribution and use in source and binary forms, with or without\n
 modification, are permitted provided that the following conditions are met:\n
@@ -403,7 +405,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Slope definition A0</description>
             <addressOffset>0x000</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000320</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>A</name>
@@ -418,7 +420,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Slope definition A1</description>
             <addressOffset>0x004</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000343</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>A</name>
@@ -433,7 +435,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Slope definition A2</description>
             <addressOffset>0x008</addressOffset>
             <access>read-only</access>
-            <resetValue>0x0000035D</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>A</name>
@@ -448,7 +450,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Slope definition A3</description>
             <addressOffset>0x00C</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000400</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>A</name>
@@ -463,7 +465,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Slope definition A4</description>
             <addressOffset>0x010</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000452</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>A</name>
@@ -478,7 +480,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Slope definition A5</description>
             <addressOffset>0x014</addressOffset>
             <access>read-only</access>
-            <resetValue>0x0000037B</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>A</name>
@@ -493,7 +495,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Y-intercept B0</description>
             <addressOffset>0x018</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00003FCC</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>B</name>
@@ -508,7 +510,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Y-intercept B1</description>
             <addressOffset>0x01C</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00003F98</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>B</name>
@@ -523,7 +525,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Y-intercept B2</description>
             <addressOffset>0x020</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00003F98</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>B</name>
@@ -538,7 +540,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Y-intercept B3</description>
             <addressOffset>0x024</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000012</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>B</name>
@@ -553,7 +555,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Y-intercept B4</description>
             <addressOffset>0x028</addressOffset>
             <access>read-only</access>
-            <resetValue>0x0000004D</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>B</name>
@@ -568,7 +570,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Y-intercept B5</description>
             <addressOffset>0x02C</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00003E10</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>B</name>
@@ -583,7 +585,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Segment end T0</description>
             <addressOffset>0x030</addressOffset>
             <access>read-only</access>
-            <resetValue>0x000000E2</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>T</name>
@@ -598,7 +600,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Segment end T1</description>
             <addressOffset>0x034</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000000</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>T</name>
@@ -613,7 +615,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Segment end T2</description>
             <addressOffset>0x038</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000014</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>T</name>
@@ -628,7 +630,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Segment end T3</description>
             <addressOffset>0x03C</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000019</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>T</name>
@@ -643,7 +645,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <description>Segment end T4</description>
             <addressOffset>0x040</addressOffset>
             <access>read-only</access>
-            <resetValue>0x00000050</resetValue>
+            <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>T</name>
@@ -720,6 +722,23 @@ POSSIBILITY OF SUCH DAMAGE.\n
           </fields>
         </register>
         <register>
+          <dim>0x8</dim>
+          <dimIncrement>0x4</dimIncrement>
+          <name>NRFMDK[%s]</name>
+          <description>Description collection: Reserved for Nordic MDK</description>
+          <addressOffset>0x100</addressOffset>
+          <access>read-write</access>
+          <resetValue>0xFFFFFFFF</resetValue>
+          <fields>
+            <field>
+              <name>NRFMDK</name>
+              <description>Reserved for Nordic MDK</description>
+              <lsb>0</lsb>
+              <msb>31</msb>
+            </field>
+          </fields>
+        </register>
+        <register>
           <dim>0x2</dim>
           <dimIncrement>0x4</dimIncrement>
           <name>PSELRESET[%s]</name>
@@ -769,8 +788,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Disabled</name>
-                  <description>Disable</description>
+                  <description>Hardware disable of access port protection for devices where access port protection is controlled by hardware</description>
                   <value>0xFF</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>HwDisabled</name>
+                  <description>Hardware disable of access port protection for devices where access port protection is controlled by hardware and software</description>
+                  <value>0x5A</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Enabled</name>
@@ -784,9 +808,69 @@ POSSIBILITY OF SUCH DAMAGE.\n
       </registers>
     </peripheral>
     <peripheral>
+      <name>APPROTECT</name>
+      <description>Access Port Protection</description>
+      <baseAddress>0x40000000</baseAddress>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <groupName>APPROTECT</groupName>
+      <size>0x20</size>
+      <registers>
+        <register>
+          <name>FORCEPROTECT</name>
+          <description>Software force enable APPROTECT mechanism until next reset.</description>
+          <addressOffset>0x550</addressOffset>
+          <access>read-writeonce</access>
+          <resetValue>0xFFFFFFFF</resetValue>
+          <fields>
+            <field>
+              <name>FORCEPROTECT</name>
+              <description>Write 0x0 to force enable APPROTECT mechanism</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <enumeratedValues>
+                <usage>write</usage>
+                <enumeratedValue>
+                  <name>Force</name>
+                  <description>Software force enable APPROTECT mechanism</description>
+                  <value>0x0</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>DISABLE</name>
+          <description>Software disable APPROTECT mechanism</description>
+          <addressOffset>0x558</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DISABLE</name>
+              <description>Software disable APPROTECT mechanism</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>SwDisable</name>
+                  <description>Software disable APPROTECT mechanism</description>
+                  <value>0x5A</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
       <name>BPROT</name>
       <description>Block Protect</description>
       <baseAddress>0x40000000</baseAddress>
+      <alternatePeripheral>APPROTECT</alternatePeripheral>
       <addressBlock>
         <offset>0</offset>
         <size>0x1000</size>
@@ -1708,7 +1792,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <name>CLOCK</name>
       <description>Clock control</description>
       <baseAddress>0x40000000</baseAddress>
-      <alternatePeripheral>BPROT</alternatePeripheral>
+      <alternatePeripheral>APPROTECT</alternatePeripheral>
       <addressBlock>
         <offset>0</offset>
         <size>0x1000</size>
@@ -2467,7 +2551,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <name>POWER</name>
       <description>Power control</description>
       <baseAddress>0x40000000</baseAddress>
-      <alternatePeripheral>BPROT</alternatePeripheral>
+      <alternatePeripheral>APPROTECT</alternatePeripheral>
       <addressBlock>
         <offset>0</offset>
         <size>0x1000</size>
@@ -9890,13 +9974,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_EDEND</name>
-          <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register</description>
+          <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register.</description>
           <addressOffset>0x13C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_EDEND</name>
-              <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register</description>
+              <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -10123,14 +10207,40 @@ POSSIBILITY OF SUCH DAMAGE.\n
           </fields>
         </register>
         <register>
+          <name>EVENTS_SYNC</name>
+          <description>Preamble indicator</description>
+          <addressOffset>0x168</addressOffset>
+          <access>read-write</access>
+          <fields>
+            <field>
+              <name>EVENTS_SYNC</name>
+              <description>Preamble indicator</description>
+              <lsb>0</lsb>
+              <msb>0</msb>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>NotGenerated</name>
+                  <description>Event not generated</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Generated</name>
+                  <description>Event generated</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
           <name>EVENTS_PHYEND</name>
-          <description>Generated when last bit is sent on air</description>
+          <description>Generated when last bit is sent on air, or received from air</description>
           <addressOffset>0x16C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_PHYEND</name>
-              <description>Generated when last bit is sent on air</description>
+              <description>Generated when last bit is sent on air, or received from air</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -11098,6 +11208,33 @@ POSSIBILITY OF SUCH DAMAGE.\n
               </enumeratedValues>
             </field>
             <field>
+              <name>SYNC</name>
+              <description>Write '1' to enable interrupt for event SYNC</description>
+              <lsb>26</lsb>
+              <msb>26</msb>
+              <enumeratedValues>
+                <usage>read</usage>
+                <enumeratedValue>
+                  <name>Disabled</name>
+                  <description>Read: Disabled</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Enabled</name>
+                  <description>Read: Enabled</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+              <enumeratedValues>
+                <usage>write</usage>
+                <enumeratedValue>
+                  <name>Set</name>
+                  <description>Enable</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
               <name>PHYEND</name>
               <description>Write '1' to enable interrupt for event PHYEND</description>
               <lsb>27</lsb>
@@ -11727,6 +11864,33 @@ POSSIBILITY OF SUCH DAMAGE.\n
               </enumeratedValues>
             </field>
             <field>
+              <name>SYNC</name>
+              <description>Write '1' to disable interrupt for event SYNC</description>
+              <lsb>26</lsb>
+              <msb>26</msb>
+              <enumeratedValues>
+                <usage>read</usage>
+                <enumeratedValue>
+                  <name>Disabled</name>
+                  <description>Read: Disabled</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Enabled</name>
+                  <description>Read: Enabled</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+              <enumeratedValues>
+                <usage>write</usage>
+                <enumeratedValue>
+                  <name>Clear</name>
+                  <description>Disable</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
               <name>PHYEND</name>
               <description>Write '1' to disable interrupt for event PHYEND</description>
               <lsb>27</lsb>
@@ -11882,12 +12046,12 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>LR125kbit</name>
-                  <description>Frame is received at 125kbps</description>
+                  <description>Frame is received at 125 kbps</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>LR500kbit</name>
-                  <description>Frame is received at 500kbps</description>
+                  <description>Frame is received at 500 kbps</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -12014,7 +12178,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>MAP</name>
-              <description>Channel map selection.</description>
+              <description>Channel map selection</description>
               <lsb>8</lsb>
               <msb>8</msb>
               <enumeratedValues>
@@ -12157,19 +12321,19 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>LFLEN</name>
-              <description>Length on air of LENGTH field in number of bits.</description>
+              <description>Length on air of LENGTH field in number of bits</description>
               <lsb>0</lsb>
               <msb>3</msb>
             </field>
             <field>
               <name>S0LEN</name>
-              <description>Length on air of S0 field in number of bytes.</description>
+              <description>Length on air of S0 field in number of bytes</description>
               <lsb>8</lsb>
               <msb>8</msb>
             </field>
             <field>
               <name>S1LEN</name>
-              <description>Length on air of S1 field in number of bits.</description>
+              <description>Length on air of S1 field in number of bits</description>
               <lsb>16</lsb>
               <msb>19</msb>
             </field>
@@ -12579,7 +12743,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>LEN</name>
-              <description>CRC length in number of bytes.</description>
+              <description>CRC length in number of bytes For MODE Ble_LR125Kbit and Ble_LR500Kbit, only LEN set to 3 is supported</description>
               <lsb>0</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -12667,7 +12831,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>TIFS</name>
-              <description>Interframe spacing in us</description>
+              <description>Interframe spacing in us.</description>
               <lsb>0</lsb>
               <msb>9</msb>
             </field>
@@ -12681,7 +12845,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>RSSISAMPLE</name>
-              <description>RSSI sample</description>
+              <description>RSSI sample.</description>
               <lsb>0</lsb>
               <msb>6</msb>
             </field>
@@ -13057,7 +13221,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Fast</name>
-                  <description>Fast ramp-up (tRXEN,FAST and tTXEN,FAST), see electrical specification for more information</description>
+                  <description>Fast ramp-up (tRXEN,FAST and tTXEN,FAST), see electrical specifications for more information</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -13121,7 +13285,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <name>EDSAMPLE</name>
           <description>IEEE 802.15.4 energy detect level</description>
           <addressOffset>0x668</addressOffset>
-          <access>read-write</access>
+          <access>read-only</access>
           <resetValue>0x00000000</resetValue>
           <fields>
             <field>
@@ -13293,93 +13457,93 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>20</name>
-                  <description>20 in 8us unit (default) Set to 20 if parsed CTETime is larger han 20</description>
+                  <description>20 in 8 us unit (default) Set to 20 if parsed CTETime is larger than 20</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>31</name>
-                  <description>31 in 8us unit</description>
+                  <description>31 in 8 us unit</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>63</name>
-                  <description>63 in 8us unit</description>
+                  <description>63 in 8 us unit</description>
                   <value>2</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>CTEINLINERXMODE1US</name>
-              <description>Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set</description>
+              <description>Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set.</description>
               <lsb>10</lsb>
               <msb>12</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500ns</name>
-                  <description>0.5us</description>
+                  <description>0.5 us</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>250ns</name>
-                  <description>0.25us</description>
+                  <description>0.25 us</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125ns</name>
-                  <description>0.125us</description>
+                  <description>0.125 us</description>
                   <value>6</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>CTEINLINERXMODE2US</name>
-              <description>Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set</description>
+              <description>Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set.</description>
               <lsb>13</lsb>
               <msb>15</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500ns</name>
-                  <description>0.5us</description>
+                  <description>0.5 us</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>250ns</name>
-                  <description>0.25us</description>
+                  <description>0.25 us</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125ns</name>
-                  <description>0.125us</description>
+                  <description>0.125 us</description>
                   <value>6</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -13437,17 +13601,17 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -13460,32 +13624,32 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500ns</name>
-                  <description>0.5us</description>
+                  <description>0.5 us</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>250ns</name>
-                  <description>0.25us</description>
+                  <description>0.25 us</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125ns</name>
-                  <description>0.125us</description>
+                  <description>0.125 us</description>
                   <value>6</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -13516,32 +13680,32 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500ns</name>
-                  <description>0.5us</description>
+                  <description>0.5 us</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>250ns</name>
-                  <description>0.25us</description>
+                  <description>0.25 us</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125ns</name>
-                  <description>0.125us</description>
+                  <description>0.125 us</description>
                   <value>6</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -13584,7 +13748,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>SWITCHPATTERN</name>
-              <description>Fill array of GPIO patterns for antenna control</description>
+              <description>Fill array of GPIO patterns for antenna control.</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -28705,7 +28869,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
     </peripheral>
     <peripheral>
       <name>CCM</name>
-      <description>AES CCM Mode Encryption</description>
+      <description>AES CCM mode encryption</description>
       <baseAddress>0x4000F000</baseAddress>
       <alternatePeripheral>AAR</alternatePeripheral>
       <addressBlock>
@@ -28722,13 +28886,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <registers>
         <register>
           <name>TASKS_KSGEN</name>
-          <description>Start generation of key-stream. This operation will stop by itself when completed.</description>
+          <description>Start generation of keystream. This operation will stop by itself when completed.</description>
           <addressOffset>0x000</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_KSGEN</name>
-              <description>Start generation of key-stream. This operation will stop by itself when completed.</description>
+              <description>Start generation of keystream. This operation will stop by itself when completed.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -28806,13 +28970,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_ENDKSGEN</name>
-          <description>Key-stream generation complete</description>
+          <description>Keystream generation complete</description>
           <addressOffset>0x100</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_ENDKSGEN</name>
-              <description>Key-stream generation complete</description>
+              <description>Keystream generation complete</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -29147,7 +29311,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>MODE</name>
-              <description>The mode of operation to be used. The settings in this register apply whenever either the KSGEN or CRYPT tasks are triggered.</description>
+              <description>The mode of operation to be used. Settings in this register apply whenever either the KSGEN task or the CRYPT task is triggered.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -29181,12 +29345,12 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125Kbps</name>
-                  <description>125 Kbps</description>
+                  <description>125 kbps</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500Kbps</name>
-                  <description>500 Kbps</description>
+                  <description>500 kbps</description>
                   <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -29199,12 +29363,12 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Default</name>
-                  <description>Default length. Effective length of LENGTH field in encrypted/decrypted packet is 5 bits. A key-stream for packet payloads up to 27 bytes will be generated.</description>
+                  <description>Default length. Effective length of LENGTH field in encrypted/decrypted packet is 5 bits. A keystream for packet payloads up to 27 bytes will be generated.</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Extended</name>
-                  <description>Extended length. Effective length of LENGTH field in encrypted/decrypted packet is 8 bits. A key-stream for packet payloads up to MAXPACKETSIZE bytes will be generated.</description>
+                  <description>Extended length. Effective length of LENGTH field in encrypted/decrypted packet is 8 bits. A keystream for packet payloads up to MAXPACKETSIZE bytes will be generated.</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -29213,13 +29377,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>CNFPTR</name>
-          <description>Pointer to data structure holding AES key and NONCE vector</description>
+          <description>Pointer to data structure holding the AES key and the NONCE vector</description>
           <addressOffset>0x508</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>CNFPTR</name>
-              <description>Pointer to the data structure holding the AES key and the CCM NONCE vector (see Table 1 CCM data structure overview)</description>
+              <description>Pointer to the data structure holding the AES key and the CCM NONCE vector (see table CCM data structure overview)</description>
               <lsb>0</lsb>
               <msb>31</msb>
             </field>
@@ -29261,7 +29425,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>SCRATCHPTR</name>
-              <description>Pointer to a scratch data area used for temporary storage during key-stream generation,
+              <description>Pointer to a scratch data area used for temporary storage during keystream generation,
         MIC generation and encryption/decryption.</description>
               <lsb>0</lsb>
               <msb>31</msb>
@@ -29270,14 +29434,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>MAXPACKETSIZE</name>
-          <description>Length of key-stream generated when MODE.LENGTH = Extended.</description>
+          <description>Length of keystream generated when MODE.LENGTH = Extended</description>
           <addressOffset>0x518</addressOffset>
           <access>read-write</access>
           <resetValue>0x000000FB</resetValue>
           <fields>
             <field>
               <name>MAXPACKETSIZE</name>
-              <description>Length of key-stream generated when MODE.LENGTH = Extended. This value must be greater or equal to the subsequent packet payload to be encrypted/decrypted.</description>
+              <description>Length of keystream generated when MODE.LENGTH = Extended. This value must be greater than or equal to the subsequent packet payload to be encrypted/decrypted.</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -29292,7 +29456,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>RATEOVERRIDE</name>
-              <description>Data rate override setting.</description>
+              <description>Data rate override setting</description>
               <lsb>0</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -29308,12 +29472,12 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125Kbps</name>
-                  <description>125 Kbps</description>
+                  <description>125 kbps</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500Kbps</name>
-                  <description>500 Kbps</description>
+                  <description>500 kbps</description>
                   <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -31857,7 +32021,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
     </peripheral>
     <peripheral>
       <name>EGU0</name>
-      <description>Event Generator Unit 0</description>
+      <description>Event generator unit 0</description>
       <baseAddress>0x40014000</baseAddress>
       <headerStructName>EGU</headerStructName>
       <addressBlock>
@@ -33130,7 +33294,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
     </peripheral>
     <peripheral derivedFrom="EGU0">
       <name>EGU1</name>
-      <description>Event Generator Unit 1</description>
+      <description>Event generator unit 1</description>
       <baseAddress>0x40015000</baseAddress>
       <interrupt>
         <name>SWI1_EGU1</name>

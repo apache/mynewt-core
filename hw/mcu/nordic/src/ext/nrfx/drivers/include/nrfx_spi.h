@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -86,27 +88,47 @@ enum {
 /** @brief Configuration structure of the SPI master driver instance. */
 typedef struct
 {
-    uint8_t sck_pin;                ///< SCK pin number.
-    uint8_t mosi_pin;               ///< MOSI pin number (optional).
-                                    /**< Set to @ref NRFX_SPI_PIN_NOT_USED
-                                     *   if this signal is not needed. */
-    uint8_t miso_pin;               ///< MISO pin number (optional).
-                                    /**< Set to @ref NRFX_SPI_PIN_NOT_USED
-                                     *   if this signal is not needed. */
-    uint8_t ss_pin;                 ///< Slave Select pin number (optional).
-                                    /**< Set to @ref NRFX_SPI_PIN_NOT_USED
-                                     *   if this signal is not needed. The driver
-                                     *   supports only active low for this signal.
-                                     *   If the signal must be active high,
-                                     *   it must be controlled externally. */
-    uint8_t irq_priority;           ///< Interrupt priority.
-    uint8_t orc;                    ///< Overrun character.
-                                    /**< This character is used when all bytes from the TX buffer are sent,
-                                         but the transfer continues due to RX. */
-    nrf_spi_frequency_t frequency;  ///< SPI frequency.
-    nrf_spi_mode_t      mode;       ///< SPI mode.
-    nrf_spi_bit_order_t bit_order;  ///< SPI bit order.
-    nrf_gpio_pin_pull_t miso_pull;  ///< MISO pull up configuration.
+    uint8_t             sck_pin;       ///< SCK pin number.
+    uint8_t             mosi_pin;      ///< MOSI pin number (optional).
+                                       /**< Set to @ref NRFX_SPI_PIN_NOT_USED
+                                        *   if this signal is not needed. */
+    uint8_t             miso_pin;      ///< MISO pin number (optional).
+                                       /**< Set to @ref NRFX_SPI_PIN_NOT_USED
+                                        *   if this signal is not needed. */
+    uint8_t             ss_pin;        ///< Slave Select pin number (optional).
+                                       /**< Set to @ref NRFX_SPI_PIN_NOT_USED
+                                        *   if this signal is not needed. The driver
+                                        *   supports only active low for this signal.
+                                        *   If the signal must be active high,
+                                        *   it must be controlled externally.
+                                        *   @note Unlike the other fields that specify
+                                        *   pin numbers, this one cannot be omitted
+                                        *   when both GPIO configuration and pin
+                                        *   selection are to be skipped, as the driver
+                                        *   must control the signal as a regular GPIO. */
+    uint8_t             irq_priority;  ///< Interrupt priority.
+    uint8_t             orc;           ///< Overrun character.
+                                       /**< This character is used when all bytes from the TX buffer are sent,
+                                        *   but the transfer continues due to RX. */
+    nrf_spi_frequency_t frequency;     ///< SPI frequency.
+    nrf_spi_mode_t      mode;          ///< SPI mode.
+    nrf_spi_bit_order_t bit_order;     ///< SPI bit order.
+    nrf_gpio_pin_pull_t miso_pull;     ///< MISO pull up configuration.
+    bool                skip_gpio_cfg; ///< Skip GPIO configuration of pins.
+                                       /**< When set to true, the driver does not modify
+                                        *   any GPIO parameters of the used pins. Those
+                                        *   parameters are supposed to be configured
+                                        *   externally before the driver is initialized. */
+    bool                skip_psel_cfg; ///< Skip pin selection configuration.
+                                       /**< When set to true, the driver does not modify
+                                        *   pin select registers in the peripheral.
+                                        *   Those registers are supposed to be set up
+                                        *   externally before the driver is initialized.
+                                        *   @note When both GPIO configuration and pin
+                                        *   selection are to be skipped, the structure
+                                        *   fields that specify pins can be omitted,
+                                        *   as they are ignored anyway. This does not
+                                        *   apply to the @p ss_pin field. */
 } nrfx_spi_config_t;
 
 /**

@@ -75,17 +75,24 @@ SECTIONS
         KEEP(*(.eh_frame*))
     } > FLASH
 
-    .ARM.extab :
+    .gnu.sgstubs :
+    {
+        . = ALIGN(32);
+    } > FLASH
+    
+
+    .ARM.extab : 
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
     } > FLASH
 
-    __exidx_start = .;
+    
     .ARM.exidx :
     {
+        __exidx_start = .;
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+        __exidx_end = .;
     } > FLASH
-    __exidx_end = .;
 
     . = ALIGN(4);
     __etext = .;

@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2019 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,6 +37,7 @@
 #include <nrfx.h>
 #include <hal/nrf_nvmc.h>
 #include <hal/nrf_ficr.h>
+#include <nrf_erratas.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -260,6 +263,21 @@ void nrfx_nvmc_words_write(uint32_t address, void const * src, uint32_t num_word
 uint16_t nrfx_nvmc_otp_halfword_read(uint32_t address);
 
 /**
+ * @brief Function for reading a 32-bit aligned word from the UICR
+ *
+ * This function should be used to read from the UICR since reading
+ * the flash main memory area straight after reading the UICR results
+ * in undefined behaviour for nRF9160.
+ *
+ * @note See anomaly 7 in the errata document.
+ *
+ * @param address Address to read from. Must be word-aligned.
+ *
+ * @retval The contents at @p address.
+ */
+NRFX_STATIC_INLINE uint32_t nrfx_nvmc_uicr_word_read(uint32_t const volatile *address);
+
+/**
  * @brief Function for getting the total flash size in bytes.
  *
  * @return Flash total size in bytes.
@@ -306,6 +324,17 @@ NRFX_STATIC_INLINE void nrfx_nvmc_icache_disable(void);
 NRFX_STATIC_INLINE bool nrfx_nvmc_write_done_check(void)
 {
     return nrf_nvmc_ready_check(NRF_NVMC);
+}
+
+NRFX_STATIC_INLINE uint32_t nrfx_nvmc_uicr_word_read(uint32_t const volatile *address)
+{
+    uint32_t value = *address;
+
+#if NRF91_ERRATA_7_ENABLE_WORKAROUND
+    __DSB();
+#endif
+
+    return value;
 }
 
 #if defined(NVMC_FEATURE_CACHE_PRESENT)

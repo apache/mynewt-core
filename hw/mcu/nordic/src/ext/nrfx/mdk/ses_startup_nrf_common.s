@@ -246,4 +246,27 @@ Pass_StackPtr:
         //
         bx      LR                      // Return
 
+#ifdef INITIALIZE_USER_SECTIONS
+  .global InitializeUserMemorySections
+  .section .init, "ax"
+  .thumb_func
+InitializeUserMemorySections:
+  ldr r0, =__start_nrf_sections
+  ldr r1, =__start_nrf_sections_run
+  ldr r2, =__end_nrf_sections_run
+  cmp r0, r1
+  beq 2f
+  subs r2, r2, r1
+  beq 2f
+1:
+  ldrb r3, [r0]
+  adds r0, r0, #1
+  strb r3, [r1]
+  adds r1, r1, #1
+  subs r2, r2, #1
+  bne 1b
+2:
+  bx lr
+#endif
+
 /*************************** End of file ****************************/

@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -77,6 +79,8 @@ typedef struct
     bool tx_ready       : 1;
     bool buffers_needed : 1;
     bool buffers_reused : 1;
+    bool skip_gpio_cfg  : 1;
+    bool skip_psel_cfg  : 1;
 
     uint16_t            buffer_size;
     nrfx_i2s_buffers_t  next_buffers;
@@ -87,63 +91,59 @@ static i2s_control_block_t m_cb;
 
 static void configure_pins(nrfx_i2s_config_t const * p_config)
 {
-    uint32_t mck_pin, sdout_pin, sdin_pin;
+    if (!p_config->skip_gpio_cfg)
+    {
+        // Configure pins used by the peripheral:
 
-    // Configure pins used by the peripheral:
-
-    // - SCK and LRCK (required) - depending on the mode of operation these
-    //   pins are configured as outputs (in Master mode) or inputs (in Slave
-    //   mode).
-    if (p_config->mode == NRF_I2S_MODE_MASTER)
-    {
-        nrf_gpio_cfg_output(p_config->sck_pin);
-        nrf_gpio_cfg_output(p_config->lrck_pin);
-    }
-    else
-    {
-        nrf_gpio_cfg_input(p_config->sck_pin,  NRF_GPIO_PIN_NOPULL);
-        nrf_gpio_cfg_input(p_config->lrck_pin, NRF_GPIO_PIN_NOPULL);
-    }
-
-    // - MCK (optional) - always output,
-    if (p_config->mck_pin != NRFX_I2S_PIN_NOT_USED)
-    {
-        mck_pin = p_config->mck_pin;
-        nrf_gpio_cfg_output(mck_pin);
-    }
-    else
-    {
-        mck_pin = NRF_I2S_PIN_NOT_CONNECTED;
-    }
-
-    // - SDOUT (optional) - always output,
-    if (p_config->sdout_pin != NRFX_I2S_PIN_NOT_USED)
-    {
-        sdout_pin = p_config->sdout_pin;
-        nrf_gpio_cfg_output(sdout_pin);
-    }
-    else
-    {
-        sdout_pin = NRF_I2S_PIN_NOT_CONNECTED;
+        // - SCK and LRCK (required) - depending on the mode of operation these
+        //   pins are configured as outputs (in Master mode) or inputs (in Slave
+        //   mode).
+        if (p_config->mode == NRF_I2S_MODE_MASTER)
+        {
+            nrf_gpio_cfg_output(p_config->sck_pin);
+            nrf_gpio_cfg_output(p_config->lrck_pin);
+        }
+        else
+        {
+            nrf_gpio_cfg_input(p_config->sck_pin,  NRF_GPIO_PIN_NOPULL);
+            nrf_gpio_cfg_input(p_config->lrck_pin, NRF_GPIO_PIN_NOPULL);
+        }
+        // - MCK (optional) - always output,
+        if (p_config->mck_pin != NRFX_I2S_PIN_NOT_USED)
+        {
+            nrf_gpio_cfg_output(p_config->mck_pin);
+        }
+        // - SDOUT (optional) - always output,
+        if (p_config->sdout_pin != NRFX_I2S_PIN_NOT_USED)
+        {
+            nrf_gpio_cfg_output(p_config->sdout_pin);
+        }
+        // - SDIN (optional) - always input.
+        if (p_config->sdin_pin != NRFX_I2S_PIN_NOT_USED)
+        {
+            nrf_gpio_cfg_input(p_config->sdin_pin, NRF_GPIO_PIN_NOPULL);
+        }
     }
 
-    // - SDIN (optional) - always input.
-    if (p_config->sdin_pin != NRFX_I2S_PIN_NOT_USED)
+    if (!p_config->skip_psel_cfg)
     {
-        sdin_pin = p_config->sdin_pin;
-        nrf_gpio_cfg_input(sdin_pin, NRF_GPIO_PIN_NOPULL);
-    }
-    else
-    {
-        sdin_pin = NRF_I2S_PIN_NOT_CONNECTED;
-    }
+        uint32_t mck_pin = (p_config->mck_pin != NRFX_I2S_PIN_NOT_USED)
+                           ? p_config->mck_pin
+                           : NRF_I2S_PIN_NOT_CONNECTED;
+        uint32_t sdout_pin = (p_config->sdout_pin != NRFX_I2S_PIN_NOT_USED)
+                             ? p_config->sdout_pin
+                             : NRF_I2S_PIN_NOT_CONNECTED;
+        uint32_t sdin_pin = (p_config->sdin_pin != NRFX_I2S_PIN_NOT_USED)
+                            ? p_config->sdin_pin
+                            : NRF_I2S_PIN_NOT_CONNECTED;
 
-    nrf_i2s_pins_set(NRF_I2S0,
-                     p_config->sck_pin,
-                     p_config->lrck_pin,
-                     mck_pin,
-                     sdout_pin,
-                     sdin_pin);
+        nrf_i2s_pins_set(NRF_I2S0,
+                         p_config->sck_pin,
+                         p_config->lrck_pin,
+                         mck_pin,
+                         sdout_pin,
+                         sdin_pin);
+    }
 }
 
 static void deconfigure_pins(void)
@@ -220,8 +220,11 @@ nrfx_err_t nrfx_i2s_init(nrfx_i2s_config_t const * p_config,
 #if NRF_I2S_HAS_CLKCONFIG
     nrf_i2s_clk_configure(NRF_I2S0, p_config->clksrc, p_config->enable_bypass);
 #endif
+
     configure_pins(p_config);
 
+    m_cb.skip_gpio_cfg = p_config->skip_gpio_cfg;
+    m_cb.skip_psel_cfg = p_config->skip_psel_cfg;
     m_cb.handler = handler;
 
     NRFX_IRQ_PRIORITY_SET(nrfx_get_irq_number(NRF_I2S0), p_config->irq_priority);
@@ -244,17 +247,23 @@ void nrfx_i2s_uninit(void)
 
     nrf_i2s_disable(NRF_I2S0);
 
-    deconfigure_pins();
+    if (!m_cb.skip_gpio_cfg)
+    {
+        deconfigure_pins();
+    }
 
 #if USE_WORKAROUND_FOR_ANOMALY_196
-    // Disabling I2S is insufficient to release pins acquired by the peripheral.
-    // Explicit disconnect is needed.
-    nrf_i2s_pins_set(NRF_I2S0,
-                     NRF_I2S_PIN_NOT_CONNECTED,
-                     NRF_I2S_PIN_NOT_CONNECTED,
-                     NRF_I2S_PIN_NOT_CONNECTED,
-                     NRF_I2S_PIN_NOT_CONNECTED,
-                     NRF_I2S_PIN_NOT_CONNECTED);
+    if (!m_cb.skip_psel_cfg)
+    {
+        // Disabling I2S is insufficient to release pins acquired
+        // by the peripheral. Explicit disconnect is needed.
+        nrf_i2s_pins_set(NRF_I2S0,
+                         NRF_I2S_PIN_NOT_CONNECTED,
+                         NRF_I2S_PIN_NOT_CONNECTED,
+                         NRF_I2S_PIN_NOT_CONNECTED,
+                         NRF_I2S_PIN_NOT_CONNECTED,
+                         NRF_I2S_PIN_NOT_CONNECTED);
+    }
 #endif
 
     m_cb.state = NRFX_DRV_STATE_UNINITIALIZED;

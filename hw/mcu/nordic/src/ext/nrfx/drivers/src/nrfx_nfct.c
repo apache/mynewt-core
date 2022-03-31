@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2018 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -511,21 +513,47 @@ nrfx_err_t nrfx_nfct_tx(nrfx_nfct_data_desc_t const * p_tx_data,
     NRFX_ASSERT(p_tx_data);
     NRFX_ASSERT(p_tx_data->p_data);
 
+    nrfx_err_t err = NRFX_SUCCESS;
+
     if (p_tx_data->data_size == 0)
     {
         return NRFX_ERROR_INVALID_LENGTH;
     }
 
-    nrf_nfct_rxtx_buffer_set(NRF_NFCT, (uint8_t *) p_tx_data->p_data, p_tx_data->data_size);
-    nrf_nfct_tx_bits_set(NRF_NFCT, NRFX_NFCT_BYTES_TO_BITS(p_tx_data->data_size));
-    nrf_nfct_frame_delay_mode_set(NRF_NFCT, (nrf_nfct_frame_delay_mode_t) delay_mode);
-    nrfx_nfct_frame_delay_max_set(false);
+    NRFX_CRITICAL_SECTION_ENTER();
 
-    nrfx_nfct_rxtx_int_enable(NRFX_NFCT_TX_INT_MASK);
-    nrf_nfct_task_trigger(NRF_NFCT, NRF_NFCT_TASK_STARTTX);
+    /* In case when NFC frame transmission has already started, it returns an error. */
+    if (NRFX_NFCT_EVT_ACTIVE(TXFRAMESTART))
+    {
+        err = NRFX_ERROR_BUSY;
+    }
+    else
+    {
+        /* In case when Tx operation was scheduled with delay, stop scheduled Tx operation. */
+#if defined(NRF52_SERIES)
+        *(volatile uint32_t *)0x40005010 = 0x01;
+#elif defined(NRF5340_XXAA_APPLICATION) && defined(NRF_TRUSTZONE_NONSECURE)
+        *(volatile uint32_t *)0x4002D010 = 0x01;
+#elif defined(NRF5340_XXAA_APPLICATION)
+        *(volatile uint32_t *)0x5002D010 = 0x01;
+#endif
+        nrf_nfct_rxtx_buffer_set(NRF_NFCT, (uint8_t *) p_tx_data->p_data, p_tx_data->data_size);
+        nrf_nfct_tx_bits_set(NRF_NFCT, NRFX_NFCT_BYTES_TO_BITS(p_tx_data->data_size));
+        nrf_nfct_frame_delay_mode_set(NRF_NFCT, (nrf_nfct_frame_delay_mode_t) delay_mode);
+        nrfx_nfct_frame_delay_max_set(false);
 
-    NRFX_LOG_INFO("Tx start");
-    return NRFX_SUCCESS;
+        nrfx_nfct_rxtx_int_enable(NRFX_NFCT_TX_INT_MASK);
+        nrf_nfct_task_trigger(NRF_NFCT, NRF_NFCT_TASK_STARTTX);
+    }
+
+    NRFX_CRITICAL_SECTION_EXIT();
+
+    if (err == NRFX_SUCCESS)
+    {
+        NRFX_LOG_INFO("Tx start");
+    }
+
+    return err;
 }
 
 void nrfx_nfct_state_force(nrfx_nfct_state_t state)

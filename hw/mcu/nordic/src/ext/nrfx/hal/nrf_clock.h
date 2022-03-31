@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -82,14 +84,6 @@ extern "C" {
 #define NRF_CLOCK_HAS_HFCLKAUDIO 1
 #else
 #define NRF_CLOCK_HAS_HFCLKAUDIO 0
-#endif
-
-#if (defined(CLOCK_HFCLKCTRL_HCLK_Msk) && !defined(NRF5340_XXAA_NETWORK)) \
-    || defined(__NRFX_DOXYGEN__)
-/** @brief Presence of HFCLK frequency configuration. */
-#define NRF_CLOCK_HAS_HFCLK_DIV 1
-#else
-#define NRF_CLOCK_HAS_HFCLK_DIV 0
 #endif
 
 #if defined(CLOCK_LFCLKALWAYSRUN_ALWAYSRUN_Msk) || defined(__NRFX_DOXYGEN__)
@@ -182,7 +176,7 @@ typedef enum
 #endif
 } nrf_clock_domain_t;
 
-#if NRF_CLOCK_HAS_HFCLK_DIV || NRF_CLOCK_HAS_HFCLK192M
+#if defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT) || NRF_CLOCK_HAS_HFCLK192M
 /**
  * @brief High-frequency clock frequency configuration.
  * @details Used by HFCLKCTRL and HFCLK192MCTRL registers.
@@ -195,7 +189,7 @@ typedef enum
     NRF_CLOCK_HFCLK_DIV_4 = CLOCK_HFCLK192MCTRL_HCLK192M_Div4, /**< Divide HFCLK192M by 4 */
 #endif
 } nrf_clock_hfclk_div_t;
-#endif // NRF_CLOCK_HAS_HFCLK_DIV || NRF_CLOCK_HAS_HFCLK192M
+#endif // defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT) || NRF_CLOCK_HAS_HFCLK192M
 
 /**
  * @brief Trigger status of task LFCLKSTART/HFCLKSTART.
@@ -566,7 +560,7 @@ uint16_t nrf_clock_hfclkaudio_config_get(NRF_CLOCK_Type const * p_reg);
 NRF_STATIC_INLINE void nrf_clock_cal_timer_timeout_set(NRF_CLOCK_Type * p_reg, uint32_t interval);
 #endif
 
-#if NRF_CLOCK_HAS_HFCLK_DIV
+#if defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT)
 /**
  * @brief Function for changing the HFCLK frequency divider.
  *
@@ -918,7 +912,7 @@ uint16_t nrf_clock_hfclkaudio_config_get(NRF_CLOCK_Type const * p_reg)
 }
 #endif
 
-#if NRF_CLOCK_HAS_HFCLK_DIV
+#if defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT)
 NRF_STATIC_INLINE
 void nrf_clock_hfclk_div_set(NRF_CLOCK_Type * p_reg, nrf_clock_hfclk_div_t divider)
 {

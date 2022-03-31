@@ -8,7 +8,9 @@
   <version>1</version>
   <description>nRF52805 reference description for radio MCU with ARM 32-bit Cortex-M4 Microcontroller </description>
   <licenseText>
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.\n
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.\n
+\n
+SPDX-License-Identifier: BSD-3-Clause\n
 \n
 Redistribution and use in source and binary forms, with or without\n
 modification, are permitted provided that the following conditions are met:\n
@@ -715,6 +717,23 @@ POSSIBILITY OF SUCH DAMAGE.\n
           </fields>
         </register>
         <register>
+          <dim>0x8</dim>
+          <dimIncrement>0x4</dimIncrement>
+          <name>NRFMDK[%s]</name>
+          <description>Description collection: Reserved for Nordic MDK</description>
+          <addressOffset>0x100</addressOffset>
+          <access>read-write</access>
+          <resetValue>0xFFFFFFFF</resetValue>
+          <fields>
+            <field>
+              <name>NRFMDK</name>
+              <description>Reserved for Nordic MDK</description>
+              <lsb>0</lsb>
+              <msb>31</msb>
+            </field>
+          </fields>
+        </register>
+        <register>
           <dim>0x2</dim>
           <dimIncrement>0x4</dimIncrement>
           <name>PSELRESET[%s]</name>
@@ -764,8 +783,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Disabled</name>
-                  <description>Disable</description>
+                  <description>Hardware disable of access port protection for devices where access port protection is controlled by hardware</description>
                   <value>0xFF</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>HwDisabled</name>
+                  <description>Hardware disable of access port protection for devices where access port protection is controlled by hardware and software</description>
+                  <value>0x5A</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Enabled</name>
@@ -1692,6 +1716,66 @@ POSSIBILITY OF SUCH DAMAGE.\n
                   <name>Enabled</name>
                   <description>Enabled in debug</description>
                   <value>0</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>APPROTECT</name>
+      <description>Only for emulation on devices that support hardened AP-PROTECT.</description>
+      <baseAddress>0x40000000</baseAddress>
+      <alternatePeripheral>BPROT</alternatePeripheral>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <groupName>APPROTECT</groupName>
+      <size>0x20</size>
+      <registers>
+        <register>
+          <name>FORCEPROTECT</name>
+          <description>Software force enable APPROTECT mechanism until next reset.</description>
+          <addressOffset>0x550</addressOffset>
+          <access>read-writeonce</access>
+          <resetValue>0xFFFFFFFF</resetValue>
+          <fields>
+            <field>
+              <name>FORCEPROTECT</name>
+              <description>Write 0x0 to force enable APPROTECT mechanism</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <enumeratedValues>
+                <usage>write</usage>
+                <enumeratedValue>
+                  <name>Force</name>
+                  <description>Software force enable APPROTECT mechanism</description>
+                  <value>0x0</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>DISABLE</name>
+          <description>Software disable APPROTECT mechanism</description>
+          <addressOffset>0x558</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DISABLE</name>
+              <description>Software disable APPROTECT mechanism</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>SwDisable</name>
+                  <description>Software disable APPROTECT mechanism</description>
+                  <value>0x5A</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>

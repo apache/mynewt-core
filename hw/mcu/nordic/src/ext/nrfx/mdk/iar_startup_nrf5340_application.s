@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2020 ARM Limited. All rights reserved.
+; Copyright (c) 2009-2021 ARM Limited. All rights reserved.
 ; 
 ;     SPDX-License-Identifier: Apache-2.0
 ; 
@@ -93,11 +93,11 @@ __vector_table
         DCD     CLOCK_POWER_IRQHandler
         DCD     0                         ; Reserved
         DCD     0                         ; Reserved
-        DCD     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-        DCD     SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
+        DCD     SERIAL0_IRQHandler
+        DCD     SERIAL1_IRQHandler
         DCD     SPIM4_IRQHandler
-        DCD     SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
-        DCD     SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+        DCD     SERIAL2_IRQHandler
+        DCD     SERIAL3_IRQHandler
         DCD     GPIOTE0_IRQHandler
         DCD     SAADC_IRQHandler
         DCD     TIMER0_IRQHandler
@@ -419,14 +419,14 @@ SPU_IRQHandler
 CLOCK_POWER_IRQHandler
         B .
 
-        PUBWEAK  SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+        PUBWEAK  SERIAL0_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
-SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+SERIAL0_IRQHandler
         B .
 
-        PUBWEAK  SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
+        PUBWEAK  SERIAL1_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
-SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
+SERIAL1_IRQHandler
         B .
 
         PUBWEAK  SPIM4_IRQHandler
@@ -434,14 +434,14 @@ SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
 SPIM4_IRQHandler
         B .
 
-        PUBWEAK  SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
+        PUBWEAK  SERIAL2_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
-SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
+SERIAL2_IRQHandler
         B .
 
-        PUBWEAK  SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+        PUBWEAK  SERIAL3_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
-SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+SERIAL3_IRQHandler
         B .
 
         PUBWEAK  GPIOTE0_IRQHandler

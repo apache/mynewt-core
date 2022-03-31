@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2014 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2014 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -176,6 +178,12 @@ typedef enum
 #if defined(TIMER_INTENSET_COMPARE5_Msk) || defined(__NRFX_DOXYGEN__)
     NRF_TIMER_SHORT_COMPARE5_STOP_MASK = TIMER_SHORTS_COMPARE5_STOP_Msk,   ///< Shortcut for stopping the timer based on compare 5.
 #endif
+#if defined(TIMER_INTENSET_COMPARE6_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_SHORT_COMPARE6_STOP_MASK = TIMER_SHORTS_COMPARE6_STOP_Msk,   ///< Shortcut for stopping the timer based on compare 6.
+#endif
+#if defined(TIMER_INTENSET_COMPARE7_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_SHORT_COMPARE7_STOP_MASK = TIMER_SHORTS_COMPARE7_STOP_Msk,   ///< Shortcut for stopping the timer based on compare 7.
+#endif
     NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK = TIMER_SHORTS_COMPARE0_CLEAR_Msk, ///< Shortcut for clearing the timer based on compare 0.
     NRF_TIMER_SHORT_COMPARE1_CLEAR_MASK = TIMER_SHORTS_COMPARE1_CLEAR_Msk, ///< Shortcut for clearing the timer based on compare 1.
     NRF_TIMER_SHORT_COMPARE2_CLEAR_MASK = TIMER_SHORTS_COMPARE2_CLEAR_Msk, ///< Shortcut for clearing the timer based on compare 2.
@@ -185,6 +193,12 @@ typedef enum
 #endif
 #if defined(TIMER_INTENSET_COMPARE5_Msk) || defined(__NRFX_DOXYGEN__)
     NRF_TIMER_SHORT_COMPARE5_CLEAR_MASK = TIMER_SHORTS_COMPARE5_CLEAR_Msk, ///< Shortcut for clearing the timer based on compare 5.
+#endif
+#if defined(TIMER_INTENSET_COMPARE6_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_SHORT_COMPARE6_CLEAR_MASK = TIMER_SHORTS_COMPARE6_CLEAR_Msk, ///< Shortcut for clearing the timer based on compare 6.
+#endif
+#if defined(TIMER_INTENSET_COMPARE7_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_SHORT_COMPARE7_CLEAR_MASK = TIMER_SHORTS_COMPARE7_CLEAR_Msk, ///< Shortcut for clearing the timer based on compare 7.
 #endif
 } nrf_timer_short_mask_t;
 
@@ -235,6 +249,12 @@ typedef enum
 #if defined(TIMER_INTENSET_COMPARE5_Msk) || defined(__NRFX_DOXYGEN__)
     NRF_TIMER_CC_CHANNEL5,     ///< Timer capture/compare channel 5.
 #endif
+#if defined(TIMER_INTENSET_COMPARE6_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_CC_CHANNEL6,     ///< Timer capture/compare channel 6.
+#endif
+#if defined(TIMER_INTENSET_COMPARE7_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_CC_CHANNEL7,     ///< Timer capture/compare channel 7.
+#endif
 } nrf_timer_cc_channel_t;
 
 /** @brief Timer interrupts. */
@@ -249,6 +269,12 @@ typedef enum
 #endif
 #if defined(TIMER_INTENSET_COMPARE5_Msk) || defined(__NRFX_DOXYGEN__)
     NRF_TIMER_INT_COMPARE5_MASK = TIMER_INTENSET_COMPARE5_Msk, ///< Timer interrupt from compare event on channel 5.
+#endif
+#if defined(TIMER_INTENSET_COMPARE6_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_INT_COMPARE6_MASK = TIMER_INTENSET_COMPARE6_Msk, ///< Timer interrupt from compare event on channel 6.
+#endif
+#if defined(TIMER_INTENSET_COMPARE7_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_INT_COMPARE7_MASK = TIMER_INTENSET_COMPARE7_Msk, ///< Timer interrupt from compare event on channel 7.
 #endif
 } nrf_timer_int_mask_t;
 
@@ -331,6 +357,24 @@ NRF_STATIC_INLINE void nrf_timer_shorts_disable(NRF_TIMER_Type * p_reg,
  */
 NRF_STATIC_INLINE void nrf_timer_shorts_set(NRF_TIMER_Type * p_reg,
                                             uint32_t         mask);
+
+/**
+ * @brief Function for getting COMPARE_CLEAR short mask for the specified channel.
+ *
+ * @param[in] channel Channel.
+ *
+ * @return Short mask.
+ */
+NRF_STATIC_INLINE nrf_timer_short_mask_t nrf_timer_short_compare_clear_get(uint8_t channel);
+
+/**
+ * @brief Function for getting COMPARE_STOP short mask for the specified channel.
+ *
+ * @param[in] channel Channel.
+ *
+ * @return Short mask.
+ */
+NRF_STATIC_INLINE nrf_timer_short_mask_t nrf_timer_short_compare_stop_get(uint8_t channel);
 
 /**
  * @brief Function for enabling the specified interrupts.
@@ -603,6 +647,16 @@ NRF_STATIC_INLINE void nrf_timer_shorts_set(NRF_TIMER_Type * p_reg,
                                             uint32_t         mask)
 {
     p_reg->SHORTS = mask;
+}
+
+NRF_STATIC_INLINE nrf_timer_short_mask_t nrf_timer_short_compare_clear_get(uint8_t channel)
+{
+    return (nrf_timer_short_mask_t)((uint32_t)NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK << channel);
+}
+
+NRF_STATIC_INLINE nrf_timer_short_mask_t nrf_timer_short_compare_stop_get(uint8_t channel)
+{
+    return (nrf_timer_short_mask_t)((uint32_t)NRF_TIMER_SHORT_COMPARE0_STOP_MASK << channel);
 }
 
 NRF_STATIC_INLINE void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,

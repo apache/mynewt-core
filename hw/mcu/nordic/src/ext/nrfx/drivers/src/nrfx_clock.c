@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2016 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -107,6 +109,14 @@ extern bool nrfx_power_irq_enabled;
     NRFX_CLOCK_CONFIG_LF_SRC != LF_SRC_XTAL_LOW && \
     NRFX_CLOCK_CONFIG_LF_SRC != LF_SRC_XTAL_FULL
     #error "Two-stage LFXO start procedure enabled but LFCLK source is not set to LFXO!"
+#endif
+
+#if !defined(NRFX_CLOCK_CONFIG_CT_ENABLED) && NRF_CLOCK_HAS_CALIBRATION_TIMER
+#define NRFX_CLOCK_CONFIG_CT_ENABLED 1
+#endif
+
+#if NRFX_CHECK(NRFX_CLOCK_CONFIG_CT_ENABLED) && !NRF_CLOCK_HAS_CALIBRATION_TIMER
+    #error "Calibration timer is not available in the SoC that is used."
 #endif
 
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)
@@ -431,7 +441,8 @@ nrfx_err_t nrfx_clock_is_calibrating(void)
 
 void nrfx_clock_calibration_timer_start(uint8_t interval)
 {
-#if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED) && NRF_CLOCK_HAS_CALIBRATION_TIMER
+#if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED) && \
+    NRFX_CHECK(NRFX_CLOCK_CONFIG_CT_ENABLED) &&  NRF_CLOCK_HAS_CALIBRATION_TIMER
     nrf_clock_cal_timer_timeout_set(NRF_CLOCK, interval);
     nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_CTTO);
     nrf_clock_int_enable(NRF_CLOCK, NRF_CLOCK_INT_CTTO_MASK);
@@ -443,19 +454,20 @@ void nrfx_clock_calibration_timer_start(uint8_t interval)
 
 void nrfx_clock_calibration_timer_stop(void)
 {
-#if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED) && NRF_CLOCK_HAS_CALIBRATION_TIMER
+#if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED) && \
+    NRFX_CHECK(NRFX_CLOCK_CONFIG_CT_ENABLED) && NRF_CLOCK_HAS_CALIBRATION_TIMER
     nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_CTTO_MASK);
     nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_CTSTOP);
 #endif
 }
 
-#if NRF_CLOCK_HAS_HFCLK_DIV || NRF_CLOCK_HAS_HFCLK192M
+#if defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT) || NRF_CLOCK_HAS_HFCLK192M
 nrfx_err_t nrfx_clock_divider_set(nrf_clock_domain_t domain,
                                   nrf_clock_hfclk_div_t div)
 {
     switch(domain)
     {
-#if NRF_CLOCK_HAS_HFCLK_DIV
+#if defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT)
         case NRF_CLOCK_DOMAIN_HFCLK:
             switch (div)
             {
@@ -568,8 +580,9 @@ void nrfx_clock_irq_handler(void)
     }
 
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)
-#if NRF_CLOCK_HAS_CALIBRATION_TIMER
-    if (nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_CTTO))
+#if NRF_CLOCK_HAS_CALIBRATION_TIMER && NRFX_CHECK(NRFX_CLOCK_CONFIG_CT_ENABLED)
+    if (nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_CTTO) &&
+        nrf_clock_int_enable_check(NRF_CLOCK, NRF_CLOCK_INT_CTTO_MASK))
     {
         nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_CTTO);
         NRFX_LOG_DEBUG("Event: NRF_CLOCK_EVENT_CTTO");
@@ -577,9 +590,10 @@ void nrfx_clock_irq_handler(void)
 
         m_clock_cb.event_handler(NRFX_CLOCK_EVT_CTTO);
     }
-#endif // NRF_CLOCK_HAS_CALIBRATION_TIMER
+#endif // NRF_CLOCK_HAS_CALIBRATION_TIMER && NRFX_CHECK(NRFX_CLOCK_CONFIG_CT_ENABLED)
 
-    if (nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_DONE))
+    if (nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_DONE) &&
+        nrf_clock_int_enable_check(NRF_CLOCK, NRF_CLOCK_INT_DONE_MASK))
     {
 #if NRFX_CHECK(USE_WORKAROUND_FOR_ANOMALY_192)
         *(volatile uint32_t *)0x40000C34 = 0x00000000;

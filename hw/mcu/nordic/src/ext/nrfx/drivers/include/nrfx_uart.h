@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -88,6 +90,20 @@ typedef struct
     nrf_uart_baudrate_t baudrate;           ///< Baud rate.
     uint8_t             interrupt_priority; ///< Interrupt priority.
     nrf_uart_config_t   hal_cfg;            ///< Parity, flow control and stop bits settings.
+    bool                skip_gpio_cfg;      ///< Skip GPIO configuration of pins.
+                                            /**< When set to true, the driver does not modify
+                                             *   any GPIO parameters of the used pins. Those
+                                             *   parameters are supposed to be configured
+                                             *   externally before the driver is initialized. */
+    bool                skip_psel_cfg;      ///< Skip pin selection configuration.
+                                            /**< When set to true, the driver does not modify
+                                             *   pin select registers in the peripheral.
+                                             *   Those registers are supposed to be set up
+                                             *   externally before the driver is initialized.
+                                             *   @note When both GPIO configuration and pin
+                                             *   selection are to be skipped, the structure
+                                             *   fields that specify pins can be omitted,
+                                             *   as they are ignored anyway. */
 } nrfx_uart_config_t;
 
 #if defined(UART_CONFIG_STOP_Msk) || defined(__NRFX_DOXYGEN__)
