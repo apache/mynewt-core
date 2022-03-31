@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2009-2020 ARM Limited. All rights reserved.
+Copyright (c) 2009-2021 ARM Limited. All rights reserved.
 
     SPDX-License-Identifier: Apache-2.0
 
@@ -24,7 +24,7 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #define SYSTEM_NRF53_APPROTECT_H
 
 #include "nrf.h"
-#include "nrf_erratas.h"
+#include "nrf53_erratas.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +46,7 @@ static inline void nrf53_handle_approtect(void)
     #if defined(NRF_APPLICATION)
         #if defined (ENABLE_APPROTECT)
             /* Prevent processor from unlocking APPROTECT soft branch after this point. */
-            NRF_CTRLAP_S->APPROTECT.LOCK = NRF_CTRLAP_S_APPROTECT_LOCK_LOCK_Locked;
+            NRF_CTRLAP_S->APPROTECT.LOCK = CTRLAPPERI_APPROTECT_LOCK_LOCK_Locked;
 
         #elif  defined (ENABLE_APPROTECT_USER_HANDLING)
                 /* Do nothing, allow user code to handle APPROTECT. Use this if you want to enable authenticated debug. */
@@ -60,7 +60,7 @@ static inline void nrf53_handle_approtect(void)
         /* Secure APPROTECT is only available for Application core. */
         #if defined (ENABLE_SECURE_APPROTECT)
             /* Prevent processor from unlocking SECURE APPROTECT soft branch after this point. */
-            NRF_CTRLAP_S->SECUREAPPROTECT.LOCK = NRF_CTRLAP_S_SECUREAPPROTECT_LOCK_LOCK_Locked;
+            NRF_CTRLAP_S->SECUREAPPROTECT.LOCK = CTRLAPPERI_SECUREAPPROTECT_LOCK_LOCK_Locked;
 
         #elif  defined (ENABLE_SECURE_APPROTECT_USER_HANDLING)
                 /* Do nothing, allow user code to handle SECURE APPROTECT. Use this if you want to enable authenticated debug. */
@@ -74,7 +74,7 @@ static inline void nrf53_handle_approtect(void)
     #if defined(NRF_NETWORK)
         #if defined (ENABLE_APPROTECT)
             /* Prevent processor from unlocking APPROTECT soft branch after this point. */
-            NRF_CTRLAP_NS->APPROTECT.LOCK = NRF_CTRLAP_NS_APPROTECT_LOCK_LOCK_Locked;
+            NRF_CTRLAP_NS->APPROTECT.LOCK = CTRLAPPERI_APPROTECT_LOCK_LOCK_Locked;
 
         #elif  defined (ENABLE_APPROTECT_USER_HANDLING)
                 /* Do nothing, allow user code to handle APPROTECT. Use this if you want to enable authenticated debug. */

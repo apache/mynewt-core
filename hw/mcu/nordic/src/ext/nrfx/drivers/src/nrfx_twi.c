@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -107,6 +109,7 @@ typedef struct
     bool                    repeated;
     size_t                  bytes_transferred;
     bool                    hold_bus_uninit;
+    bool                    skip_gpio_cfg;
 } twi_control_block_t;
 
 static twi_control_block_t m_cb[NRFX_TWI_ENABLED_COUNT];
@@ -159,8 +162,8 @@ nrfx_err_t nrfx_twi_init(nrfx_twi_t const *        p_instance,
                          void *                    p_context)
 {
     NRFX_ASSERT(p_config);
-    NRFX_ASSERT(p_config->scl != p_config->sda);
     twi_control_block_t * p_cb  = &m_cb[p_instance->drv_inst_idx];
+    NRF_TWI_Type * p_twi = p_instance->p_twi;
     nrfx_err_t err_code;
 
     if (p_cb->state != NRFX_DRV_STATE_UNINITIALIZED)
@@ -199,16 +202,23 @@ nrfx_err_t nrfx_twi_init(nrfx_twi_t const *        p_instance,
     p_cb->repeated        = false;
     p_cb->busy            = false;
     p_cb->hold_bus_uninit = p_config->hold_bus_uninit;
+    p_cb->skip_gpio_cfg   = p_config->skip_gpio_cfg;
 
     /* To secure correct signal levels on the pins used by the TWI
        master when the system is in OFF mode, and when the TWI master is
        disabled, these pins must be configured in the GPIO peripheral.
     */
-    TWI_PIN_INIT(p_config->scl);
-    TWI_PIN_INIT(p_config->sda);
+    if (!p_config->skip_gpio_cfg)
+    {
+        TWI_PIN_INIT(p_config->scl);
+        TWI_PIN_INIT(p_config->sda);
+    }
 
-    NRF_TWI_Type * p_twi = p_instance->p_twi;
-    nrf_twi_pins_set(p_twi, p_config->scl, p_config->sda);
+    if (!p_config->skip_psel_cfg)
+    {
+        nrf_twi_pins_set(p_twi, p_config->scl, p_config->sda);
+    }
+
     nrf_twi_frequency_set(p_twi,
         (nrf_twi_frequency_t)p_config->frequency);
 
@@ -241,7 +251,7 @@ void nrfx_twi_uninit(nrfx_twi_t const * p_instance)
     nrfx_prs_release(p_instance->p_twi);
 #endif
 
-    if (!p_cb->hold_bus_uninit)
+    if (!p_cb->skip_gpio_cfg && !p_cb->hold_bus_uninit)
     {
         nrf_gpio_cfg_default(nrf_twi_scl_pin_get(p_instance->p_twi));
         nrf_gpio_cfg_default(nrf_twi_sda_pin_get(p_instance->p_twi));
@@ -274,6 +284,7 @@ void nrfx_twi_disable(nrfx_twi_t const * p_instance)
     nrf_twi_disable(p_twi);
 
     p_cb->state = NRFX_DRV_STATE_INITIALIZED;
+    p_cb->busy = false;
     NRFX_LOG_INFO("Instance disabled: %d.", p_instance->drv_inst_idx);
 }
 

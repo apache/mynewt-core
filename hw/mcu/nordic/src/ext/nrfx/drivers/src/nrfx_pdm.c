@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -66,6 +68,7 @@ typedef struct
     uint8_t                   active_buffer;    ///< Number of currently active buffer.
     uint8_t                   error;            ///< Driver error flag.
     volatile uint8_t          irq_buff_request; ///< Request the next buffer in the ISR.
+    bool                      skip_gpio_cfg;    ///< Do not touch GPIO configuration of used pins.
 } nrfx_pdm_cb_t;
 
 static nrfx_pdm_cb_t m_cb;
@@ -199,6 +202,7 @@ nrfx_err_t nrfx_pdm_init(nrfx_pdm_config_t const * p_config,
     m_cb.error = 0;
     m_cb.event_handler = event_handler;
     m_cb.op_state = NRFX_PDM_STATE_IDLE;
+    m_cb.skip_gpio_cfg = p_config->skip_gpio_cfg;
 
 #if NRF_PDM_HAS_RATIO_CONFIG
     nrf_pdm_ratio_set(NRF_PDM0, p_config->ratio);
@@ -211,10 +215,16 @@ nrfx_err_t nrfx_pdm_init(nrfx_pdm_config_t const * p_config,
     nrf_pdm_mode_set(NRF_PDM0, p_config->mode, p_config->edge);
     nrf_pdm_gain_set(NRF_PDM0, p_config->gain_l, p_config->gain_r);
 
-    nrf_gpio_cfg_output(p_config->pin_clk);
-    nrf_gpio_pin_clear(p_config->pin_clk);
-    nrf_gpio_cfg_input(p_config->pin_din, NRF_GPIO_PIN_NOPULL);
-    nrf_pdm_psel_connect(NRF_PDM0, p_config->pin_clk, p_config->pin_din);
+    if (!p_config->skip_gpio_cfg)
+    {
+        nrf_gpio_pin_clear(p_config->pin_clk);
+        nrf_gpio_cfg_output(p_config->pin_clk);
+        nrf_gpio_cfg_input(p_config->pin_din, NRF_GPIO_PIN_NOPULL);
+    }
+    if (!p_config->skip_psel_cfg)
+    {
+        nrf_pdm_psel_connect(NRF_PDM0, p_config->pin_clk, p_config->pin_din);
+    }
 
     nrf_pdm_event_clear(NRF_PDM0, NRF_PDM_EVENT_STARTED);
     nrf_pdm_event_clear(NRF_PDM0, NRF_PDM_EVENT_END);
@@ -235,8 +245,11 @@ void nrfx_pdm_uninit(void)
 {
     nrf_pdm_disable(NRF_PDM0);
 
-    nrf_gpio_cfg_default(nrf_pdm_clk_pin_get(NRF_PDM0));
-    nrf_gpio_cfg_default(nrf_pdm_din_pin_get(NRF_PDM0));
+    if (!m_cb.skip_gpio_cfg)
+    {
+        nrf_gpio_cfg_default(nrf_pdm_clk_pin_get(NRF_PDM0));
+        nrf_gpio_cfg_default(nrf_pdm_din_pin_get(NRF_PDM0));
+    }
 
     m_cb.drv_state = NRFX_DRV_STATE_UNINITIALIZED;
     NRFX_LOG_INFO("Uninitialized.");

@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2020 ARM Limited. All rights reserved.
+; Copyright (c) 2009-2021 ARM Limited. All rights reserved.
 ; 
 ;     SPDX-License-Identifier: Apache-2.0
 ; 
@@ -104,7 +104,7 @@ __vector_table
         DCD     TEMP_IRQHandler
         DCD     RTC0_IRQHandler
         DCD     IPC_IRQHandler
-        DCD     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+        DCD     SERIAL0_IRQHandler
         DCD     EGU0_IRQHandler
         DCD     0                         ; Reserved
         DCD     RTC1_IRQHandler
@@ -338,9 +338,9 @@ RTC0_IRQHandler
 IPC_IRQHandler
         B .
 
-        PUBWEAK  SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+        PUBWEAK  SERIAL0_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
-SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+SERIAL0_IRQHandler
         B .
 
         PUBWEAK  EGU0_IRQHandler

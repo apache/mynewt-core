@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -220,12 +222,15 @@ nrfx_err_t nrfx_saadc_init(uint8_t interrupt_priority);
 void nrfx_saadc_uninit(void);
 
 /**
- * @brief Function for configuring the SAADC channels.
+ * @brief Function for configuring multiple SAADC channels.
  *
  * @note The values of the @ref nrf_saadc_channel_config_t.burst fields in channel configurations
  *       are ignored. They will be overridden with the value suitable for the selected driver
  *       operation mode.
  * @note The desired mode (simple or advanced) must be set after the channels are configured.
+ *
+ * @warning This function overrides previous configuration done on any channel by
+ *          @ref nrfx_saadc_channels_config or @ref nrfx_saadc_channel_config.
  *
  * @param[in] p_channels    Pointer to the array of channel configuration structures.
  * @param[in] channel_count Number of channels to be configured.
@@ -236,6 +241,33 @@ void nrfx_saadc_uninit(void);
  */
 nrfx_err_t nrfx_saadc_channels_config(nrfx_saadc_channel_t const * p_channels,
                                       uint32_t                     channel_count);
+
+/**
+ * @brief Function for configuring single SAADC channel.
+ *
+ * @note The values of the @ref nrf_saadc_channel_config_t.burst fields in channel configurations
+ *       are ignored. They will be overridden with the value suitable for the selected driver
+ *       operation mode.
+ *
+ * @warning This function overrides previous configuration done on specified channel by
+ *          @ref nrfx_saadc_channels_config or @ref nrfx_saadc_channel_config.
+ *
+ * @param[in] p_channel Pointer to the channel configuration structure.
+ *
+ * @retval NRFX_SUCCESS    Configuration was successful.
+ * @retval NRFX_ERROR_BUSY There is a conversion or calibration ongoing.
+ */
+nrfx_err_t nrfx_saadc_channel_config(nrfx_saadc_channel_t const * p_channel);
+
+/**
+ * @brief Function for deconfiguring the specified SAADC channels.
+ *
+ * @param[in] channel_mask Bitmask of channels to be deconfigured.
+ *
+ * @retval NRFX_SUCCESS    Deconfiguration was successful.
+ * @retval NRFX_ERROR_BUSY There is a conversion or calibration ongoing.
+ */
+nrfx_err_t nrfx_saadc_channels_deconfig(uint32_t channel_mask);
 
 /**
  * @brief Function for setting the SAADC driver in the simple mode.

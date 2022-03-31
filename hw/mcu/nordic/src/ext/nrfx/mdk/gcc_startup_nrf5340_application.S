@@ -1,6 +1,6 @@
 /*
  
-Copyright (c) 2009-2020 ARM Limited. All rights reserved.
+Copyright (c) 2009-2021 ARM Limited. All rights reserved.
 
     SPDX-License-Identifier: Apache-2.0
 
@@ -98,11 +98,11 @@ __isr_vector:
     .long   CLOCK_POWER_IRQHandler
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
-    .long   SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-    .long   SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
+    .long   SERIAL0_IRQHandler
+    .long   SERIAL1_IRQHandler
     .long   SPIM4_IRQHandler
-    .long   SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
-    .long   SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+    .long   SERIAL2_IRQHandler
+    .long   SERIAL3_IRQHandler
     .long   GPIOTE0_IRQHandler
     .long   SAADC_IRQHandler
     .long   TIMER0_IRQHandler
@@ -504,11 +504,11 @@ Default_Handler:
     IRQ  CACHE_IRQHandler
     IRQ  SPU_IRQHandler
     IRQ  CLOCK_POWER_IRQHandler
-    IRQ  SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-    IRQ  SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
+    IRQ  SERIAL0_IRQHandler
+    IRQ  SERIAL1_IRQHandler
     IRQ  SPIM4_IRQHandler
-    IRQ  SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
-    IRQ  SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+    IRQ  SERIAL2_IRQHandler
+    IRQ  SERIAL3_IRQHandler
     IRQ  GPIOTE0_IRQHandler
     IRQ  SAADC_IRQHandler
     IRQ  TIMER0_IRQHandler

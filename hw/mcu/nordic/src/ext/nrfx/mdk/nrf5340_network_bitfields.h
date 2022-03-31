@@ -1,6 +1,8 @@
 /*
 
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.
+
+SPDX-License-Identifier: BSD-3-Clause
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -213,7 +215,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: AAR_NIRK */
 /* Description: Number of IRKs */
 
-/* Bits 4..0 : Number of Identity root keys available in the IRK data structure */
+/* Bits 4..0 : Number of Identity Root Keys available in the IRK data structure */
 #define AAR_NIRK_NIRK_Pos (0UL) /*!< Position of NIRK field. */
 #define AAR_NIRK_NIRK_Msk (0x1FUL << AAR_NIRK_NIRK_Pos) /*!< Bit mask of NIRK field. */
 
@@ -243,14 +245,14 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Description: Access control lists */
 
 /* Register: ACL_ACL_ADDR */
-/* Description: Description cluster: Configure the word-aligned start address of region n to protect */
+/* Description: Description cluster: Start address of region to protect. The start address must be word-aligned. */
 
-/* Bits 31..0 : Valid word-aligned start address of region n to protect. Address must point to a flash page boundary. */
+/* Bits 31..0 : Start address of flash region n. The start address must point to a flash page boundary. */
 #define ACL_ACL_ADDR_ADDR_Pos (0UL) /*!< Position of ADDR field. */
 #define ACL_ACL_ADDR_ADDR_Msk (0xFFFFFFFFUL << ACL_ACL_ADDR_ADDR_Pos) /*!< Bit mask of ADDR field. */
 
 /* Register: ACL_ACL_SIZE */
-/* Description: Description cluster: Size of region to protect counting from address ACL[n].ADDR. Write '0' as no effect. */
+/* Description: Description cluster: Size of region to protect counting from address ACL[n].ADDR. Writing a '0' has no effect. */
 
 /* Bits 31..0 : Size of flash region n in bytes. Must be a multiple of the flash page size. */
 #define ACL_ACL_SIZE_SIZE_Pos (0UL) /*!< Position of SIZE field. */
@@ -259,17 +261,17 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: ACL_ACL_PERM */
 /* Description: Description cluster: Access permissions for region n as defined by start address ACL[n].ADDR and size ACL[n].SIZE */
 
-/* Bit 2 : Configure read permissions for region n. Write '0' has no effect. */
+/* Bit 2 : Configure read permissions for region n. Writing a '0' has no effect. */
 #define ACL_ACL_PERM_READ_Pos (2UL) /*!< Position of READ field. */
 #define ACL_ACL_PERM_READ_Msk (0x1UL << ACL_ACL_PERM_READ_Pos) /*!< Bit mask of READ field. */
-#define ACL_ACL_PERM_READ_Enable (0UL) /*!< Allow read instructions to region n */
-#define ACL_ACL_PERM_READ_Disable (1UL) /*!< Block read instructions to region n */
+#define ACL_ACL_PERM_READ_Enable (0UL) /*!< Allow read instructions to region n. */
+#define ACL_ACL_PERM_READ_Disable (1UL) /*!< Block read instructions to region n. */
 
-/* Bit 1 : Configure write and erase permissions for region n. Write '0' has no effect. */
+/* Bit 1 : Configure write and erase permissions for region n. Writing a '0' has no effect. */
 #define ACL_ACL_PERM_WRITE_Pos (1UL) /*!< Position of WRITE field. */
 #define ACL_ACL_PERM_WRITE_Msk (0x1UL << ACL_ACL_PERM_WRITE_Pos) /*!< Bit mask of WRITE field. */
-#define ACL_ACL_PERM_WRITE_Enable (0UL) /*!< Allow write and erase instructions to region n */
-#define ACL_ACL_PERM_WRITE_Disable (1UL) /*!< Block write and erase instructions to region n */
+#define ACL_ACL_PERM_WRITE_Enable (0UL) /*!< Allow write and erase instructions to region n. */
+#define ACL_ACL_PERM_WRITE_Disable (1UL) /*!< Block write and erase instructions to region n. */
 
 
 /* Peripheral: MUTEX */
@@ -527,8 +529,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CCM_MODE_DATARATE_Msk (0x3UL << CCM_MODE_DATARATE_Pos) /*!< Bit mask of DATARATE field. */
 #define CCM_MODE_DATARATE_1Mbit (0UL) /*!< 1 Mbps */
 #define CCM_MODE_DATARATE_2Mbit (1UL) /*!< 2 Mbps */
-#define CCM_MODE_DATARATE_125Kbps (2UL) /*!< 125 Kbps */
-#define CCM_MODE_DATARATE_500Kbps (3UL) /*!< 500 Kbps */
+#define CCM_MODE_DATARATE_125Kbps (2UL) /*!< 125 kbps */
+#define CCM_MODE_DATARATE_500Kbps (3UL) /*!< 500 kbps */
 
 /* Bit 0 : The mode of operation to be used. Settings in this register apply whenever either the KSGEN task or the CRYPT task is triggered. */
 #define CCM_MODE_MODE_Pos (0UL) /*!< Position of MODE field. */
@@ -580,8 +582,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CCM_RATEOVERRIDE_RATEOVERRIDE_Msk (0x3UL << CCM_RATEOVERRIDE_RATEOVERRIDE_Pos) /*!< Bit mask of RATEOVERRIDE field. */
 #define CCM_RATEOVERRIDE_RATEOVERRIDE_1Mbit (0UL) /*!< 1 Mbps */
 #define CCM_RATEOVERRIDE_RATEOVERRIDE_2Mbit (1UL) /*!< 2 Mbps */
-#define CCM_RATEOVERRIDE_RATEOVERRIDE_125Kbps (2UL) /*!< 125 Kbps */
-#define CCM_RATEOVERRIDE_RATEOVERRIDE_500Kbps (3UL) /*!< 500 Kbps */
+#define CCM_RATEOVERRIDE_RATEOVERRIDE_125Kbps (2UL) /*!< 125 kbps */
+#define CCM_RATEOVERRIDE_RATEOVERRIDE_500Kbps (3UL) /*!< 500 kbps */
 
 /* Register: CCM_HEADERMASK */
 /* Description: Header (S0) mask. */
@@ -912,7 +914,6 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 1..0 : Active clock source */
 #define CLOCK_LFCLKSTAT_SRC_Pos (0UL) /*!< Position of SRC field. */
 #define CLOCK_LFCLKSTAT_SRC_Msk (0x3UL << CLOCK_LFCLKSTAT_SRC_Pos) /*!< Bit mask of SRC field. */
-#define CLOCK_LFCLKSTAT_SRC_LFULP (0UL) /*!< 32.768 kHz ultra-low power RC oscillator */
 #define CLOCK_LFCLKSTAT_SRC_LFRC (1UL) /*!< 32.768 kHz RC oscillator */
 #define CLOCK_LFCLKSTAT_SRC_LFXO (2UL) /*!< 32.768 kHz crystal oscillator */
 #define CLOCK_LFCLKSTAT_SRC_LFSYNT (3UL) /*!< 32.768 kHz synthesized from HFCLK */
@@ -923,7 +924,6 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 1..0 : Clock source */
 #define CLOCK_LFCLKSRCCOPY_SRC_Pos (0UL) /*!< Position of SRC field. */
 #define CLOCK_LFCLKSRCCOPY_SRC_Msk (0x3UL << CLOCK_LFCLKSRCCOPY_SRC_Pos) /*!< Bit mask of SRC field. */
-#define CLOCK_LFCLKSRCCOPY_SRC_LFULP (0UL) /*!< 32.768 kHz ultra-low power RC oscillator */
 #define CLOCK_LFCLKSRCCOPY_SRC_LFRC (1UL) /*!< 32.768 kHz RC oscillator */
 #define CLOCK_LFCLKSRCCOPY_SRC_LFXO (2UL) /*!< 32.768 kHz crystal oscillator */
 #define CLOCK_LFCLKSRCCOPY_SRC_LFSYNT (3UL) /*!< 32.768 kHz synthesized from HFCLK */
@@ -943,7 +943,6 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 1..0 : Select which LFCLK source is started by the LFCLKSTART task */
 #define CLOCK_LFCLKSRC_SRC_Pos (0UL) /*!< Position of SRC field. */
 #define CLOCK_LFCLKSRC_SRC_Msk (0x3UL << CLOCK_LFCLKSRC_SRC_Pos) /*!< Bit mask of SRC field. */
-#define CLOCK_LFCLKSRC_SRC_LFULP (0UL) /*!< 32.768 kHz ultra-low power RC oscillator */
 #define CLOCK_LFCLKSRC_SRC_LFRC (1UL) /*!< 32.768 kHz RC oscillator */
 #define CLOCK_LFCLKSRC_SRC_LFXO (2UL) /*!< 32.768 kHz crystal oscillator */
 #define CLOCK_LFCLKSRC_SRC_LFSYNT (3UL) /*!< 32.768 kHz synthesized from HFCLK */
@@ -1344,17 +1343,17 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: CTI_DEVTYPE */
 /* Description: Device Type Identifier register */
 
-/* Bits 7..4 : Sub-classification of the type of the debug component as specified in the ARM Architecture Specification within
+/* Bits 7..4 : Sub-classification of the type of the debug component as specified in the Arm Architecture Specification within
                     the major classification as specified in the MAJOR field. */
 #define CTI_DEVTYPE_SUB_Pos (4UL) /*!< Position of SUB field. */
 #define CTI_DEVTYPE_SUB_Msk (0xFUL << CTI_DEVTYPE_SUB_Pos) /*!< Bit mask of SUB field. */
-#define CTI_DEVTYPE_SUB_Crosstrigger (0b0001UL) /*!< Indicates that this component is a sub-triggering component. */
+#define CTI_DEVTYPE_SUB_Crosstrigger (1UL) /*!< Indicates that this component is a sub-triggering component. */
 
-/* Bits 3..0 : Major classification of the type of the debug component as specified in the ARM Architecture Specification for this
+/* Bits 3..0 : Major classification of the type of the debug component as specified in the Arm Architecture Specification for this
                     debug and trace component. */
 #define CTI_DEVTYPE_MAJOR_Pos (0UL) /*!< Position of MAJOR field. */
 #define CTI_DEVTYPE_MAJOR_Msk (0xFUL << CTI_DEVTYPE_MAJOR_Pos) /*!< Bit mask of MAJOR field. */
-#define CTI_DEVTYPE_MAJOR_Controller (0b0100UL) /*!< Indicates that this component allows a debugger to control other components in a CoreSight SoC-400 system. */
+#define CTI_DEVTYPE_MAJOR_Controller (4UL) /*!< Indicates that this component allows a debugger to control other components in an Arm CoreSight SoC-400 system. */
 
 /* Register: CTI_PIDR4 */
 /* Description: Peripheral ID4 Register */
@@ -1366,7 +1365,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 3..0 : Together, PIDR1.DES_0, PIDR2.DES_1, and PIDR4.DES_2 identify the designer of the component. */
 #define CTI_PIDR4_DES_2_Pos (0UL) /*!< Position of DES_2 field. */
 #define CTI_PIDR4_DES_2_Msk (0xFUL << CTI_PIDR4_DES_2_Pos) /*!< Bit mask of DES_2 field. */
-#define CTI_PIDR4_DES_2_Code (0b0100UL) /*!< JEDEC continuation code */
+#define CTI_PIDR4_DES_2_Code (4UL) /*!< JEDEC continuation code. */
 
 /* Register: CTI_PIDR0 */
 /* Description: Peripheral ID0 Register */
@@ -1382,12 +1381,12 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 7..4 : Together, PIDR1.DES_0, PIDR2.DES_1, and PIDR4.DES_2 identify the designer of the component. */
 #define CTI_PIDR1_DES_0_Pos (4UL) /*!< Position of DES_0 field. */
 #define CTI_PIDR1_DES_0_Msk (0xFUL << CTI_PIDR1_DES_0_Pos) /*!< Bit mask of DES_0 field. */
-#define CTI_PIDR1_DES_0_Arm (0b1011UL) /*!< ARM. Bits[3:0] of the JEDEC JEP106 Identity Code */
+#define CTI_PIDR1_DES_0_Arm (11UL) /*!< Arm. Bits[3:0] of the JEDEC JEP106 Identity Code */
 
 /* Bits 3..0 : Bits[11:8] of the 12-bit part number of the component. The designer of the component assigns this part number. */
 #define CTI_PIDR1_PART_1_Pos (0UL) /*!< Position of PART_1 field. */
 #define CTI_PIDR1_PART_1_Msk (0xFUL << CTI_PIDR1_PART_1_Pos) /*!< Bit mask of PART_1 field. */
-#define CTI_PIDR1_PART_1_PartnumberH (0b1101UL) /*!< Indicates bits[11:8] of the part number of the component. */
+#define CTI_PIDR1_PART_1_PartnumberH (13UL) /*!< Indicates bits[11:8] of the part number of the component. */
 
 /* Register: CTI_PIDR2 */
 /* Description: Peripheral ID2 Register */
@@ -1395,7 +1394,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 7..4 : Peripheral revision */
 #define CTI_PIDR2_REVISION_Pos (4UL) /*!< Position of REVISION field. */
 #define CTI_PIDR2_REVISION_Msk (0xFUL << CTI_PIDR2_REVISION_Pos) /*!< Bit mask of REVISION field. */
-#define CTI_PIDR2_REVISION_Rev0p0 (0b0000UL) /*!< This device is at r0p0 */
+#define CTI_PIDR2_REVISION_Rev0p0 (0UL) /*!< This device is at r0p0 */
 
 /* Bit 3 : Always 1. Indicates that the JEDEC-assigned designer ID is used. */
 #define CTI_PIDR2_JEDEC_Pos (3UL) /*!< Position of JEDEC field. */
@@ -1404,23 +1403,23 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 2..0 : Together, PIDR1.DES_0, PIDR2.DES_1, and PIDR4.DES_2 identify the designer of the component. */
 #define CTI_PIDR2_DES_1_Pos (0UL) /*!< Position of DES_1 field. */
 #define CTI_PIDR2_DES_1_Msk (0x7UL << CTI_PIDR2_DES_1_Pos) /*!< Bit mask of DES_1 field. */
-#define CTI_PIDR2_DES_1_Arm (0b011UL) /*!< ARM. Bits[6:4] of the JEDEC JEP106 Identity Code */
+#define CTI_PIDR2_DES_1_Arm (3UL) /*!< Arm. Bits[6:4] of the JEDEC JEP106 Identity Code */
 
 /* Register: CTI_PIDR3 */
 /* Description: Peripheral ID3 Register */
 
 /* Bits 7..4 : Indicates minor errata fixes specific to the revision of the component being used, for example metal fixes after
-                    implementation. In most cases, this field is 0b0000. ARM recommends that the component designers ensure that a
+                    implementation. In most cases, this field is 0b0000. Arm recommends that the component designers ensure that a
                     metal fix can change this field if required, for example, by driving it from registers that reset to 0b0000. */
 #define CTI_PIDR3_REVAND_Pos (4UL) /*!< Position of REVAND field. */
 #define CTI_PIDR3_REVAND_Msk (0xFUL << CTI_PIDR3_REVAND_Pos) /*!< Bit mask of REVAND field. */
-#define CTI_PIDR3_REVAND_NoErrata (0b000UL) /*!< Indicates that there are no errata fixes to this component. */
+#define CTI_PIDR3_REVAND_NoErrata (0UL) /*!< Indicates that there are no errata fixes to this component. */
 
 /* Bits 3..0 : Customer Modified. Indicates whether the customer has modified the behavior of the component. In most cases,
                     this field is 0b0000. Customers change this value when they make authorized modifications to this component. */
 #define CTI_PIDR3_CMOD_Pos (0UL) /*!< Position of CMOD field. */
 #define CTI_PIDR3_CMOD_Msk (0xFUL << CTI_PIDR3_CMOD_Pos) /*!< Bit mask of CMOD field. */
-#define CTI_PIDR3_CMOD_Unmodified (0b000UL) /*!< Indicates that the customer has not modified this component. */
+#define CTI_PIDR3_CMOD_Unmodified (0UL) /*!< Indicates that the customer has not modified this component. */
 
 /* Register: CTI_CIDR0 */
 /* Description: Component ID0 Register */
@@ -1437,12 +1436,12 @@ POSSIBILITY OF SUCH DAMAGE.
                     Contains bits[15:12] of the component identification code */
 #define CTI_CIDR1_CLASS_Pos (4UL) /*!< Position of CLASS field. */
 #define CTI_CIDR1_CLASS_Msk (0xFUL << CTI_CIDR1_CLASS_Pos) /*!< Bit mask of CLASS field. */
-#define CTI_CIDR1_CLASS_Coresight (0b1001UL) /*!< Indicates that the component is a CoreSight component. */
+#define CTI_CIDR1_CLASS_Coresight (9UL) /*!< Indicates that the component is a CoreSight component. */
 
 /* Bits 3..0 : Preamble[1]. Contains bits[11:8] of the component identification code. */
 #define CTI_CIDR1_PRMBL_1_Pos (0UL) /*!< Position of PRMBL_1 field. */
 #define CTI_CIDR1_PRMBL_1_Msk (0xFUL << CTI_CIDR1_PRMBL_1_Pos) /*!< Bit mask of PRMBL_1 field. */
-#define CTI_CIDR1_PRMBL_1_Value (0b0000UL) /*!< Bits[11:8] of the identification code. */
+#define CTI_CIDR1_PRMBL_1_Value (0UL) /*!< Bits[11:8] of the identification code. */
 
 /* Register: CTI_CIDR2 */
 /* Description: Component ID2 Register */
@@ -1524,12 +1523,14 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: CTRLAPPERI_APPROTECT_DISABLE */
 /* Description: This register disables the APPROTECT register and enables debug access to non-secure mode. */
 
-/* Bits 31..0 : Disable APPROTECT and enable debug access to non-secure mode until the next pin reset if the KEY fields match. The current APPROTECT value as configured from UICR is bypassed if the value of the KEY fields are non-zero and the KEY fields match on both the CPU and debugger sides. */
+/* Bits 31..0 : If the value of the KEY field is non-zero, and the KEY fields match on both the
+        CPU and debugger sides, disable APPROTECT and enable debug access to non-secure mode until
+        the next pin reset, brown-out reset, power-on reset, or watchog timer reset. After reset the debugger side register has a fixed KEY value. To enable debug access, both CTRL-AP and UICR.APPROTECT protection needs to be disabled. */
 #define CTRLAPPERI_APPROTECT_DISABLE_KEY_Pos (0UL) /*!< Position of KEY field. */
 #define CTRLAPPERI_APPROTECT_DISABLE_KEY_Msk (0xFFFFFFFFUL << CTRLAPPERI_APPROTECT_DISABLE_KEY_Pos) /*!< Bit mask of KEY field. */
 
 /* Register: CTRLAPPERI_STATUS */
-/* Description: Status bits for CTRL-AP peripheral */
+/* Description: Status bits for CTRL-AP peripheral. */
 
 /* Bit 2 : Status bit for device debug interface mode */
 #define CTRLAPPERI_STATUS_DBGIFACEMODE_Pos (2UL) /*!< Position of DBGIFACEMODE field. */
@@ -1537,11 +1538,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CTRLAPPERI_STATUS_DBGIFACEMODE_Disabled (0UL) /*!< No debugger attached */
 #define CTRLAPPERI_STATUS_DBGIFACEMODE_Enabled (1UL) /*!< Debugger is attached and device is in debug interface mode */
 
-/* Bit 0 : Status bit for access port protection in non-secure mode */
-#define CTRLAPPERI_STATUS_APPROTECT_Pos (0UL) /*!< Position of APPROTECT field. */
-#define CTRLAPPERI_STATUS_APPROTECT_Msk (0x1UL << CTRLAPPERI_STATUS_APPROTECT_Pos) /*!< Bit mask of APPROTECT field. */
-#define CTRLAPPERI_STATUS_APPROTECT_Disabled (0UL) /*!< Non-secure mode access port protection is currently disabled */
-#define CTRLAPPERI_STATUS_APPROTECT_Enabled (1UL) /*!< Non-secure mode access port protection is currently enabled */
+/* Bit 0 : Status bit for UICR part of access port protection at last reset. */
+#define CTRLAPPERI_STATUS_UICRAPPROTECT_Pos (0UL) /*!< Position of UICRAPPROTECT field. */
+#define CTRLAPPERI_STATUS_UICRAPPROTECT_Msk (0x1UL << CTRLAPPERI_STATUS_UICRAPPROTECT_Pos) /*!< Bit mask of UICRAPPROTECT field. */
+#define CTRLAPPERI_STATUS_UICRAPPROTECT_Enabled (0UL) /*!< APPROTECT was enabled in UICR */
+#define CTRLAPPERI_STATUS_UICRAPPROTECT_Disabled (1UL) /*!< APPROTECT wasdisabled in UICR */
 
 
 /* Peripheral: DCNF */
@@ -1602,6 +1603,102 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Register: DPPIC_CHEN */
 /* Description: Channel enable register */
+
+/* Bit 31 : Enable or disable channel 31 */
+#define DPPIC_CHEN_CH31_Pos (31UL) /*!< Position of CH31 field. */
+#define DPPIC_CHEN_CH31_Msk (0x1UL << DPPIC_CHEN_CH31_Pos) /*!< Bit mask of CH31 field. */
+#define DPPIC_CHEN_CH31_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH31_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 30 : Enable or disable channel 30 */
+#define DPPIC_CHEN_CH30_Pos (30UL) /*!< Position of CH30 field. */
+#define DPPIC_CHEN_CH30_Msk (0x1UL << DPPIC_CHEN_CH30_Pos) /*!< Bit mask of CH30 field. */
+#define DPPIC_CHEN_CH30_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH30_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 29 : Enable or disable channel 29 */
+#define DPPIC_CHEN_CH29_Pos (29UL) /*!< Position of CH29 field. */
+#define DPPIC_CHEN_CH29_Msk (0x1UL << DPPIC_CHEN_CH29_Pos) /*!< Bit mask of CH29 field. */
+#define DPPIC_CHEN_CH29_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH29_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 28 : Enable or disable channel 28 */
+#define DPPIC_CHEN_CH28_Pos (28UL) /*!< Position of CH28 field. */
+#define DPPIC_CHEN_CH28_Msk (0x1UL << DPPIC_CHEN_CH28_Pos) /*!< Bit mask of CH28 field. */
+#define DPPIC_CHEN_CH28_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH28_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 27 : Enable or disable channel 27 */
+#define DPPIC_CHEN_CH27_Pos (27UL) /*!< Position of CH27 field. */
+#define DPPIC_CHEN_CH27_Msk (0x1UL << DPPIC_CHEN_CH27_Pos) /*!< Bit mask of CH27 field. */
+#define DPPIC_CHEN_CH27_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH27_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 26 : Enable or disable channel 26 */
+#define DPPIC_CHEN_CH26_Pos (26UL) /*!< Position of CH26 field. */
+#define DPPIC_CHEN_CH26_Msk (0x1UL << DPPIC_CHEN_CH26_Pos) /*!< Bit mask of CH26 field. */
+#define DPPIC_CHEN_CH26_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH26_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 25 : Enable or disable channel 25 */
+#define DPPIC_CHEN_CH25_Pos (25UL) /*!< Position of CH25 field. */
+#define DPPIC_CHEN_CH25_Msk (0x1UL << DPPIC_CHEN_CH25_Pos) /*!< Bit mask of CH25 field. */
+#define DPPIC_CHEN_CH25_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH25_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 24 : Enable or disable channel 24 */
+#define DPPIC_CHEN_CH24_Pos (24UL) /*!< Position of CH24 field. */
+#define DPPIC_CHEN_CH24_Msk (0x1UL << DPPIC_CHEN_CH24_Pos) /*!< Bit mask of CH24 field. */
+#define DPPIC_CHEN_CH24_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH24_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 23 : Enable or disable channel 23 */
+#define DPPIC_CHEN_CH23_Pos (23UL) /*!< Position of CH23 field. */
+#define DPPIC_CHEN_CH23_Msk (0x1UL << DPPIC_CHEN_CH23_Pos) /*!< Bit mask of CH23 field. */
+#define DPPIC_CHEN_CH23_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH23_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 22 : Enable or disable channel 22 */
+#define DPPIC_CHEN_CH22_Pos (22UL) /*!< Position of CH22 field. */
+#define DPPIC_CHEN_CH22_Msk (0x1UL << DPPIC_CHEN_CH22_Pos) /*!< Bit mask of CH22 field. */
+#define DPPIC_CHEN_CH22_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH22_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 21 : Enable or disable channel 21 */
+#define DPPIC_CHEN_CH21_Pos (21UL) /*!< Position of CH21 field. */
+#define DPPIC_CHEN_CH21_Msk (0x1UL << DPPIC_CHEN_CH21_Pos) /*!< Bit mask of CH21 field. */
+#define DPPIC_CHEN_CH21_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH21_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 20 : Enable or disable channel 20 */
+#define DPPIC_CHEN_CH20_Pos (20UL) /*!< Position of CH20 field. */
+#define DPPIC_CHEN_CH20_Msk (0x1UL << DPPIC_CHEN_CH20_Pos) /*!< Bit mask of CH20 field. */
+#define DPPIC_CHEN_CH20_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH20_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 19 : Enable or disable channel 19 */
+#define DPPIC_CHEN_CH19_Pos (19UL) /*!< Position of CH19 field. */
+#define DPPIC_CHEN_CH19_Msk (0x1UL << DPPIC_CHEN_CH19_Pos) /*!< Bit mask of CH19 field. */
+#define DPPIC_CHEN_CH19_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH19_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 18 : Enable or disable channel 18 */
+#define DPPIC_CHEN_CH18_Pos (18UL) /*!< Position of CH18 field. */
+#define DPPIC_CHEN_CH18_Msk (0x1UL << DPPIC_CHEN_CH18_Pos) /*!< Bit mask of CH18 field. */
+#define DPPIC_CHEN_CH18_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH18_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 17 : Enable or disable channel 17 */
+#define DPPIC_CHEN_CH17_Pos (17UL) /*!< Position of CH17 field. */
+#define DPPIC_CHEN_CH17_Msk (0x1UL << DPPIC_CHEN_CH17_Pos) /*!< Bit mask of CH17 field. */
+#define DPPIC_CHEN_CH17_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH17_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 16 : Enable or disable channel 16 */
+#define DPPIC_CHEN_CH16_Pos (16UL) /*!< Position of CH16 field. */
+#define DPPIC_CHEN_CH16_Msk (0x1UL << DPPIC_CHEN_CH16_Pos) /*!< Bit mask of CH16 field. */
+#define DPPIC_CHEN_CH16_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH16_Enabled (1UL) /*!< Enable channel */
 
 /* Bit 15 : Enable or disable channel 15 */
 #define DPPIC_CHEN_CH15_Pos (15UL) /*!< Position of CH15 field. */
@@ -1701,6 +1798,118 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Register: DPPIC_CHENSET */
 /* Description: Channel enable set register */
+
+/* Bit 31 : Channel 31 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH31_Pos (31UL) /*!< Position of CH31 field. */
+#define DPPIC_CHENSET_CH31_Msk (0x1UL << DPPIC_CHENSET_CH31_Pos) /*!< Bit mask of CH31 field. */
+#define DPPIC_CHENSET_CH31_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH31_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH31_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 30 : Channel 30 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH30_Pos (30UL) /*!< Position of CH30 field. */
+#define DPPIC_CHENSET_CH30_Msk (0x1UL << DPPIC_CHENSET_CH30_Pos) /*!< Bit mask of CH30 field. */
+#define DPPIC_CHENSET_CH30_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH30_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH30_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 29 : Channel 29 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH29_Pos (29UL) /*!< Position of CH29 field. */
+#define DPPIC_CHENSET_CH29_Msk (0x1UL << DPPIC_CHENSET_CH29_Pos) /*!< Bit mask of CH29 field. */
+#define DPPIC_CHENSET_CH29_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH29_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH29_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 28 : Channel 28 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH28_Pos (28UL) /*!< Position of CH28 field. */
+#define DPPIC_CHENSET_CH28_Msk (0x1UL << DPPIC_CHENSET_CH28_Pos) /*!< Bit mask of CH28 field. */
+#define DPPIC_CHENSET_CH28_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH28_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH28_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 27 : Channel 27 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH27_Pos (27UL) /*!< Position of CH27 field. */
+#define DPPIC_CHENSET_CH27_Msk (0x1UL << DPPIC_CHENSET_CH27_Pos) /*!< Bit mask of CH27 field. */
+#define DPPIC_CHENSET_CH27_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH27_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH27_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 26 : Channel 26 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH26_Pos (26UL) /*!< Position of CH26 field. */
+#define DPPIC_CHENSET_CH26_Msk (0x1UL << DPPIC_CHENSET_CH26_Pos) /*!< Bit mask of CH26 field. */
+#define DPPIC_CHENSET_CH26_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH26_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH26_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 25 : Channel 25 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH25_Pos (25UL) /*!< Position of CH25 field. */
+#define DPPIC_CHENSET_CH25_Msk (0x1UL << DPPIC_CHENSET_CH25_Pos) /*!< Bit mask of CH25 field. */
+#define DPPIC_CHENSET_CH25_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH25_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH25_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 24 : Channel 24 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH24_Pos (24UL) /*!< Position of CH24 field. */
+#define DPPIC_CHENSET_CH24_Msk (0x1UL << DPPIC_CHENSET_CH24_Pos) /*!< Bit mask of CH24 field. */
+#define DPPIC_CHENSET_CH24_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH24_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH24_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 23 : Channel 23 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH23_Pos (23UL) /*!< Position of CH23 field. */
+#define DPPIC_CHENSET_CH23_Msk (0x1UL << DPPIC_CHENSET_CH23_Pos) /*!< Bit mask of CH23 field. */
+#define DPPIC_CHENSET_CH23_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH23_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH23_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 22 : Channel 22 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH22_Pos (22UL) /*!< Position of CH22 field. */
+#define DPPIC_CHENSET_CH22_Msk (0x1UL << DPPIC_CHENSET_CH22_Pos) /*!< Bit mask of CH22 field. */
+#define DPPIC_CHENSET_CH22_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH22_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH22_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 21 : Channel 21 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH21_Pos (21UL) /*!< Position of CH21 field. */
+#define DPPIC_CHENSET_CH21_Msk (0x1UL << DPPIC_CHENSET_CH21_Pos) /*!< Bit mask of CH21 field. */
+#define DPPIC_CHENSET_CH21_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH21_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH21_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 20 : Channel 20 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH20_Pos (20UL) /*!< Position of CH20 field. */
+#define DPPIC_CHENSET_CH20_Msk (0x1UL << DPPIC_CHENSET_CH20_Pos) /*!< Bit mask of CH20 field. */
+#define DPPIC_CHENSET_CH20_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH20_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH20_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 19 : Channel 19 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH19_Pos (19UL) /*!< Position of CH19 field. */
+#define DPPIC_CHENSET_CH19_Msk (0x1UL << DPPIC_CHENSET_CH19_Pos) /*!< Bit mask of CH19 field. */
+#define DPPIC_CHENSET_CH19_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH19_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH19_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 18 : Channel 18 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH18_Pos (18UL) /*!< Position of CH18 field. */
+#define DPPIC_CHENSET_CH18_Msk (0x1UL << DPPIC_CHENSET_CH18_Pos) /*!< Bit mask of CH18 field. */
+#define DPPIC_CHENSET_CH18_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH18_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH18_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 17 : Channel 17 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH17_Pos (17UL) /*!< Position of CH17 field. */
+#define DPPIC_CHENSET_CH17_Msk (0x1UL << DPPIC_CHENSET_CH17_Pos) /*!< Bit mask of CH17 field. */
+#define DPPIC_CHENSET_CH17_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH17_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH17_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 16 : Channel 16 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH16_Pos (16UL) /*!< Position of CH16 field. */
+#define DPPIC_CHENSET_CH16_Msk (0x1UL << DPPIC_CHENSET_CH16_Pos) /*!< Bit mask of CH16 field. */
+#define DPPIC_CHENSET_CH16_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH16_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH16_Set (1UL) /*!< Write: Enable channel */
 
 /* Bit 15 : Channel 15 enable set register. Writing 0 has no effect. */
 #define DPPIC_CHENSET_CH15_Pos (15UL) /*!< Position of CH15 field. */
@@ -1817,6 +2026,118 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: DPPIC_CHENCLR */
 /* Description: Channel enable clear register */
 
+/* Bit 31 : Channel 31 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH31_Pos (31UL) /*!< Position of CH31 field. */
+#define DPPIC_CHENCLR_CH31_Msk (0x1UL << DPPIC_CHENCLR_CH31_Pos) /*!< Bit mask of CH31 field. */
+#define DPPIC_CHENCLR_CH31_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH31_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH31_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 30 : Channel 30 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH30_Pos (30UL) /*!< Position of CH30 field. */
+#define DPPIC_CHENCLR_CH30_Msk (0x1UL << DPPIC_CHENCLR_CH30_Pos) /*!< Bit mask of CH30 field. */
+#define DPPIC_CHENCLR_CH30_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH30_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH30_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 29 : Channel 29 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH29_Pos (29UL) /*!< Position of CH29 field. */
+#define DPPIC_CHENCLR_CH29_Msk (0x1UL << DPPIC_CHENCLR_CH29_Pos) /*!< Bit mask of CH29 field. */
+#define DPPIC_CHENCLR_CH29_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH29_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH29_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 28 : Channel 28 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH28_Pos (28UL) /*!< Position of CH28 field. */
+#define DPPIC_CHENCLR_CH28_Msk (0x1UL << DPPIC_CHENCLR_CH28_Pos) /*!< Bit mask of CH28 field. */
+#define DPPIC_CHENCLR_CH28_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH28_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH28_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 27 : Channel 27 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH27_Pos (27UL) /*!< Position of CH27 field. */
+#define DPPIC_CHENCLR_CH27_Msk (0x1UL << DPPIC_CHENCLR_CH27_Pos) /*!< Bit mask of CH27 field. */
+#define DPPIC_CHENCLR_CH27_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH27_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH27_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 26 : Channel 26 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH26_Pos (26UL) /*!< Position of CH26 field. */
+#define DPPIC_CHENCLR_CH26_Msk (0x1UL << DPPIC_CHENCLR_CH26_Pos) /*!< Bit mask of CH26 field. */
+#define DPPIC_CHENCLR_CH26_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH26_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH26_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 25 : Channel 25 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH25_Pos (25UL) /*!< Position of CH25 field. */
+#define DPPIC_CHENCLR_CH25_Msk (0x1UL << DPPIC_CHENCLR_CH25_Pos) /*!< Bit mask of CH25 field. */
+#define DPPIC_CHENCLR_CH25_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH25_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH25_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 24 : Channel 24 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH24_Pos (24UL) /*!< Position of CH24 field. */
+#define DPPIC_CHENCLR_CH24_Msk (0x1UL << DPPIC_CHENCLR_CH24_Pos) /*!< Bit mask of CH24 field. */
+#define DPPIC_CHENCLR_CH24_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH24_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH24_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 23 : Channel 23 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH23_Pos (23UL) /*!< Position of CH23 field. */
+#define DPPIC_CHENCLR_CH23_Msk (0x1UL << DPPIC_CHENCLR_CH23_Pos) /*!< Bit mask of CH23 field. */
+#define DPPIC_CHENCLR_CH23_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH23_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH23_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 22 : Channel 22 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH22_Pos (22UL) /*!< Position of CH22 field. */
+#define DPPIC_CHENCLR_CH22_Msk (0x1UL << DPPIC_CHENCLR_CH22_Pos) /*!< Bit mask of CH22 field. */
+#define DPPIC_CHENCLR_CH22_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH22_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH22_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 21 : Channel 21 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH21_Pos (21UL) /*!< Position of CH21 field. */
+#define DPPIC_CHENCLR_CH21_Msk (0x1UL << DPPIC_CHENCLR_CH21_Pos) /*!< Bit mask of CH21 field. */
+#define DPPIC_CHENCLR_CH21_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH21_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH21_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 20 : Channel 20 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH20_Pos (20UL) /*!< Position of CH20 field. */
+#define DPPIC_CHENCLR_CH20_Msk (0x1UL << DPPIC_CHENCLR_CH20_Pos) /*!< Bit mask of CH20 field. */
+#define DPPIC_CHENCLR_CH20_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH20_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH20_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 19 : Channel 19 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH19_Pos (19UL) /*!< Position of CH19 field. */
+#define DPPIC_CHENCLR_CH19_Msk (0x1UL << DPPIC_CHENCLR_CH19_Pos) /*!< Bit mask of CH19 field. */
+#define DPPIC_CHENCLR_CH19_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH19_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH19_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 18 : Channel 18 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH18_Pos (18UL) /*!< Position of CH18 field. */
+#define DPPIC_CHENCLR_CH18_Msk (0x1UL << DPPIC_CHENCLR_CH18_Pos) /*!< Bit mask of CH18 field. */
+#define DPPIC_CHENCLR_CH18_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH18_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH18_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 17 : Channel 17 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH17_Pos (17UL) /*!< Position of CH17 field. */
+#define DPPIC_CHENCLR_CH17_Msk (0x1UL << DPPIC_CHENCLR_CH17_Pos) /*!< Bit mask of CH17 field. */
+#define DPPIC_CHENCLR_CH17_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH17_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH17_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 16 : Channel 16 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH16_Pos (16UL) /*!< Position of CH16 field. */
+#define DPPIC_CHENCLR_CH16_Msk (0x1UL << DPPIC_CHENCLR_CH16_Pos) /*!< Bit mask of CH16 field. */
+#define DPPIC_CHENCLR_CH16_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH16_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH16_Clear (1UL) /*!< Write: Disable channel */
+
 /* Bit 15 : Channel 15 enable clear register.  Writing 0 has no effect. */
 #define DPPIC_CHENCLR_CH15_Pos (15UL) /*!< Position of CH15 field. */
 #define DPPIC_CHENCLR_CH15_Msk (0x1UL << DPPIC_CHENCLR_CH15_Pos) /*!< Bit mask of CH15 field. */
@@ -1931,6 +2252,102 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Register: DPPIC_CHG */
 /* Description: Description collection: Channel group n Note: Writes to this register are ignored if either SUBSCRIBE_CHG[n].EN or SUBSCRIBE_CHG[n].DIS is enabled */
+
+/* Bit 31 : Include or exclude channel 31 */
+#define DPPIC_CHG_CH31_Pos (31UL) /*!< Position of CH31 field. */
+#define DPPIC_CHG_CH31_Msk (0x1UL << DPPIC_CHG_CH31_Pos) /*!< Bit mask of CH31 field. */
+#define DPPIC_CHG_CH31_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH31_Included (1UL) /*!< Include */
+
+/* Bit 30 : Include or exclude channel 30 */
+#define DPPIC_CHG_CH30_Pos (30UL) /*!< Position of CH30 field. */
+#define DPPIC_CHG_CH30_Msk (0x1UL << DPPIC_CHG_CH30_Pos) /*!< Bit mask of CH30 field. */
+#define DPPIC_CHG_CH30_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH30_Included (1UL) /*!< Include */
+
+/* Bit 29 : Include or exclude channel 29 */
+#define DPPIC_CHG_CH29_Pos (29UL) /*!< Position of CH29 field. */
+#define DPPIC_CHG_CH29_Msk (0x1UL << DPPIC_CHG_CH29_Pos) /*!< Bit mask of CH29 field. */
+#define DPPIC_CHG_CH29_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH29_Included (1UL) /*!< Include */
+
+/* Bit 28 : Include or exclude channel 28 */
+#define DPPIC_CHG_CH28_Pos (28UL) /*!< Position of CH28 field. */
+#define DPPIC_CHG_CH28_Msk (0x1UL << DPPIC_CHG_CH28_Pos) /*!< Bit mask of CH28 field. */
+#define DPPIC_CHG_CH28_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH28_Included (1UL) /*!< Include */
+
+/* Bit 27 : Include or exclude channel 27 */
+#define DPPIC_CHG_CH27_Pos (27UL) /*!< Position of CH27 field. */
+#define DPPIC_CHG_CH27_Msk (0x1UL << DPPIC_CHG_CH27_Pos) /*!< Bit mask of CH27 field. */
+#define DPPIC_CHG_CH27_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH27_Included (1UL) /*!< Include */
+
+/* Bit 26 : Include or exclude channel 26 */
+#define DPPIC_CHG_CH26_Pos (26UL) /*!< Position of CH26 field. */
+#define DPPIC_CHG_CH26_Msk (0x1UL << DPPIC_CHG_CH26_Pos) /*!< Bit mask of CH26 field. */
+#define DPPIC_CHG_CH26_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH26_Included (1UL) /*!< Include */
+
+/* Bit 25 : Include or exclude channel 25 */
+#define DPPIC_CHG_CH25_Pos (25UL) /*!< Position of CH25 field. */
+#define DPPIC_CHG_CH25_Msk (0x1UL << DPPIC_CHG_CH25_Pos) /*!< Bit mask of CH25 field. */
+#define DPPIC_CHG_CH25_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH25_Included (1UL) /*!< Include */
+
+/* Bit 24 : Include or exclude channel 24 */
+#define DPPIC_CHG_CH24_Pos (24UL) /*!< Position of CH24 field. */
+#define DPPIC_CHG_CH24_Msk (0x1UL << DPPIC_CHG_CH24_Pos) /*!< Bit mask of CH24 field. */
+#define DPPIC_CHG_CH24_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH24_Included (1UL) /*!< Include */
+
+/* Bit 23 : Include or exclude channel 23 */
+#define DPPIC_CHG_CH23_Pos (23UL) /*!< Position of CH23 field. */
+#define DPPIC_CHG_CH23_Msk (0x1UL << DPPIC_CHG_CH23_Pos) /*!< Bit mask of CH23 field. */
+#define DPPIC_CHG_CH23_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH23_Included (1UL) /*!< Include */
+
+/* Bit 22 : Include or exclude channel 22 */
+#define DPPIC_CHG_CH22_Pos (22UL) /*!< Position of CH22 field. */
+#define DPPIC_CHG_CH22_Msk (0x1UL << DPPIC_CHG_CH22_Pos) /*!< Bit mask of CH22 field. */
+#define DPPIC_CHG_CH22_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH22_Included (1UL) /*!< Include */
+
+/* Bit 21 : Include or exclude channel 21 */
+#define DPPIC_CHG_CH21_Pos (21UL) /*!< Position of CH21 field. */
+#define DPPIC_CHG_CH21_Msk (0x1UL << DPPIC_CHG_CH21_Pos) /*!< Bit mask of CH21 field. */
+#define DPPIC_CHG_CH21_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH21_Included (1UL) /*!< Include */
+
+/* Bit 20 : Include or exclude channel 20 */
+#define DPPIC_CHG_CH20_Pos (20UL) /*!< Position of CH20 field. */
+#define DPPIC_CHG_CH20_Msk (0x1UL << DPPIC_CHG_CH20_Pos) /*!< Bit mask of CH20 field. */
+#define DPPIC_CHG_CH20_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH20_Included (1UL) /*!< Include */
+
+/* Bit 19 : Include or exclude channel 19 */
+#define DPPIC_CHG_CH19_Pos (19UL) /*!< Position of CH19 field. */
+#define DPPIC_CHG_CH19_Msk (0x1UL << DPPIC_CHG_CH19_Pos) /*!< Bit mask of CH19 field. */
+#define DPPIC_CHG_CH19_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH19_Included (1UL) /*!< Include */
+
+/* Bit 18 : Include or exclude channel 18 */
+#define DPPIC_CHG_CH18_Pos (18UL) /*!< Position of CH18 field. */
+#define DPPIC_CHG_CH18_Msk (0x1UL << DPPIC_CHG_CH18_Pos) /*!< Bit mask of CH18 field. */
+#define DPPIC_CHG_CH18_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH18_Included (1UL) /*!< Include */
+
+/* Bit 17 : Include or exclude channel 17 */
+#define DPPIC_CHG_CH17_Pos (17UL) /*!< Position of CH17 field. */
+#define DPPIC_CHG_CH17_Msk (0x1UL << DPPIC_CHG_CH17_Pos) /*!< Bit mask of CH17 field. */
+#define DPPIC_CHG_CH17_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH17_Included (1UL) /*!< Include */
+
+/* Bit 16 : Include or exclude channel 16 */
+#define DPPIC_CHG_CH16_Pos (16UL) /*!< Position of CH16 field. */
+#define DPPIC_CHG_CH16_Msk (0x1UL << DPPIC_CHG_CH16_Pos) /*!< Bit mask of CH16 field. */
+#define DPPIC_CHG_CH16_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH16_Included (1UL) /*!< Include */
 
 /* Bit 15 : Include or exclude channel 15 */
 #define DPPIC_CHG_CH15_Pos (15UL) /*!< Position of CH15 field. */
@@ -2568,6 +2985,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 31..0 : Part Variant, Hardware version and Production configuration, encoded as ASCII */
 #define FICR_INFO_VARIANT_VARIANT_Pos (0UL) /*!< Position of VARIANT field. */
 #define FICR_INFO_VARIANT_VARIANT_Msk (0xFFFFFFFFUL << FICR_INFO_VARIANT_VARIANT_Pos) /*!< Bit mask of VARIANT field. */
+#define FICR_INFO_VARIANT_VARIANT_CLAA (0x434C4141UL) /*!< CLAA */
 #define FICR_INFO_VARIANT_VARIANT_QKAA (0x514B4141UL) /*!< QKAA */
 #define FICR_INFO_VARIANT_VARIANT_Unspecified (0xFFFFFFFFUL) /*!< Unspecified */
 
@@ -2577,7 +2995,8 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 31..0 : Package option */
 #define FICR_INFO_PACKAGE_PACKAGE_Pos (0UL) /*!< Position of PACKAGE field. */
 #define FICR_INFO_PACKAGE_PACKAGE_Msk (0xFFFFFFFFUL << FICR_INFO_PACKAGE_PACKAGE_Pos) /*!< Bit mask of PACKAGE field. */
-#define FICR_INFO_PACKAGE_PACKAGE_QF (0x2000UL) /*!< QFxx - 94 pin QFN */
+#define FICR_INFO_PACKAGE_PACKAGE_QK (0x2000UL) /*!< QKxx - 94-pin aQFN */
+#define FICR_INFO_PACKAGE_PACKAGE_CL (0x2005UL) /*!< CLxx - WLCSP */
 #define FICR_INFO_PACKAGE_PACKAGE_Unspecified (0xFFFFFFFFUL) /*!< Unspecified */
 
 /* Register: FICR_INFO_RAM */
@@ -3650,7 +4069,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bit 0 : NVMC is ready or busy */
 #define NVMC_READY_READY_Pos (0UL) /*!< Position of READY field. */
 #define NVMC_READY_READY_Msk (0x1UL << NVMC_READY_READY_Pos) /*!< Bit mask of READY field. */
-#define NVMC_READY_READY_Busy (0UL) /*!< NVMC is busy (on-going write or erase operation) */
+#define NVMC_READY_READY_Busy (0UL) /*!< NVMC is busy (ongoing write or erase operation) */
 #define NVMC_READY_READY_Ready (1UL) /*!< NVMC is ready */
 
 /* Register: NVMC_READYNEXT */
@@ -3676,7 +4095,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: NVMC_ERASEALL */
 /* Description: Register for erasing all non-volatile user memory */
 
-/* Bit 0 : Erase all non-volatile memory including UICR registers. Note that erasing must be enabled by setting CONFIG.WEN = Een before the non-volatile memory can be erased. */
+/* Bit 0 : Erase all non-volatile memory including UICR registers. Before the non-volatile memory can be erased, erasing must be enabled by setting CONFIG.WEN=Een. */
 #define NVMC_ERASEALL_ERASEALL_Pos (0UL) /*!< Position of ERASEALL field. */
 #define NVMC_ERASEALL_ERASEALL_Msk (0x1UL << NVMC_ERASEALL_ERASEALL_Pos) /*!< Bit mask of ERASEALL field. */
 #define NVMC_ERASEALL_ERASEALL_NoOperation (0UL) /*!< No operation */
@@ -5218,193 +5637,193 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: GPIO_LATCH */
 /* Description: Latch register indicating what GPIO pins that have met the criteria set in the PIN_CNF[n].SENSE registers */
 
-/* Bit 31 : Status on whether PIN31 has met criteria set in PIN_CNF31.SENSE register. Write '1' to clear. */
+/* Bit 31 : Status on whether PIN[31] has met criteria set in PIN_CNF[31].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN31_Pos (31UL) /*!< Position of PIN31 field. */
 #define GPIO_LATCH_PIN31_Msk (0x1UL << GPIO_LATCH_PIN31_Pos) /*!< Bit mask of PIN31 field. */
 #define GPIO_LATCH_PIN31_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN31_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 30 : Status on whether PIN30 has met criteria set in PIN_CNF30.SENSE register. Write '1' to clear. */
+/* Bit 30 : Status on whether PIN[30] has met criteria set in PIN_CNF[30].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN30_Pos (30UL) /*!< Position of PIN30 field. */
 #define GPIO_LATCH_PIN30_Msk (0x1UL << GPIO_LATCH_PIN30_Pos) /*!< Bit mask of PIN30 field. */
 #define GPIO_LATCH_PIN30_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN30_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 29 : Status on whether PIN29 has met criteria set in PIN_CNF29.SENSE register. Write '1' to clear. */
+/* Bit 29 : Status on whether PIN[29] has met criteria set in PIN_CNF[29].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN29_Pos (29UL) /*!< Position of PIN29 field. */
 #define GPIO_LATCH_PIN29_Msk (0x1UL << GPIO_LATCH_PIN29_Pos) /*!< Bit mask of PIN29 field. */
 #define GPIO_LATCH_PIN29_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN29_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 28 : Status on whether PIN28 has met criteria set in PIN_CNF28.SENSE register. Write '1' to clear. */
+/* Bit 28 : Status on whether PIN[28] has met criteria set in PIN_CNF[28].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN28_Pos (28UL) /*!< Position of PIN28 field. */
 #define GPIO_LATCH_PIN28_Msk (0x1UL << GPIO_LATCH_PIN28_Pos) /*!< Bit mask of PIN28 field. */
 #define GPIO_LATCH_PIN28_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN28_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 27 : Status on whether PIN27 has met criteria set in PIN_CNF27.SENSE register. Write '1' to clear. */
+/* Bit 27 : Status on whether PIN[27] has met criteria set in PIN_CNF[27].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN27_Pos (27UL) /*!< Position of PIN27 field. */
 #define GPIO_LATCH_PIN27_Msk (0x1UL << GPIO_LATCH_PIN27_Pos) /*!< Bit mask of PIN27 field. */
 #define GPIO_LATCH_PIN27_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN27_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 26 : Status on whether PIN26 has met criteria set in PIN_CNF26.SENSE register. Write '1' to clear. */
+/* Bit 26 : Status on whether PIN[26] has met criteria set in PIN_CNF[26].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN26_Pos (26UL) /*!< Position of PIN26 field. */
 #define GPIO_LATCH_PIN26_Msk (0x1UL << GPIO_LATCH_PIN26_Pos) /*!< Bit mask of PIN26 field. */
 #define GPIO_LATCH_PIN26_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN26_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 25 : Status on whether PIN25 has met criteria set in PIN_CNF25.SENSE register. Write '1' to clear. */
+/* Bit 25 : Status on whether PIN[25] has met criteria set in PIN_CNF[25].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN25_Pos (25UL) /*!< Position of PIN25 field. */
 #define GPIO_LATCH_PIN25_Msk (0x1UL << GPIO_LATCH_PIN25_Pos) /*!< Bit mask of PIN25 field. */
 #define GPIO_LATCH_PIN25_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN25_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 24 : Status on whether PIN24 has met criteria set in PIN_CNF24.SENSE register. Write '1' to clear. */
+/* Bit 24 : Status on whether PIN[24] has met criteria set in PIN_CNF[24].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN24_Pos (24UL) /*!< Position of PIN24 field. */
 #define GPIO_LATCH_PIN24_Msk (0x1UL << GPIO_LATCH_PIN24_Pos) /*!< Bit mask of PIN24 field. */
 #define GPIO_LATCH_PIN24_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN24_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 23 : Status on whether PIN23 has met criteria set in PIN_CNF23.SENSE register. Write '1' to clear. */
+/* Bit 23 : Status on whether PIN[23] has met criteria set in PIN_CNF[23].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN23_Pos (23UL) /*!< Position of PIN23 field. */
 #define GPIO_LATCH_PIN23_Msk (0x1UL << GPIO_LATCH_PIN23_Pos) /*!< Bit mask of PIN23 field. */
 #define GPIO_LATCH_PIN23_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN23_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 22 : Status on whether PIN22 has met criteria set in PIN_CNF22.SENSE register. Write '1' to clear. */
+/* Bit 22 : Status on whether PIN[22] has met criteria set in PIN_CNF[22].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN22_Pos (22UL) /*!< Position of PIN22 field. */
 #define GPIO_LATCH_PIN22_Msk (0x1UL << GPIO_LATCH_PIN22_Pos) /*!< Bit mask of PIN22 field. */
 #define GPIO_LATCH_PIN22_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN22_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 21 : Status on whether PIN21 has met criteria set in PIN_CNF21.SENSE register. Write '1' to clear. */
+/* Bit 21 : Status on whether PIN[21] has met criteria set in PIN_CNF[21].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN21_Pos (21UL) /*!< Position of PIN21 field. */
 #define GPIO_LATCH_PIN21_Msk (0x1UL << GPIO_LATCH_PIN21_Pos) /*!< Bit mask of PIN21 field. */
 #define GPIO_LATCH_PIN21_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN21_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 20 : Status on whether PIN20 has met criteria set in PIN_CNF20.SENSE register. Write '1' to clear. */
+/* Bit 20 : Status on whether PIN[20] has met criteria set in PIN_CNF[20].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN20_Pos (20UL) /*!< Position of PIN20 field. */
 #define GPIO_LATCH_PIN20_Msk (0x1UL << GPIO_LATCH_PIN20_Pos) /*!< Bit mask of PIN20 field. */
 #define GPIO_LATCH_PIN20_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN20_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 19 : Status on whether PIN19 has met criteria set in PIN_CNF19.SENSE register. Write '1' to clear. */
+/* Bit 19 : Status on whether PIN[19] has met criteria set in PIN_CNF[19].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN19_Pos (19UL) /*!< Position of PIN19 field. */
 #define GPIO_LATCH_PIN19_Msk (0x1UL << GPIO_LATCH_PIN19_Pos) /*!< Bit mask of PIN19 field. */
 #define GPIO_LATCH_PIN19_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN19_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 18 : Status on whether PIN18 has met criteria set in PIN_CNF18.SENSE register. Write '1' to clear. */
+/* Bit 18 : Status on whether PIN[18] has met criteria set in PIN_CNF[18].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN18_Pos (18UL) /*!< Position of PIN18 field. */
 #define GPIO_LATCH_PIN18_Msk (0x1UL << GPIO_LATCH_PIN18_Pos) /*!< Bit mask of PIN18 field. */
 #define GPIO_LATCH_PIN18_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN18_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 17 : Status on whether PIN17 has met criteria set in PIN_CNF17.SENSE register. Write '1' to clear. */
+/* Bit 17 : Status on whether PIN[17] has met criteria set in PIN_CNF[17].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN17_Pos (17UL) /*!< Position of PIN17 field. */
 #define GPIO_LATCH_PIN17_Msk (0x1UL << GPIO_LATCH_PIN17_Pos) /*!< Bit mask of PIN17 field. */
 #define GPIO_LATCH_PIN17_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN17_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 16 : Status on whether PIN16 has met criteria set in PIN_CNF16.SENSE register. Write '1' to clear. */
+/* Bit 16 : Status on whether PIN[16] has met criteria set in PIN_CNF[16].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN16_Pos (16UL) /*!< Position of PIN16 field. */
 #define GPIO_LATCH_PIN16_Msk (0x1UL << GPIO_LATCH_PIN16_Pos) /*!< Bit mask of PIN16 field. */
 #define GPIO_LATCH_PIN16_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN16_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 15 : Status on whether PIN15 has met criteria set in PIN_CNF15.SENSE register. Write '1' to clear. */
+/* Bit 15 : Status on whether PIN[15] has met criteria set in PIN_CNF[15].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN15_Pos (15UL) /*!< Position of PIN15 field. */
 #define GPIO_LATCH_PIN15_Msk (0x1UL << GPIO_LATCH_PIN15_Pos) /*!< Bit mask of PIN15 field. */
 #define GPIO_LATCH_PIN15_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN15_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 14 : Status on whether PIN14 has met criteria set in PIN_CNF14.SENSE register. Write '1' to clear. */
+/* Bit 14 : Status on whether PIN[14] has met criteria set in PIN_CNF[14].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN14_Pos (14UL) /*!< Position of PIN14 field. */
 #define GPIO_LATCH_PIN14_Msk (0x1UL << GPIO_LATCH_PIN14_Pos) /*!< Bit mask of PIN14 field. */
 #define GPIO_LATCH_PIN14_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN14_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 13 : Status on whether PIN13 has met criteria set in PIN_CNF13.SENSE register. Write '1' to clear. */
+/* Bit 13 : Status on whether PIN[13] has met criteria set in PIN_CNF[13].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN13_Pos (13UL) /*!< Position of PIN13 field. */
 #define GPIO_LATCH_PIN13_Msk (0x1UL << GPIO_LATCH_PIN13_Pos) /*!< Bit mask of PIN13 field. */
 #define GPIO_LATCH_PIN13_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN13_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 12 : Status on whether PIN12 has met criteria set in PIN_CNF12.SENSE register. Write '1' to clear. */
+/* Bit 12 : Status on whether PIN[12] has met criteria set in PIN_CNF[12].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN12_Pos (12UL) /*!< Position of PIN12 field. */
 #define GPIO_LATCH_PIN12_Msk (0x1UL << GPIO_LATCH_PIN12_Pos) /*!< Bit mask of PIN12 field. */
 #define GPIO_LATCH_PIN12_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN12_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 11 : Status on whether PIN11 has met criteria set in PIN_CNF11.SENSE register. Write '1' to clear. */
+/* Bit 11 : Status on whether PIN[11] has met criteria set in PIN_CNF[11].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN11_Pos (11UL) /*!< Position of PIN11 field. */
 #define GPIO_LATCH_PIN11_Msk (0x1UL << GPIO_LATCH_PIN11_Pos) /*!< Bit mask of PIN11 field. */
 #define GPIO_LATCH_PIN11_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN11_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 10 : Status on whether PIN10 has met criteria set in PIN_CNF10.SENSE register. Write '1' to clear. */
+/* Bit 10 : Status on whether PIN[10] has met criteria set in PIN_CNF[10].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN10_Pos (10UL) /*!< Position of PIN10 field. */
 #define GPIO_LATCH_PIN10_Msk (0x1UL << GPIO_LATCH_PIN10_Pos) /*!< Bit mask of PIN10 field. */
 #define GPIO_LATCH_PIN10_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN10_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 9 : Status on whether PIN9 has met criteria set in PIN_CNF9.SENSE register. Write '1' to clear. */
+/* Bit 9 : Status on whether PIN[9] has met criteria set in PIN_CNF[9].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN9_Pos (9UL) /*!< Position of PIN9 field. */
 #define GPIO_LATCH_PIN9_Msk (0x1UL << GPIO_LATCH_PIN9_Pos) /*!< Bit mask of PIN9 field. */
 #define GPIO_LATCH_PIN9_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN9_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 8 : Status on whether PIN8 has met criteria set in PIN_CNF8.SENSE register. Write '1' to clear. */
+/* Bit 8 : Status on whether PIN[8] has met criteria set in PIN_CNF[8].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN8_Pos (8UL) /*!< Position of PIN8 field. */
 #define GPIO_LATCH_PIN8_Msk (0x1UL << GPIO_LATCH_PIN8_Pos) /*!< Bit mask of PIN8 field. */
 #define GPIO_LATCH_PIN8_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN8_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 7 : Status on whether PIN7 has met criteria set in PIN_CNF7.SENSE register. Write '1' to clear. */
+/* Bit 7 : Status on whether PIN[7] has met criteria set in PIN_CNF[7].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN7_Pos (7UL) /*!< Position of PIN7 field. */
 #define GPIO_LATCH_PIN7_Msk (0x1UL << GPIO_LATCH_PIN7_Pos) /*!< Bit mask of PIN7 field. */
 #define GPIO_LATCH_PIN7_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN7_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 6 : Status on whether PIN6 has met criteria set in PIN_CNF6.SENSE register. Write '1' to clear. */
+/* Bit 6 : Status on whether PIN[6] has met criteria set in PIN_CNF[6].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN6_Pos (6UL) /*!< Position of PIN6 field. */
 #define GPIO_LATCH_PIN6_Msk (0x1UL << GPIO_LATCH_PIN6_Pos) /*!< Bit mask of PIN6 field. */
 #define GPIO_LATCH_PIN6_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN6_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 5 : Status on whether PIN5 has met criteria set in PIN_CNF5.SENSE register. Write '1' to clear. */
+/* Bit 5 : Status on whether PIN[5] has met criteria set in PIN_CNF[5].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN5_Pos (5UL) /*!< Position of PIN5 field. */
 #define GPIO_LATCH_PIN5_Msk (0x1UL << GPIO_LATCH_PIN5_Pos) /*!< Bit mask of PIN5 field. */
 #define GPIO_LATCH_PIN5_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN5_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 4 : Status on whether PIN4 has met criteria set in PIN_CNF4.SENSE register. Write '1' to clear. */
+/* Bit 4 : Status on whether PIN[4] has met criteria set in PIN_CNF[4].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN4_Pos (4UL) /*!< Position of PIN4 field. */
 #define GPIO_LATCH_PIN4_Msk (0x1UL << GPIO_LATCH_PIN4_Pos) /*!< Bit mask of PIN4 field. */
 #define GPIO_LATCH_PIN4_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN4_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 3 : Status on whether PIN3 has met criteria set in PIN_CNF3.SENSE register. Write '1' to clear. */
+/* Bit 3 : Status on whether PIN[3] has met criteria set in PIN_CNF[3].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN3_Pos (3UL) /*!< Position of PIN3 field. */
 #define GPIO_LATCH_PIN3_Msk (0x1UL << GPIO_LATCH_PIN3_Pos) /*!< Bit mask of PIN3 field. */
 #define GPIO_LATCH_PIN3_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN3_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 2 : Status on whether PIN2 has met criteria set in PIN_CNF2.SENSE register. Write '1' to clear. */
+/* Bit 2 : Status on whether PIN[2] has met criteria set in PIN_CNF[2].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN2_Pos (2UL) /*!< Position of PIN2 field. */
 #define GPIO_LATCH_PIN2_Msk (0x1UL << GPIO_LATCH_PIN2_Pos) /*!< Bit mask of PIN2 field. */
 #define GPIO_LATCH_PIN2_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN2_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 1 : Status on whether PIN1 has met criteria set in PIN_CNF1.SENSE register. Write '1' to clear. */
+/* Bit 1 : Status on whether PIN[1] has met criteria set in PIN_CNF[1].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN1_Pos (1UL) /*!< Position of PIN1 field. */
 #define GPIO_LATCH_PIN1_Msk (0x1UL << GPIO_LATCH_PIN1_Pos) /*!< Bit mask of PIN1 field. */
 #define GPIO_LATCH_PIN1_NotLatched (0UL) /*!< Criteria has not been met */
 #define GPIO_LATCH_PIN1_Latched (1UL) /*!< Criteria has been met */
 
-/* Bit 0 : Status on whether PIN0 has met criteria set in PIN_CNF0.SENSE register. Write '1' to clear. */
+/* Bit 0 : Status on whether PIN[0] has met criteria set in PIN_CNF[0].SENSE register. Write '1' to clear. */
 #define GPIO_LATCH_PIN0_Pos (0UL) /*!< Position of PIN0 field. */
 #define GPIO_LATCH_PIN0_Msk (0x1UL << GPIO_LATCH_PIN0_Pos) /*!< Bit mask of PIN0 field. */
 #define GPIO_LATCH_PIN0_NotLatched (0UL) /*!< Criteria has not been met */
@@ -6052,9 +6471,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_EVENTS_FRAMESTART_EVENTS_FRAMESTART_Generated (1UL) /*!< Event generated */
 
 /* Register: RADIO_EVENTS_EDEND */
-/* Description: Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register */
+/* Description: Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register. */
 
-/* Bit 0 : Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register */
+/* Bit 0 : Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register. */
 #define RADIO_EVENTS_EDEND_EVENTS_EDEND_Pos (0UL) /*!< Position of EVENTS_EDEND field. */
 #define RADIO_EVENTS_EDEND_EVENTS_EDEND_Msk (0x1UL << RADIO_EVENTS_EDEND_EVENTS_EDEND_Pos) /*!< Bit mask of EVENTS_EDEND field. */
 #define RADIO_EVENTS_EDEND_EVENTS_EDEND_NotGenerated (0UL) /*!< Event not generated */
@@ -7019,11 +7438,11 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: RADIO_FREQUENCY */
 /* Description: Frequency */
 
-/* Bit 8 : Channel map selection. */
+/* Bit 8 : Channel map selection */
 #define RADIO_FREQUENCY_MAP_Pos (8UL) /*!< Position of MAP field. */
 #define RADIO_FREQUENCY_MAP_Msk (0x1UL << RADIO_FREQUENCY_MAP_Pos) /*!< Bit mask of MAP field. */
-#define RADIO_FREQUENCY_MAP_Default (0UL) /*!< Channel map between 2400 MHZ .. 2500 MHz */
-#define RADIO_FREQUENCY_MAP_Low (1UL) /*!< Channel map between 2360 MHZ .. 2460 MHz */
+#define RADIO_FREQUENCY_MAP_Default (0UL) /*!< Channel map between 2400 MHz and 2500 MHz */
+#define RADIO_FREQUENCY_MAP_Low (1UL) /*!< Channel map between 2360 MHz and 2460 MHz */
 
 /* Bits 6..0 : Radio channel frequency */
 #define RADIO_FREQUENCY_FREQUENCY_Pos (0UL) /*!< Position of FREQUENCY field. */
@@ -7060,8 +7479,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_MODE_MODE_Nrf_2Mbit (1UL) /*!< 2 Mbps Nordic proprietary radio mode */
 #define RADIO_MODE_MODE_Ble_1Mbit (3UL) /*!< 1 Mbps BLE */
 #define RADIO_MODE_MODE_Ble_2Mbit (4UL) /*!< 2 Mbps BLE */
-#define RADIO_MODE_MODE_Ble_LR125Kbit (5UL) /*!< Long range 125 kbps TX, 125 kbps and 500 kbps RX */
-#define RADIO_MODE_MODE_Ble_LR500Kbit (6UL) /*!< Long range 500 kbps TX, 125 kbps and 500 kbps RX */
+#define RADIO_MODE_MODE_Ble_LR125Kbit (5UL) /*!< Long Range 125 kbps TX, 125 kbps and 500 kbps RX */
+#define RADIO_MODE_MODE_Ble_LR500Kbit (6UL) /*!< Long Range 500 kbps TX, 125 kbps and 500 kbps RX */
 #define RADIO_MODE_MODE_Ieee802154_250Kbit (15UL) /*!< IEEE 802.15.4-2006 250 kbps */
 
 /* Register: RADIO_PCNF0 */
@@ -7083,9 +7502,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_PCNF0_PLEN_8bit (0UL) /*!< 8-bit preamble */
 #define RADIO_PCNF0_PLEN_16bit (1UL) /*!< 16-bit preamble */
 #define RADIO_PCNF0_PLEN_32bitZero (2UL) /*!< 32-bit zero preamble - used for IEEE 802.15.4 */
-#define RADIO_PCNF0_PLEN_LongRange (3UL) /*!< Preamble - used for BLE long range */
+#define RADIO_PCNF0_PLEN_LongRange (3UL) /*!< Preamble - used for Bluetooth LE Long Range */
 
-/* Bits 23..22 : Length of code indicator - long range */
+/* Bits 23..22 : Length of code indicator - Long Range */
 #define RADIO_PCNF0_CILEN_Pos (22UL) /*!< Position of CILEN field. */
 #define RADIO_PCNF0_CILEN_Msk (0x3UL << RADIO_PCNF0_CILEN_Pos) /*!< Bit mask of CILEN field. */
 
@@ -7095,15 +7514,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_PCNF0_S1INCL_Automatic (0UL) /*!< Include S1 field in RAM only if S1LEN &gt; 0 */
 #define RADIO_PCNF0_S1INCL_Include (1UL) /*!< Always include S1 field in RAM independent of S1LEN */
 
-/* Bits 19..16 : Length on air of S1 field in number of bits. */
+/* Bits 19..16 : Length on air of S1 field in number of bits */
 #define RADIO_PCNF0_S1LEN_Pos (16UL) /*!< Position of S1LEN field. */
 #define RADIO_PCNF0_S1LEN_Msk (0xFUL << RADIO_PCNF0_S1LEN_Pos) /*!< Bit mask of S1LEN field. */
 
-/* Bit 8 : Length on air of S0 field in number of bytes. */
+/* Bit 8 : Length on air of S0 field in number of bytes */
 #define RADIO_PCNF0_S0LEN_Pos (8UL) /*!< Position of S0LEN field. */
 #define RADIO_PCNF0_S0LEN_Msk (0x1UL << RADIO_PCNF0_S0LEN_Pos) /*!< Bit mask of S0LEN field. */
 
-/* Bits 3..0 : Length on air of LENGTH field in number of bits. */
+/* Bits 3..0 : Length on air of LENGTH field in number of bits */
 #define RADIO_PCNF0_LFLEN_Pos (0UL) /*!< Position of LFLEN field. */
 #define RADIO_PCNF0_LFLEN_Msk (0xFUL << RADIO_PCNF0_LFLEN_Pos) /*!< Bit mask of LFLEN field. */
 
@@ -7254,7 +7673,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_CRCCNF_SKIPADDR_Skip (1UL) /*!< CRC calculation does not include address field. The CRC calculation will start at the first byte after the address. */
 #define RADIO_CRCCNF_SKIPADDR_Ieee802154 (2UL) /*!< CRC calculation as per 802.15.4 standard. Starting at first byte after length field. */
 
-/* Bits 1..0 : CRC length in number of bytes. */
+/* Bits 1..0 : CRC length in number of bytes For MODE Ble_LR125Kbit and Ble_LR500Kbit, only LEN set to 3 is supported */
 #define RADIO_CRCCNF_LEN_Pos (0UL) /*!< Position of LEN field. */
 #define RADIO_CRCCNF_LEN_Msk (0x3UL << RADIO_CRCCNF_LEN_Pos) /*!< Bit mask of LEN field. */
 #define RADIO_CRCCNF_LEN_Disabled (0UL) /*!< CRC length is zero and CRC calculation is disabled */
@@ -7279,14 +7698,14 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: RADIO_TIFS */
 /* Description: Interframe spacing in us */
 
-/* Bits 9..0 : Interframe spacing in us */
+/* Bits 9..0 : Interframe spacing in us. */
 #define RADIO_TIFS_TIFS_Pos (0UL) /*!< Position of TIFS field. */
 #define RADIO_TIFS_TIFS_Msk (0x3FFUL << RADIO_TIFS_TIFS_Pos) /*!< Bit mask of TIFS field. */
 
 /* Register: RADIO_RSSISAMPLE */
 /* Description: RSSI sample */
 
-/* Bits 6..0 : RSSI sample */
+/* Bits 6..0 : RSSI sample. */
 #define RADIO_RSSISAMPLE_RSSISAMPLE_Pos (0UL) /*!< Position of RSSISAMPLE field. */
 #define RADIO_RSSISAMPLE_RSSISAMPLE_Msk (0x7FUL << RADIO_RSSISAMPLE_RSSISAMPLE_Pos) /*!< Bit mask of RSSISAMPLE field. */
 
@@ -7445,7 +7864,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_MODECNF0_RU_Pos (0UL) /*!< Position of RU field. */
 #define RADIO_MODECNF0_RU_Msk (0x1UL << RADIO_MODECNF0_RU_Pos) /*!< Bit mask of RU field. */
 #define RADIO_MODECNF0_RU_Default (0UL) /*!< Default ramp-up time (tRXEN and tTXEN), compatible with firmware written for nRF51 */
-#define RADIO_MODECNF0_RU_Fast (1UL) /*!< Fast ramp-up (tRXEN,FAST and tTXEN,FAST), see electrical specification for more information */
+#define RADIO_MODECNF0_RU_Fast (1UL) /*!< Fast ramp-up (tRXEN,FAST and tTXEN,FAST), see electrical specifications for more information */
 
 /* Register: RADIO_SFD */
 /* Description: IEEE 802.15.4 start of frame delimiter */
@@ -7513,32 +7932,32 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RADIO_CTEINLINECONF_S0CONF_Pos (16UL) /*!< Position of S0CONF field. */
 #define RADIO_CTEINLINECONF_S0CONF_Msk (0xFFUL << RADIO_CTEINLINECONF_S0CONF_Pos) /*!< Bit mask of S0CONF field. */
 
-/* Bits 15..13 : Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set */
+/* Bits 15..13 : Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set. */
 #define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_Pos (13UL) /*!< Position of CTEINLINERXMODE2US field. */
 #define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_Msk (0x7UL << RADIO_CTEINLINECONF_CTEINLINERXMODE2US_Pos) /*!< Bit mask of CTEINLINERXMODE2US field. */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_4us (1UL) /*!< 4us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_2us (2UL) /*!< 2us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_1us (3UL) /*!< 1us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_500ns (4UL) /*!< 0.5us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_250ns (5UL) /*!< 0.25us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_125ns (6UL) /*!< 0.125us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_4us (1UL) /*!< 4 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_2us (2UL) /*!< 2 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_1us (3UL) /*!< 1 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_500ns (4UL) /*!< 0.5 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_250ns (5UL) /*!< 0.25 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE2US_125ns (6UL) /*!< 0.125 us */
 
-/* Bits 12..10 : Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set */
+/* Bits 12..10 : Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set. */
 #define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_Pos (10UL) /*!< Position of CTEINLINERXMODE1US field. */
 #define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_Msk (0x7UL << RADIO_CTEINLINECONF_CTEINLINERXMODE1US_Pos) /*!< Bit mask of CTEINLINERXMODE1US field. */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_4us (1UL) /*!< 4us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_2us (2UL) /*!< 2us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_1us (3UL) /*!< 1us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_500ns (4UL) /*!< 0.5us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_250ns (5UL) /*!< 0.25us */
-#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_125ns (6UL) /*!< 0.125us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_4us (1UL) /*!< 4 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_2us (2UL) /*!< 2 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_1us (3UL) /*!< 1 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_500ns (4UL) /*!< 0.5 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_250ns (5UL) /*!< 0.25 us */
+#define RADIO_CTEINLINECONF_CTEINLINERXMODE1US_125ns (6UL) /*!< 0.125 us */
 
 /* Bits 7..6 : Max range of CTETime */
 #define RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_Pos (6UL) /*!< Position of CTETIMEVALIDRANGE field. */
 #define RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_Msk (0x3UL << RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_Pos) /*!< Bit mask of CTETIMEVALIDRANGE field. */
-#define RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_20 (0UL) /*!< 20 in 8us unit (default) Set to 20 if parsed CTETime is larger han 20 */
-#define RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_31 (1UL) /*!< 31 in 8us unit */
-#define RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_63 (2UL) /*!< 63 in 8us unit */
+#define RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_20 (0UL) /*!< 20 in 8 us unit (default) Set to 20 if parsed CTETime is larger than 20 */
+#define RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_31 (1UL) /*!< 31 in 8 us unit */
+#define RADIO_CTEINLINECONF_CTETIMEVALIDRANGE_63 (2UL) /*!< 63 in 8 us unit */
 
 /* Bit 4 : Sampling/switching if CRC is not OK */
 #define RADIO_CTEINLINECONF_CTEERRORHANDLING_Pos (4UL) /*!< Position of CTEERRORHANDLING field. */
@@ -7573,12 +7992,12 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 18..16 : Interval between samples in the SWITCHING period when CTEINLINECTRLEN is 0 */
 #define RADIO_DFECTRL1_TSAMPLESPACING_Pos (16UL) /*!< Position of TSAMPLESPACING field. */
 #define RADIO_DFECTRL1_TSAMPLESPACING_Msk (0x7UL << RADIO_DFECTRL1_TSAMPLESPACING_Pos) /*!< Bit mask of TSAMPLESPACING field. */
-#define RADIO_DFECTRL1_TSAMPLESPACING_4us (1UL) /*!< 4us */
-#define RADIO_DFECTRL1_TSAMPLESPACING_2us (2UL) /*!< 2us */
-#define RADIO_DFECTRL1_TSAMPLESPACING_1us (3UL) /*!< 1us */
-#define RADIO_DFECTRL1_TSAMPLESPACING_500ns (4UL) /*!< 0.5us */
-#define RADIO_DFECTRL1_TSAMPLESPACING_250ns (5UL) /*!< 0.25us */
-#define RADIO_DFECTRL1_TSAMPLESPACING_125ns (6UL) /*!< 0.125us */
+#define RADIO_DFECTRL1_TSAMPLESPACING_4us (1UL) /*!< 4 us */
+#define RADIO_DFECTRL1_TSAMPLESPACING_2us (2UL) /*!< 2 us */
+#define RADIO_DFECTRL1_TSAMPLESPACING_1us (3UL) /*!< 1 us */
+#define RADIO_DFECTRL1_TSAMPLESPACING_500ns (4UL) /*!< 0.5 us */
+#define RADIO_DFECTRL1_TSAMPLESPACING_250ns (5UL) /*!< 0.25 us */
+#define RADIO_DFECTRL1_TSAMPLESPACING_125ns (6UL) /*!< 0.125 us */
 
 /* Bit 15 : Whether to sample I/Q or magnitude/phase */
 #define RADIO_DFECTRL1_SAMPLETYPE_Pos (15UL) /*!< Position of SAMPLETYPE field. */
@@ -7589,19 +8008,19 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 14..12 : Interval between samples in the REFERENCE period */
 #define RADIO_DFECTRL1_TSAMPLESPACINGREF_Pos (12UL) /*!< Position of TSAMPLESPACINGREF field. */
 #define RADIO_DFECTRL1_TSAMPLESPACINGREF_Msk (0x7UL << RADIO_DFECTRL1_TSAMPLESPACINGREF_Pos) /*!< Bit mask of TSAMPLESPACINGREF field. */
-#define RADIO_DFECTRL1_TSAMPLESPACINGREF_4us (1UL) /*!< 4us */
-#define RADIO_DFECTRL1_TSAMPLESPACINGREF_2us (2UL) /*!< 2us */
-#define RADIO_DFECTRL1_TSAMPLESPACINGREF_1us (3UL) /*!< 1us */
-#define RADIO_DFECTRL1_TSAMPLESPACINGREF_500ns (4UL) /*!< 0.5us */
-#define RADIO_DFECTRL1_TSAMPLESPACINGREF_250ns (5UL) /*!< 0.25us */
-#define RADIO_DFECTRL1_TSAMPLESPACINGREF_125ns (6UL) /*!< 0.125us */
+#define RADIO_DFECTRL1_TSAMPLESPACINGREF_4us (1UL) /*!< 4 us */
+#define RADIO_DFECTRL1_TSAMPLESPACINGREF_2us (2UL) /*!< 2 us */
+#define RADIO_DFECTRL1_TSAMPLESPACINGREF_1us (3UL) /*!< 1 us */
+#define RADIO_DFECTRL1_TSAMPLESPACINGREF_500ns (4UL) /*!< 0.5 us */
+#define RADIO_DFECTRL1_TSAMPLESPACINGREF_250ns (5UL) /*!< 0.25 us */
+#define RADIO_DFECTRL1_TSAMPLESPACINGREF_125ns (6UL) /*!< 0.125 us */
 
 /* Bits 10..8 : Interval between every time the antenna is changed in the SWITCHING state */
 #define RADIO_DFECTRL1_TSWITCHSPACING_Pos (8UL) /*!< Position of TSWITCHSPACING field. */
 #define RADIO_DFECTRL1_TSWITCHSPACING_Msk (0x7UL << RADIO_DFECTRL1_TSWITCHSPACING_Pos) /*!< Bit mask of TSWITCHSPACING field. */
-#define RADIO_DFECTRL1_TSWITCHSPACING_4us (1UL) /*!< 4us */
-#define RADIO_DFECTRL1_TSWITCHSPACING_2us (2UL) /*!< 2us */
-#define RADIO_DFECTRL1_TSWITCHSPACING_1us (3UL) /*!< 1us */
+#define RADIO_DFECTRL1_TSWITCHSPACING_4us (1UL) /*!< 4 us */
+#define RADIO_DFECTRL1_TSWITCHSPACING_2us (2UL) /*!< 2 us */
+#define RADIO_DFECTRL1_TSWITCHSPACING_1us (3UL) /*!< 1 us */
 
 /* Bit 7 : Add CTE extension and do antenna switching/sampling in this extension */
 #define RADIO_DFECTRL1_DFEINEXTENSION_Pos (7UL) /*!< Position of DFEINEXTENSION field. */
@@ -7616,18 +8035,18 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: RADIO_DFECTRL2 */
 /* Description: Start offset for Direction finding */
 
-/* Bits 27..16 : Signed value offset before starting sampling in number of 16M cycles relative to the beginning of the REFERENCE state - 12 us after switching start */
+/* Bits 27..16 : Signed value offset in number of 16 MHz clock cycles for fine tuning of the sampling instant for all IQ samples. With TSAMPLEOFFSET=0 the first sample is taken immediately at the start of the reference period */
 #define RADIO_DFECTRL2_TSAMPLEOFFSET_Pos (16UL) /*!< Position of TSAMPLEOFFSET field. */
 #define RADIO_DFECTRL2_TSAMPLEOFFSET_Msk (0xFFFUL << RADIO_DFECTRL2_TSAMPLEOFFSET_Pos) /*!< Bit mask of TSAMPLEOFFSET field. */
 
-/* Bits 12..0 : Signed value offset after the end of the CRC before starting switching in number of 16M cycles */
+/* Bits 12..0 : Signed value offset after the end of the CRC before starting switching in number of 16 MHz clock cycles */
 #define RADIO_DFECTRL2_TSWITCHOFFSET_Pos (0UL) /*!< Position of TSWITCHOFFSET field. */
 #define RADIO_DFECTRL2_TSWITCHOFFSET_Msk (0x1FFFUL << RADIO_DFECTRL2_TSWITCHOFFSET_Pos) /*!< Bit mask of TSWITCHOFFSET field. */
 
 /* Register: RADIO_SWITCHPATTERN */
 /* Description: GPIO patterns to be used for each antenna */
 
-/* Bits 7..0 : Fill array of GPIO patterns for antenna control */
+/* Bits 7..0 : Fill array of GPIO patterns for antenna control. */
 #define RADIO_SWITCHPATTERN_SWITCHPATTERN_Pos (0UL) /*!< Position of SWITCHPATTERN field. */
 #define RADIO_SWITCHPATTERN_SWITCHPATTERN_Msk (0xFFUL << RADIO_SWITCHPATTERN_SWITCHPATTERN_Pos) /*!< Bit mask of SWITCHPATTERN field. */
 
@@ -8331,7 +8750,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RTC_COUNTER_COUNTER_Msk (0xFFFFFFUL << RTC_COUNTER_COUNTER_Pos) /*!< Bit mask of COUNTER field. */
 
 /* Register: RTC_PRESCALER */
-/* Description: 12-bit prescaler for counter frequency (32768/(PRESCALER+1)). Must be written when RTC is stopped. */
+/* Description: 12-bit prescaler for counter frequency (32768 / (PRESCALER + 1)). Must be written when RTC is stopped. */
 
 /* Bits 11..0 : Prescaler value */
 #define RTC_PRESCALER_PRESCALER_Pos (0UL) /*!< Position of PRESCALER field. */
@@ -8628,7 +9047,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define SPIM_INTENCLR_STOPPED_Clear (1UL) /*!< Disable */
 
 /* Register: SPIM_STALLSTAT */
-/* Description: Stall status for EasyDMA RAM accesses. The fields in this register is set to STALL by hardware whenever a stall occurres and can be cleared (set to NOSTALL) by the CPU. */
+/* Description: Stall status for EasyDMA RAM accesses. The fields in this register are set to STALL by hardware whenever a stall occurres and can be cleared (set to NOSTALL) by the CPU. */
 
 /* Bit 1 : Stall status for EasyDMA RAM writes */
 #define SPIM_STALLSTAT_RX_Pos (1UL) /*!< Position of RX field. */
@@ -8824,9 +9243,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define SPIM_IFTIMING_RXDELAY_RXDELAY_Msk (0x7UL << SPIM_IFTIMING_RXDELAY_RXDELAY_Pos) /*!< Bit mask of RXDELAY field. */
 
 /* Register: SPIM_IFTIMING_CSNDUR */
-/* Description: Minimum duration between edge of CSN and edge of SCK and minimum duration CSN must stay high between transactions */
+/* Description: Minimum duration between edge of CSN and edge of SCK. When SHORTS.END_START is used, this is also the minimum duration CSN must stay high between transactions. */
 
-/* Bits 7..0 : Minimum duration between edge of CSN and edge of SCK and minimum duration CSN must stay high between transactions. The value is specified in number of 64 MHz clock cycles (15.625 ns). */
+/* Bits 7..0 : Minimum duration between edge of CSN and edge of SCK. When SHORTS.END_START is used, this is the minimum duration CSN must stay high between transactions. The value is specified in number of 64 MHz clock cycles (15.625 ns). */
 #define SPIM_IFTIMING_CSNDUR_CSNDUR_Pos (0UL) /*!< Position of CSNDUR field. */
 #define SPIM_IFTIMING_CSNDUR_CSNDUR_Msk (0xFFUL << SPIM_IFTIMING_CSNDUR_CSNDUR_Pos) /*!< Bit mask of CSNDUR field. */
 
@@ -9335,121 +9754,121 @@ POSSIBILITY OF SUCH DAMAGE.
 #define TEMP_TEMP_TEMP_Msk (0xFFFFFFFFUL << TEMP_TEMP_TEMP_Pos) /*!< Bit mask of TEMP field. */
 
 /* Register: TEMP_A0 */
-/* Description: Slope of 1st piece wise linear function */
+/* Description: Slope of first piecewise linear function */
 
-/* Bits 11..0 : Slope of 1st piece wise linear function */
+/* Bits 11..0 : Slope of first piecewise linear function */
 #define TEMP_A0_A0_Pos (0UL) /*!< Position of A0 field. */
 #define TEMP_A0_A0_Msk (0xFFFUL << TEMP_A0_A0_Pos) /*!< Bit mask of A0 field. */
 
 /* Register: TEMP_A1 */
-/* Description: Slope of 2nd piece wise linear function */
+/* Description: Slope of second piecewise linear function */
 
-/* Bits 11..0 : Slope of 2nd piece wise linear function */
+/* Bits 11..0 : Slope of second piecewise linear function */
 #define TEMP_A1_A1_Pos (0UL) /*!< Position of A1 field. */
 #define TEMP_A1_A1_Msk (0xFFFUL << TEMP_A1_A1_Pos) /*!< Bit mask of A1 field. */
 
 /* Register: TEMP_A2 */
-/* Description: Slope of 3rd piece wise linear function */
+/* Description: Slope of third piecewise linear function */
 
-/* Bits 11..0 : Slope of 3rd piece wise linear function */
+/* Bits 11..0 : Slope of third piecewise linear function */
 #define TEMP_A2_A2_Pos (0UL) /*!< Position of A2 field. */
 #define TEMP_A2_A2_Msk (0xFFFUL << TEMP_A2_A2_Pos) /*!< Bit mask of A2 field. */
 
 /* Register: TEMP_A3 */
-/* Description: Slope of 4th piece wise linear function */
+/* Description: Slope of fourth piecewise linear function */
 
-/* Bits 11..0 : Slope of 4th piece wise linear function */
+/* Bits 11..0 : Slope of fourth piecewise linear function */
 #define TEMP_A3_A3_Pos (0UL) /*!< Position of A3 field. */
 #define TEMP_A3_A3_Msk (0xFFFUL << TEMP_A3_A3_Pos) /*!< Bit mask of A3 field. */
 
 /* Register: TEMP_A4 */
-/* Description: Slope of 5th piece wise linear function */
+/* Description: Slope of fifth piecewise linear function */
 
-/* Bits 11..0 : Slope of 5th piece wise linear function */
+/* Bits 11..0 : Slope of fifth piecewise linear function */
 #define TEMP_A4_A4_Pos (0UL) /*!< Position of A4 field. */
 #define TEMP_A4_A4_Msk (0xFFFUL << TEMP_A4_A4_Pos) /*!< Bit mask of A4 field. */
 
 /* Register: TEMP_A5 */
-/* Description: Slope of 6th piece wise linear function */
+/* Description: Slope of sixth piecewise linear function */
 
-/* Bits 11..0 : Slope of 6th piece wise linear function */
+/* Bits 11..0 : Slope of sixth piecewise linear function */
 #define TEMP_A5_A5_Pos (0UL) /*!< Position of A5 field. */
 #define TEMP_A5_A5_Msk (0xFFFUL << TEMP_A5_A5_Pos) /*!< Bit mask of A5 field. */
 
 /* Register: TEMP_B0 */
-/* Description: y-intercept of 1st piece wise linear function */
+/* Description: y-intercept of first piecewise linear function */
 
-/* Bits 11..0 : y-intercept of 1st piece wise linear function */
+/* Bits 11..0 : y-intercept of first piecewise linear function */
 #define TEMP_B0_B0_Pos (0UL) /*!< Position of B0 field. */
 #define TEMP_B0_B0_Msk (0xFFFUL << TEMP_B0_B0_Pos) /*!< Bit mask of B0 field. */
 
 /* Register: TEMP_B1 */
-/* Description: y-intercept of 2nd piece wise linear function */
+/* Description: y-intercept of second piecewise linear function */
 
-/* Bits 11..0 : y-intercept of 2nd piece wise linear function */
+/* Bits 11..0 : y-intercept of second piecewise linear function */
 #define TEMP_B1_B1_Pos (0UL) /*!< Position of B1 field. */
 #define TEMP_B1_B1_Msk (0xFFFUL << TEMP_B1_B1_Pos) /*!< Bit mask of B1 field. */
 
 /* Register: TEMP_B2 */
-/* Description: y-intercept of 3rd piece wise linear function */
+/* Description: y-intercept of third piecewise linear function */
 
-/* Bits 11..0 : y-intercept of 3rd piece wise linear function */
+/* Bits 11..0 : y-intercept of third piecewise linear function */
 #define TEMP_B2_B2_Pos (0UL) /*!< Position of B2 field. */
 #define TEMP_B2_B2_Msk (0xFFFUL << TEMP_B2_B2_Pos) /*!< Bit mask of B2 field. */
 
 /* Register: TEMP_B3 */
-/* Description: y-intercept of 4th piece wise linear function */
+/* Description: y-intercept of fourth piecewise linear function */
 
-/* Bits 11..0 : y-intercept of 4th piece wise linear function */
+/* Bits 11..0 : y-intercept of fourth piecewise linear function */
 #define TEMP_B3_B3_Pos (0UL) /*!< Position of B3 field. */
 #define TEMP_B3_B3_Msk (0xFFFUL << TEMP_B3_B3_Pos) /*!< Bit mask of B3 field. */
 
 /* Register: TEMP_B4 */
-/* Description: y-intercept of 5th piece wise linear function */
+/* Description: y-intercept of fifth piecewise linear function */
 
-/* Bits 11..0 : y-intercept of 5th piece wise linear function */
+/* Bits 11..0 : y-intercept of fifth piecewise linear function */
 #define TEMP_B4_B4_Pos (0UL) /*!< Position of B4 field. */
 #define TEMP_B4_B4_Msk (0xFFFUL << TEMP_B4_B4_Pos) /*!< Bit mask of B4 field. */
 
 /* Register: TEMP_B5 */
-/* Description: y-intercept of 6th piece wise linear function */
+/* Description: y-intercept of sixth piecewise linear function */
 
-/* Bits 11..0 : y-intercept of 6th piece wise linear function */
+/* Bits 11..0 : y-intercept of sixth piecewise linear function */
 #define TEMP_B5_B5_Pos (0UL) /*!< Position of B5 field. */
 #define TEMP_B5_B5_Msk (0xFFFUL << TEMP_B5_B5_Pos) /*!< Bit mask of B5 field. */
 
 /* Register: TEMP_T0 */
-/* Description: End point of 1st piece wise linear function */
+/* Description: Endpoint of first piecewise linear function */
 
-/* Bits 7..0 : End point of 1st piece wise linear function */
+/* Bits 7..0 : Endpoint of first piecewise linear function */
 #define TEMP_T0_T0_Pos (0UL) /*!< Position of T0 field. */
 #define TEMP_T0_T0_Msk (0xFFUL << TEMP_T0_T0_Pos) /*!< Bit mask of T0 field. */
 
 /* Register: TEMP_T1 */
-/* Description: End point of 2nd piece wise linear function */
+/* Description: Endpoint of second piecewise linear function */
 
-/* Bits 7..0 : End point of 2nd piece wise linear function */
+/* Bits 7..0 : Endpoint of second piecewise linear function */
 #define TEMP_T1_T1_Pos (0UL) /*!< Position of T1 field. */
 #define TEMP_T1_T1_Msk (0xFFUL << TEMP_T1_T1_Pos) /*!< Bit mask of T1 field. */
 
 /* Register: TEMP_T2 */
-/* Description: End point of 3rd piece wise linear function */
+/* Description: Endpoint of third piecewise linear function */
 
-/* Bits 7..0 : End point of 3rd piece wise linear function */
+/* Bits 7..0 : Endpoint of third piecewise linear function */
 #define TEMP_T2_T2_Pos (0UL) /*!< Position of T2 field. */
 #define TEMP_T2_T2_Msk (0xFFUL << TEMP_T2_T2_Pos) /*!< Bit mask of T2 field. */
 
 /* Register: TEMP_T3 */
-/* Description: End point of 4th piece wise linear function */
+/* Description: Endpoint of fourth piecewise linear function */
 
-/* Bits 7..0 : End point of 4th piece wise linear function */
+/* Bits 7..0 : Endpoint of fourth piecewise linear function */
 #define TEMP_T3_T3_Pos (0UL) /*!< Position of T3 field. */
 #define TEMP_T3_T3_Msk (0xFFUL << TEMP_T3_T3_Pos) /*!< Bit mask of T3 field. */
 
 /* Register: TEMP_T4 */
-/* Description: End point of 5th piece wise linear function */
+/* Description: Endpoint of fifth piecewise linear function */
 
-/* Bits 7..0 : End point of 5th piece wise linear function */
+/* Bits 7..0 : Endpoint of fifth piecewise linear function */
 #define TEMP_T4_T4_Pos (0UL) /*!< Position of T4 field. */
 #define TEMP_T4_T4_Msk (0xFFUL << TEMP_T4_T4_Pos) /*!< Bit mask of T4 field. */
 
@@ -10189,12 +10608,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define TWIM_SHORTS_LASTRX_STOP_Disabled (0UL) /*!< Disable shortcut */
 #define TWIM_SHORTS_LASTRX_STOP_Enabled (1UL) /*!< Enable shortcut */
 
-/* Bit 11 : Shortcut between event LASTRX and task SUSPEND */
-#define TWIM_SHORTS_LASTRX_SUSPEND_Pos (11UL) /*!< Position of LASTRX_SUSPEND field. */
-#define TWIM_SHORTS_LASTRX_SUSPEND_Msk (0x1UL << TWIM_SHORTS_LASTRX_SUSPEND_Pos) /*!< Bit mask of LASTRX_SUSPEND field. */
-#define TWIM_SHORTS_LASTRX_SUSPEND_Disabled (0UL) /*!< Disable shortcut */
-#define TWIM_SHORTS_LASTRX_SUSPEND_Enabled (1UL) /*!< Enable shortcut */
-
 /* Bit 10 : Shortcut between event LASTRX and task STARTTX */
 #define TWIM_SHORTS_LASTRX_STARTTX_Pos (10UL) /*!< Position of LASTRX_STARTTX field. */
 #define TWIM_SHORTS_LASTRX_STARTTX_Msk (0x1UL << TWIM_SHORTS_LASTRX_STARTTX_Pos) /*!< Bit mask of LASTRX_STARTTX field. */
@@ -10919,7 +11332,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: TWIS_MATCH */
 /* Description: Status register indicating which address had a match */
 
-/* Bit 0 : Which of the addresses in {ADDRESS} matched the incoming address */
+/* Bit 0 : Indication of which address in {ADDRESS} that matched the incoming address */
 #define TWIS_MATCH_MATCH_Pos (0UL) /*!< Position of MATCH field. */
 #define TWIS_MATCH_MATCH_Msk (0x1UL << TWIS_MATCH_MATCH_Pos) /*!< Bit mask of MATCH field. */
 
@@ -11651,7 +12064,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define UARTE_INTENCLR_CTS_Clear (1UL) /*!< Disable */
 
 /* Register: UARTE_ERRORSRC */
-/* Description: Error source Note : this register is read / write one to clear. */
+/* Description: Error source */
 
 /* Bit 3 : Break condition */
 #define UARTE_ERRORSRC_BREAK_Pos (3UL) /*!< Position of BREAK field. */
@@ -11777,7 +12190,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define UARTE_BAUDRATE_BAUDRATE_Baud250000 (0x04000000UL) /*!< 250000 baud */
 #define UARTE_BAUDRATE_BAUDRATE_Baud460800 (0x07400000UL) /*!< 460800 baud (actual rate: 457143) */
 #define UARTE_BAUDRATE_BAUDRATE_Baud921600 (0x0F000000UL) /*!< 921600 baud (actual rate: 941176) */
-#define UARTE_BAUDRATE_BAUDRATE_Baud1M (0x10000000UL) /*!< 1Mega baud */
+#define UARTE_BAUDRATE_BAUDRATE_Baud1M (0x10000000UL) /*!< 1 megabaud */
 
 /* Register: UARTE_RXD_PTR */
 /* Description: Data pointer */
@@ -11856,11 +12269,11 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Description: Access port protection */
 
 /* Bits 31..0 : Blocks debugger read/write access to all CPU registers and memory mapped
-        addresses Using any value except Unprotected will lead to the protection being enabled. */
+        addresses. */
 #define UICR_APPROTECT_PALL_Pos (0UL) /*!< Position of PALL field. */
 #define UICR_APPROTECT_PALL_Msk (0xFFFFFFFFUL << UICR_APPROTECT_PALL_Pos) /*!< Bit mask of PALL field. */
 #define UICR_APPROTECT_PALL_Protected (0x00000000UL) /*!< Protected */
-#define UICR_APPROTECT_PALL_Unprotected (0xFFFFFFFFUL) /*!< Unprotected */
+#define UICR_APPROTECT_PALL_Unprotected (0x50FA50FAUL) /*!< Unprotected */
 
 /* Register: UICR_ERASEPROTECT */
 /* Description: Erase protection */
@@ -12053,17 +12466,17 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Description: Watchdog Timer */
 
 /* Register: WDT_TASKS_START */
-/* Description: Start the watchdog */
+/* Description: Start WDT */
 
-/* Bit 0 : Start the watchdog */
+/* Bit 0 : Start WDT */
 #define WDT_TASKS_START_TASKS_START_Pos (0UL) /*!< Position of TASKS_START field. */
 #define WDT_TASKS_START_TASKS_START_Msk (0x1UL << WDT_TASKS_START_TASKS_START_Pos) /*!< Bit mask of TASKS_START field. */
 #define WDT_TASKS_START_TASKS_START_Trigger (1UL) /*!< Trigger task */
 
 /* Register: WDT_TASKS_STOP */
-/* Description: Stop the watchdog timer. */
+/* Description: Stop WDT */
 
-/* Bit 0 : Stop the watchdog timer. */
+/* Bit 0 : Stop WDT */
 #define WDT_TASKS_STOP_TASKS_STOP_Pos (0UL) /*!< Position of TASKS_STOP field. */
 #define WDT_TASKS_STOP_TASKS_STOP_Msk (0x1UL << WDT_TASKS_STOP_TASKS_STOP_Pos) /*!< Bit mask of TASKS_STOP field. */
 #define WDT_TASKS_STOP_TASKS_STOP_Trigger (1UL) /*!< Trigger task */
@@ -12209,10 +12622,10 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: WDT_RUNSTATUS */
 /* Description: Run status */
 
-/* Bit 0 : Indicates whether or not the watchdog is running */
+/* Bit 0 : Indicates whether or not WDT is running */
 #define WDT_RUNSTATUS_RUNSTATUSWDT_Pos (0UL) /*!< Position of RUNSTATUSWDT field. */
 #define WDT_RUNSTATUS_RUNSTATUSWDT_Msk (0x1UL << WDT_RUNSTATUS_RUNSTATUSWDT_Pos) /*!< Bit mask of RUNSTATUSWDT field. */
-#define WDT_RUNSTATUS_RUNSTATUSWDT_NotRunning (0UL) /*!< Watchdog not running */
+#define WDT_RUNSTATUS_RUNSTATUSWDT_NotRunning (0UL) /*!< Watchdog is not running */
 #define WDT_RUNSTATUS_RUNSTATUSWDT_Running (1UL) /*!< Watchdog is running */
 
 /* Register: WDT_REQSTATUS */
@@ -12327,31 +12740,31 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: WDT_CONFIG */
 /* Description: Configuration register */
 
-/* Bit 6 : Allow stopping the watchdog */
+/* Bit 6 : Allow stopping WDT */
 #define WDT_CONFIG_STOPEN_Pos (6UL) /*!< Position of STOPEN field. */
 #define WDT_CONFIG_STOPEN_Msk (0x1UL << WDT_CONFIG_STOPEN_Pos) /*!< Bit mask of STOPEN field. */
-#define WDT_CONFIG_STOPEN_Disable (0UL) /*!< Do not allow stopping the watchdog */
-#define WDT_CONFIG_STOPEN_Enable (1UL) /*!< Allow stopping the watchdog */
+#define WDT_CONFIG_STOPEN_Disable (0UL) /*!< Do not allow stopping WDT */
+#define WDT_CONFIG_STOPEN_Enable (1UL) /*!< Allow stopping WDT */
 
-/* Bit 3 : Configure the watchdog to either be paused, or kept running, while the CPU is halted by the debugger */
+/* Bit 3 : Configure WDT to either be paused, or kept running, while the CPU is halted by the debugger */
 #define WDT_CONFIG_HALT_Pos (3UL) /*!< Position of HALT field. */
 #define WDT_CONFIG_HALT_Msk (0x1UL << WDT_CONFIG_HALT_Pos) /*!< Bit mask of HALT field. */
-#define WDT_CONFIG_HALT_Pause (0UL) /*!< Pause watchdog while the CPU is halted by the debugger */
-#define WDT_CONFIG_HALT_Run (1UL) /*!< Keep the watchdog running while the CPU is halted by the debugger */
+#define WDT_CONFIG_HALT_Pause (0UL) /*!< Pause WDT while the CPU is halted by the debugger */
+#define WDT_CONFIG_HALT_Run (1UL) /*!< Keep WDT running while the CPU is halted by the debugger */
 
-/* Bit 0 : Configure the watchdog to either be paused, or kept running, while the CPU is sleeping */
+/* Bit 0 : Configure WDT to either be paused, or kept running, while the CPU is sleeping */
 #define WDT_CONFIG_SLEEP_Pos (0UL) /*!< Position of SLEEP field. */
 #define WDT_CONFIG_SLEEP_Msk (0x1UL << WDT_CONFIG_SLEEP_Pos) /*!< Bit mask of SLEEP field. */
-#define WDT_CONFIG_SLEEP_Pause (0UL) /*!< Pause watchdog while the CPU is sleeping */
-#define WDT_CONFIG_SLEEP_Run (1UL) /*!< Keep the watchdog running while the CPU is sleeping */
+#define WDT_CONFIG_SLEEP_Pause (0UL) /*!< Pause WDT while the CPU is sleeping */
+#define WDT_CONFIG_SLEEP_Run (1UL) /*!< Keep WDT running while the CPU is sleeping */
 
 /* Register: WDT_TSEN */
-/* Description: Task Stop Enable */
+/* Description: Task stop enable */
 
-/* Bits 31..0 : Task stop enable register */
+/* Bits 31..0 : Allow stopping WDT */
 #define WDT_TSEN_TSEN_Pos (0UL) /*!< Position of TSEN field. */
 #define WDT_TSEN_TSEN_Msk (0xFFFFFFFFUL << WDT_TSEN_TSEN_Pos) /*!< Bit mask of TSEN field. */
-#define WDT_TSEN_TSEN_Enable (0x6E524635UL) /*!< Value to allow stopping the watchdog */
+#define WDT_TSEN_TSEN_Enable (0x6E524635UL) /*!< Value to allow stopping WDT */
 
 /* Register: WDT_RR */
 /* Description: Description collection: Reload request n */

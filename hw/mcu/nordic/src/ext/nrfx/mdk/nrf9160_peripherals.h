@@ -1,6 +1,8 @@
 /*
 
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.
+
+SPDX-License-Identifier: BSD-3-Clause
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -109,46 +111,46 @@ POSSIBILITY OF SUCH DAMAGE.
 #define SPIM2_MAX_DATARATE  8
 #define SPIM3_MAX_DATARATE  8
 
-#define SPIM0_EASYDMA_MAXCNT_SIZE 12
-#define SPIM1_EASYDMA_MAXCNT_SIZE 12
-#define SPIM2_EASYDMA_MAXCNT_SIZE 12
-#define SPIM3_EASYDMA_MAXCNT_SIZE 12
+#define SPIM0_EASYDMA_MAXCNT_SIZE 13
+#define SPIM1_EASYDMA_MAXCNT_SIZE 13
+#define SPIM2_EASYDMA_MAXCNT_SIZE 13
+#define SPIM3_EASYDMA_MAXCNT_SIZE 13
 
 /* Serial Peripheral Interface Slave with DMA*/
 #define SPIS_PRESENT
 #define SPIS_COUNT 4
 
-#define SPIS0_EASYDMA_MAXCNT_SIZE 12
-#define SPIS1_EASYDMA_MAXCNT_SIZE 12
-#define SPIS2_EASYDMA_MAXCNT_SIZE 12
-#define SPIS3_EASYDMA_MAXCNT_SIZE 12
+#define SPIS0_EASYDMA_MAXCNT_SIZE 13
+#define SPIS1_EASYDMA_MAXCNT_SIZE 13
+#define SPIS2_EASYDMA_MAXCNT_SIZE 13
+#define SPIS3_EASYDMA_MAXCNT_SIZE 13
 
 /* Two Wire Interface Master with DMA */
 #define TWIM_PRESENT
 #define TWIM_COUNT 4
 
-#define TWIM0_EASYDMA_MAXCNT_SIZE 12
-#define TWIM1_EASYDMA_MAXCNT_SIZE 12
-#define TWIM2_EASYDMA_MAXCNT_SIZE 12
-#define TWIM3_EASYDMA_MAXCNT_SIZE 12
+#define TWIM0_EASYDMA_MAXCNT_SIZE 13
+#define TWIM1_EASYDMA_MAXCNT_SIZE 13
+#define TWIM2_EASYDMA_MAXCNT_SIZE 13
+#define TWIM3_EASYDMA_MAXCNT_SIZE 13
 
 /* Two Wire Interface Slave with DMA */
 #define TWIS_PRESENT
 #define TWIS_COUNT 4
 
-#define TWIS0_EASYDMA_MAXCNT_SIZE 12
-#define TWIS1_EASYDMA_MAXCNT_SIZE 12
-#define TWIS2_EASYDMA_MAXCNT_SIZE 12
-#define TWIS3_EASYDMA_MAXCNT_SIZE 12
+#define TWIS0_EASYDMA_MAXCNT_SIZE 13
+#define TWIS1_EASYDMA_MAXCNT_SIZE 13
+#define TWIS2_EASYDMA_MAXCNT_SIZE 13
+#define TWIS3_EASYDMA_MAXCNT_SIZE 13
 
 /* Universal Asynchronous Receiver-Transmitter with DMA */
 #define UARTE_PRESENT
 #define UARTE_COUNT 4
 
-#define UARTE0_EASYDMA_MAXCNT_SIZE 12
-#define UARTE1_EASYDMA_MAXCNT_SIZE 12
-#define UARTE2_EASYDMA_MAXCNT_SIZE 12
-#define UARTE3_EASYDMA_MAXCNT_SIZE 12
+#define UARTE0_EASYDMA_MAXCNT_SIZE 13
+#define UARTE1_EASYDMA_MAXCNT_SIZE 13
+#define UARTE2_EASYDMA_MAXCNT_SIZE 13
+#define UARTE3_EASYDMA_MAXCNT_SIZE 13
 
 /* Successive Approximation Analog to Digital Converter */
 #define SAADC_PRESENT
@@ -201,6 +203,8 @@ POSSIBILITY OF SUCH DAMAGE.
 /* SPU */
 #define SPU_PRESENT
 #define SPU_COUNT 1
+
+#define SPU_RAMREGION_SIZE 0x2000ul
 
 /* CRYPTOCELL */
 #define CRYPTOCELL_PRESENT

@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -92,39 +94,61 @@ enum {
 /** @brief Configuration structure of the SPIM driver instance. */
 typedef struct
 {
-    uint8_t               sck_pin;        ///< SCK pin number.
-    uint8_t               mosi_pin;       ///< MOSI pin number (optional).
-                                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
-                                           *   if this signal is not needed. */
-    uint8_t               miso_pin;       ///< MISO pin number (optional).
-                                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
-                                           *   if this signal is not needed. */
-    uint8_t               ss_pin;         ///< Slave Select pin number (optional).
-                                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
-                                           *   if this signal is not needed. */
-    bool                  ss_active_high; ///< Polarity of the Slave Select pin during transmission.
-    uint8_t               irq_priority;   ///< Interrupt priority.
-    uint8_t               orc;            ///< Overrun character.
-                                          /**< This character is used when all bytes from the TX buffer are sent,
-                                               but the transfer continues due to RX. */
-    nrf_spim_frequency_t frequency;       ///< SPIM frequency.
-    nrf_spim_mode_t      mode;            ///< SPIM mode.
-    nrf_spim_bit_order_t bit_order;       ///< SPIM bit order.
-    nrf_gpio_pin_pull_t  miso_pull;       ///< MISO pull up configuration.
+    uint8_t              sck_pin;        ///< SCK pin number.
+    uint8_t              mosi_pin;       ///< MOSI pin number (optional).
+                                         /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
+                                          *   if this signal is not needed. */
+    uint8_t              miso_pin;       ///< MISO pin number (optional).
+                                         /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
+                                          *   if this signal is not needed. */
+    uint8_t              ss_pin;         ///< Slave Select pin number (optional).
+                                         /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
+                                          *   if this signal is not needed.
+                                          *   @note Unlike the other fields that specify
+                                          *   pin numbers, this one cannot be omitted
+                                          *   when both GPIO configuration and pin
+                                          *   selection are to be skipped but the signal
+                                          *   is not controlled by hardware (the driver
+                                          *   must then control it as a regular GPIO). */
+    bool                 ss_active_high; ///< Polarity of the Slave Select pin during transmission.
+    uint8_t              irq_priority;   ///< Interrupt priority.
+    uint8_t              orc;            ///< Overrun character.
+                                         /**< This character is used when all bytes from the TX buffer are sent,
+                                          *   but the transfer continues due to RX. */
+    nrf_spim_frequency_t frequency;      ///< SPIM frequency.
+    nrf_spim_mode_t      mode;           ///< SPIM mode.
+    nrf_spim_bit_order_t bit_order;      ///< SPIM bit order.
+    nrf_gpio_pin_pull_t  miso_pull;      ///< MISO pull up configuration.
 #if NRFX_CHECK(NRFX_SPIM_EXTENDED_ENABLED) || defined(__NRFX_DOXYGEN__)
-    uint8_t              dcx_pin;         ///< D/CX pin number (optional).
-    uint8_t              rx_delay;        ///< Sample delay for input serial data on MISO.
-                                          /**< The value specifies the delay, in number of 64 MHz clock cycles
-                                           *   (15.625 ns), from the the sampling edge of SCK (leading edge for
-                                           *   CONFIG.CPHA = 0, trailing edge for CONFIG.CPHA = 1) until
-                                           *   the input serial data is sampled. */
-    bool                 use_hw_ss;       ///< Indication to use software or hardware controlled Slave Select pin.
-    uint8_t              ss_duration;     ///< Slave Select duration before and after transmission.
-                                          /**< Minimum duration between the edge of CSN and the edge of SCK.
-                                           *   Also, minimum duration of CSN inactivity between transactions.
-                                           *   The value is specified in number of 64 MHz clock cycles (15.625 ns).
-                                           *   Supported only for hardware-controlled Slave Select. */
+    uint8_t              dcx_pin;        ///< D/CX pin number (optional).
+    uint8_t              rx_delay;       ///< Sample delay for input serial data on MISO.
+                                         /**< The value specifies the delay, in number of 64 MHz clock cycles
+                                          *   (15.625 ns), from the the sampling edge of SCK (leading edge for
+                                          *   CONFIG.CPHA = 0, trailing edge for CONFIG.CPHA = 1) until
+                                          *   the input serial data is sampled. */
+    bool                 use_hw_ss;      ///< Indication to use software or hardware controlled Slave Select pin.
+    uint8_t              ss_duration;    ///< Slave Select duration before and after transmission.
+                                         /**< Minimum duration between the edge of CSN and the edge of SCK.
+                                          *   Also, minimum duration of CSN inactivity between transactions.
+                                          *   The value is specified in number of 64 MHz clock cycles (15.625 ns).
+                                          *   Supported only for hardware-controlled Slave Select. */
 #endif
+    bool                 skip_gpio_cfg;  ///< Skip GPIO configuration of pins.
+                                         /**< When set to true, the driver does not modify
+                                          *   any GPIO parameters of the used pins. Those
+                                          *   parameters are supposed to be configured
+                                          *   externally before the driver is initialized. */
+    bool                 skip_psel_cfg;  ///< Skip pin selection configuration.
+                                         /**< When set to true, the driver does not modify
+                                          *   pin select registers in the peripheral.
+                                          *   Those registers are supposed to be set up
+                                          *   externally before the driver is initialized.
+                                          *   @note When both GPIO configuration and pin
+                                          *   selection are to be skipped, the structure
+                                          *   fields that specify pins can be omitted,
+                                          *   as they are ignored anyway. This does not
+                                          *   apply to the @p ss_pin field, unless it is
+                                          *   to be controlled by hardware.*/
 } nrfx_spim_config_t;
 
 #if NRFX_CHECK(NRFX_SPIM_EXTENDED_ENABLED) || defined(__NRFX_DOXYGEN__)
@@ -254,6 +278,10 @@ typedef void (* nrfx_spim_evt_handler_t)(nrfx_spim_evt_t const * p_event,
  *                       will be performed in blocking mode.
  * @param[in] p_context  Context passed to event handler.
  *
+ * @warning On nRF5340, 32 MHz setting for SPIM4 peripheral instance is supported
+ *          only on the dedicated pins with @ref NRF_GPIO_PIN_MCUSEL_PERIPHERAL configuration.
+ *          See the chapter <a href=@nRF5340pinAssignmentsURL>Pin assignments</a> in the Product Specification.
+ *
  * @retval NRFX_SUCCESS             Initialization was successful.
  * @retval NRFX_ERROR_INVALID_STATE The driver was already initialized.
  * @retval NRFX_ERROR_BUSY          Some other peripheral with the same
@@ -262,6 +290,7 @@ typedef void (* nrfx_spim_evt_handler_t)(nrfx_spim_evt_t const * p_event,
  *                                  is enabled.
  * @retval NRFX_ERROR_NOT_SUPPORTED Requested configuration is not supported
  *                                  by the SPIM instance.
+ * @retval NRFX_ERROR_INVALID_PARAM Requested frequency is not available on the specified pins.
  */
 nrfx_err_t nrfx_spim_init(nrfx_spim_t const *        p_instance,
                           nrfx_spim_config_t const * p_config,

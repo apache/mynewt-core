@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2020 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -38,6 +40,18 @@ extern "C" {
 
 #ifndef NRFX_EVENT_READBACK_ENABLED
 #define NRFX_EVENT_READBACK_ENABLED 1
+#endif
+
+#if defined(NRFX_CLZ)
+#define NRF_CLZ(value) NRFX_CLZ(value)
+#else
+#define NRF_CLZ(value) __CLZ(value)
+#endif
+
+#if defined(NRFX_CTZ)
+#define NRF_CTZ(value) NRFX_CTZ(value)
+#else
+#define NRF_CTZ(value) __CLZ(__RBIT(value))
 #endif
 
 #ifndef NRF_DECLARE_ONLY

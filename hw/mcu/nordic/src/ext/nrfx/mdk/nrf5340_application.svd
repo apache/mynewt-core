@@ -8,7 +8,9 @@
   <version>1</version>
   <description>nRF53 reference description for system-on-chip with dual ARM 32-bit Cortex-M33 microcontrollers</description>
   <licenseText>
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.
+
+SPDX-License-Identifier: BSD-3-Clause
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -188,7 +190,7 @@ POSSIBILITY OF SUCH DAMAGE.
               </field>
               <field>
                 <name>V</name>
-                <description>Valid bit.</description>
+                <description>Valid bit</description>
                 <lsb>30</lsb>
                 <msb>30</msb>
                 <access>read-only</access>
@@ -328,6 +330,11 @@ POSSIBILITY OF SUCH DAMAGE.
                     <value>0x514B4141</value>
                   </enumeratedValue>
                   <enumeratedValue>
+                    <name>CLAA</name>
+                    <description>CLAA</description>
+                    <value>0x434C4141</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
                     <name>Unspecified</name>
                     <description>Unspecified</description>
                     <value>0xFFFFFFFF</value>
@@ -350,9 +357,14 @@ POSSIBILITY OF SUCH DAMAGE.
                 <msb>31</msb>
                 <enumeratedValues>
                   <enumeratedValue>
-                    <name>QF</name>
-                    <description>QFxx - 94 pin QFN</description>
+                    <name>QK</name>
+                    <description>QKxx - 94-pin aQFN</description>
                     <value>0x2000</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
+                    <name>CL</name>
+                    <description>CLxx - WLCSP</description>
+                    <value>0x2005</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>Unspecified</name>
@@ -546,7 +558,7 @@ POSSIBILITY OF SUCH DAMAGE.
             <name>ADDR</name>
             <description>Description cluster: Address of the PAR register which will be written</description>
             <addressOffset>0x000</addressOffset>
-            <access>read-write</access>
+            <access>read-only</access>
             <resetValue>0xFFFFFFFF</resetValue>
             <dataType>uint32_t *</dataType>
             <fields>
@@ -888,14 +900,14 @@ POSSIBILITY OF SUCH DAMAGE.
             <field>
               <name>PALL</name>
               <description>Blocks debugger read/write access to all CPU registers and
-          memory mapped addresses Using any value except Unprotected will lead to the protection being enabled.</description>
+          memory mapped addresses.</description>
               <lsb>0</lsb>
               <msb>31</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Unprotected</name>
                   <description>Unprotected</description>
-                  <value>0xFFFFFFFF</value>
+                  <value>0x50FA50FA</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Protected</name>
@@ -907,42 +919,15 @@ POSSIBILITY OF SUCH DAMAGE.
           </fields>
         </register>
         <register>
-          <name>EXTSUPPLY</name>
-          <description>Enable external circuitry to be supplied from VDD pin. Applicable in 'High voltage mode' only.</description>
-          <addressOffset>0x00C</addressOffset>
-          <access>read-write</access>
-          <resetValue>0xFFFFFFFF</resetValue>
-          <fields>
-            <field>
-              <name>EXTSUPPLY</name>
-              <description>Enable external circuitry to be supplied from VDD pin (output of VREGH stage).</description>
-              <lsb>0</lsb>
-              <msb>0</msb>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>Disabled</name>
-                  <description>No current can be drawn from the VDD pin.</description>
-                  <value>1</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Enabled</name>
-                  <description>It is allowed to supply external circuitry from the VDD pin.</description>
-                  <value>0</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
           <name>VREGHVOUT</name>
-          <description>GPIO reference voltage / external output supply voltage in 'High voltage mode'.</description>
+          <description>Output voltage from the high voltage (VREGH) regulator stage. The maximum output voltage from this stage is given as VDDH - VREGHDROP.</description>
           <addressOffset>0x010</addressOffset>
           <access>read-write</access>
           <resetValue>0xFFFFFFFF</resetValue>
           <fields>
             <field>
               <name>VREGHVOUT</name>
-              <description>VREGH regulator output voltage. The maximum output voltage from this stage is given as VDDH - VEXDIF.</description>
+              <description>VREGH regulator output voltage.</description>
               <lsb>0</lsb>
               <msb>2</msb>
               <enumeratedValues>
@@ -1027,14 +1012,14 @@ POSSIBILITY OF SUCH DAMAGE.
             <field>
               <name>PALL</name>
               <description>Blocks debugger read/write access to all secure CPU registers and secure memory
-        mapped addresses. Using any value except Unprotected will lead to the protection being enabled.</description>
+        mapped addresses.</description>
               <lsb>0</lsb>
               <msb>31</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Unprotected</name>
                   <description>Unprotected</description>
-                  <value>0xFFFFFFFF</value>
+                  <value>0x50FA50FA</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Protected</name>
@@ -2378,21 +2363,21 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>MAJOR</name>
-              <description>Major classification of the type of the debug component as specified in the ARM Architecture Specification for this
+              <description>Major classification of the type of the debug component as specified in the Arm Architecture Specification for this
                     debug and trace component.</description>
               <lsb>0</lsb>
               <msb>3</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Controller</name>
-                  <description>Indicates that this component allows a debugger to control other components in a CoreSight SoC-400 system.</description>
-                  <value>0b0100</value>
+                  <description>Indicates that this component allows a debugger to control other components in an Arm CoreSight SoC-400 system.</description>
+                  <value>4</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>SUB</name>
-              <description>Sub-classification of the type of the debug component as specified in the ARM Architecture Specification within
+              <description>Sub-classification of the type of the debug component as specified in the Arm Architecture Specification within
                     the major classification as specified in the MAJOR field.</description>
               <lsb>4</lsb>
               <msb>7</msb>
@@ -2400,7 +2385,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValue>
                   <name>Crosstrigger</name>
                   <description>Indicates that this component is a sub-triggering component.</description>
-                  <value>0b0001</value>
+                  <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2421,8 +2406,8 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Code</name>
-                  <description>JEDEC continuation code</description>
-                  <value>0b0100</value>
+                  <description>JEDEC continuation code.</description>
+                  <value>4</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2490,7 +2475,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValue>
                   <name>PartnumberH</name>
                   <description>Indicates bits[11:8] of the part number of the component.</description>
-                  <value>0b1101</value>
+                  <value>13</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2502,8 +2487,8 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Arm</name>
-                  <description>ARM. Bits[3:0] of the JEDEC JEP106 Identity Code</description>
-                  <value>0b1011</value>
+                  <description>Arm. Bits[3:0] of the JEDEC JEP106 Identity Code</description>
+                  <value>11</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2524,8 +2509,8 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Arm</name>
-                  <description>ARM. Bits[6:4] of the JEDEC JEP106 Identity Code</description>
-                  <value>0b011</value>
+                  <description>Arm. Bits[6:4] of the JEDEC JEP106 Identity Code</description>
+                  <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2544,7 +2529,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValue>
                   <name>Rev0p0</name>
                   <description>This device is at r0p0</description>
-                  <value>0b0000</value>
+                  <value>0</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2567,14 +2552,14 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValue>
                   <name>Unmodified</name>
                   <description>Indicates that the customer has not modified this component.</description>
-                  <value>0b000</value>
+                  <value>0</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>REVAND</name>
               <description>Indicates minor errata fixes specific to the revision of the component being used, for example metal fixes after
-                    implementation. In most cases, this field is 0b0000. ARM recommends that the component designers ensure that a
+                    implementation. In most cases, this field is 0b0000. Arm recommends that the component designers ensure that a
                     metal fix can change this field if required, for example, by driving it from registers that reset to 0b0000.</description>
               <lsb>4</lsb>
               <msb>7</msb>
@@ -2582,7 +2567,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValue>
                   <name>NoErrata</name>
                   <description>Indicates that there are no errata fixes to this component.</description>
-                  <value>0b000</value>
+                  <value>0</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2626,7 +2611,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValue>
                   <name>Value</name>
                   <description>Bits[11:8] of the identification code.</description>
-                  <value>0b0000</value>
+                  <value>0</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2640,7 +2625,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValue>
                   <name>Coresight</name>
                   <description>Indicates that the component is a CoreSight component.</description>
-                  <value>0b1001</value>
+                  <value>9</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -2820,7 +2805,7 @@ POSSIBILITY OF SUCH DAMAGE.
           </register>
           <register>
             <name>TRACEDATA0</name>
-            <description>Pin configuration for TRACEDATA[0] and SWO</description>
+            <description>Pin configuration for TRACEDATA[0]</description>
             <addressOffset>0x004</addressOffset>
             <access>read-write</access>
             <resetValue>0xFFFFFFFF</resetValue>
@@ -2833,7 +2818,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Tracedata0</name>
-                    <description>TRACEDATA0/SWO pin</description>
+                    <description>TRACEDATA0 pin</description>
                     <value>11</value>
                   </enumeratedValue>
                 </enumeratedValues>
@@ -2981,7 +2966,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </cluster>
         <register>
           <name>TRACEPORTSPEED</name>
-          <description>Clocking options for the Trace Port debug interface.</description>
+          <description>Clocking options for the Trace Port debug interface Reset behavior is the same as debug components</description>
           <addressOffset>0x518</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000000</resetValue>
@@ -3003,13 +2988,13 @@ POSSIBILITY OF SUCH DAMAGE.
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>8MHz</name>
-                  <description>Trace Port clock is: 8MHz</description>
+                  <name>16MHz</name>
+                  <description>Trace Port clock is: 16MHz</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>4MHz</name>
-                  <description>Trace Port clock is: 4MHz</description>
+                  <name>8MHz</name>
+                  <description>Trace Port clock is: 8MHz</description>
                   <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -4020,7 +4005,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </cluster>
         <register>
           <name>ENABLE</name>
-          <description>Enable cache</description>
+          <description>Enable cache.</description>
           <addressOffset>0x500</addressOffset>
           <access>read-write</access>
           <fields>
@@ -4046,7 +4031,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>INVALIDATE</name>
-          <description>Invalidate the cache</description>
+          <description>Invalidate the cache.</description>
           <addressOffset>0x504</addressOffset>
           <access>write-only</access>
           <fields>
@@ -4067,7 +4052,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>ERASE</name>
-          <description>Erase the cache</description>
+          <description>Erase the cache.</description>
           <addressOffset>0x508</addressOffset>
           <access>write-only</access>
           <fields>
@@ -4088,7 +4073,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>PROFILINGENABLE</name>
-          <description>Enable the profiling counters</description>
+          <description>Enable the profiling counters.</description>
           <addressOffset>0x50C</addressOffset>
           <access>read-write</access>
           <fields>
@@ -4114,7 +4099,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>PROFILINGCLEAR</name>
-          <description>Clear the profiling counters</description>
+          <description>Clear the profiling counters.</description>
           <addressOffset>0x510</addressOffset>
           <access>write-only</access>
           <fields>
@@ -4135,7 +4120,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>MODE</name>
-          <description>Cache mode. Switching from Cache to RAM mode causes the RAM to be cleared. Switching from RAM to Cache mode causes the cache to be invalidated.</description>
+          <description>Cache mode. Switching from Cache to Ram mode causes the RAM to be cleared. Switching from RAM to Cache mode causes the cache to be invalidated.</description>
           <addressOffset>0x514</addressOffset>
           <access>read-write</access>
           <fields>
@@ -4161,7 +4146,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>DEBUGLOCK</name>
-          <description>Lock debug mode Ignored in RAM mode.</description>
+          <description>Lock debug mode.</description>
           <addressOffset>0x518</addressOffset>
           <access>read-writeonce</access>
           <fields>
@@ -4187,7 +4172,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>ERASESTATUS</name>
-          <description>Cache erase status</description>
+          <description>Cache erase status.</description>
           <addressOffset>0x51C</addressOffset>
           <access>read-write</access>
           <fields>
@@ -4678,18 +4663,18 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>TZM</name>
-              <description>Show ARM TrustZone status</description>
+              <description>Show Arm TrustZone status</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>NotAvailable</name>
-                  <description>ARM TrustZone support not available</description>
+                  <description>Arm TrustZone support not available</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Enabled</name>
-                  <description>ARM TrustZone support is available</description>
+                  <description>Arm TrustZone support is available</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -4883,583 +4868,583 @@ POSSIBILITY OF SUCH DAMAGE.
           <addressOffset>0x480</addressOffset>
           <register>
             <name>PERM</name>
-            <description>Description cluster: Select between secure and non-secure attribute  for the DPPI channels.</description>
+            <description>Description cluster: Select between secure and non-secure attribute  for the DPPI channels</description>
             <addressOffset>0x000</addressOffset>
             <access>read-write</access>
             <resetValue>0xFFFFFFFF</resetValue>
             <fields>
               <field>
                 <name>CHANNEL0</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>0</lsb>
                 <msb>0</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel0 has its secure attribute set</description>
+                    <description>Channel 0 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel0 has its non-secure attribute set</description>
+                    <description>Channel 0 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL1</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>1</lsb>
                 <msb>1</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel1 has its secure attribute set</description>
+                    <description>Channel 1 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel1 has its non-secure attribute set</description>
+                    <description>Channel 1 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL2</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>2</lsb>
                 <msb>2</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel2 has its secure attribute set</description>
+                    <description>Channel 2 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel2 has its non-secure attribute set</description>
+                    <description>Channel 2 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL3</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>3</lsb>
                 <msb>3</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel3 has its secure attribute set</description>
+                    <description>Channel 3 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel3 has its non-secure attribute set</description>
+                    <description>Channel 3 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL4</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>4</lsb>
                 <msb>4</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel4 has its secure attribute set</description>
+                    <description>Channel 4 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel4 has its non-secure attribute set</description>
+                    <description>Channel 4 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL5</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>5</lsb>
                 <msb>5</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel5 has its secure attribute set</description>
+                    <description>Channel 5 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel5 has its non-secure attribute set</description>
+                    <description>Channel 5 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL6</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>6</lsb>
                 <msb>6</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel6 has its secure attribute set</description>
+                    <description>Channel 6 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel6 has its non-secure attribute set</description>
+                    <description>Channel 6 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL7</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>7</lsb>
                 <msb>7</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel7 has its secure attribute set</description>
+                    <description>Channel 7 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel7 has its non-secure attribute set</description>
+                    <description>Channel 7 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL8</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>8</lsb>
                 <msb>8</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel8 has its secure attribute set</description>
+                    <description>Channel 8 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel8 has its non-secure attribute set</description>
+                    <description>Channel 8 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL9</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>9</lsb>
                 <msb>9</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel9 has its secure attribute set</description>
+                    <description>Channel 9 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel9 has its non-secure attribute set</description>
+                    <description>Channel 9 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL10</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>10</lsb>
                 <msb>10</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel10 has its secure attribute set</description>
+                    <description>Channel 10 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel10 has its non-secure attribute set</description>
+                    <description>Channel 10 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL11</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>11</lsb>
                 <msb>11</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel11 has its secure attribute set</description>
+                    <description>Channel 11 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel11 has its non-secure attribute set</description>
+                    <description>Channel 11 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL12</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>12</lsb>
                 <msb>12</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel12 has its secure attribute set</description>
+                    <description>Channel 12 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel12 has its non-secure attribute set</description>
+                    <description>Channel 12 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL13</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>13</lsb>
                 <msb>13</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel13 has its secure attribute set</description>
+                    <description>Channel 13 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel13 has its non-secure attribute set</description>
+                    <description>Channel 13 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL14</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>14</lsb>
                 <msb>14</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel14 has its secure attribute set</description>
+                    <description>Channel 14 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel14 has its non-secure attribute set</description>
+                    <description>Channel 14 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL15</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>15</lsb>
                 <msb>15</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel15 has its secure attribute set</description>
+                    <description>Channel 15 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel15 has its non-secure attribute set</description>
+                    <description>Channel 15 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL16</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>16</lsb>
                 <msb>16</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel16 has its secure attribute set</description>
+                    <description>Channel 16 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel16 has its non-secure attribute set</description>
+                    <description>Channel 16 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL17</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>17</lsb>
                 <msb>17</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel17 has its secure attribute set</description>
+                    <description>Channel 17 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel17 has its non-secure attribute set</description>
+                    <description>Channel 17 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL18</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>18</lsb>
                 <msb>18</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel18 has its secure attribute set</description>
+                    <description>Channel 18 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel18 has its non-secure attribute set</description>
+                    <description>Channel 18 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL19</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>19</lsb>
                 <msb>19</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel19 has its secure attribute set</description>
+                    <description>Channel 19 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel19 has its non-secure attribute set</description>
+                    <description>Channel 19 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL20</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>20</lsb>
                 <msb>20</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel20 has its secure attribute set</description>
+                    <description>Channel 20 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel20 has its non-secure attribute set</description>
+                    <description>Channel 20 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL21</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>21</lsb>
                 <msb>21</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel21 has its secure attribute set</description>
+                    <description>Channel 21 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel21 has its non-secure attribute set</description>
+                    <description>Channel 21 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL22</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>22</lsb>
                 <msb>22</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel22 has its secure attribute set</description>
+                    <description>Channel 22 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel22 has its non-secure attribute set</description>
+                    <description>Channel 22 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL23</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>23</lsb>
                 <msb>23</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel23 has its secure attribute set</description>
+                    <description>Channel 23 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel23 has its non-secure attribute set</description>
+                    <description>Channel 23 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL24</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>24</lsb>
                 <msb>24</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel24 has its secure attribute set</description>
+                    <description>Channel 24 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel24 has its non-secure attribute set</description>
+                    <description>Channel 24 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL25</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>25</lsb>
                 <msb>25</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel25 has its secure attribute set</description>
+                    <description>Channel 25 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel25 has its non-secure attribute set</description>
+                    <description>Channel 25 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL26</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>26</lsb>
                 <msb>26</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel26 has its secure attribute set</description>
+                    <description>Channel 26 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel26 has its non-secure attribute set</description>
+                    <description>Channel 26 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL27</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>27</lsb>
                 <msb>27</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel27 has its secure attribute set</description>
+                    <description>Channel 27 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel27 has its non-secure attribute set</description>
+                    <description>Channel 27 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL28</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>28</lsb>
                 <msb>28</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel28 has its secure attribute set</description>
+                    <description>Channel 28 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel28 has its non-secure attribute set</description>
+                    <description>Channel 28 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL29</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>29</lsb>
                 <msb>29</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel29 has its secure attribute set</description>
+                    <description>Channel 29 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel29 has its non-secure attribute set</description>
+                    <description>Channel 29 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL30</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>30</lsb>
                 <msb>30</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel30 has its secure attribute set</description>
+                    <description>Channel 30 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel30 has its non-secure attribute set</description>
+                    <description>Channel 30 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>CHANNEL31</name>
-                <description>Select secure attribute.</description>
+                <description>Select secure attribute</description>
                 <lsb>31</lsb>
                 <msb>31</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Secure</name>
-                    <description>Channel31 has its secure attribute set</description>
+                    <description>Channel 31 has its secure attribute set</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>NonSecure</name>
-                    <description>Channel31 has its non-secure attribute set</description>
+                    <description>Channel 31 has its non-secure attribute set</description>
                     <value>0</value>
                   </enumeratedValue>
                 </enumeratedValues>
@@ -5503,7 +5488,7 @@ POSSIBILITY OF SUCH DAMAGE.
           <addressOffset>0x4C0</addressOffset>
           <register>
             <name>PERM</name>
-            <description>Description cluster: Select between secure and non-secure attribute  for pins 0 to 31  of port n.</description>
+            <description>Description cluster: Select between secure and non-secure attribute  for pins 0 to 31  of port n</description>
             <addressOffset>0x000</addressOffset>
             <access>read-write</access>
             <resetValue>0xFFFFFFFF</resetValue>
@@ -6173,42 +6158,42 @@ POSSIBILITY OF SUCH DAMAGE.
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>32</name>
-                    <description>The region n is defined as non-secure callable with a 32-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 32 bytes</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>64</name>
-                    <description>The region n is defined as non-secure callable with a 64-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 64 bytes</description>
                     <value>2</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>128</name>
-                    <description>The region n is defined as non-secure callable with a 128-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 128 bytes</description>
                     <value>3</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>256</name>
-                    <description>The region n is defined as non-secure callable with a 256-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 256 bytes</description>
                     <value>4</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>512</name>
-                    <description>The region n is defined as non-secure callable with a 512-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 512 bytes</description>
                     <value>5</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>1024</name>
-                    <description>The region n is defined as non-secure callable with a 1024-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 1024 bytes</description>
                     <value>6</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>2048</name>
-                    <description>The region n is defined as non-secure callable with a 2048-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 2048 bytes</description>
                     <value>7</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>4096</name>
-                    <description>The region n is defined as non-secure callable with a 4096-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 4096 bytes</description>
                     <value>8</value>
                   </enumeratedValue>
                 </enumeratedValues>
@@ -6293,42 +6278,42 @@ POSSIBILITY OF SUCH DAMAGE.
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>32</name>
-                    <description>The region n is defined as non-secure callable with a 32-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 32 bytes</description>
                     <value>1</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>64</name>
-                    <description>The region n is defined as non-secure callable with a 64-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 64 bytes</description>
                     <value>2</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>128</name>
-                    <description>The region n is defined as non-secure callable with a 128-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 128 bytes</description>
                     <value>3</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>256</name>
-                    <description>The region n is defined as non-secure callable with a 256-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 256 bytes</description>
                     <value>4</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>512</name>
-                    <description>The region n is defined as non-secure callable with a 512-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 512 bytes</description>
                     <value>5</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>1024</name>
-                    <description>The region n is defined as non-secure callable with a 1024-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 1024 bytes</description>
                     <value>6</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>2048</name>
-                    <description>The region n is defined as non-secure callable with a 2048-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 2048 bytes</description>
                     <value>7</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>4096</name>
-                    <description>The region n is defined as non-secure callable with a 4096-byte size</description>
+                    <description>The region n is defined as non-secure callable with size 4096 bytes</description>
                     <value>8</value>
                   </enumeratedValue>
                 </enumeratedValues>
@@ -6584,7 +6569,7 @@ POSSIBILITY OF SUCH DAMAGE.
             <fields>
               <field>
                 <name>SECUREMAPPING</name>
-                <description>Define configuration capabilities for TrustZone Cortex-M secure attribute</description>
+                <description>Define configuration capabilities for Arm TrustZone Cortex-M secure attribute</description>
                 <lsb>0</lsb>
                 <msb>1</msb>
                 <access>read-only</access>
@@ -6613,7 +6598,7 @@ POSSIBILITY OF SUCH DAMAGE.
               </field>
               <field>
                 <name>DMA</name>
-                <description>Indicate if the peripheral has DMA capabilities and if DMA transfer can be assigned to a different security attribute than the peripheral itself</description>
+                <description>Indicates if the peripheral has DMA capabilities and if DMA transfer can be assigned to a different security attribute than the peripheral itself</description>
                 <lsb>2</lsb>
                 <msb>3</msb>
                 <access>read-only</access>
@@ -6819,8 +6804,8 @@ POSSIBILITY OF SUCH DAMAGE.
                     <value>2</value>
                   </enumeratedValue>
                   <enumeratedValue>
-                    <name>C11PF</name>
-                    <description>11 pF internal load capacitance</description>
+                    <name>C9PF</name>
+                    <description>9 pF internal load capacitance</description>
                     <value>3</value>
                   </enumeratedValue>
                 </enumeratedValues>
@@ -8569,11 +8554,6 @@ POSSIBILITY OF SUCH DAMAGE.
               <msb>1</msb>
               <enumeratedValues>
                 <enumeratedValue>
-                  <name>LFULP</name>
-                  <description>32.768 kHz ultra-low power RC oscillator</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
                   <name>LFRC</name>
                   <description>32.768 kHz RC oscillator</description>
                   <value>1</value>
@@ -8641,11 +8621,6 @@ POSSIBILITY OF SUCH DAMAGE.
               <lsb>0</lsb>
               <msb>1</msb>
               <enumeratedValues>
-                <enumeratedValue>
-                  <name>LFULP</name>
-                  <description>32.768 kHz ultra-low power RC oscillator</description>
-                  <value>0</value>
-                </enumeratedValue>
                 <enumeratedValue>
                   <name>LFRC</name>
                   <description>32.768 kHz RC oscillator</description>
@@ -8863,11 +8838,6 @@ POSSIBILITY OF SUCH DAMAGE.
               <lsb>0</lsb>
               <msb>1</msb>
               <enumeratedValues>
-                <enumeratedValue>
-                  <name>LFULP</name>
-                  <description>32.768 kHz ultra-low power RC oscillator</description>
-                  <value>0</value>
-                </enumeratedValue>
                 <enumeratedValue>
                   <name>LFRC</name>
                   <description>32.768 kHz RC oscillator</description>
@@ -10086,7 +10056,7 @@ POSSIBILITY OF SUCH DAMAGE.
             <name>DISABLE</name>
             <description>This register disables the ERASEPROTECT register and performs an  ERASEALL operation.</description>
             <addressOffset>0x004</addressOffset>
-            <access>read-write</access>
+            <access>read-writeonce</access>
             <resetValue>0x00000000</resetValue>
             <fields>
               <field>
@@ -10140,7 +10110,9 @@ POSSIBILITY OF SUCH DAMAGE.
             <fields>
               <field>
                 <name>KEY</name>
-                <description>Disable APPROTECT and enable debug access to non-secure mode until the next pin reset if the KEY fields match. The current APPROTECT value as configured from UICR is bypassed if the value of the KEY fields are non-zero and the KEY fields match on both the CPU and debugger sides.</description>
+                <description>If the value of the KEY field is non-zero, and the KEY fields match on both the
+        CPU and debugger sides, disable APPROTECT and enable debug access to non-secure mode until
+        the next pin reset, brown-out reset, power-on reset, or watchog timer reset. After reset the debugger side register has a fixed KEY value. To enable debug access, both CTRL-AP and UICR.APPROTECT protection needs to be disabled.</description>
                 <lsb>0</lsb>
                 <msb>31</msb>
               </field>
@@ -10189,7 +10161,9 @@ POSSIBILITY OF SUCH DAMAGE.
             <fields>
               <field>
                 <name>KEY</name>
-                <description>Disable SECUREAPPROTECT and enable debug of secure mode until the next pin reset if the KEY fields match. The current SECUREAPPROTECT value as configured from UICR is bypassed if the value of the KEY fields are non-zero and the KEY fields match on both the CPU and debugger sides.</description>
+                <description>If the value of the KEY field is non-zero, and the KEY fields match on both the
+        CPU and debugger sides, disable SECUREAPPROTECT and enable debug access to secure mode until
+        the next pin reset, brown-out reset, power-on reset, or watchog timer reset. After reset the debugger side register has a fixed KEY value. To enable debug access, both CTRL-AP and UICR.SECUREAPPROTECT protection needs to be disabled.</description>
                 <lsb>0</lsb>
                 <msb>31</msb>
               </field>
@@ -10198,43 +10172,43 @@ POSSIBILITY OF SUCH DAMAGE.
         </cluster>
         <register>
           <name>STATUS</name>
-          <description>Status bits for CTRL-AP peripheral</description>
+          <description>Status bits for CTRL-AP peripheral.</description>
           <addressOffset>0x600</addressOffset>
           <access>read-only</access>
           <resetValue>0x00000000</resetValue>
           <fields>
             <field>
-              <name>APPROTECT</name>
-              <description>Status bit for access port protection in non-secure mode</description>
+              <name>UICRAPPROTECT</name>
+              <description>Status bit for UICR part of access port protection at last reset.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
                 <enumeratedValue>
-                  <name>Disabled</name>
-                  <description>Non-secure mode access port protection is currently disabled</description>
+                  <name>Enabled</name>
+                  <description>APPROTECT was enabled in UICR</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>Enabled</name>
-                  <description>Non-secure mode access port protection is currently enabled</description>
+                  <name>Disabled</name>
+                  <description>APPROTECT wasdisabled in UICR</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
-              <name>SECUREAPPROTECT</name>
-              <description>Status bit for access port protection in secure mode</description>
+              <name>UICRSECUREAPPROTECT</name>
+              <description>Status bit for UICR part of secure access port protection at last reset.</description>
               <lsb>1</lsb>
               <msb>1</msb>
               <enumeratedValues>
                 <enumeratedValue>
-                  <name>Disabled</name>
-                  <description>Secure mode access port protection is currently disabled</description>
+                  <name>Enabled</name>
+                  <description>SECUREAPPROTECT was enabled in UICR</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>Enabled</name>
-                  <description>Secure mode access port protection is currently enabled</description>
+                  <name>Disabled</name>
+                  <description>SECUREAPPROTECT was disabled in UICR</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -10281,7 +10255,7 @@ POSSIBILITY OF SUCH DAMAGE.
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
       <groupName>SPIM</groupName>
@@ -11094,7 +11068,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>STALLSTAT</name>
-          <description>Stall status for EasyDMA RAM accesses. The fields in this register is set to STALL by hardware whenever a stall occurres and can be cleared (set to NOSTALL) by the CPU.</description>
+          <description>Stall status for EasyDMA RAM accesses. The fields in this register are set to STALL by hardware whenever a stall occurres and can be cleared (set to NOSTALL) by the CPU.</description>
           <addressOffset>0x400</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000000</resetValue>
@@ -11623,14 +11597,14 @@ POSSIBILITY OF SUCH DAMAGE.
           </register>
           <register>
             <name>CSNDUR</name>
-            <description>Minimum duration between edge of CSN and edge of SCK and minimum duration CSN must stay high between transactions</description>
+            <description>Minimum duration between edge of CSN and edge of SCK. When SHORTS.END_START is used, this is also the minimum duration CSN must stay high between transactions.</description>
             <addressOffset>0x004</addressOffset>
             <access>read-write</access>
             <resetValue>0x00000002</resetValue>
             <fields>
               <field>
                 <name>CSNDUR</name>
-                <description>Minimum duration between edge of CSN and edge of SCK and minimum duration CSN must stay high between transactions. The value is specified in number of 64 MHz clock cycles (15.625 ns).</description>
+                <description>Minimum duration between edge of CSN and edge of SCK. When SHORTS.END_START is used, this is the minimum duration CSN must stay high between transactions. The value is specified in number of 64 MHz clock cycles (15.625 ns).</description>
                 <lsb>0</lsb>
                 <msb>7</msb>
               </field>
@@ -11747,7 +11721,7 @@ POSSIBILITY OF SUCH DAMAGE.
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
       <groupName>SPIS</groupName>
@@ -12776,7 +12750,7 @@ POSSIBILITY OF SUCH DAMAGE.
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
       <groupName>TWIM</groupName>
@@ -13506,24 +13480,6 @@ POSSIBILITY OF SUCH DAMAGE.
               <description>Shortcut between event LASTRX and task STARTTX</description>
               <lsb>10</lsb>
               <msb>10</msb>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>Disabled</name>
-                  <description>Disable shortcut</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Enabled</name>
-                  <description>Enable shortcut</description>
-                  <value>1</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>LASTRX_SUSPEND</name>
-              <description>Shortcut between event LASTRX and task SUSPEND</description>
-              <lsb>11</lsb>
-              <msb>11</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Disabled</name>
@@ -14476,7 +14432,7 @@ POSSIBILITY OF SUCH DAMAGE.
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
       <groupName>TWIS</groupName>
@@ -15655,7 +15611,7 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>MATCH</name>
-              <description>Which of the addresses in {ADDRESS} matched the incoming address</description>
+              <description>Indication of which address in {ADDRESS} that matched the incoming address</description>
               <lsb>0</lsb>
               <msb>0</msb>
             </field>
@@ -16013,7 +15969,7 @@ POSSIBILITY OF SUCH DAMAGE.
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
       <groupName>UARTE</groupName>
@@ -17768,7 +17724,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>ERRORSRC</name>
-          <description>Error source Note : this register is read / write one to clear.</description>
+          <description>Error source</description>
           <addressOffset>0x480</addressOffset>
           <access>read-write</access>
           <modifiedWriteValues>oneToClear</modifiedWriteValues>
@@ -18140,7 +18096,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Baud1M</name>
-                  <description>1Mega baud</description>
+                  <description>1 megabaud</description>
                   <value>0x10000000</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -18334,7 +18290,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
     </peripheral>
@@ -18346,7 +18302,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
     </peripheral>
@@ -18358,7 +18314,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
     </peripheral>
@@ -18370,7 +18326,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
     </peripheral>
@@ -18382,7 +18338,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM0_SPIS0_TWIM0_TWIS0_UARTE0</name>
+        <name>SERIAL0</name>
         <value>8</value>
       </interrupt>
     </peripheral>
@@ -18393,7 +18349,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18405,7 +18361,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18417,7 +18373,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18429,7 +18385,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18441,7 +18397,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18452,7 +18408,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18464,7 +18420,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18476,7 +18432,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18488,7 +18444,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18500,7 +18456,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM1_SPIS1_TWIM1_TWIS1_UARTE1</name>
+        <name>SERIAL1</name>
         <value>9</value>
       </interrupt>
     </peripheral>
@@ -18533,7 +18489,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18545,7 +18501,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18557,7 +18513,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18569,7 +18525,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18581,7 +18537,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18592,7 +18548,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18604,7 +18560,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18616,7 +18572,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18628,7 +18584,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18640,7 +18596,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <name>SERIAL2</name>
         <value>11</value>
       </interrupt>
     </peripheral>
@@ -18651,7 +18607,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18663,7 +18619,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18675,7 +18631,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18687,7 +18643,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18699,7 +18655,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18710,7 +18666,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18722,7 +18678,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18734,7 +18690,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18746,7 +18702,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -18758,7 +18714,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <name>SERIAL3</name>
         <value>12</value>
       </interrupt>
     </peripheral>
@@ -19752,13 +19708,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_STOP</name>
-          <description>Stop the ADC and terminate any on-going conversion</description>
+          <description>Stop the ADC and terminate any ongoing conversion</description>
           <addressOffset>0x008</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_STOP</name>
-              <description>Stop the ADC and terminate any on-going conversion</description>
+              <description>Stop the ADC and terminate any ongoing conversion</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -19996,13 +19952,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>EVENTS_RESULTDONE</name>
-          <description>A result is ready to get transferred to RAM.</description>
+          <description>A result is ready to get transferred to RAM</description>
           <addressOffset>0x10C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_RESULTDONE</name>
-              <description>A result is ready to get transferred to RAM.</description>
+              <description>A result is ready to get transferred to RAM</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -22012,7 +21968,7 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Ready</name>
-                  <description>ADC is ready. No on-going conversion.</description>
+                  <description>ADC is ready. No ongoing conversion.</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
@@ -22377,7 +22333,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>SE</name>
-                    <description>Single ended, PSELN will be ignored, negative input to ADC shorted to GND</description>
+                    <description>Single-ended, PSELN will be ignored, negative input to ADC shorted to GND</description>
                     <value>0</value>
                   </enumeratedValue>
                   <enumeratedValue>
@@ -22535,7 +22491,7 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>CC</name>
-              <description>Capture and compare value. Sample rate is 16 MHz/CC</description>
+              <description>Capture and compare value; sample rate is 16 MHz/CC</description>
               <lsb>0</lsb>
               <msb>10</msb>
             </field>
@@ -25230,7 +25186,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>PRESCALER</name>
-          <description>12-bit prescaler for counter frequency (32768/(PRESCALER+1)). Must be written when RTC is stopped.</description>
+          <description>12-bit prescaler for counter frequency (32768 / (PRESCALER + 1)). Must be written when RTC is stopped.</description>
           <addressOffset>0x508</addressOffset>
           <access>read-write</access>
           <fields>
@@ -28376,13 +28332,13 @@ POSSIBILITY OF SUCH DAMAGE.
       <registers>
         <register>
           <name>TASKS_START</name>
-          <description>Start the watchdog</description>
+          <description>Start WDT</description>
           <addressOffset>0x000</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_START</name>
-              <description>Start the watchdog</description>
+              <description>Start WDT</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -28397,13 +28353,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_STOP</name>
-          <description>Stop the watchdog timer.</description>
+          <description>Stop WDT</description>
           <addressOffset>0x004</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_STOP</name>
-              <description>Stop the watchdog timer.</description>
+              <description>Stop WDT</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -28848,13 +28804,13 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>RUNSTATUSWDT</name>
-              <description>Indicates whether or not the watchdog is running</description>
+              <description>Indicates whether or not WDT is running</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>NotRunning</name>
-                  <description>Watchdog not running</description>
+                  <description>Watchdog is not running</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
@@ -29196,54 +29152,54 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>SLEEP</name>
-              <description>Configure the watchdog to either be paused, or kept running, while the CPU is sleeping</description>
+              <description>Configure WDT to either be paused, or kept running, while the CPU is sleeping</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Pause</name>
-                  <description>Pause watchdog while the CPU is sleeping</description>
+                  <description>Pause WDT while the CPU is sleeping</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Run</name>
-                  <description>Keep the watchdog running while the CPU is sleeping</description>
+                  <description>Keep WDT running while the CPU is sleeping</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>HALT</name>
-              <description>Configure the watchdog to either be paused, or kept running, while the CPU is halted by the debugger</description>
+              <description>Configure WDT to either be paused, or kept running, while the CPU is halted by the debugger</description>
               <lsb>3</lsb>
               <msb>3</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Pause</name>
-                  <description>Pause watchdog while the CPU is halted by the debugger</description>
+                  <description>Pause WDT while the CPU is halted by the debugger</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Run</name>
-                  <description>Keep the watchdog running while the CPU is halted by the debugger</description>
+                  <description>Keep WDT running while the CPU is halted by the debugger</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>STOPEN</name>
-              <description>Allow stopping the watchdog</description>
+              <description>Allow stopping WDT</description>
               <lsb>6</lsb>
               <msb>6</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Disable</name>
-                  <description>Do not allow stopping the watchdog</description>
+                  <description>Do not allow stopping WDT</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Enable</name>
-                  <description>Allow stopping the watchdog</description>
+                  <description>Allow stopping WDT</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -29252,20 +29208,20 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TSEN</name>
-          <description>Task Stop Enable</description>
+          <description>Task stop enable</description>
           <addressOffset>0x520</addressOffset>
           <access>write-only</access>
           <resetValue>0x00000000</resetValue>
           <fields>
             <field>
               <name>TSEN</name>
-              <description>Task stop enable register</description>
+              <description>Allow stopping WDT</description>
               <lsb>0</lsb>
               <msb>31</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Enable</name>
-                  <description>Value to allow stopping the watchdog</description>
+                  <description>Value to allow stopping WDT</description>
                   <value>0x6E524635</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -36255,7 +36211,7 @@ POSSIBILITY OF SUCH DAMAGE.
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>32MDIV21</name>
-                    <description>32 MHz / 21 = 1.5238095 Deprecated, use MCKFREQ equation.</description>
+                    <description>32 MHz / 21 = 1.5238095 MHz Deprecated, use MCKFREQ equation.</description>
                     <value>0x0C000000</value>
                   </enumeratedValue>
                   <enumeratedValue>
@@ -36389,12 +36345,12 @@ POSSIBILITY OF SUCH DAMAGE.
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>32Bit</name>
-                    <description>32-bit sample.</description>
+                    <description>32 bit sample.</description>
                     <value>3</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>8BitIn16</name>
-                    <description>8 bit sample in a 16 bit half-frame.</description>
+                    <description>8 bit sample in a 16-bit half-frame.</description>
                     <value>4</value>
                   </enumeratedValue>
                   <enumeratedValue>
@@ -39853,7 +39809,7 @@ POSSIBILITY OF SUCH DAMAGE.
           </register>
           <register>
             <name>IO2</name>
-            <description>Pin select for serial data IO2.</description>
+            <description>Pin select for serial data WP/IO2.</description>
             <addressOffset>0x014</addressOffset>
             <access>read-write</access>
             <resetValue>0xFFFFFFFF</resetValue>
@@ -39892,7 +39848,7 @@ POSSIBILITY OF SUCH DAMAGE.
           </register>
           <register>
             <name>IO3</name>
-            <description>Pin select for serial data IO3.</description>
+            <description>Pin select for serial data HOLD/IO3.</description>
             <addressOffset>0x018</addressOffset>
             <access>read-write</access>
             <resetValue>0xFFFFFFFF</resetValue>
@@ -40412,6 +40368,11 @@ POSSIBILITY OF SUCH DAMAGE.
                   <description>Mode 0: Data are captured on the clock rising edge and data is output on a falling edge. Base level of clock is 0 (CPOL=0, CPHA=0).</description>
                   <value>0</value>
                 </enumeratedValue>
+                <enumeratedValue>
+                  <name>MODE3</name>
+                  <description>Mode 3: Data are captured on the clock rising edge and data is output on a falling edge. Base level of clock is 1 (CPOL=1, CPHA=1).</description>
+                  <value>1</value>
+                </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
@@ -40536,12 +40497,12 @@ POSSIBILITY OF SUCH DAMAGE.
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>OpByte0</name>
-                  <description>Send opcode, byte0.</description>
+                  <description>Send opcode, BYTE0.</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>All</name>
-                  <description>Send opcode, byte0, byte1.</description>
+                  <description>Send opcode, BYTE0, BYTE1.</description>
                   <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -40700,7 +40661,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LFEN</name>
-              <description>Enable long frame mode. When enabled, a custom instruction transaction has to be ended by writing the LFSTOP field.</description>
+              <description>Enable Long frame mode. When enabled, a custom instruction transaction has to be ended by writing the LFSTOP field.</description>
               <lsb>16</lsb>
               <msb>16</msb>
               <enumeratedValues>
@@ -40800,7 +40761,15 @@ POSSIBILITY OF SUCH DAMAGE.
           <description>SPI interface timing.</description>
           <addressOffset>0x640</addressOffset>
           <access>read-write</access>
-          <resetValue>0x00000600</resetValue>
+          <resetValue>0x00000200</resetValue>
+          <fields>
+            <field>
+              <name>RXDELAY</name>
+              <description>Timing related to sampling of the input serial data. The value of RXDELAY specifies the number of prescaled 192 MHz cycles delay from the the rising edge of the SPI Clock (SCK) until the input serial data is sampled. For example, if RXDELAY is set to 0, the input serial data is sampled on the rising edge of SCK.</description>
+              <lsb>8</lsb>
+              <msb>10</msb>
+            </field>
+          </fields>
         </register>
       </registers>
     </peripheral>
@@ -43306,7 +43275,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </cluster>
         <register>
           <name>NFCTAGSTATE</name>
-          <description>NfcTag state register</description>
+          <description>Current operating state of NFC tag</description>
           <addressOffset>0x410</addressOffset>
           <access>read-only</access>
           <fields>
@@ -43432,7 +43401,7 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>FRAMEDELAYMIN</name>
-              <description>Minimum frame delay in number of 13.56 MHz clocks</description>
+              <description>Minimum frame delay in number of 13.56 MHz clock cycles</description>
               <lsb>0</lsb>
               <msb>15</msb>
             </field>
@@ -43447,7 +43416,7 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>FRAMEDELAYMAX</name>
-              <description>Maximum frame delay in number of 13.56 MHz clocks</description>
+              <description>Maximum frame delay in number of 13.56 MHz clock cycles</description>
               <lsb>0</lsb>
               <msb>19</msb>
             </field>
@@ -43620,7 +43589,7 @@ POSSIBILITY OF SUCH DAMAGE.
               </field>
               <field>
                 <name>TXDATABYTES</name>
-                <description>Number of complete bytes that shall be included in the frame, excluding CRC, parity and framing</description>
+                <description>Number of complete bytes that shall be included in the frame, excluding CRC, parity, and framing.</description>
                 <lsb>3</lsb>
                 <msb>11</msb>
               </field>
@@ -43756,7 +43725,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>MODULATIONPSEL</name>
-          <description>Pin select for Modulation control.</description>
+          <description>Pin select for Modulation control</description>
           <addressOffset>0x538</addressOffset>
           <access>read-write</access>
           <resetValue>0xFFFFFFFF</resetValue>
@@ -43771,7 +43740,7 @@ POSSIBILITY OF SUCH DAMAGE.
               <name>PORT</name>
               <description>Port number</description>
               <lsb>5</lsb>
-              <msb>6</msb>
+              <msb>5</msb>
             </field>
             <field>
               <name>CONNECT</name>
@@ -50214,7 +50183,7 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>OneDir</name>
-                  <description>Full buffer dedicated to either iso IN or OUT</description>
+                  <description>Full buffer dedicated to either ISO IN or OUT</description>
                   <value>0x0000</value>
                 </enumeratedValue>
                 <enumeratedValue>
@@ -51510,7 +51479,7 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Busy</name>
-                  <description>NVMC is busy (on-going write or erase operation)</description>
+                  <description>NVMC is busy (ongoing write or erase operation)</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
@@ -51595,7 +51564,7 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>ERASEALL</name>
-              <description>Erase all non-volatile memory including UICR registers. Note that erasing must be enabled by setting CONFIG.WEN = Een before the non-volatile memory can be erased.</description>
+              <description>Erase all non-volatile memory including UICR registers. Before the non-volatile memory can be erased, erasing must be enabled by setting CONFIG.WEN=Een.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -51631,7 +51600,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>CONFIGNS</name>
-          <description>Unspecified</description>
+          <description>Non-secure configuration register</description>
           <addressOffset>0x584</addressOffset>
           <access>read-write</access>
           <fields>
@@ -56982,7 +56951,7 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>PIN0</name>
-              <description>Status on whether PIN0 has met criteria set in PIN_CNF0.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[0] has met criteria set in PIN_CNF[0].SENSE register. Write '1' to clear.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -57000,7 +56969,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN1</name>
-              <description>Status on whether PIN1 has met criteria set in PIN_CNF1.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[1] has met criteria set in PIN_CNF[1].SENSE register. Write '1' to clear.</description>
               <lsb>1</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -57018,7 +56987,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN2</name>
-              <description>Status on whether PIN2 has met criteria set in PIN_CNF2.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[2] has met criteria set in PIN_CNF[2].SENSE register. Write '1' to clear.</description>
               <lsb>2</lsb>
               <msb>2</msb>
               <enumeratedValues>
@@ -57036,7 +57005,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN3</name>
-              <description>Status on whether PIN3 has met criteria set in PIN_CNF3.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[3] has met criteria set in PIN_CNF[3].SENSE register. Write '1' to clear.</description>
               <lsb>3</lsb>
               <msb>3</msb>
               <enumeratedValues>
@@ -57054,7 +57023,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN4</name>
-              <description>Status on whether PIN4 has met criteria set in PIN_CNF4.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[4] has met criteria set in PIN_CNF[4].SENSE register. Write '1' to clear.</description>
               <lsb>4</lsb>
               <msb>4</msb>
               <enumeratedValues>
@@ -57072,7 +57041,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN5</name>
-              <description>Status on whether PIN5 has met criteria set in PIN_CNF5.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[5] has met criteria set in PIN_CNF[5].SENSE register. Write '1' to clear.</description>
               <lsb>5</lsb>
               <msb>5</msb>
               <enumeratedValues>
@@ -57090,7 +57059,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN6</name>
-              <description>Status on whether PIN6 has met criteria set in PIN_CNF6.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[6] has met criteria set in PIN_CNF[6].SENSE register. Write '1' to clear.</description>
               <lsb>6</lsb>
               <msb>6</msb>
               <enumeratedValues>
@@ -57108,7 +57077,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN7</name>
-              <description>Status on whether PIN7 has met criteria set in PIN_CNF7.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[7] has met criteria set in PIN_CNF[7].SENSE register. Write '1' to clear.</description>
               <lsb>7</lsb>
               <msb>7</msb>
               <enumeratedValues>
@@ -57126,7 +57095,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN8</name>
-              <description>Status on whether PIN8 has met criteria set in PIN_CNF8.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[8] has met criteria set in PIN_CNF[8].SENSE register. Write '1' to clear.</description>
               <lsb>8</lsb>
               <msb>8</msb>
               <enumeratedValues>
@@ -57144,7 +57113,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN9</name>
-              <description>Status on whether PIN9 has met criteria set in PIN_CNF9.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[9] has met criteria set in PIN_CNF[9].SENSE register. Write '1' to clear.</description>
               <lsb>9</lsb>
               <msb>9</msb>
               <enumeratedValues>
@@ -57162,7 +57131,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN10</name>
-              <description>Status on whether PIN10 has met criteria set in PIN_CNF10.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[10] has met criteria set in PIN_CNF[10].SENSE register. Write '1' to clear.</description>
               <lsb>10</lsb>
               <msb>10</msb>
               <enumeratedValues>
@@ -57180,7 +57149,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN11</name>
-              <description>Status on whether PIN11 has met criteria set in PIN_CNF11.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[11] has met criteria set in PIN_CNF[11].SENSE register. Write '1' to clear.</description>
               <lsb>11</lsb>
               <msb>11</msb>
               <enumeratedValues>
@@ -57198,7 +57167,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN12</name>
-              <description>Status on whether PIN12 has met criteria set in PIN_CNF12.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[12] has met criteria set in PIN_CNF[12].SENSE register. Write '1' to clear.</description>
               <lsb>12</lsb>
               <msb>12</msb>
               <enumeratedValues>
@@ -57216,7 +57185,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN13</name>
-              <description>Status on whether PIN13 has met criteria set in PIN_CNF13.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[13] has met criteria set in PIN_CNF[13].SENSE register. Write '1' to clear.</description>
               <lsb>13</lsb>
               <msb>13</msb>
               <enumeratedValues>
@@ -57234,7 +57203,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN14</name>
-              <description>Status on whether PIN14 has met criteria set in PIN_CNF14.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[14] has met criteria set in PIN_CNF[14].SENSE register. Write '1' to clear.</description>
               <lsb>14</lsb>
               <msb>14</msb>
               <enumeratedValues>
@@ -57252,7 +57221,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN15</name>
-              <description>Status on whether PIN15 has met criteria set in PIN_CNF15.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[15] has met criteria set in PIN_CNF[15].SENSE register. Write '1' to clear.</description>
               <lsb>15</lsb>
               <msb>15</msb>
               <enumeratedValues>
@@ -57270,7 +57239,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN16</name>
-              <description>Status on whether PIN16 has met criteria set in PIN_CNF16.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[16] has met criteria set in PIN_CNF[16].SENSE register. Write '1' to clear.</description>
               <lsb>16</lsb>
               <msb>16</msb>
               <enumeratedValues>
@@ -57288,7 +57257,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN17</name>
-              <description>Status on whether PIN17 has met criteria set in PIN_CNF17.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[17] has met criteria set in PIN_CNF[17].SENSE register. Write '1' to clear.</description>
               <lsb>17</lsb>
               <msb>17</msb>
               <enumeratedValues>
@@ -57306,7 +57275,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN18</name>
-              <description>Status on whether PIN18 has met criteria set in PIN_CNF18.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[18] has met criteria set in PIN_CNF[18].SENSE register. Write '1' to clear.</description>
               <lsb>18</lsb>
               <msb>18</msb>
               <enumeratedValues>
@@ -57324,7 +57293,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN19</name>
-              <description>Status on whether PIN19 has met criteria set in PIN_CNF19.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[19] has met criteria set in PIN_CNF[19].SENSE register. Write '1' to clear.</description>
               <lsb>19</lsb>
               <msb>19</msb>
               <enumeratedValues>
@@ -57342,7 +57311,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN20</name>
-              <description>Status on whether PIN20 has met criteria set in PIN_CNF20.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[20] has met criteria set in PIN_CNF[20].SENSE register. Write '1' to clear.</description>
               <lsb>20</lsb>
               <msb>20</msb>
               <enumeratedValues>
@@ -57360,7 +57329,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN21</name>
-              <description>Status on whether PIN21 has met criteria set in PIN_CNF21.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[21] has met criteria set in PIN_CNF[21].SENSE register. Write '1' to clear.</description>
               <lsb>21</lsb>
               <msb>21</msb>
               <enumeratedValues>
@@ -57378,7 +57347,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN22</name>
-              <description>Status on whether PIN22 has met criteria set in PIN_CNF22.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[22] has met criteria set in PIN_CNF[22].SENSE register. Write '1' to clear.</description>
               <lsb>22</lsb>
               <msb>22</msb>
               <enumeratedValues>
@@ -57396,7 +57365,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN23</name>
-              <description>Status on whether PIN23 has met criteria set in PIN_CNF23.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[23] has met criteria set in PIN_CNF[23].SENSE register. Write '1' to clear.</description>
               <lsb>23</lsb>
               <msb>23</msb>
               <enumeratedValues>
@@ -57414,7 +57383,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN24</name>
-              <description>Status on whether PIN24 has met criteria set in PIN_CNF24.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[24] has met criteria set in PIN_CNF[24].SENSE register. Write '1' to clear.</description>
               <lsb>24</lsb>
               <msb>24</msb>
               <enumeratedValues>
@@ -57432,7 +57401,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN25</name>
-              <description>Status on whether PIN25 has met criteria set in PIN_CNF25.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[25] has met criteria set in PIN_CNF[25].SENSE register. Write '1' to clear.</description>
               <lsb>25</lsb>
               <msb>25</msb>
               <enumeratedValues>
@@ -57450,7 +57419,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN26</name>
-              <description>Status on whether PIN26 has met criteria set in PIN_CNF26.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[26] has met criteria set in PIN_CNF[26].SENSE register. Write '1' to clear.</description>
               <lsb>26</lsb>
               <msb>26</msb>
               <enumeratedValues>
@@ -57468,7 +57437,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN27</name>
-              <description>Status on whether PIN27 has met criteria set in PIN_CNF27.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[27] has met criteria set in PIN_CNF[27].SENSE register. Write '1' to clear.</description>
               <lsb>27</lsb>
               <msb>27</msb>
               <enumeratedValues>
@@ -57486,7 +57455,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN28</name>
-              <description>Status on whether PIN28 has met criteria set in PIN_CNF28.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[28] has met criteria set in PIN_CNF[28].SENSE register. Write '1' to clear.</description>
               <lsb>28</lsb>
               <msb>28</msb>
               <enumeratedValues>
@@ -57504,7 +57473,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN29</name>
-              <description>Status on whether PIN29 has met criteria set in PIN_CNF29.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[29] has met criteria set in PIN_CNF[29].SENSE register. Write '1' to clear.</description>
               <lsb>29</lsb>
               <msb>29</msb>
               <enumeratedValues>
@@ -57522,7 +57491,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN30</name>
-              <description>Status on whether PIN30 has met criteria set in PIN_CNF30.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[30] has met criteria set in PIN_CNF[30].SENSE register. Write '1' to clear.</description>
               <lsb>30</lsb>
               <msb>30</msb>
               <enumeratedValues>
@@ -57540,7 +57509,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>PIN31</name>
-              <description>Status on whether PIN31 has met criteria set in PIN_CNF31.SENSE register. Write '1' to clear.</description>
+              <description>Status on whether PIN[31] has met criteria set in PIN_CNF[31].SENSE register. Write '1' to clear.</description>
               <lsb>31</lsb>
               <msb>31</msb>
               <enumeratedValues>

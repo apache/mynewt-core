@@ -8,7 +8,9 @@
   <version>1</version>
   <description>nRF52833 reference description for radio MCU with ARM 32-bit Cortex-M4 Microcontroller </description>
   <licenseText>
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.\n
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.\n
+\n
+SPDX-License-Identifier: BSD-3-Clause\n
 \n
 Redistribution and use in source and binary forms, with or without\n
 modification, are permitted provided that the following conditions are met:\n
@@ -215,6 +217,11 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <msb>31</msb>
                 <enumeratedValues>
                   <enumeratedValue>
+                    <name>N52820</name>
+                    <description>nRF52820</description>
+                    <value>0x52820</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
                     <name>N52833</name>
                     <description>nRF52833</description>
                     <value>0x52833</value>
@@ -257,6 +264,21 @@ POSSIBILITY OF SUCH DAMAGE.\n
                     <value>0x41414142</value>
                   </enumeratedValue>
                   <enumeratedValue>
+                    <name>AAA0</name>
+                    <description>AAA0</description>
+                    <value>0x41414130</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
+                    <name>AAA1</name>
+                    <description>AAA1</description>
+                    <value>0x41414131</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
+                    <name>AAB0</name>
+                    <description>AAB0</description>
+                    <value>0x41414230</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
                     <name>Unspecified</name>
                     <description>Unspecified</description>
                     <value>0xFFFFFFFF</value>
@@ -280,17 +302,17 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>QD</name>
-                    <description>QDxx - 40-pin QFN</description>
+                    <description>QDxx - 5x5 40-pin QFN</description>
                     <value>0x2007</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>QI</name>
-                    <description>QIxx - 73-pin aQFN</description>
+                    <description>QIxx - 7x7 73-pin aQFN</description>
                     <value>0x2004</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>CJ</name>
-                    <description>CJxx - WLCSP</description>
+                    <description>CJxx - 3.175 x 3.175 WLCSP</description>
                     <value>0x2008</value>
                   </enumeratedValue>
                   <enumeratedValue>
@@ -948,8 +970,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Disabled</name>
-                  <description>Disable</description>
+                  <description>Hardware disable of access port protection for devices where access port protection is controlled by hardware</description>
                   <value>0xFF</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>HwDisabled</name>
+                  <description>Hardware disable of access port protection for devices where access port protection is controlled by hardware and software</description>
+                  <value>0x5A</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Enabled</name>
@@ -975,12 +1002,12 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Disabled</name>
-                  <description>Operation as GPIO pins. Same protection as normal GPIO pins</description>
+                  <description>Operation as GPIO pins. Same protection as normal GPIO pins.</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>NFC</name>
-                  <description>Operation as NFC antenna pins. Configures the protection for NFC operation</description>
+                  <description>Operation as NFC antenna pins. Configures the protection for NFC operation.</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -1034,7 +1061,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>REGOUT0</name>
-          <description>Output voltage from REG0 regulator stage. The maximum output voltage from this stage is given as VDDH - VREG0DROP.</description>
+          <description>Output voltage from REG0 regulator stage. The maximum output voltage from this stage is given as VDDH - V_VDDH-VDD.</description>
           <addressOffset>0x304</addressOffset>
           <access>read-write</access>
           <resetValue>0xFFFFFFFF</resetValue>
@@ -1087,9 +1114,69 @@ POSSIBILITY OF SUCH DAMAGE.\n
       </registers>
     </peripheral>
     <peripheral>
+      <name>APPROTECT</name>
+      <description>Access Port Protection</description>
+      <baseAddress>0x40000000</baseAddress>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <groupName>APPROTECT</groupName>
+      <size>0x20</size>
+      <registers>
+        <register>
+          <name>FORCEPROTECT</name>
+          <description>Software force enable APPROTECT mechanism until next reset.</description>
+          <addressOffset>0x550</addressOffset>
+          <access>read-writeonce</access>
+          <resetValue>0xFFFFFFFF</resetValue>
+          <fields>
+            <field>
+              <name>FORCEPROTECT</name>
+              <description>Write 0x0 to force enable APPROTECT mechanism</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <enumeratedValues>
+                <usage>write</usage>
+                <enumeratedValue>
+                  <name>Force</name>
+                  <description>Software force enable APPROTECT mechanism</description>
+                  <value>0x0</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>DISABLE</name>
+          <description>Software disable APPROTECT mechanism</description>
+          <addressOffset>0x558</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DISABLE</name>
+              <description>Software disable APPROTECT mechanism</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>SwDisable</name>
+                  <description>Software disable APPROTECT mechanism</description>
+                  <value>0x5A</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
       <name>CLOCK</name>
       <description>Clock control</description>
       <baseAddress>0x40000000</baseAddress>
+      <alternatePeripheral>APPROTECT</alternatePeripheral>
       <addressBlock>
         <offset>0</offset>
         <size>0x1000</size>
@@ -2122,7 +2209,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <name>POWER</name>
       <description>Power control</description>
       <baseAddress>0x40000000</baseAddress>
-      <alternatePeripheral>CLOCK</alternatePeripheral>
+      <alternatePeripheral>APPROTECT</alternatePeripheral>
       <addressBlock>
         <offset>0</offset>
         <size>0x1000</size>
@@ -5325,7 +5412,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5352,7 +5439,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5379,7 +5466,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5406,7 +5493,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5433,7 +5520,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5460,7 +5547,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5487,7 +5574,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5514,7 +5601,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5541,7 +5628,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5568,7 +5655,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5595,7 +5682,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5622,7 +5709,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5649,7 +5736,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5676,7 +5763,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5703,7 +5790,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5730,7 +5817,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5757,7 +5844,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5784,7 +5871,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5811,7 +5898,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5838,7 +5925,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5865,7 +5952,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5892,7 +5979,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5919,7 +6006,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5946,7 +6033,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -5973,7 +6060,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6000,7 +6087,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6027,7 +6114,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6054,7 +6141,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6081,7 +6168,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6108,7 +6195,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6135,7 +6222,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6162,7 +6249,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets the pin high; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin high; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6198,7 +6285,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6225,7 +6312,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6252,7 +6339,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6279,7 +6366,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6306,7 +6393,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6333,7 +6420,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6360,7 +6447,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6387,7 +6474,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6414,7 +6501,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6441,7 +6528,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6468,7 +6555,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6495,7 +6582,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6522,7 +6609,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6549,7 +6636,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6576,7 +6663,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6603,7 +6690,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6630,7 +6717,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6657,7 +6744,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6684,7 +6771,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6711,7 +6798,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6738,7 +6825,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6765,7 +6852,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6792,7 +6879,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6819,7 +6906,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6846,7 +6933,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6873,7 +6960,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6900,7 +6987,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6927,7 +7014,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6954,7 +7041,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6981,7 +7068,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -7008,7 +7095,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -7035,7 +7122,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets the pin low; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets the pin low; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8239,7 +8326,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8266,7 +8353,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8293,7 +8380,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8320,7 +8407,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8347,7 +8434,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8374,7 +8461,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8401,7 +8488,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8428,7 +8515,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8455,7 +8542,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8482,7 +8569,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8509,7 +8596,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8536,7 +8623,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8563,7 +8650,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8590,7 +8677,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8617,7 +8704,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8644,7 +8731,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8671,7 +8758,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8698,7 +8785,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8725,7 +8812,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8752,7 +8839,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8779,7 +8866,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8806,7 +8893,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8833,7 +8920,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8860,7 +8947,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8887,7 +8974,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8914,7 +9001,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8941,7 +9028,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8968,7 +9055,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8995,7 +9082,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9022,7 +9109,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9049,7 +9136,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9076,7 +9163,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Set</name>
-                  <description>Write: writing a '1' sets pin to output; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to output; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9112,7 +9199,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9139,7 +9226,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9166,7 +9253,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9193,7 +9280,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9220,7 +9307,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9247,7 +9334,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9274,7 +9361,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9301,7 +9388,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9328,7 +9415,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9355,7 +9442,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9382,7 +9469,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9409,7 +9496,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9436,7 +9523,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9463,7 +9550,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9490,7 +9577,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9517,7 +9604,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9544,7 +9631,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9571,7 +9658,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9598,7 +9685,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9625,7 +9712,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9652,7 +9739,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9679,7 +9766,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9706,7 +9793,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9733,7 +9820,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9760,7 +9847,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9787,7 +9874,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9814,7 +9901,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9841,7 +9928,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9868,7 +9955,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9895,7 +9982,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9922,7 +10009,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -9949,7 +10036,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <usage>write</usage>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Write: writing a '1' sets pin to input; writing a '0' has no effect</description>
+                  <description>Write: a '1' sets pin to input; a '0' has no effect</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -10542,13 +10629,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>DETECTMODE</name>
-          <description>Select between default DETECT signal behaviour and LDETECT mode</description>
+          <description>Select between default DETECT signal behavior and LDETECT mode</description>
           <addressOffset>0x524</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>DETECTMODE</name>
-              <description>Select between default DETECT signal behaviour and LDETECT mode</description>
+              <description>Select between default DETECT signal behavior and LDETECT mode</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -10559,7 +10646,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>LDETECT</name>
-                  <description>Use the latched LDETECT behaviour</description>
+                  <description>Use the latched LDETECT behavior</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -11318,13 +11405,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_EDEND</name>
-          <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register</description>
+          <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register.</description>
           <addressOffset>0x13C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_EDEND</name>
-              <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register</description>
+              <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -13522,7 +13609,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>MAP</name>
-              <description>Channel map selection.</description>
+              <description>Channel map selection</description>
               <lsb>8</lsb>
               <msb>8</msb>
               <enumeratedValues>
@@ -13690,19 +13777,19 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>LFLEN</name>
-              <description>Length on air of LENGTH field in number of bits.</description>
+              <description>Length on air of LENGTH field in number of bits</description>
               <lsb>0</lsb>
               <msb>3</msb>
             </field>
             <field>
               <name>S0LEN</name>
-              <description>Length on air of S0 field in number of bytes.</description>
+              <description>Length on air of S0 field in number of bytes</description>
               <lsb>8</lsb>
               <msb>8</msb>
             </field>
             <field>
               <name>S1LEN</name>
-              <description>Length on air of S1 field in number of bits.</description>
+              <description>Length on air of S1 field in number of bits</description>
               <lsb>16</lsb>
               <msb>19</msb>
             </field>
@@ -14112,7 +14199,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>LEN</name>
-              <description>CRC length in number of bytes.</description>
+              <description>CRC length in number of bytes For MODE Ble_LR125Kbit and Ble_LR500Kbit, only LEN set to 3 is supported</description>
               <lsb>0</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -14200,7 +14287,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>TIFS</name>
-              <description>Interframe spacing in us</description>
+              <description>Interframe spacing in us.</description>
               <lsb>0</lsb>
               <msb>9</msb>
             </field>
@@ -14214,7 +14301,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>RSSISAMPLE</name>
-              <description>RSSI sample</description>
+              <description>RSSI sample.</description>
               <lsb>0</lsb>
               <msb>6</msb>
             </field>
@@ -14590,7 +14677,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Fast</name>
-                  <description>Fast ramp-up (tRXEN,FAST and tTXEN,FAST), see electrical specification for more information</description>
+                  <description>Fast ramp-up (tRXEN,FAST and tTXEN,FAST), see electrical specifications for more information</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -14826,93 +14913,93 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>20</name>
-                  <description>20 in 8us unit (default) Set to 20 if parsed CTETime is larger han 20</description>
+                  <description>20 in 8 us unit (default) Set to 20 if parsed CTETime is larger than 20</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>31</name>
-                  <description>31 in 8us unit</description>
+                  <description>31 in 8 us unit</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>63</name>
-                  <description>63 in 8us unit</description>
+                  <description>63 in 8 us unit</description>
                   <value>2</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>CTEINLINERXMODE1US</name>
-              <description>Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set</description>
+              <description>Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set.</description>
               <lsb>10</lsb>
               <msb>12</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500ns</name>
-                  <description>0.5us</description>
+                  <description>0.5 us</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>250ns</name>
-                  <description>0.25us</description>
+                  <description>0.25 us</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125ns</name>
-                  <description>0.125us</description>
+                  <description>0.125 us</description>
                   <value>6</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>CTEINLINERXMODE2US</name>
-              <description>Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set</description>
+              <description>Spacing between samples for the samples in the SWITCHING period when CTEINLINEMODE is set.</description>
               <lsb>13</lsb>
               <msb>15</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500ns</name>
-                  <description>0.5us</description>
+                  <description>0.5 us</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>250ns</name>
-                  <description>0.25us</description>
+                  <description>0.25 us</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125ns</name>
-                  <description>0.125us</description>
+                  <description>0.125 us</description>
                   <value>6</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -14970,17 +15057,17 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -14993,32 +15080,32 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500ns</name>
-                  <description>0.5us</description>
+                  <description>0.5 us</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>250ns</name>
-                  <description>0.25us</description>
+                  <description>0.25 us</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125ns</name>
-                  <description>0.125us</description>
+                  <description>0.125 us</description>
                   <value>6</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -15049,32 +15136,32 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>4us</name>
-                  <description>4us</description>
+                  <description>4 us</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>2us</name>
-                  <description>2us</description>
+                  <description>2 us</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1us</name>
-                  <description>1us</description>
+                  <description>1 us</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500ns</name>
-                  <description>0.5us</description>
+                  <description>0.5 us</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>250ns</name>
-                  <description>0.25us</description>
+                  <description>0.25 us</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125ns</name>
-                  <description>0.125us</description>
+                  <description>0.125 us</description>
                   <value>6</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -15130,7 +15217,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>SWITCHPATTERN</name>
-              <description>Fill array of GPIO patterns for antenna control</description>
+              <description>Fill array of GPIO patterns for antenna control.</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -17711,7 +17798,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>ERRORSRC</name>
-          <description>Error source Note : this register is read / write one to clear.</description>
+          <description>Error source This register is read/write one to clear.</description>
           <addressOffset>0x480</addressOffset>
           <access>read-write</access>
           <modifiedWriteValues>oneToClear</modifiedWriteValues>
@@ -18083,7 +18170,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Baud1M</name>
-                  <description>1Mega baud</description>
+                  <description>1 megabaud</description>
                   <value>0x10000000</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -18556,7 +18643,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>TXD</name>
-              <description>TX data to send. Double buffered</description>
+              <description>TX data to send. Double buffered.</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -19224,7 +19311,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>STALLSTAT</name>
-          <description>Stall status for EasyDMA RAM accesses. The fields in this register is set to STALL by hardware whenever a stall occurres and can be cleared (set to NOSTALL) by the CPU.</description>
+          <description>Stall status for EasyDMA RAM accesses. The fields in this register are set to STALL by hardware whenever a stall occurs and can be cleared (set to NOSTALL) by the CPU.</description>
           <addressOffset>0x400</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000000</resetValue>
@@ -21829,13 +21916,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_SUSPENDED</name>
-          <description>Last byte has been sent out after the SUSPEND task has been issued, TWI traffic is now suspended.</description>
+          <description>SUSPEND task has been issued, TWI traffic is now suspended.</description>
           <addressOffset>0x148</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_SUSPENDED</name>
-              <description>Last byte has been sent out after the SUSPEND task has been issued, TWI traffic is now suspended.</description>
+              <description>SUSPEND task has been issued, TWI traffic is now suspended.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -23823,7 +23910,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>MATCH</name>
-              <description>Which of the addresses in {ADDRESS} matched the incoming address</description>
+              <description>Indication of which address in {ADDRESS} that matched the incoming address</description>
               <lsb>0</lsb>
               <msb>0</msb>
             </field>
@@ -31878,7 +31965,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>PRESCALER</name>
-          <description>12 bit prescaler for COUNTER frequency (32768/(PRESCALER+1)).Must be written when RTC is stopped</description>
+          <description>12 bit prescaler for COUNTER frequency (32768/(PRESCALER+1)). Must be written when RTC is stopped.</description>
           <addressOffset>0x508</addressOffset>
           <access>read-write</access>
           <fields>
@@ -32079,14 +32166,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>A0</name>
-          <description>Slope of 1st piece wise linear function</description>
+          <description>Slope of first piecewise linear function</description>
           <addressOffset>0x520</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000326</resetValue>
           <fields>
             <field>
               <name>A0</name>
-              <description>Slope of 1st piece wise linear function</description>
+              <description>Slope of first piecewise linear function</description>
               <lsb>0</lsb>
               <msb>11</msb>
             </field>
@@ -32094,14 +32181,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>A1</name>
-          <description>Slope of 2nd piece wise linear function</description>
+          <description>Slope of second piecewise linear function</description>
           <addressOffset>0x524</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000348</resetValue>
           <fields>
             <field>
               <name>A1</name>
-              <description>Slope of 2nd piece wise linear function</description>
+              <description>Slope of second piecewise linear function</description>
               <lsb>0</lsb>
               <msb>11</msb>
             </field>
@@ -32109,14 +32196,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>A2</name>
-          <description>Slope of 3rd piece wise linear function</description>
+          <description>Slope of third piecewise linear function</description>
           <addressOffset>0x528</addressOffset>
           <access>read-write</access>
           <resetValue>0x000003AA</resetValue>
           <fields>
             <field>
               <name>A2</name>
-              <description>Slope of 3rd piece wise linear function</description>
+              <description>Slope of third piecewise linear function</description>
               <lsb>0</lsb>
               <msb>11</msb>
             </field>
@@ -32124,14 +32211,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>A3</name>
-          <description>Slope of 4th piece wise linear function</description>
+          <description>Slope of fourth piecewise linear function</description>
           <addressOffset>0x52C</addressOffset>
           <access>read-write</access>
           <resetValue>0x0000040E</resetValue>
           <fields>
             <field>
               <name>A3</name>
-              <description>Slope of 4th piece wise linear function</description>
+              <description>Slope of fourth piecewise linear function</description>
               <lsb>0</lsb>
               <msb>11</msb>
             </field>
@@ -32139,14 +32226,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>A4</name>
-          <description>Slope of 5th piece wise linear function</description>
+          <description>Slope of fifth piecewise linear function</description>
           <addressOffset>0x530</addressOffset>
           <access>read-write</access>
           <resetValue>0x000004BD</resetValue>
           <fields>
             <field>
               <name>A4</name>
-              <description>Slope of 5th piece wise linear function</description>
+              <description>Slope of fifth piecewise linear function</description>
               <lsb>0</lsb>
               <msb>11</msb>
             </field>
@@ -32154,14 +32241,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>A5</name>
-          <description>Slope of 6th piece wise linear function</description>
+          <description>Slope of sixth piecewise linear function</description>
           <addressOffset>0x534</addressOffset>
           <access>read-write</access>
           <resetValue>0x000005A3</resetValue>
           <fields>
             <field>
               <name>A5</name>
-              <description>Slope of 6th piece wise linear function</description>
+              <description>Slope of sixth piecewise linear function</description>
               <lsb>0</lsb>
               <msb>11</msb>
             </field>
@@ -32169,14 +32256,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>B0</name>
-          <description>y-intercept of 1st piece wise linear function</description>
+          <description>y-intercept of first piecewise linear function</description>
           <addressOffset>0x540</addressOffset>
           <access>read-write</access>
           <resetValue>0x00003FEF</resetValue>
           <fields>
             <field>
               <name>B0</name>
-              <description>y-intercept of 1st piece wise linear function</description>
+              <description>y-intercept of first piecewise linear function</description>
               <lsb>0</lsb>
               <msb>13</msb>
             </field>
@@ -32184,14 +32271,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>B1</name>
-          <description>y-intercept of 2nd piece wise linear function</description>
+          <description>y-intercept of second piecewise linear function</description>
           <addressOffset>0x544</addressOffset>
           <access>read-write</access>
           <resetValue>0x00003FBE</resetValue>
           <fields>
             <field>
               <name>B1</name>
-              <description>y-intercept of 2nd piece wise linear function</description>
+              <description>y-intercept of second piecewise linear function</description>
               <lsb>0</lsb>
               <msb>13</msb>
             </field>
@@ -32199,14 +32286,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>B2</name>
-          <description>y-intercept of 3rd piece wise linear function</description>
+          <description>y-intercept of third piecewise linear function</description>
           <addressOffset>0x548</addressOffset>
           <access>read-write</access>
           <resetValue>0x00003FBE</resetValue>
           <fields>
             <field>
               <name>B2</name>
-              <description>y-intercept of 3rd piece wise linear function</description>
+              <description>y-intercept of third piecewise linear function</description>
               <lsb>0</lsb>
               <msb>13</msb>
             </field>
@@ -32214,14 +32301,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>B3</name>
-          <description>y-intercept of 4th piece wise linear function</description>
+          <description>y-intercept of fourth piecewise linear function</description>
           <addressOffset>0x54C</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000012</resetValue>
           <fields>
             <field>
               <name>B3</name>
-              <description>y-intercept of 4th piece wise linear function</description>
+              <description>y-intercept of fourth piecewise linear function</description>
               <lsb>0</lsb>
               <msb>13</msb>
             </field>
@@ -32229,14 +32316,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>B4</name>
-          <description>y-intercept of 5th piece wise linear function</description>
+          <description>y-intercept of fifth piecewise linear function</description>
           <addressOffset>0x550</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000124</resetValue>
           <fields>
             <field>
               <name>B4</name>
-              <description>y-intercept of 5th piece wise linear function</description>
+              <description>y-intercept of fifth piecewise linear function</description>
               <lsb>0</lsb>
               <msb>13</msb>
             </field>
@@ -32244,14 +32331,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>B5</name>
-          <description>y-intercept of 6th piece wise linear function</description>
+          <description>y-intercept of sixth piecewise linear function</description>
           <addressOffset>0x554</addressOffset>
           <access>read-write</access>
           <resetValue>0x0000027C</resetValue>
           <fields>
             <field>
               <name>B5</name>
-              <description>y-intercept of 6th piece wise linear function</description>
+              <description>y-intercept of sixth piecewise linear function</description>
               <lsb>0</lsb>
               <msb>13</msb>
             </field>
@@ -32259,14 +32346,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>T0</name>
-          <description>End point of 1st piece wise linear function</description>
+          <description>End point of first piecewise linear function</description>
           <addressOffset>0x560</addressOffset>
           <access>read-write</access>
           <resetValue>0x000000E2</resetValue>
           <fields>
             <field>
               <name>T0</name>
-              <description>End point of 1st piece wise linear function</description>
+              <description>End point of first piecewise linear function</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -32274,14 +32361,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>T1</name>
-          <description>End point of 2nd piece wise linear function</description>
+          <description>End point of second piecewise linear function</description>
           <addressOffset>0x564</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000000</resetValue>
           <fields>
             <field>
               <name>T1</name>
-              <description>End point of 2nd piece wise linear function</description>
+              <description>End point of second piecewise linear function</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -32289,14 +32376,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>T2</name>
-          <description>End point of 3rd piece wise linear function</description>
+          <description>End point of third piecewise linear function</description>
           <addressOffset>0x568</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000019</resetValue>
           <fields>
             <field>
               <name>T2</name>
-              <description>End point of 3rd piece wise linear function</description>
+              <description>End point of third piecewise linear function</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -32304,14 +32391,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>T3</name>
-          <description>End point of 4th piece wise linear function</description>
+          <description>End point of fourth piecewise linear function</description>
           <addressOffset>0x56C</addressOffset>
           <access>read-write</access>
           <resetValue>0x0000003C</resetValue>
           <fields>
             <field>
               <name>T3</name>
-              <description>End point of 4th piece wise linear function</description>
+              <description>End point of fourth piecewise linear function</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -32319,14 +32406,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>T4</name>
-          <description>End point of 5th piece wise linear function</description>
+          <description>End point of fifth piecewise linear function</description>
           <addressOffset>0x570</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000050</resetValue>
           <fields>
             <field>
               <name>T4</name>
-              <description>End point of 5th piece wise linear function</description>
+              <description>End point of fifth piecewise linear function</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -33169,7 +33256,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>NIRK</name>
-              <description>Number of Identity root keys available in the IRK data structure</description>
+              <description>Number of Identity Root Keys available in the IRK data structure</description>
               <lsb>0</lsb>
               <msb>4</msb>
             </field>
@@ -33221,7 +33308,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
     </peripheral>
     <peripheral>
       <name>CCM</name>
-      <description>AES CCM Mode Encryption</description>
+      <description>AES CCM mode encryption</description>
       <baseAddress>0x4000F000</baseAddress>
       <alternatePeripheral>AAR</alternatePeripheral>
       <addressBlock>
@@ -33238,13 +33325,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <registers>
         <register>
           <name>TASKS_KSGEN</name>
-          <description>Start generation of key-stream. This operation will stop by itself when completed.</description>
+          <description>Start generation of keystream. This operation will stop by itself when completed.</description>
           <addressOffset>0x000</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_KSGEN</name>
-              <description>Start generation of key-stream. This operation will stop by itself when completed.</description>
+              <description>Start generation of keystream. This operation will stop by itself when completed.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -33322,13 +33409,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_ENDKSGEN</name>
-          <description>Key-stream generation complete</description>
+          <description>Keystream generation complete</description>
           <addressOffset>0x100</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_ENDKSGEN</name>
-              <description>Key-stream generation complete</description>
+              <description>Keystream generation complete</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -33663,7 +33750,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>MODE</name>
-              <description>The mode of operation to be used. The settings in this register apply whenever either the KSGEN or CRYPT tasks are triggered.</description>
+              <description>The mode of operation to be used. Settings in this register apply whenever either the KSGEN task or the CRYPT task is triggered.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -33697,12 +33784,12 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125Kbps</name>
-                  <description>125 Kbps</description>
+                  <description>125 kbps</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500Kbps</name>
-                  <description>500 Kbps</description>
+                  <description>500 kbps</description>
                   <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -33715,12 +33802,12 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Default</name>
-                  <description>Default length. Effective length of LENGTH field in encrypted/decrypted packet is 5 bits. A key-stream for packet payloads up to 27 bytes will be generated.</description>
+                  <description>Default length. Effective length of LENGTH field in encrypted/decrypted packet is 5 bits. A keystream for packet payloads up to 27 bytes will be generated.</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Extended</name>
-                  <description>Extended length. Effective length of LENGTH field in encrypted/decrypted packet is 8 bits. A key-stream for packet payloads up to MAXPACKETSIZE bytes will be generated.</description>
+                  <description>Extended length. Effective length of LENGTH field in encrypted/decrypted packet is 8 bits. A keystream for packet payloads up to MAXPACKETSIZE bytes will be generated.</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -33729,13 +33816,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>CNFPTR</name>
-          <description>Pointer to data structure holding AES key and NONCE vector</description>
+          <description>Pointer to data structure holding the AES key and the NONCE vector</description>
           <addressOffset>0x508</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>CNFPTR</name>
-              <description>Pointer to the data structure holding the AES key and the CCM NONCE vector (see Table 1 CCM data structure overview)</description>
+              <description>Pointer to the data structure holding the AES key and the CCM NONCE vector (see table CCM data structure overview)</description>
               <lsb>0</lsb>
               <msb>31</msb>
             </field>
@@ -33777,7 +33864,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>SCRATCHPTR</name>
-              <description>Pointer to a scratch data area used for temporary storage during key-stream generation,
+              <description>Pointer to a scratch data area used for temporary storage during keystream generation,
         MIC generation and encryption/decryption.</description>
               <lsb>0</lsb>
               <msb>31</msb>
@@ -33786,14 +33873,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>MAXPACKETSIZE</name>
-          <description>Length of key-stream generated when MODE.LENGTH = Extended.</description>
+          <description>Length of keystream generated when MODE.LENGTH = Extended</description>
           <addressOffset>0x518</addressOffset>
           <access>read-write</access>
           <resetValue>0x000000FB</resetValue>
           <fields>
             <field>
               <name>MAXPACKETSIZE</name>
-              <description>Length of key-stream generated when MODE.LENGTH = Extended. This value must be greater or equal to the subsequent packet payload to be encrypted/decrypted.</description>
+              <description>Length of keystream generated when MODE.LENGTH = Extended. This value must be greater than or equal to the subsequent packet payload to be encrypted/decrypted.</description>
               <lsb>0</lsb>
               <msb>7</msb>
             </field>
@@ -33808,7 +33895,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>RATEOVERRIDE</name>
-              <description>Data rate override setting.</description>
+              <description>Data rate override setting</description>
               <lsb>0</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -33824,15 +33911,30 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>125Kbps</name>
-                  <description>125 Kbps</description>
+                  <description>125 kbps</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>500Kbps</name>
-                  <description>500 Kbps</description>
+                  <description>500 kbps</description>
                   <value>3</value>
                 </enumeratedValue>
               </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HEADERMASK</name>
+          <description>Header (S0) mask.</description>
+          <addressOffset>0x520</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x000000E3</resetValue>
+          <fields>
+            <field>
+              <name>HEADERMASK</name>
+              <description>Header (S0) mask</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
             </field>
           </fields>
         </register>
@@ -35214,53 +35316,53 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>REPORTPER</name>
-              <description>Specifies the number of samples to be accumulated in the ACC register before the REPORTRDY and DBLRDY events can be generated</description>
+              <description>Specifies the number of samples to be accumulated in the ACC register before the REPORTRDY and DBLRDY events can be generated.</description>
               <lsb>0</lsb>
               <msb>3</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>10Smpl</name>
-                  <description>10 samples / report</description>
+                  <description>10 samples/report</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>40Smpl</name>
-                  <description>40 samples / report</description>
+                  <description>40 samples/report</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>80Smpl</name>
-                  <description>80 samples / report</description>
+                  <description>80 samples/report</description>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>120Smpl</name>
-                  <description>120 samples / report</description>
+                  <description>120 samples/report</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>160Smpl</name>
-                  <description>160 samples / report</description>
+                  <description>160 samples/report</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>200Smpl</name>
-                  <description>200 samples / report</description>
+                  <description>200 samples/report</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>240Smpl</name>
-                  <description>240 samples / report</description>
+                  <description>240 samples/report</description>
                   <value>6</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>280Smpl</name>
-                  <description>280 samples / report</description>
+                  <description>280 samples/report</description>
                   <value>7</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>1Smpl</name>
-                  <description>1 sample / report</description>
+                  <description>1 sample/report</description>
                   <value>8</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -35276,7 +35378,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>ACC</name>
-              <description>Register accumulating all valid samples (not double transition) read from the SAMPLE register</description>
+              <description>Register accumulating all valid samples (not double transition) read from the SAMPLE register.</description>
               <lsb>0</lsb>
               <msb>31</msb>
             </field>
@@ -40487,14 +40589,14 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <addressOffset>0x800</addressOffset>
           <register>
             <name>ADDR</name>
-            <description>Description cluster: Configure the word-aligned start address of region n to protect</description>
+            <description>Description cluster: Start address of region to protect. The start address must be word-aligned.</description>
             <addressOffset>0x000</addressOffset>
             <access>read-writeonce</access>
             <resetValue>0x00000000</resetValue>
             <fields>
               <field>
                 <name>ADDR</name>
-                <description>Valid word-aligned start address of region n to protect. Address must point to a flash page boundary.</description>
+                <description>Start address of flash region n. The start address must point to a flash page boundary.</description>
                 <lsb>0</lsb>
                 <msb>31</msb>
               </field>
@@ -40502,7 +40604,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           </register>
           <register>
             <name>SIZE</name>
-            <description>Description cluster: Size of region to protect counting from address ACL[n].ADDR. Write '0' as no effect.</description>
+            <description>Description cluster: Size of region to protect counting from address ACL[n].ADDR. Writing a '0' has no effect.</description>
             <addressOffset>0x004</addressOffset>
             <access>read-writeonce</access>
             <resetValue>0x00000000</resetValue>
@@ -40524,36 +40626,36 @@ POSSIBILITY OF SUCH DAMAGE.\n
             <fields>
               <field>
                 <name>WRITE</name>
-                <description>Configure write and erase permissions for region n. Write '0' has no effect.</description>
+                <description>Configure write and erase permissions for region n. Writing a '0' has no effect.</description>
                 <lsb>1</lsb>
                 <msb>1</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Enable</name>
-                    <description>Allow write and erase instructions to region n</description>
+                    <description>Allow write and erase instructions to region n.</description>
                     <value>0</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>Disable</name>
-                    <description>Block write and erase instructions to region n</description>
+                    <description>Block write and erase instructions to region n.</description>
                     <value>1</value>
                   </enumeratedValue>
                 </enumeratedValues>
               </field>
               <field>
                 <name>READ</name>
-                <description>Configure read permissions for region n. Write '0' has no effect.</description>
+                <description>Configure read permissions for region n. Writing a '0' has no effect.</description>
                 <lsb>2</lsb>
                 <msb>2</msb>
                 <enumeratedValues>
                   <enumeratedValue>
                     <name>Enable</name>
-                    <description>Allow read instructions to region n</description>
+                    <description>Allow read instructions to region n.</description>
                     <value>0</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>Disable</name>
-                    <description>Block read instructions to region n</description>
+                    <description>Block read instructions to region n.</description>
                     <value>1</value>
                   </enumeratedValue>
                 </enumeratedValues>
@@ -41516,7 +41618,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>CH0</name>
-              <description>Channel 0 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 0 enable set register.  Writing '0' has no effect.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -41543,7 +41645,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH1</name>
-              <description>Channel 1 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 1 enable set register.  Writing '0' has no effect.</description>
               <lsb>1</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -41570,7 +41672,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH2</name>
-              <description>Channel 2 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 2 enable set register.  Writing '0' has no effect.</description>
               <lsb>2</lsb>
               <msb>2</msb>
               <enumeratedValues>
@@ -41597,7 +41699,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH3</name>
-              <description>Channel 3 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 3 enable set register.  Writing '0' has no effect.</description>
               <lsb>3</lsb>
               <msb>3</msb>
               <enumeratedValues>
@@ -41624,7 +41726,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH4</name>
-              <description>Channel 4 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 4 enable set register.  Writing '0' has no effect.</description>
               <lsb>4</lsb>
               <msb>4</msb>
               <enumeratedValues>
@@ -41651,7 +41753,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH5</name>
-              <description>Channel 5 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 5 enable set register.  Writing '0' has no effect.</description>
               <lsb>5</lsb>
               <msb>5</msb>
               <enumeratedValues>
@@ -41678,7 +41780,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH6</name>
-              <description>Channel 6 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 6 enable set register.  Writing '0' has no effect.</description>
               <lsb>6</lsb>
               <msb>6</msb>
               <enumeratedValues>
@@ -41705,7 +41807,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH7</name>
-              <description>Channel 7 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 7 enable set register.  Writing '0' has no effect.</description>
               <lsb>7</lsb>
               <msb>7</msb>
               <enumeratedValues>
@@ -41732,7 +41834,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH8</name>
-              <description>Channel 8 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 8 enable set register.  Writing '0' has no effect.</description>
               <lsb>8</lsb>
               <msb>8</msb>
               <enumeratedValues>
@@ -41759,7 +41861,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH9</name>
-              <description>Channel 9 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 9 enable set register.  Writing '0' has no effect.</description>
               <lsb>9</lsb>
               <msb>9</msb>
               <enumeratedValues>
@@ -41786,7 +41888,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH10</name>
-              <description>Channel 10 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 10 enable set register.  Writing '0' has no effect.</description>
               <lsb>10</lsb>
               <msb>10</msb>
               <enumeratedValues>
@@ -41813,7 +41915,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH11</name>
-              <description>Channel 11 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 11 enable set register.  Writing '0' has no effect.</description>
               <lsb>11</lsb>
               <msb>11</msb>
               <enumeratedValues>
@@ -41840,7 +41942,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH12</name>
-              <description>Channel 12 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 12 enable set register.  Writing '0' has no effect.</description>
               <lsb>12</lsb>
               <msb>12</msb>
               <enumeratedValues>
@@ -41867,7 +41969,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH13</name>
-              <description>Channel 13 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 13 enable set register.  Writing '0' has no effect.</description>
               <lsb>13</lsb>
               <msb>13</msb>
               <enumeratedValues>
@@ -41894,7 +41996,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH14</name>
-              <description>Channel 14 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 14 enable set register.  Writing '0' has no effect.</description>
               <lsb>14</lsb>
               <msb>14</msb>
               <enumeratedValues>
@@ -41921,7 +42023,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH15</name>
-              <description>Channel 15 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 15 enable set register.  Writing '0' has no effect.</description>
               <lsb>15</lsb>
               <msb>15</msb>
               <enumeratedValues>
@@ -41948,7 +42050,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH16</name>
-              <description>Channel 16 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 16 enable set register.  Writing '0' has no effect.</description>
               <lsb>16</lsb>
               <msb>16</msb>
               <enumeratedValues>
@@ -41975,7 +42077,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH17</name>
-              <description>Channel 17 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 17 enable set register.  Writing '0' has no effect.</description>
               <lsb>17</lsb>
               <msb>17</msb>
               <enumeratedValues>
@@ -42002,7 +42104,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH18</name>
-              <description>Channel 18 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 18 enable set register.  Writing '0' has no effect.</description>
               <lsb>18</lsb>
               <msb>18</msb>
               <enumeratedValues>
@@ -42029,7 +42131,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH19</name>
-              <description>Channel 19 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 19 enable set register.  Writing '0' has no effect.</description>
               <lsb>19</lsb>
               <msb>19</msb>
               <enumeratedValues>
@@ -42056,7 +42158,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH20</name>
-              <description>Channel 20 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 20 enable set register.  Writing '0' has no effect.</description>
               <lsb>20</lsb>
               <msb>20</msb>
               <enumeratedValues>
@@ -42083,7 +42185,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH21</name>
-              <description>Channel 21 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 21 enable set register.  Writing '0' has no effect.</description>
               <lsb>21</lsb>
               <msb>21</msb>
               <enumeratedValues>
@@ -42110,7 +42212,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH22</name>
-              <description>Channel 22 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 22 enable set register.  Writing '0' has no effect.</description>
               <lsb>22</lsb>
               <msb>22</msb>
               <enumeratedValues>
@@ -42137,7 +42239,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH23</name>
-              <description>Channel 23 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 23 enable set register.  Writing '0' has no effect.</description>
               <lsb>23</lsb>
               <msb>23</msb>
               <enumeratedValues>
@@ -42164,7 +42266,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH24</name>
-              <description>Channel 24 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 24 enable set register.  Writing '0' has no effect.</description>
               <lsb>24</lsb>
               <msb>24</msb>
               <enumeratedValues>
@@ -42191,7 +42293,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH25</name>
-              <description>Channel 25 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 25 enable set register.  Writing '0' has no effect.</description>
               <lsb>25</lsb>
               <msb>25</msb>
               <enumeratedValues>
@@ -42218,7 +42320,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH26</name>
-              <description>Channel 26 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 26 enable set register.  Writing '0' has no effect.</description>
               <lsb>26</lsb>
               <msb>26</msb>
               <enumeratedValues>
@@ -42245,7 +42347,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH27</name>
-              <description>Channel 27 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 27 enable set register.  Writing '0' has no effect.</description>
               <lsb>27</lsb>
               <msb>27</msb>
               <enumeratedValues>
@@ -42272,7 +42374,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH28</name>
-              <description>Channel 28 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 28 enable set register.  Writing '0' has no effect.</description>
               <lsb>28</lsb>
               <msb>28</msb>
               <enumeratedValues>
@@ -42299,7 +42401,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH29</name>
-              <description>Channel 29 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 29 enable set register.  Writing '0' has no effect.</description>
               <lsb>29</lsb>
               <msb>29</msb>
               <enumeratedValues>
@@ -42326,7 +42428,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH30</name>
-              <description>Channel 30 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 30 enable set register.  Writing '0' has no effect.</description>
               <lsb>30</lsb>
               <msb>30</msb>
               <enumeratedValues>
@@ -42353,7 +42455,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH31</name>
-              <description>Channel 31 enable set register.  Writing '0' has no effect</description>
+              <description>Channel 31 enable set register.  Writing '0' has no effect.</description>
               <lsb>31</lsb>
               <msb>31</msb>
               <enumeratedValues>
@@ -42389,7 +42491,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>CH0</name>
-              <description>Channel 0 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 0 enable clear register.  Writing '0' has no effect.</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -42416,7 +42518,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH1</name>
-              <description>Channel 1 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 1 enable clear register.  Writing '0' has no effect.</description>
               <lsb>1</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -42443,7 +42545,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH2</name>
-              <description>Channel 2 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 2 enable clear register.  Writing '0' has no effect.</description>
               <lsb>2</lsb>
               <msb>2</msb>
               <enumeratedValues>
@@ -42470,7 +42572,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH3</name>
-              <description>Channel 3 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 3 enable clear register.  Writing '0' has no effect.</description>
               <lsb>3</lsb>
               <msb>3</msb>
               <enumeratedValues>
@@ -42497,7 +42599,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH4</name>
-              <description>Channel 4 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 4 enable clear register.  Writing '0' has no effect.</description>
               <lsb>4</lsb>
               <msb>4</msb>
               <enumeratedValues>
@@ -42524,7 +42626,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH5</name>
-              <description>Channel 5 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 5 enable clear register.  Writing '0' has no effect.</description>
               <lsb>5</lsb>
               <msb>5</msb>
               <enumeratedValues>
@@ -42551,7 +42653,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH6</name>
-              <description>Channel 6 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 6 enable clear register.  Writing '0' has no effect.</description>
               <lsb>6</lsb>
               <msb>6</msb>
               <enumeratedValues>
@@ -42578,7 +42680,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH7</name>
-              <description>Channel 7 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 7 enable clear register.  Writing '0' has no effect.</description>
               <lsb>7</lsb>
               <msb>7</msb>
               <enumeratedValues>
@@ -42605,7 +42707,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH8</name>
-              <description>Channel 8 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 8 enable clear register.  Writing '0' has no effect.</description>
               <lsb>8</lsb>
               <msb>8</msb>
               <enumeratedValues>
@@ -42632,7 +42734,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH9</name>
-              <description>Channel 9 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 9 enable clear register.  Writing '0' has no effect.</description>
               <lsb>9</lsb>
               <msb>9</msb>
               <enumeratedValues>
@@ -42659,7 +42761,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH10</name>
-              <description>Channel 10 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 10 enable clear register.  Writing '0' has no effect.</description>
               <lsb>10</lsb>
               <msb>10</msb>
               <enumeratedValues>
@@ -42686,7 +42788,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH11</name>
-              <description>Channel 11 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 11 enable clear register.  Writing '0' has no effect.</description>
               <lsb>11</lsb>
               <msb>11</msb>
               <enumeratedValues>
@@ -42713,7 +42815,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH12</name>
-              <description>Channel 12 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 12 enable clear register.  Writing '0' has no effect.</description>
               <lsb>12</lsb>
               <msb>12</msb>
               <enumeratedValues>
@@ -42740,7 +42842,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH13</name>
-              <description>Channel 13 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 13 enable clear register.  Writing '0' has no effect.</description>
               <lsb>13</lsb>
               <msb>13</msb>
               <enumeratedValues>
@@ -42767,7 +42869,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH14</name>
-              <description>Channel 14 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 14 enable clear register.  Writing '0' has no effect.</description>
               <lsb>14</lsb>
               <msb>14</msb>
               <enumeratedValues>
@@ -42794,7 +42896,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH15</name>
-              <description>Channel 15 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 15 enable clear register.  Writing '0' has no effect.</description>
               <lsb>15</lsb>
               <msb>15</msb>
               <enumeratedValues>
@@ -42821,7 +42923,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH16</name>
-              <description>Channel 16 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 16 enable clear register.  Writing '0' has no effect.</description>
               <lsb>16</lsb>
               <msb>16</msb>
               <enumeratedValues>
@@ -42848,7 +42950,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH17</name>
-              <description>Channel 17 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 17 enable clear register.  Writing '0' has no effect.</description>
               <lsb>17</lsb>
               <msb>17</msb>
               <enumeratedValues>
@@ -42875,7 +42977,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH18</name>
-              <description>Channel 18 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 18 enable clear register.  Writing '0' has no effect.</description>
               <lsb>18</lsb>
               <msb>18</msb>
               <enumeratedValues>
@@ -42902,7 +43004,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH19</name>
-              <description>Channel 19 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 19 enable clear register.  Writing '0' has no effect.</description>
               <lsb>19</lsb>
               <msb>19</msb>
               <enumeratedValues>
@@ -42929,7 +43031,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH20</name>
-              <description>Channel 20 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 20 enable clear register.  Writing '0' has no effect.</description>
               <lsb>20</lsb>
               <msb>20</msb>
               <enumeratedValues>
@@ -42956,7 +43058,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH21</name>
-              <description>Channel 21 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 21 enable clear register.  Writing '0' has no effect.</description>
               <lsb>21</lsb>
               <msb>21</msb>
               <enumeratedValues>
@@ -42983,7 +43085,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH22</name>
-              <description>Channel 22 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 22 enable clear register.  Writing '0' has no effect.</description>
               <lsb>22</lsb>
               <msb>22</msb>
               <enumeratedValues>
@@ -43010,7 +43112,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH23</name>
-              <description>Channel 23 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 23 enable clear register.  Writing '0' has no effect.</description>
               <lsb>23</lsb>
               <msb>23</msb>
               <enumeratedValues>
@@ -43037,7 +43139,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH24</name>
-              <description>Channel 24 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 24 enable clear register.  Writing '0' has no effect.</description>
               <lsb>24</lsb>
               <msb>24</msb>
               <enumeratedValues>
@@ -43064,7 +43166,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH25</name>
-              <description>Channel 25 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 25 enable clear register.  Writing '0' has no effect.</description>
               <lsb>25</lsb>
               <msb>25</msb>
               <enumeratedValues>
@@ -43091,7 +43193,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH26</name>
-              <description>Channel 26 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 26 enable clear register.  Writing '0' has no effect.</description>
               <lsb>26</lsb>
               <msb>26</msb>
               <enumeratedValues>
@@ -43118,7 +43220,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH27</name>
-              <description>Channel 27 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 27 enable clear register.  Writing '0' has no effect.</description>
               <lsb>27</lsb>
               <msb>27</msb>
               <enumeratedValues>
@@ -43145,7 +43247,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH28</name>
-              <description>Channel 28 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 28 enable clear register.  Writing '0' has no effect.</description>
               <lsb>28</lsb>
               <msb>28</msb>
               <enumeratedValues>
@@ -43172,7 +43274,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH29</name>
-              <description>Channel 29 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 29 enable clear register.  Writing '0' has no effect.</description>
               <lsb>29</lsb>
               <msb>29</msb>
               <enumeratedValues>
@@ -43199,7 +43301,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH30</name>
-              <description>Channel 30 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 30 enable clear register.  Writing '0' has no effect.</description>
               <lsb>30</lsb>
               <msb>30</msb>
               <enumeratedValues>
@@ -43226,7 +43328,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CH31</name>
-              <description>Channel 31 enable clear register.  Writing '0' has no effect</description>
+              <description>Channel 31 enable clear register.  Writing '0' has no effect.</description>
               <lsb>31</lsb>
               <msb>31</msb>
               <enumeratedValues>
@@ -43263,7 +43365,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <addressOffset>0x510</addressOffset>
           <register>
             <name>EEP</name>
-            <description>Description cluster: Channel n event end-point</description>
+            <description>Description cluster: Channel n event endpoint</description>
             <addressOffset>0x000</addressOffset>
             <access>read-write</access>
             <fields>
@@ -43277,7 +43379,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           </register>
           <register>
             <name>TEP</name>
-            <description>Description cluster: Channel n task end-point</description>
+            <description>Description cluster: Channel n task endpoint</description>
             <addressOffset>0x004</addressOffset>
             <access>read-write</access>
             <fields>
@@ -43886,7 +43988,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <addressOffset>0x910</addressOffset>
           <register>
             <name>TEP</name>
-            <description>Description cluster: Channel n task end-point</description>
+            <description>Description cluster: Channel n task endpoint</description>
             <addressOffset>0x000</addressOffset>
             <access>read-write</access>
             <fields>
@@ -53713,7 +53815,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>OneDir</name>
-                  <description>Full buffer dedicated to either iso IN or OUT</description>
+                  <description>Full buffer dedicated to either ISO IN or OUT</description>
                   <value>0x0000</value>
                 </enumeratedValue>
                 <enumeratedValue>

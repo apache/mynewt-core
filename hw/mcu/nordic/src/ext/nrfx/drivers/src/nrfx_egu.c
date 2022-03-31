@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2019 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -77,7 +79,7 @@ static uint32_t egu_event_mask_get_and_clear(NRF_EGU_Type * p_reg, uint32_t int_
     uint32_t event_mask = 0;
     while (int_mask)
     {
-        uint8_t event_idx = __CLZ(__RBIT(int_mask));
+        uint8_t event_idx = NRF_CTZ(int_mask);
         int_mask &= ~(1uL << event_idx);
 
         nrf_egu_event_t event = nrf_egu_triggered_event_get(event_idx);
@@ -164,7 +166,7 @@ static void egu_irq_handler(NRF_EGU_Type * p_reg, egu_control_block_t * p_cb)
     uint32_t event_mask = egu_event_mask_get_and_clear(p_reg, int_mask);
     while (event_mask)
     {
-        uint8_t event_idx = __CLZ(__RBIT(event_mask));
+        uint8_t event_idx = NRF_CTZ(event_mask);
         event_mask &= ~(1uL << event_idx);
         p_cb->handler(event_idx, p_cb->p_context);
     }

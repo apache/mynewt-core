@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -136,21 +138,35 @@ typedef struct
 /** @brief SPI peripheral device configuration data. */
 typedef struct
 {
-    uint32_t             miso_pin;      //!< SPI MISO pin (optional).
+    uint32_t             miso_pin;      ///< SPI MISO pin (optional).
                                         /**< Set @ref NRFX_SPIS_PIN_NOT_USED
                                          *   if this signal is not needed. */
-    uint32_t             mosi_pin;      //!< SPI MOSI pin (optional).
+    uint32_t             mosi_pin;      ///< SPI MOSI pin (optional).
                                         /**< Set @ref NRFX_SPIS_PIN_NOT_USED
                                          *   if this signal is not needed. */
-    uint32_t             sck_pin;       //!< SPI SCK pin.
-    uint32_t             csn_pin;       //!< SPI CSN pin.
-    nrf_spis_mode_t      mode;          //!< SPI mode.
-    nrf_spis_bit_order_t bit_order;     //!< SPI transaction bit order.
-    nrf_gpio_pin_pull_t  csn_pullup;    //!< CSN pin pull-up configuration.
-    nrf_gpio_pin_drive_t miso_drive;    //!< MISO pin drive configuration.
-    uint8_t              def;           //!< Character clocked out in case of an ignored transaction.
-    uint8_t              orc;           //!< Character clocked out after an over-read of the transmit buffer.
-    uint8_t              irq_priority;  //!< Interrupt priority.
+    uint32_t             sck_pin;       ///< SPI SCK pin.
+    uint32_t             csn_pin;       ///< SPI CSN pin.
+    nrf_spis_mode_t      mode;          ///< SPI mode.
+    nrf_spis_bit_order_t bit_order;     ///< SPI transaction bit order.
+    nrf_gpio_pin_pull_t  csn_pullup;    ///< CSN pin pull-up configuration.
+    nrf_gpio_pin_drive_t miso_drive;    ///< MISO pin drive configuration.
+    uint8_t              def;           ///< Character clocked out in case of an ignored transaction.
+    uint8_t              orc;           ///< Character clocked out after an over-read of the transmit buffer.
+    uint8_t              irq_priority;  ///< Interrupt priority.
+    bool                 skip_gpio_cfg; ///< Skip GPIO configuration of pins.
+                                        /**< When set to true, the driver does not modify
+                                         *   any GPIO parameters of the used pins. Those
+                                         *   parameters are supposed to be configured
+                                         *   externally before the driver is initialized. */
+    bool                 skip_psel_cfg; ///< Skip pin selection configuration.
+                                        /**< When set to true, the driver does not modify
+                                         *   pin select registers in the peripheral.
+                                         *   Those registers are supposed to be set up
+                                         *   externally before the driver is initialized.
+                                         *   @note When both GPIO configuration and pin
+                                         *   selection are to be skipped, the structure
+                                         *   fields that specify pins can be omitted,
+                                         *   as they are ignored anyway. */
 } nrfx_spis_config_t;
 
 

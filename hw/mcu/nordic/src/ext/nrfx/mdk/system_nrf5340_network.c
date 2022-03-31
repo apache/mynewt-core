@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2009-2020 ARM Limited. All rights reserved.
+Copyright (c) 2009-2021 ARM Limited. All rights reserved.
 
     SPDX-License-Identifier: Apache-2.0
 
@@ -26,14 +26,14 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #include <stdint.h>
 #include <stdbool.h>
 #include "nrf.h"
-#include "nrf_erratas.h"
+#include "nrf53_erratas.h"
 #include "system_nrf5340_network.h"
 #include "system_nrf53_approtect.h"
 
 /*lint ++flb "Enter library region" */
 
 
-#define __SYSTEM_CLOCK      (64000000UL)     /*!< NRF5340 network core uses a fixed System Clock Frequency of 32MHz */
+#define __SYSTEM_CLOCK      (64000000UL)     /*!< NRF5340 network core uses a fixed System Clock Frequency of 64MHz */
 
 #if defined ( __CC_ARM )
     uint32_t SystemCoreClock __attribute__((used)) = __SYSTEM_CLOCK;  
@@ -58,7 +58,7 @@ void SystemInit(void)
             /* IAR will complain about the order of volatile pointer accesses. */
             #pragma diag_suppress=Pa082
         #endif
-        *NRF_FICR_NS->TRIMCNF[index].ADDR = NRF_FICR_NS->TRIMCNF[index].DATA;
+        *((volatile uint32_t *)NRF_FICR_NS->TRIMCNF[index].ADDR) = NRF_FICR_NS->TRIMCNF[index].DATA;
         #if defined ( __ICCARM__ )
             #pragma diag_default=Pa082
         #endif

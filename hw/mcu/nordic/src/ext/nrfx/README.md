@@ -42,6 +42,4 @@ SoCs, as well as startup and initialization files for them.
 
 nrfx documentation is available in the `doc\html` folder of the release package.
 
-You can also generate documentation yourself from the source code. To do it, install doxygen
-and run one of the scripts: `generate_html_doc.bat` or `generate_html_doc.sh`. Generated
-documentation will be stored in the `doc\html` directory. Use `index.html` to open it.
+Refer to [this guide](doc/README.md) for more details.

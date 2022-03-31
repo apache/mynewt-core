@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -99,15 +101,6 @@ nrfx_err_t nrfx_comp_init(nrfx_comp_config_t const * p_config,
     }
 #endif
 
-    nrf_comp_task_trigger(NRF_COMP, NRF_COMP_TASK_STOP);
-    nrf_comp_enable(NRF_COMP);
-
-    // Clear events to be sure there are no leftovers.
-    nrf_comp_event_clear(NRF_COMP, NRF_COMP_EVENT_READY);
-    nrf_comp_event_clear(NRF_COMP, NRF_COMP_EVENT_DOWN);
-    nrf_comp_event_clear(NRF_COMP, NRF_COMP_EVENT_UP);
-    nrf_comp_event_clear(NRF_COMP, NRF_COMP_EVENT_CROSS);
-
     nrf_comp_ref_set(NRF_COMP, p_config->reference);
 
     //If external source is chosen, write to appropriate register.
@@ -132,6 +125,16 @@ nrfx_err_t nrfx_comp_init(nrfx_comp_config_t const * p_config,
                          COMP_INTENCLR_READY_Msk);
 
     nrf_comp_input_select(NRF_COMP, p_config->input);
+
+    nrf_comp_enable(NRF_COMP);
+
+    nrf_comp_task_trigger(NRF_COMP, NRF_COMP_TASK_STOP);
+
+    // Clear events to be sure there are no leftovers.
+    nrf_comp_event_clear(NRF_COMP, NRF_COMP_EVENT_READY);
+    nrf_comp_event_clear(NRF_COMP, NRF_COMP_EVENT_DOWN);
+    nrf_comp_event_clear(NRF_COMP, NRF_COMP_EVENT_UP);
+    nrf_comp_event_clear(NRF_COMP, NRF_COMP_EVENT_CROSS);
 
     NRFX_IRQ_PRIORITY_SET(nrfx_get_irq_number(NRF_COMP), p_config->interrupt_priority);
     NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_COMP));

@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2016 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -60,7 +62,7 @@ extern "C" {
  * @sa nrf_usbd_isosplit_set
  * @sa nrf_usbd_isosplit_get
  */
-#define NRFX_USBD_ISOSIZE 1024
+#define NRFX_USBD_ISOSIZE 1023
 
 /**
  * @brief The size of internal feeder buffer.
@@ -74,6 +76,9 @@ extern "C" {
  *
  * Auxiliary macros for creating endpoint identifiers compatible with the USB specification.
  * @{
+ */
+
+/**
  * @brief Create identifier for IN endpoint.
  *
  * Simple macro to create IN endpoint identifier for given endpoint number.
