@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2016 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -846,7 +848,7 @@ static void usbd_ep_abort_all(void)
     uint32_t ep_waiting = m_ep_dma_waiting | (m_ep_ready & NRFX_USBD_EPOUT_BIT_MASK);
     while (0 != ep_waiting)
     {
-        uint8_t bitpos = __CLZ(__RBIT(ep_waiting));
+        uint8_t bitpos = NRF_CTZ(ep_waiting);
         if (!NRF_USBD_EPISO_CHECK(bit2ep(bitpos)))
         {
             usbd_ep_abort(bit2ep(bitpos));
@@ -1280,7 +1282,7 @@ static void ev_epdata_handler(void)
     /* All finished endpoint have to be marked as busy */
     while (dataepstatus)
     {
-        uint8_t bitpos    = __CLZ(__RBIT(dataepstatus));
+        uint8_t bitpos    = NRF_CTZ(dataepstatus);
         nrfx_usbd_ep_t ep = bit2ep(bitpos);
         dataepstatus &= ~(1UL << bitpos);
 
@@ -1309,7 +1311,7 @@ static void ev_epdata_handler(void)
 static uint8_t usbd_dma_scheduler_algorithm(uint32_t req)
 {
     /* Only prioritized scheduling mode is supported. */
-    return __CLZ(__RBIT(req));
+    return NRF_CTZ(req);
 }
 
 /**
@@ -1626,7 +1628,7 @@ void nrfx_usbd_irq_handler(void)
     /* Check all enabled interrupts */
     while (to_process)
     {
-        uint8_t event_nr = __CLZ(__RBIT(to_process));
+        uint8_t event_nr = NRF_CTZ(to_process);
         if (nrf_usbd_event_get_and_clear(NRF_USBD,
                                          (nrf_usbd_event_t)nrfx_bitpos_to_event(event_nr)))
         {
@@ -1641,7 +1643,7 @@ void nrfx_usbd_irq_handler(void)
 
     while (active)
     {
-        uint8_t event_nr = __CLZ(__RBIT(active));
+        uint8_t event_nr = NRF_CTZ(active);
         m_isr[event_nr]();
         active &= ~(1UL << event_nr);
     }
@@ -1940,10 +1942,10 @@ void nrfx_usbd_force_bus_wakeup(void)
 
 void nrfx_usbd_ep_max_packet_size_set(nrfx_usbd_ep_t ep, uint16_t size)
 {
-    /* Only power of 2 size allowed */
-    NRFX_ASSERT((size & 0x01) == 0);
-    /* 0 allowed only for ISO endpoints */
-    NRFX_ASSERT((size != 0) || NRF_USBD_EPISO_CHECK(ep));
+    /* Only the power of 2 size allowed for Control Endpoints */
+    NRFX_ASSERT((((size & (size - 1)) == 0) || (NRF_USBD_EP_NR_GET(ep) != 0)));
+    /* Only non zero size allowed for Control Endpoints */
+    NRFX_ASSERT((size != 0) || (NRF_USBD_EP_NR_GET(ep) != 0));
     /* Packet size cannot be higher than maximum buffer size */
     NRFX_ASSERT((NRF_USBD_EPISO_CHECK(ep) && (size <= usbd_ep_iso_capacity(ep))) ||
                 (!NRF_USBD_EPISO_CHECK(ep) && (size <= NRFX_USBD_EPSIZE)));

@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2016 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -117,7 +119,7 @@ void nrfx_clock_stop(nrf_clock_domain_t domain);
  */
 NRFX_STATIC_INLINE bool nrfx_clock_is_running(nrf_clock_domain_t domain, void * p_clk_src);
 
-#if NRF_CLOCK_HAS_HFCLK_DIV || NRF_CLOCK_HAS_HFCLK_192M
+#if defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT) || NRF_CLOCK_HAS_HFCLK_192M
 /**
  * @brief Function for setting the specified clock domain divider.
  *
@@ -269,12 +271,12 @@ NRFX_STATIC_INLINE uint32_t nrfx_clock_ppi_event_addr(nrf_clock_event_t event);
 
 #ifndef NRFX_DECLARE_ONLY
 
-#if NRF_CLOCK_HAS_HFCLK_DIV || NRF_CLOCK_HAS_HFCLK_192M
+#if defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT) || NRF_CLOCK_HAS_HFCLK_192M
 NRFX_STATIC_INLINE nrf_clock_hfclk_div_t nrfx_clock_divider_get(nrf_clock_domain_t domain)
 {
     switch (domain)
     {
-#if NRF_CLOCK_HAS_HFCLK_DIV
+#if defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT)
         case NRF_CLOCK_DOMAIN_HFCLK:
             return nrf_clock_hfclk_div_get(NRF_CLOCK);
 #endif
@@ -287,7 +289,7 @@ NRFX_STATIC_INLINE nrf_clock_hfclk_div_t nrfx_clock_divider_get(nrf_clock_domain
             return (nrf_clock_hfclk_div_t)0;
     }
 }
-#endif // NRF_CLOCK_HAS_HFCLK_DIV || NRF_CLOCK_HAS_HFCLK_192M
+#endif // defined(CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT) || NRF_CLOCK_HAS_HFCLK_192M
 
 NRFX_STATIC_INLINE void nrfx_clock_lfclk_start(void)
 {

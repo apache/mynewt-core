@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2020 ARM Limited. All rights reserved.
+; Copyright (c) 2009-2021 ARM Limited. All rights reserved.
 ; 
 ;     SPDX-License-Identifier: Apache-2.0
 ; 
@@ -103,7 +103,7 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     TEMP_IRQHandler
                 DCD     RTC0_IRQHandler
                 DCD     IPC_IRQHandler
-                DCD     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+                DCD     SERIAL0_IRQHandler
                 DCD     EGU0_IRQHandler
                 DCD     0                         ; Reserved
                 DCD     RTC1_IRQHandler
@@ -292,7 +292,7 @@ Default_Handler PROC
                 EXPORT   TEMP_IRQHandler [WEAK]
                 EXPORT   RTC0_IRQHandler [WEAK]
                 EXPORT   IPC_IRQHandler [WEAK]
-                EXPORT   SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler [WEAK]
+                EXPORT   SERIAL0_IRQHandler [WEAK]
                 EXPORT   EGU0_IRQHandler [WEAK]
                 EXPORT   RTC1_IRQHandler [WEAK]
                 EXPORT   TIMER1_IRQHandler [WEAK]
@@ -312,7 +312,7 @@ AAR_CCM_IRQHandler
 TEMP_IRQHandler
 RTC0_IRQHandler
 IPC_IRQHandler
-SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+SERIAL0_IRQHandler
 EGU0_IRQHandler
 RTC1_IRQHandler
 TIMER1_IRQHandler

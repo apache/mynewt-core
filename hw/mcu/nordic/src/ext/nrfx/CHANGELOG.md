@@ -1,6 +1,63 @@
 # Changelog
 All notable changes to this project are documented in this file.
 
+## [2.7.0] - 2021-12-16
+### Added
+- Added new fields in the driver configuration structures to allow skipping GPIO and/or PSEL register configuration. Affected drivers: I2S, PDM, PWM, QDEC, QSPI, SPI, SPIM, SPIS, TWI, TWIM, TWIS, UART, UARTE.
+
+### Changed
+- Updated MDK to version 8.44.2.
+
+### Fixed
+- Fixed the inability to start subsequent simple mode conversion from the user callback context in the SAADC driver.
+
+## [2.6.0] - 2021-11-22
+### Added
+- Added new functions for the GPIOTE peripheral management in the GPIOTE driver. Legacy API is now deprecated.
+- Added support for the TIMER CC channels 6 and 7.
+- Added the nrfx_flag32_allocator helper layer to unify resource allocation mechanism across several drivers.
+- Added functions for getting shortcut bitmask associated with specified channel in the TIMER HAL.
+- Added functions for channel allocation and deallocation in the nrfx_gppi helper layer.
+- Added the nrf_gpio_reconfigure() function for selective reconfiguration of the specified pin.
+- Introduced the NRFX_CLOCK_CONFIG_CT_ENABLED symbol for enabling the calibration timer support in the CLOCK driver. The symbol is enabled by default on supported SoCs.
+- Introduced the NRFX_CTZ and NRFX_CLZ macros to allow providing custom implementation for these functionalities. By default `__RBIT()` and `__CLZ()` CMSIS macros are used.
+- Introduced the NRFX_ATOMIC_CAS macro to allow providing custom implementation for atomic compare-and-swap functionality.
+- Implemented workaround for the nRF9160 anomaly 7 in the NVMC driver.
+
+### Changed
+- Updated MDK to version 8.44.1.
+
+### Fixed
+- Fixed missing disabling of interrupts in the nrfx_qspi_lfm_start() and nrfx_qspi_lfm_xfer() functions.
+- Fixed manual sample fetching when REPORTPER is disabled in the QDEC driver.
+- Fixed a race condition in the NFCT driver when starting the transfer.
+
+## [2.5.0] - 2021-05-05
+### Added
+- Added support for double-buffered transfers in the QSPI driver.
+- Added support for one-by-one channel configuration in the SAADC driver.
+- Added critical sections for channel allocation and deallocation in the DPPI driver.
+- Added support for generating documentation in the RST format using Sphinx tool.
+- Added high-drive pin configuration in the QSPI, TWIM, and SPIM drivers.
+- Added report period setting of 1 sample in the QDEC HAL.
+- Implemented workaround for nRF53 Series anomaly 121 in the QSPI driver.
+
+### Changed
+- Updated MDK to version 8.40.2.
+- Removed implicit channel deallocation during initialization in the GPIOTE driver.
+- Restricted pins that are supported for specific configuration on nRF5340 in the QSPI, TWIM, and SPIM drivers.
+- Aligned IRQ handler symbols to new naming scheme for nRF53 Series.
+
+### Fixed
+- Fixed register access sequence in the COMP driver.
+- Fixed memory corruption when uninitialized channel was freed in the GPIOTE driver.
+- Fixed spurious access of DCX pin for every instance of the peripheral when extended features were enabled in the SPIM driver.
+- Fixed overwrite of MCUSEL configuration in the nrf_gpio_cfg() function.
+- Fixed driver behavior for zero-length transfer in the TWIM driver.
+- Fixed internal state handling when transfer is aborted before finishing in the TWI and TWIM drivers.
+- Corrected assertions for MPS requirements in the USBD driver.
+- Corrected symbol describing maximum data payload for a full-speed isochronous endpoint in the USBD driver.
+
 ## [2.4.0] - 2020-11-13
 ### Added
 - Added the channel allocator feature in the GPIOTE driver.

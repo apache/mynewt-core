@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -137,12 +139,26 @@ typedef void (*nrfx_twis_event_handler_t)(nrfx_twis_evt_t const * p_event);
 /** @brief Structure for TWIS configuration. */
 typedef struct
 {
-    uint32_t            addr[2];            //!< Set addresses that this slave should respond. Set 0 to disable.
-    uint32_t            scl;                //!< SCL pin number.
-    uint32_t            sda;                //!< SDA pin number.
-    nrf_gpio_pin_pull_t scl_pull;           //!< SCL pin pull.
-    nrf_gpio_pin_pull_t sda_pull;           //!< SDA pin pull.
-    uint8_t             interrupt_priority; //!< The priority of interrupt for the module to be set.
+    uint32_t            addr[2];            ///< Set addresses that this slave should respond. Set 0 to disable.
+    uint32_t            scl;                ///< SCL pin number.
+    uint32_t            sda;                ///< SDA pin number.
+    nrf_gpio_pin_pull_t scl_pull;           ///< SCL pin pull.
+    nrf_gpio_pin_pull_t sda_pull;           ///< SDA pin pull.
+    uint8_t             interrupt_priority; ///< The priority of interrupt for the module to be set.
+    bool                skip_gpio_cfg;      ///< Skip GPIO configuration of pins.
+                                            /**< When set to true, the driver does not modify
+                                             *   any GPIO parameters of the used pins. Those
+                                             *   parameters are supposed to be configured
+                                             *   externally before the driver is initialized. */
+    bool                skip_psel_cfg;      ///< Skip pin selection configuration.
+                                            /**< When set to true, the driver does not modify
+                                             *   pin select registers in the peripheral.
+                                             *   Those registers are supposed to be set up
+                                             *   externally before the driver is initialized.
+                                             *   @note When both GPIO configuration and pin
+                                             *   selection are to be skipped, the structure
+                                             *   fields that specify pins can be omitted,
+                                             *   as they are ignored anyway. */
 } nrfx_twis_config_t;
 
 /**

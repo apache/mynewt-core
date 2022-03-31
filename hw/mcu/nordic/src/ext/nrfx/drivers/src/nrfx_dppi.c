@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2018 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,6 +36,7 @@
 #if NRFX_CHECK(NRFX_DPPI_ENABLED)
 
 #include <nrfx_dppi.h>
+#include <helpers/nrfx_flag32_allocator.h>
 
 #define NRFX_LOG_MODULE DPPI
 #include <nrfx_log.h>
@@ -57,27 +60,19 @@
 /** @brief Set bit at given position. */
 #define DPPI_BIT_SET(pos) (1uL << (pos))
 
-static uint32_t m_allocated_channels;
-
-static uint8_t  m_allocated_groups;
-
-static bool channel_is_allocated(uint8_t channel)
-{
-    return ((m_allocated_channels & DPPI_BIT_SET(channel)) != 0);
-}
-
-static bool group_is_allocated(nrf_dppi_channel_group_t group)
-{
-    return ((m_allocated_groups & DPPI_BIT_SET(group)) != 0);
-}
+/**< Bitmap representing channels availability. */
+static nrfx_atomic_t   m_allocated_channels = DPPI_AVAILABLE_CHANNELS_MASK;
+/**< Bitmap representing groups availability. */
+static nrfx_atomic_t   m_allocated_groups = DPPI_AVAILABLE_GROUPS_MASK;
 
 void nrfx_dppi_free(void)
 {
-    uint32_t mask = m_allocated_groups;
+    uint32_t mask = DPPI_AVAILABLE_GROUPS_MASK & ~m_allocated_groups;
     uint8_t group_idx = NRF_DPPI_CHANNEL_GROUP0;
 
     // Disable all channels
-    nrf_dppi_channels_disable(NRF_DPPIC, m_allocated_channels);
+    nrf_dppi_channels_disable(NRF_DPPIC,
+                              DPPI_AVAILABLE_CHANNELS_MASK & ~m_allocated_channels);
 
     // Clear all groups configurations
     while (mask)
@@ -92,65 +87,28 @@ void nrfx_dppi_free(void)
     }
 
     // Clear all allocated channels.
-    m_allocated_channels = 0;
+    m_allocated_channels = DPPI_AVAILABLE_CHANNELS_MASK;
 
     // Clear all allocated groups.
-    m_allocated_groups = 0;
+    m_allocated_groups = DPPI_AVAILABLE_GROUPS_MASK;
 }
 
 nrfx_err_t nrfx_dppi_channel_alloc(uint8_t * p_channel)
 {
-    nrfx_err_t err_code;
-
-    // Get mask of available DPPI channels
-    uint32_t remaining_channels = DPPI_AVAILABLE_CHANNELS_MASK & ~(m_allocated_channels);
-    uint8_t channel = 0;
-
-    if (!remaining_channels)
-    {
-        err_code = NRFX_ERROR_NO_MEM;
-        NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
-        return err_code;
-    }
-
-    // Find first free channel
-    while (!(remaining_channels & DPPI_BIT_SET(channel)))
-    {
-        channel++;
-    }
-
-    m_allocated_channels |= DPPI_BIT_SET(channel);
-    *p_channel = channel;
-
-    err_code = NRFX_SUCCESS;
-    NRFX_LOG_INFO("Allocated channel: %d.", channel);
-    return err_code;
+    return nrfx_flag32_alloc(&m_allocated_channels, p_channel);
 }
 
 nrfx_err_t nrfx_dppi_channel_free(uint8_t channel)
 {
-    nrfx_err_t err_code = NRFX_SUCCESS;
-
-    if (!channel_is_allocated(channel))
-    {
-        err_code = NRFX_ERROR_INVALID_PARAM;
-    }
-    else
-    {
-        // First disable this channel
-        nrf_dppi_channels_disable(NRF_DPPIC, DPPI_BIT_SET(channel));
-        // Clear channel allocated indication.
-        m_allocated_channels &= ~DPPI_BIT_SET(channel);
-    }
-    NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
-    return err_code;
+    nrf_dppi_channels_disable(NRF_DPPIC, NRFX_BIT(channel));
+    return nrfx_flag32_free(&m_allocated_channels, channel);
 }
 
 nrfx_err_t nrfx_dppi_channel_enable(uint8_t channel)
 {
     nrfx_err_t err_code = NRFX_SUCCESS;
 
-    if (!channel_is_allocated(channel))
+    if (!nrfx_flag32_is_allocated(m_allocated_channels, channel))
     {
         err_code = NRFX_ERROR_INVALID_PARAM;
     }
@@ -166,7 +124,7 @@ nrfx_err_t nrfx_dppi_channel_disable(uint8_t channel)
 {
     nrfx_err_t err_code = NRFX_SUCCESS;
 
-    if (!channel_is_allocated(channel))
+    if (!nrfx_flag32_is_allocated(m_allocated_channels, channel))
     {
         err_code = NRFX_ERROR_INVALID_PARAM;
     }
@@ -181,50 +139,13 @@ nrfx_err_t nrfx_dppi_channel_disable(uint8_t channel)
 
 nrfx_err_t nrfx_dppi_group_alloc(nrf_dppi_channel_group_t * p_group)
 {
-    nrfx_err_t err_code;
-
-    // Get mask of available DPPI groups
-    uint32_t remaining_groups = DPPI_AVAILABLE_GROUPS_MASK & ~(m_allocated_groups);
-    uint8_t group_idx = NRF_DPPI_CHANNEL_GROUP0;
-
-    if (!remaining_groups)
-    {
-        err_code = NRFX_ERROR_NO_MEM;
-        NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
-        return err_code;
-    }
-
-    // Find first free group
-    while (!(remaining_groups & DPPI_BIT_SET((nrf_dppi_channel_group_t)group_idx)))
-    {
-        group_idx++;
-    }
-
-    nrf_dppi_channel_group_t group = (nrf_dppi_channel_group_t)group_idx;
-    m_allocated_groups |= DPPI_BIT_SET(group);
-    *p_group = group;
-
-    err_code = NRFX_SUCCESS;
-    NRFX_LOG_INFO("Allocated channel: %d.", group);
-    return err_code;
+    return nrfx_flag32_alloc(&m_allocated_groups, (uint8_t *)p_group);
 }
 
 nrfx_err_t nrfx_dppi_group_free(nrf_dppi_channel_group_t group)
 {
-    nrfx_err_t err_code = NRFX_SUCCESS;
-
-    if (!group_is_allocated(group))
-    {
-        err_code = NRFX_ERROR_INVALID_PARAM;
-    }
-    else
-    {
-        nrf_dppi_group_disable(NRF_DPPIC, group);
-        // Set bit value to zero at position corresponding to the group number.
-        m_allocated_groups &= ~DPPI_BIT_SET(group);
-    }
-    NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
-    return err_code;
+    nrf_dppi_group_disable(NRF_DPPIC, group);
+    return nrfx_flag32_free(&m_allocated_groups, group);
 }
 
 nrfx_err_t nrfx_dppi_channel_include_in_group(uint8_t                  channel,
@@ -232,13 +153,16 @@ nrfx_err_t nrfx_dppi_channel_include_in_group(uint8_t                  channel,
 {
     nrfx_err_t err_code = NRFX_SUCCESS;
 
-    if (!group_is_allocated(group) || !channel_is_allocated(channel))
+    if (!nrfx_flag32_is_allocated(m_allocated_groups, group) ||
+        !nrfx_flag32_is_allocated(m_allocated_channels, channel))
     {
         err_code = NRFX_ERROR_INVALID_PARAM;
     }
     else
     {
+        NRFX_CRITICAL_SECTION_ENTER();
         nrf_dppi_channels_include_in_group(NRF_DPPIC, DPPI_BIT_SET(channel), group);
+        NRFX_CRITICAL_SECTION_EXIT();
     }
     NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
     return err_code;
@@ -249,13 +173,16 @@ nrfx_err_t nrfx_dppi_channel_remove_from_group(uint8_t                  channel,
 {
     nrfx_err_t err_code = NRFX_SUCCESS;
 
-    if (!group_is_allocated(group) || !channel_is_allocated(channel))
+    if (!nrfx_flag32_is_allocated(m_allocated_groups, group) ||
+        !nrfx_flag32_is_allocated(m_allocated_channels, channel))
     {
         err_code = NRFX_ERROR_INVALID_PARAM;
     }
     else
     {
+        NRFX_CRITICAL_SECTION_ENTER();
         nrf_dppi_channels_remove_from_group(NRF_DPPIC, DPPI_BIT_SET(channel), group);
+        NRFX_CRITICAL_SECTION_EXIT();
     }
     NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
     return err_code;
@@ -265,7 +192,7 @@ nrfx_err_t nrfx_dppi_group_clear(nrf_dppi_channel_group_t group)
 {
     nrfx_err_t err_code = NRFX_SUCCESS;
 
-    if (!group_is_allocated(group))
+    if (!nrfx_flag32_is_allocated(m_allocated_groups, group))
     {
         err_code = NRFX_ERROR_INVALID_PARAM;
     }
@@ -281,7 +208,7 @@ nrfx_err_t nrfx_dppi_group_enable(nrf_dppi_channel_group_t group)
 {
     nrfx_err_t err_code = NRFX_SUCCESS;
 
-    if (!group_is_allocated(group))
+    if (!nrfx_flag32_is_allocated(m_allocated_groups, group))
     {
         err_code = NRFX_ERROR_INVALID_PARAM;
     }
@@ -297,7 +224,7 @@ nrfx_err_t nrfx_dppi_group_disable(nrf_dppi_channel_group_t group)
 {
     nrfx_err_t err_code = NRFX_SUCCESS;
 
-    if (!group_is_allocated(group))
+    if (!nrfx_flag32_is_allocated(m_allocated_groups, group))
     {
         err_code = NRFX_ERROR_INVALID_PARAM;
     }

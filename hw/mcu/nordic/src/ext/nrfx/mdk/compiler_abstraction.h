@@ -1,6 +1,8 @@
 /*
 
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.
+
+SPDX-License-Identifier: BSD-3-Clause
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -126,13 +128,23 @@ POSSIBILITY OF SUCH DAMAGE.
         #define __WEAK              __weak
     #endif
 
-    #ifndef __ALIGN
-        #define STRING_PRAGMA(x) _Pragma(#x)
-        #define __ALIGN(n) STRING_PRAGMA(data_alignment = n)
-    #endif
+    #if (__VER__ >= 8000000)
+        #ifndef __ALIGN
+            #define __ALIGN(n) __attribute__((aligned(n)))
+        #endif
 
-    #ifndef __PACKED
-        #define __PACKED            __packed
+        #ifndef   __PACKED
+            #define __PACKED __attribute__((packed, aligned(1)))
+        #endif
+    #else
+        #ifndef __ALIGN
+            #define STRING_PRAGMA(x) _Pragma(#x)
+            #define __ALIGN(n) STRING_PRAGMA(data_alignment = n)
+        #endif
+
+        #ifndef   __PACKED
+            #define __PACKED __packed
+        #endif
     #endif
 
     #ifndef __UNUSED

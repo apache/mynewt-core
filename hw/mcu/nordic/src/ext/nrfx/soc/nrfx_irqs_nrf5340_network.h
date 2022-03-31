@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2019 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -66,15 +68,15 @@ extern "C" {
 // IPC_IRQn
 #define nrfx_ipc_irq_handler        IPC_IRQHandler
 
-// SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQn
+// SERIAL0_IRQn
 #if NRFX_CHECK(NRFX_PRS_ENABLED) && NRFX_CHECK(NRFX_PRS_BOX_0_ENABLED)
-#define nrfx_prs_box_0_irq_handler  SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+#define nrfx_prs_box_0_irq_handler  SERIAL0_IRQHandler
 #else
-#define nrfx_spim_0_irq_handler     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-#define nrfx_spis_0_irq_handler     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-#define nrfx_twim_0_irq_handler     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-#define nrfx_twis_0_irq_handler     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-#define nrfx_uarte_0_irq_handler    SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+#define nrfx_spim_0_irq_handler     SERIAL0_IRQHandler
+#define nrfx_spis_0_irq_handler     SERIAL0_IRQHandler
+#define nrfx_twim_0_irq_handler     SERIAL0_IRQHandler
+#define nrfx_twis_0_irq_handler     SERIAL0_IRQHandler
+#define nrfx_uarte_0_irq_handler    SERIAL0_IRQHandler
 #endif
 
 // EGU0_IRQn

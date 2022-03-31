@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -44,6 +46,13 @@ extern "C" {
  * @ingroup nrf_spim
  * @brief   Hardware access layer for managing the SPIM peripheral.
  */
+
+#if defined(SPIM_FREQUENCY_FREQUENCY_M32) || defined(__NRFX_DOXYGEN__)
+/** @brief Symbol indicating whether 32 MHz clock frequency is available. */
+#define NRF_SPIM_HAS_32_MHZ_FREQ 1
+#else
+#define NRF_SPIM_HAS_32_MHZ_FREQ 0
+#endif
 
 /**
  * @brief This value can be used as a parameter for the @ref nrf_spim_pins_set

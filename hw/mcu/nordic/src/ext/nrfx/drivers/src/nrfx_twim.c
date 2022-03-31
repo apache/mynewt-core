@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -72,12 +74,12 @@
     (type == NRFX_TWIM_XFER_TXTX ? "XFER_TXTX" : \
                                    "UNKNOWN TRANSFER TYPE"))))
 
-#define TWIM_PIN_INIT(_pin) nrf_gpio_cfg((_pin),                     \
-                                         NRF_GPIO_PIN_DIR_INPUT,     \
-                                         NRF_GPIO_PIN_INPUT_CONNECT, \
-                                         NRF_GPIO_PIN_PULLUP,        \
-                                         NRF_GPIO_PIN_S0D1,          \
-                                         NRF_GPIO_PIN_NOSENSE)
+#define TWIM_PIN_INIT(_pin, _drive) nrf_gpio_cfg((_pin),                     \
+                                                 NRF_GPIO_PIN_DIR_INPUT,     \
+                                                 NRF_GPIO_PIN_INPUT_CONNECT, \
+                                                 NRF_GPIO_PIN_PULLUP,        \
+                                                 (_drive),                   \
+                                                 NRF_GPIO_PIN_NOSENSE)
 
 #define TWIMX_LENGTH_VALIDATE(peripheral, drv_inst_idx, len1, len2)     \
     (((drv_inst_idx) == NRFX_CONCAT_3(NRFX_, peripheral, _INST_IDX)) && \
@@ -130,6 +132,7 @@ typedef struct
     bool                    repeated;
     uint8_t                 bytes_transferred;
     bool                    hold_bus_uninit;
+    bool                    skip_gpio_cfg;
 #if NRFX_CHECK(NRFX_TWIM_NRF52_ANOMALY_109_WORKAROUND_ENABLED)
     nrf_twim_frequency_t    bus_frequency;
 #endif
@@ -214,14 +217,66 @@ static bool xfer_completeness_check(NRF_TWIM_Type * p_twim, twim_control_block_t
     return transfer_complete;
 }
 
+static bool twim_pins_configure(NRF_TWIM_Type * p_twim, nrfx_twim_config_t const * p_config)
+{
+    // If both GPIO configuration and pin selection are to be skipped,
+    // the pin numbers may be not specified at all, so even validation
+    // of those numbers cannot be performed.
+    if (p_config->skip_gpio_cfg && p_config->skip_psel_cfg)
+    {
+        return true;
+    }
+
+    nrf_gpio_pin_drive_t drive;
+
+#if NRF_TWIM_HAS_1000_KHZ_FREQ && defined(NRF5340_XXAA)
+    if (p_config->frequency >= NRF_TWIM_FREQ_1000K)
+    {
+        /* When using 1 Mbps mode, two high-speed pins have to be used with extra high drive. */
+        drive = NRF_GPIO_PIN_E0E1;
+
+        uint32_t e0e1_pin_1 = NRF_GPIO_PIN_MAP(1, 2);
+        uint32_t e0e1_pin_2 = NRF_GPIO_PIN_MAP(1, 3);
+
+        /* Check whether provided pins have the extra high drive capabilities. */
+        if (((p_config->scl != e0e1_pin_1) || (p_config->sda != e0e1_pin_2)) &&
+            ((p_config->scl != e0e1_pin_2) || (p_config->sda != e0e1_pin_1)))
+        {
+            return false;
+        }
+    }
+    else
+#endif
+    {
+        drive = NRF_GPIO_PIN_S0D1;
+    }
+
+    /* To secure correct signal levels on the pins used by the TWI
+       master when the system is in OFF mode, and when the TWI master is
+       disabled, these pins must be configured in the GPIO peripheral.
+    */
+    if (!p_config->skip_gpio_cfg)
+    {
+        TWIM_PIN_INIT(p_config->scl, drive);
+        TWIM_PIN_INIT(p_config->sda, drive);
+    }
+
+    if (!p_config->skip_psel_cfg)
+    {
+        nrf_twim_pins_set(p_twim, p_config->scl, p_config->sda);
+    }
+
+    return true;
+}
+
 nrfx_err_t nrfx_twim_init(nrfx_twim_t const *        p_instance,
                           nrfx_twim_config_t const * p_config,
                           nrfx_twim_evt_handler_t    event_handler,
                           void *                     p_context)
 {
     NRFX_ASSERT(p_config);
-    NRFX_ASSERT(p_config->scl != p_config->sda);
     twim_control_block_t * p_cb  = &m_cb[p_instance->drv_inst_idx];
+    NRF_TWIM_Type * p_twim = p_instance->p_twim;
     nrfx_err_t err_code;
 
     if (p_cb->state != NRFX_DRV_STATE_UNINITIALIZED)
@@ -265,21 +320,17 @@ nrfx_err_t nrfx_twim_init(nrfx_twim_t const *        p_instance,
     p_cb->repeated        = false;
     p_cb->busy            = false;
     p_cb->hold_bus_uninit = p_config->hold_bus_uninit;
+    p_cb->skip_gpio_cfg   = p_config->skip_gpio_cfg;
 #if NRFX_CHECK(NRFX_TWIM_NRF52_ANOMALY_109_WORKAROUND_ENABLED)
     p_cb->bus_frequency   = (nrf_twim_frequency_t)p_config->frequency;
 #endif
 
-    /* To secure correct signal levels on the pins used by the TWI
-       master when the system is in OFF mode, and when the TWI master is
-       disabled, these pins must be configured in the GPIO peripheral.
-    */
-    TWIM_PIN_INIT(p_config->scl);
-    TWIM_PIN_INIT(p_config->sda);
+    if (!twim_pins_configure(p_twim, p_config))
+    {
+        return NRFX_ERROR_INVALID_PARAM;
+    }
 
-    NRF_TWIM_Type * p_twim = p_instance->p_twim;
-    nrf_twim_pins_set(p_twim, p_config->scl, p_config->sda);
-    nrf_twim_frequency_set(p_twim,
-        (nrf_twim_frequency_t)p_config->frequency);
+    nrf_twim_frequency_set(p_twim, (nrf_twim_frequency_t)p_config->frequency);
 
     if (p_cb->handler)
     {
@@ -310,7 +361,7 @@ void nrfx_twim_uninit(nrfx_twim_t const * p_instance)
     nrfx_prs_release(p_instance->p_twim);
 #endif
 
-    if (!p_cb->hold_bus_uninit)
+    if (!p_cb->skip_gpio_cfg && !p_cb->hold_bus_uninit)
     {
         nrf_gpio_cfg_default(nrf_twim_scl_pin_get(p_instance->p_twim));
         nrf_gpio_cfg_default(nrf_twim_sda_pin_get(p_instance->p_twim));
@@ -343,6 +394,7 @@ void nrfx_twim_disable(nrfx_twim_t const * p_instance)
     nrf_twim_disable(p_twim);
 
     p_cb->state = NRFX_DRV_STATE_INITIALIZED;
+    p_cb->busy = false;
     NRFX_LOG_INFO("Instance disabled: %d.", p_instance->drv_inst_idx);
 }
 
@@ -383,7 +435,7 @@ static nrfx_err_t twim_xfer(twim_control_block_t        * p_cb,
     nrf_twim_task_t  start_task = NRF_TWIM_TASK_STARTTX;
     p_cb->error = false;
 
-    if (!nrfx_is_in_ram(p_xfer_desc->p_primary_buf))
+    if (p_xfer_desc->primary_length != 0 && !nrfx_is_in_ram(p_xfer_desc->p_primary_buf))
     {
         err_code = NRFX_ERROR_INVALID_ADDR;
         NRFX_LOG_WARNING("Function: %s, error code: %s.",
@@ -490,6 +542,10 @@ static nrfx_err_t twim_xfer(twim_control_block_t        * p_cb,
     if (!(flags & NRFX_TWIM_FLAG_HOLD_XFER) && (p_xfer_desc->type != NRFX_TWIM_XFER_TXTX))
     {
         nrf_twim_task_trigger(p_twim, start_task);
+        if (p_xfer_desc->primary_length == 0)
+        {
+            nrf_twim_task_trigger(p_twim, NRF_TWIM_TASK_STOP);
+        }
     }
 
     if (p_cb->handler)
@@ -515,7 +571,7 @@ static nrfx_err_t twim_xfer(twim_control_block_t        * p_cb,
             p_twim->FREQUENCY = 0;
             nrf_twim_event_clear(p_twim, NRF_TWIM_EVENT_TXSTARTED);
             nrf_twim_int_enable(p_twim, NRF_TWIM_INT_TXSTARTED_MASK);
-        } 
+        }
         else
         {
             nrf_twim_frequency_set(p_twim, p_cb->bus_frequency);

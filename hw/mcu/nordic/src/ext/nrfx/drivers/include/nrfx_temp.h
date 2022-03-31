@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2019 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -65,7 +67,7 @@ typedef struct
  *                     representation. This value can be converted to Celsius
  *                     scale using the @ref nrfx_temp_calculate() function.
  */
-typedef void (* nrfx_temp_data_handler_t)(int32_t raw_temperature);
+typedef void (* nrfx_temp_data_handler_t)(int32_t temperature);
 
 /**
  * @brief Function for initializing the TEMP driver.

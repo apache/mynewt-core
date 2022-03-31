@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2020 ARM Limited. All rights reserved.
+; Copyright (c) 2009-2021 ARM Limited. All rights reserved.
 ; 
 ;     SPDX-License-Identifier: Apache-2.0
 ; 
@@ -92,11 +92,11 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     CLOCK_POWER_IRQHandler
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
-                DCD     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-                DCD     SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
+                DCD     SERIAL0_IRQHandler
+                DCD     SERIAL1_IRQHandler
                 DCD     SPIM4_IRQHandler
-                DCD     SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
-                DCD     SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+                DCD     SERIAL2_IRQHandler
+                DCD     SERIAL3_IRQHandler
                 DCD     GPIOTE0_IRQHandler
                 DCD     SAADC_IRQHandler
                 DCD     TIMER0_IRQHandler
@@ -401,11 +401,11 @@ Default_Handler PROC
                 EXPORT   CACHE_IRQHandler [WEAK]
                 EXPORT   SPU_IRQHandler [WEAK]
                 EXPORT   CLOCK_POWER_IRQHandler [WEAK]
-                EXPORT   SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler [WEAK]
-                EXPORT   SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler [WEAK]
+                EXPORT   SERIAL0_IRQHandler [WEAK]
+                EXPORT   SERIAL1_IRQHandler [WEAK]
                 EXPORT   SPIM4_IRQHandler [WEAK]
-                EXPORT   SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler [WEAK]
-                EXPORT   SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler [WEAK]
+                EXPORT   SERIAL2_IRQHandler [WEAK]
+                EXPORT   SERIAL3_IRQHandler [WEAK]
                 EXPORT   GPIOTE0_IRQHandler [WEAK]
                 EXPORT   SAADC_IRQHandler [WEAK]
                 EXPORT   TIMER0_IRQHandler [WEAK]
@@ -442,11 +442,11 @@ FPU_IRQHandler
 CACHE_IRQHandler
 SPU_IRQHandler
 CLOCK_POWER_IRQHandler
-SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
-SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
+SERIAL0_IRQHandler
+SERIAL1_IRQHandler
 SPIM4_IRQHandler
-SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
-SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+SERIAL2_IRQHandler
+SERIAL3_IRQHandler
 GPIOTE0_IRQHandler
 SAADC_IRQHandler
 TIMER0_IRQHandler

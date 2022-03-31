@@ -1,6 +1,6 @@
 /*
  
-Copyright (c) 2009-2020 ARM Limited. All rights reserved.
+Copyright (c) 2009-2021 ARM Limited. All rights reserved.
 
     SPDX-License-Identifier: Apache-2.0
 
@@ -39,7 +39,7 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
     .equ    Stack_Size, __STACK_SIZE
 #else
     .align 3
-    .equ    Stack_Size, 16384
+    .equ    Stack_Size, 15872
 #endif
     .globl __StackTop
     .globl __StackLimit
@@ -56,7 +56,7 @@ __StackTop:
 #elif defined(__HEAP_SIZE)
     .equ Heap_Size, __HEAP_SIZE
 #else
-    .equ Heap_Size, 16384
+    .equ Heap_Size, 15872
 #endif
     .globl __HeapBase
     .globl __HeapLimit

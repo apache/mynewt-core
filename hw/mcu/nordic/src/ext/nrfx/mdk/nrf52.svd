@@ -6,9 +6,11 @@
   <name>nrf52</name>
   <series>nrf52</series>
   <version>1</version>
-  <description>nRF52832 reference description for radio MCU with ARM 32-bit Cortex-M4 Microcontroller </description>
+  <description>nRF52 reference description for radio MCU with ARM 32-bit Cortex-M4 Microcontroller </description>
   <licenseText>
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.\n
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.\n
+\n
+SPDX-License-Identifier: BSD-3-Clause\n
 \n
 Redistribution and use in source and binary forms, with or without\n
 modification, are permitted provided that the following conditions are met:\n
@@ -250,6 +252,11 @@ POSSIBILITY OF SUCH DAMAGE.\n
                     <value>0x41414142</value>
                   </enumeratedValue>
                   <enumeratedValue>
+                    <name>AAAC</name>
+                    <description>AAAC</description>
+                    <value>0x41414143</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
                     <name>AABA</name>
                     <description>AABA</description>
                     <value>0x41414241</value>
@@ -265,9 +272,39 @@ POSSIBILITY OF SUCH DAMAGE.\n
                     <value>0x41414230</value>
                   </enumeratedValue>
                   <enumeratedValue>
+                    <name>ABB0</name>
+                    <description>ABB0</description>
+                    <value>0x41424230</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
                     <name>AAE0</name>
                     <description>AAE0</description>
                     <value>0x41414530</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
+                    <name>ABE0</name>
+                    <description>ABE0</description>
+                    <value>0x41424530</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
+                    <name>AAGB</name>
+                    <description>AAGB</description>
+                    <value>0x41414742</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
+                    <name>ABGB</name>
+                    <description>ABGB</description>
+                    <value>0x41424742</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
+                    <name>AAG0</name>
+                    <description>AAG0</description>
+                    <value>0x41414730</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
+                    <name>ABG0</name>
+                    <description>ABG0</description>
+                    <value>0x41424730</value>
                   </enumeratedValue>
                   <enumeratedValue>
                     <name>Unspecified</name>
@@ -926,21 +963,26 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>APPROTECT</name>
-          <description>Access Port protection</description>
+          <description>Access port protection</description>
           <addressOffset>0x208</addressOffset>
           <access>read-write</access>
           <resetValue>0xFFFFFFFF</resetValue>
           <fields>
             <field>
               <name>PALL</name>
-              <description>Enable or disable Access Port protection. Any other value than 0xFF being written to this field will enable protection.</description>
+              <description>Enable or disable access port protection.</description>
               <lsb>0</lsb>
               <msb>7</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Disabled</name>
-                  <description>Disable</description>
+                  <description>Hardware disable of access port protection for devices where access port protection is controlled by hardware</description>
                   <value>0xFF</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>HwDisabled</name>
+                  <description>Hardware disable of access port protection for devices where access port protection is controlled by hardware and software</description>
+                  <value>0x5A</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Enabled</name>
@@ -966,13 +1008,72 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Disabled</name>
-                  <description>Operation as GPIO pins. Same protection as normal GPIO pins</description>
+                  <description>Operation as GPIO pins. Same protection as normal GPIO pins.</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>NFC</name>
-                  <description>Operation as NFC antenna pins. Configures the protection for NFC operation</description>
+                  <description>Operation as NFC antenna pins. Configures the protection for NFC operation.</description>
                   <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>APPROTECT</name>
+      <description>Access Port Protection</description>
+      <groupName>APPROTECT</groupName>
+      <baseAddress>0x40000000</baseAddress>
+      <size>32</size>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <name>FORCEPROTECT</name>
+          <description>Software force enable APPROTECT mechanism until next reset. This register can only be written once.</description>
+          <addressOffset>0x550</addressOffset>
+          <access>read-write</access>
+          <resetValue>0xFFFFFFFF</resetValue>
+          <fields>
+            <field>
+              <name>FORCEPROTECT</name>
+              <description>Write 0x0 to force enable APPROTECT mechanism</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <enumeratedValues>
+                <usage>write</usage>
+                <enumeratedValue>
+                  <name>Force</name>
+                  <description>Software force enable APPROTECT mechanism</description>
+                  <value>0x0</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>DISABLE</name>
+          <description>Software disable APPROTECT mechanism</description>
+          <addressOffset>0x558</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DISABLE</name>
+              <description>Software disable APPROTECT mechanism</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>SwDisable</name>
+                  <description>Software disable APPROTECT mechanism</description>
+                  <value>0x5A</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -986,6 +1087,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <groupName>BPROT</groupName>
       <baseAddress>0x40000000</baseAddress>
       <size>32</size>
+      <alternatePeripheral>APPROTECT</alternatePeripheral>
       <addressBlock>
         <offset>0</offset>
         <size>0x1000</size>
@@ -3369,7 +3471,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <groupName>POWER</groupName>
       <baseAddress>0x40000000</baseAddress>
       <size>32</size>
-      <alternatePeripheral>BPROT</alternatePeripheral>
+      <alternatePeripheral>APPROTECT</alternatePeripheral>
       <addressBlock>
         <offset>0</offset>
         <size>0x1000</size>
@@ -4370,7 +4472,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <groupName>CLOCK</groupName>
       <baseAddress>0x40000000</baseAddress>
       <size>32</size>
-      <alternatePeripheral>BPROT</alternatePeripheral>
+      <alternatePeripheral>APPROTECT</alternatePeripheral>
       <addressBlock>
         <offset>0</offset>
         <size>0x1000</size>

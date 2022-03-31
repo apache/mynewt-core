@@ -174,7 +174,7 @@ _vectors:
   ISR_HANDLER   TEMP_IRQHandler
   ISR_HANDLER   RTC0_IRQHandler
   ISR_HANDLER   IPC_IRQHandler
-  ISR_HANDLER   SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
+  ISR_HANDLER   SERIAL0_IRQHandler
   ISR_HANDLER   EGU0_IRQHandler
   ISR_RESERVED_DUMMY                           /*Reserved */
   ISR_HANDLER   RTC1_IRQHandler

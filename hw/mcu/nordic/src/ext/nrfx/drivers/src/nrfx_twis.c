@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -83,6 +85,7 @@ typedef struct
     volatile nrfx_twis_substate_t   substate;
 
     volatile bool                   semaphore;
+    bool                            skip_gpio_cfg;
 } twis_control_block_t;
 static twis_control_block_t m_cb[NRFX_TWIS_ENABLED_COUNT];
 
@@ -126,9 +129,6 @@ static inline void nrfx_twis_swreset(NRF_TWIS_Type * p_reg)
 {
     /* Disable TWIS */
     nrf_twis_disable(p_reg);
-
-    /* Disconnect pins */
-    nrf_twis_pins_set(p_reg, ~0U, ~0U);
 
     /* Disable interrupt global for the instance */
     NRFX_IRQ_DISABLE(nrfx_get_irq_number(p_reg));
@@ -457,7 +457,6 @@ nrfx_err_t nrfx_twis_init(nrfx_twis_t const *        p_instance,
                           nrfx_twis_event_handler_t  event_handler)
 {
     NRFX_ASSERT(p_config);
-    NRFX_ASSERT(p_config->scl != p_config->sda);
     nrfx_err_t err_code;
 
     NRF_TWIS_Type *        p_reg = p_instance->p_reg;
@@ -503,8 +502,18 @@ nrfx_err_t nrfx_twis_init(nrfx_twis_t const *        p_instance,
         nrfx_twis_swreset(p_reg);
     }
 
-    nrfx_twis_config_pin(p_config->scl, p_config->scl_pull);
-    nrfx_twis_config_pin(p_config->sda, p_config->sda_pull);
+    p_cb->skip_gpio_cfg = p_config->skip_gpio_cfg;
+
+    if (!p_config->skip_gpio_cfg)
+    {
+        nrfx_twis_config_pin(p_config->scl, p_config->scl_pull);
+        nrfx_twis_config_pin(p_config->sda, p_config->sda_pull);
+    }
+
+    if (!p_config->skip_psel_cfg)
+    {
+        nrf_twis_pins_set(p_reg, p_config->scl, p_config->sda);
+    }
 
     uint32_t addr_mask = 0;
     if (0 == (p_config->addr[0] | p_config->addr[1]))
@@ -531,7 +540,6 @@ nrfx_err_t nrfx_twis_init(nrfx_twis_t const *        p_instance,
     NRFX_IRQ_ENABLE(nrfx_get_irq_number(p_reg));
 
     /* Configure */
-    nrf_twis_pins_set          (p_reg, p_config->scl, p_config->sda);
     nrf_twis_address_set       (p_reg, 0, p_config->addr[0]);
     nrf_twis_address_set       (p_reg, 1, p_config->addr[1]);
     nrf_twis_config_address_set(p_reg, (nrf_twis_config_addr_mask_t)addr_mask);
@@ -557,13 +565,13 @@ void nrfx_twis_uninit(nrfx_twis_t const * p_instance)
     twis_control_block_t * p_cb  = &m_cb[p_instance->drv_inst_idx];
     NRFX_ASSERT(p_cb->state != NRFX_DRV_STATE_UNINITIALIZED);
 
-    uint32_t scl_pin = nrf_twis_scl_pin_get(p_reg);
-    uint32_t sda_pin = nrf_twis_sda_pin_get(p_reg);
-
     nrfx_twis_swreset(p_reg);
 
-    nrf_gpio_cfg_default(scl_pin);
-    nrf_gpio_cfg_default(sda_pin);
+    if (!p_cb->skip_gpio_cfg)
+    {
+        nrf_gpio_cfg_default(nrf_twis_scl_pin_get(p_reg));
+        nrf_gpio_cfg_default(nrf_twis_sda_pin_get(p_reg));
+    }
 
 #if NRFX_CHECK(NRFX_PRS_ENABLED)
     nrfx_prs_release(p_reg);

@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2018 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -53,6 +55,8 @@ void nrfx_dppi_free(void);
  * @brief Function for allocating a DPPI channel.
  * @details This function allocates the first unused DPPI channel.
  *
+ * @note Function is thread safe as it uses @ref nrfx_flag32_alloc.
+ *
  * @param[out] p_channel Pointer to the DPPI channel number that has been allocated.
  *
  * @retval NRFX_SUCCESS      The channel was successfully allocated.
@@ -62,7 +66,10 @@ nrfx_err_t nrfx_dppi_channel_alloc(uint8_t * p_channel);
 
 /**
  * @brief Function for freeing a DPPI channel.
- * @details This function also disables the chosen channel.
+ * @details This function also disables the chosen channel. Configuration in
+ *          PUBLISH/SUBSCRIBE registers used for the channel is not cleared.
+ *
+ * @note Function is thread safe as it uses @ref nrfx_flag32_free.
  *
  * @param[in] channel DPPI channel to be freed.
  *
@@ -84,6 +91,9 @@ nrfx_err_t nrfx_dppi_channel_enable(uint8_t channel);
 /**
  * @brief Function for disabling a DPPI channel.
  *
+ * @note Disabling channel does not modify PUBLISH/SUBSCRIBE registers configured to use
+ *       that channel.
+ *
  * @param[in] channel DPPI channel to be disabled.
  *
  * @retval NRFX_SUCCESS             The channel was successfully disabled.
@@ -95,6 +105,8 @@ nrfx_err_t nrfx_dppi_channel_disable(uint8_t channel);
  * @brief Function for allocating a DPPI channel group.
  * @details This function allocates the first unused DPPI group.
  *
+ * @note Function is thread safe as it uses @ref nrfx_flag32_alloc.
+ *
  * @param[out] p_group Pointer to the DPPI channel group that has been allocated.
  *
  * @retval NRFX_SUCCESS      The channel group was successfully allocated.
@@ -105,6 +117,8 @@ nrfx_err_t nrfx_dppi_group_alloc(nrf_dppi_channel_group_t * p_group);
 /**
  * @brief Function for freeing a DPPI channel group.
  * @details This function also disables the chosen group.
+ *
+ * @note Function is thread safe as it uses @ref nrfx_flag32_free.
  *
  * @param[in] group DPPI channel group to be freed.
  *
@@ -119,6 +133,9 @@ nrfx_err_t nrfx_dppi_group_free(nrf_dppi_channel_group_t group);
  * @param[in] channel DPPI channel to be added.
  * @param[in] group   Channel group in which to include the channel.
  *
+ * @warning Channel group configuration can be modified only if subscriptions for tasks
+ *          associated with this group are disabled.
+ *
  * @retval NRFX_SUCCESS             The channel was successfully included.
  * @retval NRFX_ERROR_INVALID_PARAM The specified group or channel is not allocated.
  */
@@ -131,6 +148,9 @@ nrfx_err_t nrfx_dppi_channel_include_in_group(uint8_t                  channel,
  * @param[in] channel DPPI channel to be removed.
  * @param[in] group   Channel group from which to remove the channel.
  *
+ * @warning Channel group configuration can be modified only if subscriptions for tasks
+ *          associated with this group are disabled.
+ *
  * @retval NRFX_SUCCESS             The channel was successfully removed.
  * @retval NRFX_ERROR_INVALID_PARAM The specified group or channel is not allocated.
  */
@@ -141,6 +161,9 @@ nrfx_err_t nrfx_dppi_channel_remove_from_group(uint8_t                  channel,
  * @brief Function for clearing a DPPI channel group.
  *
  * @param[in] group Channel group to be cleared.
+ *
+ * @warning Channel group configuration can be modified only if subscriptions for tasks
+ *          associated with this group are disabled.
  *
  * @retval NRFX_SUCCESS             The group was successfully cleared.
  * @retval NRFX_ERROR_INVALID_PARAM The specified group is not allocated.

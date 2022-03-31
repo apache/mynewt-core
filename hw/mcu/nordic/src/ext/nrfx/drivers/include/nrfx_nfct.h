@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2018 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -232,6 +234,7 @@ void nrfx_nfct_rx(nrfx_nfct_data_desc_t const * p_rx_data);
  *
  * @retval NRFX_SUCCESS              The operation was successful.
  * @retval NRFX_ERROR_INVALID_LENGTH The TX buffer size is invalid.
+ * @retval NRFX_ERROR_BUSY           Driver is already transferring.
  */
 nrfx_err_t nrfx_nfct_tx(nrfx_nfct_data_desc_t const * p_tx_data,
                         nrf_nfct_frame_delay_mode_t   delay_mode);

@@ -1,6 +1,8 @@
 /*
 
-Copyright (c) 2010 - 2020, Nordic Semiconductor ASA All rights reserved.
+Copyright (c) 2010 - 2021, Nordic Semiconductor ASA All rights reserved.
+
+SPDX-License-Identifier: BSD-3-Clause
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -113,7 +115,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define DPPI_PRESENT
 #define DPPI_COUNT 1
 
-#define DPPI_CH_NUM 16
+#define DPPI_CH_NUM 32
 #define DPPI_GROUP_NUM 6
 
 /* Event Generator Unit */

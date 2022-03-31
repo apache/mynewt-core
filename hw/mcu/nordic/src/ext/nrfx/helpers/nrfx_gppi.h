@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2019 - 2020, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,6 +35,14 @@
 #define NRFX_GPPI_H
 
 #include <nrfx.h>
+
+#if NRFX_CHECK(NRFX_DPPI_ENABLED)
+#include <nrfx_dppi.h>
+#endif
+
+#if NRFX_CHECK(NRFX_PPI_ENABLED)
+#include <nrfx_ppi.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -340,6 +350,51 @@ __STATIC_INLINE nrfx_gppi_task_t nrfx_gppi_group_disable_task_get(nrfx_gppi_chan
  */
 __STATIC_INLINE nrfx_gppi_task_t nrfx_gppi_group_enable_task_get(nrfx_gppi_channel_group_t group);
 
+/**
+ * @brief Function for allocating a channel.
+ *
+ * @param[out] p_channel After successful allocation, index of the allocated channel.
+ *
+ * @retval NRFX_SUCCESS             Channel was successfully allocated.
+ * @retval NRFX_ERROR_NO_MEM        There is no available channel to be used.
+ * @retval NRFX_ERROR_NOT_SUPPORTED Driver is not enabled.
+ */
+__STATIC_INLINE nrfx_err_t nrfx_gppi_channel_alloc(uint8_t * p_channel);
+
+/**
+ * @brief Function for freeing a channel.
+ *
+ * @param[in] channel (D)PPI channel to be freed.
+ *
+ * @retval NRFX_SUCCESS             The channel was successfully freed.
+ * @retval NRFX_ERROR_INVALID_PARAM The specified channel is not allocated or
+ *                                  is not user-configurable.
+ * @retval NRFX_ERROR_NOT_SUPPORTED Driver is not enabled.
+ */
+__STATIC_INLINE nrfx_err_t nrfx_gppi_channel_free(uint8_t channel);
+
+/**
+ * @brief Function for allocating a channel group.
+ *
+ * @param[out] p_group Pointer to the (D)PPI channel group that has been allocated.
+ *
+ * @retval NRFX_SUCCESS             The channel group was successfully allocated.
+ * @retval NRFX_ERROR_NO_MEM        There is no available channel group to be used.
+ * @retval NRFX_ERROR_NOT_SUPPORTED Driver is not enabled.
+ */
+__STATIC_INLINE nrfx_err_t nrfx_gppi_group_alloc(nrfx_gppi_channel_group_t * p_group);
+
+/**
+ * @brief Function for freeing a channel group.
+ *
+ * @param[in] group (D)PPI channel group to be freed.
+ *
+ * @retval NRFX_SUCCESS             The channel was successfully freed.
+ * @retval NRFX_ERROR_INVALID_PARAM The specified channel is not allocated or
+ *                                  is not user-configurable.
+ * @retval NRFX_ERROR_NOT_SUPPORTED Driver is not enabled.
+ */
+__STATIC_INLINE nrfx_err_t nrfx_gppi_group_free(nrfx_gppi_channel_group_t group);
 /** @} */
 
 #if defined(PPI_PRESENT)
@@ -458,6 +513,45 @@ __STATIC_INLINE nrfx_gppi_task_t nrfx_gppi_group_enable_task_get(nrfx_gppi_chann
     return (nrfx_gppi_task_t)nrf_ppi_group_enable_task_get(NRF_PPI, (uint8_t)group);
 }
 
+__STATIC_INLINE nrfx_err_t nrfx_gppi_channel_alloc(uint8_t * p_channel)
+{
+#if NRFX_CHECK(NRFX_PPI_ENABLED)
+    return nrfx_ppi_channel_alloc((nrf_ppi_channel_t *)p_channel);
+#else
+    (void)p_channel;
+    return NRFX_ERROR_NOT_SUPPORTED;
+#endif
+}
+
+__STATIC_INLINE nrfx_err_t nrfx_gppi_channel_free(uint8_t channel)
+{
+#if NRFX_CHECK(NRFX_PPI_ENABLED)
+    return nrfx_ppi_channel_free((nrf_ppi_channel_t)channel);
+#else
+    (void)channel;
+    return NRFX_ERROR_NOT_SUPPORTED;
+#endif
+}
+
+__STATIC_INLINE nrfx_err_t nrfx_gppi_group_alloc(nrfx_gppi_channel_group_t * p_group)
+{
+#if NRFX_CHECK(NRFX_PPI_ENABLED)
+    return nrfx_ppi_group_alloc((nrf_ppi_channel_group_t *)p_group);
+#else
+    (void)p_group;
+    return NRFX_ERROR_NOT_SUPPORTED;
+#endif
+}
+
+__STATIC_INLINE nrfx_err_t nrfx_gppi_group_free(nrfx_gppi_channel_group_t group)
+{
+#if NRFX_CHECK(NRFX_PPI_ENABLED)
+    return nrfx_ppi_group_free((nrf_ppi_channel_group_t)group);
+#else
+    (void)group;
+    return NRFX_ERROR_NOT_SUPPORTED;
+#endif
+}
 #elif defined(DPPI_PRESENT)
 
 __STATIC_INLINE bool nrfx_gppi_channel_check(uint8_t channel)
@@ -575,6 +669,45 @@ __STATIC_INLINE nrfx_gppi_task_t nrfx_gppi_group_enable_task_get(nrfx_gppi_chann
     return (nrfx_gppi_task_t) nrf_dppi_group_enable_task_get((uint8_t)group);
 }
 
+__STATIC_INLINE nrfx_err_t nrfx_gppi_channel_alloc(uint8_t * p_channel)
+{
+#if NRFX_CHECK(NRFX_DPPI_ENABLED)
+    return nrfx_dppi_channel_alloc(p_channel);
+#else
+    (void)p_channel;
+    return NRFX_ERROR_NOT_SUPPORTED;
+#endif
+}
+
+__STATIC_INLINE nrfx_err_t nrfx_gppi_channel_free(uint8_t channel)
+{
+#if NRFX_CHECK(NRFX_DPPI_ENABLED)
+    return nrfx_dppi_channel_free(channel);
+#else
+    (void)channel;
+    return NRFX_ERROR_NOT_SUPPORTED;
+#endif
+}
+
+__STATIC_INLINE nrfx_err_t nrfx_gppi_group_alloc(nrfx_gppi_channel_group_t * p_group)
+{
+#if NRFX_CHECK(NRFX_DPPI_ENABLED)
+    return nrfx_dppi_group_alloc((nrf_dppi_channel_group_t *)p_group);
+#else
+    (void)p_group;
+    return NRFX_ERROR_NOT_SUPPORTED;
+#endif
+}
+
+__STATIC_INLINE nrfx_err_t nrfx_gppi_group_free(nrfx_gppi_channel_group_t group)
+{
+#if NRFX_CHECK(NRFX_DPPI_ENABLED)
+    return nrfx_dppi_group_free((nrf_dppi_channel_group_t)group);
+#else
+    (void)group;
+    return NRFX_ERROR_NOT_SUPPORTED;
+#endif
+}
 #else
 #error "Neither PPI nor DPPI is present in the SoC currently in use."
 #endif
