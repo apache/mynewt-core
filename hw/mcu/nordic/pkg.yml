@@ -34,6 +34,7 @@ pkg.ign_dirs:
     - "soc"
     - "templates"
     - "mdk"
+    - "helpers"
 
 pkg.src_dirs:
     - "src/ext/nrfx/"

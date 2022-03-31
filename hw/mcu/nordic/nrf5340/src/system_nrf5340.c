@@ -97,7 +97,7 @@ void SystemInit(void)
                 /* IAR will complain about the order of volatile pointer accesses. */
                 #pragma diag_suppress=Pa082
             #endif
-            *NRF_FICR_S->TRIMCNF[index].ADDR = NRF_FICR_S->TRIMCNF[index].DATA;
+            *((volatile uint32_t *)NRF_FICR_S->TRIMCNF[index].ADDR) = NRF_FICR_S->TRIMCNF[index].DATA;
             #if defined ( __ICCARM__ )
                 #pragma diag_default=Pa082
             #endif
