@@ -41,17 +41,17 @@ struct listener_data {
     struct battery_prop_listener *ld_listener;
 };
 
-struct battery_manager {
+    struct battery_manager {
     /* The lock for battery object */
-    struct os_mutex bm_lock;
+struct os_mutex bm_lock;
 
-    struct battery *bm_batteries[BATTERY_MAX_COUNT];
+struct battery *bm_batteries[BATTERY_MAX_COUNT];
 
     /** Event queue */
-    struct os_eventq *bm_eventq;
+struct os_eventq *bm_eventq;
 
     /** Manages poll rates of the batteries */
-    struct os_callout bm_poll_callout;
+struct os_callout bm_poll_callout;
 
 } battery_manager;
 

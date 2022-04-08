@@ -133,7 +133,7 @@ before_install:
   - if [ "${TEST}" != "RAT" && "${TEST}" != "STYLE" ]; then go version; fi
 
 install:
-  - git clone https://github.com/JuulLabs-OSS/mynewt-travis-ci $HOME/ci
+  - git clone -b test https://github.com/michal-narajowski/mynewt-travis-ci $HOME/ci
   - chmod +x $HOME/ci/*.sh
   - |
     if [ "${TEST}" == "RAT" ]; then
