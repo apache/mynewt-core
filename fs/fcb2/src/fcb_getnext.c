@@ -25,18 +25,27 @@ int
 fcb2_getnext_in_area(struct fcb2 *fcb, struct fcb2_entry *loc)
 {
     int rc = FCB2_ERR_CRC;
-    int off;
     int len;
+    int next_data_offset;
+    int next_entry_offset;
 
     while (rc == FCB2_ERR_CRC) {
         len = loc->fe_data_len;
-        off = loc->fe_data_off;
+        /* Next data offset in sector */
+        next_data_offset = loc->fe_data_off + fcb2_len_in_flash(loc->fe_range, len) +
+                                                 fcb2_len_in_flash(loc->fe_range, 2);
+        /* Possible entry offset for next data */
+        next_entry_offset = fcb->f_active.fe_range->fsr_sector_size -
+                            (FCB2_ENTRY_SIZE * (loc->fe_entry_num + 1));
         loc->fe_data_len = 0;
         loc->fe_entry_num++;
+        /* If there is no space for next entry just finish search */
+        if (next_data_offset >= next_entry_offset) {
+            return FCB2_ERR_NOVAR;
+        }
         rc = fcb2_elem_info(loc);
         if (len) {
-            loc->fe_data_off = off + fcb2_len_in_flash(loc->fe_range, len) +
-                fcb2_len_in_flash(loc->fe_range, 2);
+            loc->fe_data_off = next_data_offset;
         }
     }
     return rc;
