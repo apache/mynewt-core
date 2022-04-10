@@ -78,4 +78,14 @@ TEST_CASE_SELF(fcb_test_append_fill)
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_separate.elem_cnts[0] == elem_cnts[0]);
     TEST_ASSERT(aa_separate.elem_cnts[1] == elem_cnts[1]);
+
+    /* Re-init FCB without clearing flash */
+    rc = fcb_tc_init_fcb(2);
+    TEST_ASSERT(rc == 0);
+    aa_together_cnts[0] = 0;
+    aa_together_cnts[1] = 0;
+    /* Walk again, number of elements should not changed */
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_cnt_elems_cb, &aa_together);
+    TEST_ASSERT(aa_together_cnts[0] == elem_cnts[0]);
+    TEST_ASSERT(aa_together_cnts[1] == elem_cnts[1]);
 }

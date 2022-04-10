@@ -108,13 +108,11 @@ fcb_test_cnt_elems_cb(struct fcb2_entry *loc, void *arg)
     return 0;
 }
 
-void
-fcb_tc_pretest(uint8_t sector_count)
+int
+fcb_tc_init_fcb(uint8_t sector_count)
 {
     struct fcb2 *fcb;
-    int rc = 0;
 
-    fcb_test_wipe();
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
     fcb->f_sector_cnt = sector_count;
@@ -124,7 +122,16 @@ fcb_tc_pretest(uint8_t sector_count)
     test_fcb_ranges[0].fsr_flash_area.fa_size =
         test_fcb_ranges[0].fsr_sector_size * sector_count;
 
-    rc = fcb2_init(fcb);
+    return fcb2_init(fcb);
+}
+
+void
+fcb_tc_pretest(uint8_t sector_count)
+{
+    int rc = 0;
+
+    fcb_test_wipe();
+    rc = fcb_tc_init_fcb(sector_count);
     if (rc != 0) {
         printf("fcb_tc_pretest rc == %x, %d\n", rc, rc);
         TEST_ASSERT(rc == 0);
