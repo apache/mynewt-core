@@ -46,6 +46,8 @@ uint8_t fcb_test_append_data(int msg_len, int off);
 int fcb_test_data_walk_cb(struct fcb2_entry *loc, void *arg);
 int fcb_test_cnt_elems_cb(struct fcb2_entry *loc, void *arg);
 void fcb_tc_pretest(uint8_t sector_count);
+/* Inits fcb without wiping flash */
+int fcb_tc_init_fcb(uint8_t sector_count);
 
 #ifdef __cplusplus
 }
