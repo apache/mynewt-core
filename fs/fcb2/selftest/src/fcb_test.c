@@ -143,6 +143,7 @@ TEST_CASE_DECL(fcb_test_empty_walk)
 TEST_CASE_DECL(fcb_test_append)
 TEST_CASE_DECL(fcb_test_append_too_big)
 TEST_CASE_DECL(fcb_test_append_fill)
+TEST_CASE_DECL(fcb_test_append_fill_small)
 TEST_CASE_DECL(fcb_test_reset)
 TEST_CASE_DECL(fcb_test_rotate)
 TEST_CASE_DECL(fcb_test_multiple_scratch)
@@ -157,6 +158,7 @@ TEST_SUITE(fcb_test_all)
     fcb_test_append();
     fcb_test_append_too_big();
     fcb_test_append_fill();
+    fcb_test_append_fill_small();
     fcb_test_reset();
     fcb_test_rotate();
     fcb_test_multiple_scratch();
