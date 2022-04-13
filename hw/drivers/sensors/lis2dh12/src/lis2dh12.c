@@ -645,7 +645,7 @@ lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect)
 #if MYNEWT_VAL(LIS2DH12_LIS2DK10_COMPAT)
     rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG0, &reg, 1);
     if (rc) {
-        goto err;
+        return rc;
     }
     reg &= ~LIS2DH12_CTRL_REG0_SPD;
     reg |= (disconnect ? LIS2DH12_CTRL_REG0_SPD : 0);
@@ -657,7 +657,6 @@ lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect)
 
     rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG0, &reg, 1);
 
-err:
     return rc;
 }
 
