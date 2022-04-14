@@ -59,24 +59,27 @@
 #define MBEDTLS_GCM_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
 
-#include "mbedtls/cipher.h"
+#include "cipher.h"
 
 #include <stdint.h>
 
 #define MBEDTLS_GCM_ENCRYPT     1
 #define MBEDTLS_GCM_DECRYPT     0
 
-#define MBEDTLS_ERR_GCM_AUTH_FAILED                       -0x0012  /**< Authenticated decryption failed. */
+/** Authenticated decryption failed. */
+#define MBEDTLS_ERR_GCM_AUTH_FAILED                       -0x0012
 
 /* MBEDTLS_ERR_GCM_HW_ACCEL_FAILED is deprecated and should not be used. */
-#define MBEDTLS_ERR_GCM_HW_ACCEL_FAILED                   -0x0013  /**< GCM hardware accelerator failed. */
+/** GCM hardware accelerator failed. */
+#define MBEDTLS_ERR_GCM_HW_ACCEL_FAILED                   -0x0013
 
-#define MBEDTLS_ERR_GCM_BAD_INPUT                         -0x0014  /**< Bad input parameters to function. */
+/** Bad input parameters to function. */
+#define MBEDTLS_ERR_GCM_BAD_INPUT                         -0x0014
 
 #ifdef __cplusplus
 extern "C" {
@@ -140,14 +143,6 @@ int mbedtls_gcm_setkey( mbedtls_gcm_context *ctx,
                         mbedtls_cipher_id_t cipher,
                         const unsigned char *key,
                         unsigned int keybits );
-
-/**
- * Same as above, but with preallocated memory for cipher algorithm context
- */
-int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
-                                const mbedtls_cipher_info_t *cipher_info,
-                                const unsigned char *key,
-                                void *cipher_ctx);
 
 /**
  * \brief           This function performs GCM encryption or decryption of a buffer.
@@ -282,32 +277,9 @@ int mbedtls_gcm_starts( mbedtls_gcm_context *ctx,
 
 /**
  * \brief           This function feeds an input buffer into an ongoing GCM
- *                  encryption or decryption operation as additional data.
- *                  This needs to be called before starting enc/dec
- *                  operations.
- *
- *    `             The function expects input to be a multiple of 16
- *                  Bytes. Only the last call before mbedtls_gcm_update() or
- *                  mbedtls_gcm_finish() can be less than 16 Bytes.
- *
- *
- * \param ctx       The GCM context.
- * \param length    The length of the input data. This must be a multiple of
- *                  16 except in the last call before mbedtls_gcm_finish().
- * \param input     The buffer holding the input ADD.
- *
- * \return         \c 0 on success.
- * \return         #MBEDTLS_ERR_GCM_BAD_INPUT on failure.
- */
-int mbedtls_gcm_update_add( mbedtls_gcm_context *ctx,
-                size_t length,
-                const unsigned char *input );
-
-/**
- * \brief           This function feeds an input buffer into an ongoing GCM
  *                  encryption or decryption operation.
  *
- *                  The function expects input to be a multiple of 16
+ *    `             The function expects input to be a multiple of 16
  *                  Bytes. Only the last call before calling
  *                  mbedtls_gcm_finish() can be less than 16 Bytes.
  *

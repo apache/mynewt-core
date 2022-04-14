@@ -54,14 +54,15 @@
 #define MBEDTLS_PADLOCK_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
 
-#include "mbedtls/aes.h"
+#include "aes.h"
 
-#define MBEDTLS_ERR_PADLOCK_DATA_MISALIGNED               -0x0030  /**< Input data should be aligned. */
+/** Input data should be aligned. */
+#define MBEDTLS_ERR_PADLOCK_DATA_MISALIGNED               -0x0030
 
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer)
@@ -98,7 +99,7 @@ extern "C" {
  *
  * \param feature  The feature to detect
  *
- * \return         1 if CPU has support for the feature, 0 otherwise
+ * \return         non-zero if CPU has support for the feature, 0 otherwise
  */
 int mbedtls_padlock_has_support( int feature );
 

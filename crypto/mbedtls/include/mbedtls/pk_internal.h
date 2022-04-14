@@ -51,12 +51,12 @@
 #define MBEDTLS_PK_WRAP_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
 
-#include "mbedtls/pk.h"
+#include "pk.h"
 
 struct mbedtls_pk_info_t
 {

@@ -111,6 +111,20 @@
 }
 #endif
 
+#ifndef PUT_UINT64_BE
+#define PUT_UINT64_BE( n, b, i )                                 \
+{                                                                \
+    ( b )[( i )    ] = (unsigned char) ( ( (n) >> 56 ) & 0xff ); \
+    ( b )[( i ) + 1] = (unsigned char) ( ( (n) >> 48 ) & 0xff ); \
+    ( b )[( i ) + 2] = (unsigned char) ( ( (n) >> 40 ) & 0xff ); \
+    ( b )[( i ) + 3] = (unsigned char) ( ( (n) >> 32 ) & 0xff ); \
+    ( b )[( i ) + 4] = (unsigned char) ( ( (n) >> 24 ) & 0xff ); \
+    ( b )[( i ) + 5] = (unsigned char) ( ( (n) >> 16 ) & 0xff ); \
+    ( b )[( i ) + 6] = (unsigned char) ( ( (n) >> 8  ) & 0xff ); \
+    ( b )[( i ) + 7] = (unsigned char) ( ( (n)       ) & 0xff ); \
+}
+#endif
+
 /*
  * Initialize a context
  */
@@ -224,41 +238,6 @@ int mbedtls_gcm_setkey( mbedtls_gcm_context *ctx,
     return( 0 );
 }
 
-int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
-                                const mbedtls_cipher_info_t *cipher_info,
-                                const unsigned char *key,
-                                void *cipher_ctx)
-{
-    int ret;
-
-    ctx->cipher_ctx.cipher_info = cipher_info;
-    ctx->cipher_ctx.cipher_ctx = cipher_ctx;
-#if defined(MBEDTLS_CIPHER_MODE_WITH_PADDING)
-    /*
-     * Ignore possible errors caused by a cipher mode that doesn't use padding
-     */
-#if defined(MBEDTLS_CIPHER_PADDING_PKCS7)
-    (void) mbedtls_cipher_set_padding_mode( &ctx->cipher_ctx,
-                               MBEDTLS_PADDING_PKCS7 );
-#else
-    (void) mbedtls_cipher_set_padding_mode( &ctx->cipher_ctx,
-                               MBEDTLS_PADDING_NONE );
-#endif
-#endif /* MBEDTLS_CIPHER_MODE_WITH_PADDING */
-
-    if( ( ret = mbedtls_cipher_setkey( &ctx->cipher_ctx, key,
-                               cipher_info->key_bitlen,
-                               MBEDTLS_ENCRYPT ) ) != 0 )
-    {
-        return( ret );
-    }
-
-    if( ( ret = gcm_gen_table( ctx ) ) != 0 )
-        return( ret );
-
-    return( 0 );
-}
-
 /*
  * Shoup's method for multiplication use this table with
  *      last4[x] = x times P^128
@@ -344,6 +323,7 @@ int mbedtls_gcm_starts( mbedtls_gcm_context *ctx,
     size_t i;
     const unsigned char *p;
     size_t use_len, olen = 0;
+    uint64_t iv_bits;
 
     GCM_VALIDATE_RET( ctx != NULL );
     GCM_VALIDATE_RET( iv != NULL );
@@ -373,7 +353,8 @@ int mbedtls_gcm_starts( mbedtls_gcm_context *ctx,
     else
     {
         memset( work_buf, 0x00, 16 );
-        PUT_UINT32_BE( iv_len * 8, work_buf, 12 );
+        iv_bits = (uint64_t)iv_len * 8;
+        PUT_UINT64_BE( iv_bits, work_buf, 8 );
 
         p = iv;
         while( iv_len > 0 )
@@ -400,7 +381,7 @@ int mbedtls_gcm_starts( mbedtls_gcm_context *ctx,
     {
         return( ret );
     }
-/*
+
     ctx->add_len = add_len;
     p = add;
     while( add_len > 0 )
@@ -410,39 +391,6 @@ int mbedtls_gcm_starts( mbedtls_gcm_context *ctx,
         for( i = 0; i < use_len; i++ )
             ctx->buf[i] ^= p[i];
 
-        gcm_mult( ctx, ctx->buf, ctx->buf );
-
-        add_len -= use_len;
-        p += use_len;
-    }
-
-    return( 0 );
-*/
-    return mbedtls_gcm_update_add( ctx, add_len, add );
-}
-
-int mbedtls_gcm_update_add( mbedtls_gcm_context *ctx,
-                size_t add_len,
-                const unsigned char *add )
-{
-    const unsigned char *p;
-    size_t i;
-    size_t use_len;
-
-    if ( ctx->add_len & 15 )
-    {
-        return( MBEDTLS_ERR_GCM_BAD_INPUT );
-    }
-    ctx->add_len += add_len;
-    p = add;
-
-    while (add_len > 0)
-    {
-        use_len = ( add_len < 16 ) ? add_len : 16;
-
-        for( i = 0; i < use_len; i++ ) {
-            ctx->buf[i] ^= p[i];
-        }
         gcm_mult( ctx, ctx->buf, ctx->buf );
 
         add_len -= use_len;

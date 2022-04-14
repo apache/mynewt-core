@@ -50,6 +50,7 @@
  *  http://www.ietf.org/rfc/rfc1320.txt
  */
 
+
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include "mbedtls/config.h"
 #else
@@ -444,8 +445,7 @@ static const unsigned char md4_test_str[7][81] =
     { "message digest" },
     { "abcdefghijklmnopqrstuvwxyz" },
     { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" },
-    { "12345678901234567890123456789012345678901234567890123456789012"
-      "345678901234567890" }
+    { "12345678901234567890123456789012345678901234567890123456789012345678901234567890" }
 };
 
 static const size_t md4_test_strlen[7] =

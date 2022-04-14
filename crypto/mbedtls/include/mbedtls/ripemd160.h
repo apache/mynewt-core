@@ -50,7 +50,7 @@
 #define MBEDTLS_RIPEMD160_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
@@ -60,7 +60,8 @@
 
 /* MBEDTLS_ERR_RIPEMD160_HW_ACCEL_FAILED is deprecated and should not be used.
  */
-#define MBEDTLS_ERR_RIPEMD160_HW_ACCEL_FAILED             -0x0031  /**< RIPEMD160 hardware accelerator failed */
+/** RIPEMD160 hardware accelerator failed */
+#define MBEDTLS_ERR_RIPEMD160_HW_ACCEL_FAILED             -0x0031
 
 #ifdef __cplusplus
 extern "C" {
