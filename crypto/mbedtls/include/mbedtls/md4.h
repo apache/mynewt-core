@@ -55,7 +55,7 @@
 #define MBEDTLS_MD4_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
@@ -64,7 +64,8 @@
 #include <stdint.h>
 
 /* MBEDTLS_ERR_MD4_HW_ACCEL_FAILED is deprecated and should not be used. */
-#define MBEDTLS_ERR_MD4_HW_ACCEL_FAILED                   -0x002D  /**< MD4 hardware accelerator failed */
+/** MD4 hardware accelerator failed */
+#define MBEDTLS_ERR_MD4_HW_ACCEL_FAILED                   -0x002D
 
 #ifdef __cplusplus
 extern "C" {

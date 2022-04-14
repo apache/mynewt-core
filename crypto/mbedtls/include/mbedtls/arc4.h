@@ -54,7 +54,7 @@
 #define MBEDTLS_ARC4_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
@@ -62,7 +62,8 @@
 #include <stddef.h>
 
 /* MBEDTLS_ERR_ARC4_HW_ACCEL_FAILED is deprecated and should not be used. */
-#define MBEDTLS_ERR_ARC4_HW_ACCEL_FAILED                  -0x0019  /**< ARC4 hardware accelerator failed. */
+/** ARC4 hardware accelerator failed. */
+#define MBEDTLS_ERR_ARC4_HW_ACCEL_FAILED                  -0x0019
 
 #ifdef __cplusplus
 extern "C" {

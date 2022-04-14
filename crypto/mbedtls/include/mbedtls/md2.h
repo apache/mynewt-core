@@ -55,7 +55,7 @@
 #define MBEDTLS_MD2_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
@@ -63,7 +63,8 @@
 #include <stddef.h>
 
 /* MBEDTLS_ERR_MD2_HW_ACCEL_FAILED is deprecated and should not be used. */
-#define MBEDTLS_ERR_MD2_HW_ACCEL_FAILED                   -0x002B  /**< MD2 hardware accelerator failed */
+/** MD2 hardware accelerator failed */
+#define MBEDTLS_ERR_MD2_HW_ACCEL_FAILED                   -0x002B
 
 #ifdef __cplusplus
 extern "C" {

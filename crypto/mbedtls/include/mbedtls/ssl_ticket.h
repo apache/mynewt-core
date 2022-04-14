@@ -50,7 +50,7 @@
 #define MBEDTLS_SSL_TICKET_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
@@ -61,11 +61,11 @@
  * secrecy, when MBEDTLS_HAVE_TIME is defined.
  */
 
-#include "mbedtls/ssl.h"
-#include "mbedtls/cipher.h"
+#include "ssl.h"
+#include "cipher.h"
 
 #if defined(MBEDTLS_THREADING_C)
-#include "mbedtls/threading.h"
+#include "threading.h"
 #endif
 
 #ifdef __cplusplus
@@ -124,7 +124,7 @@ void mbedtls_ssl_ticket_init( mbedtls_ssl_ticket_context *ctx );
  *                  Recommended value: 86400 (one day).
  *
  * \note            It is highly recommended to select a cipher that is at
- *                  least as strong as the the strongest ciphersuite
+ *                  least as strong as the strongest ciphersuite
  *                  supported. Usually that means a 256-bit key.
  *
  * \note            The lifetime of the keys is twice the lifetime of tickets.

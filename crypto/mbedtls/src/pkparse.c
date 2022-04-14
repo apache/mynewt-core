@@ -1070,7 +1070,7 @@ static int pk_parse_key_pkcs8_unencrypted_der(
         return( MBEDTLS_ERR_PK_KEY_INVALID_VERSION + ret );
 
     if( ( ret = pk_get_pk_alg( &p, end, &pk_alg, &params ) ) != 0 )
-        return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
+        return( ret );
 
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len, MBEDTLS_ASN1_OCTET_STRING ) ) != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
@@ -1408,8 +1408,11 @@ int mbedtls_pk_parse_key( mbedtls_pk_context *pk,
     }
 #endif /* MBEDTLS_PKCS12_C || MBEDTLS_PKCS5_C */
 
-    if( ( ret = pk_parse_key_pkcs8_unencrypted_der( pk, key, keylen ) ) == 0 )
+    ret = pk_parse_key_pkcs8_unencrypted_der( pk, key, keylen );
+    if( ret == 0 )
+    {
         return( 0 );
+    }
 
     mbedtls_pk_free( pk );
     mbedtls_pk_init( pk );
