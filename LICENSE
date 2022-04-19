@@ -283,6 +283,8 @@ which are available under a BSD style license.  Relevant files are:
     * hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
     * hw/mcu/nordic/nrf5340/include/nrfx_config.h
     * hw/mcu/nordic/nrf5340_net/include/nrfx_config.h
+    * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0.s
+    * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0_split.s
 
 This product bundles Gary S. Brown's CRC32 implementation, which is available
 under the following license:
@@ -564,6 +566,13 @@ which is available under the "modified Tcl/Tk" license.  Bundled files are:
     * hw/bsp/vbluno52/split-vbluno52.ld
     * hw/bsp/vbluno52/vbluno52_no_boot.ld
     * hw/bsp/pinetime/boot-pinetime.ld
+    * hw/bsp/apollo3_evb/apollo3.ld
+    * hw/bsp/apollo3_evb/boot-apollo3.ld
+    * hw/bsp/apollo3_evb/src/system_apollo3.c
+    * hw/bsp/nordic_pca10059/nordic_pca10059_no_boot.ld
+    * hw/bsp/nordic_pca10059/split-nordic_pca10059.ld
+    * hw/bsp/ublox_bmd_345/split-ublox_bmd_345.ld
+    * hw/bsp/ublox_bmd_345/ublox_bmd_345_no_boot.ld
 
 This product bundles part of NXP/FreeScale SDK, which is available
 under the "3-clause BSD" license. Bundled files are:
@@ -635,12 +644,20 @@ This products bundle Adafruit's tsl2561 driver, which is available under the
 
 This products bundles Amiq Micro Apollo 2, which is available under the
 "3-clause BSD" license. Bundled files are:
-    * hw/mcu/ambiq/src/ext/AmbiqSuite
+    * hw/mcu/ambiq/apollo2/src/ext/AmbiqSuite
     * hw/mcu/ambiq/apollo2/include/mcu/apollo2.h
     * hw/mcu/ambiq/apollo2/include/mcu/system_apollo2.h
     * hw/bsp/apollo2_evb/include/bsp/apollo_nvic.h
     * hw/bsp/apollo2_evb/src/system_apollo2.c
     * hw/bsp/apollo2_evb/src/arch/cortex_m4/gcc_startup.s
+
+This products bundles Amiq Micro Apollo 3, which is available under the
+"3-clause BSD" license. Bundled files are:
+    * hw/mcu/ambiq/apollo3/src/ext/AmbiqSuite
+    * hw/mcu/ambiq/apollo3/include/mcu/apollo3.h
+    * hw/mcu/ambiq/apollo3/include/mcu/cmsis_nvic.h
+    * hw/mcu/ambiq/apollo3/include/mcu/system_apollo3.h
+    * hw/bsp/apollo3_evb/src/system_apollo3.c
 
 This product bundles processor headers for PIC32 by Microchip Technology
 Inc., which is available under the "3-clause BSD" license. Bundled files are:
@@ -655,6 +672,8 @@ Inc., which is available under the "3-clause BSD" license. Bundled files are:
     * kernel/os/src/arch/pic32/startup/simple-tlb-refill-exception.S
     * kernel/os/src/arch/pic32/stubs/pic32_init_cache.S
     * kernel/os/src/arch/pic32/stubs/pic32_init_tlb_ebi_sqi.S
+    * hw/mcu/microchip/pic32mz/p32mz_app.ld
+    * hw/mcu/microchip/pic32mz/p32mz_boot.ld
 
 This product bundles MIPS processor low-level macros by Imagination
 Technologies Limited, which is available under the "3-clause BSD" license.

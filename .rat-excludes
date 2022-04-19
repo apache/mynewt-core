@@ -134,6 +134,12 @@ nordic_pca10090_no_boot.ld
 nrf91xxaa.ld
 nrf91_ram_resident.ld
 boot-pinetime.ld
+boot-apollo3.ld
+apollo3.ld
+nordic_pca10059_no_boot.ld
+split-nordic_pca10059.ld
+split-ublox_bmd_345.ld
+ublox_bmd_345_no_boot.ld
 
 # STM32 HAL - BSD License
 stm32_driver_mod_i2c_v1.c
@@ -428,6 +434,8 @@ cache-err-exception.S
 cp0defs.h
 simple-tlb-refill-exception.S
 crt0.S
+p32mz_app.ld
+p32mz_boot.ld
 
 # Calliope SDK - BSD Licence
 split-calliope_mini.ld
@@ -447,12 +455,15 @@ pic32mz2048_wi-fire
 # hw/bsp/apollo2_evb/src/arch/cortex_m4/gcc_startup.s
 apollo2_evb
 
-# BSP for Apollo2 - BSD License
+# BSP for Ambiq Apollo2/Apollo3 - BSD License
 AmbiqSuite
 apollo2.h
 system_apollo2.h
 system_apollo2.c
 apollo_nvic.h
+system_apollo3.c
+apollo3.h
+system_apollo3.h
 
 # CMSIS Cortex-M4, STM32f3 - BSD License.
 STM32F3xx
@@ -472,6 +483,7 @@ docs
 nrfx
 nrfx_glue.h
 nrfx_config.h
+nrf51xxx
 nrf52xxx
 nrf91xx
 nrf52xxx-compat
@@ -550,3 +562,5 @@ startup_stm32l073xx.s
 
 # MK64F12 SDK - BSD License
 MK64F12
+
+
