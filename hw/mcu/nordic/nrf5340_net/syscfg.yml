@@ -68,6 +68,12 @@ syscfg.defs:
             Default value is 0, so disabled.
         value: 0
 
+    MCU_DEFAULT_STARTUP:
+        description: >
+            Include default startup code.
+            Set to 0 if BSP provides customized startup code.
+        value: 1
+
 # MCU peripherals definitions
     TRNG:
         description: 'Enable nRF5340 TRNG'

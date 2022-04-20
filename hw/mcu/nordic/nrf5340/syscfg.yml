@@ -127,6 +127,12 @@ syscfg.defs:
             This settings must have same value for bootloader and application build.
         value: 1
 
+    MCU_DEFAULT_STARTUP:
+        description: >
+            Include default startup code.
+            Set to 0 if BSP provides customized startup code.
+        value: 1
+
 # MCU peripherals definitions
     ADC_0:
         description: 'Enable nRF5340 ADC 0'
