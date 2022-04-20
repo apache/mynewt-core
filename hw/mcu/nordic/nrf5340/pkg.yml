@@ -109,3 +109,6 @@ pkg.deps.NRF5340_EMBED_NET_CORE:
 
 pkg.cflags.MCU_NRF5340_EN_APPROTECT_USERHANDLING:
     - "-DENABLE_APPROTECT_USER_HANDLING"
+
+pkg.deps.MCU_MPU_ENABLE:
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/mpu"

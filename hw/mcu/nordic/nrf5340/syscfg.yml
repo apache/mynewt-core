@@ -560,6 +560,11 @@ syscfg.defs:
         description: Embed net core image in application image for single image build.
         value: 0
 
+    MCU_MPU_ENABLE:
+        description: >
+            Adds default MPU configuration package
+        value: 0
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 128
 
