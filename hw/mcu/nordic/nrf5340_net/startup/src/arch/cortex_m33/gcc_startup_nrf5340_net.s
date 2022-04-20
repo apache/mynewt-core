@@ -20,10 +20,14 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 
 */
 
+#include "syscfg/syscfg.h"
+
     .syntax unified
     .arch armv8-m.main
 
-#define __STACK_SIZE 432
+#if MYNEWT_VAL(MAIN_STACK_SIZE)
+#define __STACK_SIZE MYNEWT_VAL(MAIN_STACK_SIZE)
+#endif
 #define __HEAP_SIZE 0
 #define __STARTUP_CLEAR_BSS
 
