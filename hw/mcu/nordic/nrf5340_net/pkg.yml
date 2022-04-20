@@ -52,3 +52,7 @@ pkg.deps.TRNG:
 
 pkg.deps.BLE_CONTROLLER:
     - "@apache-mynewt-nimble/nimble/drivers/nrf5340"
+
+pkg.deps.MCU_DEFAULT_STARTUP:
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net/startup"
+
