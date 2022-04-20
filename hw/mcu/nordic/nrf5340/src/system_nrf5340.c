@@ -61,6 +61,9 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
     uint32_t SystemCoreClock __attribute__((used)) = __SYSTEM_CLOCK_INITIAL;
 #endif
 
+/* stack limit provided by linker script */
+extern uint32_t __StackLimit[];
+
 void SystemCoreClockUpdate(void)
 {
     SystemCoreClock = __SYSTEM_CLOCK_MAX >> (NRF_CLOCK->HFCLKCTRL & (CLOCK_HFCLKCTRL_HCLK_Msk));
@@ -252,6 +255,9 @@ void SystemInit(void)
     SystemCoreClockUpdate();
 
     NVIC_Relocate();
+
+    /* Setup Cortex-M33 stack limiter to detect stack overflow in interrupts and bootloader code */
+    __set_MSPLIM((uint32_t)__StackLimit);
 }
 
 /*lint --flb "Leave library region" */
