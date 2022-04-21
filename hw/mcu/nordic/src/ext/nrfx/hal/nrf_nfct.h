@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 - 2021, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2022, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -247,13 +247,6 @@ typedef enum
     /**< SENS_RES 'Platform Config' field (b7-b6) value for any platform except Type 1 Tag platform. */
     NRF_NFCT_SENSRES_PLATFORM_CONFIG_OTHER = 0 << NFCT_SENSRES_PLATFCONFIG_Pos
 } nrf_nfct_sensres_platform_config_t;
-
-/** @brief Bit masks for SEL_RES NFC frame configuration. */
-typedef enum
-{
-    NRF_NFCT_SELRES_CASCADE_MASK  = NFCT_SELRES_CASCADE_Msk,  /**< SEL_RES Cascade field bit mask. */
-    NRF_NFCT_SELRES_PROTOCOL_MASK = NFCT_SELRES_PROTOCOL_Msk  /**< SEL_RES Protocol field bit mask. */
-} nrf_nfct_selres_t;
 
 /**
  * @brief Protocol NFC field (bits b7 and b6) configuration for the SEL_RES frame according to
@@ -881,6 +874,27 @@ nrf_nfct_selres_protocol_t nrf_nfct_selres_protocol_get(NRF_NFCT_Type const * p_
 NRF_STATIC_INLINE void nrf_nfct_selres_protocol_set(NRF_NFCT_Type *            p_reg,
                                                     nrf_nfct_selres_protocol_t sel_res_protocol);
 
+/**
+ * @brief Function for getting the SEL_RES frame configuration.
+ *
+ * @details The SEL_RES frame is handled automatically by the NFCT hardware.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return SEL_RES frame configuration.
+ */
+NRF_STATIC_INLINE uint32_t nrf_nfct_selres_get(NRF_NFCT_Type const * p_reg);
+
+/**
+ * @brief Function for setting the SEL_RES frame configuration.
+ *
+ * @details The SEL_RES frame is handled automatically by the NFCT hardware.
+ *
+ * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
+ * @param[in] selres SEL_RES frame configuration.
+ */
+NRF_STATIC_INLINE void nrf_nfct_selres_set(NRF_NFCT_Type * p_reg, uint32_t selres);
+
 #ifndef NRF_DECLARE_ONLY
 NRF_STATIC_INLINE void nrf_nfct_task_trigger(NRF_NFCT_Type * p_reg, nrf_nfct_task_t task)
 {
@@ -1259,6 +1273,16 @@ NRF_STATIC_INLINE void nrf_nfct_selres_protocol_set(NRF_NFCT_Type *            p
 {
     p_reg->SELRES = (p_reg->SELRES & ~NFCT_SELRES_PROTOCOL_Msk) |
                     ((uint32_t)sel_res_protocol << NFCT_SELRES_PROTOCOL_Pos);
+}
+
+NRF_STATIC_INLINE uint32_t nrf_nfct_selres_get(NRF_NFCT_Type const * p_reg)
+{
+    return p_reg->SELRES;
+}
+
+NRF_STATIC_INLINE void nrf_nfct_selres_set(NRF_NFCT_Type * p_reg, uint32_t selres)
+{
+    p_reg->SELRES = (p_reg->SELRES & NFCT_SELRES_CASCADE_Msk) | (selres & ~NFCT_SELRES_CASCADE_Msk);
 }
 #endif /* NRF_DECLARE_ONLY */
 

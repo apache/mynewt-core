@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2021, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2022, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -260,7 +260,17 @@ nrfx_err_t nrfx_saadc_channels_config(nrfx_saadc_channel_t const * p_channels,
 nrfx_err_t nrfx_saadc_channel_config(nrfx_saadc_channel_t const * p_channel);
 
 /**
+ * @brief Function for getting the currently configured SAADC channels.
+ *
+ * @return Bitmask of configured channels.
+ */
+uint32_t nrfx_saadc_channels_configured_get(void);
+
+/**
  * @brief Function for deconfiguring the specified SAADC channels.
+ *
+ * @warning Pins associated with the deconfigured channels will be released after
+ *          next @ref nrfx_saadc_simple_mode_set() or @ref nrfx_saadc_advanced_mode_set() call.
  *
  * @param[in] channel_mask Bitmask of channels to be deconfigured.
  *
@@ -351,13 +361,16 @@ nrfx_err_t nrfx_saadc_buffer_set(nrf_saadc_value_t * p_buffer, uint16_t size);
  *                                  Call the function again to continue the conversion.
  * @retval NRFX_ERROR_NO_MEM        There is no buffer provided.
  *                                  Supply the buffer using @ref nrfx_saadc_buffer_set() and try again.
- * @retval NRFX_ERROR_INVALID_STATE There is an ongoing conversion being performed in the non-blocking manner
- *                                  or the driver is in the idle mode.
+ * @retval NRFX_ERROR_INVALID_STATE There is an ongoing conversion or calibration being performed
+ *                                  in the non-blocking manner or the driver is in the idle mode.
  */
 nrfx_err_t nrfx_saadc_mode_trigger(void);
 
 /**
  * @brief Function for aborting the ongoing and buffered conversions.
+ *
+ * @warning Aborting blocking conversion or calibration from different context is not supported.
+ *          Perform the operation in non-blocking manner instead.
  *
  * @note @ref NRFX_SAADC_EVT_DONE event will be generated if there is a conversion in progress.
  *       Event will contain number of words in the sample buffer.
@@ -391,17 +404,14 @@ nrfx_err_t nrfx_saadc_limits_set(uint8_t channel, int16_t limit_low, int16_t lim
 /**
  * @brief Function for starting the SAADC offset calibration.
  *
- * @note This function cancels the currently selected driver operation mode, if any.
- *       The desired mode (simple or advanced) must be set after the calibration process completes.
- *
- * @param[in] event_handler Event handler provided by the user. In case of providing NULL,
- *                          the calibration will be performed in the blocking manner.
+ * @param[in] calib_event_handler Calibration event handler provided by the user. In case of providing NULL,
+ *                                the calibration will be performed in the blocking manner.
  *
  * @retval NRFX_SUCCESS    Calibration finished successfully in the blocking manner
  *                         or started successfully in the non-blocking manner.
  * @retval NRFX_ERROR_BUSY There is a conversion or calibration ongoing.
  */
-nrfx_err_t nrfx_saadc_offset_calibrate(nrfx_saadc_event_handler_t event_handler);
+nrfx_err_t nrfx_saadc_offset_calibrate(nrfx_saadc_event_handler_t calib_event_handler);
 
 /** @} */
 
