@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project are documented in this file.
 
+## [2.8.0] - 2022-04-05
+### Added
+- Added function for getting the currently configured channels in the SAADC driver.
+- Added callback for the RXFRAMESTART event in the NFCT driver.
+- Added function for transmitting the NFC frame with specified number of bits in the NFCT driver.
+- Added functions for getting and setting SEL_RES auto response configuration in the NFCT HAL.
+
+### Changed
+- Refactored calibration procedure in the SAADC driver, so it retains previously configured mode.
+- Improved management of low frequency clock source during initialization in the CLOCK driver. Compatible source that already runs or is starting during initialization is now used without reconfiguration.
+- Improved software-managed triggering of the START task on an END event in the SAADC driver.
+
+### Fixed
+- Fixed event processing order in the SAADC driver. Previously, incorrect buffer might have been filled when double-buffered sampling was used with END event and START task being connected through (D)PPI.
+- Fixed the limits feature that could be spuriously triggered during calibration procedure in the SAADC driver.
+
 ## [2.7.0] - 2021-12-16
 ### Added
 - Added new fields in the driver configuration structures to allow skipping GPIO and/or PSEL register configuration. Affected drivers: I2S, PDM, PWM, QDEC, QSPI, SPI, SPIM, SPIS, TWI, TWIM, TWIS, UART, UARTE.
