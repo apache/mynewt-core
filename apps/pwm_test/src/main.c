@@ -24,17 +24,17 @@
 #include <console/console.h>
 #include "pwm_shell.h"
 
-#if (defined NUCLEO_F767ZI)
+#if MYNEWT_VAL(BSP_nucleo_f767zi)
 #   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 2)
 #   define  PWM_TEST_CH_CFG_INV  false 
 #   define  PWM_TEST_CH_NUM      2
 #   define  PWM_TEST_IRQ_PRIO    0
-#elif (defined NUCLEO_F303RE)
+#elif MYNEWT_VAL(BSP_nucleo_f303re)
 #   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 1)
 #   define  PWM_TEST_CH_CFG_INV  false 
 #   define  PWM_TEST_CH_NUM      0
 #   define  PWM_TEST_IRQ_PRIO    0
-#elif (defined NUCLEO_F303K8)
+#elif MYNEWT_VAL(BSP_nucleo_f303k8)
 #   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 1)
 #   define  PWM_TEST_CH_CFG_INV  false 
 #   define  PWM_TEST_CH_NUM      1
