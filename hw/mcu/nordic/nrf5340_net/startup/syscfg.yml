@@ -22,7 +22,7 @@ syscfg.defs:
             Stack size (in bytes) to use in startup code.
             For bootloader it's main stack, for application this stack is used by interrupts
             and exceptions.
-        value: 432
+        value: 512
 
 syscfg.vals.BOOT_LOADER:
     # MCUboot code uses a lot of stack
