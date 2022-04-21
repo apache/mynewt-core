@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 - 2021, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2022, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -238,6 +238,20 @@ void nrfx_nfct_rx(nrfx_nfct_data_desc_t const * p_rx_data);
  */
 nrfx_err_t nrfx_nfct_tx(nrfx_nfct_data_desc_t const * p_tx_data,
                         nrf_nfct_frame_delay_mode_t   delay_mode);
+
+/**
+ * @brief Function for transmitting an NFC frame with a specified number of bits.
+ *
+ * @param[in] p_tx_data   Pointer to the TX buffer. Unlike in @ref nrfx_nfct_tx, @p data_size is
+ *                        used as the number of bits to transmit, rather than bytes.
+ * @param[in] delay_mode  Delay mode of the NFCT frame timer.
+ *
+ * @retval NRFX_SUCCESS              The operation was successful.
+ * @retval NRFX_ERROR_INVALID_LENGTH The TX buffer size is invalid.
+ * @retval NRFX_ERROR_BUSY           Driver is already transferring.
+ */
+nrfx_err_t nrfx_nfct_bits_tx(nrfx_nfct_data_desc_t const * p_tx_data,
+                             nrf_nfct_frame_delay_mode_t   delay_mode);
 
 /**
  * @brief Function for moving the NFCT to a new state.
