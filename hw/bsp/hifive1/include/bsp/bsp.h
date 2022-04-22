@@ -19,6 +19,8 @@
 #ifndef __HIFIVE_BSP_H
 #define __HIFIVE_BSP_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
