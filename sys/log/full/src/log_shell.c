@@ -109,16 +109,25 @@ shell_log_dump_cmd(int argc, char **argv)
     uint32_t log_limit = 0;
     bool stream;
     bool partial_match = false;
+    bool clear_log;
     int i;
     int rc;
 
+    clear_log = false;
     for (i = 1; i < argc; ++i) {
         if (0 == strcmp(argv[i], "-l")) {
             list_only = true;
             break;
         }
-        if (isdigit((unsigned char)argv[i][0])) {
+
+        /* the -c option is to clear a log (or logs). */
+        if (!strcmp(argv[i], "-c")) {
+            clear_log = true;
+        } else if (isdigit((unsigned char)argv[i][0])) {
             log_limit = parse_ll_bounds(argv[i], 1, 1000000, &rc);
+            if (clear_log) {
+                goto err;
+            }
         } else {
             log_name = argv[i];
             if ('*' == log_name[strlen(log_name) - 1]) {
@@ -149,21 +158,29 @@ shell_log_dump_cmd(int argc, char **argv)
             continue;
         }
 
-        console_printf("Dumping log %s\n", log->l_name);
-
-        log_offset.lo_arg = NULL;
-        log_offset.lo_ts = 0;
-        log_last_index = log_get_last_index(log);
-        if (log_limit == 0 || log_last_index < log_limit) {
-            log_offset.lo_index = 0;
+        if (clear_log) {
+            console_printf("Clearing log %s\n", log->l_name);
+            rc = log_flush(log);
+            if (rc != 0) {
+                goto err;
+            }
         } else {
-            log_offset.lo_index = log_last_index - log_limit;
-        }
-        log_offset.lo_data_len = 0;
+            console_printf("Dumping log %s\n", log->l_name);
 
-        rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
-        if (rc != 0) {
-            goto err;
+            log_offset.lo_arg = NULL;
+            log_offset.lo_ts = 0;
+            log_last_index = log_get_last_index(log);
+            if (log_limit == 0 || log_last_index < log_limit) {
+                log_offset.lo_index = 0;
+            } else {
+                log_offset.lo_index = log_last_index - log_limit;
+            }
+            log_offset.lo_data_len = 0;
+
+            rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
+            if (rc != 0) {
+                goto err;
+            }
         }
     }
 
