@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file    stm32wb50xx.h
+  * @file    stm32wb30xx.h
   * @author  MCD Application Team
   * @brief   CMSIS Cortex Device Peripheral Access Layer Header File.
   *          This file contains all the peripheral register's definitions, bits
-  *          definitions and memory mapping for stm32wb50xx devices.
+  *          definitions and memory mapping for stm32wb30xx devices.
   *
   *          This file contains:
   *           - Data structures and the address mapping for all peripherals
@@ -28,12 +28,12 @@
   * @{
   */
 
-/** @addtogroup stm32wb50xx
+/** @addtogroup stm32wb30xx
   * @{
   */
 
-#ifndef __STM32WB50xx_H
-#define __STM32WB50xx_H
+#ifndef __STM32WB30xx_H
+#define __STM32WB30xx_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -60,7 +60,7 @@
   */
 
 /**
- * @brief stm32wb50xx Interrupt Number Definition, according to the selected device 
+ * @brief stm32wb30xx Interrupt Number Definition, according to the selected device 
  *        in @ref Library_configuration_section
  */
 /*!< Interrupt Number Definition for M4 */
@@ -109,7 +109,6 @@ typedef enum
   I2C1_ER_IRQn                        = 31,     /*!< I2C1 Error Interrupt                                              */
   SPI1_IRQn                           = 34,     /*!< SPI1 Interrupt                                                    */
   USART1_IRQn                         = 36,     /*!< USART1 Interrupt                                                  */
-  TSC_IRQn                            = 39,     /*!< TSC Interrupt                                                     */
   EXTI15_10_IRQn                      = 40,     /*!< EXTI Lines1[15:10 ]Interrupts                                     */
   RTC_Alarm_IRQn                      = 41,     /*!< RTC Alarms (A and B) Interrupt                                    */
   PWR_SOTF_BLEACT_802ACT_RFPHASE_IRQn = 43,     /*!< PWR switching on the fly interrupt
@@ -758,18 +757,18 @@ typedef struct
 #define OPTION_BYTE_BASE       (0x1FFF8000UL)  /*!< Option Bytes : 4kB (0x1FFF8000 - 0x1FFF8FFF)   */
 #define ENGI_BYTE_BASE         (0x1FFF7400UL)  /*!< Engi Bytes : 3kB (0x1FFF7400 - 0x1FFF7FFF)     */
 
-#define SRAM1_BASE             SRAM_BASE                 /*!< SRAM1(up to 64 KB) base address */
-#define SRAM2A_BASE            (SRAM_BASE + 0x00030000UL)/*!< SRAM2A(32 KB) base address      */
-#define SRAM2B_BASE            (SRAM_BASE + 0x00038000UL)/*!< SRAM2B(32 KB) base address      */
+#define SRAM1_BASE             SRAM_BASE                 /*!< SRAM1(up to 32 KB) base address */
+#define SRAM2A_BASE            (SRAM_BASE + 0x00030000UL)/*!< SRAM2A(32 KB) base address       */
+#define SRAM2B_BASE            (SRAM_BASE + 0x00038000UL)/*!< SRAM2B(32 KB) base address       */
 
 /* Memory Size */
 #define FLASH_SIZE              (((uint32_t)(*((uint16_t *)FLASHSIZE_BASE)) & (0x07FFUL)) << 10U)
-#define SRAM1_SIZE              0x00010000UL   /*!< SRAM1 default size : 64 kB  */
+#define SRAM1_SIZE              0x00008000UL   /*!< SRAM1 default size : 32 kB  */
 #define SRAM2A_SIZE             0x00008000UL   /*!< SRAM2a default size : 32 kB  */
 #define SRAM2B_SIZE             0x00008000UL   /*!< SRAM2b default size : 32 kB  */
 
 /* End addresses */
-#define SRAM1_END_ADDR         (0x2000FFFFUL)  /*!< SRAM1               :  64KB (0x20000000 - 0x2000FFFF) */
+#define SRAM1_END_ADDR         (0x20007FFFUL)  /*!< SRAM1               :  32KB (0x20000000 - 0x20007FFF) */
 #define SRAM2A_END_ADDR        (0x20037FFFUL)  /*!< SRAM2a (backup)     :  32KB (0x20030000 - 0x20037FFF) */
 #define SRAM2B_END_ADDR        (0x2003FFFFUL)  /*!< SRAM2b (non-backup) :  32KB (0x20038000 - 0x2003FFFF) */
 
@@ -8823,9 +8822,6 @@ typedef struct
 #define SYSCFG_C2IMR2_PVDIM_Pos                 (20U)                          
 #define SYSCFG_C2IMR2_PVDIM_Msk                 (0x1UL << SYSCFG_C2IMR2_PVDIM_Pos)              /*!< 0x00100000 */
 #define SYSCFG_C2IMR2_PVDIM                     SYSCFG_C2IMR2_PVDIM_Msk                         /*!< Enabling of interrupt from Power Voltage Detector to CPU2         */
-#define SYSCFG_C2IMR2_TSCIM_Pos                 (21U)                          
-#define SYSCFG_C2IMR2_TSCIM_Msk                 (0x1UL << SYSCFG_C2IMR2_TSCIM_Pos)              /*!< 0x00200000 */
-#define SYSCFG_C2IMR2_TSCIM                     SYSCFG_C2IMR2_TSCIM_Msk                         /*!< Enabling of interrupt from Touch Sensing Controller to CPU2       */
 
 /*****************  Bit definition for SYSCFG_SIPCR register (SYSCFG secure IP control register) *****************************************************************************/
 #define SYSCFG_SIPCR_SAES2_Pos                  (1U)                           
@@ -11028,7 +11024,7 @@ typedef struct
 }
 #endif /* __cplusplus */
 
-#endif /* __STM32WB50xx_H */
+#endif /* __STM32WB30xx_H */
 
 /**
   * @}
