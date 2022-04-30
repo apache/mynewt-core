@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics. 
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the 
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -86,6 +85,8 @@
 #define USE_HAL_UART_REGISTER_CALLBACKS      0u
 #define USE_HAL_USART_REGISTER_CALLBACKS     0u
 #define USE_HAL_WWDG_REGISTER_CALLBACKS      0u
+
+#define USE_HAL_CRYP_SUSPEND_RESUME 0u
 
 /* ########################## Oscillator Values adaptation ####################*/
 /**
@@ -174,17 +175,17 @@
   */
 #define  VDD_VALUE                    (3300UL) /*!< Value of VDD in mv */
 #define  TICK_INT_PRIORITY            ((1UL<<__NVIC_PRIO_BITS) - 1UL) /*!< tick interrupt priority (lowest by default) */
-#define  USE_RTOS                     0
-#define  PREFETCH_ENABLE              0
-#define  INSTRUCTION_CACHE_ENABLE     1
-#define  DATA_CACHE_ENABLE            1
+#define  USE_RTOS                     0U
+#define  PREFETCH_ENABLE              0U
+#define  INSTRUCTION_CACHE_ENABLE     1U
+#define  DATA_CACHE_ENABLE            1U
 
 /* ########################## Assert Selection ############################## */
 /**
   * @brief Uncomment the line below to expanse the "assert_param" macro in the
   *        HAL drivers code
   */
-/* #define USE_FULL_ASSERT    1 */
+/* #define USE_FULL_ASSERT    1U */
 
 /* ################## SPI peripheral configuration ########################## */
 
@@ -349,5 +350,3 @@
 #endif
 
 #endif /* STM32WBxx_HAL_CONF_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
