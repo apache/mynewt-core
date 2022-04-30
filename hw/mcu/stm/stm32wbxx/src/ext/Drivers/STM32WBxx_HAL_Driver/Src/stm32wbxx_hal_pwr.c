@@ -11,13 +11,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics. 
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the 
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -127,11 +126,13 @@ void HAL_PWR_DeInit(void)
   
   /* Clear all flags */
   LL_PWR_WriteReg(SCR,
-                    LL_PWR_SCR_CC2HF 
-                  | LL_PWR_SCR_C802AF
+                    LL_PWR_SCR_CC2HF
                   | LL_PWR_SCR_CBLEAF
                   | LL_PWR_SCR_CCRPEF
+#if defined(PWR_CR3_E802A)
+                  | LL_PWR_SCR_C802AF
                   | LL_PWR_SCR_C802WUF
+#endif
                   | LL_PWR_SCR_CBLEWUF
 #if defined(PWR_CR5_SMPSEN)
                   | LL_PWR_SCR_CBORHF
@@ -222,8 +223,9 @@ void HAL_PWR_DisableBkUpAccess(void)
       (+) Stop 1 mode: all clocks are stopped except LSI and LSE, main regulator off, low power regulator on.
       (+) Stop 2 mode: all clocks are stopped except LSI and LSE, main regulator off, low power regulator on, reduced set of waking up IPs compared to Stop 1 mode.
 
-      (+) Standby mode with SRAM2: all clocks are stopped except LSI and LSE, SRAM2 content preserved, main regulator off, low power regulator on. 
-      (+) Standby mode without SRAM2: all clocks are stopped except LSI and LSE, main and low power regulators off.
+      (+) Standby mode with SRAM2a: all clocks are stopped except LSI and LSE, SRAM2a content preserved, main regulator off, low power regulator on.
+          Note: On devices STM32WB15xx, STM32WB10xx, retention is extended to SRAM1, SRAM2a, SRAM2b.
+      (+) Standby mode without SRAM2a: all clocks are stopped except LSI and LSE, main and low power regulators off.
 
       (+) Shutdown mode: all clocks are stopped except LSE, main and low power regulators off.
 
@@ -266,6 +268,7 @@ void HAL_PWR_DisableBkUpAccess(void)
           The Stop 0, Stop 1 or Stop 2 modes are entered thru the following API's:
           (++) HAL_PWREx_EnterSTOP0Mode() for mode 0, HAL_PWREx_EnterSTOP1Mode() for mode 1, HAL_PWREx_EnterSTOP2Mode() for mode 2
                or for porting reasons HAL_PWR_EnterSTOPMode().
+               Note: Low power Stop2 mode is not available on devices STM32WB15xx, STM32WB10xx.
 
       (+) Regulator setting (applicable to HAL_PWR_EnterSTOPMode() only):
           (++) PWR_MAINREGULATOR_ON: Regulator in main mode (STOP0 mode)
@@ -560,6 +563,8 @@ void HAL_PWR_EnterSLEEPMode(uint32_t Regulator, uint8_t SLEEPEntry)
   *         startup delay is incurred when waking up.
   *         By keeping the internal regulator ON during Stop mode (Stop 0), the consumption
   *         is higher although the startup time is reduced.
+  * @note  Case of Stop0 mode with SMPS: Before entering Stop 0 mode with SMPS Step Down converter enabled,
+  *        the HSI16 must be kept on by enabling HSI kernel clock (set HSIKERON register bit).
   * @note  According to system power policy, system entering in Stop mode
   *        is depending on other CPU power mode.
   * @param Regulator Specifies the regulator state in Stop mode.
@@ -712,4 +717,4 @@ __weak void HAL_PWR_PVDCallback(void)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

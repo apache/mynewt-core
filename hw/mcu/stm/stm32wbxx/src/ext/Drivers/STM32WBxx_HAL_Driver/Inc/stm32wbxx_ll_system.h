@@ -3,6 +3,17 @@
   * @file    stm32wbxx_ll_system.h
   * @author  MCD Application Team
   * @brief   Header file of SYSTEM LL module.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
   @verbatim
   ==============================================================================
                      ##### How to use this driver #####
@@ -16,17 +27,6 @@
       (+) Access to VREFBUF registers
 
   @endverbatim
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics. 
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the 
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
   ******************************************************************************
   */
 
@@ -58,7 +58,13 @@ extern "C" {
 /** @defgroup SYSTEM_LL_Private_Constants SYSTEM Private Constants
   * @{
   */
-
+/**
+ * @brief VREFBUF VREF_SC0 & VREF_SC1 calibration values 
+ */
+#define VREFBUF_SC0_CAL_ADDR   ((uint8_t*) (0x1FFF75F0UL)) /*!<  Address of VREFBUF trimming value for VRS=0,
+                                                                 VREF_SC0 in STM32WB datasheet */
+#define VREFBUF_SC1_CAL_ADDR   ((uint8_t*) (0x1FFF7530UL)) /*!<  Address of VREFBUF trimming value for VRS=1,
+                                                                 VREF_SC1 in STM32WB datasheet */
 /**
   * @}
   */
@@ -191,6 +197,7 @@ extern "C" {
 #define LL_SYSCFG_SRAM2WRP_PAGE33               SYSCFG_SWPR2_PAGE33      /*!< SRAM2B Write protection page 33 */
 #define LL_SYSCFG_SRAM2WRP_PAGE34               SYSCFG_SWPR2_PAGE34      /*!< SRAM2B Write protection page 34 */
 #define LL_SYSCFG_SRAM2WRP_PAGE35               SYSCFG_SWPR2_PAGE35      /*!< SRAM2B Write protection page 35 */
+#if defined(SYSCFG_SWPR2_PAGE36)
 #define LL_SYSCFG_SRAM2WRP_PAGE36               SYSCFG_SWPR2_PAGE36      /*!< SRAM2B Write protection page 36 */
 #define LL_SYSCFG_SRAM2WRP_PAGE37               SYSCFG_SWPR2_PAGE37      /*!< SRAM2B Write protection page 37 */
 #define LL_SYSCFG_SRAM2WRP_PAGE38               SYSCFG_SWPR2_PAGE38      /*!< SRAM2B Write protection page 38 */
@@ -219,6 +226,7 @@ extern "C" {
 #define LL_SYSCFG_SRAM2WRP_PAGE61               SYSCFG_SWPR2_PAGE61      /*!< SRAM2B Write protection page 61 */
 #define LL_SYSCFG_SRAM2WRP_PAGE62               SYSCFG_SWPR2_PAGE62      /*!< SRAM2B Write protection page 62 */
 #define LL_SYSCFG_SRAM2WRP_PAGE63               SYSCFG_SWPR2_PAGE63      /*!< SRAM2B Write protection page 63 */
+#endif
 /**
   * @}
   */
@@ -227,8 +235,12 @@ extern "C" {
   * @{
   */
 #define LL_SYSCFG_GRP1_TIM1                     SYSCFG_IMR1_TIM1IM     /*!< Enabling of interrupt from Timer 1 to CPU1                    */
+#if defined(TIM16)
 #define LL_SYSCFG_GRP1_TIM16                    SYSCFG_IMR1_TIM16IM    /*!< Enabling of interrupt from Timer 16 to CPU1                   */
+#endif
+#if defined(TIM17)
 #define LL_SYSCFG_GRP1_TIM17                    SYSCFG_IMR1_TIM17IM    /*!< Enabling of interrupt from Timer 17 to CPU1                   */
+#endif
 
 #define LL_SYSCFG_GRP1_EXTI5                    SYSCFG_IMR1_EXTI5IM    /*!< Enabling of interrupt from External Interrupt Line 5 to CPU1  */
 #define LL_SYSCFG_GRP1_EXTI6                    SYSCFG_IMR1_EXTI6IM    /*!< Enabling of interrupt from External Interrupt Line 6 to CPU1  */
@@ -383,8 +395,12 @@ extern "C" {
   * @{
   */
 #define LL_DBGMCU_APB2_GRP1_TIM1_STOP      DBGMCU_APB2FZR_DBG_TIM1_STOP   /*!< The counter clock of TIM1 is stopped when the core is halted              */
+#if defined(TIM16)
 #define LL_DBGMCU_APB2_GRP1_TIM16_STOP     DBGMCU_APB2FZR_DBG_TIM16_STOP  /*!< The counter clock of TIM16 is stopped when the core is halted             */
+#endif
+#if defined(TIM17)
 #define LL_DBGMCU_APB2_GRP1_TIM17_STOP     DBGMCU_APB2FZR_DBG_TIM17_STOP  /*!< The counter clock of TIM17 is stopped when the core is halted             */
+#endif
 /**
   * @}
   */
@@ -393,8 +409,12 @@ extern "C" {
   * @{
   */
 #define LL_C2_DBGMCU_APB2_GRP1_TIM1_STOP   DBGMCU_C2APB2FZR_DBG_TIM1_STOP   /*!< The counter clock of TIM1 is stopped when the core is halted              */
+#if defined(TIM16)
 #define LL_C2_DBGMCU_APB2_GRP1_TIM16_STOP  DBGMCU_C2APB2FZR_DBG_TIM16_STOP  /*!< The counter clock of TIM16 is stopped when the core is halted             */
+#endif
+#if defined(TIM17)
 #define LL_C2_DBGMCU_APB2_GRP1_TIM17_STOP  DBGMCU_C2APB2FZR_DBG_TIM17_STOP  /*!< The counter clock of TIM17 is stopped when the core is halted             */
+#endif
 /**
   * @}
   */
@@ -504,6 +524,7 @@ __STATIC_INLINE void LL_SYSCFG_DisableAnalogBooster(void)
   CLEAR_BIT(SYSCFG->CFGR1, SYSCFG_CFGR1_BOOSTEN);
 }
 
+#if defined(SYSCFG_CFGR1_ANASWVDD)
 /**
   * @brief  Enable the Analog GPIO switch to control voltage selection
   *         when the supply voltage is supplied by VDDA
@@ -527,6 +548,7 @@ __STATIC_INLINE void LL_SYSCFG_DisableAnalogGpioSwitch(void)
 {
   CLEAR_BIT(SYSCFG->CFGR1, SYSCFG_CFGR1_ANASWVDD);
 }
+#endif
 
 /**
   * @brief  Enable the I2C fast mode plus driving capability.
@@ -1592,7 +1614,7 @@ __STATIC_INLINE uint32_t LL_DBGMCU_IsEnabledTraceClock(void)
 }
 
 /**
-  * @brief  Enable the external trigger ouput
+  * @brief  Enable the external trigger output
   * @note   When enable the external trigger is output (state of bit 1),
   *         TRGIO pin is connected to TRGOUT.
   * @rmtoll DBGMCU_CR TRGOEN         LL_DBGMCU_EnableTriggerOutput\n
@@ -1603,7 +1625,7 @@ __STATIC_INLINE void LL_DBGMCU_EnableTriggerOutput(void)
 }
 
 /**
-  * @brief  Disable the external trigger ouput
+  * @brief  Disable the external trigger output
   * @note   When disable external trigger is input (state of bit 0),
   *         TRGIO pin is connected to TRGIN.
   * @rmtoll DBGMCU_CR TRGOEN         LL_DBGMCU_DisableTriggerOutput\n
@@ -1877,6 +1899,24 @@ __STATIC_INLINE uint32_t LL_VREFBUF_GetVoltageScaling(void)
 }
 
 /**
+  * @brief  Get the VREFBUF trimming value for VRS=0 (VREF_SC0)
+  * @retval Between 0 and 0x3F
+  */
+__STATIC_INLINE uint32_t LL_VREFBUF_SC0_GetCalibration(void)
+{
+  return (uint32_t)(*VREFBUF_SC0_CAL_ADDR);
+}
+
+/**
+  * @brief  Get the VREFBUF trimming value for VRS=1 (VREF_SC1)
+  * @retval Between 0 and 0x3F
+  */
+__STATIC_INLINE uint32_t LL_VREFBUF_SC1_GetCalibration(void)
+{
+  return (uint32_t)(*VREFBUF_SC1_CAL_ADDR);
+}
+
+/**
   * @brief  Check if Voltage reference buffer is ready
   * @rmtoll VREFBUF_CSR  VRR           LL_VREFBUF_IsVREFReady
   * @retval State of bit (1 or 0).
@@ -1898,6 +1938,11 @@ __STATIC_INLINE uint32_t LL_VREFBUF_GetTrimming(void)
 
 /**
   * @brief  Set the trimming code for VREFBUF calibration (Tune the internal reference buffer voltage)
+  * @note   Each VrefBuf voltage scale is calibrated in production for each device,
+  *         data stored in flash memory.
+  *         Functions @ref LL_VREFBUF_SC0_GetCalibration and 
+  *         @ref LL_VREFBUF_SC0_GetCalibration can be used to retrieve
+  *         these calibration data.
   * @rmtoll VREFBUF_CCR  TRIM          LL_VREFBUF_SetTrimming
   * @param  Value Between 0 and 0x3F
   * @retval None
@@ -2182,8 +2227,8 @@ __STATIC_INLINE uint32_t LL_FLASH_GetUDN(void)
   * @brief  Return the Device ID
   * @note   The 64-bit UID64 may be used by Firmware to derive BLE 48-bit Device Address EUI-48 or
   *         802.15.4 64-bit Device Address EUI-64.
-  *         For STM32WBxxxx devices, the device ID is 0x05
-  * @retval Values between Min_Data=0x00 and Max_Data=0xFF (ex: Device ID is 0x05)
+  *         For STM32WBxxxx devices, the device ID is 0x26
+  * @retval Values between Min_Data=0x00 and Max_Data=0xFF (ex: Device ID is 0x26 for STM32WB55x)
   */
 __STATIC_INLINE uint32_t LL_FLASH_GetDeviceID(void)
 {
@@ -2194,13 +2239,17 @@ __STATIC_INLINE uint32_t LL_FLASH_GetDeviceID(void)
   * @brief  Return the ST Company ID
   * @note   The 64-bit UID64 may be used by Firmware to derive BLE 48-bit Device Address EUI-48 or
   *         802.15.4 64-bit Device Address EUI-64.
-  *         For STM32WBxxxx devices, the ST Compagny ID is 0x0080E1
-  * @retval Values between Min_Data=0x00 and Max_Data=0xFFFFFF (ex: ST Compagny ID is 0x0080E1)
+  *         For STM32WBxxxx devices, the ST Company ID is 0x0080E1
+  * @retval Values between Min_Data=0x00 and Max_Data=0xFFFFFF (ex: ST Company ID is 0x0080E1)
   */
 __STATIC_INLINE uint32_t LL_FLASH_GetSTCompanyID(void)
 {
   return (uint32_t)(((READ_REG(*((uint32_t *)UID64_BASE + 1U))) >> 8U ) & 0x00FFFFFFU);
 }
+/**
+  * @}
+  */
+
 /**
   * @}
   */
@@ -2224,5 +2273,3 @@ __STATIC_INLINE uint32_t LL_FLASH_GetSTCompanyID(void)
 #endif
 
 #endif /* STM32WBxx_LL_SYSTEM_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -8,6 +8,17 @@
   *           + Initialization and de-initialization functions
   *           + IO operation functions
   *           + Peripheral State and errors functions
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
   @verbatim
   ==============================================================================
                         ##### How to use this driver #####
@@ -72,17 +83,6 @@
       (@) You can refer to the DMA HAL driver header file for more useful macros
 
   @endverbatim
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics. 
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the 
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
   ******************************************************************************
   */
 
@@ -727,6 +727,9 @@ HAL_StatusTypeDef HAL_DMA_PollForTransfer(DMA_HandleTypeDef *hdma, HAL_DMA_Level
     /* Clear the transfer complete flag */
     hdma->DmaBaseAddress->IFCR = (DMA_FLAG_TC1 << (hdma->ChannelIndex & 0x1cU));
 
+    /* Process unlocked */
+    __HAL_UNLOCK(hdma);
+
     /* The selected Channelx EN bit is cleared (DMA is disabled and
     all transfers are complete) */
     hdma->State = HAL_DMA_STATE_READY;
@@ -736,9 +739,6 @@ HAL_StatusTypeDef HAL_DMA_PollForTransfer(DMA_HandleTypeDef *hdma, HAL_DMA_Level
     /* Clear the half transfer complete flag */
     hdma->DmaBaseAddress->IFCR = (DMA_FLAG_HT1 << (hdma->ChannelIndex & 0x1cU));
   }
-
-  /* Process unlocked */
-  __HAL_UNLOCK(hdma);
 
   return HAL_OK;
 }
@@ -837,9 +837,9 @@ void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
   * @brief  Register callbacks
   * @param hdma Pointer to a DMA_HandleTypeDef structure that contains
   *                               the configuration information for the specified DMA Channel.
-  * @param CallbackID User Callback identifer
+  * @param CallbackID User Callback identifier
   *                               a HAL_DMA_CallbackIDTypeDef ENUM as parameter.
-  * @param pCallback Pointer to private callbacsk function which has pointer to
+  * @param pCallback Pointer to private callback function which has pointer to
   *                               a DMA_HandleTypeDef structure as parameter.
   * @retval HAL status
   */
@@ -890,7 +890,7 @@ HAL_StatusTypeDef HAL_DMA_RegisterCallback(DMA_HandleTypeDef *hdma, HAL_DMA_Call
   * @brief  UnRegister callbacks
   * @param hdma Pointer to a DMA_HandleTypeDef structure that contains
   *                               the configuration information for the specified DMA Channel.
-  * @param CallbackID User Callback identifer
+  * @param CallbackID User Callback identifier
   *                               a HAL_DMA_CallbackIDTypeDef ENUM as parameter.
   * @retval HAL status
   */
@@ -1075,7 +1075,9 @@ static void DMA_CalcDMAMUXChannelBaseAndMask(DMA_HandleTypeDef *hdma)
 #endif
   channel_number = (((uint32_t)hdma->Instance & 0xFFU) - 8U) / 20U;
   hdma->DMAmuxChannelStatus = DMAMUX1_ChannelStatus;
-  hdma->DMAmuxChannelStatusMask = 1UL << (channel_number & 0x1cU);
+
+  /* Initialize the field DMAmuxChannelStatusMask with the corresponding index of the DMAMUX channel selected for the current ChannelIndex */
+  hdma->DMAmuxChannelStatusMask = 1UL << (channel_number & 0x1FU);
 }
 
 /**
@@ -1114,5 +1116,3 @@ static void DMA_CalcDMAMUXRequestGenBaseAndMask(DMA_HandleTypeDef *hdma)
 /**
   * @}
   */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

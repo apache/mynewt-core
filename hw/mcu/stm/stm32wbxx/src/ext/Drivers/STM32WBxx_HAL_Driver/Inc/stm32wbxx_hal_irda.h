@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -78,7 +77,8 @@ typedef struct
 
 /**
   * @brief HAL IRDA State definition
-  * @note  HAL IRDA State value is a combination of 2 different substates: gState and RxState (see @ref IRDA_State_Definition).
+  * @note  HAL IRDA State value is a combination of 2 different substates:
+  *        gState and RxState (see @ref IRDA_State_Definition).
   *        - gState contains IRDA state information related to global Handle management
   *          and also information related to Tx operations.
   *          gState value coding follow below described bitmap :
@@ -87,14 +87,14 @@ typedef struct
   *             01 : (Not Used)
   *             10 : Timeout
   *             11 : Error
-  *          b5     IP initilisation status
-  *             0  : Reset (IP not initialized)
-  *             1  : Init done (IP not initialized. HAL IRDA Init function already called)
+  *          b5     Peripheral initialization status
+  *             0  : Reset (Peripheral not initialized)
+  *             1  : Init done (Peripheral initialized. HAL IRDA Init function already called)
   *          b4-b3  (not used)
   *             xx : Should be set to 00
   *          b2     Intrinsic process state
   *             0  : Ready
-  *             1  : Busy (IP busy with some configuration or internal operations)
+  *             1  : Busy (Peripheral busy with some configuration or internal operations)
   *          b1     (not used)
   *             x  : Should be set to 0
   *          b0     Tx state
@@ -104,9 +104,9 @@ typedef struct
   *          RxState value coding follow below described bitmap :
   *          b7-b6  (not used)
   *             xx : Should be set to 00
-  *          b5     IP initilisation status
-  *             0  : Reset (IP not initialized)
-  *             1  : Init done (IP not initialized)
+  *          b5     Peripheral initialization status
+  *             0  : Reset (Peripheral not initialized)
+  *             1  : Init done (Peripheral initialized)
   *          b4-b2  (not used)
   *            xxx : Should be set to 000
   *          b1     Rx state
@@ -951,4 +951,3 @@ uint32_t              HAL_IRDA_GetError(IRDA_HandleTypeDef *hirda);
 
 #endif /* STM32WBxx_HAL_IRDA_H */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
