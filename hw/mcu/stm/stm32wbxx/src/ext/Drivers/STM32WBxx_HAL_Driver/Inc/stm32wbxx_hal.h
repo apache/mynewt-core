@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics. 
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the 
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -38,23 +37,26 @@
   * @{
   */
   
-/* Exported constants --------------------------------------------------------*/
-/** @defgroup HAL_Exported_Constants HAL Exported Constants
-  * @{
-  */
-  
 /** @defgroup HAL_TICK_FREQ Tick Frequency
   * @{
   */
-#define  HAL_TICK_FREQ_10HZ         100U
-#define  HAL_TICK_FREQ_100HZ        10U
-#define  HAL_TICK_FREQ_1KHZ         1U
-#define  HAL_TICK_FREQ_DEFAULT      HAL_TICK_FREQ_1KHZ
+typedef enum
+{
+  HAL_TICK_FREQ_10HZ         = 100U,
+  HAL_TICK_FREQ_100HZ        = 10U,
+  HAL_TICK_FREQ_1KHZ         = 1U,
+  HAL_TICK_FREQ_DEFAULT      = HAL_TICK_FREQ_1KHZ
+} HAL_TickFreqTypeDef;
 
 /**
   * @}
   */
   
+/* Exported constants --------------------------------------------------------*/
+/** @defgroup HAL_Exported_Constants HAL Exported Constants
+  * @{
+  */
+
 /** @defgroup SYSCFG_Exported_Constants SYSCFG Exported Constants
   * @{
   */
@@ -133,6 +135,7 @@
 #define SYSCFG_SRAM2WRP_PAGE33          LL_SYSCFG_SRAM2WRP_PAGE33       /*!< SRAM2B Write protection page 33 */
 #define SYSCFG_SRAM2WRP_PAGE34          LL_SYSCFG_SRAM2WRP_PAGE34       /*!< SRAM2B Write protection page 34 */
 #define SYSCFG_SRAM2WRP_PAGE35          LL_SYSCFG_SRAM2WRP_PAGE35       /*!< SRAM2B Write protection page 35 */
+#if defined(LL_SYSCFG_SRAM2WRP_PAGE36)
 #define SYSCFG_SRAM2WRP_PAGE36          LL_SYSCFG_SRAM2WRP_PAGE36       /*!< SRAM2B Write protection page 36 */
 #define SYSCFG_SRAM2WRP_PAGE37          LL_SYSCFG_SRAM2WRP_PAGE37       /*!< SRAM2B Write protection page 37 */
 #define SYSCFG_SRAM2WRP_PAGE38          LL_SYSCFG_SRAM2WRP_PAGE38       /*!< SRAM2B Write protection page 38 */
@@ -161,6 +164,7 @@
 #define SYSCFG_SRAM2WRP_PAGE61          LL_SYSCFG_SRAM2WRP_PAGE61       /*!< SRAM2B Write protection page 61 */
 #define SYSCFG_SRAM2WRP_PAGE62          LL_SYSCFG_SRAM2WRP_PAGE62       /*!< SRAM2B Write protection page 62 */
 #define SYSCFG_SRAM2WRP_PAGE63          LL_SYSCFG_SRAM2WRP_PAGE63       /*!< SRAM2B Write protection page 63 */
+#endif /* LL_SYSCFG_SRAM2WRP_PAGE36 */
 
 /**
   * @}
@@ -419,7 +423,7 @@
   * @param  __SRAM2WRP__  This parameter can be a combination of values of @ref SYSCFG_SRAM2WRP_32_63
   * @note   Write protection can only be disabled by a system reset
   */
-#define __HAL_SYSCFG_SRAM2_WRP_32_63_ENABLE(__SRAM2WRP__)   do {assert_param(IS_SYSCFG_SRAM2WRP_PAGE((__SRAM2WRP__)));\
+#define __HAL_SYSCFG_SRAM2_WRP_32_63_ENABLE(__SRAM2WRP__)   do {assert_param(IS_SYSCFG_SRAM2WRP2_PAGE((__SRAM2WRP__)));\
                                                                 LL_SYSCFG_EnableSRAM2PageWRP_32_63(__SRAM2WRP__);\
                                                             }while(0)
 
@@ -516,7 +520,13 @@
                                                          (((__INTERRUPT__) & SYSCFG_IT_FPU_IDC) == SYSCFG_IT_FPU_IDC) || \
                                                          (((__INTERRUPT__) & SYSCFG_IT_FPU_IXC) == SYSCFG_IT_FPU_IXC))
 
+#if defined(STM32WB15xx)
 #define IS_SYSCFG_SRAM2WRP_PAGE(__PAGE__)               (((__PAGE__) > 0U) && ((__PAGE__) <= 0xFFFFFFFFU))
+#define IS_SYSCFG_SRAM2WRP2_PAGE(__PAGE__)              (((__PAGE__) > 0U) && ((__PAGE__) <= 0x0000000FU))
+#else
+#define IS_SYSCFG_SRAM2WRP_PAGE(__PAGE__)               (((__PAGE__) > 0U) && ((__PAGE__) <= 0xFFFFFFFFU))
+#define IS_SYSCFG_SRAM2WRP2_PAGE(__PAGE__)              IS_SYSCFG_SRAM2WRP_PAGE(__PAGE__)
+#endif
 
 #if defined(VREFBUF)
 #define IS_SYSCFG_VREFBUF_VOLTAGE_SCALE(__SCALE__)      (((__SCALE__) == SYSCFG_VREFBUF_VOLTAGE_SCALE0) || \
@@ -594,8 +604,8 @@ void HAL_IncTick(void);
 void HAL_Delay(uint32_t Delay);
 uint32_t HAL_GetTick(void);
 uint32_t HAL_GetTickPrio(void);
-HAL_StatusTypeDef HAL_SetTickFreq(uint32_t Freq);
-uint32_t HAL_GetTickFreq(void);
+HAL_StatusTypeDef HAL_SetTickFreq(HAL_TickFreqTypeDef Freq);
+HAL_TickFreqTypeDef HAL_GetTickFreq(void);
 void HAL_SuspendTick(void);
 void HAL_ResumeTick(void);
 uint32_t HAL_GetHalVersion(void);
@@ -630,7 +640,7 @@ void HAL_DBGMCU_DisableDBGStandbyMode(void);
   */
 extern __IO uint32_t uwTick;
 extern uint32_t uwTickPrio;
-extern uint32_t uwTickFreq;
+extern HAL_TickFreqTypeDef uwTickFreq;
 /**
   * @}
   */
@@ -654,8 +664,10 @@ void HAL_SYSCFG_DisableVREFBUF(void);
 
 void HAL_SYSCFG_EnableIOBooster(void);
 void HAL_SYSCFG_DisableIOBooster(void);
+#if defined(SYSCFG_CFGR1_ANASWVDD)
 void HAL_SYSCFG_EnableIOVdd(void);
 void HAL_SYSCFG_DisableIOVdd(void);
+#endif
 
 void HAL_SYSCFG_EnableSecurityAccess(uint32_t SecurityAccess);
 void HAL_SYSCFG_DisableSecurityAccess(uint32_t SecurityAccess);
@@ -682,5 +694,3 @@ uint32_t HAL_SYSCFG_IsEnabledSecurityAccess(uint32_t SecurityAccess);
 #endif
 
 #endif /* STM32WBxx_HAL_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
