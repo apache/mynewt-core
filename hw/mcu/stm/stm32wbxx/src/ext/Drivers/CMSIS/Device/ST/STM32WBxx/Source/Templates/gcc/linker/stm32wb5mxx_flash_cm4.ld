@@ -1,7 +1,7 @@
 /**
 *****************************************************************************
 **
-**  File        : stm32wb50xx_flash_cm4.ld
+**  File        : stm32wb5mxx_flash_cm4.ld
 **
 **  Abstract    : System Workbench Minimal System calls file
 **
@@ -31,7 +31,7 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-_estack = 0x20010000;    /* end of RAM */
+_estack = 0x20030000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x400;      /* required amount of heap  */
 _Min_Stack_Size = 0x1000;   /* required amount of stack */
@@ -40,7 +40,7 @@ _Min_Stack_Size = 0x1000;   /* required amount of stack */
 MEMORY
 {
 FLASH (rx)                 : ORIGIN = 0x08000000, LENGTH = 512K
-RAM1 (xrw)                 : ORIGIN = 0x20000008, LENGTH = 0xFFF8
+RAM1 (xrw)                 : ORIGIN = 0x20000008, LENGTH = 0x2FFF8
 RAM_SHARED (xrw)           : ORIGIN = 0x20030000, LENGTH = 10K
 }
 

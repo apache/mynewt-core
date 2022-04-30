@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file      startup_stm32wb55xx_cm4.s
+  * @file      startup_stm32wb5mxx_cm4.s
   * @author    MCD Application Team
-  * @brief     STM32WB55xx devices vector table GCC toolchain.
+  * @brief     STM32WB5Mxx devices vector table GCC toolchain.
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -94,7 +94,7 @@ Reset_Handler:
   mov   sp, r0          /* set stack pointer */
 /* Call the clock system initialization function.*/
   bl  SystemInit
-
+  
 /* Copy the data segment initializers from flash to SRAM */
   INIT_DATA _sdata, _edata, _sidata
 

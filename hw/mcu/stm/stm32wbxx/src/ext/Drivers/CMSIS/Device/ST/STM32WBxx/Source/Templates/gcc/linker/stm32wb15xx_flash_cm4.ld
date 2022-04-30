@@ -1,23 +1,28 @@
-/**
-*****************************************************************************
+/*
+******************************************************************************
 **
-**  File        : stm32wb50xx_flash_cm4.ld
+**  File        : LinkerScript.ld
 **
-**  Abstract    : System Workbench Minimal System calls file
+**  Author      : STM32CubeIDE
 **
-** 		          For more information about which c-functions
-**                need which of these lowlevel functions
-**                please consult the Newlib libc-manual
+**  Abstract    : Linker script for STM32WB15xC Device
+**                      320Kbytes FLASH
+**                       48Kbytes RAM
 **
-**  Environment : System Workbench for MCU
+**                Set heap size, stack size and stack location according
+**                to application requirements.
 **
-**  Distribution: The file is distributed “as is,” without any warranty
+**                Set memory bank area and size if external memory is used.
+**
+**  Target      : STMicroelectronics STM32
+**
+**  Distribution: The file is distributed as is without any warranty
 **                of any kind.
 **
 *****************************************************************************
 ** @attention
 **
-** Copyright (c) 2019 STMicroelectronics.
+** Copyright (c) 2020 STMicroelectronics.
 ** All rights reserved.
 **
 ** This software is licensed under terms that can be found in the LICENSE file
@@ -31,16 +36,16 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-_estack = 0x20010000;    /* end of RAM */
+_estack = 0x20003000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x400;      /* required amount of heap  */
-_Min_Stack_Size = 0x1000;   /* required amount of stack */
+_Min_Heap_Size = 0x400 ;      /* required amount of heap  */
+_Min_Stack_Size = 0x1000 ;   /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
-FLASH (rx)                 : ORIGIN = 0x08000000, LENGTH = 512K
-RAM1 (xrw)                 : ORIGIN = 0x20000008, LENGTH = 0xFFF8
+FLASH (rx)                 : ORIGIN = 0x08000000, LENGTH = 110K
+RAM1 (xrw)                 : ORIGIN = 0x20000008, LENGTH = 0x2FF8
 RAM_SHARED (xrw)           : ORIGIN = 0x20030000, LENGTH = 10K
 }
 
@@ -119,6 +124,8 @@ SECTIONS
     _sdata = .;        /* create a global symbol at data start */
     *(.data)           /* .data sections */
     *(.data*)          /* .data* sections */
+    *(.RamFunc)        /* .RamFunc sections */
+    *(.RamFunc*)       /* .RamFunc* sections */
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */

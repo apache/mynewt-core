@@ -14,13 +14,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics. 
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019-2021 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the 
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -44,21 +43,29 @@ defined in linker script */
 .word	_sbss
 /* end address for the .bss section. defined in linker script */
 .word	_ebss
+/* start address for the .MB_MEM2 section. defined in linker script */
+.word _sMB_MEM2
+/* end address for the .MB_MEM2 section. defined in linker script */
+.word _eMB_MEM2
 
-  .section .text.Reset_Handler
-  .weak Reset_Handler
-  .type Reset_Handler, %function
-Reset_Handler:
-  ldr   r0, =_estack
-  mov   sp, r0          /* set stack pointer */
-
-/* Copy the data segment initializers from flash to SRAM */
-  ldr r0, =_sdata
-  ldr r1, =_edata
-  ldr r2, =_sidata
+/* INIT_BSS macro is used to fill the specified region [start : end] with zeros */
+.macro INIT_BSS start, end
+  ldr r0, =\start
+  ldr r1, =\end
   movs r3, #0
-  b	LoopCopyDataInit
+  bl LoopFillZerobss
+.endm
 
+/* INIT_DATA macro is used to copy data in the region [start : end] starting from 'src' */
+.macro INIT_DATA start, end, src
+  ldr r0, =\start
+  ldr r1, =\end
+  ldr r2, =\src
+  movs r3, #0
+  bl LoopCopyDataInit
+.endm
+
+.section  .text.data_initializers
 CopyDataInit:
   ldr r4, [r2, r3]
   str r4, [r0, r3]
@@ -67,24 +74,34 @@ CopyDataInit:
 LoopCopyDataInit:
   adds r4, r0, r3
   cmp r4, r1
-  bcc CopyDataInit
-  
-/* Zero fill the bss segment. */
-  ldr r2, =_sbss
-  ldr r4, =_ebss
-  movs r3, #0
-  b LoopFillZerobss
+  bcc  CopyDataInit
+  bx lr
 
 FillZerobss:
-  str  r3, [r2]
-  adds r2, r2, #4
+  str  r3, [r0]
+  adds r0, r0, #4
 
 LoopFillZerobss:
-  cmp r2, r4
+  cmp r0, r1
   bcc FillZerobss
+  bx lr
 
-/* Call the clock system intitialization function.*/
+  .section .text.Reset_Handler
+  .weak Reset_Handler
+  .type Reset_Handler, %function
+Reset_Handler:
+  ldr   r0, =_estack
+  mov   sp, r0          /* set stack pointer */
+/* Call the clock system initialization function.*/
   bl  SystemInit
+
+/* Copy the data segment initializers from flash to SRAM */
+  INIT_DATA _sdata, _edata, _sidata
+
+/* Zero fill the bss segments. */
+  INIT_BSS _sbss, _ebss
+  INIT_BSS _sMB_MEM2, _eMB_MEM2
+
 /* Call static constructors */
   bl __libc_init_array
 /* Call the application s entry point.*/
@@ -174,9 +191,9 @@ g_pfnVectors:
   .word SPI1_IRQHandler
   .word 0
   .word USART1_IRQHandler
-  .word LPUART1_IRQHandler
   .word 0
-  .word TSC_IRQHandler
+  .word 0
+  .word 0
   .word EXTI15_10_IRQHandler
   .word RTC_Alarm_IRQHandler
   .word 0
@@ -367,4 +384,3 @@ g_pfnVectors:
   .weak  DMAMUX1_OVR_IRQHandler
   .thumb_set DMAMUX1_OVR_IRQHandler,Default_Handler
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
