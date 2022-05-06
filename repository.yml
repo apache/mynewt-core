@@ -40,8 +40,8 @@ repo.versions:
     "1.9.0": "mynewt_1_9_0_tag"
     "1.10.0": "mynewt_1_10_0_tag"
 
-    "0-latest": "1.9.0"
-    "1-latest": "1.9.0"
+    "0-latest": "1.10.0"
+    "1-latest": "1.10.0"
     "0-dev": "0.0.0"       # master
 
     "0.8-latest": "0.8.0"
