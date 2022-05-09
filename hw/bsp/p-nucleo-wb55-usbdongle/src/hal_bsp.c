@@ -91,10 +91,10 @@ hal_bsp_core_dump(int *area_cnt)
     return dump_cfg;
 }
 
+#if MYNEWT_VAL(BUTTON_1_AS_STM32_DFU)
 void
 boot_preboot(void)
 {
-#if MYNEWT_VAL(BUTTON_1_AS_STM32_DFU) >= 0
     hal_gpio_init_in(BUTTON_1, HAL_GPIO_PULL_UP);
     os_cputime_delay_usecs(100);
     if (hal_gpio_read(BUTTON_1) == 0) {
@@ -102,8 +102,8 @@ boot_preboot(void)
         stm32_start_bootloader();
     }
     hal_gpio_deinit(BUTTON_1);
-#endif
 }
+#endif
 
 static void
 dongle_soft_reset(void *arg)
