@@ -20,7 +20,7 @@
 #ifndef __TUSB_HW_H__
 #define __TUSB_HW_H__
 
-#define CFG_TUSB_MCU OPT_MCU_STM32WB55
+#define CFG_TUSB_MCU OPT_MCU_STM32WB
 
 #include <syscfg/syscfg.h>
 
