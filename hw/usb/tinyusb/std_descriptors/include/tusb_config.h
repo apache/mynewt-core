@@ -85,9 +85,17 @@ extern "C" {
 /* Minimal number for alternative interfaces that is recognized by Windows as Bluetooth radio controller */
 #define CFG_TUD_BTH_ISO_ALT_COUNT 2
 
-/*  CDC FIFO size of TX and RX */
+#if MYNEWT_VAL(USBD_CDC_RX_BUFSIZE)
+#define CFG_TUD_CDC_RX_BUFSIZE   MYNEWT_VAL(USBD_CDC_RX_BUFSIZE)
+#else
 #define CFG_TUD_CDC_RX_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
+#endif
+
+#if MYNEWT_VAL(USBD_CDC_TX_BUFSIZE)
+#define CFG_TUD_CDC_TX_BUFSIZE   MYNEWT_VAL(USBD_CDC_TX_BUFSIZE)
+#else
 #define CFG_TUD_CDC_TX_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
+#endif
 
 /* HID buffer size Should be sufficient to hold ID (if any) + Data */
 #define CFG_TUD_HID_BUFSIZE      16
