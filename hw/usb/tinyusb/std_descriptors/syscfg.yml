@@ -91,7 +91,7 @@ syscfg.defs:
         description: CDC data out endpoint number
         value:
     USBD_CDC_DATA_IN_EP:
-        description: CDC data out endpoint number
+        description: CDC data in endpoint number
         value:
     USBD_CDC_DATA_EP_SIZE:
         description: CDC data endpoint size
@@ -101,6 +101,12 @@ syscfg.defs:
         value:
     USBD_CDC_NOTIFY_EP_SIZE:
         description: CDC notify endpoint size
+        value:
+    USBD_CDC_RX_BUFSIZE:
+        description: CDC endpoint OUT FIFO size
+        value:
+    USBD_CDC_TX_BUFSIZE:
+        description: CDC endpoint IN FIFO size
         value:
 
     USBD_CDC_DESCRIPTOR_STRING:
