@@ -62,24 +62,24 @@ syscfg.defs:
         description: Device friendly name
         value: '"Dev device"'
     USBD_CDC:
-        description: Enable CDC device
-        value: 0
+        description: Enable CDC device function in TinyUSB stack.
+        value:
     USBD_HID:
-        description: Enable HID device
-        value: 0
+        description: Enable HID device function in TinyUSB stack.
+        value:
     USBD_MSC:
-        description: Enable MSC device
-        value: 0
+        description: Enable MSC device function in TinyUSB stack.
+        value:
     USBD_BTH:
-        description: Enable BT HCI device
-        value: 0
+        description: Enable BT HCI device function in TinyUSB stack.
+        value:
     USBD_DFU:
         description: >
             Enable DFU interface in TinyUSB.  This adds USB descriptor to
             USB configuration.  It does not add TinyUSB callbacks implementation,
             if standard implementation exposing SLOT1 is required USB_DFU_STD can
             be additionally specified.
-        value: 0
+        value:
     USBD_DFU_STD:
         description: >
             Add Mynewt standard DFU interface implementation.
