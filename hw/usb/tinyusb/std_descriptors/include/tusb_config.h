@@ -72,15 +72,35 @@ extern "C" {
 #define CFG_TUD_ENDPOINT0_SIZE   MYNEWT_VAL(USBD_EP0_SIZE)
 
 /* ------------- CLASS ------------- */
+#if MYNEWT_VAL(USBD_CDC)
 #define CFG_TUD_CDC              MYNEWT_VAL(USBD_CDC)
+#else
+#define CFG_TUD_CDC              0
+#endif
+#if MYNEWT_VAL(USBD_HID)
 #define CFG_TUD_HID              MYNEWT_VAL(USBD_HID)
+#else
+#define CFG_TUD_HID              0
+#endif
+#if MYNEWT_VAL(USBD_MSC)
+#define CFG_TUD_MSC              MYNEWT_VAL(USBD_MSC)
+#else
 #define CFG_TUD_MSC              0
+#endif
 #define CFG_TUD_MIDI             0
 #define CFG_TUD_VENDOR           0
 #define CFG_TUD_USBTMC           0
 #define CFG_TUD_DFU_RT           0
+#if MYNEWT_VAL(USBD_DFU)
 #define CFG_TUD_DFU              MYNEWT_VAL(USBD_DFU)
+#else
+#define CFG_TUD_DFU              0
+#endif
+#if MYNEWT_VAL(USBD_BTH)
 #define CFG_TUD_BTH              MYNEWT_VAL(USBD_BTH)
+#else
+#define CFG_TUD_BTH              0
+#endif
 
 /* Minimal number for alternative interfaces that is recognized by Windows as Bluetooth radio controller */
 #define CFG_TUD_BTH_ISO_ALT_COUNT 2
