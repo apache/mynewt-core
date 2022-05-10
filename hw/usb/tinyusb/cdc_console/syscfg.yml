@@ -23,6 +23,7 @@ syscfg.defs:
         value: '"Mynewt console"'
 
 syscfg.vals:
+    USBD_CDC: 1
 
 syscfg.restrictions:
     - "USBD_CDC"

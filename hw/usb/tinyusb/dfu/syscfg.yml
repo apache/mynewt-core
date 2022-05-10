@@ -101,6 +101,9 @@ syscfg.defs:
         description: 'Minimum level for the DFU log.'
         value: 1
 
+syscfg.vals:
+    USBD_DFU: 1
+
 syscfg.logs:
     USBD_DFU_LOG:
         module: MYNEWT_VAL(USBD_DFU_LOG_MODULE)
