@@ -401,6 +401,7 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
     os_error_t ret;
 #if MYNEWT_VAL(OS_MEMPOOL_CHECK)
     struct os_memblock *block;
+    int sr;
 #endif
 
     os_trace_api_u32x2(OS_TRACE_ID_MEMBLOCK_PUT, (uint32_t)mp,
@@ -419,9 +420,12 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
     /*
      * Check for duplicate free.
      */
+    OS_ENTER_CRITICAL(sr);
     SLIST_FOREACH(block, mp, mb_next) {
         assert(block != (struct os_memblock *)block_addr);
     }
+    OS_EXIT_CRITICAL(sr);
+
 #endif
     /* If this is an extended mempool with a put callback, call the callback
      * instead of freeing the block directly.
