@@ -392,6 +392,12 @@ ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data)
 int
 ipc_nrf5340_send(int channel, const void *data, uint16_t len)
 {
+    return ipc_nrf5340_write(channel, data, len, true);
+}
+
+int
+ipc_nrf5340_write(int channel, const void *data, uint16_t len, bool last)
+{
     struct ipc_shm *shm;
     uint16_t frag_len;
     uint16_t space;
@@ -417,7 +423,9 @@ ipc_nrf5340_send(int channel, const void *data, uint16_t len)
 
             frag_len = min(len, space);
             ipc_nrf5340_shm_write(shm, data, frag_len);
-            NRF_IPC->TASKS_SEND[channel] = 1;
+            if (last || len > space) {
+                NRF_IPC->TASKS_SEND[channel] = 1;
+            }
 
             data += frag_len;
             len -= frag_len;
