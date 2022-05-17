@@ -21,6 +21,7 @@
 #define _HW_DRIVERS_IPC_NRF5340_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,6 +70,21 @@ void ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data);
  * @return            0 on success and negative error on failure
  */
 int ipc_nrf5340_send(int channel, const void *data, uint16_t len);
+
+/**
+ * Sends data over specified IPC channel. IPC uses ring buffer for data passing.
+ * If IPC_NRF5340_BLOCKING_WRITE is not enable and there is not enough space to
+ * store data SYS_ENOMEM error is returned.
+ *
+ * @param channel     IPC channel number to send on
+ * @param data        Data to be sent over IPC. If this is NULL only signal is
+ *                    sent
+ * @param len         Data length
+ * @param last        If this is the last send, so other side can be notified
+ *
+ * @return            0 on success and negative error on failure
+ */
+int ipc_nrf5340_write(int channel, const void *data, uint16_t len, bool last);
 
 /**
  * Reads data from IPC ring buffer to specified flat buffer. Should be used only
