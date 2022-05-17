@@ -57,6 +57,18 @@ void ipc_nrf5340_reset(void);
 void ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data);
 
 /**
+ * Sends single byte data  over specified IPC channel. IPC uses ring buffer for data passing.
+ * If IPC_NRF5340_BLOCKING_WRITE is not enable and there is not enough space to
+ * store data SYS_ENOMEM error is returned. This function does not notify the other side
+ *
+ * @param channel     IPC channel number to send on
+ * @param data        Data to be sent over IPC.
+ *
+ * @return            0 on success and negative error on failure
+ */
+int ipc_nrf5340_send_no_notify(int channel, uint8_t data);
+
+/**
  * Sends data over specified IPC channel. IPC uses ring buffer for data passing.
  * If IPC_NRF5340_BLOCKING_WRITE is not enable and there is not enough space to
  * store data SYS_ENOMEM error is returned.

@@ -390,6 +390,32 @@ ipc_nrf5340_recv(int channel, ipc_nrf5340_recv_cb cb, void *user_data)
 }
 
 int
+ipc_nrf5340_send_no_notify(int channel, uint8_t data)
+{
+    struct ipc_shm *shm;
+    uint16_t space;
+
+    assert(channel < IPC_MAX_CHANS);
+    shm = &shms[channel];
+
+    do {
+        space = IPC_BUF_SIZE - 1;
+        space -= ipc_nrf5340_shm_get_data_length(shm->head, shm->tail);
+#if !MYNEWT_VAL(IPC_NRF5340_BLOCKING_WRITE)
+        /* assert since that will always fail for non-blocking write
+         * indicating use error
+         */
+        if (space == 0) return SYS_ENOMEM;
+#endif
+    } while (space == 0);
+
+    ipc_nrf5340_shm_write(shm, data, 1);
+    // dont notify other side! (will be done by later calls to ipc_nrf5340_send)
+
+    return 0;
+}
+
+int
 ipc_nrf5340_send(int channel, const void *data, uint16_t len)
 {
     struct ipc_shm *shm;
