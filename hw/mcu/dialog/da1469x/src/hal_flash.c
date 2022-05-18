@@ -398,7 +398,8 @@ da1469x_hff_sector_info(const struct hal_flash *dev, int idx,
 
 #if MYNEWT_VAL(RAM_RESIDENT)
 
-static void qspi_qe_enable(const struct hal_flash *dev, const struct qspi_qe_config *config)
+static void
+qspi_qe_enable(const struct hal_flash *dev, const struct qspi_qe_config *config)
 {
     int i;
 
@@ -424,7 +425,8 @@ static void qspi_qe_enable(const struct hal_flash *dev, const struct qspi_qe_con
     QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
 }
 
-static const struct qspi_flash_config *qspi_read_rdid(const struct hal_flash *dev)
+static const struct qspi_flash_config *
+qspi_read_rdid(const struct hal_flash *dev)
 {
     int i;
     uint32_t result;
@@ -483,7 +485,7 @@ da1469x_hff_mcu_custom_init(const struct hal_flash *dev)
 #endif
 
 static int
-    da1469x_hff_init(const struct hal_flash *dev)
+da1469x_hff_init(const struct hal_flash *dev)
 {
 #if MYNEWT_VAL(RAM_RESIDENT)
     da1469x_hff_mcu_custom_init(dev);
