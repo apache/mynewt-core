@@ -46,7 +46,7 @@ static char hw_id[] = "DA1469X_HW_ID";
  * Configure empty RDIDs for use by flash init.
  */
 #if MYNEWT_VAL(RAM_RESIDENT)
-const struct qspi_flash_config rdids[] = 0;
+const struct qspi_flash_config rdids[] = {};
 const int qspi_flash_config_array_size = ARRAY_SIZE(rdids);
 #endif
 

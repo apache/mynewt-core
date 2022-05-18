@@ -24,7 +24,6 @@
 #include "mcu/da1469x_hal.h"
 #include "hal/hal_flash_int.h"
 #include "mcu/mcu.h"
-#include <os/util.h>
 #include <stdbool.h>
 
 #define CODE_QSPI_INLINE    __attribute__((always_inline)) inline
