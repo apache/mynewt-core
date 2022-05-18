@@ -397,31 +397,6 @@ da1469x_hff_sector_info(const struct hal_flash *dev, int idx,
 }
 
 #if MYNEWT_VAL(RAM_RESIDENT)
-struct qspi_qe_config {
-    uint8_t length;
-    uint8_t bytes[2];
-};
-
-struct qspi_flash_config {
-    uint32_t id;
-    uint32_t cmda;
-    uint32_t cmdb;
-    struct qspi_qe_config qe;
-};
-
-static const struct qspi_flash_config rdids[] =
-{
-    { .id = 0xc86015,                       /* gigaflash */
-      .cmda = 0xa82000eb,
-      .cmdb = 0x66,
-      .qe = {2, {0x0, 0x2}},
-    },
-    { .id = 0xc22535,                       /* macronix */
-      .cmda = 0xa8a500eb,
-      .cmdb = 0x66,
-      .qe = {1, {0x40}},
-    },
-};
 
 static void qspi_qe_enable(const struct hal_flash *dev, const struct qspi_qe_config *config)
 {
@@ -462,7 +437,7 @@ static const struct qspi_flash_config *qspi_read_rdid(const struct hal_flash *de
     result |= da1469x_qspi_read8(dev);
     QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
 
-    for (i = 0; i < ARRAY_SIZE(rdids); i++) {
+    for (i = 0; i < qspi_flash_config_array_size; i++) {
         if (result == rdids[i].id) {
             return &rdids[i];
         }

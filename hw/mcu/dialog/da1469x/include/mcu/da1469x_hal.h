@@ -70,6 +70,21 @@ struct da1469x_hal_spi_cfg {
     int8_t pin_ss;
 };
 
+struct qspi_qe_config {
+    uint8_t length;
+    uint8_t bytes[2];
+};
+
+struct qspi_flash_config {
+    uint32_t id;
+    uint32_t cmda;
+    uint32_t cmdb;
+    struct qspi_qe_config qe;
+};
+
+extern const struct qspi_flash_config rdids[];
+extern const int qspi_flash_config_array_size;
+
 #ifdef __cplusplus
 }
 #endif
