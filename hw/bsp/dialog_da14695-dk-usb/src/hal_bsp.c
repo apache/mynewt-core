@@ -50,8 +50,7 @@ const struct qspi_flash_config rdids[] = {
     { .id = 0xc22536,                       /* macronix */
       .cmda = 0xa8a500eb,
       .cmdb = 0x66,
-      .qe = {1, {0x40}},
-    },
+      .qe = {1, {0x40}},},
 };
 
 const int qspi_flash_config_array_size = ARRAY_SIZE(rdids);
