@@ -27,6 +27,7 @@
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_periph.h"
 #include "bsp/bsp.h"
+#include <os/util.h>
 
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
