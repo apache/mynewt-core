@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <os/endian.h>
+#include <bsp/bsp.h>
 #include <sysflash/sysflash.h>
 #include <hal/hal_gpio.h>
 #include <os/util.h>
