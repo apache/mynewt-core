@@ -173,30 +173,6 @@ syscfg.defs:
             data before writing, i.e. each such transfer will be split into
             chunks of this size. Buffer is created on stack.
         value: 128
-    MCU_QSPIC_APP_CFG:
-        description: >
-            Enable application initialization of QSPIC settings. Syscfg values that
-            are defined for QSPIC_BURSTCMDA_REG, QSPIC_BURSTCMDB_REG or
-            QSPIC_CTRLMODE_REG will be applied by hal_flash_init.
-        value: 0
-    MCU_QSPIC_BURSTCMDA_INIT_VAL:
-        description: >
-            MCU initialization value for QSPIC_BURSTCMDA_REG
-        value: ''
-        restrictions:
-        - (MCU_QSPIC_APP_CFG)
-    MCU_QSPIC_BURSTCMDB_INIT_VAL:
-        description: >
-            MCU initialization value for QSPIC_BURSTCMDB_REG
-        value: ''
-        restrictions:
-        - (MCU_QSPIC_APP_CFG)
-    MCU_QSPIC_CTRLMODE_INIT_VAL:
-        description: >
-            MCU initialization value for QSPIC_CTRLMODE_REG
-        value: ''
-        restrictions:
-        - (MCU_QSPIC_APP_CFG)
     MCU_DEEP_SLEEP_QSPIC_QUAD_DISABLE:
         description: >
             Enable disabling quad mode when entering deep sleep

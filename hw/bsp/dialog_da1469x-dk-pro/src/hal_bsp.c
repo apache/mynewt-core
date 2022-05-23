@@ -27,6 +27,7 @@
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_periph.h"
 #include "bsp/bsp.h"
+#include <os/util.h>
 
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
@@ -40,6 +41,21 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
  * Most probably it should be generated and stored somewhere in OTP.
  */
 static char hw_id[] = "DA1469X_HW_ID";
+
+
+/*
+ * Configure empty RDIDs for use by flash init.
+ */
+#if MYNEWT_VAL(RAM_RESIDENT)
+const struct qspi_flash_config rdids[] = {
+    { .id = 0xc22536,                       /* macronix */
+      .cmda = 0xa8a500eb,
+      .cmdb = 0x66,
+      .qe = {1, {0x40}},},
+};
+
+const int qspi_flash_config_array_size = ARRAY_SIZE(rdids);
+#endif
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)

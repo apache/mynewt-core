@@ -395,35 +395,98 @@ da1469x_hff_sector_info(const struct hal_flash *dev, int idx,
     return 0;
 }
 
-#if MYNEWT_VAL(MCU_QSPIC_APP_CFG)
+#if MYNEWT_VAL(RAM_RESIDENT)
+
+static void
+qspi_qe_enable(const struct hal_flash *dev, const struct qspi_qe_config *config)
+{
+    int i;
+
+    /*
+     * Write some number of bytes to the status register of the QSPI device.
+     * Targeting QE enable bit
+     */
+
+    da1469x_qspi_mode_manual(dev);
+    da1469x_qspi_wait_busy(dev);
+    da1469x_qspi_cmd_enable_write(dev);
+
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
+
+    /* Write status register command 0x1 */
+    da1469x_qspi_write8(dev, 0x01);
+
+    /* data to write out to register */
+    for (i = 0; i < config->length; i++) {
+        da1469x_qspi_write8(dev, config->bytes[i]);
+    }
+
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
+}
+
+static const struct qspi_flash_config *
+qspi_read_rdid(const struct hal_flash *dev)
+{
+    int i;
+    uint32_t result;
+
+    /* Issue a read rdid command (0x9F) and get 24 bit response */
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
+    da1469x_qspi_write8(dev, 0x9f);
+    result = da1469x_qspi_read8(dev) << 16;
+    result |= da1469x_qspi_read8(dev) << 8;
+    result |= da1469x_qspi_read8(dev);
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
+
+    for (i = 0; i < qspi_flash_config_array_size; i++) {
+        if (result == rdids[i].id) {
+            return &rdids[i];
+        }
+    }
+
+    return NULL;
+}
+
 static sec_text_ram_core void
 da1469x_hff_mcu_custom_init(const struct hal_flash *dev)
 {
+    const struct qspi_flash_config *config = NULL;
     uint32_t primask;
-    uint32_t ctrlmode_reg = QSPIC->QSPIC_CTRLMODE_REG;
+
     __HAL_DISABLE_INTERRUPTS(primask);
     da1469x_qspi_mode_manual(dev);
-#if defined (MYNEWT_VAL_MCU_QSPIC_BURSTCMDA_INIT_VAL)
-    QSPIC->QSPIC_BURSTCMDA_REG = MYNEWT_VAL(MCU_QSPIC_BURSTCMDA_INIT_VAL);
-#endif
-#if defined (MYNEWT_VAL_MCU_QSPIC_BURSTCMDB_INIT_VAL)
-    QSPIC->QSPIC_BURSTCMDB_REG = MYNEWT_VAL(MCU_QSPIC_BURSTCMDB_INIT_VAL);
-#endif
-#if defined (MYNEWT_VAL_MCU_QSPIC_CTRLMODE_INIT_VAL)
-    QSPIC->QSPIC_CTRLMODE_REG = MYNEWT_VAL(MCU_QSPIC_CTRLMODE_INIT_VAL);
-#endif
-    if (ctrlmode_reg & QSPIC_QSPIC_CTRLMODE_REG_QSPIC_AUTO_MD_Msk) {
-        /* restore auto mode */
-        da1469x_qspi_mode_auto(dev);
-    }
+
+    /* detect flash device and use correct configuration */
+    config = qspi_read_rdid(dev);
+    assert(config);
+
+    QSPIC->QSPIC_BURSTCMDA_REG = config->cmda;
+    QSPIC->QSPIC_BURSTCMDB_REG = config->cmdb;
+
+    /* provision attached QSPI device for proper quad operation */
+    qspi_qe_enable(dev, &config->qe);
+
+    /*
+     * Set auto mode, read pipe delay to 0x7, read pipe enable
+     * negative edge on received data, and IO2/3 output level 1
+     * and disable IO2/3 output enable
+     */
+    QSPIC->QSPIC_CTRLMODE_REG = QSPIC_QSPIC_CTRLMODE_REG_QSPIC_AUTO_MD_Msk |
+                                QSPIC_QSPIC_CTRLMODE_REG_QSPIC_CLK_MD_Msk |
+                                QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO2_DAT_Msk |
+                                QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO3_DAT_Msk |
+                                QSPIC_QSPIC_CTRLMODE_REG_QSPIC_RXD_NEG_Msk |
+                                QSPIC_QSPIC_CTRLMODE_REG_QSPIC_RPIPE_EN_Msk |
+                                (0x7 << QSPIC_QSPIC_CTRLMODE_REG_QSPIC_PCLK_MD_Pos);
+
     __HAL_ENABLE_INTERRUPTS(primask);
 }
 #endif
 
 static int
-    da1469x_hff_init(const struct hal_flash *dev)
+da1469x_hff_init(const struct hal_flash *dev)
 {
-#if MYNEWT_VAL(MCU_QSPIC_APP_CFG)
+#if MYNEWT_VAL(RAM_RESIDENT)
     da1469x_hff_mcu_custom_init(dev);
 #endif
     return 0;
