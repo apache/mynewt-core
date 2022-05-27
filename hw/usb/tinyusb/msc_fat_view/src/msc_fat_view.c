@@ -99,15 +99,13 @@ typedef uint32_t cluster_t;
 
 #define FAT_CHAIN_END   ((cluster_t)0xFFFFFFFF)
 
-#if MYNEWT_VAL(MSV_FAT_VIEW_HIGE_FILE)
+#if MYNEWT_VAL(MSC_FAT_VIEW_HUGE_FILE)
 #if MYNEWT_VAL(MSC_FAT_VIEW_HUGE_FILE_SIZE) > 0
 #define HUGE_FILE_SIZE          MYNEWT_VAL(MSC_FAT_VIEW_HUGE_FILE_SIZE)
 #if HUGE_FILE_SIZE > (MYNEWT_VAL(MSC_FAT_VIEW_DISK_SIZE) * 1024) + 2000000
 #error HUGE_FILE_SIZE is to big for specified disk size
 #endif
-#endif
-#else
-#if (MYNEWT_VAL(MSC_FAT_VIEW_DISK_SIZE) * 1024) < 2000000
+#elif (MYNEWT_VAL(MSC_FAT_VIEW_DISK_SIZE) * 1024) < 2000000
 #error No space for huge file, increase MSC_FAT_VIEW_DISK_SIZE in syscfg
 #endif
 #define HUGE_FILE_SIZE          ((MYNEWT_VAL(MSC_FAT_VIEW_DISK_SIZE) * 1024) - 2000000)
