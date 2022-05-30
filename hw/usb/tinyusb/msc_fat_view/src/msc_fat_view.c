@@ -107,8 +107,11 @@ typedef uint32_t cluster_t;
 #endif
 #elif (MYNEWT_VAL(MSC_FAT_VIEW_DISK_SIZE) * 1024) < 2000000
 #error No space for huge file, increase MSC_FAT_VIEW_DISK_SIZE in syscfg
-#endif
+#else
 #define HUGE_FILE_SIZE          ((MYNEWT_VAL(MSC_FAT_VIEW_DISK_SIZE) * 1024) - 2000000)
+#endif
+#else
+#define HUGE_FILE_SIZE          0
 #endif
 
 struct TU_ATTR_PACKED boot_sector_start {
