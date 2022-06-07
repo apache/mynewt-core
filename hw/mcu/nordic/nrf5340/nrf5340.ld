@@ -165,13 +165,7 @@ SECTIONS
         __data_end__ = .;
     } > RAM AT > FLASH
 
-    /* Non-zeroed BSS.  This section is similar to BSS, with the following two
-     * caveats:
-     *    1. It does not get zeroed at init-time.
-     *    2. You cannot use it as source memory for EasyDMA.
-     *
-     * This section exists because of a hardware defect; see errata 33 and 34
-     * in nrf52 errata sheet.
+    /* Non-zeroed BSS.  This section is similar to BSS, but does not get zeroed at init-time.
      */
     .bssnz :
     {
