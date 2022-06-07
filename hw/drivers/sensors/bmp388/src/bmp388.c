@@ -1616,7 +1616,7 @@ bmp3_init(struct bmp3_dev *dev)
         /* Proceed if everything is fine until now */
         if (rslt == BMP3_OK) {
             /* Check for chip id validity */
-            if ((chip_id != BMP3_CHIP_ID) && (chip_id != BMP390_CHIP_ID)) {
+            if ((chip_id == BMP3_CHIP_ID) || (chip_id == BMP390_CHIP_ID)) {
                 dev->chip_id = chip_id;
                 /* Reset the sensor */
                 rslt = bmp3_soft_reset(dev);
