@@ -49,6 +49,8 @@
 #include "system_nrf52811.h"
 #endif
 
+#include "system_nrf52_approtect.h"
+
 /*lint ++flb "Enter library region" */
 
 #define __SYSTEM_CLOCK_64M      (64000000UL)
@@ -487,6 +489,8 @@ void SystemInit(void)
             NRF_P1->PIN_CNF[9]  = (GPIO_PIN_CNF_DRIVE_H0H1 << GPIO_PIN_CNF_DRIVE_Pos) | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
         #endif
 #endif
+    nrf52_handle_approtect();
+
     SystemCoreClockUpdate();
 
     NVIC_Relocate();
