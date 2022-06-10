@@ -80,6 +80,21 @@ static const reg_name_t reg_name[] = {
     { .addr = 0x5f, .regname = "MD2_CFG" },
 };
 
+/* Human readable register map for bankA */
+static const reg_name_t reg_name_banka[] = {
+    { .addr = 0x0f, .regname = "CONFIG_PEDO_THS_MIN" },
+    { .addr = 0x13, .regname = "SM_THS" },
+    { .addr = 0x14, .regname = "PEDO_DEB_REG" },
+    { .addr = 0x15, .regname = "STEP_COUNT_DELTA" },
+};
+
+/* Human readable register map for bankB */
+static const reg_name_t reg_name_bankb[] = {
+    { .addr = 0x50, .regname = "A_WRIST_TILT_LAT" },
+    { .addr = 0x54, .regname = "A_WRIST_TILT_THS" },
+    { .addr = 0x59, .regname = "A_WRIST_TILT_Mask" },
+};
+
 static struct shell_cmd lsm6dsl_shell_cmd_struct = {
     .sc_cmd = "lsm6dsl",
     .sc_cmd_func = lsm6dsl_shell_cmd
@@ -171,6 +186,44 @@ lsm6dsl_shell_cmd_dump(int argc, char **argv)
                 console_printf("%-22s(0x%02X) = 0x%02X\n",
                                reg_name[i].regname, reg_name[i].addr, value);
             }
+        }
+
+        /* Bank A */
+        rc = lsm6dsl_write_reg(g_lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, LSM6DSL_FUNC_CFG_ACCESS_MASK);
+        if (rc) {
+            return rc;
+        }
+        for (i = 0; i < ARRAY_SIZE(reg_name_banka); i++) {
+            rc = lsm6dsl_read(g_lsm6dsl, reg_name_banka[i].addr, &value, 1);
+            if (rc) {
+                console_printf("dump failed %d\n", rc);
+            } else if (all || value != 0){
+                console_printf("%-22s(0x%02X) = 0x%02X\n",
+                               reg_name_banka[i].regname, reg_name_banka[i].addr, value);
+            }
+        }
+        rc = lsm6dsl_write_reg(g_lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, 0);
+        if (rc) {
+            return rc;
+        }
+
+        /* Bank B */
+        rc = lsm6dsl_write_reg(g_lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, LSM6DSL_FUNC_CFG_ACCESS_MASK | LSM6DSL_SHUB_REG_ACCESS_MASK);
+        if (rc) {
+            return rc;
+        }
+        for (i = 0; i < ARRAY_SIZE(reg_name_bankb); i++) {
+            rc = lsm6dsl_read(g_lsm6dsl, reg_name_bankb[i].addr, &value, 1);
+            if (rc) {
+                console_printf("dump failed %d\n", rc);
+            } else if (all || value != 0){
+                console_printf("%-22s(0x%02X) = 0x%02X\n",
+                               reg_name_bankb[i].regname, reg_name_bankb[i].addr, value);
+            }
+        }
+        rc = lsm6dsl_write_reg(g_lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, 0);
+        if (rc) {
+            return rc;
         }
     } else {
         sreg = parse_ll_bounds(argv[2], 0x02, 0x7F, &rc);
