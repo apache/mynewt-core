@@ -37,7 +37,7 @@ extern "C" {
 #define LSM6DSL_FUNC_CFG_ACCESS_REG     0x01
 
 #define LSM6DSL_FUNC_CFG_ACCESS_MASK    0x80
-#define LSM6DSL_SHUB_REG_ACCESS_MASK    0x40
+#define LSM6DSL_SHUB_REG_ACCESS_MASK    0x20
 
 /*
  * FIFO control register 1
@@ -650,6 +650,25 @@ extern "C" {
 #define LSM6DSL_SENSORHUB17_REG         0x51
 #define LSM6DSL_SENSORHUB18_REG         0x52
 
+/*
+ * FUNC_SRC1 register
+ */
+#define LSM6DSL_FUNC_SRC1_REG             0x53
+#define LSM6DSL_SENSORHUB_END_OP_MASK     0x01
+#define LSM6DSL_SI_END_OP_MASK            0x02
+#define LSM6DSL_HI_FAI_MASKL              0x04
+#define LSM6DSL_STEP_OVERFLOW_MASK        0x08
+#define LSM6DSL_STEP_DETECTED_MASK        0x10
+#define LSM6DSL_TILT_IA_MASK              0x20
+#define LSM6DSL_SIGN_MOTION_IA_MASK       0x40
+#define LSM6DSL_STEP_COUNT_DELTA_IA_MASK  0x80
+
+/*
+ * FUNC_SRC2 register
+ */
+#define LSM6DSL_FUNC_SRC2_REG             0x54
+#define LSM6DSL_WRIST_TILT_IA_MASK        0x01
+
 /* Bank A registers */
 #define LSM6DSL_SLV0_ADD_REG            0x02
 #define LSM6DSL_SLV0_SUBADD_REG         0x03
@@ -689,6 +708,14 @@ extern "C" {
 #define LSM6DSL_A_WRIST_TILT_LAT_REG    0x50
 #define LSM6DSL_A_WRIST_TILT_THS_REG    0x54
 #define LSM6DSL_A_WRIST_TILT_MASK_REG   0x59
+
+#define LSM6DSL_A_WRIST_TILT_IA_REG     0x55
+#define LSM6DSL_A_WRIST_TILT_XPOS_MASK  0x80
+#define LSM6DSL_A_WRIST_TILT_XNEG_MASK  0x40
+#define LSM6DSL_A_WRIST_TILT_YPOS_MASK  0x20
+#define LSM6DSL_A_WRIST_TILT_YNEG_MASK  0x10
+#define LSM6DSL_A_WRIST_TILT_ZPOS_MASK  0x08
+#define LSM6DSL_A_WRIST_TILT_ZNEG_MASK  0x04
 
 #define LSM6DSL_MAX_FIFO_DEPTH          2048
 

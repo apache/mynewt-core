@@ -107,6 +107,17 @@ struct lsm6dsl_ff_settings {
     free_fall_threshold_t free_fall_ths;
 };
 
+struct lsm6dsl_tilt_settings {
+    uint8_t en_rel_tilt;
+    uint8_t en_wrist_tilt;
+    /* Timer for latency. 1LSB = 40ms */
+    uint8_t tilt_lat;
+    /* Threshold for Tilt function 1LSB = 15.626 mg*/
+    uint8_t tilt_ths;
+    /* A_WRIST_TILT_Mask reg (z pos and neg)*/
+    uint8_t tilt_axis_mask;
+};
+
 struct lsm6dsl_tap_settings {
     /* Axis enabled bitmask */
     uint8_t en_x: 1;
@@ -165,6 +176,9 @@ struct int_src_regs {
     uint8_t tap_src;
     uint8_t d6d_src;
     uint8_t status_reg;
+    uint8_t func_src1;
+    uint8_t func_src2;
+    uint8_t wrist_tilt_ia;
 };
 
 struct lsm6dsl_cfg {
@@ -177,6 +191,7 @@ struct lsm6dsl_cfg {
     struct lsm6dsl_orientation_settings orientation;
     struct lsm6dsl_wk_settings wk;
     struct lsm6dsl_ff_settings ff;
+    struct lsm6dsl_tilt_settings tilt;
 
     /* Event notification config */
     struct lsm6dsl_notif_cfg *notify_cfg;
