@@ -140,6 +140,12 @@ typedef enum {
     SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE  = (1 << 14),
     /* Orientation Change Event in the Z H direction */
     SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE  = (1 << 15),
+    /* Relative tilt Change Event */
+    SENSOR_EVENT_TYPE_TILT_CHANGE        = (1 << 16),
+    /* Absolute tilt Change Event in the positive direction */
+    SENSOR_EVENT_TYPE_TILT_POS           = (1 << 17),
+    /* Absolute tilt Change Event in the negative direction */
+    SENSOR_EVENT_TYPE_TILT_NEG           = (1 << 18),
 } sensor_event_type_t;
 
 

@@ -46,6 +46,24 @@
 /* Default event notification */
 static const struct lsm6dsl_notif_cfg default_notif_cfg[] = {
     {
+        .event = SENSOR_EVENT_TYPE_TILT_POS,
+        .int_num = 0,
+        .int_mask = LSM6DSL_A_WRIST_TILT_ZPOS_MASK,
+        .int_en = LSM6DSL_INT1_TILT_MASK,
+    },
+    {
+        .event = SENSOR_EVENT_TYPE_TILT_NEG,
+        .int_num = 0,
+        .int_mask = LSM6DSL_A_WRIST_TILT_ZNEG_MASK,
+        .int_en = LSM6DSL_INT1_TILT_MASK,
+    },
+    {
+        .event = SENSOR_EVENT_TYPE_TILT_CHANGE,
+        .int_num = 0,
+        .int_mask = LSM6DSL_TILT_IA_MASK,
+        .int_en = LSM6DSL_INT1_TILT_MASK,
+    },
+    {
         .event = SENSOR_EVENT_TYPE_SINGLE_TAP,
         .int_num = 0,
         .int_mask = LSM6DSL_SINGLE_TAP_MASK,
@@ -91,6 +109,9 @@ STATS_SECT_START(lsm6dsl_stat_section)
     STATS_SECT_ENTRY(single_tap_notify)
     STATS_SECT_ENTRY(double_tap_notify)
     STATS_SECT_ENTRY(free_fall_notify)
+    STATS_SECT_ENTRY(rel_tilt_notify)
+    STATS_SECT_ENTRY(abs_tilt_pos_notify)
+    STATS_SECT_ENTRY(abs_tilt_neg_notify)
     STATS_SECT_ENTRY(sleep_notify)
     STATS_SECT_ENTRY(orientation_notify)
     STATS_SECT_ENTRY(wakeup_notify)
@@ -104,6 +125,9 @@ STATS_NAME_START(lsm6dsl_stat_section)
 #if MYNEWT_VAL(LSM6DSL_NOTIF_STATS)
     STATS_NAME(lsm6dsl_stat_section, single_tap_notify)
     STATS_NAME(lsm6dsl_stat_section, double_tap_notify)
+    STATS_NAME(lsm6dsl_stat_section, rel_tilt_notify)
+    STATS_NAME(lsm6dsl_stat_section, abs_tilt_pos_notify)
+    STATS_NAME(lsm6dsl_stat_section, abs_tilt_neg_notify)
     STATS_NAME(lsm6dsl_stat_section, free_fall_notify)
     STATS_NAME(lsm6dsl_stat_section, sleep_notify)
     STATS_NAME(lsm6dsl_stat_section, orientation_notify)
@@ -816,8 +840,12 @@ lsm6dsl_clear_int(struct lsm6dsl *lsm6dsl, struct int_src_regs *int_src)
      * Interrupt status could have been read in single 4 byte I2C transaction, but
      * if wake_up_src is read first D6D_IA bit from D6D_SRC is cleared
      * and information about orientation change is lost.
+     * 3 byte read of FUNC_SRC1 will get FUNC_SRC1, FUNC_SRC2, and WRIST_TILT_IA.
      */
     rc = lsm6dsl_read(lsm6dsl, LSM6DSL_D6D_SRC_REG, (uint8_t *)&int_src->d6d_src, 2);
+    if (rc == 0) {
+        rc = lsm6dsl_read(lsm6dsl, LSM6DSL_FUNC_SRC1_REG, (uint8_t *)&int_src->func_src1, 3);
+    }
     if (rc == 0) {
         rc = lsm6dsl_read(lsm6dsl, LSM6DSL_WAKE_UP_SRC_REG, (uint8_t *)&int_src->wake_up_src, 2);
     }
@@ -996,6 +1024,51 @@ lsm6dsl_get_wake_up(struct lsm6dsl *lsm6dsl, struct lsm6dsl_wk_settings *wk)
     wk->inactivity = LSM6DSL_DESHIFT_DATA_MASK(lsm6dsl->cfg_regs2.tap_cfg, LSM6DSL_INACT_EN_MASK);
 
     return 0;
+}
+
+int
+lsm6dsl_set_tilt(struct lsm6dsl *lsm6dsl,
+                        const struct lsm6dsl_tilt_settings *cfg)
+{
+    int rc;
+    uint8_t en_mask;
+
+    en_mask = (cfg->en_rel_tilt * LSM6DSL_TILT_EN_MASK) | (cfg->en_wrist_tilt * LSM6DSL_WRIST_TILT_EN_MASK);
+
+    if (en_mask) {
+        rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_CTRL10_C_REG, LSM6DSL_FUNC_EN_MASK | en_mask);
+        if (rc) {
+            return rc;
+        }
+        if (cfg->en_wrist_tilt) {
+            rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, LSM6DSL_FUNC_CFG_ACCESS_MASK | LSM6DSL_SHUB_REG_ACCESS_MASK);
+            if (rc) {
+                return rc;
+            }
+
+            rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_A_WRIST_TILT_LAT_REG, cfg->tilt_lat);
+            if (rc) {
+                goto err;
+            }
+
+            rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_A_WRIST_TILT_THS_REG, cfg->tilt_ths);
+            if (rc) {
+                goto err;
+            }
+
+            rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_A_WRIST_TILT_MASK_REG, cfg->tilt_axis_mask);
+
+err:
+            rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, 0x00);
+        }
+    } else {
+        rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_CTRL10_C_REG, en_mask);
+        if (rc) {
+            return rc;
+        }
+    }
+
+    return rc;
 }
 
 static void
@@ -2158,6 +2231,15 @@ lsm6dsl_inc_notif_stats(sensor_event_type_t event)
         case SENSOR_EVENT_TYPE_FREE_FALL:
             STATS_INC(g_lsm6dsl_stats, free_fall_notify);
             break;
+        case SENSOR_EVENT_TYPE_TILT_CHANGE:
+            STATS_INC(g_lsm6dsl_stats, rel_tilt_notify);
+            break;
+        case SENSOR_EVENT_TYPE_TILT_POS:
+            STATS_INC(g_lsm6dsl_stats, abs_tilt_pos_notify);
+            break;
+        case SENSOR_EVENT_TYPE_TILT_NEG:
+            STATS_INC(g_lsm6dsl_stats, abs_tilt_neg_notify);
+            break;
         default:
             break;
     }
@@ -2216,6 +2298,20 @@ lsm6dsl_sensor_handle_interrupt(struct sensor *sensor)
         lsm6dsl_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_CHANGE);
     }
 
+    rc = lsm6dsl_notify(lsm6dsl, int_src.func_src1, SENSOR_EVENT_TYPE_TILT_CHANGE);
+    if (!rc) {
+        lsm6dsl_inc_notif_stats(SENSOR_EVENT_TYPE_TILT_CHANGE);
+    }
+
+    rc = lsm6dsl_notify(lsm6dsl, int_src.wrist_tilt_ia, SENSOR_EVENT_TYPE_TILT_POS);
+    if (!rc) {
+        lsm6dsl_inc_notif_stats(SENSOR_EVENT_TYPE_TILT_POS);
+    }
+
+    rc = lsm6dsl_notify(lsm6dsl, int_src.wrist_tilt_ia, SENSOR_EVENT_TYPE_TILT_NEG);
+    if (!rc) {
+        lsm6dsl_inc_notif_stats(SENSOR_EVENT_TYPE_TILT_NEG);
+    }
     return rc;
 }
 
@@ -2510,6 +2606,11 @@ lsm6dsl_config(struct lsm6dsl *lsm6dsl, struct lsm6dsl_cfg *cfg)
     }
 
     rc = lsm6dsl_set_orientation(lsm6dsl, &cfg->orientation);
+    if (rc) {
+        goto end;
+    }
+
+    rc = lsm6dsl_set_tilt(lsm6dsl, &cfg->tilt);
     if (rc) {
         goto end;
     }
