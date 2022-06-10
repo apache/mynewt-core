@@ -68,6 +68,8 @@ static const unsigned int net_gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(MCU_GPI
 static const unsigned int periph_gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(MCU_GPIO_PERIPH)) };
 #endif
 
+extern uint8_t __StackTop[];
+
 void
 hal_system_start(void *img_start)
 {
@@ -142,13 +144,12 @@ hal_system_start(void *img_start)
      * Normal loop here is inlined by GCC to call to memset hence asm version of
      * memset that does not use stack (that just get erased).
      */
-    asm volatile("    add     %1, %1, %0    \n"
-                 "    mov     r0, #0        \n"
+    asm volatile("    mov     r0, #0        \n"
                  "1:  stmia   %0!, {r0}     \n"
                  "    cmp     %0, %1        \n"
                  "    blt     1b            \n"
         :
-        : "r" (&_ram_start), "r" (RAM_SIZE)
+        : "r" (&_ram_start), "r" (&__StackTop)
         : "r0");
     /* Application startup code expects interrupts to be enabled */
     __enable_irq();
