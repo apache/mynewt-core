@@ -182,14 +182,15 @@ lsm6dsl_shell_cmd_dump(int argc, char **argv)
             rc = lsm6dsl_read(g_lsm6dsl, reg_name[i].addr, &value, 1);
             if (rc) {
                 console_printf("dump failed %d\n", rc);
-            } else if (all || value != 0){
+            } else if (all || value != 0) {
                 console_printf("%-22s(0x%02X) = 0x%02X\n",
                                reg_name[i].regname, reg_name[i].addr, value);
             }
         }
 
         /* Bank A */
-        rc = lsm6dsl_write_reg(g_lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, LSM6DSL_FUNC_CFG_ACCESS_MASK);
+        rc = lsm6dsl_write_reg(g_lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG,
+                               LSM6DSL_FUNC_CFG_ACCESS_MASK);
         if (rc) {
             return rc;
         }
@@ -197,7 +198,7 @@ lsm6dsl_shell_cmd_dump(int argc, char **argv)
             rc = lsm6dsl_read(g_lsm6dsl, reg_name_banka[i].addr, &value, 1);
             if (rc) {
                 console_printf("dump failed %d\n", rc);
-            } else if (all || value != 0){
+            } else if (all || value != 0) {
                 console_printf("%-22s(0x%02X) = 0x%02X\n",
                                reg_name_banka[i].regname, reg_name_banka[i].addr, value);
             }
@@ -208,7 +209,8 @@ lsm6dsl_shell_cmd_dump(int argc, char **argv)
         }
 
         /* Bank B */
-        rc = lsm6dsl_write_reg(g_lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, LSM6DSL_FUNC_CFG_ACCESS_MASK | LSM6DSL_SHUB_REG_ACCESS_MASK);
+        rc = lsm6dsl_write_reg(g_lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG,
+                               LSM6DSL_FUNC_CFG_ACCESS_MASK | LSM6DSL_SHUB_REG_ACCESS_MASK);
         if (rc) {
             return rc;
         }
@@ -216,7 +218,7 @@ lsm6dsl_shell_cmd_dump(int argc, char **argv)
             rc = lsm6dsl_read(g_lsm6dsl, reg_name_bankb[i].addr, &value, 1);
             if (rc) {
                 console_printf("dump failed %d\n", rc);
-            } else if (all || value != 0){
+            } else if (all || value != 0) {
                 console_printf("%-22s(0x%02X) = 0x%02X\n",
                                reg_name_bankb[i].regname, reg_name_bankb[i].addr, value);
             }
