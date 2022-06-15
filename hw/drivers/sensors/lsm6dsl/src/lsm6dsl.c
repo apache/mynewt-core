@@ -1028,7 +1028,7 @@ lsm6dsl_get_wake_up(struct lsm6dsl *lsm6dsl, struct lsm6dsl_wk_settings *wk)
 
 int
 lsm6dsl_set_tilt(struct lsm6dsl *lsm6dsl,
-                        const struct lsm6dsl_tilt_settings *cfg)
+                 const struct lsm6dsl_tilt_settings *cfg)
 {
     int rc;
     uint8_t en_mask;
@@ -1041,7 +1041,8 @@ lsm6dsl_set_tilt(struct lsm6dsl *lsm6dsl,
             return rc;
         }
         if (cfg->en_wrist_tilt) {
-            rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG, LSM6DSL_FUNC_CFG_ACCESS_MASK | LSM6DSL_SHUB_REG_ACCESS_MASK);
+            rc = lsm6dsl_write_reg(lsm6dsl, LSM6DSL_FUNC_CFG_ACCESS_REG,
+                                   LSM6DSL_FUNC_CFG_ACCESS_MASK | LSM6DSL_SHUB_REG_ACCESS_MASK);
             if (rc) {
                 return rc;
             }
@@ -2213,35 +2214,35 @@ lsm6dsl_inc_notif_stats(sensor_event_type_t event)
 {
 #if MYNEWT_VAL(LSM6DSL_NOTIF_STATS)
     switch (event) {
-        case SENSOR_EVENT_TYPE_SINGLE_TAP:
-            STATS_INC(g_lsm6dsl_stats, single_tap_notify);
-            break;
-        case SENSOR_EVENT_TYPE_DOUBLE_TAP:
-            STATS_INC(g_lsm6dsl_stats, double_tap_notify);
-            break;
-        case SENSOR_EVENT_TYPE_ORIENT_CHANGE:
-            STATS_INC(g_lsm6dsl_stats, orientation_notify);
-            break;
-        case SENSOR_EVENT_TYPE_SLEEP:
-            STATS_INC(g_lsm6dsl_stats, sleep_notify);
-            break;
-        case SENSOR_EVENT_TYPE_WAKEUP:
-            STATS_INC(g_lsm6dsl_stats, wakeup_notify);
-            break;
-        case SENSOR_EVENT_TYPE_FREE_FALL:
-            STATS_INC(g_lsm6dsl_stats, free_fall_notify);
-            break;
-        case SENSOR_EVENT_TYPE_TILT_CHANGE:
-            STATS_INC(g_lsm6dsl_stats, rel_tilt_notify);
-            break;
-        case SENSOR_EVENT_TYPE_TILT_POS:
-            STATS_INC(g_lsm6dsl_stats, abs_tilt_pos_notify);
-            break;
-        case SENSOR_EVENT_TYPE_TILT_NEG:
-            STATS_INC(g_lsm6dsl_stats, abs_tilt_neg_notify);
-            break;
-        default:
-            break;
+    case SENSOR_EVENT_TYPE_SINGLE_TAP:
+        STATS_INC(g_lsm6dsl_stats, single_tap_notify);
+        break;
+    case SENSOR_EVENT_TYPE_DOUBLE_TAP:
+        STATS_INC(g_lsm6dsl_stats, double_tap_notify);
+        break;
+    case SENSOR_EVENT_TYPE_ORIENT_CHANGE:
+        STATS_INC(g_lsm6dsl_stats, orientation_notify);
+        break;
+    case SENSOR_EVENT_TYPE_SLEEP:
+        STATS_INC(g_lsm6dsl_stats, sleep_notify);
+        break;
+    case SENSOR_EVENT_TYPE_WAKEUP:
+        STATS_INC(g_lsm6dsl_stats, wakeup_notify);
+        break;
+    case SENSOR_EVENT_TYPE_FREE_FALL:
+        STATS_INC(g_lsm6dsl_stats, free_fall_notify);
+        break;
+    case SENSOR_EVENT_TYPE_TILT_CHANGE:
+        STATS_INC(g_lsm6dsl_stats, rel_tilt_notify);
+        break;
+    case SENSOR_EVENT_TYPE_TILT_POS:
+        STATS_INC(g_lsm6dsl_stats, abs_tilt_pos_notify);
+        break;
+    case SENSOR_EVENT_TYPE_TILT_NEG:
+        STATS_INC(g_lsm6dsl_stats, abs_tilt_neg_notify);
+        break;
+    default:
+        break;
     }
 #endif /* LSM6DSL_NOTIF_STATS */
 }
