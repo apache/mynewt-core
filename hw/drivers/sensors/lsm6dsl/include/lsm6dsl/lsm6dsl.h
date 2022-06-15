@@ -120,10 +120,10 @@ struct lsm6dsl_tilt_settings {
 
 struct lsm6dsl_tap_settings {
     /* Axis enabled bitmask */
-    uint8_t en_x: 1;
-    uint8_t en_y: 1;
-    uint8_t en_z: 1;
-    uint8_t en_dtap: 1;
+    uint8_t en_x : 1;
+    uint8_t en_y : 1;
+    uint8_t en_z : 1;
+    uint8_t en_dtap : 1;
 
     /* Threshold for tap recognition */
     int8_t tap_ths;
