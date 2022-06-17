@@ -21,6 +21,7 @@ pkg.name: hw/drivers/sensors/bmp388
 pkg.description: Driver for the BMP388 pressure sensor
 pkg.keywords:
     - bmp388
+    - bmp390
     - i2c
     - spi
     - sensor

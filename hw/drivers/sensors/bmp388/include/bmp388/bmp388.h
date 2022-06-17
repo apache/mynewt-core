@@ -65,6 +65,8 @@ extern "C" {
 
 /**\name BMP3 chip identifier */
 #define BMP3_CHIP_ID      0x50
+/**\name BMP390 chip identifier */
+#define BMP390_CHIP_ID      0x60
 /**\name BMP3 pressure settling time (micro secs)*/
 #define BMP3_PRESS_SETTLE_TIME  UINT16_C(392)
 /**\name BMP3 temperature settling time (micro secs) */
