@@ -28,6 +28,9 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #if MYNEWT_VAL(MAIN_STACK_SIZE)
 #define __STACK_SIZE MYNEWT_VAL(MAIN_STACK_SIZE)
 #endif
+#ifndef __STARTUP_FILL_MAIN_STACK
+#define __STARTUP_FILL_MAIN_STACK 1
+#endif
 #define __HEAP_SIZE 0
 #define __STARTUP_CLEAR_BSS
 
@@ -403,6 +406,16 @@ Reset_Handler:
 
 .L_loop3_done:
 #endif /* __STARTUP_CLEAR_BSS */
+
+#if __STARTUP_FILL_MAIN_STACK
+    ldr     r2, =0xdeadbeef
+    ldr     r0, =__StackLimit
+    mov     r1, sp
+0:  cmp     r1, r0
+    str     r2, [r1,#-4]!
+    bge     0b
+1:
+#endif
 
     LDR     R0, =__HeapBase
     LDR     R1, =__HeapLimit
