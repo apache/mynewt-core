@@ -21,6 +21,7 @@
 #define H_BSP_H
 
 #include <stdint.h>
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
 extern "C" {
