@@ -92,8 +92,8 @@ apollo3_flash_write_odd(const struct hal_flash *dev, uint32_t address,
 }
 
 static int
-apollo3_flash_write(const struct hal_flash *dev, uint32_t address,
-    const void *src, uint32_t num_bytes)
+apollo3_flash_write_default(const struct hal_flash *dev, uint32_t address,
+                            const void *src, uint32_t num_bytes)
 {
     const uint8_t *u8p;
     int lead_size;
@@ -165,6 +165,33 @@ apollo3_flash_write(const struct hal_flash *dev, uint32_t address,
 
 done:
     __HAL_ENABLE_INTERRUPTS(sr);
+    return rc;
+}
+
+static int
+apollo3_flash_write(const struct hal_flash *dev, uint32_t address,
+                    const void *src, uint32_t num_bytes)
+{
+    int rc = 0;
+    uint32_t offset = 0;
+    uint32_t chunk_len;
+    uint8_t ram_buf[MYNEWT_VAL(FLASH_INTERMEDIARY_BUF_SIZE)];
+
+    /* Handle in the default manner if src data is already in ram */
+    if ((uint32_t)src > apollo3_flash_dev.hf_size - apollo3_flash_dev.hf_base_addr) {
+        rc = apollo3_flash_write_default(dev, address, src, num_bytes);
+    } else {
+        while (num_bytes) {
+            chunk_len = num_bytes >
+                        MYNEWT_VAL(FLASH_INTERMEDIARY_BUF_SIZE) ? MYNEWT_VAL(FLASH_INTERMEDIARY_BUF_SIZE) : num_bytes;
+            memcpy(ram_buf, src+offset, chunk_len);
+            rc = apollo3_flash_write_default(dev, address+offset, ram_buf, chunk_len);
+
+            num_bytes -= chunk_len;
+            offset += chunk_len;
+        }
+    }
+
     return rc;
 }
 

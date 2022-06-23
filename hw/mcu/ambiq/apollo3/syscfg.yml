@@ -26,6 +26,14 @@ syscfg.defs:
     MCU_APOLLO3:
         value: 1
 
+    FLASH_INTERMEDIARY_BUF_SIZE:
+        description: >
+            In order to write data located on flash to another location on flash
+            they have to be read first. This is the size of buffer used to read
+            data before writing, i.e. each such transfer will be split into
+            chunks of this size. Buffer is created on stack.
+        value: 128
+
     UART_0:
         description: 'Whether to enable UART0'
         value: 1
