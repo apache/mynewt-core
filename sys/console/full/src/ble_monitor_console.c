@@ -21,7 +21,7 @@
 
 #if MYNEWT_VAL(CONSOLE_BLE_MONITOR)
 
-#include "host/ble_monitor.h"
+#include "nimble/transport/monitor.h"
 #include "console/console.h"
 
 int
