@@ -196,7 +196,7 @@ native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa,
         sun->sun_len = sizeof(*sun);
 #endif
         sun->sun_path[0] = '\0';
-        strncat(sun->sun_path, msun->msun_path, sizeof sun->sun_path);
+        strncat(sun->sun_path, msun->msun_path, sizeof(sun->sun_path) - 1);
         if (strcmp(sun->sun_path, msun->msun_path) != 0) {
             /* Path too long. */
             return MN_EINVAL;
