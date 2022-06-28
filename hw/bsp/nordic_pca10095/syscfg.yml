@@ -43,6 +43,29 @@ syscfg.defs:
             can reduce size of crash dump.
         value: 0
 
+    ARDUINO_PIN_D0: 32
+    ARDUINO_PIN_D1: 33
+    ARDUINO_PIN_D2: 36
+    ARDUINO_PIN_D3: 37
+    ARDUINO_PIN_D4: 38
+    ARDUINO_PIN_D5: 39
+    ARDUINO_PIN_D6: 40
+    ARDUINO_PIN_D7: 41
+    ARDUINO_PIN_D8: 42
+    ARDUINO_PIN_D9: 43
+    ARDUINO_PIN_D10: 44
+    ARDUINO_PIN_D11: 45
+    ARDUINO_PIN_D12: 46
+    ARDUINO_PIN_D13: 47
+    ARDUINO_PIN_A0: 4
+    ARDUINO_PIN_A1: 5
+    ARDUINO_PIN_A2: 6
+    ARDUINO_PIN_A3: 7
+    ARDUINO_PIN_A4: 25
+    ARDUINO_PIN_A5: 26
+    ARDUINO_PIN_SCL: 35
+    ARDUINO_PIN_SDA: 34
+
 syscfg.vals:
     # Set default pins for peripherals
     UART_0_PIN_TX: 20

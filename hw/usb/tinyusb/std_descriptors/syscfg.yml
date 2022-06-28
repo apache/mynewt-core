@@ -111,19 +111,19 @@ syscfg.defs:
 
     USBD_CDC_DESCRIPTOR_STRING:
         description: String for CDC interface
-        value: NULL
+        value: raw("NULL")
 
     USBD_MSC_DESCRIPTOR_STRING:
         description: String for MSC interface
-        value: NULL
+        value: raw("NULL")
 
     USBD_HID_DESCRIPTOR_STRING:
         description: String for HID interface
-        value: NULL
+        value: raw("NULL")
 
     USBD_BTH_DESCRIPTOR_STRING:
         description: String for BT descriptor
-        value: NULL
+        value: raw("NULL")
 
     USBD_HID_REPORT_EP:
         description: HID report endpoint number
