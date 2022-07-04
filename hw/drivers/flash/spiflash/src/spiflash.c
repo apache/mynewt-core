@@ -1374,12 +1374,24 @@ spiflash_identify(struct spiflash_dev *dev)
          * different pins, or of different type.
          * It is unlikely that flash depended packaged will work correctly.
          */
-        assert(manufacturer == supported_chips[0].fc_jedec_id.ji_manufacturer &&
-               memory_type == supported_chips[0].fc_jedec_id.ji_type &&
-               capacity == supported_chips[0].fc_jedec_id.ji_capacity);
-        if (manufacturer != supported_chips[0].fc_jedec_id.ji_manufacturer ||
-            memory_type != supported_chips[0].fc_jedec_id.ji_type ||
-            capacity != supported_chips[0].fc_jedec_id.ji_capacity) {
+        assert(MYNEWT_VAL(SPIFLASH_IGNORE_MANUFACTURER) ||
+            manufacturer == supported_chips[0].fc_jedec_id.ji_manufacturer);
+        if (!(MYNEWT_VAL(SPIFLASH_IGNORE_MANUFACTURER) ||
+              manufacturer == supported_chips[0].fc_jedec_id.ji_manufacturer)) {
+            rc = -1;
+            goto err;
+        }
+        assert(MYNEWT_VAL(SPIFLASH_IGNORE_MEMORY_TYPE) ||
+            memory_type == supported_chips[0].fc_jedec_id.ji_type);
+        if (!(MYNEWT_VAL(SPIFLASH_IGNORE_MEMORY_TYPE) ||
+              memory_type == supported_chips[0].fc_jedec_id.ji_type)) {
+            rc = -1;
+            goto err;
+        }
+        assert(MYNEWT_VAL(SPIFLASH_IGNORE_MEMORY_CAPACITY) ||
+            capacity == supported_chips[0].fc_jedec_id.ji_capacity);
+        if (!(MYNEWT_VAL(SPIFLASH_IGNORE_MEMORY_CAPACITY) ||
+              capacity == supported_chips[0].fc_jedec_id.ji_capacity)) {
             rc = -1;
             goto err;
         }
@@ -1413,9 +1425,12 @@ spiflash_identify(struct spiflash_dev *dev)
             }
         }
         for (i = 0; supported_chips[i].fc_jedec_id.ji_manufacturer != 0; ++i) {
-            if (manufacturer ==  supported_chips[i].fc_jedec_id.ji_manufacturer &&
-                memory_type == supported_chips[i].fc_jedec_id.ji_type &&
-                capacity == supported_chips[i].fc_jedec_id.ji_capacity) {
+            if ((MYNEWT_VAL(SPIFLASH_IGNORE_MANUFACTURER) ||
+                 manufacturer == supported_chips[i].fc_jedec_id.ji_manufacturer) &&
+                (MYNEWT_VAL(SPIFLASH_IGNORE_MEMORY_TYPE) ||
+                 memory_type == supported_chips[i].fc_jedec_id.ji_type) &&
+                (MYNEWT_VAL(SPIFLASH_IGNORE_MEMORY_CAPACITY) ||
+                 capacity == supported_chips[i].fc_jedec_id.ji_capacity)) {
                 /* Device is supported */
                 dev->flash_chip = &supported_chips[i];
                 break;
