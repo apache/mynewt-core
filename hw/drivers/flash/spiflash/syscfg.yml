@@ -68,13 +68,25 @@ syscfg.defs:
             values found in hw/drivers/flash/spiflash/chips/syscfg.yml should be
             set to 1 for desired chips.
         value: 0
+    SPIFLASH_IGNORE_MANUFACTURER:
+        description: >
+            Ignore the SpiFlash manufacturer as read by Read JEDEC ID command 9FH
+        value: 0
     SPIFLASH_MEMORY_TYPE:
         description: >
             Expected SpiFlash memory type as read by Read JEDEC ID command 9FH
         value: 0
+    SPIFLASH_IGNORE_MEMORY_TYPE:
+        description: >
+            Ignore SpiFlash memory type as read by Read JEDEC ID command 9FH
+        value: 0
     SPIFLASH_MEMORY_CAPACITY:
         description: >
             Expected SpiFlash memory capactity as read by Read JEDEC ID command 9FH
+        value: 0
+    SPIFLASH_IGNORE_MEMORY_CAPACITY:
+        description: >
+            Ignore SpiFlash memory capactity as read by Read JEDEC ID command 9FH
         value: 0
 
     SPIFLASH_READ_STATUS_INTERVAL:
