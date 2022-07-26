@@ -85,6 +85,8 @@ struct qspi_flash_config {
 extern const struct qspi_flash_config rdids[];
 extern const int qspi_flash_config_array_size;
 
+extern const struct qspi_flash_config *rdid_detected;
+
 #ifdef __cplusplus
 }
 #endif

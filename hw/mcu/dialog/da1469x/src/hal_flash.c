@@ -34,6 +34,8 @@ union da1469x_qspi_data_reg {
     uint8_t  d8;
 };
 
+const struct qspi_flash_config *rdid_detected = NULL;
+
 static int da1469x_hff_read(const struct hal_flash *dev, uint32_t address,
                             void *dst, uint32_t num_bytes);
 static int da1469x_hff_write(const struct hal_flash *dev, uint32_t address,
@@ -453,20 +455,19 @@ qspi_read_rdid(const struct hal_flash *dev)
 static sec_text_ram_core void
 da1469x_hff_mcu_custom_init(const struct hal_flash *dev)
 {
-    const struct qspi_flash_config *config = NULL;
     uint32_t primask;
 
     __HAL_DISABLE_INTERRUPTS(primask);
 
     /* detect flash device and use correct configuration */
-    config = qspi_read_rdid(dev);
-    assert(config);
+    rdid_detected = qspi_read_rdid(dev);
+    assert(rdid_detected);
 
-    QSPIC->QSPIC_BURSTCMDA_REG = config->cmda;
-    QSPIC->QSPIC_BURSTCMDB_REG = config->cmdb;
+    QSPIC->QSPIC_BURSTCMDA_REG = rdid_detected->cmda;
+    QSPIC->QSPIC_BURSTCMDB_REG = rdid_detected->cmdb;
 
     /* provision attached QSPI device for proper quad operation */
-    qspi_qe_enable(dev, &config->qe);
+    qspi_qe_enable(dev, &rdid_detected->qe);
 
     /*
      * Set auto mode, read pipe delay to 0x7, read pipe enable
