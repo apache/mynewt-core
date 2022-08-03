@@ -130,6 +130,7 @@ SECTIONS
 
   .data          :
   {
+    *(.ram_text, .ram_text.*)
     *(.data .data.*)
     *(.gnu.linkonce.d.*)
   } >ram AT>flash

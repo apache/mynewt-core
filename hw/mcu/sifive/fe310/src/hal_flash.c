@@ -70,7 +70,7 @@ fe310_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
     return 0;
 }
 
-static int __attribute((section(".data.fe310_flash_transmit")))
+static int __attribute((section(".ram_text.fe310_flash_transmit")))
 fe310_flash_transmit(uint8_t out_byte)
 {
     int in_byte;
@@ -86,7 +86,7 @@ fe310_flash_transmit(uint8_t out_byte)
     return in_byte;
 }
 
-static int __attribute((section(".data.fe310_flash_fifo_put")))
+static int __attribute((section(".ram_text.fe310_flash_fifo_put")))
 fe310_flash_fifo_put(uint8_t out_byte)
 {
     int went_out = 0;
@@ -105,7 +105,7 @@ fe310_flash_fifo_put(uint8_t out_byte)
     return went_out;
 }
 
-static int __attribute((section(".data.fe310_flash_fifo_write")))
+static int __attribute((section(".ram_text.fe310_flash_fifo_write")))
 fe310_flash_fifo_write(const uint8_t *ptr, int count)
 {
     int went_out = 0;
@@ -123,7 +123,7 @@ fe310_flash_fifo_write(const uint8_t *ptr, int count)
     return went_out;
 }
 
-static int __attribute((section(".data.fe310_flash_wait_till_ready")))
+static int __attribute((section(".ram_text.fe310_flash_wait_till_ready")))
 fe310_flash_wait_till_ready(void)
 {
     int status;
@@ -138,7 +138,7 @@ fe310_flash_wait_till_ready(void)
     return 0;
 }
 
-static int __attribute((section(".data.fe310_flash_write_enable")))
+static int __attribute((section(".ram_text.fe310_flash_write_enable")))
 fe310_flash_write_enable(void)
 {
     SPI0_REG(SPI_REG_CSMODE) = SPI_CSMODE_HOLD;
@@ -147,7 +147,7 @@ fe310_flash_write_enable(void)
     return 0;
 }
 
-static int  __attribute((section(".data.fe310_flash_write_page"))) __attribute((noinline))
+static int  __attribute((section(".ram_text.fe310_flash_write_page"))) __attribute((noinline))
 fe310_flash_write_page(const struct hal_flash *dev, uint32_t address,
                       const void *src, uint32_t num_bytes)
 {
@@ -232,7 +232,7 @@ fe310_flash_write(const struct hal_flash *dev, uint32_t address,
     return 0;
 }
 
-static int __attribute((section(".data.fe310_flash_erase_sector"))) __attribute((noinline))
+static int __attribute((section(".ram_text.fe310_flash_erase_sector"))) __attribute((noinline))
 fe310_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     int sr;
