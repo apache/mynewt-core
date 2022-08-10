@@ -71,7 +71,11 @@ console_rx_restart(void)
 static void
 tx_flush_ev_cb(struct os_event *ev)
 {
+#if MYNEWT_VAL(USBD_CDC_TX_BUFSIZE)
+    if (connected && tud_cdc_write_available() < CFG_TUD_CDC_TX_BUFSIZE) {
+#else
     if (connected && tud_cdc_write_available() < USBD_CDC_DATA_EP_SIZE) {
+#endif
         if (tud_cdc_write_flush() == 0) {
             /*
              * Previous data not sent yet.
