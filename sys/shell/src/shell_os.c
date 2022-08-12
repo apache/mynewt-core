@@ -170,6 +170,14 @@ shell_os_date_cmd(const struct shell_cmd *cmd, int argc, char **argv,
 }
 
 int
+shell_os_print_reset_cause(const struct shell_cmd *cmd, int argc, char **argv,
+                           struct streamer *streamer)
+{
+    streamer_printf(streamer, "Reset cause: %s\n", hal_reset_cause_str());
+    return 0;
+}
+
+int
 shell_os_reset_cmd(const struct shell_cmd *cmd, int argc, char **argv,
                    struct streamer *streamer)
 {
@@ -250,6 +258,10 @@ static const struct shell_param reset_params[] = {
     {NULL, NULL}
 };
 
+static const struct shell_cmd_help print_reset_cause_help = {
+    .summary = "Print reset cause.",
+};
+
 static const struct shell_cmd_help reset_help = {
     .summary = "reset system",
     .usage = NULL,
@@ -266,6 +278,7 @@ static const struct shell_cmd os_commands[] = {
     SHELL_CMD_EXT("mpool", shell_os_mpool_display_cmd, &mpool_help),
     SHELL_CMD_EXT("date", shell_os_date_cmd, &date_help),
     SHELL_CMD_EXT("reset", shell_os_reset_cmd, &reset_help),
+    SHELL_CMD_EXT("reset_cause", shell_os_print_reset_cause, &print_reset_cause_help),
     SHELL_CMD_EXT("lsdev", shell_os_ls_dev_cmd, &ls_dev_help),
     { 0 },
 };
