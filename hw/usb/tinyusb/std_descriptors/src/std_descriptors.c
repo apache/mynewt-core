@@ -39,10 +39,34 @@
 #define CONFIG_NUM 1
 #endif
 
-#define CDC_IF_STR_IX (MYNEWT_VAL(USBD_CDC_DESCRIPTOR_STRING) == NULL ? 0 : 4)
-#define MSC_IF_STR_IX (MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING) == NULL ? 0 : 5)
-#define HID_IF_STR_IX (MYNEWT_VAL(USBD_HID_DESCRIPTOR_STRING) == NULL ? 0 : 6)
-#define BTH_IF_STR_IX (MYNEWT_VAL(USBD_BTH_DESCRIPTOR_STRING) == NULL ? 0 : 7)
+enum usb_desc_ix {
+    USB_DESC_IX_SERIAL_NUMBER   = 1,
+    USB_DESC_IX_VENDOR          = 2,
+    USB_DESC_IX_PRODUCT         = 3,
+#if defined MYNEWT_VAL_USBD_CDC_DESCRIPTOR_STRING
+    CDC_IF_STR_IX,
+#else
+#define CDC_IF_STR_IX 0
+#endif
+#if defined MYNEWT_VAL_USBD_MSC_DESCRIPTOR_STRING
+    MSC_IF_STR_IX,
+#else
+#define MSC_IF_STR_IX   0
+#endif
+#if defined MYNEWT_VAL_USBD_HID_DESCRIPTOR_STRING
+    HID_IF_STR_IX,
+#else
+#define HID_IF_STR_IX   0
+#endif
+#if defined MYNEWT_VAL_USBD_BTH_DESCRIPTOR_STRING
+    BTH_IF_STR_IX,
+#else
+#define BTH_IF_STR_IX   0
+#endif
+#if defined MYNEWT_VAL_USBD_DFU_SLOT_NAME
+    DFU_SLOT_NAME_IF_STR_IX,
+#endif
+};
 
 #if MYNEWT_VAL(USBD_CONFIGURATION_SELF_POWERED)
 #define SELF_POWERED_OPT    TUSB_DESC_CONFIG_ATT_SELF_POWERED
@@ -290,7 +314,8 @@ const uint8_t desc_configuration[] = {
 #endif
 
 #if CFG_TUD_DFU
-    TUD_DFU_DESCRIPTOR(ITF_NUM_DFU, 1, 8, DFU_ATTR_CAN_DOWNLOAD, CFG_TUD_DFU_DETACH_TIMEOUT, CFG_TUD_DFU_XFER_BUFSIZE),
+    TUD_DFU_DESCRIPTOR(ITF_NUM_DFU, 1, DFU_SLOT_NAME_IF_STR_IX, DFU_ATTR_CAN_DOWNLOAD,
+                       CFG_TUD_DFU_DETACH_TIMEOUT, CFG_TUD_DFU_XFER_BUFSIZE),
 #endif
 };
 
@@ -310,14 +335,20 @@ tud_descriptor_configuration_cb(uint8_t index)
 const char *string_desc_arr[] = {
     MYNEWT_VAL(USBD_VENDOR_STRING),
     MYNEWT_VAL(USBD_PRODUCT_STRING),
+#if defined MYNEWT_VAL_USBD_CDC_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_CDC_DESCRIPTOR_STRING),
+#endif
+#if defined MYNEWT_VAL_USBD_MSC_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING),
+#endif
+#if defined MYNEWT_VAL_USBD_HID_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_HID_DESCRIPTOR_STRING),
+#endif
+#if defined MYNEWT_VAL_USBD_BTH_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_BTH_DESCRIPTOR_STRING),
+#endif
 #if defined MYNEWT_VAL_USBD_DFU_SLOT_NAME
     MYNEWT_VAL(USBD_DFU_SLOT_NAME),
-#else
-    NULL,
 #endif
 };
 
@@ -400,14 +431,16 @@ tud_descriptor_string_cb(uint8_t index, uint16_t langid)
     } else if (index - 2 < ARRAY_SIZE(string_desc_arr)) {
         str = string_desc_arr[index - 2];
 
-        char_num = strlen(str);
-        assert(char_num <= ARRAY_SIZE(desc_string) - 1);
-        if (char_num > ARRAY_SIZE(desc_string) - 1) {
-            char_num = ARRAY_SIZE(desc_string) - 1;
-        }
+        if (str) {
+            char_num = strlen(str);
+            assert(char_num <= ARRAY_SIZE(desc_string) - 1);
+            if (char_num > ARRAY_SIZE(desc_string) - 1) {
+                char_num = ARRAY_SIZE(desc_string) - 1;
+            }
 
-        for (i = 0; i < char_num; ++i) {
-            desc_string[1 + i] = str[i];
+            for (i = 0; i < char_num; ++i) {
+                desc_string[1 + i] = str[i];
+            }
         }
     }
 
