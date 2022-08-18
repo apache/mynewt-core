@@ -53,6 +53,11 @@ enum usb_desc_ix {
 #else
 #define CDC_CONSOLE_IF_STR_IX   0
 #endif
+#if defined MYNEWT_VAL_USBD_CDC_HCI_DESCRIPTOR_STRING
+    CDC_HCI_IF_STR_IX,
+#else
+#define CDC_HCI_IF_STR_IX   0
+#endif
 #if defined MYNEWT_VAL_USBD_MSC_DESCRIPTOR_STRING
     MSC_IF_STR_IX,
 #else
@@ -272,6 +277,11 @@ enum {
     ITF_NUM_CDC_CONSOLE_DATA,
 #endif
 
+#if CFG_CDC_HCI
+    ITF_NUM_CDC_HCI,
+    ITF_NUM_CDC_HCI_DATA,
+#endif
+
 #if CFG_TUD_MSC
     ITF_NUM_MSC,
 #endif
@@ -290,6 +300,7 @@ enum {
 #define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + \
                              CFG_CDC * TUD_CDC_DESC_LEN + \
                              CFG_CDC_CONSOLE * TUD_CDC_DESC_LEN + \
+                             CFG_CDC_HCI * TUD_CDC_DESC_LEN + \
                              CFG_TUD_MSC * TUD_MSC_DESC_LEN + \
                              CFG_TUD_HID * TUD_HID_DESC_LEN + \
                              CFG_TUD_BTH * TUD_BTH_DESC_LEN + \
@@ -311,6 +322,12 @@ const uint8_t desc_configuration[] = {
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_CONSOLE, CDC_CONSOLE_IF_STR_IX, USBD_CDC_CONSOLE_NOTIFY_EP,
                        USBD_CDC_CONSOLE_NOTIFY_EP_SIZE, USBD_CDC_CONSOLE_DATA_OUT_EP, USBD_CDC_CONSOLE_DATA_IN_EP,
                        (CFG_TUSB_RHPORT0_MODE & OPT_MODE_HIGH_SPEED) ? 512 : USBD_CDC_CONSOLE_DATA_EP_SIZE),
+#endif
+
+#if CFG_CDC_HCI
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_HCI, CDC_HCI_IF_STR_IX, USBD_CDC_HCI_NOTIFY_EP, USBD_CDC_HCI_NOTIFY_EP_SIZE,
+                       USBD_CDC_HCI_DATA_OUT_EP, USBD_CDC_HCI_DATA_IN_EP,
+                       (CFG_TUSB_RHPORT0_MODE & OPT_MODE_HIGH_SPEED) ? 512 : USBD_CDC_HCI_DATA_EP_SIZE),
 #endif
 
 #if CFG_CDC
@@ -357,6 +374,9 @@ const char *string_desc_arr[] = {
 #endif
 #if defined MYNEWT_VAL_USBD_CDC_CONSOLE_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_CDC_CONSOLE_DESCRIPTOR_STRING),
+#endif
+#if defined MYNEWT_VAL_USBD_CDC_HCI_DESCRIPTOR_STRING
+    MYNEWT_VAL(USBD_CDC_HCI_DESCRIPTOR_STRING),
 #endif
 #if defined MYNEWT_VAL_USBD_MSC_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING),
