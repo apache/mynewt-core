@@ -29,6 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/usb/tinyusb"
+    - "@apache-mynewt-core/hw/usb/tinyusb/cdc"
     - "@tinyusb/tinyusb"
 
 pkg.init:

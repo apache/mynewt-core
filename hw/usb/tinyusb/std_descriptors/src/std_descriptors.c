@@ -48,6 +48,11 @@ enum usb_desc_ix {
 #else
 #define CDC_IF_STR_IX 0
 #endif
+#if defined MYNEWT_VAL_USBD_CDC_CONSOLE_DESCRIPTOR_STRING
+    CDC_CONSOLE_IF_STR_IX,
+#else
+#define CDC_CONSOLE_IF_STR_IX   0
+#endif
 #if defined MYNEWT_VAL_USBD_MSC_DESCRIPTOR_STRING
     MSC_IF_STR_IX,
 #else
@@ -257,9 +262,14 @@ enum {
 #endif
 #endif
 
-#if CFG_TUD_CDC
+#if CFG_CDC
     ITF_NUM_CDC,
     ITF_NUM_CDC_DATA,
+#endif
+
+#if CFG_CDC_CONSOLE
+    ITF_NUM_CDC_CONSOLE,
+    ITF_NUM_CDC_CONSOLE_DATA,
 #endif
 
 #if CFG_TUD_MSC
@@ -278,7 +288,8 @@ enum {
 };
 
 #define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + \
-                             CFG_TUD_CDC * TUD_CDC_DESC_LEN + \
+                             CFG_CDC * TUD_CDC_DESC_LEN + \
+                             CFG_CDC_CONSOLE * TUD_CDC_DESC_LEN + \
                              CFG_TUD_MSC * TUD_MSC_DESC_LEN + \
                              CFG_TUD_HID * TUD_HID_DESC_LEN + \
                              CFG_TUD_BTH * TUD_BTH_DESC_LEN + \
@@ -296,7 +307,13 @@ const uint8_t desc_configuration[] = {
                        0, 9, 17, 25, 33, 49),
 #endif
 
-#if CFG_TUD_CDC
+#if CFG_CDC_CONSOLE
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_CONSOLE, CDC_CONSOLE_IF_STR_IX, USBD_CDC_CONSOLE_NOTIFY_EP,
+                       USBD_CDC_CONSOLE_NOTIFY_EP_SIZE, USBD_CDC_CONSOLE_DATA_OUT_EP, USBD_CDC_CONSOLE_DATA_IN_EP,
+                       (CFG_TUSB_RHPORT0_MODE & OPT_MODE_HIGH_SPEED) ? 512 : USBD_CDC_CONSOLE_DATA_EP_SIZE),
+#endif
+
+#if CFG_CDC
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, CDC_IF_STR_IX, USBD_CDC_NOTIFY_EP, USBD_CDC_NOTIFY_EP_SIZE,
                        USBD_CDC_DATA_OUT_EP, USBD_CDC_DATA_IN_EP,
                        (CFG_TUSB_RHPORT0_MODE & OPT_MODE_HIGH_SPEED) ? 512 : USBD_CDC_DATA_EP_SIZE),
@@ -337,6 +354,9 @@ const char *string_desc_arr[] = {
     MYNEWT_VAL(USBD_PRODUCT_STRING),
 #if defined MYNEWT_VAL_USBD_CDC_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_CDC_DESCRIPTOR_STRING),
+#endif
+#if defined MYNEWT_VAL_USBD_CDC_CONSOLE_DESCRIPTOR_STRING
+    MYNEWT_VAL(USBD_CDC_CONSOLE_DESCRIPTOR_STRING),
 #endif
 #if defined MYNEWT_VAL_USBD_MSC_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING),

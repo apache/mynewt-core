@@ -18,12 +18,12 @@
 #
 
 syscfg.defs:
-    USBD_CDC_DECRIPTOR_STRING:
-        description: String for CDC interface
+    USBD_CDC_CONSOLE_DECRIPTOR_STRING:
+        description: String for CDC/Console interface
         value: '"Mynewt console"'
 
 syscfg.vals:
-    USBD_CDC: 1
+    USBD_CDC_CONSOLE: 1
 
 syscfg.restrictions:
-    - "USBD_CDC"
+    - "USBD_CDC_CONSOLE"

@@ -72,11 +72,54 @@ extern "C" {
 #define CFG_TUD_ENDPOINT0_SIZE   MYNEWT_VAL(USBD_EP0_SIZE)
 
 /* ------------- CLASS ------------- */
-#if MYNEWT_VAL(USBD_CDC)
-#define CFG_TUD_CDC              MYNEWT_VAL(USBD_CDC)
+/*
+ * If CDC_CONSOLE does not have specific values for endpoint configuration,
+ * use values for unspecified CDC
+ */
+#if defined(MYNEWT_VAL_USBD_CDC_CONSOLE_NOTIFY_EP_SIZE)
+#define USBD_CDC_CONSOLE_NOTIFY_EP_SIZE MYNEWT_VAL(USBD_CDC_CONSOLE_NOTIFY_EP_SIZE)
 #else
-#define CFG_TUD_CDC              0
+#define USBD_CDC_CONSOLE_NOTIFY_EP_SIZE USBD_CDC_NOTIFY_EP_SIZE
 #endif
+
+#if defined(MYNEWT_VAL_USBD_CDC_CONSOLE_NOTIFY_EP)
+#define USBD_CDC_CONSOLE_NOTIFY_EP      MYNEWT_VAL(USBD_CDC_CONSOLE_NOTIFY_EP)
+#else
+#define USBD_CDC_CONSOLE_NOTIFY_EP      USBD_CDC_NOTIFY_EP
+#endif
+
+#if defined(MYNEWT_VAL_USBD_CDC_CONSOLE_DATA_OUT_EP)
+#define USBD_CDC_CONSOLE_DATA_OUT_EP    MYNEWT_VAL(USBD_CDC_CONSOLE_DATA_OUT_EP)
+#else
+#define USBD_CDC_CONSOLE_DATA_OUT_EP    USBD_CDC_DATA_OUT_EP
+#endif
+
+#if defined(MYNEWT_VAL_USBD_CDC_CONSOLE_DATA_IN_EP)
+#define USBD_CDC_CONSOLE_DATA_IN_EP     MYNEWT_VAL(USBD_CDC_CONSOLE_DATA_IN_EP)
+#else
+#define USBD_CDC_CONSOLE_DATA_IN_EP     USBD_CDC_DATA_IN_EP
+#endif
+
+#if defined(MYNEWT_VAL_USBD_CDC_CONSOLE_DATA_EP_SIZE)
+#define USBD_CDC_CONSOLE_DATA_EP_SIZE   MYNEWT_VAL(USBD_CDC_CONSOLE_DATA_EP_SIZE)
+#else
+#define USBD_CDC_CONSOLE_DATA_EP_SIZE   USBD_CDC_DATA_EP_SIZE
+#endif
+
+#if MYNEWT_VAL(USBD_CDC)
+#define CFG_CDC                  MYNEWT_VAL(USBD_CDC)
+#else
+#define CFG_CDC                  0
+#endif
+
+#if MYNEWT_VAL(CONSOLE_USB)
+#define CFG_CDC_CONSOLE          MYNEWT_VAL(CONSOLE_USB)
+#else
+#define CFG_CDC_CONSOLE          0
+#endif
+
+#define CFG_TUD_CDC              ((CFG_CDC) + (CFG_CDC_CONSOLE))
+
 #if MYNEWT_VAL(USBD_HID)
 #define CFG_TUD_HID              MYNEWT_VAL(USBD_HID)
 #else

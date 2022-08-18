@@ -62,7 +62,10 @@ syscfg.defs:
         description: Device friendly name
         value: '"Dev device"'
     USBD_CDC:
-        description: Enable CDC device function in TinyUSB stack.
+        description: Enable CDC device function in TinyUSB stack (other then console or hci).
+        value:
+    USBD_CDC_CONSOLE:
+        description: Enable CDC device function for console in TinyUSB stack.
         value:
     USBD_HID:
         description: Enable HID device function in TinyUSB stack.
