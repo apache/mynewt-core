@@ -38,33 +38,39 @@ extern uint8_t _ram_start;
 #define RAM_SIZE        0x10000
 
 /* LED pins */
-#define LED_1           (28)
-#define LED_2           (29)
-#define LED_3           (30)
-#define LED_4           (31)
-#define LED_BLINK_PIN   (LED_2)
+#define LED_1               31
+#define LED_2               32
+#define LED_3               33
+#define RGB_LED_1_RED       7
+#define RGB_LED_1_GREEN     25
+#define RGB_LED_1_BLUE      26
+#define RGB_LED_2_RED       28
+#define RGB_LED_2_GREEN     29
+#define RGB_LED_2_BLUE      30
+#define LED_BLINK_PIN       (LED_1)
 
 /* Buttons */
-#define BUTTON_1        (23)
-#define BUTTON_2        (24)
-#define BUTTON_3        (8)
-#define BUTTON_4        (9)
+#define BUTTON_1            2
+#define BUTTON_2            3
+#define BUTTON_3            4
+#define BUTTON_4            6
+#define BUTTON_5            5
 
 /* Arduino pins */
-#define ARDUINO_PIN_D0      32
-#define ARDUINO_PIN_D1      33
-#define ARDUINO_PIN_D2      36
-#define ARDUINO_PIN_D3      37
-#define ARDUINO_PIN_D4      38
-#define ARDUINO_PIN_D5      39
-#define ARDUINO_PIN_D6      40
-#define ARDUINO_PIN_D7      41
+#define ARDUINO_PIN_D0      41
+#define ARDUINO_PIN_D1      42
+#define ARDUINO_PIN_D2      31
+#define ARDUINO_PIN_D3      32
+#define ARDUINO_PIN_D4      33
+#define ARDUINO_PIN_D5      46
+#define ARDUINO_PIN_D6      39
+#define ARDUINO_PIN_D7      43
 #define ARDUINO_PIN_D8      42
-#define ARDUINO_PIN_D9      43
+#define ARDUINO_PIN_D9      45
 #define ARDUINO_PIN_D10     44
-#define ARDUINO_PIN_D11     45
-#define ARDUINO_PIN_D12     46
-#define ARDUINO_PIN_D13     47
+#define ARDUINO_PIN_D11     9
+#define ARDUINO_PIN_D12     10
+#define ARDUINO_PIN_D13     8
 #define ARDUINO_PIN_A0      4
 #define ARDUINO_PIN_A1      5
 #define ARDUINO_PIN_A2      6
