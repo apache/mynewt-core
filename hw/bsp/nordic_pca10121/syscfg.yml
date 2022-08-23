@@ -45,10 +45,15 @@ syscfg.defs:
 
 syscfg.vals:
     # Set default pins for peripherals
-    UART_0_PIN_TX: 20
-    UART_0_PIN_RX: 22
-    UART_0_PIN_RTS: 19
-    UART_0_PIN_CTS: 21
+    UART_0_PIN_TX: 37
+    UART_0_PIN_RX: 36
+    UART_0_PIN_RTS: 39
+    UART_0_PIN_CTS: 38
+
+    UART_1_PIN_TX: 41
+    UART_1_PIN_RX: 40
+    UART_1_PIN_RTS: 43
+    UART_1_PIN_CTS: 42
 
     SPI_0_MASTER_PIN_SCK: 45
     SPI_0_MASTER_PIN_MOSI: 46

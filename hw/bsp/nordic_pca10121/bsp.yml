@@ -17,20 +17,19 @@
 # under the License.
 #
 
-bsp.name: "nRF5340 PDK"
-bsp.url: https://www.nordicsemi.com/Software-and-tools/Development-Kits/nRF5340-PDK
+bsp.name: "nRF5340 Audio DK"
+bsp.url: https://www.nordicsemi.com/Products/Development-hardware/nRF5340-Audio-DK
 bsp.maker: "Nordic Semiconductor"
 bsp.arch: cortex_m33
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m33"
 bsp.linkerscript:
-    - "hw/bsp/nordic_pca10095/nrf5340.ld"
+    - "hw/bsp/nordic_pca10121/nrf5340.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/nrf5340.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "hw/bsp/nordic_pca10095/boot-nrf5340.ld"
+    - "hw/bsp/nordic_pca10121/boot-nrf5340.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/nrf5340.ld"
-bsp.part2linkerscript: "hw/bsp/nordic_pca10095/split-nordic_pca10095.ld"
-bsp.downloadscript: "hw/bsp/nordic_pca10095/nordic_pca10095_download.sh"
-bsp.debugscript: "hw/bsp/nordic_pca10095/nordic_pca10095_debug.sh"
+bsp.downloadscript: "hw/bsp/nordic_pca10121/download.sh"
+bsp.debugscript: "hw/bsp/nordic_pca10121/debug.sh"
 
 bsp.flash_map:
     areas:
