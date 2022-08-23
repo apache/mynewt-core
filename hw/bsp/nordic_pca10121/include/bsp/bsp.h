@@ -58,7 +58,7 @@ extern uint8_t _ram_start;
 
 /* Arduino pins */
 #define ARDUINO_PIN_D0      41
-#define ARDUINO_PIN_D1      42
+#define ARDUINO_PIN_D1      40
 #define ARDUINO_PIN_D2      31
 #define ARDUINO_PIN_D3      32
 #define ARDUINO_PIN_D4      33
