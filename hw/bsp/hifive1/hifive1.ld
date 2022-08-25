@@ -128,14 +128,14 @@ SECTIONS
     PROVIDE( _data = . );
   } >ram AT>flash
 
-  .data          :
+  .data          :  ALIGN_WITH_INPUT
   {
     *(.ram_text, .ram_text.*)
     *(.data .data.*)
     *(.gnu.linkonce.d.*)
   } >ram AT>flash
 
-  .srodata        :
+  .srodata        : ALIGN_WITH_INPUT
   {
     PROVIDE( _gp = . + 0x800 );
     PROVIDE( __global_pointer$ = _gp);
@@ -146,7 +146,7 @@ SECTIONS
     *(.srodata .srodata.*)
   } >ram AT>flash
 
-  .sdata          :
+  .sdata          : ALIGN_WITH_INPUT
   {
     *(.sdata .sdata.*)
     *(.gnu.linkonce.s.*)
