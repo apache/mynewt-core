@@ -26,6 +26,7 @@
  */
 
   /* Program leave space for image header ~192KB */
-  kseg0_program_mem     (rx)  : ORIGIN = 0x9D000020, LENGTH = 0x2FFE0
+  kseg0_program_mem     (rx)  : ORIGIN = 0x9D000020, LENGTH = 0x7FFE0
+  kseg1_program_mem     (rx)  : ORIGIN = 0xBD000020, LENGTH = 0x7FFE0
   /* Cachable RAM 512KB */
   kseg0_data_mem       (w!x)  : ORIGIN = 0x80000000, LENGTH = 0x80000
