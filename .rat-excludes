@@ -140,6 +140,7 @@ nordic_pca10059_no_boot.ld
 split-nordic_pca10059.ld
 split-ublox_bmd_345.ld
 ublox_bmd_345_no_boot.ld
+no_boot.ld
 
 # STM32 HAL - BSD License
 stm32_driver_mod_i2c_v1.c
