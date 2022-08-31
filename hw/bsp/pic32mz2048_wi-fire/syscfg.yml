@@ -24,70 +24,38 @@ syscfg.defs:
 
     CLOCK_FREQ:
         description: 'System clock frequency, defined in hal_bsp.c'
-        value:  200000000ul
-
-    TIMER_0:
-        description: "Whether to enable Timer 0"
-        value:  1
-
-    TIMER_1:
-        description: "Whether to enable Timer 1"
-        value:  0
-
-    TIMER_2:
-        description: "Whether to enable Timer 2"
-        value:  0
-
-    TIMER_3:
-        description: "Whether to enable Timer 3"
-        value:  0
-
-    TIMER_4:
-        description: "Whether to enable Timer 4"
-        value:  0
-
-    TIMER_5:
-        description: "Whether to enable Timer 5"
-        value:  0
-
-    TIMER_6:
-        description: "Whether to enable Timer 6"
-        value:  0
-
-    TIMER_7:
-        description: "Whether to enable Timer 7"
-        value:  0
-
-    UART_0:
-        description: 'Whether to enable UART0'
-        value:  1
-
-    UART_1:
-        description: 'Whether to enable UART1'
-        value:  1
-
-    UART_2:
-        description: 'Whether to enable UART2'
-        value:  1
-
-    UART_3:
-        description: 'Whether to enable UART3'
-        value:  1
-
-    UART_4:
-        description: 'Whether to enable UART4'
-        value:  1
-
-    UART_5:
-        description: 'Whether to enable UART5'
-        value:  1
-
-    I2C_3:
-        description: 'I2C available on J6 connector'
-        value:  1
+        value:  200000000
+        range: 8000000, 24000000, 50000000, 100000000, 200000000
 
 syscfg.vals:
+    TIMER_0: 1
+    UART_0: 1
+    UART_1: 1
+    UART_2: 1
+    UART_3: 1
+    UART_4: 1
+    UART_4_PIN_TX: MCU_GPIO_PORTF(8)
+    UART_4_PIN_RX: MCU_GPIO_PORTF(2)
+    UART_5: 1
+    # I2C available on J6 connector
+    I2C_3: 1
+    I2C_3_FREQ_KHZ: 400
+    # SPI 1 (J9 connector)
+    SPI_1_MASTER_PIN_MOSI: MCU_GPIO_PORTF(0)
+    SPI_1_MASTER_PIN_MISO: MCU_GPIO_PORTD(11)
+    # SPI 2 (microSD card)
+    SPI_2_MASTER_PIN_MOSI: MCU_GPIO_PORTB(10)
+    SPI_2_MASTER_PIN_MISO: MCU_GPIO_PORTC(4)
+    # SPI 3 (MRF24WG0MA)
+    SPI_3_MASTER_PIN_MOSI: MCU_GPIO_PORTF(5)
+    SPI_3_MASTER_PIN_MISO: MCU_GPIO_PORTG(0)
+
     CONSOLE_UART_DEV: '"uart3"'
 
-    # BSP uses private version of _sbrk
-    HAL_SBRK: 0
+    CLOCK_FREQ: 200000000
+    SYSTEM_CLOCK_SRC: POSC_PLL
+    SYSTEM_CLOCK_OSC_FREQ: 24000000
+    SYSTEM_CLOCK_PLLIDIV: 3
+    SYSTEM_CLOCK_PLLRANGE: 1
+    SYSTEM_CLOCK_PLLMULT: 50
+    SYSTEM_CLOCK_PLLODIV: 2
