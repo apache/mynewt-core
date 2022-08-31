@@ -30,26 +30,8 @@ pkg.keywords:
 pkg.cflags:
     - -mprocessor=32MZ2048EFG100
 pkg.lflags:
-    - -Wl,--defsym=_min_heap_size=0x400
+    - "-L@apache-mynewt-core/hw/bsp/olimex-pic32-emz64"
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/microchip/pic32mz2048efg100"
+    - "@apache-mynewt-core/hw/mcu/microchip/pic32mz"
     - "@apache-mynewt-core/libc/baselibc"
-
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_2:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_3:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_4:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_5:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"

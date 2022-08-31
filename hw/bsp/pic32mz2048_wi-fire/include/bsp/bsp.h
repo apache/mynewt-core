@@ -20,7 +20,8 @@
 #define H_BSP_H
 
 #include <inttypes.h>
-#include "mcu/mcu.h"
+#include <xc.h>
+#include <mcu/mcu.h>
 
 #ifdef __cplusplus
 extern "C" {

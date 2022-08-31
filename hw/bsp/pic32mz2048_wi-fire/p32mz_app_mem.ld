@@ -17,13 +17,16 @@
  * under the License.
  */
 
-#ifndef __MCU_PIC32_H__
-#define __MCU_PIC32_H__
+/*
+ * Part of the MEMORY section that defines application memory size.
+ * This file is included by MCU linker script.
+ * this file does not have whole MEMORY section to make it clear
+ * what are differences between MCUs (Flash size and RAM), config
+ * sections are same.
+ */
 
-static inline void
-hal_debug_break(void)
-{
-    __asm__ volatile (" sdbbp 0");
-}
-
-#endif /* __MCU_PIC32_H__ */
+  /* Program leave space for image header ~512KB */
+  kseg0_program_mem     (rx)  : ORIGIN = 0x9D000020, LENGTH = 0x7FFE0
+  kseg1_program_mem     (rx)  : ORIGIN = 0xBD000020, LENGTH = 0x7FFE0
+  /* Cachable RAM 128 */
+  kseg0_data_mem       (w!x)  : ORIGIN = 0x80000000, LENGTH = 0x20000
