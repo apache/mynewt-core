@@ -19,7 +19,7 @@
 syscfg.defs:
     COREMARK_ITERATIONS:
         description: Number of iterations to run
-        value: 200
+        value: 0
 
 syscfg.vals.HARDFLOAT:
     FLOAT_USER: 1
