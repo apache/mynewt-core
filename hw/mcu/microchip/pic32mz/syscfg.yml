@@ -17,6 +17,8 @@
 #
 
 syscfg.defs:
+    MCU_FAMILY_PIC32MZ: 1
+
     MCU_PIC32MZ:
         description: MCUs are of PIC32MZ family.
         value: 1

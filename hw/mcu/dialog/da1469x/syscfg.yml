@@ -17,6 +17,9 @@
 #
 
 syscfg.defs:
+    MCU_FAMILY_SMARTBOND: 1
+    MCU_SERIES_DA1469X: 1
+
     MCU_TARGET:
         description: Specifies target MCU, shall be set by BSP.
         value:
