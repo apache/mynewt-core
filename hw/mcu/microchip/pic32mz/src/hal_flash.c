@@ -104,23 +104,47 @@ pic32mz_flash_read(const struct hal_flash *dev, uint32_t address,
     return 0;
 }
 
+/**
+ * Function returns address to 4 byte aligned data
+ * @param src      pointer to source data
+ * @param aligned_buffer address of aligned buffer to use in case src in unaligned
+ * @param aligned_buffer_size size of aligned buffer in bytes
+ * @param num_bytes number of bytes to provide.
+ * @return src if it is 4 byte aligned otherwise aligned_buffer
+ */
+const uint32_t *
+aligned_ptr(const void *src, uint32_t *aligned_buffer, uint32_t aligned_buffer_size, uint32_t num_bytes)
+{
+    if (((uint32_t)src & 3) == 0) {
+        /* Source is aligned, there is no need to copy data */
+        return (const uint32_t *)src;
+    }
+    if (num_bytes > aligned_buffer_size) {
+        num_bytes = aligned_buffer_size;
+    }
+    memcpy(aligned_buffer, src, num_bytes);
+    return aligned_buffer;
+}
+
 static int
 pic32mz_flash_write(const struct hal_flash *dev, uint32_t address,
                     const void *src, uint32_t num_bytes)
 {
     (void)dev;
-    const uint32_t *data = (const uint32_t*)src;
-    uint32_t word;
+    const uint32_t *data;
+    uint32_t aligned_data[4];
 
-    if (num_bytes & (WORD_SIZE - 1) || (address & 3)) {
+    if ((address & 3)) {
         return -1;
     }
 
     /* Write flash by word until the next quadword boundary is reached */
     while (address & (QUADWORD_SIZE -1) && num_bytes >= WORD_SIZE) {
+        data = aligned_ptr(src, aligned_data, sizeof(aligned_data), num_bytes);
         NVMADDR = address;
         address += WORD_SIZE;
-        NVMDATA0 = *data++;
+        src += WORD_SIZE;
+        NVMDATA0 = *data;
 
         if (flash_do_op(WORD_PROGRAM)) {
             return -1;
@@ -129,14 +153,15 @@ pic32mz_flash_write(const struct hal_flash *dev, uint32_t address,
     }
 
     while (num_bytes >= QUADWORD_SIZE) {
+        data = aligned_ptr(src, aligned_data, sizeof(aligned_data), num_bytes);
         NVMADDR = address;
         address += QUADWORD_SIZE;
+        src += QUADWORD_SIZE;
 
         NVMDATA0 = data[0];
         NVMDATA1 = data[1];
         NVMDATA2 = data[2];
         NVMDATA3 = data[3];
-        data += 4;
 
         if (flash_do_op(QUADWORD_PROGRAM)) {
             return -1;
@@ -145,9 +170,11 @@ pic32mz_flash_write(const struct hal_flash *dev, uint32_t address,
     }
 
     while (num_bytes >= WORD_SIZE) {
+        data = aligned_ptr(src, aligned_data, sizeof(aligned_data), num_bytes);
         NVMADDR = address;
         address += WORD_SIZE;
-        NVMDATA0 = *data++;
+        src += WORD_SIZE;
+        NVMDATA0 = *data;
 
         if (flash_do_op(WORD_PROGRAM)) {
             return -1;
@@ -155,11 +182,11 @@ pic32mz_flash_write(const struct hal_flash *dev, uint32_t address,
         num_bytes -= WORD_SIZE;
     }
     if (num_bytes > 0) {
-        memcpy(&word, data, num_bytes);
-        pic32mz_flash_read(dev, address + num_bytes, ((uint8_t *)&word) + num_bytes, WORD_SIZE - num_bytes);
+        aligned_data[0] = 0xFFFFFFFF;
+        memcpy(aligned_data, src, num_bytes);
 
         NVMADDR = address;
-        NVMDATA0 = word;
+        NVMDATA0 = aligned_data[0];
 
         if (flash_do_op(WORD_PROGRAM)) {
             return -1;
