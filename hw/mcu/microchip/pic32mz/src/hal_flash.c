@@ -22,6 +22,7 @@
 #include <hal/hal_flash_int.h>
 #include <mcu/mips_hal.h>
 #include <string.h>
+#include <sys/kmem.h>
 
 #define VIRT_TO_PHY(ADDRESS)   (unsigned int)((int)(ADDRESS) & 0x1FFFFFFF)
 #define PHY_TO_VIRT(ADDRESS)   (unsigned int)((int)(ADDRESS) | 0x80000000)
@@ -100,7 +101,7 @@ pic32mz_flash_read(const struct hal_flash *dev, uint32_t address,
                    void *dst, uint32_t num_bytes)
 {
     (void)dev;
-    memcpy(dst, (void *)PHY_TO_VIRT(address), num_bytes);
+    memcpy(dst, (void *)PA_TO_KVA1(address), num_bytes);
     return 0;
 }
 
