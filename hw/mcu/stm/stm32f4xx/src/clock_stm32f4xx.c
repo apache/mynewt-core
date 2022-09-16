@@ -275,8 +275,8 @@ SystemClock_Config(void)
 #if PREFETCH_ENABLE
 #if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) || \
     defined(STM32F417xx)
-    /* RevA (prefetch must be off) or RevZ (prefetch can be on/off) */
-    if (HAL_GetREVID() == 0x1001) {
+    /* RevA (prefetch must be off see errata ES0182) */
+    if (HAL_GetREVID() != 0x1000) {
         __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
     }
 #else
