@@ -33,6 +33,7 @@
 #define NRFX_GLUE_H__
 
 #include <assert.h>
+#include <stdatomic.h>
 #include "os/mynewt.h"
 
 #ifdef __cplusplus
@@ -66,7 +67,7 @@ extern "C" {
  *
  * @param expression  Expression to evaluate.
  */
-#define NRFX_STATIC_ASSERT(expression) STATIC_ASSERT(expression)
+#define NRFX_STATIC_ASSERT(expression) static_assert(expression, "")
 
 //------------------------------------------------------------------------------
 
@@ -152,6 +153,75 @@ static os_sr_t sr_from_macro __attribute__((unused));
  * @param us_time Number of microseconds to wait.
  */
 #define NRFX_DELAY_US(us_time) os_cputime_delay_usecs(us_time)
+
+//------------------------------------------------------------------------------
+
+/** @brief Atomic 32-bit unsigned type. */
+#define nrfx_atomic_t atomic_uint_fast32_t
+
+/**
+ * @brief Macro for storing a value to an atomic object and returning its previous value.
+ *
+ * @param[in] p_data Atomic memory pointer.
+ * @param[in] value  Value to store.
+ *
+ * @return Previous value of the atomic object.
+ */
+#define NRFX_ATOMIC_FETCH_STORE(p_data, value) atomic_exchange(p_data, value)
+
+/**
+ * @brief Macro for running a bitwise OR operation on an atomic object and returning its previous value.
+ *
+ * @param[in] p_data Atomic memory pointer.
+ * @param[in] value  Value of the second operand in the OR operation.
+ *
+ * @return Previous value of the atomic object.
+ */
+#define NRFX_ATOMIC_FETCH_OR(p_data, value) atomic_fetch_or(p_data, value)
+
+/**
+ * @brief Macro for running a bitwise AND operation on an atomic object
+ *        and returning its previous value.
+ *
+ * @param[in] p_data Atomic memory pointer.
+ * @param[in] value  Value of the second operand in the AND operation.
+ *
+ * @return Previous value of the atomic object.
+ */
+#define NRFX_ATOMIC_FETCH_AND(p_data, value) atomic_fetch_and(p_data, value)
+
+/**
+ * @brief Macro for running a bitwise XOR operation on an atomic object
+ *        and returning its previous value.
+ *
+ * @param[in] p_data Atomic memory pointer.
+ * @param[in] value  Value of the second operand in the XOR operation.
+ *
+ * @return Previous value of the atomic object.
+ */
+#define NRFX_ATOMIC_FETCH_XOR(p_data, value) atomic_fetch_xor(p_data, value)
+
+/**
+ * @brief Macro for running an addition operation on an atomic object
+ *        and returning its previous value.
+ *
+ * @param[in] p_data Atomic memory pointer.
+ * @param[in] value  Value of the second operand in the ADD operation.
+ *
+ * @return Previous value of the atomic object.
+ */
+#define NRFX_ATOMIC_FETCH_ADD(p_data, value) atomic_fetch_add(p_data, value)
+
+/**
+ * @brief Macro for running a subtraction operation on an atomic object
+ *        and returning its previous value.
+ *
+ * @param[in] p_data Atomic memory pointer.
+ * @param[in] value  Value of the second operand in the SUB operation.
+ *
+ * @return Previous value of the atomic object.
+ */
+#define NRFX_ATOMIC_FETCH_SUB(p_data, value) atomic_fetch_sub(p_data, value)
 
 //------------------------------------------------------------------------------
 
