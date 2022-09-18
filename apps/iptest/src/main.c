@@ -90,6 +90,23 @@ static const union mn_socket_cb net_listen_cbs =  {
     .listen.newconn = net_test_newconn,
 };
 
+static void
+net_cli_close_socket(void)
+{
+    int rc;
+
+    if (net_test_socket) {
+        rc = mn_close(net_test_socket);
+        console_printf("mn_close() = %d\n", rc);
+        net_test_socket = NULL;
+    }
+    if (net_test_socket2) {
+        rc = mn_close(net_test_socket2);
+        console_printf("mn_close() = %d\n", rc);
+        net_test_socket2 = NULL;
+    }
+}
+
 static int
 net_cli(int argc, char **argv)
 {
@@ -105,13 +122,15 @@ net_cli(int argc, char **argv)
         return 0;
     }
     if (!strcmp(argv[1], "udp")) {
+        net_cli_close_socket();
         rc = mn_socket(&net_test_socket, MN_PF_INET, MN_SOCK_DGRAM, 0);
         console_printf("mn_socket(UDP) = %d %x\n", rc,
-          (int)net_test_socket);
+                       (int)net_test_socket);
     } else if (!strcmp(argv[1], "tcp")) {
+        net_cli_close_socket();
         rc = mn_socket(&net_test_socket, MN_PF_INET, MN_SOCK_STREAM, 0);
         console_printf("mn_socket(TCP) = %d %x\n", rc,
-          (int)net_test_socket);
+                       (int)net_test_socket);
     } else if (!strcmp(argv[1], "connect") || !strcmp(argv[1], "bind")) {
         if (argc < 4) {
             return 0;
@@ -137,27 +156,32 @@ net_cli(int argc, char **argv)
         sin.msin_addr.s_addr = addr;
 
         if (!strcmp(argv[1], "connect")) {
+            if (NULL == net_test_socket) {
+                console_printf("No socket, use 'socket tcp' first\n");
+                return 0;
+            }
             mn_socket_set_cbs(net_test_socket, NULL, &net_test_cbs);
             rc = mn_connect(net_test_socket, (struct mn_sockaddr *)&sin);
             console_printf("mn_connect() = %d\n", rc);
         } else {
+            if (NULL == net_test_socket) {
+                console_printf("No socket, use 'socket <usb|tcp>' first\n");
+                return 0;
+            }
             mn_socket_set_cbs(net_test_socket, NULL, &net_test_cbs);
             rc = mn_bind(net_test_socket, (struct mn_sockaddr *)&sin);
             console_printf("mn_bind() = %d\n", rc);
         }
     } else if (!strcmp(argv[1], "listen")) {
-            mn_socket_set_cbs(net_test_socket, NULL, &net_listen_cbs);
+        if (NULL == net_test_socket) {
+            console_printf("No socket, use 'socket tcp' 'socket listen' first\n");
+            return 0;
+        }
+        mn_socket_set_cbs(net_test_socket, NULL, &net_listen_cbs);
         rc = mn_listen(net_test_socket, 2);
         console_printf("mn_listen() = %d\n", rc);
     } else if (!strcmp(argv[1], "close")) {
-        rc = mn_close(net_test_socket);
-        console_printf("mn_close() = %d\n", rc);
-        net_test_socket = NULL;
-        if (net_test_socket2) {
-            rc = mn_close(net_test_socket2);
-            console_printf("mn_close() = %d\n", rc);
-            net_test_socket2 = NULL;
-        }
+        net_cli_close_socket();
     } else if (!strcmp(argv[1], "send")) {
         if (argc < 3) {
             return 0;
