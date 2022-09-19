@@ -26,3 +26,8 @@ syscfg.defs:
         description: >
             Sysinit stage for the IP stack.
         value: 200
+
+    STD_LWIPOPTS:
+        description: >
+            Adds standard lwipopts.h, suitable for start playing with LWIP.
+        value: 1

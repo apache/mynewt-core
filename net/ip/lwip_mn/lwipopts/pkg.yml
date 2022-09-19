@@ -17,23 +17,9 @@
 # under the License.
 #
 
-pkg.name: net/ip/lwip_mn
-pkg.description: LwIP adaptation to Mynewt
+pkg.name: net/ip/lwip_mn/lwipopts
+pkg.description: Package with default lwipopts.h
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage:
 pkg.keywords:
     - lwip
-
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/net/ip/lwip_base"
-    - "@apache-mynewt-core/net/ip/mn_socket"
-
-pkg.deps.LWIP_CLI:
-    - "@apache-mynewt-core/sys/shell"
-
-pkg.deps.STD_LWIPOPTS:
-    - "@apache-mynewt-core/net/ip/lwip_mn/lwipopts"
-
-pkg.init:
-    ip_init: 'MYNEWT_VAL(IP_SYSINIT_STAGE)'
