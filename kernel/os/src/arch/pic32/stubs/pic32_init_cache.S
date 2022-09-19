@@ -55,7 +55,7 @@
 #endif
 
 /* Set __PIC32_CACHE_MODE to the desired coherency attribute */
-#define __PIC32_CACHE_MODE _CACHE_WRITEBACK_WRITEALLOCATE
+#define __PIC32_CACHE_MODE _CACHE_WRITETHROUGH_WRITEALLOCATE
 
 /* ==================================== */
 #define Index_Store_Tag_I 0x08
