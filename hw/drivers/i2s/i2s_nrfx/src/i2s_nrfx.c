@@ -23,6 +23,7 @@
 #include <i2s/i2s_driver.h>
 #include <i2s_nrfx/i2s_nrfx.h>
 #include <nrfx/drivers/include/nrfx_i2s.h>
+#include <nrfx_clock.h>
 
 struct i2s_nrfx {
     nrfx_i2s_config_t nrfx_i2s_cfg;
@@ -218,6 +219,35 @@ i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
         /* User provided custom clock setup, no need to use stock values */
         return;
     }
+#if NRF_I2S_HAS_CLKCONFIG
+    float src_frq;
+    uint32_t ratio;
+    uint32_t mck;
+    if (cfg->clksrc == I2S_CONFIG_CLKCONFIG_CLKSRC_ACLK) {
+        NRF_CLOCK->TASKS_HFCLKAUDIOSTOP = 1;
+        if (88200 / sample_rate * sample_rate == 88200) {
+            nrfx_clock_hfclkaudio_config_set(15298);
+        } else {
+            nrfx_clock_hfclkaudio_config_set(39854);
+        }
+        NRF_CLOCK->TASKS_HFCLKAUDIOSTART = 1;
+        src_frq = (32000000 * (4 + nrfx_clock_hfclkaudio_config_get() * 0.000015259f) / 12);
+        if (cfg->sample_width == NRF_I2S_SWIDTH_24BIT) {
+            cfg->ratio = NRF_I2S_RATIO_48X;
+            ratio = 48;
+        } else if (cfg->sample_width == NRF_I2S_SWIDTH_32BIT || cfg->sample_width == NRF_I2S_SWIDTH_16BIT_IN32BIT ||
+            cfg->sample_width == NRF_I2S_SWIDTH_24BIT_IN32BIT || cfg->sample_width == NRF_I2S_SWIDTH_8BIT_IN32BIT) {
+            cfg->ratio = NRF_I2S_RATIO_64X;
+            ratio = 64;
+        } else {
+            cfg->ratio = NRF_I2S_RATIO_32X;
+            ratio = 32;
+        }
+        mck = sample_rate * ratio;
+        cfg->mck_setup = 4096 * (mck * 1048576ull / (src_frq + mck / 2));
+        return;
+    }
+#endif
     for (i = 0; i < ARRAY_SIZE(sample_rates); ++i) {
         if (sample_rates[i] == sample_rate) {
             if (cfg->sample_width == NRF_I2S_SWIDTH_24BIT) {
