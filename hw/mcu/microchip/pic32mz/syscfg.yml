@@ -239,6 +239,10 @@ syscfg.defs:
         description: "Whether to enable Timer 7"
         value:  0
 
+    ETH_0:
+        description: 'Ethernet driver for LwIP'
+        value: 0
+
     SYSTEM_CLOCK_OSC_FREQ:
         descriprion: HS Oscilator/External clock freqency.
         value:

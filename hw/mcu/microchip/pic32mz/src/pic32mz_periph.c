@@ -30,6 +30,9 @@
 #include <mcu/mips_hal.h>
 #include <uart_hal/uart_hal.h>
 #include <bsp/bsp.h>
+#if MYNEWT_VAL(ETH_0)
+#include <pic32_eth/pic32_eth.h>
+#endif
 
 static struct uart_dev uart_0_dev;
 static struct uart_dev uart_1_dev;
@@ -199,6 +202,15 @@ static const struct mips_i2c_cfg i2c_3_cfg = {
     .sda = MCU_GPIO_PORTG(7),
     .frequency = MYNEWT_VAL(I2C_3_FREQ_KHZ) * 1000,
 };
+
+#if MYNEWT_VAL(ETH_0)
+static const struct pic32_eth_cfg eth0_cfg = {
+    .phy_addr = MYNEWT_VAL(PIC32_ETH_0_PHY_ADDR),
+    .phy_type = MYNEWT_VAL(PIC32_ETH_0_PHY_CHIP),
+    .phy_irq_pin = MYNEWT_VAL(PIC32_ETH_0_PHY_IRQ_PIN),
+    .phy_irq_pin_pull_up = MYNEWT_VAL(PIC32_ETH_0_PHY_IRQ_PIN_PULLUP),
+};
+#endif
 
 /*
  * I2C_4 -> I2C5
@@ -372,6 +384,17 @@ pic32mz_periph_i2c_devs(void)
     }
 }
 
+static void
+pic32mz_periph_create_eth(void)
+{
+#if MYNEWT_VAL(ETH_0)
+    int rc;
+    rc = pic32_eth_init(&eth0_cfg);
+    assert(rc == 0);
+    (void)rc;
+#endif
+}
+
 void
 pic32mz_periph_create(void)
 {
@@ -379,4 +402,5 @@ pic32mz_periph_create(void)
     pic32mz_periph_create_uart_devs();
     pic32mz_periph_spi_devs();
     pic32mz_periph_i2c_devs();
+    pic32mz_periph_create_eth();
 }
