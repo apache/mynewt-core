@@ -42,6 +42,31 @@ static inline int PLL_ODIV(int n)
 
 uint32_t SystemCoreClock;
 
+#if __PIC32_HAS_L1CACHE
+void
+dcache_flush_area(void *addr, int size)
+{
+    uint32_t a = (uint32_t)(addr) & ~3;
+
+    for (; size > 0; --size, a += 4) {
+        _cache(17, (void *)a);
+    }
+}
+
+void
+dcache_flush(void)
+{
+    int i;
+    int j;
+
+    for (i = 0; i < 64; ++i) {
+        for (j = 0; j < 4; ++j) {
+            _cache(1, (void *)((i + j * 64) * 16));
+        }
+    }
+}
+#endif
+
 void
 SystemClock_Config(void)
 {

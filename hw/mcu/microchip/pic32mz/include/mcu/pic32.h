@@ -22,6 +22,14 @@
 
 extern uint32_t SystemCoreClock;
 
+#if __PIC32_HAS_L1CACHE
+void dcache_flush(void);
+void dcache_flush_area(void *addr, int size);
+#else
+#define dcache_flush()
+#define dcache_flush_area(addr, size)
+#endif
+
 static inline void __attribute__((always_inline))
 hal_debug_break(void)
 {
