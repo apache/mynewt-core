@@ -75,6 +75,20 @@
  */
 #pragma config WINDIS=1, WDTSPGM=1, WDTPS=15
 
+#if MYNEWT_VAL(ETH_0)
+#if MYNEWT_VAL_CHOICE(PIC32_ETH_0_PHY_ITF, RMII)
+#pragma config FMIIEN=OFF
+#else
+#pragma config FMIIEN=ON
+#endif
+
+#if MYNEWT_VAL(PIC32_ETH_0_PHY_ALT_PINS)
+#pragma config FETHIO=OFF
+#else
+#pragma config FETHIO=ON
+#endif
+#endif
+
 #endif
 
 #if MYNEWT_VAL(SPIFLASH)
