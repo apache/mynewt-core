@@ -21,6 +21,7 @@
 #include "os/mynewt.h"
 
 #include <bsp/bsp.h>
+#include <hal/hal_gpio.h>
 #include <hal/hal_bsp.h>
 #include <mcu/mips_bsp.h>
 #include <mcu/mips_hal.h>
@@ -75,6 +76,20 @@
  */
 #pragma config WINDIS=1, WDTSPGM=1, WDTPS=15
 
+#if MYNEWT_VAL(ETH_0)
+#if MYNEWT_VAL_CHOICE(PIC32_ETH_0_PHY_ITF, RMII)
+#pragma config FMIIEN=OFF
+#else
+#pragma config FMIIEN=ON
+#endif
+
+#if MYNEWT_VAL(PIC32_ETH_0_PHY_ALT_PINS)
+#pragma config FETHIO=OFF
+#else
+#pragma config FETHIO=ON
+#endif
+#endif
+
 #endif
 
 #if MYNEWT_VAL(SPIFLASH)
@@ -109,6 +124,11 @@ hal_bsp_flash_dev(uint8_t id)
 void
 hal_bsp_init(void)
 {
+    if (MYNEWT_VAL(ETH_0)) {
+        /* Remove reset from LAN8720 */
+        hal_gpio_init_out(MCU_GPIO_PORTB(11), 1);
+    }
+
     pic32mz_periph_create();
 #if MYNEWT_VAL(SPIFLASH) && MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = spiflash_create_spi_dev(&spiflash_dev.dev,
