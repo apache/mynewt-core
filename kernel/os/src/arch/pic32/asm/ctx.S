@@ -95,10 +95,12 @@
     # disable co-precessor 1 on return from context switch
     ins     k0, $0, _CP0_STATUS_CU1_POSITION, _CP0_STATUS_CU1_LENGTH
     sw      k0, CTX_STATUS(sp)
+#if defined(PRISS) && (__PIC32_SRS_SET_COUNT == 8)
     # enable interrupts with higher priority
     ins     k0, $0, _CP0_STATUS_EXL_POSITION, _CP0_STATUS_EXL_LENGTH
     ori     k0, k0, 1 << _CP0_STATUS_IPL_POSITION
     mtc0    k0, _CP0_STATUS
+#endif
     .set pop
 .endm
 
