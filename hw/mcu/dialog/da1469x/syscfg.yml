@@ -454,6 +454,11 @@ syscfg.defs:
         restrictions:
             - '!GPADC_BATTERY'
 
+    MCU_WATCHDOG_DISABLE_ON_INIT:
+        description: >
+          'Disable watchdog on init'
+        value: 1
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 128
 
