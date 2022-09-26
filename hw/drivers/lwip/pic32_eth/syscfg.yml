@@ -1,0 +1,60 @@
+#
+# Copyright 2022 Jerzy Kasenberg
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+syscfg.defs:
+    PIC32_ETH_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the pic32 eth driver.
+        value: 1000
+
+    PIC32_ETH_0_PHY_ITF:
+        description: >
+            ETH PHY interface type
+        choices:
+            - RMII
+            - MII
+        value: RMII
+
+    PIC32_ETH_0_PHY_ALT_PINS:
+        description: >
+            Use alternate pins for ETH PHY interface.
+        value: 0
+
+    PIC32_ETH_0_PHY_ADDR:
+        description: >
+            ETH PHY address
+        value:
+
+    PIC32_ETH_0_PHY_CHIP:
+        description: >
+            ETH PHY chip one of LAN_8710/LAN_8720/LAN_8740/LAN_8742
+        value: LAN_8720
+
+    PIC32_ETH_0_PHY_IRQ_PIN:
+        description: >
+            PHY interrupt pin.
+        value: -1
+
+    PIC32_ETH_0_PHY_IRQ_PIN_PULLUP:
+        description: >
+            If set to 1 PHY interrupt pin does not have external pullup and GPIO
+            will provide one.
+        value: 0
+
+    PIC32_ETH_0_AUTO_UP:
+        description: >
+            Interface is up when opened.
+        value: 1
