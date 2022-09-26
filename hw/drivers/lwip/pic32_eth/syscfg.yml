@@ -58,3 +58,7 @@ syscfg.defs:
         description: >
             Interface is up when opened.
         value: 1
+
+    PIC32_ETH_SHELL:
+        description: Enable shell commands.
+        value: 1
