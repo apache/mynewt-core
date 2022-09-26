@@ -21,57 +21,67 @@
 
 #include <console/console.h>
 #include <mn_socket/mn_socket.h>
+#include "lwip/tcpip.h"
 
 static struct os_event rx_receive_event;
-static struct os_event tx_flush_event;
-struct os_mbuf *tcp_console_out_buf;
+
+static struct os_mbuf *tcp_console_out_buf;
+static struct os_mbuf *flushing_buf;
 
 static struct mn_socket *server_socket;
 static struct mn_socket *console_socket;
 
 static void
-tcp_console_flush(void)
+tcp_console_flush_cb(void *ctx)
 {
+    int sr;
     int rc;
 
-    if (tcp_console_out_buf != NULL && console_socket != NULL) {
-        rc = mn_sendto(console_socket, tcp_console_out_buf, NULL);
-        /* If data was sent, forget about buffer, otherwise keep buffer
-         * and add more data into it */
-        if (rc == 0) {
-            tcp_console_out_buf = NULL;
+    if (flushing_buf == NULL && tcp_console_out_buf != NULL) {
+        OS_ENTER_CRITICAL(sr);
+        flushing_buf = tcp_console_out_buf;
+        tcp_console_out_buf = NULL;
+        OS_EXIT_CRITICAL(sr);
+    }
+    if (flushing_buf != NULL && console_socket != NULL) {
+        rc = mn_sendto(console_socket, flushing_buf, NULL);
+        if (rc) {
+            os_mbuf_free_chain(flushing_buf);
         }
+        flushing_buf = NULL;
     }
 }
 
 static void
 tcp_console_schedule_tx_flush(void)
 {
-    os_eventq_put(os_eventq_dflt_get(), &tx_flush_event);
+    tcpip_try_callback(tcp_console_flush_cb, NULL);
 }
 
 static void
 tcp_console_write(int c)
 {
     uint8_t buf[1] = { (uint8_t)c };
+    struct os_mbuf *mbuf;
+    int sr;
+    bool flush;
 
+    OS_ENTER_CRITICAL(sr);
+    mbuf = tcp_console_out_buf;
+    tcp_console_out_buf = NULL;
+    OS_EXIT_CRITICAL(sr);
+    if (NULL == mbuf) {
+        mbuf = os_msys_get_pkthdr(0, 0);
+        if (NULL == mbuf) {
+            return;
+        }
+    }
     /* If current mbuf was full, try to send it to client */
-    if (tcp_console_out_buf != NULL && OS_MBUF_TRAILINGSPACE(tcp_console_out_buf) == 0) {
-        tcp_console_flush();
-        /*
-         * This may not succeed it socket is not writable yet, mbuf will be still present
-         * and additional data will be appended.
-         */
-    }
-    if (tcp_console_out_buf == NULL) {
-        tcp_console_out_buf = os_msys_get_pkthdr(0, 0);
-    }
-
-    os_mbuf_append(tcp_console_out_buf, buf, 1);
-
-    /* If mbuf was just filled up try to send it to client. */
-    if (OS_MBUF_TRAILINGSPACE(tcp_console_out_buf) == 0) {
-        tcp_console_flush();
+    flush = OS_MBUF_TRAILINGSPACE(mbuf) < 2;
+    os_mbuf_append(mbuf, buf, 1);
+    tcp_console_out_buf = mbuf;
+    if (flush) {
+        tcp_console_schedule_tx_flush();
     }
 }
 
@@ -98,12 +108,6 @@ void
 console_rx_restart(void)
 {
     os_eventq_put(os_eventq_dflt_get(), &rx_receive_event);
-}
-
-static void
-tx_flush_ev_cb(struct os_event *ev)
-{
-    tcp_console_flush();
 }
 
 static void
@@ -139,7 +143,7 @@ static void
 tcp_console_writable(void *arg, int err)
 {
     if (err == 0) {
-        tcp_console_flush();
+        tcp_console_flush_cb(NULL);
     }
 }
 
@@ -170,7 +174,6 @@ tcp_console_pkg_init(void)
     int rc;
 
     rx_receive_event.ev_cb = rx_ev_cb;
-    tx_flush_event.ev_cb = tx_flush_ev_cb;
 
     /* Create normal TCP socket */
     rc = mn_socket(&server_socket, MN_PF_INET, MN_SOCK_STREAM, 0);
