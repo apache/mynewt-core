@@ -430,6 +430,9 @@ qspi_read_rdid(const struct hal_flash *dev)
     int i;
     uint32_t result;
 
+    da1469x_qspi_mode_manual(dev);
+    da1469x_qspi_wait_busy(dev);
+
     /* Issue a read rdid command (0x9F) and get 24 bit response */
     QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
     da1469x_qspi_write8(dev, 0x9f);
@@ -454,7 +457,6 @@ da1469x_hff_mcu_custom_init(const struct hal_flash *dev)
     uint32_t primask;
 
     __HAL_DISABLE_INTERRUPTS(primask);
-    da1469x_qspi_mode_manual(dev);
 
     /* detect flash device and use correct configuration */
     config = qspi_read_rdid(dev);
