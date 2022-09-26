@@ -30,3 +30,6 @@ pkg.req_apis:
 
 pkg.init:
     pic32_eth_open: 'MYNEWT_VAL(PIC32_ETH_SYSINIT_STAGE)'
+
+pkg.init.PIC32_ETH_SHELL:
+    pic32_eth_shell_register: 1001
