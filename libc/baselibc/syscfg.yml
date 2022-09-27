@@ -36,3 +36,8 @@ syscfg.defs:
             It is still possible to use C++ code when this is set to 0 but
             global variable can be in wrong state.
         value: 1
+
+    BASELIBC_THREAD_SAFE_HEAP_ALLOCATION:
+        description: >
+            Set to 1 if project requires malloc/calloc/free to be thread safe.
+        value: 0

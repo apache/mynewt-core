@@ -19,6 +19,8 @@
 
 #include <stdio.h>
 #include <console/console.h>
+#include <os/os_time.h>
+#include <os/os_mutex.h>
 
 static size_t
 stdin_read(FILE *fp, char *bp, size_t n)
@@ -45,3 +47,27 @@ static struct File _stdin = {
 struct File *const stdin = &_stdin;
 struct File *const stdout = &_stdin;
 struct File *const stderr = &_stdin;
+
+#if MYNEWT_VAL(BASELIBC_THREAD_SAFE_HEAP_ALLOCATION)
+
+static struct os_mutex heap_mutex;
+
+bool heap_lock(void)
+{
+    return os_mutex_pend(&heap_mutex, OS_TIMEOUT_NEVER) == 0;
+}
+
+void heap_unlock(void)
+{
+    os_mutex_release(&heap_mutex);
+}
+
+void
+baselibc_init(void)
+{
+    /* Setup mutex to be used for malloc/calloc/free */
+    os_mutex_init(&heap_mutex);
+    set_malloc_locking(heap_lock, heap_unlock);
+}
+
+#endif
