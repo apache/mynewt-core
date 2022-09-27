@@ -25,9 +25,6 @@
 #include <hal/hal_gpio.h>
 #include <bsp.h>
 #include <nrf_mutex.h>
-#if MYNEWT_VAL(BLE_TRANSPORT_INT_FLOW_CTL)
-#include <nimble/transport.h>
-#endif
 
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
 #include <mcu/nrf5340_hal.h>
@@ -271,10 +268,6 @@ ipc_nrf5340_init(void)
     ipc_shared->ipc_shms = shms;
     ipc_shared->ipc_state = APP_WAITS_FOR_NET;
 
-#if MYNEWT_VAL(BLE_TRANSPORT_INT_FLOW_CTL)
-    ipc_shared->acl_from_ll_count = MYNEWT_VAL(BLE_TRANSPORT_ACL_FROM_LL_COUNT);
-#endif
-
     if (MYNEWT_VAL(MCU_APP_SECURE) && !MYNEWT_VAL(IPC_NRF5340_PRE_TRUSTZONE_NETCORE_BOOT)) {
         /*
          * When bootloader is secure and application is not all peripherals are
@@ -486,40 +479,10 @@ ipc_nrf5340_consume(int channel, uint16_t len)
     return ipc_nrf5340_shm_read(&shms[channel], NULL, NULL, len);
 }
 
-#if MYNEWT_VAL(BLE_TRANSPORT_INT_FLOW_CTL)
-int
-ble_transport_int_flow_ctl_get(void)
+#if MYNEWT_PKG_apache_mynewt_nimble__nimble_transport_common_hci_ipc
+volatile struct hci_ipc_shm *
+ipc_nrf5340_hci_shm_get(void)
 {
-    int ret;
-
-    __asm__ volatile (".syntax unified                \n"
-                      "1: ldrexb r1, [%[addr]]        \n"
-                      "   mov %[ret], r1              \n"
-                      "   cmp r1, #0                  \n"
-                      "   itte ne                     \n"
-                      "   subne r2, r1, #1            \n"
-                      "   strexbne r1, r2, [%[addr]]  \n"
-                      "   clrexeq                     \n"
-                      "   cmp r1, #0                  \n"
-                      "   bne 1b                      \n"
-                      : [ret] "=&r" (ret)
-                      : [addr] "r"(&ipc_shared->acl_from_ll_count)
-                      : "r1", "r2", "memory");
-
-    return ret;
-}
-
-void
-ble_transport_int_flow_ctl_put(void)
-{
-    __asm__ volatile (".syntax unified              \n"
-                      "1: ldrexb r1, [%[addr]]      \n"
-                      "   add r1, r1, #1            \n"
-                      "   strexb r2, r1, [%[addr]]  \n"
-                      "   cmp r2, #0                \n"
-                      "   bne 1b                    \n"
-                      :
-                      : [addr] "r"(&ipc_shared->acl_from_ll_count)
-                      : "r1", "r2", "memory");
+    return &ipc_shared->hci_shm;
 }
 #endif

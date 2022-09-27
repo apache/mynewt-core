@@ -21,6 +21,9 @@
 #define _HW_DRIVERS_IPC_NRF5340_PRIV_H
 
 #include <stdint.h>
+#if MYNEWT_PKG_apache_mynewt_nimble__nimble_transport_common_hci_ipc
+#include <nimble/transport/hci_ipc.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,8 +49,8 @@ struct ipc_shared {
         APP_AND_NET_RUNNING,
         NET_RESTARTED,
     } ipc_state;
-#if MYNEWT_VAL(BLE_TRANSPORT_INT_FLOW_CTL)
-    uint8_t acl_from_ll_count;
+#if MYNEWT_PKG_apache_mynewt_nimble__nimble_transport_common_hci_ipc
+    volatile struct hci_ipc_shm hci_shm;
 #endif
 };
 
