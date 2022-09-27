@@ -41,3 +41,4 @@ syscfg.vals:
 
     ETH_0: 1
 
+    BASELIBC_THREAD_SAFE_HEAP_ALLOCATION: 1
