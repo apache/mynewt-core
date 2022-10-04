@@ -28,6 +28,7 @@ compiler.path.objcopy: "riscv-none-embed-objcopy"
 compiler.flags.base: [-Wall, -Werror, -Wno-format-truncation, -ffunction-sections, -fdata-sections, -fno-builtin-printf, -fno-common]
 compiler.flags.default: [compiler.flags.base, -O1, -ggdb]
 compiler.flags.optimized: [compiler.flags.base, -Os, -ggdb]
+compiler.flags.speed: [compiler.flags.base, -Ofast, -ggdb]
 compiler.flags.debug: [compiler.flags.base, -Og, -ggdb]
 
 compiler.as.flags: [-x assembler-with-cpp]
