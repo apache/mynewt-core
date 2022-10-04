@@ -30,3 +30,6 @@ pkg.req_apis:
 
 pkg.init.BASELIBC_THREAD_SAFE_HEAP_ALLOCATION:
     baselibc_init: 0
+
+pkg.cflags:
+    - -fno-builtin-malloc
