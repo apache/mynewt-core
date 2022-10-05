@@ -55,6 +55,9 @@ extern uint8_t _ram_start;
 #define BUTTON_3            4
 #define BUTTON_4            6
 #define BUTTON_5            5
+#define BUTTON_VOL_DOWN     BUTTON_1
+#define BUTTON_VOL_UP       BUTTON_2
+#define BUTTON_PLAY         BUTTON_3
 
 /* Arduino pins */
 #define ARDUINO_PIN_D0      41
@@ -87,6 +90,13 @@ extern uint8_t _ram_start;
 #define ARDUINO_PIN_SCK     ARDUINO_PIN_D13
 #define ARDUINO_PIN_MOSI    ARDUINO_PIN_D11
 #define ARDUINO_PIN_MISO    ARDUINO_PIN_D12
+
+/* Other on board pin selection */
+
+#define PCA100121_SDCARD_CS_PIN         11
+#define PCA100121_CS47L63_CS_PIN        17
+#define PCA100121_CS47L63_RESET_PIN     18
+#define PCA100121_HW_CODEC_ON_BOARD_PIN 21
 
 #ifdef __cplusplus
 }
