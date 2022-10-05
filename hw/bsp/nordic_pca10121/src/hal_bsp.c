@@ -29,6 +29,7 @@
 #include <mcu/nrf5340_hal.h>
 #include <mcu/nrf5340_periph.h>
 #include <bsp/bsp.h>
+#include "hal/hal_gpio.h"
 
 /*
  * What memory to include in coredump.
@@ -95,6 +96,21 @@ hal_bsp_init(void)
 {
     /* Make sure system clocks have started */
     hal_system_clock_start();
+
+    /* SDCard CS, (active low), default to 1 */
+    hal_gpio_init_out(PCA100121_SDCARD_CS_PIN, 1);
+
+    /* CS47L63 CS, (active low), default to 1 */
+    hal_gpio_init_out(PCA100121_CS47L63_CS_PIN, 1);
+
+    /* CS47L63 Reset pin, keep low at start */
+    hal_gpio_init_out(PCA100121_CS47L63_RESET_PIN, 0);
+
+    /* Select HW codec:
+     * 0 - on board HW codec
+     * 1 - pins routed to external header
+     */
+    hal_gpio_init_out(PCA100121_HW_CODEC_ON_BOARD_PIN, 0);
 
     /* Create all available nRF5340 peripherals */
     nrf5340_periph_create();
