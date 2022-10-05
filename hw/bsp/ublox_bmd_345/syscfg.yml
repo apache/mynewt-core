@@ -65,8 +65,8 @@ syscfg.vals:
     QSPI_PIN_DIO3: 23
 
     # RFX2411 PLNA
-    BLE_LL_PA_GPIO: 37
-    BLE_LL_LNA_GPIO: 38
+    BLE_FEM_PA_GPIO: 37
+    BLE_FEM_LNA_GPIO: 38
     SKY66112_PIN_CPS: 36
     SKY66112_PIN_SEL: 34
 
@@ -74,8 +74,8 @@ syscfg.vals.!BOOT_LOADER:
     MCU_LFCLK_SOURCE: LFXO
 
 syscfg.vals.!BSP_RFX2411_BYPASS_MODE:
-    BLE_LL_PA: 1
-    BLE_LL_LNA: 1
+    BLE_FEM_PA: 1
+    BLE_FEM_LNA: 1
     BLE_LL_TX_PWR_DBM: -16
 
 syscfg.vals.BLE_CONTROLLER:
