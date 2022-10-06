@@ -133,7 +133,7 @@ SECTIONS
         __vector_tbl_reloc__ = .;
         . = . + (__isr_vector_end - __isr_vector_start);
         . = ALIGN(4);
-    } > RAM
+    } > DTCM
 
     .coredata :
     {
