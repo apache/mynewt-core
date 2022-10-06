@@ -54,6 +54,9 @@ SystemClock_Config(void)
     SCB_EnableICache();
 #endif
 
+#if MYNEWT_VAL(STM32_ENABLE_DCACHE)
+    SCB_EnableDCache();
+#endif
     /*
      * Enable Power Control clock
      */
