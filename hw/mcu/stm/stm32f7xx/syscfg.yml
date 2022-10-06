@@ -31,6 +31,10 @@ syscfg.defs:
         description: Enable instruction caching
         value: 1
 
+    STM32_ENABLE_DCACHE:
+        description: Enable instruction caching
+        value: 0
+
     STM32_CLOCK_VOLTAGESCALING_CONFIG:
         description: Voltage scale
         value: 0
