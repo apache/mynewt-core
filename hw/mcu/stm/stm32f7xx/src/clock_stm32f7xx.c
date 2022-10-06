@@ -258,17 +258,5 @@ SystemClock_Config(void)
 #if PREFETCH_ENABLE
     __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
 #endif
-
-    /*
-     * These are flash instruction and data caches, not the be confused with
-     * MCU caches.
-     */
-#if INSTRUCTION_CACHE_ENABLE
-    __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
-#endif
-
-#if DATA_CACHE_ENABLE
-    __HAL_FLASH_DATA_CACHE_ENABLE();
-#endif
 }
 #endif
