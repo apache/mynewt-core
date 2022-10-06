@@ -114,7 +114,11 @@ struct os_task {
     void *t_arg;
 
     /** Current object task is waiting on, either a semaphore or mutex */
-    void *t_obj;
+    union {
+        void *t_obj;
+        struct os_mutex *t_mutex;
+        struct os_sem *t_sem;
+    };
 
     /** Default sanity check for this task */
     struct os_sanity_check t_sanity_check;
