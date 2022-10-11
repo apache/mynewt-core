@@ -471,6 +471,21 @@ ipc_nrf5340_available_buf(int channel, void **dptr)
 }
 
 uint16_t
+ipc_nrf5340_data_available_get(int channel)
+{
+    assert(channel < IPC_MAX_CHANS);
+
+    return ipc_nrf5340_shm_get_data_length(shms[channel].head,
+                                           shms[channel].tail);
+}
+
+uint16_t
+ipc_nrf5340_data_free_get(int channel)
+{
+    return IPC_BUF_SIZE - ipc_nrf5340_data_available_get(channel) - 1;
+}
+
+uint16_t
 ipc_nrf5340_consume(int channel, uint16_t len)
 {
     assert(channel < IPC_MAX_CHANS);

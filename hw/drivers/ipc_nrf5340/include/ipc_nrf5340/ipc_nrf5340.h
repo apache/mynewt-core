@@ -132,6 +132,32 @@ uint16_t ipc_nrf5340_available(int channel);
 uint16_t ipc_nrf5340_available_buf(int channel, void **dptr);
 
 /**
+ * Returns number of data bytes available in IPC ring buffer for reading.
+ *
+ * Note: this function does not use any kind of locking so it's up to caller
+ *       to make sure it's not used during write from other context as it may
+ *       yield incorrect results.
+ *
+ * @param channel     IPC channel number
+ *
+ * @return            Number of bytes available in IPC ring buffer
+ */
+uint16_t ipc_nrf5340_data_available_get(int channel);
+
+/**
+ * Returns number of free data bytes available in IPC ring buffer for writing.
+ *
+ * Note: this function does not use any kind of locking so it's up to caller
+ *       to make sure it's not used during write from other context as it may
+ *       yield incorrect results.
+ *
+ * @param channel     IPC channel number
+ *
+ * @return            Number of bytes available in IPC ring buffer
+ */
+uint16_t ipc_nrf5340_data_free_get(int channel);
+
+/**
  * Consumes data from IPC ring buffer without copying. Should be used only
  * from ipc_nrf5340_recv_cb context.
  *
