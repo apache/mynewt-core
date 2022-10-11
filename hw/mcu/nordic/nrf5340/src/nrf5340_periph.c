@@ -24,6 +24,7 @@
 #include <bsp/bsp.h>
 #include <nrfx.h>
 #include "hal/hal_spi.h"
+#include "tfm/tfm.h"
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus.h"
@@ -418,9 +419,28 @@ nrf5340_periph_create_i2c(void)
 #endif
 }
 
+#define _Args(...) __VA_ARGS__
+#define STRIP_PARENS(X) X
+#define UNMANGLE_MYNEWT_VAL(X) STRIP_PARENS(_Args X)
+
+static void
+nrf5340_net_core_pins(void)
+{
+#ifdef MYNEWT_VAL_MCU_GPIO_NET
+    unsigned int gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(MCU_GPIO_NET)) };
+    int i;
+
+    /* Configure GPIOs for Networking Core */
+    for (i = 0; i < ARRAY_SIZE(gpios); i++) {
+        tfm_gpio_pin_mcu_select(gpios[i], GPIO_PIN_CNF_MCUSEL_NetworkMCU);
+    }
+#endif
+}
+
 void
 nrf5340_periph_create(void)
 {
+    nrf5340_net_core_pins();
     nrf5340_periph_create_timers();
     nrf5340_periph_create_adc();
     nrf5340_periph_create_pwm();
