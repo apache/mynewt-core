@@ -1,0 +1,42 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    TFM_EXPORT_NSC:
+        description: >
+            Application is secure but there is also unsecure application that
+            should be able to access some secure functions.
+            If set to 1 secure function will be exported and can be used by
+            non secure code.
+        value:
+    TFM_MCU_SEL_GPIO0:
+        description: >
+            Bit mask of GPIO0 pins that can be assigned between cores by non secure code.
+        value: 0xFFFFFFFF
+    TFM_MCU_SEL_GPIO1:
+        description: >
+            Bit mask of GPIO1 pins that can be assigned between cores by non secure code.
+        value: 0xFFFFFFFF
+    TFM_UICR_OTP_MIN_ADDR:
+        description: >
+            Minimum address of UICR OTP that can be read by non-secure core.
+        value: 0
+    TFM_UICR_OTP_MAX_ADDR:
+        description: >
+            Maximum address of UICR OTP that can be read by non-secure core.
+        value: 191
