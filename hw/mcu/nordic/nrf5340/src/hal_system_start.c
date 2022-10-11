@@ -61,9 +61,6 @@ static const struct periph_id_range ns_peripheral_ids[] = {
 #define STRIP_PARENS(X) X
 #define UNMANGLE_MYNEWT_VAL(X) STRIP_PARENS(_Args X)
 
-#if MYNEWT_VAL(MCU_GPIO_NET)
-static const unsigned int net_gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(MCU_GPIO_NET)) };
-#endif
 #if MYNEWT_VAL(MCU_GPIO_PERIPH)
 static const unsigned int periph_gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(MCU_GPIO_PERIPH)) };
 #endif
@@ -120,12 +117,6 @@ hal_system_start(void *img_start)
     /* Move GPIO to non-secure area */
     NRF_SPU->GPIOPORT[0].PERM = 0;
     NRF_SPU->GPIOPORT[1].PERM = 0;
-
-#if MYNEWT_VAL(MCU_GPIO_NET)
-    for (i = 0; i < ARRAY_SIZE(net_gpios); ++i) {
-        nrf_gpio_pin_mcu_select(net_gpios[i], GPIO_PIN_CNF_MCUSEL_NetworkMCU);
-    }
-#endif
 
 #if MYNEWT_VAL(MCU_GPIO_PERIPH)
     for (i = 0; i < ARRAY_SIZE(periph_gpios); ++i) {
