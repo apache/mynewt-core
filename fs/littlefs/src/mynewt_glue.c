@@ -32,10 +32,6 @@
 #include <fs/fs.h>
 #include <fs/fs_if.h>
 
-#if ((MYNEWT_VAL(LITTLEFS_BLOCK_SIZE) < 0) || (MYNEWT_VAL(LITTLEFS_BLOCK_COUNT) < 0))
-#error "Must configure LITTLEFS_BLOCK_SIZE and LITTLEFS_BLOCK_COUNT syscfgs"
-#endif
-
 static int littlefs_open(const char *path, uint8_t access_flags,
                          struct fs_file **out_file);
 static int littlefs_close(struct fs_file *fs_file);
@@ -222,12 +218,14 @@ flash_sync(const struct lfs_config *c)
 static lfs_t *g_lfs = NULL;
 static bool g_lfs_alloc_done = false;
 
-#define READ_SIZE (MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) * 2)
-static uint8_t read_buffer[READ_SIZE];
-#define WRITE_SIZE (MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) * 2)
-static uint8_t prog_buffer[WRITE_SIZE];
-#define CACHE_SIZE 8
-static uint8_t __attribute__((aligned(4))) lookahead_buffer[CACHE_SIZE];
+#define READ_SIZE       MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE)
+#define PROG_SIZE       MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE)
+#define CACHE_SIZE      16
+#define LOOKAHEAD_SIZE  16
+
+static uint8_t read_buffer[CACHE_SIZE];
+static uint8_t prog_buffer[CACHE_SIZE];
+static uint8_t __attribute__((aligned(4))) lookahead_buffer[LOOKAHEAD_SIZE];
 static struct lfs_config g_lfs_cfg = {
     .context = NULL,
 
@@ -238,12 +236,12 @@ static struct lfs_config g_lfs_cfg = {
 
     /* block device configuration */
     .read_size = READ_SIZE,
-    .prog_size = WRITE_SIZE,
+    .prog_size = PROG_SIZE,
     .block_size = MYNEWT_VAL(LITTLEFS_BLOCK_SIZE),
     .block_count = MYNEWT_VAL(LITTLEFS_BLOCK_COUNT),
     .block_cycles = 500,
-    .cache_size = 16,
-    .lookahead_size = CACHE_SIZE,
+    .cache_size = CACHE_SIZE,
+    .lookahead_size = LOOKAHEAD_SIZE,
     .read_buffer = read_buffer,
     .prog_buffer = prog_buffer,
     .lookahead_buffer = lookahead_buffer,
@@ -470,7 +468,7 @@ littlefs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
     lfs = ((struct littlefs_file *) fs_file)->lfs;
 
     littlefs_lock();
-    size = lfs_file_read(lfs, file, out_data, *out_len);
+    size = lfs_file_read(lfs, file, out_data, len);
     littlefs_unlock();
     if (size < 0) {
         return littlefs_to_vfs_error((int)size);
