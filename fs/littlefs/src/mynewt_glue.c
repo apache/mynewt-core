@@ -26,8 +26,8 @@
 #include <disk/disk.h>
 #include <flash_map/flash_map.h>
 
-#include <littlefs/lfs.h>
-#include <littlefs/lfs_util.h>
+#include "lfs.h"
+#include "lfs_util.h"
 
 #include <fs/fs.h>
 #include <fs/fs_if.h>
