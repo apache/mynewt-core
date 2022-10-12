@@ -21,9 +21,6 @@
 #include <os/os.h>
 #include <ipc_nrf5340/ipc_nrf5340.h>
 #include <nrfx.h>
-#include <hal/hal_gpio.h>
-#include <bsp.h>
-#include <nrf_mutex.h>
 #include "ipc_nrf5340_priv.h"
 
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
