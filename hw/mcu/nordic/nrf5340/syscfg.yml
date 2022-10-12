@@ -113,7 +113,7 @@ syscfg.defs:
         description: >
             Enable instruction and data cache
             Default value is 0, so disabled.
-        value: 0
+        value: 1
 
     MCU_NRF5340_EN_APPROTECT_USERHANDLING:
         description: >
