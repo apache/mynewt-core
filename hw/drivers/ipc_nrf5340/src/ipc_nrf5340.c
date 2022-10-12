@@ -446,10 +446,7 @@ ipc_nrf5340_read_om(int channel, struct os_mbuf *om, uint16_t len)
 uint16_t
 ipc_nrf5340_available(int channel)
 {
-    assert(channel < IPC_MAX_CHANS);
-
-    return ipc_nrf5340_shm_get_data_length(shms[channel].head,
-                                           shms[channel].tail);
+    return ipc_nrf5340_data_available_get(channel);
 }
 
 uint16_t

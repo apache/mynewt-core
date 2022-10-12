@@ -119,6 +119,8 @@ uint16_t ipc_nrf5340_read_om(int channel, struct os_mbuf *om, uint16_t len);
 /**
  * Returns number of data bytes available in IPC ring buffer.
  *
+ * Note: use ipc_nrf5340_data_available_get() instead
+ *
  * Note: this function does not use any kind of locking so it's up to caller
  *       to make sure it's not used during write from other context as it may
  *       yield incorrect results.
