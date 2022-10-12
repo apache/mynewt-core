@@ -233,6 +233,8 @@ ipc_nrf5340_init(void)
     NRF_GPIO_Type *nrf_gpio;
 #endif
 
+    memset(ipc_shared, 0, sizeof(ipc_shared));
+
 #if MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
     /*
      * Get network core image size and placement in application flash.
