@@ -87,8 +87,11 @@ int ipc_nrf5340_send(int channel, const void *data, uint16_t len);
 int ipc_nrf5340_write(int channel, const void *data, uint16_t len, bool last);
 
 /**
- * Reads data from IPC ring buffer to specified flat buffer. Should be used only
- * from ipc_nrf5340_recv_cb context.
+ * Reads data from IPC ring buffer to specified flat buffer.
+ *
+ * Note: this function does not use any kind of locking so it's up to caller
+ *       to make sure it's not used during write from other context as it may
+ *       yield incorrect results.
  *
  * @param channel     IPC channel number to read from
  * @param buf         Buffer to read data to
@@ -99,8 +102,11 @@ int ipc_nrf5340_write(int channel, const void *data, uint16_t len, bool last);
 uint16_t ipc_nrf5340_read(int channel, void *buf, uint16_t len);
 
 /**
- * Reads data from IPC ring buffer to specified mbuf. Should be used only
- * from ipc_nrf5340_recv_cb context.
+ * Reads data from IPC ring buffer to specified mbuf.
+ *
+ * Note: this function does not use any kind of locking so it's up to caller
+ *       to make sure it's not used during write from other context as it may
+ *       yield incorrect results.
  *
  * @param channel     IPC channel number to read from
  * @param om          mbuf to read data to
@@ -111,8 +117,11 @@ uint16_t ipc_nrf5340_read(int channel, void *buf, uint16_t len);
 uint16_t ipc_nrf5340_read_om(int channel, struct os_mbuf *om, uint16_t len);
 
 /**
- * Returns number of data bytes available in IPC ring buffer. Should be used
- * only from ipc_nrf5340_recv_cb context.
+ * Returns number of data bytes available in IPC ring buffer.
+ *
+ * Note: this function does not use any kind of locking so it's up to caller
+ *       to make sure it's not used during write from other context as it may
+ *       yield incorrect results.
  *
  * @param channel     IPC channel number
  *
@@ -122,7 +131,12 @@ uint16_t ipc_nrf5340_available(int channel);
 
 /**
  * Returns number of continuous data bytes available in IPC ring buffer with
- * pointer to that data. Should be used only from ipc_nrf5340_recv_cb context.
+ * pointer to that data.
+ *
+ * Note: this function does not use any kind of locking so it's up to caller
+ *       to make sure it's not used during write from other context as it may
+ *       yield incorrect results.
+ *
  *
  * @param channel     IPC channel number
  * @param dptr        Pointer to data buffer
@@ -158,8 +172,11 @@ uint16_t ipc_nrf5340_data_available_get(int channel);
 uint16_t ipc_nrf5340_data_free_get(int channel);
 
 /**
- * Consumes data from IPC ring buffer without copying. Should be used only
- * from ipc_nrf5340_recv_cb context.
+ * Consumes data from IPC ring buffer without copying.
+ *
+ * Note: this function does not use any kind of locking so it's up to caller
+ *       to make sure it's not used during write from other context as it may
+ *       yield incorrect results.
  *
  * @param channel     IPC channel number to consume from
  * @param len         Number of bytes to consume
