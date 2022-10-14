@@ -368,6 +368,7 @@ console_init_terminal(void)
 {
     if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) && !terminal_initialized) {
         console_write_str(CSI "!p"
+                          CSI "0m"
                           CSI "1;999r"
                           CSI "999;1H\n\n"
                           CSI "A"
