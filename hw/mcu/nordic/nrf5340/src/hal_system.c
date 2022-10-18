@@ -38,7 +38,9 @@ void
 hal_system_init(void)
 {
 #if MYNEWT_VAL(MCU_CACHE_ENABLED)
+#if MYNEWT_VAL(MCU_APP_SECURE) || MYNEWT_VAL(BOOT_LOADER)
     NRF_CACHE_S->ENABLE = 1;
+#endif
 #endif
 
 #if MYNEWT_VAL(MCU_DCDC_ENABLED)
