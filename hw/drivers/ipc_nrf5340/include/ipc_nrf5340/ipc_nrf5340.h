@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <os/os.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -195,6 +196,18 @@ uint16_t ipc_nrf5340_consume(int channel, uint16_t len);
  * @param on_crash - function to be called
  */
 void ipc_nrf5340_set_net_core_restart_cb(void (*on_restart)(void));
+
+#if MYNEWT_VAL(MCU_NET_CORE)
+/**
+ * Get embedded netcore image and its size.
+ *
+ * @param size        Size of embedded image in bytes.
+ *
+ * @return            Pointer to image, NULL if not present
+ */
+const void *ipc_nrf5340_net_image_get(uint32_t *size);
+#endif
+
 
 #if MYNEWT_PKG_apache_mynewt_nimble__nimble_transport_common_hci_ipc
 volatile struct hci_ipc_shm *ipc_nrf5340_hci_shm_get(void);

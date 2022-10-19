@@ -21,12 +21,43 @@
 #include <os/os.h>
 #include <ipc_nrf5340/ipc_nrf5340.h>
 #include <nrfx.h>
-#include "ipc_nrf5340_priv.h"
 
 #if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
 #include <mcu/nrf5340_hal.h>
 #include <bsp/bsp.h>
 #endif
+
+#if MYNEWT_PKG_apache_mynewt_nimble__nimble_transport_common_hci_ipc
+#include <nimble/transport/hci_ipc.h>
+#endif
+
+#define NRF_APP_IPC_NS                  ((NRF_IPC_Type *)0x4002A000)
+#define NRF_APP_IPC_S                   ((NRF_IPC_Type *)0x5002A000)
+
+/**
+ * Initialization structure passed from APP core to NET core.
+ * Keeps various parameters that otherwise should be configured on
+ * both sides.
+ */
+struct ipc_shared {
+    /** NET core embedded image address in application flash */
+    void *net_core_image_address;
+    /** NET core embedded image size */
+    uint32_t net_core_image_size;
+    /** Number of IPC channels */
+    uint8_t ipc_channel_count;
+    /* Array of shared memories used for IPC */
+    struct ipc_shm *ipc_shms;
+    /* Set by netcore during IPC initialization */
+    volatile enum {
+        APP_WAITS_FOR_NET,
+        APP_AND_NET_RUNNING,
+        NET_RESTARTED,
+    } ipc_state;
+#if MYNEWT_PKG_apache_mynewt_nimble__nimble_transport_common_hci_ipc
+    volatile struct hci_ipc_shm hci_shm;
+#endif
+};
 
 /* Currently this allows only for 1-1 connection. */
 
@@ -489,6 +520,29 @@ ipc_nrf5340_consume(int channel, uint16_t len)
 
     return ipc_nrf5340_shm_read(&shms[channel], NULL, NULL, len);
 }
+
+#if MYNEWT_VAL(MCU_NET_CORE)
+const void *
+ipc_nrf5340_net_image_get(uint32_t *size)
+{
+    const void *img_addr;
+    uint32_t image_size;
+
+#if MYNEWT_VAL(IPC_NRF5340_PRE_TRUSTZONE_NETCORE_BOOT)
+    img_addr = (const void *)NRF_APP_IPC_S->GPMEM[0];
+    image_size = (uint32_t)NRF_APP_IPC_S->GPMEM[1];
+#else
+    img_addr = ipc_shared[0].net_core_image_address;
+    image_size = ipc_shared[0].net_core_image_size;
+#endif
+
+    if (size) {
+        *size = image_size;
+    }
+
+    return img_addr;
+}
+#endif
 
 #if MYNEWT_PKG_apache_mynewt_nimble__nimble_transport_common_hci_ipc
 volatile struct hci_ipc_shm *
