@@ -430,6 +430,41 @@ hal_spi_init(int spi_num, void *usercfg, uint8_t spi_type)
 
     spi->cfg = usercfg;
     spi->slave = (spi_type == HAL_SPI_TYPE_SLAVE);
+    switch (spi_num) {
+#if SPI_0_ENABLED
+    case 0:
+        spi->handle.Instance = SPI1;
+        break;
+#endif
+#if SPI_1_ENABLED
+    case 1:
+        spi->handle.Instance = SPI2;
+        break;
+#endif
+#if SPI_2_ENABLED
+    case 2:
+        spi->handle.Instance = SPI3;
+        break;
+#endif
+#if SPI_3_ENABLED
+    case 3:
+        spi->handle.Instance = SPI4;
+        break;
+#endif
+#if SPI_4_ENABLED
+    case 4:
+        spi->handle.Instance = SPI5;
+        break;
+#endif
+#if SPI_5_ENABLED
+    case 5:
+        spi->handle.Instance = SPI6;
+        break;
+#endif
+    default:
+        rc = -1;
+        goto err;
+    }
 
     return (0);
 err:
@@ -611,7 +646,6 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
         gpio.Alternate = GPIO_AF0_SPI1;
     #endif
 #endif
-        spi->handle.Instance = SPI1;
         break;
 #endif
 #if SPI_1_ENABLED
@@ -624,7 +658,6 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
         gpio.Alternate = GPIO_AF0_SPI2;
     #endif
 #endif
-        spi->handle.Instance = SPI2;
         break;
 #endif
 #if SPI_2_ENABLED
@@ -633,7 +666,6 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if !MYNEWT_VAL(MCU_STM32F1)
         gpio.Alternate = GPIO_AF6_SPI3;
 #endif
-        spi->handle.Instance = SPI3;
         break;
 #endif
 #if SPI_3_ENABLED
@@ -642,7 +674,6 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if !MYNEWT_VAL(MCU_STM32F1)
         gpio.Alternate = GPIO_AF5_SPI4;
 #endif
-        spi->handle.Instance = SPI4;
         break;
 #endif
 #if SPI_4_ENABLED
@@ -653,7 +684,6 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #elif defined(GPIO_AF5_SPI5)
         gpio.Alternate = GPIO_AF5_SPI5;
 #endif
-        spi->handle.Instance = SPI5;
         break;
 #endif
 #if SPI_5_ENABLED
@@ -662,7 +692,6 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if !MYNEWT_VAL(MCU_STM32F1)
         gpio.Alternate = GPIO_AF5_SPI6;
 #endif
-        spi->handle.Instance = SPI6;
         break;
 #endif
    default:
