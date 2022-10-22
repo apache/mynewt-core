@@ -912,13 +912,12 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
 {
     int rc;
     struct stm32_hal_spi *spi;
-    uint16_t retval;
+    uint16_t retval = 0xFFFF;
     int len;
     int sr;
 
     STM32_HAL_SPI_RESOLVE(spi_num, spi);
     if (spi->slave) {
-        retval = -1;
         goto err;
     }
     if (spi->handle.Init.DataSize == SPI_DATASIZE_8BIT) {
