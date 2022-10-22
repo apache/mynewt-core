@@ -1374,7 +1374,7 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
     const fat_dir_entry_t *entry = (const fat_dir_entry_t *)buffer;
     const fat_dir_entry_t *limit = (const fat_dir_entry_t *)(buffer + SECTOR_SIZE);
     dir_entry_t *file_entry;
-    char name[32];
+    char name[79];
     int i, j;
     int n;
     uint16_t checksum = 0xFFFF;
@@ -1395,6 +1395,13 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
                 while (n) {
                     n--;
                     assert(entry->checksum == checksum);
+                    /* If name in directory is longer then we have space for just ignore it */
+                    if (n > sizeof(name) / 13) {
+                        continue;
+                    } else if (n == sizeof(name) / 13) {
+                        /* This part also needs to be ignored, but store \0 for strcmp() sake */
+                        name[sizeof(name) / 13] = 0;
+                    }
                     msc_fat_view_read_ucs_2(name + n * 13, (uint8_t *)entry->name1, 5);
                     msc_fat_view_read_ucs_2(name + n * 13 + 5, (uint8_t *)entry->name2, 6);
                     msc_fat_view_read_ucs_2(name + n * 13 + 5 + 6, (uint8_t *)entry->name3, 2);
