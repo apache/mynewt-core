@@ -40,6 +40,7 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
 {
     nrfx_i2s_buffers_t nrfx_buffers = {0};
     nrfx_err_t err;
+    uint16_t buffer_size;
 
     assert(i2s != NULL);
     if (buffer == NULL) {
@@ -48,6 +49,9 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
 
     if (i2s->direction == I2S_OUT || i2s->direction == I2S_OUT_IN) {
         nrfx_buffers.p_tx_buffer = buffer->sample_data;
+        buffer_size = buffer->sample_count * i2s->sample_size_in_bytes / 4;
+    } else {
+        buffer_size = buffer->capacity * i2s->sample_size_in_bytes / 4;
     }
     if (i2s->direction == I2S_IN || i2s->direction == I2S_OUT_IN) {
         nrfx_buffers.p_rx_buffer = buffer->sample_data;
@@ -60,7 +64,7 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
     i2s_nrfx.nrfx_queued_count++;
     if (i2s_nrfx.nrfx_queued_count == 1) {
         i2s_driver_state_changed (i2s, I2S_STATE_RUNNING);
-        err = nrfx_i2s_start(&nrfx_buffers, buffer->sample_count * i2s->sample_size_in_bytes / 4, 0);
+        err = nrfx_i2s_start(&nrfx_buffers, buffer_size, 0);
     } else {
         err = nrfx_i2s_next_buffers_set(&nrfx_buffers);
     }
