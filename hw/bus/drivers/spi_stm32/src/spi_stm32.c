@@ -613,7 +613,11 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
     if (prescaler > 7) {
         rc = SYS_EINVAL;
     } else {
+#if MYNEWT_VAL(MCU_STM32H7)
+        dd->hspi.Init.BaudRatePrescaler = prescaler << SPI_CFG1_MBR_Pos;
+#else
         dd->hspi.Init.BaudRatePrescaler = prescaler << SPI_CR1_BR_Pos;
+#endif
         dd->hspi.Init.CLKPolarity = (node->mode == BUS_SPI_MODE_0 || node->mode == BUS_SPI_MODE_1) ?
                                     SPI_POLARITY_LOW : SPI_POLARITY_HIGH;
         dd->hspi.Init.CLKPhase = (node->mode == BUS_SPI_MODE_0 || node->mode == BUS_SPI_MODE_2) ?
@@ -846,7 +850,7 @@ bus_spi_stm32_dev_init_func(struct os_dev *odev, void *arg)
             __HAL_RCC_DMA2_CLK_ENABLE();
 #endif
         }
-#ifdef DMAMUX1
+#ifdef __HAL_RCC_DMAMUX1_CLK_ENABLE
         __HAL_RCC_DMAMUX1_CLK_ENABLE();
 #endif
 

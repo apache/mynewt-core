@@ -43,6 +43,11 @@ HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi, uint8_t *pData,
 #error "This MCU currently does not support SPI slave"
 #endif
 
+#if !MYNEWT_VAL(MCU_STM32H7)
+#define RXDR DR
+#define TXDR DR
+#endif
+
 /* XXX: This is copied from stm32l1xx_hal_spi_ex.c because it is a __weak
  * symbol defined in stm32l1xx_hal_spi.c that is overriden but due to our
  * archive process seems to not link correctly. Copying here enables the
@@ -112,6 +117,7 @@ HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
 }
 #endif
 
+#if !MYNEWT_VAL(MCU_STM32H7)
 static HAL_StatusTypeDef
 SPI_WaitFlagStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, uint32_t State, uint32_t Timeout, uint32_t Tickstart)
 {
@@ -139,6 +145,7 @@ SPI_WaitFlagStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, uint32_t S
 
   return HAL_OK;
 }
+#endif
 
 #if !SPI_HAS_FIFO
 static HAL_StatusTypeDef
@@ -161,12 +168,21 @@ static HAL_StatusTypeDef SPI_WaitFifoStateUntilTimeout(SPI_HandleTypeDef *hspi, 
 
   while ((hspi->Instance->SR & Fifo) != State)
   {
+#if MYNEWT_VAL(MCU_STM32H7)
+    if ((Fifo == SPI_SR_RXPLVL) && (State == SPI_RX_FIFO_0PACKET))
+    {
+      tmpreg = *((__IO uint8_t *)&hspi->Instance->RXDR);
+      /* To avoid GCC warning */
+      UNUSED(tmpreg);
+    }
+#else
     if ((Fifo == SPI_SR_FRLVL) && (State == SPI_FRLVL_EMPTY))
     {
       tmpreg = *((__IO uint8_t *)&hspi->Instance->DR);
       /* To avoid GCC warning */
       UNUSED(tmpreg);
     }
+#endif
 
     if (Timeout != HAL_MAX_DELAY)
     {
@@ -195,6 +211,14 @@ static HAL_StatusTypeDef SPI_WaitFifoStateUntilTimeout(SPI_HandleTypeDef *hspi, 
 
 static HAL_StatusTypeDef SPI_EndRxTxTransaction(SPI_HandleTypeDef *hspi, uint32_t Timeout, uint32_t Tickstart)
 {
+#if MYNEWT_VAL(MCU_STM32H7)
+  /* Control if the TX fifo is empty */
+  if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_TXC, SPI_SR_TXC, Timeout, Tickstart) != HAL_OK)
+  {
+    SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+    return HAL_TIMEOUT;
+  }
+#else
   /* Control if the TX fifo is empty */
   if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_FTLVL, SPI_FTLVL_EMPTY, Timeout, Tickstart) != HAL_OK)
   {
@@ -208,6 +232,7 @@ static HAL_StatusTypeDef SPI_EndRxTxTransaction(SPI_HandleTypeDef *hspi, uint32_
     SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
     return HAL_TIMEOUT;
   }
+#endif
 
   /* Control if the RX fifo is empty */
   if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_FRLVL, SPI_FRLVL_EMPTY, Timeout, Tickstart) != HAL_OK)
@@ -220,12 +245,21 @@ static HAL_StatusTypeDef SPI_EndRxTxTransaction(SPI_HandleTypeDef *hspi, uint32_
 
 static HAL_StatusTypeDef SPI_EndTxTransaction(SPI_HandleTypeDef *hspi, uint32_t Timeout, uint32_t Tickstart)
 {
+#if MYNEWT_VAL(MCU_STM32H7)
+  /* Control if the TX fifo is empty */
+  if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_TXC, SPI_SR_TXC, Timeout, Tickstart) != HAL_OK)
+  {
+    SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+    return HAL_TIMEOUT;
+  }
+#else
   /* Control if the TX fifo is empty */
   if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_FTLVL, SPI_FTLVL_EMPTY, Timeout, Tickstart) != HAL_OK)
   {
     SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
     return HAL_TIMEOUT;
   }
+#endif
   return HAL_OK;
 }
 #endif
@@ -348,20 +382,20 @@ static void SPI_CloseRxTx_ISR(SPI_HandleTypeDef *hspi)
 static void SPI_2linesRxISR_8BIT(struct __SPI_HandleTypeDef *hspi)
 {
   if (hspi->Init.Mode == SPI_MODE_MASTER) {
-    *hspi->pRxBuffPtr++ = *((__IO uint8_t *)&hspi->Instance->DR);
+    *hspi->pRxBuffPtr++ = *((__IO uint8_t *)&hspi->Instance->RXDR);
     hspi->RxXferCount--;
   } else {
     //FIXME: this block below is probably not required...
 #if SPI_HAS_FIFO
     /* Receive data in packing mode */
     if (hspi->RxXferCount > 1U) {
-      *((uint16_t *)hspi->pRxBuffPtr) = hspi->Instance->DR;
+      *((uint16_t *)hspi->pRxBuffPtr) = hspi->Instance->RXDR;
       hspi->pRxBuffPtr += sizeof(uint16_t);
       hspi->RxXferCount -= 2U;
     } else {
       /* Receive data in 8 Bit mode */
 #endif
-      *hspi->pRxBuffPtr++ = *((__IO uint8_t *)&hspi->Instance->DR);
+      *hspi->pRxBuffPtr++ = *((__IO uint8_t *)&hspi->Instance->RXDR);
       hspi->RxXferCount--;
 #if SPI_HAS_FIFO
     }
@@ -393,7 +427,7 @@ static void SPI_2linesTxISR_8BIT(struct __SPI_HandleTypeDef *hspi)
   /* Transmit data in packing Bit mode */
   if (hspi->TxXferCount >= 2U)
   {
-    hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+    hspi->Instance->TXDR = *((uint16_t *)hspi->pTxBuffPtr);
     hspi->pTxBuffPtr += sizeof(uint16_t);
     hspi->TxXferCount -= 2U;
   }
@@ -401,7 +435,7 @@ static void SPI_2linesTxISR_8BIT(struct __SPI_HandleTypeDef *hspi)
   else
   {
 #endif
-    *(__IO uint8_t *)&hspi->Instance->DR = (*hspi->pTxBuffPtr++);
+    *(__IO uint8_t *)&hspi->Instance->TXDR = (*hspi->pTxBuffPtr++);
     hspi->TxXferCount--;
 #if SPI_HAS_FIFO
   }
@@ -431,7 +465,7 @@ static void SPI_2linesTxISR_8BIT(struct __SPI_HandleTypeDef *hspi)
 static void SPI_2linesRxISR_16BIT(struct __SPI_HandleTypeDef *hspi)
 {
   /* Receive data in 16 Bit mode */
-  *((uint16_t*)hspi->pRxBuffPtr) = hspi->Instance->DR;
+  *((uint16_t *)hspi->pRxBuffPtr) = hspi->Instance->RXDR;
   hspi->pRxBuffPtr += sizeof(uint16_t);
   hspi->RxXferCount--;
 
@@ -456,7 +490,7 @@ static void SPI_2linesRxISR_16BIT(struct __SPI_HandleTypeDef *hspi)
 static void SPI_2linesTxISR_16BIT(struct __SPI_HandleTypeDef *hspi)
 {
   /* Transmit data in 16 Bit mode */
-  hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+  hspi->Instance->TXDR = *((uint16_t *)hspi->pTxBuffPtr);
   hspi->pTxBuffPtr += sizeof(uint16_t);
   hspi->TxXferCount--;
 
@@ -483,12 +517,12 @@ static void SPI_TxISR_8BIT(struct __SPI_HandleTypeDef *hspi)
 #if SPI_HAS_FIFO
   /* Transmit data in packing Bit mode */
   if (hspi->TxXferCount >= 2U) {
-    hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+    hspi->Instance->TXDR = *((uint16_t *)hspi->pTxBuffPtr);
     hspi->pTxBuffPtr += sizeof(uint16_t);
     hspi->TxXferCount -= 2U;
   } else {
 #endif
-    *(__IO uint8_t *)&hspi->Instance->DR = (*hspi->pTxBuffPtr++);
+    *(__IO uint8_t *)&hspi->Instance->TXDR = (*hspi->pTxBuffPtr++);
     hspi->TxXferCount--;
 #if SPI_HAS_FIFO
   }
@@ -509,7 +543,7 @@ static void SPI_TxISR_8BIT(struct __SPI_HandleTypeDef *hspi)
 static void SPI_TxISR_16BIT(struct __SPI_HandleTypeDef *hspi)
 {
   /* Transmit data in 16 Bit mode */
-  hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+  hspi->Instance->TXDR = *((uint16_t *)hspi->pTxBuffPtr);
   hspi->pTxBuffPtr += sizeof(uint16_t);
   hspi->TxXferCount--;
 
@@ -599,9 +633,15 @@ HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi, uint8_t *pData,
 #endif
 
   /* MYNEWT: in slave mode write 1st byte to DR */
-  if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) {
-      hspi->TxISR(hspi);
+#if MYNEWT_VAL(MCU_STM32H7)
+  if ((hspi->Instance->CFG2 & SPI_CFG2_MASTER) == 0) {
+    hspi->TxISR(hspi);
   }
+#else
+  if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) {
+    hspi->TxISR(hspi);
+  }
+#endif
 
 #if 0 /* MYNEWT: TODO */
   /* Check if the SPI is already enabled */
@@ -706,9 +746,15 @@ HAL_StatusTypeDef HAL_SPI_Slave_Queue_TransmitReceive(SPI_HandleTypeDef *hspi, u
   //__HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR));
 
   /* MYNEWT: in slave mode write 1st byte to DR */
-  if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) {
-      hspi->TxISR(hspi);
+#if MYNEWT_VAL(MCU_STM32H7)
+  if ((hspi->Instance->CFG2 & SPI_CFG2_MASTER) == 0) {
+    hspi->TxISR(hspi);
   }
+#else
+  if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) {
+    hspi->TxISR(hspi);
+  }
+#endif
 
 #if 0
   /* Check if the SPI is already enabled */
