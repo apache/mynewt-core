@@ -360,6 +360,9 @@ STM32F7xx
 STM32F7xx_HAL_Driver
 stm32f7xx
 
+# CMSIS Cortex-H7, STM32h7 - BSD License.
+stm32h7xx
+
 # LORA - BSD License
 lora
 
@@ -396,6 +399,11 @@ startup_STM32F429x.s
 stm32l1xx_hal_conf.h
 system_stm32l1xx.c
 startup_stm32l152xc.s
+
+# NUCLEO-H723ZG BSP - BSD License
+stm32h7xx_hal_conf.h
+system_stm32h7xx.c
+startup_stm32h723xx.s
 
 # NUCLEO-F767 BSP - BSD License
 startup_stm32f767xx.s

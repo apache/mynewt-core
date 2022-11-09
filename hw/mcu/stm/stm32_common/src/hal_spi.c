@@ -286,10 +286,15 @@ spi_ss_isr(void *arg)
         /*
          * Chip select done. Check whether there's pending data to RX.
          */
+#if MYNEWT_VAL(MCU_STM32H7)
+        if (spi->handle.Instance->SR & SPI_SR_RXP && spi->handle.RxISR) {
+            spi->handle.RxISR(&spi->handle);
+        }
+#else
         if (spi->handle.Instance->SR & SPI_SR_RXNE && spi->handle.RxISR) {
             spi->handle.RxISR(&spi->handle);
         }
-
+#endif
         /*
          * Disable SPI.
          */
@@ -509,7 +514,11 @@ stm32_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *presca
     for (i = 0; i < 8; i++) {
         candidate_br = apbfreq >> (i + 1);
         if (candidate_br <= baudrate) {
+#if !MYNEWT_VAL(MCU_STM32H7)
             *prescaler = i << SPI_CR1_BR_Pos;
+#else
+            *prescaler = i << SPI_CFG1_MBR_Pos;
+#endif
             break;
         }
     }
