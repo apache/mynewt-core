@@ -1,0 +1,140 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 1
+
+    MCU_STM32H7:
+        description: MCUs are of STM32H7xx family
+        value: 1
+
+    STM32_ENABLE_ICACHE:
+        description: Enable instruction caching
+        value: 1
+
+    STM32_CLOCK_VOLTAGESCALING_CONFIG:
+        description: Voltage scale
+        value: 0
+
+    STM32_CLOCK_LSI:
+        description: Enable low-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_LSE:
+        description: Enable low-speed external clock source (aka RTC xtal)
+        value: 0
+
+    STM32_CLOCK_LSE_BYPASS:
+        description: 0 for 32768 xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSE:
+        description: Enable high-speed external clock source
+        value: 0
+
+    STM32_CLOCK_HSE_BYPASS:
+        description: 0 for xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSI:
+        description: Enable high-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_HSI_CALIBRATION:
+        description: HSI calibration value
+        value: 'RCC_HSICALIBRATION_DEFAULT'
+
+    STM32_CLOCK_PLL_PLLM:
+        description: PLL config M parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLN:
+        description: PLL config N parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLP:
+        description: PLL config P parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLQ:
+        description: PLL config Q parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLR:
+        description: PLL config R parameter
+        value: 0
+
+    STM32_CLOCK_PLLRGE:
+        description: PLL input frequency range
+        value: 0
+
+    STM32_CLOCK_ENABLE_OVERDRIVE:
+        description: Turn on over-drive mode (reach higher clock rates)
+        value: 0
+
+    STM32_CLOCK_AHB_DIVIDER:
+        description: AHB prescaler
+        value: 0
+
+    STM32_CLOCK_APB1_DIVIDER:
+        description: APB low-speed prescaler
+        value: 0
+
+    STM32_CLOCK_APB2_DIVIDER:
+        description: APB high-speed prescaler
+        value: 0
+
+    STM32_CLOCK_APB3_DIVIDER:
+        description: APB low-speed prescaler
+        value: 0
+
+    STM32_CLOCK_APB4_DIVIDER:
+        description: APB high-speed prescaler
+        value: 0
+
+    STM32_FLASH_LATENCY:
+        description: Number of wait-states
+        value: 0
+
+    STM32_ART_ACCLERATOR_ENABLE:
+        description: Enable ...
+        value: 0
+
+    STM32_FLASH_PREFETCH_ENABLE:
+        description: Enable pre-fetch of instructions (when latency > 0)
+        value: 0
+
+    STM32_HAL_SPI_HAS_FIFO:
+        description: This MCU has a SPI with FIFO
+        value: 1
+
+    STM32_HAL_I2C_HAS_CLOCKSPEED:
+        description: This MCU's I2C has no clock speed register (has TIMINGR)
+        value: 0
+
+    STM32_HAL_UART_HAS_SR:
+        description: This MCU's UART uses ISR register (not SR) for status.
+        value: 0
+
+    MCU_FLASH_ERASED_VAL:
+        description: Value read from erased flash.
+        value: 0xff
