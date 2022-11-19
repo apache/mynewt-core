@@ -78,7 +78,8 @@ fcb2_getprev(struct fcb2 *fcb, struct fcb2_entry *loc)
              * Need to get from previous sector.
              */
             if (loc->fe_sector == fcb->f_oldest_sec) {
-                return FCB2_ERR_NOVAR;
+                rc = FCB2_ERR_NOVAR;
+                break;
             }
             if (loc->fe_sector == 0) {
                 loc->fe_sector = fcb->f_sector_cnt - 1;
