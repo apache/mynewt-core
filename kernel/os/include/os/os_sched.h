@@ -58,6 +58,28 @@ void os_sched_set_current_task(struct os_task *);
 struct os_task *os_sched_next_task(void);
 
 /**
+ * Suspend task scheduling
+ *
+ * Function suspends the scheduler.
+ * Suspending the scheduler prevents a context switch but leaves interrupts enabled.
+ * Call to os_sched_resume() enables task scheduling again.
+ * Calls to os_sched_suspend() can be nested. The same number of calls must be made
+ * to os_sched_resume() as have previously been made to os_sched_suspend() before
+ * task scheduling work again.
+ */
+void os_sched_suspend(void);
+
+/**
+ * Resume task scheduling
+ *
+ * Resumes the scheduler after it was suspended with os_sched_suspend().
+ * @returns 0 when scheduling resumed
+ * @returns non-0 when scheduling is still locked and more calls
+ *          to os_sched_resume() are needed
+ */
+int os_sched_resume(void);
+
+/**
  * Performs context switch if needed. If next_t is set, that task will be made
  * running. If next_t is NULL, highest priority ready to run is swapped in. This
  * function can be called when new tasks were made ready to run or if the current

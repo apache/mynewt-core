@@ -28,6 +28,7 @@ struct os_task *g_current_task;
 
 extern os_time_t g_os_time;
 os_time_t g_os_last_ctx_sw_time;
+static uint8_t os_sched_lock_count;
 
 /**
  * os sched insert
@@ -121,6 +122,10 @@ os_sched(struct os_task *next_t)
 {
     os_sr_t sr;
 
+    if (os_sched_lock_count) {
+        return;
+    }
+
     OS_ENTER_CRITICAL(sr);
 
     if (!next_t) {
@@ -130,6 +135,31 @@ os_sched(struct os_task *next_t)
     os_arch_ctx_sw(next_t);
 
     OS_EXIT_CRITICAL(sr);
+}
+
+void
+os_sched_suspend(void)
+{
+    os_sr_t sr;
+    OS_ENTER_CRITICAL(sr);
+    os_sched_lock_count++;
+    OS_EXIT_CRITICAL(sr);
+}
+
+int
+os_sched_resume(void)
+{
+    os_sr_t sr;
+    int ret = 0;
+
+    OS_ENTER_CRITICAL(sr);
+    if (--os_sched_lock_count == 0) {
+        os_sched(NULL);
+    }
+    ret = os_sched_lock_count;
+    OS_EXIT_CRITICAL(sr);
+
+    return ret;
 }
 
 /**
