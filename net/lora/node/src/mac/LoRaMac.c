@@ -1354,8 +1354,8 @@ lora_mac_process_radio_rx_timeout(struct os_event *ev)
                   g_lora_mac_data.rx_slot, 0);
 
     if (LoRaMacDeviceClass != CLASS_C) {
-        Radio.Sleep( );
         if (g_lora_mac_data.rx_slot == RX_SLOT_WIN_2) {
+            Radio.Sleep( );
             /* Let the ACK retry timer handle confirmed transmissions */
             if (!LM_F_NODE_ACK_REQ()) {
                 lora_mac_tx_service_done(0);
@@ -1363,6 +1363,7 @@ lora_mac_process_radio_rx_timeout(struct os_event *ev)
         }
     } else {
         /* Rx timeout for class C devices should only occur in rx window 1 */
+        Radio.Sleep( );
         assert(g_lora_mac_data.rx_slot == RX_SLOT_WIN_1);
         lora_mac_rx_on_window2();
     }
