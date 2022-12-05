@@ -36,8 +36,8 @@ compiler.ld.binfile: false
 compiler.ld.flags: -lm -Wl,--gc-sections
 
 # Linux.
-compiler.flags.base.LINUX: [-DMN_LINUX]
-compiler.ld.flags.LINUX: [-lutil]
+compiler.flags.base.LINUX: [-DMN_LINUX, -DLIBBSD_OVERLAY -I/usr/include/bsd]
+compiler.ld.flags.LINUX: [-lutil -lbsd]
 
 # OS X.
 compiler.path.cc.DARWIN.OVERWRITE: "gcc"
