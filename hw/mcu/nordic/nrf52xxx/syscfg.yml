@@ -95,7 +95,7 @@ syscfg.defs:
     MCU_ICACHE_ENABLED:
        description: >
             Enabled Instruction code cache
-       value: 0
+       value: 1
 
     MCU_COMMON_STARTUP:
         description: >
