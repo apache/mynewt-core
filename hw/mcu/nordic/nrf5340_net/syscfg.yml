@@ -65,8 +65,7 @@ syscfg.defs:
     MCU_ICACHE_ENABLED:
         description: >
             Enable instruction code cache
-            Default value is 0, so disabled.
-        value: 0
+        value: 1
 
     MCU_DEFAULT_STARTUP:
         description: >
