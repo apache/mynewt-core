@@ -18,6 +18,8 @@
 #
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: stub
+    LOG_IMPLEMENTATION: stub
 
     # PWM for buzzer
     PWM_0: 1

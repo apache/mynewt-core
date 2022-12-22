@@ -27,6 +27,6 @@ pkg.lflags:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/console"
     - "@apache-mynewt-core/hw/drivers/trng"
-    - "@apache-mynewt-core/sys/log/stub"
+    - "@apache-mynewt-core/sys/log"

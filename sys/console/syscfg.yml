@@ -17,10 +17,17 @@
 #
 
 syscfg.defs:
-    CONSOLE_MODE:
-        description: Which console to use
+    CONSOLE_IMPLEMENTATION:
+        description: >
+            Selects console implementation package full, minimal or stub.
         value:
         choices:
             - full
             - minimal
             - stub
+
+    # Defunct settings
+
+    CONSOLE_MODE:
+        description: Use 'CONSOLE_IMPLEMENTATION' instead
+        defunct: 1

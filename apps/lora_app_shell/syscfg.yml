@@ -18,6 +18,10 @@
 #
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: full
+    STATS_IMPLEMENTATION: full
+
     STATS_CLI: 1
     STATS_NAMES: 1
     SHELL_TASK: 1

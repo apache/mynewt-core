@@ -44,6 +44,9 @@ syscfg.defs:
         value: 1
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: stub
+
     CRYPTO: 1
     CRYPTO_NEED_CBC: 1
     CRYPTO_NEED_CTR: 1

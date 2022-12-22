@@ -37,5 +37,10 @@ syscfg.defs:
         description: 'Time to wait before starting the tests in seconds'
         value: 0
 
+syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: full
+    STATS_IMPLEMENTATION: full
+
 syscfg.vals.FS_TEST_LITTLEFS:
     LITTLEFS_DISABLE_SYSINIT: 1

@@ -23,4 +23,7 @@ syscfg.defs:
         value: '"hash"'
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: stub
+
     HASH: 1

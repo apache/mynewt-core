@@ -22,6 +22,10 @@ syscfg.defs:
         value: '"bsncent"'
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: full
+    STATS_IMPLEMENTATION: full
+
     # Disable logging.
     LOG_LEVEL: 255
 

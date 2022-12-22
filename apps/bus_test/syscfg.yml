@@ -58,6 +58,10 @@ syscfg.defs:
 
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: full
+    STATS_IMPLEMENTATION: stub
+
     BUS_DEBUG_OS_DEV: 1
     FLOAT_USER: 1
     SENSOR_CLI: 1

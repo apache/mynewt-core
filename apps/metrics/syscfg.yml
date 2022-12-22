@@ -18,6 +18,8 @@
 #
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+
     LOG_FCB: 1
     LOG_CLI: 1
     METRICS_CLI: 1

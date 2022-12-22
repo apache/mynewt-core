@@ -35,6 +35,9 @@ syscfg.defs:
         value: 100000
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: stub
+    LOG_IMPLEMENTATION: stub
+
     OS_SCHEDULING: 0
     SYSINIT_CONSTRAIN_INIT: 0
     MSYS_1_BLOCK_COUNT: 0

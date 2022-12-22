@@ -30,6 +30,10 @@ syscfg.defs:
         value: 0
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: full
+    STATS_IMPLEMENTATION: full
+
     SHELL_TASK: 0
 
     # Default task settings

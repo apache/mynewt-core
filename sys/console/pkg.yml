@@ -22,9 +22,9 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - console
 
-pkg.deps.'CONSOLE_MODE=="full"':
+pkg.deps.'CONSOLE_IMPLEMENTATION=="full"':
     - "@apache-mynewt-core/sys/console/full"
-pkg.deps.'CONSOLE_MODE=="minimal"':
+pkg.deps.'CONSOLE_IMPLEMENTATION=="minimal"':
     - "@apache-mynewt-core/sys/console/minimal"
-pkg.deps.'CONSOLE_MODE=="stub"':
+pkg.deps.'CONSOLE_IMPLEMENTATION=="stub"':
     - "@apache-mynewt-core/sys/console/stub"
