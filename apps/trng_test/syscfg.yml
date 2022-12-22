@@ -23,5 +23,8 @@ syscfg.defs:
         value: '"trng"'
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: stub
+
     TRNG: 1
     FLOAT_USER: 1

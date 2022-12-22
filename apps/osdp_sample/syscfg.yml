@@ -17,6 +17,9 @@
 #
 
 syscfg.vals:
+  CONSOLE_IMPLEMENTATION: full
+  LOG_IMPLEMENTATION: full
+
   # OSDP specific configuration
   OSDP_MODE_PD: 1 # set in peripheral device mode
   OSDP_SC_ENABLED: 1 # enable secure channel

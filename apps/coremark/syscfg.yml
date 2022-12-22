@@ -21,5 +21,10 @@ syscfg.defs:
         description: Number of iterations to run
         value: 0
 
+syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: stub
+    STATS_IMPLEMENTATION: stub
+
 syscfg.vals.HARDFLOAT:
     FLOAT_USER: 1

@@ -23,7 +23,7 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
-    - sys/console/full
-    - sys/metrics
-    - sys/sysinit
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/sys/console"
+    - "@apache-mynewt-core/sys/metrics"
+    - "@apache-mynewt-core/sys/sysinit"

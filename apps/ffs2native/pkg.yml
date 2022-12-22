@@ -27,7 +27,7 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/fs/nffs"
     - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/sys/console/full"
-    - "@apache-mynewt-core/sys/log/full"
-    - "@apache-mynewt-core/sys/stats/stub"
+    - "@apache-mynewt-core/sys/console"
+    - "@apache-mynewt-core/sys/log"
+    - "@apache-mynewt-core/sys/stats"
     - "@apache-mynewt-core/kernel/os"

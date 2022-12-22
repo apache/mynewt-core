@@ -30,6 +30,6 @@ pkg.pre_build_cmds:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/sys/console/stub"
-    - "@apache-mynewt-core/sys/log/stub"
-    - "@apache-mynewt-core/sys/stats/stub"
+    - "@apache-mynewt-core/sys/console"
+    - "@apache-mynewt-core/sys/log"
+    - "@apache-mynewt-core/sys/stats"

@@ -15,18 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-pkg.name: apps/crypto_test
-pkg.type: app
-pkg.description:
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
 
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/sys/console"
-    - "@apache-mynewt-core/sys/log"
-    - "@apache-mynewt-core/crypto/mbedtls"
-    - "@apache-mynewt-core/crypto/tinycrypt"
-
-pkg.cflags: '-DMBEDTLS_USER_CONFIG_FILE="mbedtls/config_mynewt.h"'
+syscfg.vals:
+    CONSOLE_IMPLEMENTATION: stub
+    LOG_IMPLEMENTATION: stub
+    STATS_IMPLEMENTATION: stub

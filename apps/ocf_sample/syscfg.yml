@@ -18,6 +18,10 @@
 #
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: full
+    STATS_IMPLEMENTATION: full
+
     SHELL_TASK: 1
 
     # Default task settings

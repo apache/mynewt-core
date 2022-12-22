@@ -17,6 +17,10 @@
 #
 
 syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: full
+    STATS_IMPLEMENTATION: full
+
     SHELL_TASK: 0
     TIMER_1: 1
     TIMER_2: 1
