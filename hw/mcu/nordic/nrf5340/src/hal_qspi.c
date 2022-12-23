@@ -20,6 +20,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
+#include <syscfg/syscfg.h>
 #if MYNEWT_VAL(QSPI_ENABLE)
 #include <hal/hal_flash_int.h>
 #include "mcu/nrf5340_hal.h"
