@@ -51,7 +51,7 @@ syscfg.vals:
     SPI_0_MASTER: 1 # for talking to the SX1276
     SX1276_SPI_IDX: 0
     SX1276_SPI_CS_PIN: 22
-    XTAL_32768: 1
+    MCU_LFCLK_SOURCE: LFXO
     BOOT_SERIAL_DETECT_PIN: 12
     SX1276_HAS_ANT_SW: 1
 
