@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-#
+# 
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,20 +17,20 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/dialog/cmac
-pkg.description: MCU definition for Dialog CMAC (Cortex-M0+ core)
+pkg.name: hw/drivers/ipc_cmac
+pkg.description:
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.homepage: "https://mynewt.apache.org/"
 pkg.keywords:
-    - dialog
-    - da1469x
-    - cmac
 
-pkg.deps:
-    - "@apache-mynewt-core/hw/cmsis-core"
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/mcu/dialog"
-    - "@apache-mynewt-core/hw/drivers/ipc_cmac"
-    - "@apache-mynewt-nimble/nimble/drivers/dialog_cmac"
+pkg.ign_files.BSP_dialog_cmac:
+  - shm_hs.c
 
-pkg.cflags: -I@apache-mynewt-core/kernel
+pkg.ign_files.'!BSP_dialog_cmac':
+  - shm_ll.c
+
+pkg.post_link_cmds.BLE_CONTROLLER:
+  scripts/create_cmac_bin.sh: 100
+
+pkg.pre_link_cmds.!BLE_CONTROLLER:
+  scripts/build_libcmac.sh: 100

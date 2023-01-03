@@ -23,7 +23,7 @@
 #include "mcu/cmac_hal.h"
 #include "mcu/cmac_timer.h"
 #include "mcu/mcu.h"
-#include "cmac_driver/cmac_shared.h"
+#include <ipc_cmac/shm.h>
 #include "os/os.h"
 #include "CMAC.h"
 
@@ -349,7 +349,7 @@ cmac_timer_slp_update(void)
 {
     uint32_t lp_clock_freq;
 
-    lp_clock_freq = g_cmac_shared_data.lp_clock_freq;
+    lp_clock_freq = g_cmac_shm_ctrl.lp_clock_freq;
 
     if (lp_clock_freq == g_cmac_timer_slp.freq) {
         return false;

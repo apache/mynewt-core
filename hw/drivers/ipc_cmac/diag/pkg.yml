@@ -17,20 +17,12 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/dialog/cmac
-pkg.description: MCU definition for Dialog CMAC (Cortex-M0+ core)
+pkg.name: hw/drivers/ipc_cmac/diag
+pkg.description: Default diag configuration for CMAC
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - dialog
     - da1469x
     - cmac
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/cmsis-core"
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/mcu/dialog"
-    - "@apache-mynewt-core/hw/drivers/ipc_cmac"
-    - "@apache-mynewt-nimble/nimble/drivers/dialog_cmac"
-
-pkg.cflags: -I@apache-mynewt-core/kernel
+pkg.apis: dialog_cmac_diag

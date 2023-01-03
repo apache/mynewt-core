@@ -17,11 +17,12 @@
  * under the License.
  */
 
-#include "mcu/mcu.h"
-#include "mcu/cmac_pdc.h"
-#include "cmac_driver/cmac_shared.h"
+#include <CMAC.h>
+#include <mcu/cmac_pdc.h>
+#include <ipc_cmac/shm.h>
+#include <ipc_cmac/mbox.h>
+#include <ipc_cmac/rand.h>
 #include "cmac_priv.h"
-#include "CMAC.h"
 
 extern void ble_rf_calibrate_req(void);
 
@@ -31,19 +32,19 @@ SYS2CMAC_IRQHandler(void)
     uint16_t pending_ops;
 
     if (CMAC->CM_EXC_STAT_REG & CMAC_CM_EXC_STAT_REG_EXC_SYS2CMAC_Msk) {
-        cmac_shared_lock();
-        pending_ops = g_cmac_shared_data.pending_ops;
-        g_cmac_shared_data.pending_ops = 0;
-        cmac_shared_unlock();
+        cmac_shm_lock();
+        pending_ops = g_cmac_shm_ctrl.pending_ops;
+        g_cmac_shm_ctrl.pending_ops = 0;
+        cmac_shm_unlock();
 
         cmac_mbox_read();
         cmac_rand_read();
 
-        if (pending_ops & CMAC_PENDING_OP_LP_CLK) {
+        if (pending_ops & CMAC_SHM_CB_PENDING_OP_LP_CLK) {
             cmac_sleep_recalculate();
         }
 
-        if (pending_ops & CMAC_PENDING_OP_RF_CAL) {
+        if (pending_ops & CMAC_SHM_CB_PENDING_OP_RF_CAL) {
             ble_rf_calibrate_req();
         }
 

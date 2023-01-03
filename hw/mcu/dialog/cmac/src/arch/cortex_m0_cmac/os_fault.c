@@ -23,7 +23,8 @@
 #include "hal/hal_system.h"
 #include "CMAC.h"
 #if MYNEWT_VAL(CMAC_DEBUG_COREDUMP_ENABLE)
-#include "cmac_driver/cmac_shared.h"
+#include <ipc_cmac/shm.h>
+#include <ipc_cmac/mbox.h>
 #endif
 
 #ifndef max
@@ -156,11 +157,11 @@ void
 __assert_func(const char *file, int line, const char *func, const char *e)
 {
 #if MYNEWT_VAL(CMAC_DEBUG_COREDUMP_ENABLE)
-    volatile struct cmac_coredump *cd = &g_cmac_shared_data.coredump;
+    volatile struct cmac_shm_crashinfo *ci = &g_cmac_shm_crashinfo;
 
-    cd->assert = (uint32_t)__builtin_return_address(0);
-    cd->assert_file = file;
-    cd->assert_line = line;
+    ci->assert = (uint32_t)__builtin_return_address(0);
+    ci->assert_file = file;
+    ci->assert_line = line;
 #endif
 
 #if MYNEWT_VAL(MCU_DEBUG_HCI_EVENT_ON_ASSERT)
@@ -174,7 +175,7 @@ void
 os_default_irq(struct trap_frame *tf)
 {
 #if MYNEWT_VAL(CMAC_DEBUG_COREDUMP_ENABLE)
-    volatile struct cmac_coredump *cd = &g_cmac_shared_data.coredump;
+    volatile struct cmac_shm_crashinfo *ci = &g_cmac_shm_crashinfo;
 #endif
 
     if (((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) == (NMI_IRQn + 16)) &&
@@ -194,14 +195,14 @@ os_default_irq(struct trap_frame *tf)
     }
 
 #if MYNEWT_VAL(CMAC_DEBUG_COREDUMP_ENABLE)
-    cd->lr = tf->ef->lr;
-    cd->pc = tf->ef->pc;
+    ci->lr = tf->ef->lr;
+    ci->pc = tf->ef->pc;
 
-    cd->CM_STAT_REG = CMAC->CM_STAT_REG;
-    cd->CM_LL_TIMER1_36_10_REG = CMAC->CM_LL_TIMER1_36_10_REG;
-    cd->CM_LL_TIMER1_9_0_REG = CMAC->CM_LL_TIMER1_9_0_REG;
-    cd->CM_ERROR_REG = CMAC->CM_ERROR_REG;
-    cd->CM_EXC_STAT_REG = CMAC->CM_EXC_STAT_REG;
+    ci->CM_STAT_REG = CMAC->CM_STAT_REG;
+    ci->CM_LL_TIMER1_36_10_REG = CMAC->CM_LL_TIMER1_36_10_REG;
+    ci->CM_LL_TIMER1_9_0_REG = CMAC->CM_LL_TIMER1_9_0_REG;
+    ci->CM_ERROR_REG = CMAC->CM_ERROR_REG;
+    ci->CM_EXC_STAT_REG = CMAC->CM_EXC_STAT_REG;
 #endif
 
 #if MYNEWT_VAL(MCU_DEBUG_HCI_EVENT_ON_FAULT)

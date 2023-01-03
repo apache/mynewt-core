@@ -20,6 +20,17 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
+    /* Size of binary image, i.e. ROM + initialized data */
+    img_size = LOADADDR(.data) + SIZEOF(.data);
+    /* Size of RAM area required for CMAC */
+    ram_size = LOADADDR(.data) + end_of_ram - ADDR(.data);
+    /* Offset of data section in binary image */
+    data_offset = LOADADDR(.data);
+    /* Offset of shared section in binary image */
+    shared_offset = LOADADDR(.data) + ADDR(.shm) - ADDR(.data);
+    /* Base address of shared section on CMAC side (to translate pointers) */
+    shared_addr = ADDR(.shm);
+
     .text :
     {
         __text = .;
@@ -29,11 +40,13 @@ SECTIONS
         __isr_vector_end = .;
 
         /* Put image info just after intvect so loader can locate it easily */
-        LONG(0xC3ACC3AC)
-        LONG(LOADADDR(.data) + SIZEOF(.data))
-        LONG(LOADADDR(.data) + end_of_ram - ADDR(.data))
-        LONG(LOADADDR(.data))
-        LONG(LOADADDR(.data) + ADDR(.shdata) - ADDR(.data))
+        KEEP(*(.shm_magic))
+        LONG(img_size)
+        LONG(ram_size)
+        LONG(data_offset)
+        LONG(shared_offset)
+        LONG(shared_addr)
+        KEEP(*(.shm_vect))
 
         *(.text*)
 
@@ -141,11 +154,11 @@ SECTIONS
         *(.stack*)
     } > RAM
 
-    .shdata (NOLOAD) : ALIGN(1K)
+    .shm (NOLOAD) : ALIGN(1K)
     {
-        __shdata_start__ = .;
-        *(.shdata)
-        __shdata_end__ = .;
+        __shm_start__ = .;
+        *(.shm_data)
+        __shm_end__ = .;
     } > RAM
 
     . = ALIGN(1K);
@@ -160,7 +173,7 @@ SECTIONS
     } AT > ROM
 
     __HeapBase = ADDR(.heap_dummy);
-    __StackTop = ADDR(.shdata);
+    __StackTop = ADDR(.shm);
 
     /* Move stack limit down by size of stack_dummy section */
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
