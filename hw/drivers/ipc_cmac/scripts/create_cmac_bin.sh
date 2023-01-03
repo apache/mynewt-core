@@ -1,4 +1,5 @@
-#
+#!/bin/bash
+
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,22 +16,16 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
 
-pkg.name: hw/mcu/dialog/cmac
-pkg.description: MCU definition for Dialog CMAC (Cortex-M0+ core)
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - dialog
-    - da1469x
-    - cmac
+OBJCOPY=${MYNEWT_OBJCOPY_PATH}
+ELF=${MYNEWT_APP_BIN_DIR}/blehci.elf
 
-pkg.deps:
-    - "@apache-mynewt-core/hw/cmsis-core"
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/mcu/dialog"
-    - "@apache-mynewt-core/hw/drivers/ipc_cmac"
-    - "@apache-mynewt-nimble/nimble/drivers/dialog_cmac"
+cd ${WORK_DIR}
 
-pkg.cflags: -I@apache-mynewt-core/kernel
+# Create image by stripping .ram section
+${OBJCOPY} -R .ram -O binary ${ELF} ${BASENAME_IMG}.bin
+# RAM image is the same as binary created by newt
+cp ${ELF}.bin ${BASENAME_RAM}.bin
+
+# Create a copy of image to flash to partition, if required
+cp ${BASENAME_IMG}.bin ${ELF}.img.bin

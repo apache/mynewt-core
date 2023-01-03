@@ -20,7 +20,7 @@
 #include "mcu/mcu.h"
 #include "hal/hal_os_tick.h"
 #include "os/os_arch_cmac.h"
-#include "os/src/os_priv.h"
+#include "../../os/src/os_priv.h"
 
 /* Initial program status register */
 #define INITIAL_xPSR    0x01000000

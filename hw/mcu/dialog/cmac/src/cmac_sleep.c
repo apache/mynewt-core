@@ -24,7 +24,7 @@
 
 #include <assert.h>
 #include "mcu/cmac_pdc.h"
-#include "cmac_driver/cmac_shared.h"
+#include "ipc_cmac/shm.h"
 #include "mcu/cmac_timer.h"
 #include "mcu/mcu.h"
 #include "hal/hal_system.h"
@@ -145,15 +145,15 @@ cmac_sleep_regs_restore(void)
 static void
 cmac_sleep_enable_dcdc(void)
 {
-    if (!g_cmac_shared_data.dcdc.enabled) {
+    if (!g_cmac_shm_dcdc.enabled) {
         return;
     }
 
-    *(volatile uint32_t *)0x50000314 = g_cmac_shared_data.dcdc.v18;
-    *(volatile uint32_t *)0x50000318 = g_cmac_shared_data.dcdc.v18p;
-    *(volatile uint32_t *)0x50000310 = g_cmac_shared_data.dcdc.vdd;
-    *(volatile uint32_t *)0x5000030c = g_cmac_shared_data.dcdc.v14;
-    *(volatile uint32_t *)0x50000304 = g_cmac_shared_data.dcdc.ctrl1;
+    *(volatile uint32_t *)0x50000314 = g_cmac_shm_dcdc.v18;
+    *(volatile uint32_t *)0x50000318 = g_cmac_shm_dcdc.v18p;
+    *(volatile uint32_t *)0x50000310 = g_cmac_shm_dcdc.vdd;
+    *(volatile uint32_t *)0x5000030c = g_cmac_shm_dcdc.v14;
+    *(volatile uint32_t *)0x50000304 = g_cmac_shm_dcdc.ctrl1;
 }
 
 static void
@@ -174,7 +174,7 @@ cmac_sleep_wait4xtal(void)
 static void
 cmac_sleep_calculate_wakeup_time(void)
 {
-    assert(g_cmac_shared_data.xtal32m_settle_us);
+    assert(g_cmac_shm_ctrl.xtal32m_settle_us);
 
     g_mcu_wakeup_usecs_min =
         /*
@@ -195,7 +195,7 @@ cmac_sleep_calculate_wakeup_time(void)
          * worst case. Finally, LLP compensation takes around 50us.
          */
         T_LPTICK_U(2) + T_LPTICK_U(2) +
-        max(T_LPTICK_U(3), T_USEC(g_cmac_shared_data.xtal32m_settle_us)) +
+        max(T_LPTICK_U(3), T_USEC(g_cmac_shm_ctrl.xtal32m_settle_us)) +
         T_LPTICK(2) + T_USEC(50);
 }
 

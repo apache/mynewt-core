@@ -66,7 +66,7 @@ SECTIONS
         *(.text)
         *(.text.*)
 
-        *(.libcmac.rom)
+        *(.libcmac.img)
 
         KEEP(*(.init))
         KEEP(*(.fini))

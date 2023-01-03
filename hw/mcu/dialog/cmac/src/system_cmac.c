@@ -25,7 +25,7 @@
 #include "mcu/cmsis_nvic.h"
 #include "mcu/mcu.h"
 #include "hal/hal_system.h"
-#include "cmac_driver/cmac_diag.h"
+#include <ipc_cmac/diag.h>
 #include "CMAC.h"
 
 void
