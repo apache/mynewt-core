@@ -19,6 +19,7 @@
 
 #include <syscfg/syscfg.h>
 #include <mcu/cortex_m33.h>
+#include <mcu/nrf5340_net_clock.h>
 #include <hal/hal_system.h>
 #include <hal/hal_debug.h>
 #include <nrf.h>
@@ -94,12 +95,14 @@ hal_system_clock_start(void)
     if ((NRF_CLOCK_NS->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
         (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) {
         NRF_CLOCK_NS->EVENTS_HFCLKSTARTED = 0;
-        NRF_CLOCK_NS->TASKS_HFCLKSTART = 1;
+        nrf5340_net_clock_hfxo_request();
         while (1) {
             if ((NRF_CLOCK_NS->EVENTS_HFCLKSTARTED) != 0) {
                 break;
             }
         }
+    } else {
+        nrf5340_net_clock_hfxo_request();
     }
 #endif
 
