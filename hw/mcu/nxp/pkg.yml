@@ -55,7 +55,7 @@ pkg.ign_files.BSP_MK81F:
 pkg.src_dirs.BSP_KINETIS:
     - "src/ext/nxp-kinetis-sdk/drivers"
 
-pkg.cflags: -std=gnu99 -mthumb
+pkg.cflags: -std=gnu99 -mthumb -Wno-error=maybe-uninitialized
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
