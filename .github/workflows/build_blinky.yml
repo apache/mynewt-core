@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '1.16'
-      - uses: carlosperate/arm-none-eabi-gcc-action@v1
+      - uses: carlosperate/arm-none-eabi-gcc-action@48db4484a55750df7a0ccca63347fcdea6534d78
         with:
           release: '12.2.Rel1'
       - name: Install Dependencies
