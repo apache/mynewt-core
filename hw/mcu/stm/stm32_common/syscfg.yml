@@ -34,6 +34,24 @@ syscfg.defs:
     TIMER_2_TIM:
         description: 'TIMx used by OS TIMER_2'
         value: ''
+    TIMER_3:
+        description: 'Timer 3'
+        value:  0
+    TIMER_3_TIM:
+        description: 'TIMx used by OS TIMER_3'
+        value:
+    TIMER_4:
+        description: 'Timer 4'
+        value: 0
+    TIMER_4_TIM:
+        description: 'TIMx used by OS TIMER_4'
+        value:
+    TIMER_5:
+        description: 'Timer 5'
+        value: 0
+    TIMER_5_TIM:
+        description: 'TIMx used by OS TIMER_5'
+        value:
 
     UART_0:
         description: 'UART 0'
