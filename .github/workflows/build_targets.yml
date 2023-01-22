@@ -42,4 +42,4 @@ jobs:
              newt upgrade --shallow=1
              ln -s .github/targets ci_targets
       - name: Build targets
-        run: newt build `ls ci_targets/`
+        run: ls ci_targets | xargs -n1 sh -c 'echo "Testing $0"; newt build -q $0'
