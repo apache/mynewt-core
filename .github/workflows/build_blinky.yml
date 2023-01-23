@@ -23,7 +23,10 @@ on: [push, pull_request]
 
 jobs:
   blinky:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -33,6 +36,7 @@ jobs:
         with:
           release: '12.2.Rel1'
       - name: Install Dependencies
+        if: matrix.os == 'ubuntu-latest'
         run: |
              sudo apt-get update
              sudo apt-get install -y gcc-multilib
@@ -45,6 +49,6 @@ jobs:
              cp .github/project.yml project.yml
              newt upgrade --shallow=1
              git clone https://github.com/apache/mynewt-blinky.git /tmp/blinky
-             ln -s /tmp/blinky/apps/blinky/ apps/blinky
+             cp -r /tmp/blinky/apps/blinky/ apps/blinky
       - name: Build Blinky
         run: bash .github/test_build_blinky.sh

@@ -24,6 +24,11 @@ IGNORED_BSPS="ci40 dialog_cmac embarc_emsk hifive1 native-armv7 native-mips\
               olimex-pic32-emz64 olimex-pic32-hmz144 pic32mx470_6lp_clicker\
               pic32mz2048_wi-fire"
 
+# native is supported only on Linux (mind the space)
+if [ $RUNNER_OS != "Linux" ]; then
+    IGNORED_BSPS+=" native"
+fi
+
 for bsp in ${BSPS}; do
     # NOTE: do not remove the spaces around IGNORED_BSPS; it's required to
     #       match against the first and last entries
