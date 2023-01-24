@@ -67,6 +67,8 @@ struct mpu6050_cfg {
     uint8_t int_enable;
     uint8_t int_cfg;
     sensor_type_t mask;
+    int16_t accel_offset[3];    /* x, y and z accelerometer offsets */
+    int16_t gyro_offset[3];     /* x, y and z gyroscope offsets */
 };
 
 struct mpu6050 {
@@ -100,6 +102,19 @@ int mpu6050_get_accel_range(struct sensor_itf *itf,
     enum mpu6050_accel_range *range);
 int mpu6050_enable_interrupt(struct sensor_itf *itf, uint8_t enable);
 int mpu6050_config_interrupt(struct sensor_itf *itf, uint8_t cfg);
+int mpu6050_set_x_accel_offset(struct sensor_itf *itf, int16_t offset);
+int mpu6050_get_x_accel_offset(struct sensor_itf *itf, int16_t *offset);
+int mpu6050_set_y_accel_offset(struct sensor_itf *itf, int16_t offset);
+int mpu6050_get_y_accel_offset(struct sensor_itf *itf, int16_t *offset);
+int mpu6050_set_z_accel_offset(struct sensor_itf *itf, int16_t offset);
+int mpu6050_get_z_accel_offset(struct sensor_itf *itf, int16_t *offset);
+int mpu6050_set_x_gyro_offset(struct sensor_itf *itf, int16_t offset);
+int mpu6050_get_x_gyro_offset(struct sensor_itf *itf, int16_t *offset);
+int mpu6050_set_y_gyro_offset(struct sensor_itf *itf, int16_t offset);
+int mpu6050_get_y_gyro_offset(struct sensor_itf *itf, int16_t *offset);
+int mpu6050_set_z_gyro_offset(struct sensor_itf *itf, int16_t offset);
+int mpu6050_get_z_gyro_offset(struct sensor_itf *itf, int16_t *offset);
+int mpu6050_set_offsets(struct mpu6050 *mpu, struct mpu6050_cfg *cfg);
 
 int mpu6050_init(struct os_dev *, void *);
 int mpu6050_config(struct mpu6050 *, struct mpu6050_cfg *);

@@ -496,6 +496,138 @@ mpu6050_config_interrupt(struct sensor_itf *itf, uint8_t cfg)
     return mpu6050_write8(itf, MPU6050_INT_PIN_CFG, reg);
 }
 
+int
+mpu6050_set_x_accel_offset(struct sensor_itf *itf, int16_t offset)
+{
+    return mpu6050_write16(itf, MPU6050_RA_XA_OFFS_H, offset);
+}
+
+int
+mpu6050_get_x_accel_offset(struct sensor_itf *itf, int16_t *offset)
+{
+    uint8_t reg[2];
+    int rc;
+
+    rc = mpu6050_read16(itf, MPU6050_RA_XA_OFFS_H, reg);
+    if (rc) {
+        return rc;
+    }
+
+    *offset = (((int16_t)reg[0]) << 8) | reg[1];
+
+    return 0;
+}
+
+int
+mpu6050_set_y_accel_offset(struct sensor_itf *itf, int16_t offset)
+{
+    return mpu6050_write16(itf, MPU6050_RA_YA_OFFS_H, offset);
+}
+
+int
+mpu6050_get_y_accel_offset(struct sensor_itf *itf, int16_t *offset)
+{
+    uint8_t reg[2];
+    int rc;
+
+    rc = mpu6050_read16(itf, MPU6050_RA_YA_OFFS_H, reg);
+    if (rc) {
+        return rc;
+    }
+
+    *offset = (((int16_t)reg[0]) << 8) | reg[1];
+
+    return 0;
+}
+
+int
+mpu6050_set_z_accel_offset(struct sensor_itf *itf, int16_t offset)
+{
+    return mpu6050_write16(itf, MPU6050_RA_ZA_OFFS_H, offset);
+}
+
+int
+mpu6050_get_z_accel_offset(struct sensor_itf *itf, int16_t *offset)
+{
+    uint8_t reg[2];
+    int rc;
+
+    rc = mpu6050_read16(itf, MPU6050_RA_ZA_OFFS_H, reg);
+    if (rc) {
+        return rc;
+    }
+
+    *offset = (((int16_t)reg[0]) << 8) | reg[1];
+
+    return 0;
+}
+
+int
+mpu6050_set_x_gyro_offset(struct sensor_itf *itf, int16_t offset)
+{
+    return mpu6050_write16(itf, MPU6050_RA_XG_OFFS_USRH, offset);
+}
+
+int
+mpu6050_get_x_gyro_offset(struct sensor_itf *itf, int16_t *offset)
+{
+    uint8_t reg[2];
+    int rc;
+
+    rc = mpu6050_read16(itf, MPU6050_RA_XG_OFFS_USRH, reg);
+    if (rc) {
+        return rc;
+    }
+
+    *offset = (((int16_t)reg[0]) << 8) | reg[1];
+
+    return 0;
+}
+
+int
+mpu6050_set_y_gyro_offset(struct sensor_itf *itf, int16_t offset)
+{
+    return mpu6050_write16(itf, MPU6050_RA_YG_OFFS_USRH, offset);
+}
+
+int
+mpu6050_get_y_gyro_offset(struct sensor_itf *itf, int16_t *offset)
+{
+    uint8_t reg[2];
+    int rc;
+
+    rc = mpu6050_read16(itf, MPU6050_RA_YG_OFFS_USRH, reg);
+    if (rc) {
+        return rc;
+    }
+
+    *offset = (((int16_t)reg[0]) << 8) | reg[1];
+
+    return 0;
+}
+
+int
+mpu6050_set_z_gyro_offset(struct sensor_itf *itf, int16_t offset)
+{
+    return mpu6050_write16(itf, MPU6050_RA_ZG_OFFS_USRH, offset);
+}
+
+int
+mpu6050_get_z_gyro_offset(struct sensor_itf *itf, int16_t *offset)
+{
+    uint8_t reg[2];
+    int rc;
+
+    rc = mpu6050_read16(itf, MPU6050_RA_ZG_OFFS_USRH, reg);
+    if (rc) {
+        return rc;
+    }
+
+    *offset = (((int16_t)reg[0]) << 8) | reg[1];
+
+    return 0;
+}
+
 /**
  * Expects to be called back through os_dev_create().
  *
@@ -550,6 +682,44 @@ mpu6050_init(struct os_dev *dev, void *arg)
     }
 
     return sensor_mgr_register(sensor);
+}
+
+int
+mpu6050_set_offsets(struct mpu6050 *mpu, struct mpu6050_cfg *cfg)
+{
+    int rc = 0;
+    struct sensor_itf *itf;
+
+    itf = SENSOR_GET_ITF(&(mpu->sensor));
+
+    /* Set offsets */
+    rc = mpu6050_set_x_accel_offset(itf, cfg->accel_offset[0]);
+    if (rc) {
+        return rc;
+    }
+
+    rc = mpu6050_set_y_accel_offset(itf, cfg->accel_offset[1]);
+    if (rc) {
+        return rc;
+    }
+
+    rc = mpu6050_set_z_accel_offset(itf, cfg->accel_offset[2]);
+    if (rc) {
+        return rc;
+    }
+
+    rc = mpu6050_set_x_gyro_offset(itf, cfg->gyro_offset[0]);
+    if (rc) {
+        return rc;
+    }
+
+    rc = mpu6050_set_y_gyro_offset(itf, cfg->gyro_offset[1]);
+    if (rc) {
+        return rc;
+    }
+
+    rc = mpu6050_set_z_gyro_offset(itf, cfg->gyro_offset[2]);
+    return rc;
 }
 
 int
