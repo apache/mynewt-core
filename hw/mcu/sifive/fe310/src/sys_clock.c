@@ -82,7 +82,7 @@ HFXOSC_2_MHZ       = {  2000000, 1, 0,  0, 0, 0, 0, 0, 3}; /* 2 MHz */
 const clock_config_t
 HFXOSC_1_MHZ       = {  1000000, 1, 0,  0, 0, 0, 0, 0, 7}; /* 1 MHz */
 
-static uint32_t cpu_freq;
+uint32_t SystemCoreClock;
 
 static unsigned long __attribute__((noinline))
 measure_cpu_freq(size_t n)
@@ -111,14 +111,14 @@ uint32_t
 get_cpu_freq(void)
 {
 
-    if (!cpu_freq) {
+    if (!SystemCoreClock) {
         // warm up I$
         measure_cpu_freq(1);
         // measure for real
-        cpu_freq = measure_cpu_freq(10);
+        SystemCoreClock = measure_cpu_freq(10);
     }
 
-    return cpu_freq;
+    return SystemCoreClock;
 }
 
 void
@@ -136,7 +136,7 @@ select_clock(const clock_config_t *cfg)
         while ((PRCI_REG(PRCI_HFROSCCFG) & ROSC_RDY(1)) == 0) {
         }
         /* Compute CPU frequency on demand */
-        cpu_freq = 0;
+        SystemCoreClock = 0;
     }
 
     if (cfg->xosc) {
@@ -146,7 +146,7 @@ select_clock(const clock_config_t *cfg)
             while ((PRCI_REG(PRCI_HFXOSCCFG) & XOSC_RDY(1)) == 0) {
             }
         }
-        cpu_freq = cfg->frq;
+        SystemCoreClock = cfg->frq;
     }
 
     /*
