@@ -66,6 +66,16 @@ void *memset(void *dst, int c, size_t n)
                   :
                   : "r3", "r4", "memory"
                  );
+#elif defined(__riscv)
+    (void)q;
+    asm volatile ("   add %[len], %[len], %[dst]            \n"
+                  "   j 2f                                  \n"
+                  "1: sb %[val], (%[dst])                   \n"
+                  "   addi %[dst], %[dst], 1                \n"
+                  "2: bne %[len], %[dst], 1b                \n"
+                  : [dst] "+r" (dst), [val] "+r" (c), [len] "+r" (n)
+                  :
+                  :);
 #else
 	while (n--) {
 		*q++ = c;
