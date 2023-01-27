@@ -46,6 +46,12 @@ jobs:
         run: |
              go version
              go get mynewt.apache.org/newt/newt@latest
+      - name: Tune newt settings on Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+             mkdir ~/.newt
+             cp .github/windows_newtrc.yml ~/.newt/newtrc.yml
       - name: Setup Blinky project
         run: |
              cp .github/project.yml project.yml
@@ -53,4 +59,5 @@ jobs:
              git clone https://github.com/apache/mynewt-blinky.git /tmp/blinky
              cp -r /tmp/blinky/apps/blinky/ apps/blinky
       - name: Build Blinky
-        run: bash .github/test_build_blinky.sh
+        shell: bash
+        run: .github/test_build_blinky.sh

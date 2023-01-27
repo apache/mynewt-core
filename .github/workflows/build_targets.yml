@@ -42,10 +42,17 @@ jobs:
              go version
              go get mynewt.apache.org/newt/newt@latest
       - name: Setup project
+        shell: bash
         run: |
              cp .github/project.yml project.yml
              newt upgrade --shallow=1
              cp -r .github/targets ci_targets
+      - name: Tune newt settings on Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+             mkdir ~/.newt
+             cp .github/windows_newtrc.yml ~/.newt/newtrc.yml
       - name: Build targets
         shell: bash
         run: ls ci_targets | xargs -n1 sh -c 'echo "Testing $0"; newt build -q $0'
