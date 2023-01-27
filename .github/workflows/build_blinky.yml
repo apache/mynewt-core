@@ -17,12 +17,13 @@
 # under the License.
 #
 
-name: build blinky
+name: Build check
 
 on: [push, pull_request]
 
 jobs:
   blinky:
+    name: Build blinky
     strategy:
       fail-fast: false
       matrix:
