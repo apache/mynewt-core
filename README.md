@@ -23,9 +23,19 @@
 
 ## Overview
 
-[![Build/Test](https://travis-ci.org/apache/mynewt-core.svg?branch=master)][travis]
+<a href="https://github.com/apache/mynewt-core/actions/workflows/build_targets.yml">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_targets.yml/badge.svg">
+<a/>
 
-[travis]: https://travis-ci.org/apache/mynewt-core
+<a href="https://github.com/apache/mynewt-core/actions/workflows/build_blinky.yml">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_blinky.yml/badge.svg">
+<a/>
+
+<a href="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml/badge.svg">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml/badge.svg">
+<a/>
+
+<p>
 
 Apache Mynewt is an open-source operating system for tiny embedded devices.
 Its goal is to make it easy to develop applications for microcontroller
