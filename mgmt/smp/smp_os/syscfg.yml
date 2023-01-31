@@ -17,26 +17,8 @@
 # under the License.
 #
 
-pkg.name: mgmt/smp/smp_os
-pkg.description: Default SMP command.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/time/datetime"
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-mcumgr/cmd/os_mgmt"
-    - "@apache-mynewt-mcumgr/mgmt"
-    - "@apache-mynewt-core/encoding/tinycbor"
-    - "@apache-mynewt-mcumgr/cborattr"
-
-pkg.deps.TIMEPERSIST:
-    - "@apache-mynewt-core/time/timepersist"
-
-pkg.req_apis:
-    - smp
-
-pkg.init:
-    smp_os_pkg_init: 'MYNEWT_VAL(SMP_OS_SYSINIT_STAGE)'
+syscfg.defs:
+    SMP_OS_SYSINIT_STAGE:
+        description: >
+          'System initialization stage for SMP OS package'
+        value: 501

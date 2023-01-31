@@ -25,4 +25,4 @@ pkg.keywords:
 pkg.deps:
 
 pkg.init:
-    bus_pkg_init: 100
+    bus_pkg_init: 'MYNEWT_VAL(BUS_SYSINIT_STAGE)'
