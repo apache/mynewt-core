@@ -61,4 +61,4 @@ pkg.deps.SDADC:
     - "@apache-mynewt-core/hw/drivers/adc/sdadc_da1469x"
 
 pkg.init:
-    da1469x_lpclk_init: 1
+    da1469x_lpclk_init: 'MYNEWT_VAL(DA1469X_LPCLK_SYSINIT_STAGE)'

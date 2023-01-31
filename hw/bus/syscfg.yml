@@ -73,3 +73,8 @@ syscfg.defs:
             magic value which is then checked on each operation to ensure
             proper objects are passed to APIs.
         value: 0
+
+    BUS_SYSINIT_STAGE:
+        description: >
+            System initialization stage for bus package
+        value: 100

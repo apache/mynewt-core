@@ -459,6 +459,11 @@ syscfg.defs:
           'Disable watchdog on init'
         value: 1
 
+    DA1469X_LPCLK_SYSINIT_STAGE:
+        description: >
+          'Initalization stage for DA1469X'
+        value: 1
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 128
 
