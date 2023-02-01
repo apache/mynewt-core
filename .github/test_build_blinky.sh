@@ -44,7 +44,7 @@ for bsp in ${BSPS}; do
     newt target create -s $target
     newt target set -s $target bsp="@apache-mynewt-core/hw/bsp/$bsp"
     newt target set -s $target app="apps/blinky"
-    newt build -q $target
+    newt build -j 64 -q $target
 
     rc=$?
     [[ $rc -ne 0 ]] && EXIT_CODE=$rc
