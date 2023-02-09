@@ -46,7 +46,7 @@
 static void
 config_i2s_pll(void)
 {
-    RCC_PeriphCLKInitTypeDef i2s_clock_init;
+    RCC_PeriphCLKInitTypeDef i2s_clock_init = {0};
 
     i2s_clock_init.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S;
     i2s_clock_init.PLLI2S.PLLI2SM = MYNEWT_VAL(STM32_CLOCK_PLLI2S_PLLM);
@@ -62,8 +62,8 @@ config_i2s_pll(void)
 void
 SystemClock_Config(void)
 {
-    RCC_OscInitTypeDef osc_init;
-    RCC_ClkInitTypeDef clk_init;
+    RCC_OscInitTypeDef osc_init = {0};
+    RCC_ClkInitTypeDef clk_init = {0};
     HAL_StatusTypeDef status;
 
     /*

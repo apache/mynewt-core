@@ -45,8 +45,8 @@
 void
 SystemClock_Config(void)
 {
-    RCC_OscInitTypeDef osc_init;
-    RCC_ClkInitTypeDef clk_init;
+    RCC_OscInitTypeDef osc_init = {0};
+    RCC_ClkInitTypeDef clk_init = {0};
     HAL_StatusTypeDef status;
 
     /*

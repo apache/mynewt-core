@@ -52,11 +52,11 @@
 void
 SystemClock_Config(void)
 {
-    RCC_OscInitTypeDef osc_init;
-    RCC_ClkInitTypeDef clk_init;
+    RCC_OscInitTypeDef osc_init = {0};
+    RCC_ClkInitTypeDef clk_init = {0};
     HAL_StatusTypeDef status;
 #if TRNG_ENABLED
-    RCC_PeriphCLKInitTypeDef  pclk_init;
+    RCC_PeriphCLKInitTypeDef pclk_init = {0};
 #endif
 
     /*
