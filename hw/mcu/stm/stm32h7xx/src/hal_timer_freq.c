@@ -27,15 +27,15 @@ static uint32_t
 stm32_hal_timer_abp_clk_div(uint32_t divider)
 {
     switch (divider) {
-    case RCC_HCLK_DIV1:
+    case RCC_APB1_DIV1:
         return 1;
-    case RCC_HCLK_DIV2:
+    case RCC_APB1_DIV2:
         return 2;
-    case RCC_HCLK_DIV4:
+    case RCC_APB1_DIV4:
         return 4;
-    case RCC_HCLK_DIV8:
+    case RCC_APB1_DIV8:
         return 8;
-    case RCC_HCLK_DIV16:
+    case RCC_APB1_DIV16:
         return 16;
     }
     return 0;
