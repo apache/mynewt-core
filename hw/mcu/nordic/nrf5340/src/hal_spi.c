@@ -424,13 +424,13 @@ hal_spi_config_master(struct nrf5340_hal_spi *spi,
         case 8000:
             frequency = SPIM_FREQUENCY_FREQUENCY_M8;
             break;
-            /* 16 and 32 MHz is only supported on SPI_3_MASTER */
-#if defined(SPIM_FREQUENCY_FREQUENCY_M16) && MYNEWT_VAL(SPI_3_MASTER)
+            /* 16 and 32 MHz is only supported on SPI_4_MASTER */
+#if defined(SPIM_FREQUENCY_FREQUENCY_M16) && MYNEWT_VAL(SPI_4_MASTER)
         case 16000:
             frequency = SPIM_FREQUENCY_FREQUENCY_M16;
             break;
 #endif
-#if defined(SPIM_FREQUENCY_FREQUENCY_M32) && MYNEWT_VAL(SPI_3_MASTER)
+#if defined(SPIM_FREQUENCY_FREQUENCY_M32) && MYNEWT_VAL(SPI_4_MASTER)
         case 32000:
             frequency = SPIM_FREQUENCY_FREQUENCY_M32;
             break;
