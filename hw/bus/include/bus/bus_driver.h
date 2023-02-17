@@ -68,6 +68,10 @@ struct bus_dev_ops {
                        const uint8_t *wbuf, uint16_t wlength,
                        uint8_t *rbuf, uint16_t rlength,
                        os_time_t timeout,  uint16_t flags);
+    /* Duplex write and read */
+    int (* duplex_write_read)(struct bus_dev *bdev, struct bus_node *bnode,
+                              const uint8_t *wbuf, uint8_t *rbuf, uint16_t length,
+                              os_time_t timeout, uint16_t flags);
 };
 
 /**
