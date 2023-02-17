@@ -651,6 +651,14 @@ HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
     os_sem_release(&dd->sem);
 }
 
+void
+HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    struct spi_stm32_driver_data *dd = (struct spi_stm32_driver_data *)hspi;
+
+    os_sem_release(&dd->sem);
+}
+
 static int
 spi_stm32_read(struct bus_dev *bdev, struct bus_node *bnode,
                uint8_t *buf, uint16_t length, os_time_t timeout,
@@ -737,6 +745,50 @@ spi_stm32_write(struct bus_dev *bdev, struct bus_node *bnode,
 }
 
 static int
+spi_stm32_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
+                            const uint8_t *wbuf, uint8_t *rbuf, uint16_t length,
+                            os_time_t timeout, uint16_t flags)
+{
+    struct bus_spi_dev *dev = (struct bus_spi_dev *)bdev;
+    struct bus_spi_node *node = (struct bus_spi_node *)bnode;
+    struct spi_stm32_driver_data *dd;
+    int rc;
+
+    BUS_DEBUG_VERIFY_DEV(dev);
+    BUS_DEBUG_VERIFY_NODE(node);
+
+    dd = driver_data(dev);
+
+    assert(os_sem_get_count(&dd->sem) == 0);
+
+    /* Activate CS */
+    if (node->pin_cs >= 0) {
+        hal_gpio_write(node->pin_cs, 0);
+    }
+
+    if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
+        HAL_SPI_TransmitReceive_DMA(&dd->hspi, (uint8_t *)wbuf, rbuf, length);
+    } else {
+        HAL_SPI_TransmitReceive_IT(&dd->hspi, (uint8_t *)wbuf, rbuf, length);
+    }
+
+    rc = os_sem_pend(&dd->sem, timeout);
+
+    if (rc) {
+        HAL_SPI_Abort(&dd->hspi);
+    }
+
+    rc = os_error_to_sys(rc);
+
+    /* Deactivate CS if needed */
+    if ((rc != 0 || !(flags & BUS_F_NOSTOP)) && node->pin_cs >= 0) {
+        hal_gpio_write(node->pin_cs, 1);
+    }
+
+    return rc;
+}
+
+static int
 spi_stm32_enable(struct bus_dev *bdev)
 {
     struct bus_spi_dev *dev = (struct bus_spi_dev *)bdev;
@@ -772,6 +824,7 @@ static const struct bus_dev_ops bus_spi_stm32_ops = {
     .read = spi_stm32_read,
     .write = spi_stm32_write,
     .disable = spi_stm32_disable,
+    .duplex_write_read = spi_stm32_duplex_write_read,
 };
 
 /* Helper function to setup interrupt handler for SPI and DMA */
