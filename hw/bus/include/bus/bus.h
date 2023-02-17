@@ -129,6 +129,27 @@ bus_node_write_read_transact(struct os_dev *node, const void  *wbuf,
                              os_time_t timeout, uint16_t flags);
 
 /**
+ * Perform write and read in duplex mode (SPI)
+ *
+ * Writes data to node and automatically reads response at the same time.
+ *
+ * The timeout parameter applies to complete transaction time.
+ *
+ * @param node     Node device object
+ * @param wbuf     Buffer with data to be written
+ * @param rbuf     Buffer to read data into
+ * @param length   Length of data to be written and read
+ * @param timeout  Operation timeout
+ * @param flags    Flags
+ *
+ * @return 0 on success, SYS_xxx on error
+ */
+int
+bus_node_duplex_write_read(struct os_dev *node, const void *wbuf,
+                           void *rbuf, uint16_t length,
+                           os_time_t timeout, uint16_t flags);
+
+/**
  * Read data from node
  *
  * This is simple version of bus_node_read() with default timeout and no flags.

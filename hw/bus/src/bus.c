@@ -456,6 +456,45 @@ done:
     return rc;
 }
 
+int
+bus_node_duplex_write_read(struct os_dev *node, const void *wbuf,
+                           void *rbuf, uint16_t length,
+                           os_time_t timeout, uint16_t flags)
+{
+    struct bus_node *bnode = (struct bus_node *)node;
+    struct bus_dev *bdev = bnode->parent_bus;
+    int rc;
+
+    BUS_DEBUG_VERIFY_DEV(bdev);
+    BUS_DEBUG_VERIFY_NODE(bnode);
+
+    if (!bdev->dops->duplex_write_read) {
+        return SYS_ENOTSUP;
+    }
+
+    rc = bus_node_lock(node, bus_node_get_lock_timeout(node));
+    if (rc) {
+        return rc;
+    }
+
+    if (!bdev->enabled) {
+        rc = SYS_EIO;
+        goto done;
+    }
+
+    BUS_STATS_INC(bdev, bnode, write_ops);
+    BUS_STATS_INC(bdev, bnode, read_ops);
+    rc = bdev->dops->duplex_write_read(bdev, bnode, wbuf, rbuf, length, timeout, flags);
+    if (rc) {
+        BUS_STATS_INC(bdev, bnode, write_errors);
+        BUS_STATS_INC(bdev, bnode, read_errors);
+    }
+
+done:
+    (void)bus_node_unlock(node);
+
+    return rc;
+}
 
 int
 bus_node_lock(struct os_dev *node, os_time_t timeout)
