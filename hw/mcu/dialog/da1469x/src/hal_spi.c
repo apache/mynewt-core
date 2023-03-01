@@ -304,20 +304,18 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 
     assert(settings->data_order == HAL_SPI_MSB_FIRST);
 
-    switch (settings->baudrate) {
-    case 16000:
+    if (settings->baudrate >= 16000) {
+        /* Set 16 MHz */
         ctrl_reg |= (2U << SPI_SPI_CTRL_REG_SPI_CLK_Pos);
-        break;
-    case 8000:
+    } else if (settings->baudrate >= 8000) {
+        /* Set 8 MHz */
         ctrl_reg |= (1U << SPI_SPI_CTRL_REG_SPI_CLK_Pos);
-        break;
-    case 4000:
+    } else if (settings->baudrate > 4000) {
+        /* Set 4 MHz */
         ctrl_reg |= (0U << SPI_SPI_CTRL_REG_SPI_CLK_Pos);
-        break;
-    default:
+    } else {
         /* Slowest possibly clock, divider 14, 2.28MHz */
         ctrl_reg |= (3U << SPI_SPI_CTRL_REG_SPI_CLK_Pos);
-        break;
     }
 
     switch (settings->data_mode) {
