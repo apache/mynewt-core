@@ -71,6 +71,8 @@ pkg.deps.LVGL_ST7789:
 
 pkg.deps.LVGL_XPT2046:
     - "@apache-mynewt-core/hw/drivers/display/lvgl/indev/xpt2046"
+pkg.deps.LVGL_STMPE610:
+    - "@apache-mynewt-core/hw/drivers/display/lvgl/indev/stmpe610"
 
 pkg.cflags:
     - -DLV_CONF_INCLUDE_SIMPLE=1
