@@ -54,3 +54,6 @@ fs/littlefs/include/littlefs/lfs.h
 fs/littlefs/include/littlefs/lfs_util.h
 fs/littlefs/src/lfs.c
 fs/littlefs/src/lfs_util.c
+
+# LVGL formated file
+hw/drivers/display/lvgl/default/lv_conf.h
