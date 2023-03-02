@@ -499,4 +499,5 @@ startup_stm32l073xx.s
 # MK64F12 SDK - BSD License
 MK64F12
 
-
+# LVGL configuration file - MIT license
+lv_conf.h

@@ -1,0 +1,74 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/drivers/display/lvgl
+pkg.description: Mynewt part for LVGL
+pkg.keywords:
+    - display
+
+pkg.type: sdk
+
+pkg.include_dirs.LVGL_DEFAULT_LV_CONF:
+    - "@apache-mynewt-core/hw/drivers/display/lvgl/default"
+
+pkg.include_dirs:
+    - "@lvgl/src"
+    - "@lvgl/."
+
+pkg.src_dirs:
+    - "@lvgl/src/"
+    - "src"
+
+pkg.include_dirs.LVGL_DEMOS:
+    - "@lvgl/demos/benchmark/assets"
+
+pkg.src_dirs.LVGL_DEMOS:
+    - "@lvgl/demos/benchmark"
+    - "@lvgl/demos/widgets"
+    - "@lvgl/demos/stress"
+    - "@lvgl/demos/music"
+    - "@lvgl/demos/keypad_encoder"
+
+pkg.src_dirs.LVGL_EXAMPLES:
+    - "@lvgl/examples/widgets"
+
+pkg.source_files:
+
+pkg.ign_files:
+
+pkg.ign_dirs:
+
+pkg.deps:
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/cmsis-core"
+
+pkg.cflags:
+    - -DLV_CONF_INCLUDE_SIMPLE=1
+    - -Wno-unused-variable
+    - -Wno-format
+
+pkg.init:
+    mynewt_lv_init: 1000
+
+repository.lvgl:
+    type: github
+    branch: master
+    vers: v8.3.6-commit
+    user: lvgl
+    repo: lvgl
