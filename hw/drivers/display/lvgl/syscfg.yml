@@ -25,6 +25,9 @@ syscfg.defs:
     LVGL_ILI9341:
         description: Enable ILI9341 display driver.
         value:
+    LVGL_ILI9486:
+        description: Enable ILI9486 display driver.
+        value:
     LVGL_TIMER_PERIOD_MS:
         description: LV timer interval for periodical refresh and touch read
         value: 10

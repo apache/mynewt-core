@@ -60,6 +60,8 @@ pkg.deps:
 
 pkg.deps.LVGL_ILI9341:
     - "@apache-mynewt-core/hw/drivers/display/lvgl/tft/ili9341"
+pkg.deps.LVGL_ILI9486:
+    - "@apache-mynewt-core/hw/drivers/display/lvgl/tft/ili9486"
 
 pkg.cflags:
     - -DLV_CONF_INCLUDE_SIMPLE=1
