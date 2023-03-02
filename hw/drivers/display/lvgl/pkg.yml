@@ -58,6 +58,9 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/drivers/display/lcd_itf"
 
+pkg.deps.LVGL_ILI9341:
+    - "@apache-mynewt-core/hw/drivers/display/lvgl/tft/ili9341"
+
 pkg.cflags:
     - -DLV_CONF_INCLUDE_SIMPLE=1
     - -Wno-unused-variable
