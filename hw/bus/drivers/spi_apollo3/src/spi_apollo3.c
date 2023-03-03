@@ -107,7 +107,7 @@ bus_spi_configure(struct bus_dev *bdev, struct bus_node *bnode)
 
     spi_cfg.data_mode = node->mode;
     spi_cfg.data_order = node->data_order;
-    spi_cfg.baudrate = node->freq;
+    spi_cfg.baudrate = node->freq * 1000;
     /* XXX add support for other word sizes */
     spi_cfg.word_size = HAL_SPI_WORD_SIZE_8BIT;
 
