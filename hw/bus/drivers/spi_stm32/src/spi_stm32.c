@@ -897,6 +897,9 @@ bus_spi_stm32_dev_init_func(struct os_dev *odev, void *arg)
     dd->hspi.Init.NSS = SPI_NSS_SOFT;
     dd->hspi.Init.TIMode = SPI_TIMODE_DISABLE;
     dd->hspi.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+#ifdef SPI_MASTER_KEEP_IO_STATE_ENABLE
+    dd->hspi.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_ENABLE;
+#endif
 
     if (MIN_DMA_RX_SIZE >= 0 || MIN_DMA_TX_SIZE >= 0) {
         dd->dmarx.Instance = spi_hw->dmarx_cfg->regs;
