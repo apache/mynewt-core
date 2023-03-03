@@ -258,7 +258,38 @@ bus_spi_write_read(struct bus_dev *bdev, struct bus_node *bnode,
     return rc;
 }
 
-static int 
+static int
+bus_spi_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
+                          const uint8_t *wbuf, uint8_t *rbuf, uint16_t length,
+                          os_time_t timeout, uint16_t flags)
+{
+    struct bus_spi_apollo3_dev *dev = (struct bus_spi_apollo3_dev *)bdev;
+    struct bus_spi_node *node = (struct bus_spi_node *)bnode;
+    bool cont = false;
+    int rc;
+
+    BUS_DEBUG_VERIFY_DEV(&dev->spi_dev);
+    BUS_DEBUG_VERIFY_NODE(node);
+
+    if (flags & BUS_F_NOSTOP) {
+        cont = true;
+    }
+    apollo3_spi_set_ss_pin(dev->spi_dev.cfg.spi_num, node->pin_cs);
+    apollo3_spi_set_continuation(dev->spi_dev.cfg.spi_num, cont);
+
+#if MYNEWT_VAL(SPI_APOLLO3_USE_NOBLOCK)
+    rc = hal_spi_txrx_noblock(dev->spi_dev.cfg.spi_num, (uint8_t *)wbuf, rbuf, length);
+    if (rc == 0) {
+        os_sem_pend(&dev->sem, OS_TIMEOUT_NEVER);
+    }
+#else
+    rc = hal_spi_txrx(dev->spi_dev.cfg.spi_num, (uint8_t *)wbuf, rbuf, length);
+#endif
+
+    return rc;
+}
+
+static int
 bus_spi_disable(struct bus_dev *bdev)
 {
     struct bus_spi_dev *spi_dev = (struct bus_spi_dev *)bdev;
@@ -282,6 +313,7 @@ static const struct bus_dev_ops bus_spi_ops = {
     .write = bus_spi_write,
     .disable = bus_spi_disable,
     .write_read = bus_spi_write_read,
+    .duplex_write_read = bus_spi_duplex_write_read,
 };
 
 int
