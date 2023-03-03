@@ -624,6 +624,9 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
                                  SPI_PHASE_1EDGE : SPI_PHASE_2EDGE;
         dd->hspi.Init.FirstBit = node->data_order == BUS_SPI_DATA_ORDER_MSB ?
                                  SPI_FIRSTBIT_MSB : SPI_FIRSTBIT_LSB;
+#if defined(SPI_MASTER_KEEP_IO_STATE_ENABLE)
+        dd->hspi.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_ENABLE;
+#endif
     }
     if (HAL_OK != HAL_SPI_Init(&dd->hspi)) {
         rc = SYS_EINVAL;
