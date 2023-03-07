@@ -61,6 +61,8 @@ hal_bsp_flash_dev(uint8_t id)
     }
 #endif
 #if MYNEWT_VAL(IPC_NRF5340_FLASH_CLIENT)
+    _Static_assert(2 < MYNEWT_VAL(HAL_FLASH_MAX_DEVICE_COUNT) || MYNEWT_VAL(QSPI_ENABLE),
+        "HAL_FLASH_MAX_DEVICE_COUNT must be set to 3 when QSPI_ENABLE is 0");
     if (id == 2) {
         return ipc_flash();
     }
