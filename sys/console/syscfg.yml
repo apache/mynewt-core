@@ -20,7 +20,7 @@ syscfg.defs:
     CONSOLE_IMPLEMENTATION:
         description: >
             Selects console implementation package full, minimal or stub.
-        value:
+        value: full
         choices:
             - full
             - minimal
