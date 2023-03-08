@@ -195,6 +195,7 @@ typedef struct fat_chain {
 typedef struct dir_entry {
     const file_entry_t *file;
     uint8_t dir_slots;
+    uint8_t deleted;
     cluster_t first_cluster;
 } dir_entry_t;
 
@@ -1392,6 +1393,12 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
 
     MSC_FAT_VIEW_LOG_INFO("Write root dir sector %d\n", sector);
 
+    for (i = 0; i < root_dir_entry_count; ++i) {
+        if (root_dir[i].deleted == 0) {
+            root_dir[i].deleted = 1;
+        }
+    }
+
     for (; entry < limit; ++entry) {
         if (entry->bytes[0] == 0xe5) {
             continue;
@@ -1422,24 +1429,36 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
             }
         }
         /* Exclude directories and volume names */
-        if ((entry->attr & (FAT_FILE_ENTRY_ATTRIBUTE_DIRECTORY | FAT_FILE_ENTRY_ATTRIBUTE_LABEL)) == 0) {
-            if (msc_fat_view_short_name_checksum(entry->name) != checksum) {
-                for (i = 0; i < 8 && entry->name[i] != ' '; ++i) {
-                    name[i] = entry->name[i];
-                }
-                for (j = 0; j < 3 && entry->ext[j] != ' '; ++j) {
-                    if (j == 0) {
-                        name[i++] = '.';
-                    }
-                    name[i++] = entry->ext[j];
-                }
-                name[i] = '\0';
+        if (msc_fat_view_short_name_checksum(entry->name) != checksum) {
+            for (i = 0; i < 8 && entry->name[i] != ' '; ++i) {
+                name[i] = entry->name[i];
             }
-            MSC_FAT_VIEW_LOG_DEBUG("File name %s\n", name);
-            file_entry = msc_fat_view_find_dir_entry(name);
-            if (file_entry == NULL) {
+            for (j = 0; j < 3 && entry->ext[j] != ' '; ++j) {
+                if (j == 0) {
+                    name[i++] = '.';
+                }
+                name[i++] = entry->ext[j];
+            }
+            name[i] = '\0';
+        }
+        MSC_FAT_VIEW_LOG_DEBUG("File name %s\n", name);
+        file_entry = msc_fat_view_find_dir_entry(name);
+        if (file_entry == NULL) {
+            if ((entry->attr & (FAT_FILE_ENTRY_ATTRIBUTE_DIRECTORY | FAT_FILE_ENTRY_ATTRIBUTE_LABEL)) == 0) {
                 /* new file just showed up in root directory */
                 msc_fat_view_handle_new_file(entry, name);
+            }
+        } else {
+            file_entry->deleted = 0;
+        }
+    }
+    for (file_entry = root_dir; file_entry < root_dir + root_dir_entry_count; ++file_entry) {
+        MSC_FAT_VIEW_LOG_INFO("%s %d\n", file_entry->file->name, file_entry->deleted);
+        if (file_entry->deleted == 1) {
+            file_entry->deleted = 2;
+            if (file_entry->file && file_entry->file->delete_entry) {
+                MSC_FAT_VIEW_LOG_INFO("Deleted entry %s\n", file_entry->file->name);
+                file_entry->file->delete_entry(file_entry->file);
             }
         }
     }

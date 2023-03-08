@@ -41,6 +41,8 @@ typedef struct file_entry {
     void (*read_sector)(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512]);
     /** Function called when host tries to write file sector */
     void (*write_sector)(const struct file_entry *entry, uint32_t file_sector, const uint8_t buffer[512]);
+    /** Function called when host deletes file */
+    void (*delete_entry)(const struct file_entry *entry);
 } file_entry_t;
 
 /**
