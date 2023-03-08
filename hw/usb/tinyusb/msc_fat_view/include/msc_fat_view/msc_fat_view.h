@@ -38,9 +38,9 @@ typedef struct file_entry {
     /** Function returning file size */
     uint32_t (*size)(const struct file_entry *entry);
     /** Function called when host tries to read file sector */
-    void (*read_sector)(uint32_t file_sector, uint8_t buffer[512]);
+    void (*read_sector)(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512]);
     /** Function called when host tries to write file sector */
-    void (*write_sector)(uint32_t file_sector, const uint8_t buffer[512]);
+    void (*write_sector)(const struct file_entry *entry, uint32_t file_sector, const uint8_t buffer[512]);
 } file_entry_t;
 
 /**
