@@ -38,6 +38,23 @@ syscfg.defs:
             Auto-confirm image when directory is read after reboot.
         value: 1
 
+    MSC_FAT_VIEW_COREDUMP_FILES:
+        description: >
+            Adds coredump files (if present) to root directory.
+        value: 0
+    MSC_FAT_VIEW_COREDUMP_FILE_NAME:
+        description: Core dump file name in the FAT directory.
+        value: '"COREDMP.BIN"'
+    MSC_FAT_VIEW_COREDUMP2_FLASH_AREA:
+        description: >
+            Second flash area to look for core dumps.
+            Can be used for systems that support have two slots for core dumps
+            (NRF53 with netcore crash dump enabled).
+        value: -1
+    MSC_FAT_VIEW_COREDUMP2_FILE_NAME:
+        description: Core dump file name for second flash area.
+        value: '"COREDMP2.BIN"'
+
     MSC_FAT_VIEW_HUGE_FILE:
         description: >
             Add 'Huge file' to root directory, this can be used to test performance

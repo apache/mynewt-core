@@ -34,6 +34,7 @@
 #include <modlog/modlog.h>
 #include <hal/hal_flash.h>
 #include <console/console.h>
+#include "coredump_files.h"
 
 #if MYNEWT_VAL(BOOT_LOADER)
 #define BOOT_LOADER     1
@@ -1589,6 +1590,9 @@ init_disk_data(void)
     }
     if (MYNEWT_VAL(MSC_FAT_VIEW_HUGE_FILE)) {
         msc_fat_view_add_dir_entry(&huge_file);
+    }
+    if (MYNEWT_VAL(MSC_FAT_VIEW_COREDUMP_FILES)) {
+        msc_fat_view_add_coredumps();
     }
     if (unallocated_write.write_status < 0) {
         write_status = unallocated_write.write_status;
