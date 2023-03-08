@@ -61,6 +61,27 @@ syscfg.defs:
     USBD_PRODUCT_STRING:
         description: Device friendly name
         value: '"Dev device"'
+    USBD_COMPOSITE_DEVICE:
+        description: >
+            When set to 1 device descriptor will have values assigned to
+            composite device. Device class = 0xFE, subclasss = 2,
+            protocol = 1.
+        value: 0
+    USBD_DEVICE_CLASS:
+        description: >
+            Device class that will be reported in device descriptors.
+            If 0 (preferred) class is specified in interface only.
+            Can be 0xFF for vendor specific.
+        value: 0
+    USBD_DEVICE_SUBCLASS:
+        description: >
+            Device sub class that will be reported in device descriptors.
+            If USBD_DEVICE_CLASS is 0 this also has to be 0.
+        value: 0
+    USBD_DEVICE_PROTOCOL:
+        description: >
+            Device class protocol that will be reported in device descriptors.
+        value: 0
     USBD_CDC:
         description: Enable CDC device function in TinyUSB stack (other then console or hci).
         value:
@@ -208,3 +229,8 @@ syscfg.defs:
 
 syscfg.restrictions:
     - '(CFG_TUSB_DEBUG == 0) || (USBD_STACK_SIZE >= 400)'
+
+syscfg.vals.USBD_COMPOSITE_DEVICE:
+    USBD_DEVICE_CLASS: TUSB_CLASS_MISC
+    USBD_DEVICE_SUBCLASS: MISC_SUBCLASS_COMMON
+    USBD_DEVICE_PROTOCOL: MISC_PROTOCOL_IAD

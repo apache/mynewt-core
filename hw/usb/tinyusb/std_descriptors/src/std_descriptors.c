@@ -167,23 +167,9 @@ const tusb_desc_device_t desc_device = {
     .bDescriptorType    = TUSB_DESC_DEVICE,
     .bcdUSB             = USB_BCD,
 
-#if CFG_TUD_BTH
-    .bDeviceClass       = TUD_BT_APP_CLASS,
-    .bDeviceSubClass    = TUD_BT_APP_SUBCLASS,
-    .bDeviceProtocol    = TUD_BT_PROTOCOL_PRIMARY_CONTROLLER,
-#elif CFG_TUD_CDC
-    /*
-     * Use Interface Association Descriptor (IAD) for CDC
-     * As required by USB Specs IAD's subclass must be common class (2) and protocol must be IAD (1)
-     */
-    .bDeviceClass       = TUSB_CLASS_MISC,
-    .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
-    .bDeviceProtocol    = MISC_PROTOCOL_IAD,
-#else
-    .bDeviceClass       = 0x00,
-    .bDeviceSubClass    = 0x00,
-    .bDeviceProtocol    = 0x00,
-#endif
+    .bDeviceClass       = MYNEWT_VAL(USBD_DEVICE_CLASS),
+    .bDeviceSubClass    = MYNEWT_VAL(USBD_DEVICE_SUBCLASS),
+    .bDeviceProtocol    = MYNEWT_VAL(USBD_DEVICE_PROTOCOL),
 
     .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
 
