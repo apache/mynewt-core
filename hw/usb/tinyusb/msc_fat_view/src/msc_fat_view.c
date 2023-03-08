@@ -242,8 +242,9 @@ return0(const file_entry_t *file)
 }
 
 static void
-empty_read(uint32_t file_sector, uint8_t buffer[512])
+empty_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
+    (void)entry;
     (void)file_sector;
     (void)buffer;
 }
@@ -274,8 +275,10 @@ mynewt_htm_size(const file_entry_t *file)
 }
 
 static void
-mynewt_htm_read(uint32_t file_sector, uint8_t buffer[512])
+mynewt_htm_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
+    (void)entry;
+
     if (file_sector == 0) {
         strcpy((char *)buffer, mynewt_htm_text);
         memset(buffer + 512 - sizeof(mynewt_htm_text), 0, sizeof(mynewt_htm_text));
@@ -391,10 +394,11 @@ readme_size(const file_entry_t *file_entry)
 }
 
 static void
-readme_read(uint32_t file_sector, uint8_t buffer[512])
+readme_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
     struct MemFile sector_file;
     int written = 0;
+    (void)entry;
 
     MSC_FAT_VIEW_LOG_DEBUG("Readme read %d\n", file_sector);
     if (file_sector == 0) {
@@ -436,10 +440,11 @@ slot0_img_size(const file_entry_t *file)
 }
 
 static void
-slot0_img_read(uint32_t file_sector, uint8_t buffer[512])
+slot0_img_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
     const struct flash_area *fa;
     uint32_t addr;
+    (void)entry;
 
     if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
         addr = file_sector * 512;
@@ -479,7 +484,7 @@ hex_digit(int v)
 }
 
 static void
-slot0_hex_read(uint32_t file_sector, uint8_t buffer[512])
+slot0_hex_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
     const struct flash_area *fa;
     int i;
@@ -487,6 +492,7 @@ slot0_hex_read(uint32_t file_sector, uint8_t buffer[512])
     int k;
     uint32_t addr = (file_sector * 512) / 4;
     uint32_t addr_buf;
+    (void)entry;
 
     if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
         flash_area_read(fa, addr, buffer, 512 / 4);
@@ -544,8 +550,10 @@ huge_file_size(const file_entry_t *file)
 }
 
 static void
-huge_file_read(uint32_t file_sector, uint8_t buffer[512])
+huge_file_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
+    (void)entry;
+
     memset(buffer, (uint8_t)file_sector, 512);
 }
 
@@ -589,10 +597,11 @@ flash_result_size(const file_entry_t *file_entry)
 }
 
 static void
-flash_result_read(uint32_t file_sector, uint8_t buffer[512])
+flash_result_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
     struct MemFile sector_file;
     int written = 0;
+    (void)entry;
 
     if (file_sector == 0) {
         fmemopen_w(&sector_file, (char *)buffer, 512);
@@ -1286,7 +1295,8 @@ msc_fat_view_read_sector(uint32_t sector, uint8_t buffer[512])
         sector_to_cluster(sector, &cluster, &sector_in_cluster);
         dir_entry = msc_fat_view_dir_entry_from_cluster(cluster, &cluster_in_chain);
         if (dir_entry) {
-            dir_entry->file->read_sector(sector_in_cluster + cluster_in_chain * SECTORS_PER_CLUSTER, buffer);
+            dir_entry->file->read_sector(dir_entry->file, sector_in_cluster + cluster_in_chain * SECTORS_PER_CLUSTER,
+                                         buffer);
         } else {
             memset(buffer, 0, 512);
         }
@@ -1502,7 +1512,7 @@ static int
 msc_fat_view_write_file_sector(dir_entry_t *dir_entry, uint32_t file_sector, const uint8_t *buffer)
 {
     if (dir_entry->file->write_sector) {
-        dir_entry->file->write_sector(file_sector, buffer);
+        dir_entry->file->write_sector(dir_entry->file, file_sector, buffer);
     }
     return 512;
 }
