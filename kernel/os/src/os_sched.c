@@ -180,6 +180,9 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
 {
     struct os_task *entry;
 
+    if (os_sched_lock_count) {
+        return 0;
+    }
     entry = NULL;
 
     TAILQ_REMOVE(&g_os_run_list, t, t_os_list);
