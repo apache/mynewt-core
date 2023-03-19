@@ -65,7 +65,7 @@ struct bus_spi_node_cfg {
     /** Data order */
     int data_order;
     /** SCK frequency to be used for node */
-    uint16_t freq;
+    uint32_t freq;
     /** Quirks to be applied for device */
     uint16_t quirks;
 };
@@ -75,7 +75,7 @@ struct bus_spi_node {
     int pin_cs;
     uint8_t mode;
     uint8_t data_order;
-    uint16_t freq;
+    uint32_t freq;
     uint16_t quirks;
 
 #if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
