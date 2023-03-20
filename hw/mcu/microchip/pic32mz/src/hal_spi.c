@@ -705,3 +705,10 @@ hal_spi_abort(int spi_num)
 
     return 0;
 }
+
+int
+hal_spi_init_hw(uint8_t spi_num, uint8_t spi_type,
+                const struct hal_spi_hw_settings *cfg)
+{
+    return hal_spi_init(spi_num, (void *)cfg, spi_type);
+}

@@ -30,6 +30,12 @@
 #include <mcu/mips_hal.h>
 #include <uart_hal/uart_hal.h>
 #include <bsp/bsp.h>
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#include "bus/drivers/spi_hal.h"
+#endif
+
 #if MYNEWT_VAL(ETH_0)
 #include <pic32_eth/pic32_eth.h>
 #endif
@@ -87,40 +93,40 @@ static const struct mips_uart_cfg uart_5_cfg = {
  * SPI_0
  *   SCK1  -> RD1
  */
-static const struct mips_spi_cfg spi_0_cfg = {
-    .mosi = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
-    .miso = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
-    .sck = MCU_GPIO_PORTD(1),
+static const struct hal_spi_hw_settings spi_0_cfg = {
+    .pin_mosi = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
+    .pin_sck = MCU_GPIO_PORTD(1),
 };
 
 /*
  * SPI_1
  *   SCK2  -> RG6
  */
-static const struct mips_spi_cfg spi_1_cfg = {
-    .mosi = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
-    .miso = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
-    .sck = MCU_GPIO_PORTG(6),
+static const struct hal_spi_hw_settings spi_1_cfg = {
+    .pin_mosi = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
+    .pin_sck = MCU_GPIO_PORTG(6),
 };
 
 /*
  * SPI_2
  *   SCK3  -> B14
  */
-static const struct mips_spi_cfg spi_2_cfg = {
-    .mosi = MYNEWT_VAL(SPI_2_MASTER_PIN_MOSI),
-    .miso = MYNEWT_VAL(SPI_2_MASTER_PIN_MISO),
-    .sck = MCU_GPIO_PORTB(14),
+static const struct hal_spi_hw_settings spi_2_cfg = {
+    .pin_mosi = MYNEWT_VAL(SPI_2_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_2_MASTER_PIN_MISO),
+    .pin_sck = MCU_GPIO_PORTB(14),
 };
 
 /*
  * SPI_3
  *   SCK4  -> RD10
  */
-static const struct mips_spi_cfg spi_3_cfg = {
-    .mosi = MYNEWT_VAL(SPI_3_MASTER_PIN_MOSI),
-    .miso = MYNEWT_VAL(SPI_3_MASTER_PIN_MISO),
-    .sck = MCU_GPIO_PORTD(10),
+static const struct hal_spi_hw_settings spi_3_cfg = {
+    .pin_mosi = MYNEWT_VAL(SPI_3_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_3_MASTER_PIN_MISO),
+    .pin_sck = MCU_GPIO_PORTD(10),
 };
 
 #ifdef _SPI5_BASE_ADDRESS
@@ -128,10 +134,10 @@ static const struct mips_spi_cfg spi_3_cfg = {
  * SPI_4
  *   SCK5  -> RF13
  */
-static const struct mips_spi_cfg spi_4_cfg = {
-    .mosi = MYNEWT_VAL(SPI_4_MASTER_PIN_MOSI),
-    .miso = MYNEWT_VAL(SPI_4_MASTER_PIN_MISO),
-    .sck = MCU_GPIO_PORTF(13),
+static const struct hal_spi_hw_settings spi_4_cfg = {
+    .pin_mosi = MYNEWT_VAL(SPI_4_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_4_MASTER_PIN_MISO),
+    .pin_sck = MCU_GPIO_PORTF(13),
 };
 #endif
 
@@ -140,12 +146,64 @@ static const struct mips_spi_cfg spi_4_cfg = {
  * SPI_5
  *   SCK6  -> RD15
  */
-static const struct mips_spi_cfg spi_5_cfg = {
-    .mosi = MYNEWT_VAL(SPI_5_MASTER_PIN_MOSI),
-    .miso = MYNEWT_VAL(SPI_5_MASTER_PIN_MISO),
-    .sck = MCU_GPIO_PORTD(15),
+static const struct hal_spi_hw_settings spi_5_cfg = {
+    .pin_mosi = MYNEWT_VAL(SPI_5_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_5_MASTER_PIN_MISO),
+    .pin_sck = MCU_GPIO_PORTD(15),
 };
 #endif
+
+static const struct bus_spi_dev_cfg spi0_cfg = {
+    .spi_num = 0,
+    .pin_sck = MCU_GPIO_PORTD(1),
+    .pin_mosi = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi0_bus;
+
+static const struct bus_spi_dev_cfg spi1_cfg = {
+    .spi_num = 1,
+    .pin_sck = MCU_GPIO_PORTG(6),
+    .pin_mosi = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi1_bus;
+
+static const struct bus_spi_dev_cfg spi2_cfg = {
+    .spi_num = 2,
+    .pin_sck = MCU_GPIO_PORTB(14),
+    .pin_mosi = MYNEWT_VAL(SPI_2_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_2_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi2_bus;
+
+static const struct bus_spi_dev_cfg spi3_cfg = {
+    .spi_num = 3,
+    .pin_sck = MCU_GPIO_PORTD(10),
+    .pin_mosi = MYNEWT_VAL(SPI_3_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_3_MASTER_PIN_MISO),
+};
+static struct bus_spi_hal_dev spi3_bus;
+
+static const struct bus_spi_dev_cfg spi4_cfg = {
+    .spi_num = 4,
+#ifdef _SPI5_BASE_ADDRESS
+    .pin_sck = MCU_GPIO_PORTF(13),
+    .pin_mosi = MYNEWT_VAL(SPI_4_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_4_MASTER_PIN_MISO),
+#endif
+};
+static struct bus_spi_hal_dev spi4_bus;
+
+static const struct bus_spi_dev_cfg spi5_cfg = {
+    .spi_num = 5,
+#ifdef _SPI6_BASE_ADDRESS
+    .pin_sck = MCU_GPIO_PORTD(15),
+    .pin_mosi = MYNEWT_VAL(SPI_5_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_5_MASTER_PIN_MISO),
+#endif
+};
+static struct bus_spi_hal_dev spi5_bus;
 
 /*
  * I2C_0 -> I2C1
@@ -320,7 +378,38 @@ static void
 pic32mz_periph_spi_devs(void)
 {
     int rc;
-
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    if (MYNEWT_VAL(SPI_0_MASTER)) {
+        rc = bus_spi_hal_dev_create("spi0",
+                                    &spi0_bus, (struct bus_spi_dev_cfg *)&spi0_cfg);
+        assert(rc == 0);
+    }
+    if (MYNEWT_VAL(SPI_1_MASTER)) {
+        rc = bus_spi_hal_dev_create("spi1", &spi1_bus,
+                                    (struct bus_spi_dev_cfg *)&spi1_cfg);
+        assert(rc == 0);
+    }
+    if (MYNEWT_VAL(SPI_2_MASTER)) {
+        rc = bus_spi_hal_dev_create("spi2", &spi2_bus,
+                                    (struct bus_spi_dev_cfg *)&spi2_cfg);
+        assert(rc == 0);
+    }
+    if (MYNEWT_VAL(SPI_3_MASTER)) {
+        rc = bus_spi_hal_dev_create("spi3", &spi3_bus,
+                                    (struct bus_spi_dev_cfg *)&spi3_cfg);
+        assert(rc == 0);
+    }
+    if (MYNEWT_VAL(SPI_4_MASTER)) {
+        rc = bus_spi_hal_dev_create("spi4", &spi4_bus,
+                                    (struct bus_spi_dev_cfg *)&spi4_cfg);
+        assert(rc == 0);
+    }
+    if (MYNEWT_VAL(SPI_5_MASTER)) {
+        rc = bus_spi_hal_dev_create("spi5", &spi5_bus,
+                                    (struct bus_spi_dev_cfg *)&spi5_cfg);
+        assert(rc == 0);
+    }
+#else
     if (MYNEWT_VAL(SPI_0_MASTER)) {
         rc = hal_spi_init(0, (void *)&spi_0_cfg, HAL_SPI_TYPE_MASTER);
         assert(rc == 0);
@@ -348,6 +437,7 @@ pic32mz_periph_spi_devs(void)
         rc = hal_spi_init(5, (void *)&spi_5_cfg, HAL_SPI_TYPE_MASTER);
         assert(rc == 0);
     }
+#endif
 #endif
 }
 
