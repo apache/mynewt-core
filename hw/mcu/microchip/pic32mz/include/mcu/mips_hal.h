@@ -36,13 +36,6 @@ struct mips_uart_cfg {
     uint8_t cts;
 };
 
-/* I/O pins for SPI, SS pin is not handled by the driver */
-struct mips_spi_cfg {
-    uint8_t mosi;
-    uint8_t miso;
-    uint8_t sck;
-};
-
 /* I/O pins for I2C, also set frequency */
 struct mips_i2c_cfg {
     uint8_t scl;

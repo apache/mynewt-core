@@ -59,7 +59,7 @@ struct hal_spi {
     int                       rxcnt;
     hal_spi_txrx_cb           callback;
     void                      *arg;
-    const struct mips_spi_cfg *pins;
+    const struct hal_spi_hw_settings *pins;
     uint32_t                  con;
     uint32_t                  brg;
 };
@@ -225,9 +225,9 @@ hal_spi_config_pins(int spi_num, uint8_t mode)
 {
     int ret = 0;
 
-    if (hal_gpio_init_out(spis[spi_num].pins->mosi, 0) ||
-        hal_gpio_init_out(spis[spi_num].pins->sck, 1) ||
-        hal_gpio_init_in(spis[spi_num].pins->miso, HAL_GPIO_PULL_NONE)) {
+    if (hal_gpio_init_out(spis[spi_num].pins->pin_mosi, 0) ||
+        hal_gpio_init_out(spis[spi_num].pins->pin_sck, 1) ||
+        hal_gpio_init_in(spis[spi_num].pins->pin_miso, HAL_GPIO_PULL_NONE)) {
         return -1;
     }
 
@@ -238,52 +238,52 @@ hal_spi_config_pins(int spi_num, uint8_t mode)
     switch (mode) {
     case HAL_SPI_MODE0:
     case HAL_SPI_MODE1:
-        hal_gpio_write(spis[spi_num].pins->sck, 0);
+        hal_gpio_write(spis[spi_num].pins->pin_sck, 0);
         break;
     case HAL_SPI_MODE2:
     case HAL_SPI_MODE3:
-        hal_gpio_write(spis[spi_num].pins->sck, 1);
+        hal_gpio_write(spis[spi_num].pins->pin_sck, 1);
         break;
     }
 
     switch (spi_num) {
 #if MYNEWT_VAL(SPI_0_MASTER)
     case 0:
-        ret += pps_configure_output(spis[spi_num].pins->mosi, SDO1_OUT_FUNC);
-        ret += pps_configure_input(spis[spi_num].pins->miso, SDI1_IN_FUNC);
+        ret += pps_configure_output(spis[spi_num].pins->pin_mosi, SDO1_OUT_FUNC);
+        ret += pps_configure_input(spis[spi_num].pins->pin_miso, SDI1_IN_FUNC);
         break;
 #endif
 #if MYNEWT_VAL(SPI_1_MASTER)
     case 1:
-        ret += pps_configure_output(spis[spi_num].pins->mosi, SDO2_OUT_FUNC);
-        ret += pps_configure_input(spis[spi_num].pins->miso, SDI2_IN_FUNC);
+        ret += pps_configure_output(spis[spi_num].pins->pin_mosi, SDO2_OUT_FUNC);
+        ret += pps_configure_input(spis[spi_num].pins->pin_miso, SDI2_IN_FUNC);
         break;
 #endif
 #if MYNEWT_VAL(SPI_2_MASTER)
     case 2:
-        ret += pps_configure_output(spis[spi_num].pins->mosi, SDO3_OUT_FUNC);
-        ret += pps_configure_input(spis[spi_num].pins->miso, SDI3_IN_FUNC);
+        ret += pps_configure_output(spis[spi_num].pins->pin_mosi, SDO3_OUT_FUNC);
+        ret += pps_configure_input(spis[spi_num].pins->pin_miso, SDI3_IN_FUNC);
         break;
 #endif
 #if MYNEWT_VAL(SPI_3_MASTER)
     case 3:
-        ret += pps_configure_output(spis[spi_num].pins->mosi, SDO4_OUT_FUNC);
-        ret += pps_configure_input(spis[spi_num].pins->miso, SDI4_IN_FUNC);
+        ret += pps_configure_output(spis[spi_num].pins->pin_mosi, SDO4_OUT_FUNC);
+        ret += pps_configure_input(spis[spi_num].pins->pin_miso, SDI4_IN_FUNC);
         break;
 #endif
 #if defined(_SPI5) && MYNEWT_VAL(SPI_4_MASTER)
     case 4:
-        ret += pps_configure_output(spis[spi_num].pins->mosi,
+        ret += pps_configure_output(spis[spi_num].pins->pin_mosi,
                                     SDO5_OUT_FUNC);
-        ret += pps_configure_input(spis[spi_num].pins->miso,
+        ret += pps_configure_input(spis[spi_num].pins->pin_miso,
                                    SDI5_IN_FUNC);
         break;
 #endif
 #if defined(_SPI6) && MYNEWT_VAL(SPI_5_MASTER)
     case 5:
-        ret += pps_configure_output(spis[spi_num].pins->mosi,
+        ret += pps_configure_output(spis[spi_num].pins->pin_mosi,
                                     SDO6_OUT_FUNC);
-        ret += pps_configure_input(spis[spi_num].pins->miso,
+        ret += pps_configure_input(spis[spi_num].pins->pin_miso,
                                    SDI6_IN_FUNC);
         break;
 #endif
