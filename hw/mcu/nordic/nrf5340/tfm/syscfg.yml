@@ -34,9 +34,9 @@ syscfg.defs:
         value: 0xFFFFFFFF
     TFM_UICR_OTP_MIN_ADDR:
         description: >
-            Minimum address of UICR OTP that can be read by non-secure core.
+            Minimum address of UICR OTP that can be accessed by non-secure core.
         value: 0
     TFM_UICR_OTP_MAX_ADDR:
         description: >
-            Maximum address of UICR OTP that can be read by non-secure core.
+            Maximum address of UICR OTP that can be accessed by non-secure core.
         value: 191

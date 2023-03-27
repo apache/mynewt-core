@@ -38,6 +38,26 @@ tfm_uicr_otp_read(uint8_t n, uint32_t *ret)
 }
 
 int SECURE_CALL
+tfm_uicr_otp_write(uint8_t n, uint32_t val)
+{
+    int err = 0;
+
+    if (n >= 192) {
+        err = TFM_ERR_INVALID_PARAM;
+    } else if ((n < MYNEWT_VAL(TFM_UICR_OTP_MIN_ADDR)) ||
+               (n > MYNEWT_VAL(TFM_UICR_OTP_MAX_ADDR)) ||
+               (NRF_UICR_S->OTP[n] != 0xFFFFFFFF)) {
+        err = TFM_ERR_ACCESS_DENIED;
+    } else {
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
+        NRF_UICR_S->OTP[n] = val;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+    }
+
+    return err;
+}
+
+int SECURE_CALL
 tfm_uicr_protect_device(uint8_t *approtect, uint8_t *secure_approtect, uint8_t *erase_protect)
 {
     NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
