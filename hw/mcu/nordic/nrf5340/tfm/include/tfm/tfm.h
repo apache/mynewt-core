@@ -45,6 +45,17 @@
 int SECURE_CALL tfm_uicr_otp_read(uint8_t n, uint32_t *ret);
 
 /**
+ * Write UICR OTP word
+ *
+ * @param n   - word to read
+ * @param val - 32 bit word to write
+ * @return 0 on success
+ *         TFM_ERR_INVALID_PARAM - when n is out of range <0-191>
+ *         TFM_ERR_ACCESS_DENIED - when n is denied by secure code
+ */
+int SECURE_CALL tfm_uicr_otp_write(uint8_t n, uint32_t val);
+
+/**
  *
  * @param pin_number
  * @param mcu_sel
