@@ -24,6 +24,12 @@
 
 #include <mcu/stm32_hal.h>
 
+#if defined(STM32U5)
+#define GPIO_AF_USB GPIO_AF10_USB
+#else
+#define GPIO_AF_USB GPIO_AF10_OTG_FS
+#endif
+
 static void
 OTG_FS_IRQHandler(void)
 {
@@ -41,7 +47,7 @@ tinyusb_hardware_init(void)
      * USB Pin Init
      * PA11- DM, PA12- DP
      */
-    hal_gpio_init_af(MCU_GPIO_PORTA(11), GPIO_AF10_OTG_FS, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTA(11), GPIO_AF_USB, GPIO_NOPULL, GPIO_MODE_AF_PP);
 #if MYNEWT_VAL(USB_DP_HAS_EXTERNAL_PULL_UP)
     hal_gpio_init_out(MCU_GPIO_PORTA(12), 0);
 #if MYNEWT_VAL(BOOT_LOADER)
@@ -50,7 +56,7 @@ tinyusb_hardware_init(void)
     os_time_delay(1);
 #endif
 #endif
-    hal_gpio_init_af(MCU_GPIO_PORTA(12), GPIO_AF10_OTG_FS, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTA(12), GPIO_AF_USB, GPIO_NOPULL, GPIO_MODE_AF_PP);
 
     /*
      * Enable USB OTG clock, force device mode
@@ -58,7 +64,7 @@ tinyusb_hardware_init(void)
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
 
 #if MYNEWT_VAL(USB_ID_PIN_ENABLE)
-    hal_gpio_init_af(MCU_GPIO_PORTA(10), GPIO_AF10_OTG_FS, GPIO_PULLUP, GPIO_MODE_AF_OD);
+    hal_gpio_init_af(MCU_GPIO_PORTA(10), GPIO_AF_USB, GPIO_PULLUP, GPIO_MODE_AF_OD);
 #else
     USB_OTG_FS->GUSBCFG &= ~USB_OTG_GUSBCFG_FHMOD;
     USB_OTG_FS->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
@@ -87,5 +93,10 @@ tinyusb_hardware_init(void)
     USB_OTG_FS->GOTGCTL |= USB_OTG_GOTGCTL_BVALOEN;
     USB_OTG_FS->GOTGCTL |= USB_OTG_GOTGCTL_BVALOVAL;
 #endif
+#endif
+
+#if MYNEWT_VAL(MCU_STM32U5)
+    /* Enable USB power */
+    HAL_PWREx_EnableVddUSB();
 #endif
 }
