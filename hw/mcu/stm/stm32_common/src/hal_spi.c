@@ -253,6 +253,14 @@ spi_irq_handler(struct stm32_hal_spi *spi)
 }
 #endif
 
+#if !defined(SPI_IT_TXE) && defined(SPI_IT_TXP)
+#define SPI_IT_TXE                      SPI_IT_TXP
+#endif
+#if !defined(SPI_IT_RXNE) && defined(SPI_IT_RXP)
+#define SPI_IT_RXNE                     SPI_IT_RXP
+#define SPI_SR_RXNE                     SPI_SR_RXP
+#endif
+
 /*
  * GPIO interrupt when slave gets selected/deselected.
  */
@@ -514,7 +522,7 @@ stm32_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *presca
     for (i = 0; i < 8; i++) {
         candidate_br = apbfreq >> (i + 1);
         if (candidate_br <= baudrate) {
-#if !MYNEWT_VAL(MCU_STM32H7)
+#if defined(SPI_CR1_BR_Pos)
             *prescaler = i << SPI_CR1_BR_Pos;
 #else
             *prescaler = i << SPI_CFG1_MBR_Pos;
