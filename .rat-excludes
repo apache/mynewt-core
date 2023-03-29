@@ -402,6 +402,14 @@ stm32h7xx_hal_conf.h
 system_stm32h7xx.c
 startup_stm32h723xx.s
 
+# STM32U5 - BSD License
+system_stm32u5xx.c
+clock_stm32u5xx.c
+
+# NUCLEO-U575ZI-Q BSP - BSD License
+startup_stm32u575xx.s
+stm32u5xx_hal_conf.h
+
 # NUCLEO-F767 BSP - BSD License
 startup_stm32f767xx.s
 

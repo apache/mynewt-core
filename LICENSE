@@ -329,6 +329,7 @@ these files in later releases.  These files are:
     * hw/mcu/stm/stm32f1xx/include/mcu/cmsis_nvic.h
     * hw/mcu/stm/stm32f7xx/include/mcu/cmsis_nvic.h
     * hw/mcu/stm/stm32h7xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32u5xx/include/mcu/cmsis_nvic.h
 
 This product bundles parts of STM32 SDK by STMicroelectronics, which is
 available under the "3-clause BSD" license.  Bundled files are:
@@ -447,6 +448,13 @@ This product bundles parts of stm32wbxx, which is available under the
     * hw/bsp/p-nucleo-wb55/src/arch/cortex_m4/startup_stm32wb55xx_cm4.s
     * hw/bsp/p-nucleo-wb55-usbdongle/include/bsp/stm32wbxx_hal_conf.h
     * hw/bsp/p-nucleo-wb55-usbdongle/src/arch/cortex_m4/startup_stm32wb55xx_cm4.s
+
+This product bundles parts of STM32CubeU5, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32u5xx/src/clock_stm32u5xx.c
+    * hw/mcu/stm/stm32u5xx/src/system_stm32u5xx.c
+    * hw/bsp/nucleo-u575zi-q/include/bsp/stm32u5xx_hal_conf.h
+    * hw/bsp/nucleo-u575zi-q/src/arch/cortex_m33/startup_stm32u575xx.s
 
 This product bundles parts of nrfx, which is available under the
 "3-clause BSD" license.  For detalils see:
