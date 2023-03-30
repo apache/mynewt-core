@@ -106,6 +106,17 @@ syscfg.defs:
     STM32_CLOCK_APB2_DIVIDER:
         description: APB high-speed prescaler (80MHz max)
         value: 0
+    STM32_CLOCK_CLK48SEL:
+        description: >
+            CLK48 source selection:
+            One of the values
+                LL_RCC_USB_CLKSOURCE_NONE (*)
+                LL_RCC_USB_CLKSOURCE_HSI48 (*)
+                LL_RCC_USB_CLKSOURCE_PLLSAI1 (*)
+                LL_RCC_USB_CLKSOURCE_PLL
+                LL_RCC_USB_CLKSOURCE_MSI
+            * - not available on all L4 devices
+        value: LL_RCC_USB_CLKSOURCE_NONE
 
     STM32_FLASH_LATENCY:
         description: Number of wait-states
