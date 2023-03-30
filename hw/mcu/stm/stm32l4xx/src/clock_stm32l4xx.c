@@ -27,6 +27,7 @@
 #include "stm32l4xx_hal_pwr_ex.h"
 #include "stm32l4xx_hal_rcc.h"
 #include "stm32l4xx_hal.h"
+#include "stm32l4xx_ll_rcc.h"
 #include <assert.h>
 
 /*
@@ -276,6 +277,8 @@ SystemClock_Config(void)
     if (status != HAL_OK) {
         assert(0);
     }
+
+    LL_RCC_SetUSBClockSource(MYNEWT_VAL(STM32_CLOCK_CLK48SEL));
 
 #if TRNG_ENABLED
     pclk_init.PeriphClockSelection = RCC_PERIPHCLK_RNG;
