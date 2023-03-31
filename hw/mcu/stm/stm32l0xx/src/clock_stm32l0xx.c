@@ -143,7 +143,7 @@ SystemClock_Config(void)
      */
 #if MYNEWT_VAL(STM32_CLOCK_HSI)
     osc_init.OscillatorType |= RCC_OSCILLATORTYPE_HSI;
-    osc_init.HSIState = RCC_HSI_ON;
+    osc_init.HSIState = MYNEWT_VAL(STM32_CLOCK_HSI_DIV4) ? RCC_HSI_DIV4 : RCC_HSI_ON;
     /* HSI calibration is not optional when HSI is enabled */
     osc_init.HSICalibrationValue = MYNEWT_VAL(STM32_CLOCK_HSI_CALIBRATION);
 
