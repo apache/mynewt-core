@@ -64,8 +64,12 @@ syscfg.defs:
         value: 0
 
     STM32_CLOCK_HSI:
-        description: Enable high-speed internal clock source
+        description: Enable high-speed internal clock source (16MHz)
         value: 1
+
+    STM32_CLOCK_HSI_DIV4:
+        description: Enable divider 4 for HSI, resulting in HSI being 4MHz
+        value: 0
 
     STM32_CLOCK_HSI_CALIBRATION:
         description: HSI calibration value
@@ -84,15 +88,15 @@ syscfg.defs:
         value: 0
 
     STM32_CLOCK_AHB_DIVIDER:
-        description: AHB CLK1 prescaler (64MHz max)
+        description: AHB CLK1 prescaler (32MHz max)
         value: 0
 
     STM32_CLOCK_APB1_DIVIDER:
-        description: APB low-speed prescaler (64MHz max)
+        description: APB low-speed prescaler (32MHz max)
         value: 0
 
     STM32_CLOCK_APB2_DIVIDER:
-        description: APB high-speed prescaler (64MHz max)
+        description: APB high-speed prescaler (32MHz max)
         value: 0
 
     STM32_FLASH_LATENCY:
