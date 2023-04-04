@@ -194,6 +194,7 @@ SECTIONS
 
     _ram_start = ORIGIN(RAM);
     _dtcmram_start = ORIGIN(DTCM);
+    _itcmram_start = ORIGIN(ITCM);
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
