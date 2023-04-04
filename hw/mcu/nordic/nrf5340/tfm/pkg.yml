@@ -35,3 +35,4 @@ pkg.cflags.(!BOOT_LOADER && !MCU_APP_SECURE):
 pkg.lflags.(MCU_APP_SECURE && TFM_EXPORT_NSC):
     - -utfm_uicr_otp_read
     - -utfm_gpio_pin_mcu_select
+    - -utfm_uicr_protect_device

@@ -38,6 +38,33 @@ tfm_uicr_otp_read(uint8_t n, uint32_t *ret)
 }
 
 int SECURE_CALL
+tfm_uicr_protect_device(uint8_t *approtect, uint8_t *secure_approtect, uint8_t *erase_protect)
+{
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
+    if (approtect) {
+        if (*approtect != 0 && NRF_UICR_S->APPROTECT == 0x50FA50FA) {
+            NRF_UICR_S->APPROTECT = 0;
+        }
+        *approtect = NRF_UICR_S->APPROTECT == 0;
+    }
+    if (secure_approtect) {
+        if (*secure_approtect != 0 && NRF_UICR_S->SECUREAPPROTECT == 0x50FA50FA) {
+            NRF_UICR_S->SECUREAPPROTECT = 0;
+        }
+        *secure_approtect = NRF_UICR_S->SECUREAPPROTECT == 0;
+    }
+    if (erase_protect) {
+        if (*erase_protect != 0 && NRF_UICR_S->ERASEPROTECT == 0xFFFFFFFF) {
+            NRF_UICR_S->ERASEPROTECT = 0;
+        }
+        *erase_protect = NRF_UICR_S->ERASEPROTECT == 0;
+    }
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+
+    return 0;
+}
+
+int SECURE_CALL
 tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_mcusel_t mcu_sel)
 {
     int err = 0;
