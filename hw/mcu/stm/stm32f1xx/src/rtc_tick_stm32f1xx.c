@@ -22,7 +22,7 @@
 #include <hal/hal_os_tick.h>
 #include <stm32_common/stm32_hal.h>
 
-#include <Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_rtc.h>
+#include <stm32f1xx_ll_rtc.h>
 
 /* RTC tick only if LSE is enabled and OS_TICKS_PER_SEC can work with 32768 oscillator */
 #if MYNEWT_VAL(STM32_CLOCK_LSE) && (((32768 / OS_TICKS_PER_SEC) * OS_TICKS_PER_SEC) == 32768)
