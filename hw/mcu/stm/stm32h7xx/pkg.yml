@@ -31,12 +31,12 @@ pkg.ign_files:
     - ".*template.*"
 
 pkg.include_dirs:
-    - "@cmsis_device_h7/Include"
-    - "@stm32h7xx_hal_driver/Inc"
+    - "@stm-cmsis_device_h7/Include"
+    - "@stm-stm32h7xx_hal_driver/Inc"
 
 pkg.src_dirs:
-    - "@cmsis_device_h7/Source/Templates/gcc"
-    - "@stm32h7xx_hal_driver/Src"
+    - "@stm-cmsis_device_h7/Source/Templates/gcc"
+    - "@stm-stm32h7xx_hal_driver/Src"
     - "src"
 
 pkg.ign_dirs:
@@ -49,3 +49,17 @@ pkg.deps:
 
 pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER || SPI_2_MASTER || SPI_3_MASTER || SPI_4_MASTER || SPI_5_MASTER) && BUS_DRIVER_PRESENT':
    - "@apache-mynewt-core/hw/bus/drivers/spi_stm32"
+
+repository.stm-cmsis_device_h7:
+    type: github
+    vers: v1.10.3-commit
+    branch: master
+    user: STMicroelectronics
+    repo: cmsis_device_h7
+
+repository.stm-stm32h7xx_hal_driver:
+    type: github
+    vers: v1.11.1-commit
+    branch: master
+    user: STMicroelectronics
+    repo: stm32h7xx_hal_driver
