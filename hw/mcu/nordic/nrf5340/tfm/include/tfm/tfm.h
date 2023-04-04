@@ -53,3 +53,17 @@ int SECURE_CALL tfm_uicr_otp_read(uint8_t n, uint32_t *ret);
  *         TFM_ERR_ACCESS_DENIED - when non-secure code is not allowed to change pin's MCU
  */
 int SECURE_CALL tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_mcusel_t mcu_sel);
+
+/**
+ * Function to set or read device protection status
+ *
+ * When variable pointer is non-NULL and variable is not 0 selected protection is activated.
+ * When variable pointer is non-NULL but is set to 0 variable is updated with current
+ * protection status.
+ *
+ * @param approtect - address of variable to set/read approtect status
+ * @param secure_approtect - address of variable to set/read secure_approtect status
+ * @param erase_protect -  - address of variable to set/read erase-all protection status
+ * @return 0 on success
+ */
+int SECURE_CALL tfm_uicr_protect_device(uint8_t *approtect, uint8_t *secure_approtect, uint8_t *erase_protect);
