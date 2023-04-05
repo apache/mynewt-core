@@ -438,7 +438,6 @@ This product bundles parts of stm32l4xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/stm/stm32l4xx/src/clock_stm32l4xx.c
     * hw/mcu/stm/stm32l4xx/src/system_stm32l4xx.c
-    * w/mcu/stm/stm32l4xx/src/ext/
     * hw/bsp/b-l475e-iot01a/include/bsp/stm32l4xx_hal_conf.h
     * hw/bsp/b-l475e-iot01a/src/arch/cortex_m4/startup_stm32l475xx.s
     * hw/bsp/nucleo-l476rg/include/bsp/stm32l4xx_hal_conf.h

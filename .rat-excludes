@@ -415,7 +415,8 @@ startup_stm32f439xx.s
 nucleo-f413zh
 
 # NUCLEO-L467rg BSP - BSD License
-nucleo-l476rg
+startup_stm32l476xx.s
+stm32l4xx_hal_conf.h
 
 # NUCLEO-F072RB BSP - BSD License
 nucleo-f072rb
@@ -517,7 +518,8 @@ olimex-p103
 stm32l0xx
 
 # STM32L4xx SDK - BSD License
-stm32l4xx
+hw/mcu/stm/stm32l4xx/src/clock_stm32l4xx.c
+hw/mcu/stm/stm32l4xx/src/system_stm32l4xx.c
 
 # STM32WBxx SDK - BSD License
 stm32wbxx
