@@ -428,7 +428,6 @@ This product bundles parts of stm32l0xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c
     * hw/mcu/stm/stm32l0xx/src/system_stm32l0xx.c
-    * hw/mcu/stm/stm32l0xx/src/ext/
     * hw/bsp/b-l072z-lrwan1/include/bsp/stm32l0xx_hal_conf.h
     * hw/bsp/b-l072z-lrwan1/src/arch/cortex_m0/startup_stm32l072xx.s
     * hw/bsp/nucleo-l073rz/include/bsp/stm32l0xx_hal_conf.h

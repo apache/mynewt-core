@@ -30,13 +30,35 @@ pkg.type: sdk
 pkg.ign_files:
     - ".*template.*"
 
+pkg.include_dirs:
+    - "@stm-cmsis_device_l0/Include"
+    - "@stm-stm32l0xx_hal_driver/Inc"
+
+pkg.src_dirs:
+    - "@stm-stm32l0xx_hal_driver/Src"
+    - "src"
+
 pkg.ign_dirs:
     - "Device"
 
 pkg.deps:
-    - hw/hal
-    - hw/mcu/stm/stm32_common
-    - hw/cmsis-core
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32_common"
+    - "@apache-mynewt-core/hw/cmsis-core"
 
 pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/spi_stm32"
+
+repository.stm-cmsis_device_l0:
+    type: github
+    vers: v1.9.3-commit
+    branch: master
+    user: STMicroelectronics
+    repo: cmsis_device_l0
+
+repository.stm-stm32l0xx_hal_driver:
+    type: github
+    vers: v1.10.6-commit
+    branch: master
+    user: STMicroelectronics
+    repo: stm32l0xx_hal_driver

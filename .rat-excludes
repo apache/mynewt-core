@@ -514,7 +514,8 @@ embarc_emsk
 olimex-p103
 
 # STM32L0xx SDK - BSD License
-stm32l0xx
+hw/mcu/stm/stm32l0xx/src/system_stm32l0xx.c
+hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c
 
 # STM32L4xx SDK - BSD License
 stm32l4xx
