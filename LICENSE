@@ -365,12 +365,11 @@ This product bundles parts of STM32CubeF4 1.5, which is available under the
 
 This product bundles parts of STM32CubeF7, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/mcu/stm/stm32f7xx/src/ext
     * hw/mcu/stm/stm32f7xx/src/clock_stm32f7xx.c
     * hw/mcu/stm/stm32f7xx/src/system_stm32f7xx.c
     * hw/bsp/nucleo-f767zi/include/bsp/stm32f7xx_hal_conf.h
     * hw/bsp/nucleo-f767zi/src/arch/cortex_m7/startup_stm32f767xx.s
-    * /hw/bsp/stm32f7discovery/include/bsp/stm32f7xx_hal_conf.h
+    * hw/bsp/stm32f7discovery/include/bsp/stm32f7xx_hal_conf.h
     * hw/bsp/stm32f7discovery/src/arch/cortex_m7/startup_stm32f746xx.s
     * hw/bsp/nucleo-f746zg/include/bsp/stm32f7xx_hal_conf.h
     * hw/bsp/nucleo-f746zg/src/arch/cortex_m7/startup_stm32f746xx.s

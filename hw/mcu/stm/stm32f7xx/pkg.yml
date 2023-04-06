@@ -30,6 +30,14 @@ pkg.type: sdk
 pkg.ign_files:
     - ".*template.*"
 
+pkg.include_dirs:
+    - "@stm-cmsis_device_f7/Include"
+    - "@stm-stm32f7xx_hal_driver/Inc"
+
+pkg.src_dirs:
+    - "@stm-stm32f7xx_hal_driver/Src"
+    - "src"
+
 pkg.ign_dirs:
     - "Device"
 
@@ -40,3 +48,17 @@ pkg.deps:
 
 pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER || SPI_2_MASTER || SPI_3_MASTER || SPI_4_MASTER || SPI_5_MASTER) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/spi_stm32"
+
+repository.stm-cmsis_device_f7:
+    type: github
+    vers: v1.2.8-commit
+    branch: master
+    user: STMicroelectronics
+    repo: cmsis_device_f7
+
+repository.stm-stm32f7xx_hal_driver:
+    type: github
+    vers: v1.2.10-commit
+    branch: master
+    user: STMicroelectronics
+    repo: stm32f7xx_hal_driver
