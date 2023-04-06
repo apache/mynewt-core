@@ -355,10 +355,9 @@ sifive
 # MQTT - Eclipse Public License
 mqtt
 
-# CMSIS Cortex-M7, STM32f7 - BSD License.
-STM32F7xx
-STM32F7xx_HAL_Driver
-stm32f7xx
+# CMSIS STM32f7 - BSD License.
+hw/mcu/stm/stm32f7xx/src/clock_stm32f7xx.c
+hw/mcu/stm/stm32f7xx/src/system_stm32f7xx.c
 
 # CMSIS Cortex-H7, STM32h7 - BSD License.
 stm32h7xx
@@ -386,7 +385,6 @@ startup_STM32F427xx.s
 
 # STM32F7 Discovery BSP - BSD License
 stm32f7xx_hal_conf.h
-system_stm32f7xx.c
 startup_stm32f746xx.s
 
 # STM32F3 Discovery BSP - BSD License
