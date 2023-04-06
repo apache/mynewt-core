@@ -161,7 +161,7 @@
 #define  TICK_INT_PRIORITY            ((uint32_t)0x0FU) /*!< tick interrupt priority */
 #define  USE_RTOS                     0U
 #define  PREFETCH_ENABLE              MYNEWT_VAL(STM32_FLASH_PREFETCH_ENABLE)
-#define  ART_ACCLERATOR_ENABLE        MYNEWT_VAL(STM32_ART_ACCLERATOR_ENABLE)
+#define  ART_ACCELERATOR_ENABLE       MYNEWT_VAL(STM32_ART_ACCLERATOR_ENABLE)
 
 /* ########################## Assert Selection ############################## */
 /**
