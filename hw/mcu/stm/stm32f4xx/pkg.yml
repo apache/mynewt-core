@@ -27,14 +27,16 @@ pkg.keywords:
 
 pkg.type: sdk
 
-# Ignoring I2C from STM32 repository is hacky and awful, but we've been
-# maintaining our own versions of these files awhile.  At least this
-# leaves the cube SDK unmolested, as we now maintain our own copies of these
-# files in our HAL implementation.
-# I'm ignoring the files as the symbols would otherwise conflict -- this needs
-# to be improved.
 pkg.ign_files:
     - ".*template.*"
+
+pkg.include_dirs:
+    - "@stm-cmsis_device_f4/Include"
+    - "@stm-stm32f4xx_hal_driver/Inc"
+
+pkg.src_dirs:
+    - "@stm-stm32f4xx_hal_driver/Src"
+    - "src"
 
 pkg.ign_dirs:
     - "Device"
@@ -46,3 +48,17 @@ pkg.deps:
 
 pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER || SPI_2_MASTER || SPI_3_MASTER || SPI_4_MASTER || SPI_5_MASTER) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/spi_stm32"
+
+repository.stm-cmsis_device_f4:
+    type: github
+    vers: v2.6.8-commit
+    branch: master
+    user: STMicroelectronics
+    repo: cmsis_device_f4
+
+repository.stm-stm32f4xx_hal_driver:
+    type: github
+    vers: v1.7.13-commit
+    branch: master
+    user: STMicroelectronics
+    repo: stm32f4xx_hal_driver

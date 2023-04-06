@@ -340,7 +340,6 @@ available under the "3-clause BSD" license.  Bundled files are:
     
 This product bundles parts of STM32CubeF4 1.5, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/mcu/stm/stm32f4xx/src/ext
     * hw/mcu/stm/stm32f4xx/src/clock_stm32f4xx.c
     * hw/mcu/stm/stm32f4xx/src/system_stm32f4xx.c
     * hw/bsp/ada_feather_stm32f405/include/bsp/stm32f4xx_hal_conf.h
