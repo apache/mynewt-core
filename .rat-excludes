@@ -475,12 +475,10 @@ apollo3.h
 system_apollo3.h
 
 # CMSIS Cortex-M4, STM32f3 - BSD License.
-STM32F3xx
-STM32F3xx_HAL_Driver
-stm32f3xx
+hw/mcu/stm/stm32f3xx/src/clock_stm32f3xx.c
+hw/mcu/stm/stm32f3xx/src/system_stm32f3xx.c
 
 # Nucleo-F303K8, Nucleo-F303RE - BSD License.
-system_stm32f3xx.c
 startup_stm32f303x8.s
 startup_stm32f303xe.s
 stm32f3xx_hal_conf.h
