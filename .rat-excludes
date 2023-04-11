@@ -229,9 +229,9 @@ stm32f4xx_hal_uart.c
 # STM32F4x MCU/BSP clock customization
 clock_stm32f4xx.c
 
-#STM32F0xx HAL - BSD licence
-STM32F0xx_HAL_Driver
-stm32f0xx
+# STM32F0xx HAL - BSD licence
+hw/mcu/stm/stm32f0xx/src/clock_stm32f0xx.c
+hw/mcu/stm/stm32f0xx/src/system_stm32f0xx.c
 
 # baselibc - BSD License.
 # tinyprintf - BSD License.

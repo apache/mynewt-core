@@ -416,7 +416,6 @@ This product bundles parts of stm32f1xx, which is available under the
     
 This product bundles parts of stm32f0xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/mcu/stm/stm32f0xx/src/ext
     * hw/mcu/stm/stm32f0xx/src/clock_stm32f0xx.c
     * hw/mcu/stm/stm32f0xx/src/system_stm32f0xx.c
     * hw/bsp/nucleo-f030r8/include/bsp/stm32f0xx_hal_conf.h
