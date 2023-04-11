@@ -377,7 +377,6 @@ This product bundles parts of STM32CubeF7, which is available under the
 
 This product bundles parts of STM32CubeF3, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/mcu/stm/stm32f3xx/src/ext
     * hw/mcu/stm/stm32f3xx/src/clock_stm32f3xx.c
     * hw/mcu/stm/stm32f3xx/src/system_stm32f3xx.c
     * hw/bsp/stm32f3discovery/include/bsp/stm32f3xx_hal_conf.h
