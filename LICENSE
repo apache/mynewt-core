@@ -449,9 +449,10 @@ This product bundles parts of stm32wbxx, which is available under the
     * hw/mcu/stm/stm32wbxx/stm32wb55.ld
     * hw/mcu/stm/stm32wbxx/src/clock_stm32wbxx.c
     * hw/mcu/stm/stm32wbxx/src/system_stm32wbxx.c
-    * hw/mcu/stm/stm32wbxx/src/ext/stm32cube-version.md
     * hw/bsp/p-nucleo-wb55/include/bsp/stm32wbxx_hal_conf.h
     * hw/bsp/p-nucleo-wb55/src/arch/cortex_m4/startup_stm32wb55xx_cm4.s
+    * hw/bsp/p-nucleo-wb55-usbdongle/include/bsp/stm32wbxx_hal_conf.h
+    * hw/bsp/p-nucleo-wb55-usbdongle/src/arch/cortex_m4/startup_stm32wb55xx_cm4.s
 
 This product bundles parts of nrfx, which is available under the
 "3-clause BSD" license.  For detalils see:
