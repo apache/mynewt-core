@@ -28,7 +28,7 @@
 #include "mcu/stm32_hal.h"
 #include "stm32_common/stm32_hal.h"
 
-#if MYNEWT_VAL(MCU_STM32L0)
+#if MYNEWT_VAL(MCU_STM32L0) || MYNEWT_VAL(MCU_STM32L1)
 void TIM_Base_SetConfig(TIM_TypeDef *TIMx, TIM_Base_InitTypeDef *Structure);
 void TIM_CCxChannelCmd(TIM_TypeDef *TIMx, uint32_t Channel, uint32_t ChannelState);
 #endif
