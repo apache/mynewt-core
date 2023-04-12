@@ -42,6 +42,11 @@ hw/bsp/stm32f4discovery/include/bsp/stm32f4xx_hal_conf.h
 hw/bsp/stm32f7discovery/include/bsp/stm32f7xx_hal_conf.h
 hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
 
+hw/mcu/stm/stm32_common/src/stm32_driver_mod_i2c_v1.c
+hw/mcu/stm/stm32_common/src/stm32_driver_mod_i2c_v2.c
+hw/mcu/stm/stm32_common/src/stm32_driver_mod_timer.c
+hw/mcu/stm/stm32_common/src/stm32_driver_mod_spi.c
+
 # Skip upstream LittleFS code but check Mynewt glue
 fs/littlefs/include/littlefs/lfs.h
 fs/littlefs/include/littlefs/lfs_util.h
