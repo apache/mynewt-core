@@ -394,7 +394,6 @@ This product bundles parts of STM32CubeH7, which is available under the
 
 This product bundles parts of stm32l1xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/mcu/stm/stm32l1xx/src/ext/
     * hw/mcu/stm/stm32l1xx/src/clock_stm32l1xx.c
     * hw/mcu/stm/stm32l1xx/src/system_stm32l1xx.c
     * hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
