@@ -29,29 +29,37 @@
 
 /* XXX: Included functions are copied verbatim from stm32l0xx_hal_tim.c
  * because they are defined in STM32Cube L0 as static functions.
+ * Same static functions are also placed in L1 headers.
  */
+#if MYNEWT_VAL(MCU_STM32L0) || MYNEWT_VAL(MCU_STM32L1)
 #if MYNEWT_VAL(MCU_STM32L0)
 #include "stm32l0xx_hal.h"
+#elif MYNEWT_VAL(MCU_STM32L1)
+#include "stm32l1xx_hal.h"
+#endif
 
 void TIM_Base_SetConfig(TIM_TypeDef *TIMx, TIM_Base_InitTypeDef *Structure)
 {
-  uint32_t tmpcr1 = 0U;
+  uint32_t tmpcr1;
   tmpcr1 = TIMx->CR1;
 
   /* Set TIM Time Base Unit parameters ---------------------------------------*/
-  if(IS_TIM_CC1_INSTANCE(TIMx) != RESET)
+  if (IS_TIM_COUNTER_MODE_SELECT_INSTANCE(TIMx))
   {
     /* Select the Counter Mode */
     tmpcr1 &= ~(TIM_CR1_DIR | TIM_CR1_CMS);
     tmpcr1 |= Structure->CounterMode;
   }
 
-  if(IS_TIM_CC1_INSTANCE(TIMx) != RESET)  
+  if (IS_TIM_CLOCK_DIVISION_INSTANCE(TIMx))
   {
     /* Set the clock division */
     tmpcr1 &= ~TIM_CR1_CKD;
     tmpcr1 |= (uint32_t)Structure->ClockDivision;
   }
+
+  /* Set the auto-reload preload */
+  MODIFY_REG(tmpcr1, TIM_CR1_ARPE, Structure->AutoReloadPreload);
 
   TIMx->CR1 = tmpcr1;
 
@@ -59,26 +67,29 @@ void TIM_Base_SetConfig(TIM_TypeDef *TIMx, TIM_Base_InitTypeDef *Structure)
   TIMx->ARR = (uint32_t)Structure->Period ;
 
   /* Set the Prescaler value */
-  TIMx->PSC = (uint32_t)Structure->Prescaler;
+  TIMx->PSC = Structure->Prescaler;
 
-  /* Generate an update event to reload the Prescaler value immediatly */
+  /* Generate an update event to reload the Prescaler
+     and the repetition counter (only for advanced timer) value immediately */
   TIMx->EGR = TIM_EGR_UG;
 }
 
+
 void TIM_CCxChannelCmd(TIM_TypeDef *TIMx, uint32_t Channel, uint32_t ChannelState)
 {
-  uint32_t tmp = 0U;
+  uint32_t tmp;
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCX_INSTANCE(TIMx,Channel));
+  assert_param(IS_TIM_CC1_INSTANCE(TIMx));
+  assert_param(IS_TIM_CHANNELS(Channel));
 
-  tmp = TIM_CCER_CC1E << Channel;
+  tmp = TIM_CCER_CC1E << (Channel & 0x1FU); /* 0x1FU = 31 bits max shift */
 
   /* Reset the CCxE Bit */
   TIMx->CCER &= ~tmp;
 
   /* Set or reset the CCxE Bit */
-  TIMx->CCER |= (uint32_t)(ChannelState << Channel);
+  TIMx->CCER |= (uint32_t)(ChannelState << (Channel & 0x1FU)); /* 0x1FU = 31 bits max shift */
 }
 
 #endif
