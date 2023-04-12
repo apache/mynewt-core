@@ -397,7 +397,6 @@ startup_STM32F429x.s
 
 # STM32L152C BSP - BSD License
 stm32l1xx_hal_conf.h
-system_stm32l1xx.c
 startup_stm32l152xc.s
 
 # NUCLEO-H723ZG BSP - BSD License
@@ -501,7 +500,8 @@ nrf52xxx-compat
 cmsis-core
 
 # stm32l1xx - BSD License
-stm32l1xx
+hw/mcu/stm/stm32l1xx/src/clock_stm32l1xx.c
+hw/mcu/stm/stm32l1xx/src/system_stm32l1xx.c
 
 # stm32f1xx - BSD License
 stm32f1xx
