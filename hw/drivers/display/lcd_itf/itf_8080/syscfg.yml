@@ -1,0 +1,60 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    LCD_D0_PIN:
+        description: D0 pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_D1_PIN:
+        description: D1 pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_D2_PIN:
+        description: D2 pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_D3_PIN:
+        description: D3 pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_D4_PIN:
+        description: D4 pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_D5_PIN:
+        description: D5 pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_D6_PIN:
+        description: D6 pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_D7_PIN:
+        description: D7 pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_WR_PIN:
+        description: WR pin for LCD.
+        value:
+        restrictions: $notnull
+    LCD_RD_PIN:
+        description: DR pin for LCD.
+        value: -1
+
+syscfg.restrictions:
