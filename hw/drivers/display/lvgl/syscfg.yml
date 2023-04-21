@@ -22,6 +22,9 @@ syscfg.defs:
             LV_COLOR_16_SWAP changes order of 16 bit RGB value to
             better match 8 bit SPI protocol.
         value: 0
+    LVGL_GC9A01:
+        description: Enable GC9A01 display driver.
+        value:
     LVGL_ILI9341:
         description: Enable ILI9341 display driver.
         value:
