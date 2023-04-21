@@ -56,7 +56,7 @@ pkg.ign_dirs:
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/hw/drivers/display/lcd_itf"
 
 pkg.cflags:
     - -DLV_CONF_INCLUDE_SIMPLE=1
