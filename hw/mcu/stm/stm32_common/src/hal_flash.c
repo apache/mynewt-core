@@ -119,7 +119,11 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
         /* FIXME: L1 was previously unlocking flash before erasing/programming,
          * and locking again afterwards. Maybe all MCUs should do the same?
          */
+#if MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32H7)
+        rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, (uint32_t)&val);
+#else
         rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, val);
+#endif
         if (rc != HAL_OK) {
             return rc;
         }
