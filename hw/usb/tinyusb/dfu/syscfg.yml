@@ -24,6 +24,9 @@ syscfg.defs:
     USBD_DFU_SLOT_NAME:
         description: Name of firmware slot that will be visible in DFU list.
         value: '"SLOT1"'
+    USBD_DFU_SLOT_ID:
+        description: Flash area for DFU.
+        value: FLASH_AREA_IMAGE_1
     USBD_DFU_BLOCK_SIZE:
         description: >
             Size of block that will be used during upgrade.
@@ -31,7 +34,7 @@ syscfg.defs:
             erased.
             It is flash dependent. For SPIFLASH typical value is 4096.
             For on-chip flash values can be different.
-        value:
+        value: 256
     USBD_DFU_RESET_AFTER_DOWNLOAD:
         description: >
             Reset device after last packet received during DFU.
@@ -112,4 +115,5 @@ syscfg.logs:
 
 syscfg.vals.BOOT_LOADER:
     USBD_DFU_SLOT_NAME: '"SLOT0"'
+    USBD_DFU_SLOT_ID: FLASH_AREA_IMAGE_0
     BOOT_PREBOOT: 1

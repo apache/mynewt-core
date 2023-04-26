@@ -31,11 +31,7 @@
  * If application code handles DFU it writes to SLOT1 and marks slot as
  * pending.
  */
-#if MYNEWT_VAL(BOOT_LOADER)
-#define FIRMWARE_SLOT       FLASH_AREA_IMAGE_0
-#else
-#define FIRMWARE_SLOT       FLASH_AREA_IMAGE_1
-#endif
+#define FIRMWARE_SLOT       MYNEWT_VAL(USBD_DFU_SLOT_ID)
 
 #if MYNEWT_VAL(USBD_DFU_RESET_AFTER_DOWNLOAD)
 
