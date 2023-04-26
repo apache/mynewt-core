@@ -54,6 +54,14 @@
 #error This MCU does not have SPI6
 #endif
 
+#if MYNEWT_VAL(MCU_STM32U5)
+/* DMA peripheral on STM32U5 is called GPDMA and macro to turn it's clock
+ * matches this name. For simplicity define old name __HAL_RCC_DMA1_CLK_ENABLE
+ * to defintion from U5 hal
+ */
+#define __HAL_RCC_DMA1_CLK_ENABLE __HAL_RCC_GPDMA1_CLK_ENABLE
+#endif
+
 /* Minimum transfer size when DMA should be used, for shorter transfers
  * interrupts are used
  */
@@ -613,7 +621,7 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
     if (prescaler > 7) {
         rc = SYS_EINVAL;
     } else {
-#if MYNEWT_VAL(MCU_STM32H7)
+#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
         dd->hspi.Init.BaudRatePrescaler = prescaler << SPI_CFG1_MBR_Pos;
 #else
         dd->hspi.Init.BaudRatePrescaler = prescaler << SPI_CR1_BR_Pos;
