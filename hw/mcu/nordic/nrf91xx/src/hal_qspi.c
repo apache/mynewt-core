@@ -26,7 +26,7 @@
 #include <hal/hal_flash_int.h>
 #include "mcu/nrf91_hal.h"
 #include "nrf.h"
-#include <nrfx/hal/nrf_qspi.h>
+#include <hal/nrf_qspi.h>
 
 #if MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) < 1
 #error QSPI_FLASH_SECTOR_SIZE must be set to the correct value in bsp syscfg.yml

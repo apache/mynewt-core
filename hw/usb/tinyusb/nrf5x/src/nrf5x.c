@@ -22,7 +22,7 @@
 
 #include <device/usbd.h>
 #include <tusb.h>
-#include <nrfx/hal/nrf_power.h>
+#include <hal/nrf_power.h>
 
 /* same value as NRFX_POWER_USB_EVT_* in nrfx_power */
 enum {

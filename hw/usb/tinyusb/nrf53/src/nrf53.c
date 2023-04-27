@@ -20,7 +20,7 @@
 #include <os/mynewt.h>
 
 #include <device/usbd.h>
-#include <nrfx/hal/nrf_usbreg.h>
+#include <hal/nrf_usbreg.h>
 
 /* same value as NRFX_POWER_USB_EVT_* in nrfx_power */
 enum {
