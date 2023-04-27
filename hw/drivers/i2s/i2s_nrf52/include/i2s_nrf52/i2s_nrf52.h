@@ -21,8 +21,8 @@
 #define _I2S_NRF52_H
 
 #include <stdint.h>
-#include <nrfx/nrfx.h>
-#include <nrfx/drivers/include/nrfx_i2s.h>
+#include <nrfx.h>
+#include <drivers/include/nrfx_i2s.h>
 
 #ifdef __cplusplus
 extern "C" {

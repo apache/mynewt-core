@@ -22,7 +22,7 @@
 #include <i2s/i2s.h>
 #include <i2s/i2s_driver.h>
 #include <i2s_nrfx/i2s_nrfx.h>
-#include <nrfx/drivers/include/nrfx_i2s.h>
+#include <drivers/include/nrfx_i2s.h>
 #include <nrfx_clock.h>
 
 struct i2s_nrfx {
