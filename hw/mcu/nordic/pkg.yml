@@ -34,13 +34,32 @@ pkg.ign_dirs:
     - "soc"
     - "templates"
     - "mdk"
-    - "helpers"
+
+pkg.include_dirs:
+    - "@nordic-nrfx/drivers/include"
+    - "@nordic-nrfx/drivers"
+    - "@nordic-nrfx/drivers/src"
+    - "@nordic-nrfx/hal"
+    - "@nordic-nrfx/helpers"
+    - "@nordic-nrfx/mdk"
+    - "@nordic-nrfx/templates"
+    - "@nordic-nrfx/."
+    - "include"
 
 pkg.src_dirs:
-    - "src/ext/nrfx/"
+    - "@nordic-nrfx/drivers/src"
+    - "@nordic-nrfx/helpers"
 
 pkg.cflags: -std=gnu99
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/cmsis-core"
+
+repository.nordic-nrfx:
+    type: github
+    vers: v2.8.0-commit
+    branch: master
+    user: NordicSemiconductor
+    repo: nrfx
+
