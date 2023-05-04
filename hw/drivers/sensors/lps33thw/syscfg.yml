@@ -20,6 +20,9 @@ syscfg.defs:
     LPS33THW_CLI:
         description: 'Enable shell support for the LPS33THW'
         value: 0
+    LPS33THW_STATS:
+        description: 'Enable statistics support for the LPS33THW'
+        value: 1
     LPS33THW_ITF_LOCK_TMO:
         description: 'LPS33THW interface lock timeout in milliseconds'
         value: 1000
