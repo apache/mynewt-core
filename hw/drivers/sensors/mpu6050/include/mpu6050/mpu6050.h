@@ -50,6 +50,17 @@ enum mpu6050_clock_select {
     MPU6050_CLK_EXTERNAL_HS          = 0x05, /* PLL with external 19.2MHz reference */
 };
 
+enum mpu6050_dlfp_cfg {
+    /* Acc(Bandwith, Delay) Gyr(Bandwith, Delay) Sampling Frequency */
+    MPU6050_DLPF_0 = 0x00, /* Acc(260Hz, 0ms)    Gyr(256Hz, 0.98ms) Fs=8kHz */
+    MPU6050_DLPF_1 = 0x01, /* Acc(184Hz, 2.0ms)  Gyr(188Hz, 1.9ms)  Fs=1kHz */
+    MPU6050_DLPF_2 = 0x02, /* Acc(94Hz,  3.0ms)  Gyr(98Hz,  2.8ms)  Fs=1kHz */
+    MPU6050_DLPF_3 = 0x03, /* Acc(44Hz,  4.9ms)  Gyr(42Hz,  4.8ms)  Fs=1kHz */
+    MPU6050_DLPF_4 = 0x04, /* Acc(21Hz,  8.5ms)  Gyr(20Hz,  8.3ms)  Fs=1kHz */
+    MPU6050_DLPF_5 = 0x05, /* Acc(10Hz,  13.8ms) Gyr(10Hz,  13.4ms) Fs=1kHz */
+    MPU6050_DLPF_6 = 0x06, /* Acc(5Hz,   19.0ms) Gyr(5Hz,   18.6ms) Fs=1kHz */
+};
+
 #define MPU6050_I2C_ADDR (0xD0 >> 1)
 
 #define MPU6050_INT_LEVEL (0x80)
@@ -63,7 +74,7 @@ struct mpu6050_cfg {
     enum mpu6050_clock_select clock_source;
     uint8_t sample_rate_div; /* Sample Rate = Gyroscope Output Rate /
             (1 + sample_rate_div) */
-    uint8_t lpf_cfg; /* See data sheet */
+    uint8_t lpf_cfg;            /* See mpu6050_dlfp_cfg and data sheet */
     uint8_t int_enable;
     uint8_t int_cfg;
     sensor_type_t mask;
