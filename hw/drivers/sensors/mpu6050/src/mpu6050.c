@@ -32,6 +32,9 @@
 #include "modlog/modlog.h"
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include <bus/drivers/i2c_common.h>
+#endif
 
 /* Define the stats section and records */
 STATS_SECT_START(mpu6050_stat_section)
@@ -865,10 +868,16 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
         databuf.sad.sad_z = (z / lsb) * STANDARD_ACCEL_GRAVITY;
         databuf.sad.sad_z_is_valid = 1;
 
-        rc = data_func(sensor, data_arg, &databuf.sad,
-                SENSOR_TYPE_ACCELEROMETER);
-        if (rc) {
-            return rc;
+        if (data_func != NULL) {
+            rc = data_func(sensor, data_arg, &databuf.sad,
+                           SENSOR_TYPE_ACCELEROMETER);
+            if (rc) {
+                return rc;
+            }
+        } else {
+            struct sensor_accel_data *sad = data_arg;
+            memcpy(sad, &databuf.sad, sizeof(struct sensor_accel_data));
+            return 0;
         }
     }
 
@@ -907,13 +916,32 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
         databuf.sgd.sgd_z = z / lsb;
         databuf.sgd.sgd_z_is_valid = 1;
 
-        rc = data_func(sensor, data_arg, &databuf.sgd, SENSOR_TYPE_GYROSCOPE);
-        if (rc) {
-            return rc;
+        if (data_func != NULL) {
+            rc = data_func(sensor, data_arg, &databuf.sgd, SENSOR_TYPE_GYROSCOPE);
+            if (rc) {
+                return rc;
+            }
+        } else {
+            struct sensor_gyro_data *sgd = data_arg;
+            memcpy(sgd, &databuf.sgd, sizeof(struct sensor_gyro_data));
         }
     }
 
     return 0;
+}
+
+int
+mpu6050_get_accel(struct mpu6050 *mpu6050, struct sensor_accel_data *sad)
+{
+    return mpu6050_sensor_read(&mpu6050->sensor, SENSOR_TYPE_ACCELEROMETER,
+                                 NULL, sad, OS_TIMEOUT_NEVER);
+}
+
+int
+mpu6050_get_gyro(struct mpu6050 *mpu6050, struct sensor_gyro_data *sgd)
+{
+    return mpu6050_sensor_read(&mpu6050->sensor, SENSOR_TYPE_GYROSCOPE,
+                                 NULL, sgd, OS_TIMEOUT_NEVER);
 }
 
 static int

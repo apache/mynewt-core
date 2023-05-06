@@ -127,6 +127,9 @@ int mpu6050_set_z_gyro_offset(struct sensor_itf *itf, int16_t offset);
 int mpu6050_get_z_gyro_offset(struct sensor_itf *itf, int16_t *offset);
 int mpu6050_set_offsets(struct mpu6050 *mpu, struct mpu6050_cfg *cfg);
 
+int mpu6050_get_accel(struct mpu6050 *mpu6050, struct sensor_accel_data *sad);
+int mpu6050_get_gyro(struct mpu6050 *mpu6050, struct sensor_gyro_data *sgd);
+
 int mpu6050_init(struct os_dev *, void *);
 int mpu6050_config(struct mpu6050 *, struct mpu6050_cfg *);
 
