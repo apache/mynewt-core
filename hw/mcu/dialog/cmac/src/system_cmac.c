@@ -28,6 +28,14 @@
 #include <ipc_cmac/diag.h>
 #include "CMAC.h"
 
+static inline void
+set_reg32_bits(uint32_t addr, uint32_t mask, uint32_t val)
+{
+    volatile uint32_t *reg = (volatile uint32_t *)addr;
+
+    *reg = (*reg & (~mask)) | (val << __builtin_ctz(mask));
+}
+
 void
 SystemInit(void)
 {
@@ -51,4 +59,6 @@ SystemInit(void)
     CMAC->CM_CTRL_REG |= CMAC_CM_CTRL_REG_CM_BS_ENABLE_Msk;
 
     cmac_timer_init();
+
+    set_reg32_bits(0x40000904, 0x0004, 1);
 }
