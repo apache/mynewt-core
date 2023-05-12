@@ -411,7 +411,6 @@ nrf52_adc_set_buffer(struct adc_dev *dev, void *buf1, void *buf2, int buf_len)
         return OS_EINVAL;
     }
 
-    buf_len /= sizeof(nrf_saadc_value_t);
     g_drv_instance.primary_buf = buf1;
     g_drv_instance.primary_size = buf_len;
     if (buf2) {
@@ -432,7 +431,6 @@ nrf52_adc_release_buffer(struct adc_dev *dev, void *buf, int buf_len)
         return OS_EINVAL;
     }
 
-    buf_len /= sizeof(nrf_saadc_value_t);
     if (!g_drv_instance.primary_buf) {
         g_drv_instance.primary_buf = buf;
         g_drv_instance.primary_size = buf_len;
@@ -622,7 +620,7 @@ nrf52_saadc_irq_handler(void)
         nrf_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_END);
 
         buf = g_drv_instance.primary_buf;
-        bufsize = g_drv_instance.primary_size * sizeof(nrf_saadc_value_t);
+        bufsize = g_drv_instance.primary_size;
         if (g_drv_instance.secondary_buf) {
             g_drv_instance.primary_buf = g_drv_instance.secondary_buf;
             g_drv_instance.primary_size = g_drv_instance.secondary_size;
