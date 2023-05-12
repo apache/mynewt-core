@@ -1,0 +1,83 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    ADC_TOUCH_XP_PIN:
+        description: >
+            Pin connected to touch screen X+ electrode.
+        value:
+    ADC_TOUCH_XM_PIN:
+        description: >
+            Pin connected to touch screen X- electrode.
+        value:
+    ADC_TOUCH_YP_PIN:
+        description: >
+            Pin connected to touch screen Y+ electrode.
+        value:
+    ADC_TOUCH_YM_PIN:
+        description: >
+            Pin connected to touch screen Y- electrode.
+        value:
+    ADC_TOUCH_ADC_X_MIN:
+        description: >
+            Minimum value of ADC for x reading.
+            Readings lower then this value will be considered invalid.
+        value: 4300
+    ADC_TOUCH_ADC_X_MAX:
+        description: >
+            Maximum value of ADC for x reading.
+            Readings higher then this value will be considered invalid.
+        value: 11500
+    ADC_TOUCH_ADC_Y_MIN:
+        description: >
+            Minimum value of ADC for y reading.
+            Readings lower then this value will be considered invalid.
+        value: 3400
+    ADC_TOUCH_ADC_Y_MAX:
+        description: >
+            Maximum value of ADC for y reading.
+            Readings higher then this value will be considered invalid.
+        value: 12500
+    ADC_TOUCH_ADC_LEFT:
+        description:
+            ADC value for X coordinate 0.
+            This value will be adjusted in runtime.
+            It can be set to value between ADC_TOUCH_ADC_X_MIN or ADC_TOUCH_ADC_X_MAX.
+        value:
+    ADC_TOUCH_ADC_RIGHT:
+        description:
+            ADC value for X coordinate at the right edge of the screen.
+            This value will be adjusted in runtime.
+            It can be set to value between ADC_TOUCH_ADC_X_MIN or ADC_TOUCH_ADC_X_MAX.
+        value:
+    ADC_TOUCH_ADC_TOP:
+        description:
+            ADC value for Y coordinate 0.
+            This value will be adjusted in runtime.
+            It can be set to value between ADC_TOUCH_ADC_Y_MIN or ADC_TOUCH_ADC_Y_MAX.
+        value:
+    ADC_TOUCH_ADC_BOTTOM:
+        description:
+            ADC value for Y coordinate at the bottom edge of the screen.
+            This value will be adjusted in runtime.
+            It can be set to value between ADC_TOUCH_ADC_Y_MIN or ADC_TOUCH_ADC_Y_MAX.
+        value:
+    ADC_TOUCH_ADC_DELAY_US:
+        description:
+            Delay after GPIO is set high and measurement
+        value: 30
