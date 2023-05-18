@@ -105,6 +105,55 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 }
 
 /**
+ * Writes two bytes to the specified register
+ *
+ * @param The sensor interface
+ * @param The register address to write to
+ * @param The value to write
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+mpu6050_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
+{
+    int rc;
+    uint8_t payload[3] = {
+        reg,
+        (uint8_t)(value >> 8),
+        (uint8_t)value,
+    };
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write(itf->si_dev, payload, 3);
+#else
+    struct hal_i2c_master_data data_struct = {
+        .address = itf->si_addr,
+        .len = 3,
+        .buffer = payload
+    };
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MPU6050_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(MPU6050_I2C_RETRIES));
+
+    if (rc) {
+        MPU6050_LOG_ERROR(
+            "Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
+            itf->si_addr, reg, value);
+        STATS_INC(g_mpu6050stats, read_errors);
+    }
+
+    sensor_itf_unlock(itf);
+#endif
+
+    return rc;
+}
+
+/**
  * Reads a single byte from the specified register
  *
  * @param The sensor interface
@@ -150,6 +199,62 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     if (rc) {
         MPU6050_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                     itf->si_addr, reg);
+        STATS_INC(g_mpu6050stats, read_errors);
+    }
+
+    sensor_itf_unlock(itf);
+#endif
+
+    return rc;
+}
+
+/**
+ * Reads 2 bytes from the specified register
+ *
+ * @param The sensor interface
+ * @param The register address to read from
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+mpu6050_read16(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
+{
+    int rc;
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, 2);
+#else
+    struct hal_i2c_master_data data_struct = {
+        .address = itf->si_addr,
+        .len = 1,
+        .buffer = &reg
+    };
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MPU6050_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
+    /* Register write */
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
+                           MYNEWT_VAL(MPU6050_I2C_RETRIES));
+    if (rc) {
+        MPU6050_LOG_ERROR("I2C access failed at address 0x%02X\n",
+                          itf->si_addr);
+        STATS_INC(g_mpu6050stats, write_errors);
+        return rc;
+    }
+
+    /* Read two bytes back */
+    data_struct.len = 2;
+    data_struct.buffer = buffer;
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(MPU6050_I2C_RETRIES));
+
+    if (rc) {
+        MPU6050_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
+                          itf->si_addr, reg);
         STATS_INC(g_mpu6050stats, read_errors);
     }
 
