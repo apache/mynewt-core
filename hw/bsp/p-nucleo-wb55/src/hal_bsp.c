@@ -28,11 +28,6 @@
 #include <stm32wb55xx.h>
 #include <stm32_common/stm32_hal.h>
 
-#if MYNEWT_VAL(ETH_0)
-#include <stm32_eth/stm32_eth.h>
-#include <stm32_eth/stm32_eth_cfg.h>
-#endif
-
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
 #include <pwm_stm32/pwm_stm32.h>
 #endif
