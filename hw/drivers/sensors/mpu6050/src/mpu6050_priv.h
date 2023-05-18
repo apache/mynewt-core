@@ -116,7 +116,9 @@ enum mpu6050_registers {
 #define MPU6050_SLEEP (0x40)
 
 int mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value);
+int mpu6050_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value);
 int mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
+int mpu6050_read16(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
 int mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer);
 
 #ifdef __cplusplus
