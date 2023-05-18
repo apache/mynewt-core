@@ -49,6 +49,13 @@ pkg.deps:
 pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER || SPI_2_MASTER || SPI_3_MASTER || SPI_4_MASTER || SPI_5_MASTER) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/spi_stm32"
 
+pkg.deps.ADC_0:
+    - "@apache-mynewt-core/hw/drivers/adc/adc_stm32f4"
+pkg.deps.ADC_1:
+    - "@apache-mynewt-core/hw/drivers/adc/adc_stm32f4"
+pkg.deps.ADC_2:
+    - "@apache-mynewt-core/hw/drivers/adc/adc_stm32f4"
+
 repository.stm-cmsis_device_f4:
     type: github
     vers: v2.6.8-commit

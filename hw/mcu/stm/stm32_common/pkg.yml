@@ -55,10 +55,3 @@ pkg.deps.CRYPTO:
 
 pkg.deps.HASH:
     - "@apache-mynewt-core/hw/drivers/hash/hash_stm32"
-
-pkg.deps.ADC_0:
-    - "@apache-mynewt-core/hw/drivers/adc/adc_stm32f4"
-pkg.deps.ADC_1:
-    - "@apache-mynewt-core/hw/drivers/adc/adc_stm32f4"
-pkg.deps.ADC_2:
-    - "@apache-mynewt-core/hw/drivers/adc/adc_stm32f4"
