@@ -81,3 +81,8 @@ syscfg.defs:
         description:
             Delay after GPIO is set high and measurement
         value: 30
+
+    ADC_TOUCH_DEFAULT_ADC:
+        description:
+            If set to 1 includes built-in adc driver
+        value: 1
