@@ -54,7 +54,7 @@ pyocd_load () {
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    pyocd flash -a $FLASH_OFFSET -e sector -M $CONNECTION_MODE -t $TARGET $FILE_NAME --format bin
+    pyocd flash -e sector -M $CONNECTION_MODE -t $TARGET $FILE_NAME@$FLASH_OFFSET --format bin
     if [ $? -ne 0 ]; then
         exit 1
     fi
