@@ -38,6 +38,11 @@ if [ "$MFG_IMAGE" ]; then
 fi
 
 case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
+  "ezflashcli")
+    . $CORE_PATH/hw/scripts/ezflashcli.sh
+    common_file_to_load
+    ezflashcli_load
+    ;;
   "jlink")
     . $CORE_PATH/hw/scripts/jlink.sh
     if [ -z "${MYNEWT_VAL_JLINK_TARGET}"] ; then
