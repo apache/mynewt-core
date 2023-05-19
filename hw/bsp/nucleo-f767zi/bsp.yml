@@ -28,10 +28,8 @@ bsp.linkerscript:
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nucleo-f767zi/boot-nucleo-f767zi.ld"
     - "@apache-mynewt-core/hw/mcu/stm/stm32f7xx/stm32f767.ld"
-bsp.downloadscript: "hw/bsp/nucleo-f767zi/nucleo-f767zi_download.sh"
+bsp.downloadscript: "hw/scripts/download.sh"
 bsp.debugscript: "hw/bsp/nucleo-f767zi/nucleo-f767zi_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nucleo-f767zi/nucleo-f767zi_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nucleo-f767zi/nucleo-f767zi_debug.cmd"
 
 bsp.flash_map:
     areas:
