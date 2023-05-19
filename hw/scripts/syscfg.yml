@@ -32,6 +32,8 @@ syscfg.defs:
             - pyocd
             # Nordic Semiconductor tool for NRF5x devices
             - nrfjprog
+            # Renesas ezFlashCLI for DA146x devices
+            - ezflashcli
         value:
     MYNEWT_DEBUGGER:
         description: >
