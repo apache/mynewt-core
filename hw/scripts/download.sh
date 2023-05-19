@@ -48,6 +48,11 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     common_file_to_load
     jlink_load
     ;;
+  "nrfjprog")
+    . $CORE_PATH/hw/scripts/nrfjprog.sh
+    common_file_to_load
+    nrfjprog_load
+    ;;
   "openocd")
     . $CORE_PATH/hw/scripts/openocd.sh
     if [ -n "${MYNEWT_VAL_MYNEWT_DOWNLOADER_OPENOCD_INTERFACE}" ] ; then

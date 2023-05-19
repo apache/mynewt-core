@@ -30,6 +30,8 @@ syscfg.defs:
             - stflash
             - openocd
             - pyocd
+            # Nordic Semiconductor tool for NRF5x devices
+            - nrfjprog
         value:
     MYNEWT_DEBUGGER:
         description: >
@@ -70,4 +72,9 @@ syscfg.defs:
             Target name for pyocd (command:
                 pyocd list --targets
             shows supported targets.
+        value:
+    NRFJPROG_COPROCESSOR:
+        description: >
+            Some NRF have more then one core. This can specify non-default core
+            (i.e. CP_NETWORK for NRF5340).
         value:
