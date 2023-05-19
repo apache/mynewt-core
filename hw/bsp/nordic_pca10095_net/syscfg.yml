@@ -31,6 +31,9 @@ syscfg.defs:
         value: 0
 
 syscfg.vals:
+    MYNEWT_DOWNLOADER: jlink
+    JLINK_TARGET: NRF5340_XXAA_NET
+    NRFJPROG_COPROCESSOR: CP_NETWORK
     # Set default pins for peripherals
     UART_0_PIN_TX: 20
     UART_0_PIN_RX: 22

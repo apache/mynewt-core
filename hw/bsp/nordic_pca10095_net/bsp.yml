@@ -29,7 +29,7 @@ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nordic_pca10095_net/boot-nrf5340_net.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net/nrf5340_net.ld"
 bsp.part2linkerscript: "hw/bsp/nordic_pca10095_net/split-nordic_pca10095_net.ld"
-bsp.downloadscript: "hw/bsp/nordic_pca10095_net/nordic_pca10095_net_download.sh"
+bsp.downloadscript: "hw/scripts/download.sh"
 bsp.debugscript: "hw/bsp/nordic_pca10095_net/nordic_pca10095_net_debug.sh"
 
 bsp.flash_map:
