@@ -28,6 +28,8 @@ syscfg.defs:
             - jlink
             # open source st-flash for STM32Fxx devices
             - stflash
+            # ST propitiatory flasher STM32_Programmer_CLI for STM32Fxx devices
+            - stm32_programmer_cli
             - openocd
             - pyocd
             # Nordic Semiconductor tool for NRF5x devices

@@ -94,4 +94,9 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     common_file_to_load
     stlink_load
     ;;
+  "stm32_programmer_cli")
+    . $CORE_PATH/hw/scripts/stm32_programmer.sh
+    common_file_to_load
+    stlink_load
+    ;;
 esac
