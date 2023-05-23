@@ -99,6 +99,11 @@ SECTIONS
         *(SORT(.dtors.*))
         *(.dtors)
 
+        . = ALIGN(4);
+        __shm_descriptor_start__ = .;
+        KEEP(*(.shm.descriptor))
+        __shm_descriptor_end__ = .;
+
         *(.rodata*)
 
         *(.eh_frame*)
