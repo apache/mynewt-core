@@ -163,10 +163,10 @@ console_out_nolock(int c)
         return c;
     }
 
-    if ('\n' == c) {
+    if ('\n' == c || '\r' == c) {
         write_char_cb(uart_dev, '\r');
+        write_char_cb(uart_dev, '\n');
     }
-    write_char_cb(uart_dev, c);
     uart_start_tx(uart_dev);
 
     return c;

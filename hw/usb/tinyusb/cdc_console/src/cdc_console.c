@@ -51,10 +51,9 @@ cdc_write(int c)
 int
 console_out_nolock(int c)
 {
-    cdc_write(c);
-
-    if ('\n' == c) {
+    if ('\n' == c || '\r' == c) {
         cdc_write('\r');
+        cdc_write('\n');
     }
 
     cdc_schedule_tx_flush();
