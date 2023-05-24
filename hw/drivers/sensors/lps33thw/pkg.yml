@@ -41,7 +41,7 @@ pkg.deps.BUS_DRIVER_PRESENT:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_common"
     - "@apache-mynewt-core/hw/bus/drivers/spi_common"
 
-pkg.req_apis:
+pkg.req_apis.LPS33HW_STATS:
     - stats
 
 pkg.deps.LPS33HW_CLI:

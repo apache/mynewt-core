@@ -38,7 +38,9 @@
 #include "lps33thw/lps33thw.h"
 #include "lps33thw_priv.h"
 #include "modlog/modlog.h"
+#if MYNEWT_VAL(LPS33THW_STATS)
 #include "stats/stats.h"
+#endif
 #include <syscfg/syscfg.h>
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
@@ -50,6 +52,7 @@ static struct hal_spi_settings spi_lps33thw_settings = {
 };
 #endif
 
+#if MYNEWT_VAL(LPS33THW_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(lps33thw_stat_section)
     STATS_SECT_ENTRY(read_errors)
@@ -64,6 +67,7 @@ STATS_NAME_END(lps33thw_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lps33thw_stat_section) g_lps33thwstats;
+#endif
 
 #define LPS33THW_PRESS_OUT_DIV (40.96f)
 #define LPS33THW_TEMP_OUT_DIV (100.0f)
@@ -237,7 +241,9 @@ lps33thw_i2c_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         LPS33THW_LOG_ERROR(
                     "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                     itf->si_addr, reg, value);
+#if MYNEWT_VAL(LPS33THW_STATS)
         STATS_INC(g_lps33thwstats, read_errors);
+#endif
     }
 
     return rc;
@@ -267,7 +273,9 @@ lps33thw_spi_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         rc = SYS_EINVAL;
         LPS33THW_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                     itf->si_num, reg);
+#if MYNEWT_VAL(LPS33THW_STATS)
         STATS_INC(g_lps33thwstats, write_errors);
+#endif
         goto err;
     }
 
@@ -277,7 +285,9 @@ lps33thw_spi_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         rc = SYS_EINVAL;
         LPS33THW_LOG_ERROR("SPI_%u write failed addr:0x%02X\n",
                     itf->si_num, reg);
+#if MYNEWT_VAL(LPS33THW_STATS)
         STATS_INC(g_lps33thwstats, write_errors);
+#endif
         goto err;
     }
 
@@ -360,7 +370,9 @@ lps33thw_spi_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
         rc = SYS_EINVAL;
         LPS33THW_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                     itf->si_num, reg);
+#if MYNEWT_VAL(LPS33THW_STATS)
         STATS_INC(g_lps33thwstats, read_errors);
+#endif
         goto err;
     }
 
@@ -371,7 +383,9 @@ lps33thw_spi_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
             rc = SYS_EINVAL;
             LPS33THW_LOG_ERROR("SPI_%u read failed addr:0x%02X\n",
                         itf->si_num, reg);
+#if MYNEWT_VAL(LPS33THW_STATS)
             STATS_INC(g_lps33thwstats, read_errors);
+#endif
             goto err;
         }
         buffer[i] = retval;
@@ -424,7 +438,9 @@ lps33thw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     if (rc) {
         LPS33THW_LOG_ERROR("I2C access failed at address 0x%02X\n",
                      itf->si_addr);
+#if MYNEWT_VAL(LPS33THW_STATS)
         STATS_INC(g_lps33thwstats, read_errors);
+#endif
         return rc;
     }
 #endif
@@ -951,6 +967,7 @@ lps33thw_init(struct os_dev *dev, void *arg)
     sensor = &lps->sensor;
     lps->cfg.mask = SENSOR_TYPE_ALL;
 
+#if MYNEWT_VAL(LPS33THW_STATS)
     /* Initialise the stats entry */
     rc = stats_init(STATS_HDR(g_lps33thwstats),
         STATS_SIZE_INIT_PARMS(g_lps33thwstats, STATS_SIZE_32),
@@ -960,6 +977,7 @@ lps33thw_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_lps33thwstats));
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
 
     rc = sensor_init(sensor, dev);
     if (rc) {
