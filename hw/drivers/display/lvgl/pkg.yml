@@ -75,6 +75,8 @@ pkg.deps.LVGL_STMPE610:
     - "@apache-mynewt-core/hw/drivers/display/lvgl/indev/stmpe610"
 pkg.deps.LVGL_ADC_TOUCH:
     - "@apache-mynewt-core/hw/drivers/display/lvgl/indev/adc_touch"
+pkg.deps.LVGL_TRACKBALL:
+    - "@apache-mynewt-core/hw/drivers/display/lvgl/indev/trackball"
 
 pkg.cflags:
     - -DLV_CONF_INCLUDE_SIMPLE=1

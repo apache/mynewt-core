@@ -46,6 +46,9 @@ syscfg.defs:
     LVGL_ADC_TOUCH:
         description: Enable ADC touchscreen driver.
         value:
+    LVGL_TRACKBALL:
+        description: Enable Trackball driver.
+        value:
     LVGL_TIMER_PERIOD_MS:
         description: LV timer interval for periodical refresh and touch read
         value: 10

@@ -1,0 +1,66 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    TRACKBALL_UP_PIN:
+        description: Trackball pin marked up.
+        restrictions:
+            - $notnull
+        value:
+    TRACKBALL_DOWN_PIN:
+        description: Trackball pin marked down.
+        restrictions:
+            - $notnull
+        value:
+    TRACKBALL_LEFT_PIN:
+        description: Trackball pin marked left.
+        restrictions:
+            - $notnull
+        value:
+    TRACKBALL_RIGHT_PIN:
+        description: Trackball pin marked right.
+        restrictions:
+            - $notnull
+        value:
+    TRACKBALL_BUTTON_PIN:
+        description: Trackball pin marked button.
+        restrictions:
+            - $notnull
+        value:
+    TRACKBALL_BUTTON_PIN_PULL:
+        description: Trackball button pull up configuration.
+        value: HAL_GPIO_PULL_NONE
+    TRACKBALL_BUTTON_PIN_VALUE:
+        description: >
+            Trackball button active value.
+            0 - GPIO reads 0 button pressed 
+            1 - GPIO reads 1 button pressed
+        value: 0
+    TRACKBALL_DRAG_PIN:
+        description: >
+            Pin for LED indicating that button is held.
+        value: -1
+    TRACKBALL_DRAG_PIN_VALUE:
+        description: >
+            Value to write to TRACKBALL_DRAG_PIN when drag is activated.
+        value: 1
+    TRACKBALL_HOLD_TO_DRAG_TIME_MS:
+        description: >
+            When this time is specified, holding button for this amount of time
+            start sticky button functionality.
+        value: 800
