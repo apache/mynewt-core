@@ -204,6 +204,12 @@ trackball_register_lv_indev(void)
     if (DRAG_PIN >= 0) {
         hal_gpio_init_out(DRAG_PIN, !DRAG_PIN_VALUE);
     }
+    hal_gpio_irq_enable(UP_PIN);
+    hal_gpio_irq_enable(DOWN_PIN);
+    hal_gpio_irq_enable(LEFT_PIN);
+    hal_gpio_irq_enable(RIGHT_PIN);
+    hal_gpio_irq_enable(BUTTON_PIN);
+
     /* Register a keypad input device */
     lv_indev_drv_init(&trackball_drv);
     trackball_drv.type = LV_INDEV_TYPE_POINTER;
