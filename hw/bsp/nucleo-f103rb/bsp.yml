@@ -28,10 +28,8 @@ bsp.linkerscript:
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nucleo-f103rb/boot-nucleo_f103rb.ld"
     - "@apache-mynewt-core/hw/mcu/stm/stm32f1xx/stm32f103.ld"
-bsp.downloadscript: "hw/bsp/nucleo-f103rb/nucleo_f103rb_download.sh"
+bsp.downloadscript: "hw/scripts/download.sh"
 bsp.debugscript: "hw/bsp/nucleo-f103rb/nucleo_f103rb_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nucleo-f103rb/nucleo_f103rb_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nucleo-f103rb/nucleo_f103rb_debug.cmd"
 
 bsp.flash_map:
     areas:
