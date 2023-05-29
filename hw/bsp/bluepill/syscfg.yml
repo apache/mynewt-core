@@ -52,3 +52,10 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM2'
     TIMER_1_TIM: 'TIM3'
     TIMER_2_TIM: 'TIM4'
+
+    # Flasher parameters
+    MYNEWT_DOWNLOADER: openocd
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
+    MYNEWT_DOWNLOADER_OPENOCD_CFG: 'repos/apache-mynewt-core/hw/bsp/bluepill/bluepill.cfg'
+    JLINK_TARGET: STM32F103C8
+    PYOCD_TARGET: stm32f103rc

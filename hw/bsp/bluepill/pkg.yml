@@ -33,3 +33,4 @@ pkg.deps:
     - '@apache-mynewt-core/hw/mcu/stm/stm32f1xx'
     - '@apache-mynewt-core/kernel/os'
     - '@apache-mynewt-core/libc/baselibc'
+    - "@apache-mynewt-core/hw/scripts"
