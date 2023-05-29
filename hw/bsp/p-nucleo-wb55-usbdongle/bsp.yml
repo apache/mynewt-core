@@ -28,7 +28,7 @@ bsp.linkerscript:
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/p-nucleo-wb55-usbdongle/boot-p-nucleo-wb55.ld"
     - "@apache-mynewt-core/hw/mcu/stm/stm32wbxx/stm32wb55.ld"
-bsp.downloadscript: "hw/bsp/p-nucleo-wb55-usbdongle/p-nucleo-wb55_download.sh"
+bsp.downloadscript: "hw/scripts/download.sh"
 bsp.debugscript: "hw/bsp/p-nucleo-wb55-usbdongle/p-nucleo-wb55_debug.sh"
 
 bsp.flash_map:
