@@ -44,10 +44,10 @@ extern "C" {
 
 #define CFG_TUSB_RHPORT0_MODE       ((OPT_MODE_DEVICE) | (CFG_TUSB_RHPORT0_SPEED))
 
-#if MYNEWT_VAL(BOOT_LOADER)
-#define CFG_TUSB_OS                 OPT_OS_NONE
-#else
+#if MYNEWT_VAL(OS_SCHEDULING)
 #define CFG_TUSB_OS                 OPT_OS_MYNEWT
+#else
+#define CFG_TUSB_OS                 OPT_OS_NONE
 #endif
 #define CFG_TUSB_DEBUG              MYNEWT_VAL(CFG_TUSB_DEBUG)
 
