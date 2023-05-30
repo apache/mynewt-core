@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <os/os.h>
 #include <cdc/cdc.h>
 
 static cdc_itf_t *cdc_itfs[CFG_TUD_CDC];
