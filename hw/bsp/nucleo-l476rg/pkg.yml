@@ -35,5 +35,5 @@ pkg.cflags.HARDFLOAT:
 
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32l4xx"
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/hw/scripts"

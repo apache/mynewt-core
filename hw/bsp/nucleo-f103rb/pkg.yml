@@ -30,5 +30,5 @@ pkg.cflags: -DSTM32F103xB
 
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32f1xx"
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/hw/scripts"

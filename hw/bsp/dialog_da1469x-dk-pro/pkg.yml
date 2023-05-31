@@ -31,5 +31,5 @@ pkg.cflags.HARDFLOAT:
     - '-mfpu=fpv5-sp-d16'
 
 pkg.deps:
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/hw/mcu/dialog/da14699"

@@ -32,7 +32,7 @@ pkg.cflags:
 
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32l0xx"
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
 
 pkg.deps.LORA_NODE:
     - "@apache-mynewt-core/hw/drivers/lora/sx1276"

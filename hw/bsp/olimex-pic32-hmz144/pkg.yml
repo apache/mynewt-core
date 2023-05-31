@@ -34,5 +34,5 @@ pkg.lflags:
 
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/microchip/pic32mz"
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/hw/drivers/flash/spiflash"

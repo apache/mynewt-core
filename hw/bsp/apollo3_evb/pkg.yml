@@ -32,5 +32,5 @@ pkg.cflags.HARDFLOAT:
 
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/ambiq/apollo3"
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
     - '@apache-mynewt-core/sys/flash_map'
