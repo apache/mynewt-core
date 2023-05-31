@@ -48,6 +48,12 @@ syscfg.vals:
     SSD1673_CS_PIN: 17
     SSD1673_SPI_DEV: 0
 
+    # Flasher parameters
+    MYNEWT_DOWNLOADER: pyocd
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x0
+    JLINK_TARGET: nRF52840_xxAA
+    PYOCD_TARGET: nrf52840
+
 syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1

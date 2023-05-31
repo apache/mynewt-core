@@ -26,10 +26,8 @@ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/reel_board/boot-nrf52840aa.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.part2linkerscript: "hw/bsp/reel_board/split-reel_board.ld"
-bsp.downloadscript: "hw/bsp/reel_board/reel_board_download.sh"
+bsp.downloadscript: "hw/scripts/download.sh"
 bsp.debugscript: "hw/bsp/reel_board/reel_board_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/reel_board/reel_board_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/reel_board/reel_board_debug.cmd"
 
 bsp.flash_map:
     areas:
