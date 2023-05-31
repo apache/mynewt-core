@@ -19,6 +19,7 @@
  */
 
 #include <assert.h>
+#include <stddef.h>
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_pd.h"

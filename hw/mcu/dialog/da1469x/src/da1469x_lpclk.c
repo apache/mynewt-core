@@ -19,6 +19,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "syscfg/syscfg.h"
 #include "mcu/mcu.h"
 #include "mcu/da1469x_clock.h"

@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_hal.h"
 #include "hal/hal_timer.h"
