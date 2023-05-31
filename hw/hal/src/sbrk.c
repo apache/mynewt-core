@@ -49,4 +49,10 @@ _sbrk(int incr)
     return prev_brk;
 }
 
+void *
+sbrk(int incr)
+{
+    return _sbrk(incr);
+}
+
 #endif
