@@ -153,6 +153,7 @@ static const struct hal_spi_hw_settings spi_5_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static const struct bus_spi_dev_cfg spi0_cfg = {
     .spi_num = 0,
     .pin_sck = MCU_GPIO_PORTD(1),
@@ -204,6 +205,7 @@ static const struct bus_spi_dev_cfg spi5_cfg = {
 #endif
 };
 static struct bus_spi_hal_dev spi5_bus;
+#endif
 
 /*
  * I2C_0 -> I2C1
