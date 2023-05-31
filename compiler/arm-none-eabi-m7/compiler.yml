@@ -33,6 +33,6 @@ compiler.flags.debug: [compiler.flags.base, -O0, -ggdb]
 
 compiler.as.flags: [-x, assembler-with-cpp]
 
-compiler.ld.flags: -static -specs=nosys.specs -lgcc -Wl,--gc-sections -nostartfiles
+compiler.ld.flags: -static -lgcc -Wl,--gc-sections -nostartfiles
 compiler.ld.resolve_circular_deps: true
 compiler.ld.mapfile: true

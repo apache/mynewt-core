@@ -33,3 +33,6 @@ pkg.init.BASELIBC_THREAD_SAFE_HEAP_ALLOCATION:
 
 pkg.cflags:
     - -fno-builtin-malloc
+
+pkg.lflags:
+    - -specs=nosys.specs:
