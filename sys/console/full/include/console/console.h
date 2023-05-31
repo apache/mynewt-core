@@ -20,6 +20,7 @@
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
 
+#include <stdarg.h>
 #include <inttypes.h>
 #include "os/mynewt.h"
 
