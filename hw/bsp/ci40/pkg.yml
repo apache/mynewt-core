@@ -31,7 +31,7 @@ pkg.keywords:
 pkg.cflags:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/mips/danube"
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/hw/mips-hal"
 
 pkg.arch: mips

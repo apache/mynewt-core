@@ -28,5 +28,5 @@ pkg.keywords:
     - cmac
 
 pkg.deps:
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/hw/mcu/dialog/cmac"

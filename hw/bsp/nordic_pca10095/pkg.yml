@@ -36,7 +36,7 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - "@apache-mynewt-core/hw/scripts"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340"
-    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/sys/flash_map"
 
 pkg.deps.BSP_NRF5340_NET_FLASH_ENABLE:
