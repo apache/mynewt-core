@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <os/util.h>
+#include <os/os_arch.h>
 #include <mcu/da1469x_vbus.h>
 
 /*

@@ -26,6 +26,8 @@
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
 #include "hal/hal_system.h"
+#include "hal/hal_debug.h"
+#include "os/os_arch.h"
 #include "os/os_cputime.h"
 
 #if !MYNEWT_VAL(BOOT_LOADER)

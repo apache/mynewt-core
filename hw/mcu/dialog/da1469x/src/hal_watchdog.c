@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <os/mynewt.h>
 #include "hal/hal_watchdog.h"
 #include "mcu/mcu.h"
 
