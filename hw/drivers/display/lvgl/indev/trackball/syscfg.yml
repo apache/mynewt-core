@@ -63,4 +63,4 @@ syscfg.defs:
         description: >
             When this time is specified, holding button for this amount of time
             start sticky button functionality.
-        value: 800
+        value: 500
