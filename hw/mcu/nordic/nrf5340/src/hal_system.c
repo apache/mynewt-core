@@ -24,6 +24,8 @@
 #include <hal/hal_debug.h>
 #include <nrf.h>
 #include <nrfx_config.h>
+#include <hal/nrf_oscillators.h>
+#include <tfm/tfm.h>
 
 /**
  * Function called at startup. Called after BSS and .data initialized but
@@ -74,6 +76,49 @@ hal_debugger_connected(void)
 {
     return CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk;
 }
+
+#if MYNEWT_VAL(MCU_HFXO_INTCAP) > 0
+static void
+hfxo_int_cap_set(void)
+{
+    uint32_t xosc32mtrim;
+    uint32_t slope_field;
+    uint32_t slope_mask;
+    uint32_t slope_sign;
+    int32_t slope;
+    uint32_t offset;
+    uint32_t capvalue;
+
+    if (tfm_ficr_xosc32mtrim_read(&xosc32mtrim) != 0) {
+        /* TODO assert? */
+        return;
+    }
+
+    /* The SLOPE field is in the two's complement form, hence this special
+     * handling. Ideally, it would result in just one SBFX instruction for
+     * extracting the slope value, at least gcc is capable of producing such
+     * output, but since the compiler apparently tries first to optimize
+     * additions and subtractions, it generates slightly less than optimal
+     * code.
+     */
+    slope_field = (xosc32mtrim & FICR_XOSC32MTRIM_SLOPE_Msk) >> FICR_XOSC32MTRIM_SLOPE_Pos;
+    slope_mask = FICR_XOSC32MTRIM_SLOPE_Msk >> FICR_XOSC32MTRIM_SLOPE_Pos;
+    slope_sign = (slope_mask - (slope_mask >> 1));
+    slope = (int32_t)(slope_field ^ slope_sign) - (int32_t)slope_sign;
+    offset = (xosc32mtrim & FICR_XOSC32MTRIM_OFFSET_Msk) >> FICR_XOSC32MTRIM_OFFSET_Pos;
+
+    /* As specified in the nRF5340 PS:
+     * CAPVALUE = (((FICR->XOSC32MTRIM.SLOPE+56)*(CAPACITANCE*2-14))
+     *            +((FICR->XOSC32MTRIM.OFFSET-8)<<4)+32)>>6;
+     * where CAPACITANCE is the desired capacitor value in pF, holding any
+     * value between 7.0 pF and 20.0 pF in 0.5 pF steps.
+     */
+    capvalue = ((slope + 56) * ((unsigned int)(MYNEWT_VAL(MCU_HFXO_INTCAP) * 2) - 14)
+                + ((offset - 8) << 4) + 32) >> 6;
+
+    nrf_oscillators_hfxo_cap_set(NRF_OSCILLATORS, true, capvalue);
+}
+#endif
 
 /**
  * hal system clock start
@@ -152,6 +197,11 @@ hal_system_clock_start(void)
         }
     }
 #endif
+
+#if MYNEWT_VAL(MCU_HFXO_INTCAP) > 0
+    hfxo_int_cap_set();
+#endif
+
     if (MYNEWT_VAL(MCU_HFCLCK192_DIV) == 1) {
         NRF_CLOCK->HFCLK192MCTRL = 0;
     } else if (MYNEWT_VAL(MCU_HFCLCK192_DIV) == 2) {
