@@ -65,6 +65,14 @@ syscfg.defs:
             - c7pf      # 7pF internal load capacitance
             - c9pf      # 9pF internal load capacitance
 
+    MCU_HFXO_INTCAP:
+        description: >
+            Control usage of internal load capacitors for 32 MHz crystal
+            oscillator. Capacitors ranging from 7.0 pF to 20.0 pF in 0.5 pF
+            steps. Value 0 means external capacitors are used.
+        value: 0
+        range: 0, 7..20
+
     MCU_GPIO_USE_PORT_EVENT:
         description: >
             When enabled, hal_gpio will use GPIOTE PORT event instead of PIN
