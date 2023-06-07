@@ -37,3 +37,4 @@ pkg.lflags.(MCU_APP_SECURE && TFM_EXPORT_NSC):
     - -utfm_uicr_otp_write
     - -utfm_gpio_pin_mcu_select
     - -utfm_uicr_protect_device
+    - -utfm_ficr_xosc32mtrim_read
