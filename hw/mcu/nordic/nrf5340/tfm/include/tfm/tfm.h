@@ -78,3 +78,12 @@ int SECURE_CALL tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_mcusel
  * @return 0 on success
  */
 int SECURE_CALL tfm_uicr_protect_device(uint8_t *approtect, uint8_t *secure_approtect, uint8_t *erase_protect);
+
+/**
+ * Read FICR XOSC32TRIM word
+ *
+ * @param xosc32mtrim - buffer for xosc32mtrim value
+ * @return 0 on success
+ *         TFM_ERR_ACCESS_DENIED - when read is denied by secure code
+ */
+int SECURE_CALL tfm_ficr_xosc32mtrim_read(uint32_t *xosc32mtrim);

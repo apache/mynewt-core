@@ -102,3 +102,11 @@ tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_mcusel_t mcu_sel)
 
     return err;
 }
+
+int SECURE_CALL
+tfm_ficr_xosc32mtrim_read(uint32_t *xosc32mtrim)
+{
+    *xosc32mtrim = NRF_FICR_S->XOSC32MTRIM;
+
+    return 0;
+}
