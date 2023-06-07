@@ -99,6 +99,7 @@ syscfg.vals:
 syscfg.vals.!BOOT_LOADER:
     MCU_LFCLK_SOURCE: LFXO
     MCU_LFCLK_XO_INTCAP: c9pf
+    MCU_HFXO_INTCAP: 8
 
 syscfg.vals.BLE_HOST:
     BLE_HS_FLOW_CTRL: 1
