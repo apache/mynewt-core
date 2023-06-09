@@ -30,7 +30,7 @@
 #  - BOOT_LOADER is set if downloading a bootloader
 
 if [ "$MFG_IMAGE" ]; then
-  if [ -z "$MYNEWT_VAL_MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET"] ; then
+  if [ -z "$MYNEWT_VAL_MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET" ] ; then
     >&2 echo "Syscfg value MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET not set"
     exit -1
   fi
@@ -45,7 +45,7 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     ;;
   "jlink")
     . $CORE_PATH/hw/scripts/jlink.sh
-    if [ -z "${MYNEWT_VAL_JLINK_TARGET}"] ; then
+    if [ -z "${MYNEWT_VAL_JLINK_TARGET}" ] ; then
       >&2 echo -e "\n\nSyscfg value MYNEWT_DOWNLOADER set to 'jlink' but JLINK_TARGET not set in syscfg."
       exit -1
     fi
@@ -69,7 +69,7 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     if [ -n "${MYNEWT_VAL_MYNEWT_DOWNLOADER_OPENOCD_CFG}" ] ; then
       CFG="${CFG} -s $BSP_PATH -f ${MYNEWT_VAL_MYNEWT_DOWNLOADER_OPENOCD_CFG}"
     fi
-    if [ -z "${CFG}"] ; then
+    if [ -z "${CFG}" ] ; then
       >&2 echo -e "\n\nSyscfg value MYNEWT_DOWNLOADER set to 'openocd' but none of the following syscfg values is not set:"
       >&2 echo -e "\tMYNEWT_DOWNLOADER_OPENOCD_INTERFACE\n\tMYNEWT_DOWNLOADER_OPENOCD_BOARD\n\tMYNEWT_DOWNLOADER_OPENOCD_CFG"
       exit -1
@@ -98,5 +98,9 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     . $CORE_PATH/hw/scripts/stm32_programmer.sh
     common_file_to_load
     stlink_load
+    ;;
+  *)
+    >&2 echo "Unknown downlaoder $MYNEWT_VAL_MYNEWT_DOWNLOADER"
+    exit 1
     ;;
 esac
