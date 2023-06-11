@@ -435,10 +435,6 @@ init_tasks(void)
 int
 mynewt_main(int argc, char **argv)
 {
-#ifdef ARCH_sim
-    mcu_sim_parse_args(argc, argv);
-#endif
-
     sysinit();
 
     init_tasks();

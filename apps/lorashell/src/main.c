@@ -476,10 +476,6 @@ mynewt_main(int argc, char **argv)
     int rc;
     int i;
 
-#ifdef ARCH_sim
-    mcu_sim_parse_args(argc, argv);
-#endif
-
     sysinit();
 
     for (i = 0; i < LORASHELL_NUM_CLI_CMDS; i++) {

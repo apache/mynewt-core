@@ -140,3 +140,11 @@ hal_bsp_init_trng(void)
         assert(rc == 0);
     }
 }
+
+#if !MYNEWT_VAL(SELFTEST)
+int
+main(int argc, char **argv)
+{
+    mcu_sim_parse_args(argc, argv);
+}
+#endif
