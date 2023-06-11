@@ -451,10 +451,6 @@ sensor_ble_oic_server_init(void)
 int
 mynewt_main(int argc, char **argv)
 {
-
-#ifdef ARCH_sim
-    mcu_sim_parse_args(argc, argv);
-#endif
     /* Initialize OS */
     sysinit();
 

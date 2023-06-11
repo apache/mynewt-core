@@ -219,10 +219,6 @@ mynewt_main(int argc, char **argv)
 {
     int rc;
 
-#ifdef ARCH_sim
-    mcu_sim_parse_args(argc, argv);
-#endif
-
     sysinit();
 
     rc = conf_register(&test_conf_handler);

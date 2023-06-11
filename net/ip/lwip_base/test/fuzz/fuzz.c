@@ -138,7 +138,8 @@ static void input_pkts(struct netif *netif, const u8_t *data, size_t len)
 #endif /* LWIP_FUZZ_MULTI_PACKET */
 }
 
-int main(int argc, char** argv)
+int
+mynewt_main(int argc, char **argv)
 {
   struct netif net_test;
   ip4_addr_t addr;

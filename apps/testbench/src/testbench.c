@@ -121,7 +121,7 @@ static const oc_handler_t omgr_oc_handler = {
  * Complexity is pushed down to the individual test suites and component test cases.
  */
 int
-main(int argc, char **argv)
+mynewt_main(int argc, char **argv)
 {
     int rc;
 

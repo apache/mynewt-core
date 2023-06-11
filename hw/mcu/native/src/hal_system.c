@@ -88,7 +88,7 @@ mcu_sim_parse_args(int argc, char **argv)
         { NULL }
     };
     int opt_idx;
-    extern int main(int argc, char **arg);
+    extern int mynewt_main(int argc, char **arg);
 
 #if MYNEWT_VAL(OS_SCHEDULING)
     if (g_os_started) {
@@ -147,7 +147,7 @@ mcu_sim_parse_args(int argc, char **argv)
         }
     }
 #if MYNEWT_VAL(OS_SCHEDULING)
-    os_init(main);
+    os_init(mynewt_main);
     os_start();
 #endif
 }

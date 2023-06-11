@@ -217,10 +217,6 @@ mynewt_main(int argc, char **argv)
 {
     RadioEvents_t radio_events;
 
-#ifdef ARCH_sim
-    mcu_sim_parse_args(argc, argv);
-#endif
-
     sysinit();
 
     /* Radio initialization. */
