@@ -72,6 +72,80 @@ syscfg.defs:
         description: Add LVGL demos to build.
         value: 1
 
+    LV_FONT_DEFAULT:
+        description: Set default LVGL font.
+        value: 'lv_font_montserrat_14'
+
+    LV_FONT_MONTSERRAT_8:
+        description: Enable Montserrat 8 font.
+        value: 0
+    LV_FONT_MONTSERRAT_10:
+        description: Enable Montserrat 10 font.
+        value: 0
+    LV_FONT_MONTSERRAT_12:
+        description: Enable Montserrat 12 font.
+        value: 1
+    LV_FONT_MONTSERRAT_14:
+        description: Enable Montserrat 14 font.
+        value: 1
+    LV_FONT_MONTSERRAT_16:
+        description: Enable Montserrat 16 font.
+        value: 1
+    LV_FONT_MONTSERRAT_18:
+        description: Enable Montserrat 18 font.
+        value: 0
+    LV_FONT_MONTSERRAT_20:
+        description: Enable Montserrat 20 font.
+        value: 0
+    LV_FONT_MONTSERRAT_22:
+        description: Enable Montserrat 22 font.
+        value: 0
+    LV_FONT_MONTSERRAT_24:
+        description: Enable Montserrat 24 font.
+        value: 0
+    LV_FONT_MONTSERRAT_26:
+        description: Enable Montserrat 26 font.
+        value: 0
+    LV_FONT_MONTSERRAT_28:
+        description: Enable Montserrat 28 font.
+        value: 0
+    LV_FONT_MONTSERRAT_30:
+        description: Enable Montserrat 30 font.
+        value: 0
+    LV_FONT_MONTSERRAT_32:
+        description: Enable Montserrat 32 font.
+        value: 0
+    LV_FONT_MONTSERRAT_34:
+        description: Enable Montserrat 34 font.
+        value: 0
+    LV_FONT_MONTSERRAT_36:
+        description: Enable Montserrat 36 font.
+        value: 0
+    LV_FONT_MONTSERRAT_38:
+        description: Enable Montserrat 38 font.
+        value: 0
+    LV_FONT_MONTSERRAT_40:
+        description: Enable Montserrat 40 font.
+        value: 0
+    LV_FONT_MONTSERRAT_42:
+        description: Enable Montserrat 42 font.
+        value: 0
+    LV_FONT_MONTSERRAT_44:
+        description: Enable Montserrat 44 font.
+        value: 0
+    LV_FONT_MONTSERRAT_46:
+        description: Enable Montserrat 46 font.
+        value: 0
+    LV_FONT_MONTSERRAT_48:
+        description: Enable Montserrat 48 font.
+        value: 0
+    LV_FONT_UNSCII_8:
+        description: Enable monospace unscii 8 font.
+        value: 0
+    LV_FONT_UNSCII_16:
+        description: Enable monospace unscii 16 font.
+        value: 0
+
     LV_USE_DEMO_FLEX_LAYOUT:
         description: Enable Flex Layout demo.
         value: 1
