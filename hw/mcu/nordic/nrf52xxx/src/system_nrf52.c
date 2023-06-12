@@ -50,6 +50,7 @@
 #endif
 
 #include "system_nrf52_approtect.h"
+#include "syscfg/syscfg.h"
 
 /*lint ++flb "Enter library region" */
 
@@ -489,6 +490,18 @@ void SystemInit(void)
             NRF_P1->PIN_CNF[9]  = (GPIO_PIN_CNF_DRIVE_H0H1 << GPIO_PIN_CNF_DRIVE_Pos) | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
         #endif
 #endif
+    if (MYNEWT_VAL_CHOICE(MCU_ACCESS_PORT_PROTECTION, disable)) {
+        NRF_APPROTECT->DISABLE = 0x5A;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Msk;
+        NRF_UICR->APPROTECT = 0x5A;
+        while (!NRF_NVMC->READY) ;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+    } else if (MYNEWT_VAL_CHOICE(MCU_ACCESS_PORT_PROTECTION, enable) && NRF_UICR->APPROTECT != 0) {
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Msk;
+        NRF_UICR->APPROTECT = 0;
+        while (!NRF_NVMC->READY) ;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+    }
     nrf52_handle_approtect();
 
     SystemCoreClockUpdate();

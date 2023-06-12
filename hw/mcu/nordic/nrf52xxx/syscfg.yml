@@ -102,6 +102,16 @@ syscfg.defs:
             Enables generic startup code. This allows BSP to not include own
             startup code.
         value: 0
+    MCU_ACCESS_PORT_PROTECTION:
+        description: >
+            If set to enable, writes 0x00 to APPROTECT register at startup disabling debugger.
+            If set to disable, writes 0x5A to APPROTECT register at startup enabling debugger.
+            (It can only be enabled if it was not already disabled before).  If it was disabled
+            MCU has to be erased (UICR and FLASH) to enable debugger again.
+            If left to default, does not write APPROTECT. Debugger may be enabled if APPROTECT
+            has already 0x5A value or for older revisions 0xFF.
+        choices: enable,disable,default
+        value: default
 
 # MCU peripherals definitions
     I2C_0:

@@ -28,6 +28,8 @@ syscfg.vals:
     # Enable nRF52840 MCU and common startup code
     MCU_TARGET: nRF52840
     MCU_COMMON_STARTUP: 1
+    # Disable access port, enable debugger
+    MCU_ACCESS_PORT_PROTECTION: disable
 
     # Set default pins for peripherals
     UART_0_PIN_TX: 6
