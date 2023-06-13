@@ -68,6 +68,22 @@ static const struct da1469x_dma_config spi_write_tx_dma_cfg = {
     .src_inc = true,
 };
 
+static const struct da1469x_dma_config spi_write_rx_dma_cfg16 = {
+    .priority = 0,
+    .burst_mode = MCU_DMA_BURST_MODE_DISABLED,
+    .bus_width = MCU_DMA_BUS_WIDTH_2B,
+    .dst_inc = false,
+    .src_inc = false,
+};
+
+static const struct da1469x_dma_config spi_write_tx_dma_cfg16 = {
+    .priority = 0,
+    .burst_mode = MCU_DMA_BURST_MODE_DISABLED,
+    .bus_width = MCU_DMA_BUS_WIDTH_2B,
+    .dst_inc = false,
+    .src_inc = true,
+};
+
 static const struct da1469x_dma_config spi_read_rx_dma_cfg = {
     .priority = 0,
     .burst_mode = MCU_DMA_BURST_MODE_DISABLED,
@@ -80,6 +96,22 @@ static const struct da1469x_dma_config spi_read_tx_dma_cfg = {
     .priority = 0,
     .burst_mode = MCU_DMA_BURST_MODE_DISABLED,
     .bus_width = MCU_DMA_BUS_WIDTH_1B,
+    .dst_inc = false,
+    .src_inc = false,
+};
+
+static const struct da1469x_dma_config spi_read_rx_dma_cfg16 = {
+    .priority = 0,
+    .burst_mode = MCU_DMA_BURST_MODE_DISABLED,
+    .bus_width = MCU_DMA_BUS_WIDTH_2B,
+    .dst_inc = true,
+    .src_inc = false,
+};
+
+static const struct da1469x_dma_config spi_read_tx_dma_cfg16 = {
+    .priority = 0,
+    .burst_mode = MCU_DMA_BURST_MODE_DISABLED,
+    .bus_width = MCU_DMA_BUS_WIDTH_2B,
     .dst_inc = false,
     .src_inc = false,
 };
@@ -488,8 +520,14 @@ spi_da1469x_read(struct bus_dev *bdev, struct bus_node *bnode,
     dd->transfer.started = 1;
     if (length >= MIN_DMA_SIZE && dd->dma_chans[0] != NULL) {
         dd->transfer.dma = 1;
-        da1469x_dma_configure(dd->dma_chans[0], &spi_read_rx_dma_cfg, spi_da1469x_dma_done_cb, dd);
-        da1469x_dma_configure(dd->dma_chans[1], &spi_read_tx_dma_cfg, NULL, NULL);
+        /* NOTE: currently can only use 8-bit or 16-bit word size */
+        if ((regs->SPI_CTRL_REG & SPI_SPI_CTRL_REG_SPI_WORD_Msk) == 0) {
+            da1469x_dma_configure(dd->dma_chans[0], &spi_read_rx_dma_cfg, spi_da1469x_dma_done_cb, dd);
+            da1469x_dma_configure(dd->dma_chans[1], &spi_read_tx_dma_cfg, NULL, NULL);
+        } else {
+            da1469x_dma_configure(dd->dma_chans[0], &spi_read_rx_dma_cfg16, spi_da1469x_dma_done_cb, dd);
+            da1469x_dma_configure(dd->dma_chans[1], &spi_read_tx_dma_cfg16, NULL, NULL);
+        }
         da1469x_dma_read_peripheral(dd->dma_chans[0], buf, length);
         da1469x_dma_write_peripheral(dd->dma_chans[1], &dma_dummy_src, length);
         regs->SPI_CTRL_REG |= SPI_SPI_CTRL_REG_SPI_ON_Msk;
@@ -565,8 +603,16 @@ spi_da1469x_write(struct bus_dev *bdev, struct bus_node *bnode,
         dd->transfer.dma = 1;
         regs->SPI_CTRL_REG &= ~SPI_SPI_CTRL_REG_SPI_INT_BIT_Msk;
         spi_da1469x_int_disable(regs);
-        da1469x_dma_configure(dd->dma_chans[0], &spi_write_rx_dma_cfg, spi_da1469x_dma_done_cb, dd);
-        da1469x_dma_configure(dd->dma_chans[1], &spi_write_tx_dma_cfg, NULL, NULL);
+
+        /* NOTE: currently can only use 8-bit or 16-bit word size */
+        if ((regs->SPI_CTRL_REG & SPI_SPI_CTRL_REG_SPI_WORD_Msk) == 0) {
+            da1469x_dma_configure(dd->dma_chans[0], &spi_write_rx_dma_cfg, spi_da1469x_dma_done_cb, dd);
+            da1469x_dma_configure(dd->dma_chans[1], &spi_write_tx_dma_cfg, NULL, NULL);
+        } else {
+            da1469x_dma_configure(dd->dma_chans[0], &spi_write_rx_dma_cfg16, spi_da1469x_dma_done_cb, dd);
+            da1469x_dma_configure(dd->dma_chans[1], &spi_write_tx_dma_cfg16, NULL, NULL);
+        }
+
         da1469x_dma_read_peripheral(dd->dma_chans[0], &dma_dummy_dst, length);
         da1469x_dma_write_peripheral(dd->dma_chans[1], buf, length);
         regs->SPI_CTRL_REG |= SPI_SPI_CTRL_REG_SPI_ON_Msk;
