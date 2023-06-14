@@ -25,7 +25,7 @@
 #error "No LITTLEFS_FLASH_AREA defined"
 #endif
 
-#include "littlefs/lfs.h"
+#include "lfs.h"
 
 int littlefs_reformat(void);
 int littlefs_init(void);
