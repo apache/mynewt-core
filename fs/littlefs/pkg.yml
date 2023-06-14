@@ -26,12 +26,27 @@ pkg.keywords:
     - filesystem
     - ffs
     - littlefs
+pkg.type: sdk
+
+repository.littlefs:
+    type: github
+    vers: v2.5.0-commit
+    branch: master
+    user: littlefs-project
+    repo: littlefs
 
 pkg.deps:
     - "@apache-mynewt-core/fs/fs"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/flash_map"
+
+pkg.source_dirs:
+    - "@littlefs/."
+    - "src"
+
+pkg.include_dirs:
+    - "@littlefs/."
 
 pkg.cflags.LITTLEFS_MIGRATE_V1:
     - -DLFS_MIGRATE
