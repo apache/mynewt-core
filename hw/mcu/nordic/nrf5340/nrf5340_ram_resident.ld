@@ -98,6 +98,7 @@ SECTIONS
         *(.rodata*)
 
         *(.eh_frame*)
+        PROVIDE(mynewt_main = main);
         . = ALIGN(4);
     } > RAM
 

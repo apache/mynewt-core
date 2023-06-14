@@ -36,3 +36,4 @@ pkg.cflags:
 
 pkg.lflags:
     - -specs=nosys.specs:
+    - -umain

@@ -46,6 +46,7 @@ SECTIONS
     *(.rodata)
     *(.rodata*)
 
+    PROVIDE(mynewt_main = main);
     . = ALIGN(4);
   } > FLASH
 

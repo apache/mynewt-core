@@ -110,6 +110,7 @@ SECTIONS
         *(.rodata*)
 
         KEEP(*(.eh_frame*))
+        PROVIDE(mynewt_main = main);
     } > FLASH
 
     .ARM.extab :

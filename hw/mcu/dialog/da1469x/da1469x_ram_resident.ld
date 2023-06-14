@@ -73,6 +73,7 @@ SECTIONS
 
         *(.eh_frame*)
         . = ALIGN(4);
+        PROVIDE(mynewt_main = main);
     } > RAM
 
     .ARM.extab :
