@@ -1,54 +1,59 @@
-/**
-*****************************************************************************
-**
-**  File        : stm32wb55xx_flash_cm4.ld
-**
-**  Abstract    : System Workbench Minimal System calls file
-**
-** 		          For more information about which c-functions
-**                need which of these lowlevel functions
-**                please consult the Newlib libc-manual
-**
-**  Environment : System Workbench for MCU
-**
-**  Distribution: The file is distributed “as is,” without any warranty
-**                of any kind.
-**
-*****************************************************************************
-**
-** <h2><center>&copy; COPYRIGHT(c) 2019 Ac6</center></h2>
-**
-** Redistribution and use in source and binary forms, with or without modification,
-** are permitted provided that the following conditions are met:
-**   1. Redistributions of source code must retain the above copyright notice,
-**      this list of conditions and the following disclaimer.
-**   2. Redistributions in binary form must reproduce the above copyright notice,
-**      this list of conditions and the following disclaimer in the documentation
-**      and/or other materials provided with the distribution.
-**   3. Neither the name of Ac6 nor the names of its contributors
-**      may be used to endorse or promote products derived from this software
-**      without specific prior written permission.
-**
-** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-** AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-** IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-** DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-** FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-** DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-** SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-** CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-** OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-**
-*****************************************************************************
-*/
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
-/* Entry Point */
+/* Linker script to place sections and symbol values. Should be used together
+ * with other linker script that defines memory regions FLASH and RAM.
+ * It references following symbols, which must be defined in code:
+ *   Reset_Handler : Entry of reset handler
+ *
+ * It defines following symbols, which code can use without definition:
+ *   __exidx_start
+ *   __exidx_end
+ *   __etext
+ *   __data_start__
+ *   __preinit_array_start
+ *   __preinit_array_end
+ *   __init_array_start
+ *   __init_array_end
+ *   __fini_array_start
+ *   __fini_array_end
+ *   __data_end__
+ *   __bss_start__
+ *   __bss_end__
+ *   __end__
+ *   end
+ *   __HeapBase
+ *   __HeapLimit
+ *   __StackLimit
+ *   __StackTop
+ *   __stack
+ *   __coredata_start__
+ *   __coredata_end__
+ *   __corebss_start__
+ *   __corebss_end__
+ *   __ecoredata
+ *   __ecorebss
+ */
 ENTRY(Reset_Handler)
 
 _estack = ORIGIN(RAM) + LENGTH(RAM);
 
-/* Define output sections */
 SECTIONS
 {
     /* Reserve space at the start of the image for the header. */
@@ -57,9 +62,10 @@ SECTIONS
         . = . + _imghdr_size;
     } > FLASH
 
+    __text = .;
+
     .text :
     {
-        . = ALIGN(8);
         __isr_vector_start = .;
         KEEP(*(.isr_vector))
         __isr_vector_end = .;
@@ -73,14 +79,14 @@ SECTIONS
         KEEP(*(.preinit_array))
         PROVIDE_HIDDEN (__preinit_array_end = .);
 
-        . = ALIGN(8);
+        . = ALIGN(4);
         /* init data */
         PROVIDE_HIDDEN (__init_array_start = .);
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array))
         PROVIDE_HIDDEN (__init_array_end = .);
 
-        . = ALIGN(8);
+        . = ALIGN(4);
         /* finit data */
         PROVIDE_HIDDEN (__fini_array_start = .);
         KEEP(*(SORT(.fini_array.*)))
@@ -104,6 +110,7 @@ SECTIONS
         *(.rodata*)
 
         KEEP(*(.eh_frame*))
+        PROVIDE(mynewt_main = main);
     } > FLASH
 
     .ARM.extab :
@@ -123,16 +130,17 @@ SECTIONS
 
     .vector_relocation :
     {
-        . = ALIGN(8);
+        . = ALIGN(4);
         __vector_tbl_reloc__ = .;
         . = . + (__isr_vector_end - __isr_vector_start);
+        . = ALIGN(4);
     } > RAM
 
     .coredata :
     {
-        . = ALIGN(8);
         __coredata_start__ = .;
         *(.data.core)
+        . = ALIGN(4);
         __coredata_end__ = .;
     } > RAM AT > FLASH
 
@@ -142,14 +150,14 @@ SECTIONS
 
     .data :
     {
-        . = ALIGN(8);
+        . = ALIGN(4);
         _sdata = .;
         __data_start__ = _sdata;
         *(vtable)
         *(.data*)
 
         KEEP(*(.jcr*))
-        . = ALIGN(8);
+        . = ALIGN(4);
         /* All data end */
         _edata = .;
         __data_end__ = _edata;

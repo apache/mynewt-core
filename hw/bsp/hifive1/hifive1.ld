@@ -42,6 +42,7 @@ SECTIONS
     *(.text.startup .text.startup.*)
     *(.text .text.*)
     *(.gnu.linkonce.t.*)
+    PROVIDE(mynewt_main = main);
   } >flash
 
   .fini           :
