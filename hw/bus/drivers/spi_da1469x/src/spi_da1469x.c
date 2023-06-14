@@ -53,7 +53,7 @@ STATS_NAME_END(spi_da1469x_stats_section)
 #define MIN_DMA_SIZE 8
 
 /* A value of 1 for the word size means 16-bit words */
-#define SPI_CTRL_REG_16BIT_WORD (1 << SPI_SPI_CTRL_REG_SPI_WORD_Pos) 
+#define SPI_CTRL_REG_16BIT_WORD (1 << SPI_SPI_CTRL_REG_SPI_WORD_Pos)
 
 static const struct da1469x_dma_config spi_write_rx_dma_cfg = {
     .priority = 0,
