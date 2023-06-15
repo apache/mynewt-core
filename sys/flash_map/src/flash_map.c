@@ -88,6 +88,11 @@ flash_area_to_sectors(int id, int *cnt, struct flash_area *ret)
     *cnt = 0;
 
     hf = hal_bsp_flash_dev(fa->fa_device_id);
+    if (!hf) {
+        flash_area_close(fa);
+        return SYS_EINVAL;
+    }
+
     for (i = 0; i < hf->hf_sector_cnt; i++) {
         hf->hf_itf->hff_sector_info(hf, i, &start, &size);
         if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
@@ -147,6 +152,11 @@ flash_area_to_sector_ranges(int id, int *cnt, struct flash_sector_range *ret)
     }
 
     hf = hal_bsp_flash_dev(fa->fa_device_id);
+    if (!hf) {
+        flash_area_close(fa);
+        return SYS_EINVAL;
+    }
+
     for (i = 0; i < hf->hf_sector_cnt; i++) {
         hf->hf_itf->hff_sector_info(hf, i, &start, &size);
         if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
@@ -211,6 +221,11 @@ flash_area_getnext_sector(int id, int *sec_id, struct flash_area *ret)
         goto end;
     }
     hf = hal_bsp_flash_dev(fa->fa_device_id);
+    if (!hf) {
+        rc = SYS_EINVAL;
+        goto end;
+    }
+
     i = *sec_id + 1;
     for (; i < hf->hf_sector_cnt; i++) {
         hf->hf_itf->hff_sector_info(hf, i, &start, &size);
