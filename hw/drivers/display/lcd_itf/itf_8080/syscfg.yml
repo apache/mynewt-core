@@ -49,6 +49,30 @@ syscfg.defs:
         description: D7 pin for LCD.
         value:
         restrictions: $notnull
+    LCD_D8_PIN:
+        description: D8 pin for LCD.
+        value:
+    LCD_D9_PIN:
+        description: D9 pin for LCD.
+        value:
+    LCD_D10_PIN:
+        description: D10 pin for LCD.
+        value:
+    LCD_D11_PIN:
+        description: D11 pin for LCD.
+        value:
+    LCD_D12_PIN:
+        description: D12 pin for LCD.
+        value:
+    LCD_D13_PIN:
+        description: D13 pin for LCD.
+        value:
+    LCD_D14_PIN:
+        description: D14 pin for LCD.
+        value:
+    LCD_D15_PIN:
+        description: D15 pin for LCD.
+        value:
     LCD_WR_PIN:
         description: WR pin for LCD.
         value:
