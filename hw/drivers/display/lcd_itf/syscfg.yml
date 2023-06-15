@@ -24,6 +24,7 @@ syscfg.defs:
             - custom
             - spi
             - 8080_II_8_bit
+            - 8080_II_16_bit
         value: spi
     LCD_CS_PIN:
         description: LCD chip select pin for SPI.

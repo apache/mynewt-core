@@ -44,6 +44,44 @@ lcd_itf_8080_write_byte(uint8_t b)
 }
 #endif
 
+#ifndef LCD_ITF_8080_WRITE_WORD
+
+#if MYNEWT_VAL_CHOICE(LCD_ITF, 8080_II_8_bit)
+
+#define LCD_ITF_8080_WRITE_WORD(w) do {         \
+        LCD_ITF_8080_WRITE_BYTE(w >> 8);        \
+        LCD_ITF_8080_WRITE_BYTE((uint8_t)w);    \
+} while (0)
+
+#else
+
+#define LCD_ITF_8080_WRITE_WORD(n) lcd_itf_8080_write_word(n)
+
+void
+lcd_itf_8080_write_word(uint16_t w)
+{
+    hal_gpio_write(MYNEWT_VAL(LCD_D0_PIN), PIN(w, 0));
+    hal_gpio_write(MYNEWT_VAL(LCD_D1_PIN), PIN(w, 1));
+    hal_gpio_write(MYNEWT_VAL(LCD_D2_PIN), PIN(w, 2));
+    hal_gpio_write(MYNEWT_VAL(LCD_D3_PIN), PIN(w, 3));
+    hal_gpio_write(MYNEWT_VAL(LCD_D4_PIN), PIN(w, 4));
+    hal_gpio_write(MYNEWT_VAL(LCD_D5_PIN), PIN(w, 5));
+    hal_gpio_write(MYNEWT_VAL(LCD_D6_PIN), PIN(w, 6));
+    hal_gpio_write(MYNEWT_VAL(LCD_D7_PIN), PIN(w, 7));
+    hal_gpio_write(MYNEWT_VAL(LCD_D8_PIN), PIN(w, 8));
+    hal_gpio_write(MYNEWT_VAL(LCD_D9_PIN), PIN(w, 9));
+    hal_gpio_write(MYNEWT_VAL(LCD_D10_PIN), PIN(w, 10));
+    hal_gpio_write(MYNEWT_VAL(LCD_D11_PIN), PIN(w, 11));
+    hal_gpio_write(MYNEWT_VAL(LCD_D12_PIN), PIN(w, 12));
+    hal_gpio_write(MYNEWT_VAL(LCD_D13_PIN), PIN(w, 13));
+    hal_gpio_write(MYNEWT_VAL(LCD_D14_PIN), PIN(w, 14));
+    hal_gpio_write(MYNEWT_VAL(LCD_D15_PIN), PIN(w, 15));
+    hal_gpio_write(MYNEWT_VAL(LCD_WR_PIN), 0);
+    hal_gpio_write(MYNEWT_VAL(LCD_WR_PIN), 1);
+}
+#endif
+#endif
+
 void
 lcd_itf_write_bytes(const uint8_t *bytes, size_t size)
 {
@@ -61,8 +99,7 @@ lcd_itf_write_color_data(const void *pixels, size_t size)
     LCD_CS_PIN_ACTIVE();
     if (LV_COLOR_16_SWAP == 0) {
         for (size_t i = 0; i < size; i += 2, data++) {
-            LCD_ITF_8080_WRITE_BYTE(*data >> 8);
-            LCD_ITF_8080_WRITE_BYTE((uint8_t)*data);
+            LCD_ITF_8080_WRITE_WORD(*data);
         }
     } else {
         lcd_itf_write_bytes((const uint8_t *)pixels, size);
@@ -107,4 +144,14 @@ lcd_itf_init(void)
     hal_gpio_init_out(MYNEWT_VAL(LCD_D5_PIN), 0);
     hal_gpio_init_out(MYNEWT_VAL(LCD_D6_PIN), 0);
     hal_gpio_init_out(MYNEWT_VAL(LCD_D7_PIN), 0);
+#if MYNEWT_VAL_CHOICE(LCD_ITF, 8080_II_16_bit)
+    hal_gpio_init_out(MYNEWT_VAL(LCD_D8_PIN), 0);
+    hal_gpio_init_out(MYNEWT_VAL(LCD_D9_PIN), 0);
+    hal_gpio_init_out(MYNEWT_VAL(LCD_D10_PIN), 0);
+    hal_gpio_init_out(MYNEWT_VAL(LCD_D11_PIN), 0);
+    hal_gpio_init_out(MYNEWT_VAL(LCD_D12_PIN), 0);
+    hal_gpio_init_out(MYNEWT_VAL(LCD_D13_PIN), 0);
+    hal_gpio_init_out(MYNEWT_VAL(LCD_D14_PIN), 0);
+    hal_gpio_init_out(MYNEWT_VAL(LCD_D15_PIN), 0);
+#endif
 }
