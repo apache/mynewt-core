@@ -1,0 +1,172 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.vals:
+    LOG_LEVEL: 255
+
+    BLE_ROLE_CENTRAL: 1
+    BLE_ROLE_PERIPHERAL: 1
+    BLE_ROLE_BROADCASTER: 1
+    BLE_ROLE_OBSERVER: 1
+
+    BLE_EDDYSTONE: 1
+    BLE_TRANSPORT_EVT_DISCARDABLE_COUNT: 70
+    BLE_EXT_ADV: 1
+    BLE_EXT_ADV_MAX_SIZE: 1650
+
+    BLE_TRANSPORT_EVT_DISCARDABLE_COUNT: 257
+    BLE_HS_DEBUG: 1
+    BLE_L2CAP_COC_MAX_NUM: 2
+    BLE_LL_CFG_FEAT_LE_2M_PHY: 1
+    BLE_LL_CFG_FEAT_LE_CODED_PHY: 1
+    BLE_LL_CFG_FEAT_LL_PRIVACY: 1
+    BLE_LL_CONN_INIT_MAX_TX_BYTES: 251
+    BLE_LL_DTM: 1
+    BLE_LL_DTM_EXTENSIONS: 1
+    BLE_LL_NUM_SCAN_DUP_ADVS: 1
+    BLE_LL_ISO: 1
+    BLE_LL_ISO_BROADCASTER: 1
+    BLE_PERIODIC_ADV_SYNC_BIGINFO_REPORTS: 1
+    BLE_MAX_CONNECTIONS: 5
+    BLE_MAX_PERIODIC_SYNCS: 5
+    BLE_MONITOR_RTT: 1
+    BLE_MONITOR_RTT_BUFFER_SIZE: 2048
+    BLE_MULTI_ADV_INSTANCES: 5
+    BLE_PERIODIC_ADV: 1
+    BLE_PERIODIC_ADV_SYNC_TRANSFER: 1
+    BLE_SM_BONDING: 1
+    BLE_SM_LEGACY: 1
+    BLE_SM_SC: 1
+    BLE_STORE_MAX_BONDS: 5
+    BLE_VERSION: 54
+
+    CONSOLE_HISTORY: ram
+    CONSOLE_HISTORY_RAM_HISTORY_SIZE: 10
+    CONSOLE_INPUT: 1
+    CONSOLE_RTT: 0
+    CONSOLE_UART: 1
+    CONSOLE_USB: 0
+    MSYS_1_BLOCK_COUNT: 70
+    CONSOLE_STICKY_PROMPT: 1
+    CONSOLE_PROMPT_SOFT_CURSOR: 1
+    CONSOLE_PROMPT_SOFT_CURSOR_ATTR: '"30;42m"'
+    CONSOLE_UART_BAUD: 1000000
+    CONSOLE_UART_RX_BUF_SIZE: 256
+
+    I2C_0: 1
+    SPI_1_MASTER: 1
+    SPI_1_MASTER_PIN_MISO: 1
+    SPI_1_MASTER_PIN_MOSI: 1
+    SPI_1_MASTER_PIN_SCK: 1
+    SPI_0_MASTER: 1
+    DRV2605_OFB: 1
+    LSM303DLHC_OFB: 1
+    LSM6DSO_OFB: 1
+    MPU6050_OFB: 1
+    BNO055_OFB: 1
+    TSL2561_OFB: 1
+    TSL2591_OFB: 1
+    TCS34725_OFB: 1
+    BME280_OFB: 1
+    MS5837_OFB: 1
+    MS5840_OFB: 1
+    BMP280_OFB: 1
+    BMP280_OFB_I2C_NUM: 0
+    BMA253_OFB: 1
+    BMA2XX_OFB: 1
+    BMP388_OFB: 1
+    BMP388_OFB_I2C_NUM: 0
+    ADXL345_OFB: 1
+    ADXL345_OFB_I2C_NUM: 0
+    LPS33HW_OFB: 1
+    LPS33THW_OFB: 1
+    LIS2DW12_OFB: 1
+    LIS2DH12_OFB: 1
+    LIS2DH12_OFB_I2C_NUM: 0
+    LIS2DS12_OFB: 1
+    BME680_OFB: 1
+    KXTJ3_OFB: 1
+    DPS368_OFB: 1
+    ICP101XX_OFB: 1
+
+    SHELL_TASK: 1
+    STATS_NAMES: 1
+    REBOOT_LOG_FCB: 1
+    LOG_FCB: 1
+    CONFIG_FCB: 1
+    CONFIG_CLI: 1
+    STATS_CLI: 1
+    LOG_CLI: 1
+    STATS_MGMT: 1
+    LOG_MGMT: 1
+    CONFIG_MGMT: 1
+    TSL2561_CLI: 1
+    BNO055_CLI: 1
+    TCS34725_CLI: 1
+    BME280_CLI: 1
+    BMA2XX_CLI: 1
+    SENSOR_OIC: 1
+    OC_SERVER: 1
+    OC_TRANSPORT_GATT: 1
+    OC_APP_RESOURCES : 20
+    FLOAT_USER: 1
+    SENSOR_OIC_PERIODIC: 1
+
+    BLE_MESH: 1
+    BLE_MESH_PB_GATT: 1
+    BLE_MESH_SETTINGS: 1
+    BLE_MESH_PROXY: 1
+    BLE_MESH_SHELL: 1
+    BLE_MESH_GATT_PROXY: 1
+    BLE_MESH_RELAY: 1
+    BLE_MESH_LOW_POWER: 1
+    BLE_MESH_FRIEND: 1
+    BLE_MESH_CFG_CLI: 1
+    BLE_MESH_HEALTH_CLI: 1
+    BLE_MESH_SHELL: 1
+    BLE_MESH_TESTING: 1
+    BLE_MESH_SHELL_MODELS: 1
+    BLE_MESH_CDB: 1
+
+
+    PWM_0: 1
+    PWM_1: 1
+    PWM_2: 1
+    PWM_3: 1
+
+    ADC_0: 1
+    ADC_1: 1
+    ADC_2: 1
+    ADC_3: 1
+
+    USB: 1
+    USBD_PID: 0x0001
+    USBD_VID: 0x0002
+    USBD_STD_DESCRIPTORS: 1
+
+    LVGL_ILI9341: 1
+    LVGL_STMPE610: 1
+    LVGL_ILI9486: 1
+    LVGL_XPT2046: 1
+    LVGL_DISPLAY_HORIZONTAL_RESOLUTION: 300
+    LVGL_DISPLAY_VERTICAL_RESOLUTION: 300
+    STMPE610_SPI_CS_PIN: 1
+    XPT2046_INT_PIN: 1
+    XPT2046_SPI_CS_PIN: 1
+    LCD_DC_PIN: 1
