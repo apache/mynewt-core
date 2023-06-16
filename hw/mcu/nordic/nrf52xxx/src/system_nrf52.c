@@ -101,6 +101,33 @@ static bool errata_136(void);
     uint32_t SystemCoreClock __attribute__((used)) = __SYSTEM_CLOCK_64M;
 #endif
 
+#if MYNEWT_VAL_CHOICE(MCU_ACCESS_PORT_PROTECTION, disable)
+/*
+ * When target requests debugger to be enabled automatically additional check
+ * has to be berformed to make sure that approtect wants 0xFF or 0x5A to
+ * enable debugger. Following lines define AUTO_PROTECT_DISABLE which evaluates
+ * to true if 0x5A is applicable for current chip.
+ */
+#define NRF_MINIMUM_VARIANT(a, b) ((uint16_t)NRF_FICR->INFO.VARIANT >= (((a) << 8) | b))
+#if defined (NRF52805_XXAA)
+#define AUTO_APPROTECT_DISABLE NRF_MINIMUM_VARIANT('B', '0')
+#elif defined(NRF52810_XXAA)
+#define AUTO_APPROTECT_DISABLE NRF_MINIMUM_VARIANT('E', '0')
+#elif defined(NRF52811_XXAA)
+#define AUTO_APPROTECT_DISABLE NRF_MINIMUM_VARIANT('B', '0')
+#elif defined(NRF52832_XXAA) || defined(NRF52832_XXAB)
+#define AUTO_APPROTECT_DISABLE NRF_MINIMUM_VARIANT('G', '0')
+#elif defined (NRF52833_XXAA)
+#define AUTO_APPROTECT_DISABLE NRF_MINIMUM_VARIANT('B', '0')
+#elif defined(NRF52840_XXAA)
+#define AUTO_APPROTECT_DISABLE NRF_MINIMUM_VARIANT('F', '0')
+#else
+#define AUTO_APPROTECT_DISABLE 0
+#endif
+#else
+#define AUTO_APPROTECT_DISABLE 0
+#endif
+
 void SystemCoreClockUpdate(void)
 {
     SystemCoreClock = __SYSTEM_CLOCK_64M;
@@ -490,10 +517,10 @@ void SystemInit(void)
             NRF_P1->PIN_CNF[9]  = (GPIO_PIN_CNF_DRIVE_H0H1 << GPIO_PIN_CNF_DRIVE_Pos) | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
         #endif
 #endif
-    if (MYNEWT_VAL_CHOICE(MCU_ACCESS_PORT_PROTECTION, disable)) {
-        NRF_APPROTECT->DISABLE = 0x5A;
+    if (MYNEWT_VAL_CHOICE(MCU_ACCESS_PORT_PROTECTION, disable) && AUTO_APPROTECT_DISABLE) {
+        NRF_APPROTECT->DISABLE = APPROTECT_DISABLE_DISABLE_SwDisable;
         NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Msk;
-        NRF_UICR->APPROTECT = 0x5A;
+        NRF_UICR->APPROTECT = APPROTECT_DISABLE_DISABLE_SwDisable;
         while (!NRF_NVMC->READY) ;
         NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
     } else if (MYNEWT_VAL_CHOICE(MCU_ACCESS_PORT_PROTECTION, enable) && NRF_UICR->APPROTECT != 0) {
