@@ -149,38 +149,20 @@ cmac_timer_disable_eq_hal_timer(void)
 static inline uint32_t
 cmac_timer_read_eq_hal_os_tick(void)
 {
-    return (CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG << 5) |
-           (CMAC->CM_LL_TIMER1_9_0_EQ_Y_REG >> 5);
+    return (CMAC->CM_LL_TIMER1_EQ_Y_HI_REG << 5) |
+           (CMAC->CM_LL_TIMER1_EQ_Y_LO_REG >> 5);
 }
 
 /* Write comparator value for hal_os_tick callback */
 static inline void
 cmac_timer_write_eq_hal_os_tick(uint32_t val)
 {
-    uint32_t val_36_10;
-
-    val_36_10 = val >> 5;
-    CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG = val_36_10;
-    CMAC->CM_LL_TIMER1_9_0_EQ_Y_REG = val << 5;
-
-    /* If msb comparator is set at least 2 "ticks" ahead, we can enable it here
-     * and then enable lsb comparator on match. Otherwise, we need to enable lsb
-     * comparator here to make sure we do not miss a match in case lsb matches
-     * just after msb (we would not be able to switch from msb to lsb comparator
-     * on time).
-     */
-    if ((int32_t)(val_36_10 - CMAC->CM_LL_TIMER1_36_10_REG) >= 2) {
-        CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
-        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
-    } else {
-        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
-        CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
-    }
+    CMAC->CM_LL_TIMER1_EQ_Y_HI_REG = val >> 5;
+    CMAC->CM_LL_TIMER1_EQ_Y_LO_REG = val << 5;
+    CMAC->CM_LL_INT_MSK_SET_REG = CMAC_CM_LL_INT_MSK_SET_REG_LL_TIMER1_EQ_Y_SEL_Msk;
 
     if ((int32_t)(val - cmac_timer_read32_msb()) <= 0) {
-        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_36_10_EQ_Y_SEL_Msk;
-        CMAC->CM_LL_INT_MSK_CLR_REG = CMAC_CM_LL_INT_MSK_CLR_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
-        cm_ll_int_stat_reg = CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_9_0_EQ_Y_SEL_Msk;
+        cm_ll_int_stat_reg = CMAC_CM_LL_INT_STAT_REG_LL_TIMER1_EQ_Y_SEL_Msk;
         NVIC_SetPendingIRQ(LL_TIMER2LLC_IRQn);
     }
 }
