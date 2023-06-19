@@ -179,7 +179,7 @@ struct da1469x_transfer {
     /* Transfer started */
     uint8_t started : 1;
     /* Transfer is 16 bits */
-    uint8_t xfr_16: 1;
+    uint8_t xfr_16 : 1;
 };
 
 struct spi_da1469x_driver_data {
