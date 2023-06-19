@@ -104,6 +104,11 @@ struct cmac_shm_crashinfo {
     uint32_t CM_LL_TIMER1_9_0_REG;
     uint32_t CM_ERROR_REG;
     uint32_t CM_EXC_STAT_REG;
+    uint32_t CM_LL_INT_STAT_REG;
+    uint32_t CM_LL_TIMER1_EQ_X_HI_REG;
+    uint32_t CM_LL_TIMER1_EQ_X_LO_REG;
+    uint32_t CM_LL_TIMER1_EQ_Y_HI_REG;
+    uint32_t CM_LL_TIMER1_EQ_Y_LO_REG;
 };
 
 struct cmac_shm_debugdata {
