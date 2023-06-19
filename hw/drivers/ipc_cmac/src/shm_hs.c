@@ -109,7 +109,6 @@ static void
 cmac2sys_isr(void)
 {
     volatile struct cmac_shm_crashinfo *ci = g_cmac_shm_crashinfo;
-    const char *assert_file;
 
     os_trace_isr_enter();
 
@@ -128,11 +127,10 @@ cmac2sys_isr(void)
                 console_printf("  assert:0x%08lx\n", ci->assert);
                 if (ci->assert_file) {
                     /* Need to translate pointer from M0 code segment to M33 data */
-                    assert_file =
-                        ci->assert_file + MCU_MEM_SYSRAM_START_ADDRESS +
-                        MEMCTRL->CMI_CODE_BASE_REG;
+                    ci->assert_file += MCU_MEM_SYSRAM_START_ADDRESS +
+                                       MEMCTRL->CMI_CODE_BASE_REG;
                     console_printf("         %s:%d\n",
-                                   assert_file, (unsigned)ci->assert_line);
+                                   ci->assert_file, (unsigned)ci->assert_line);
                 }
             }
             console_printf("  0x%08lx CM_ERROR_REG\n", ci->CM_ERROR_REG);
