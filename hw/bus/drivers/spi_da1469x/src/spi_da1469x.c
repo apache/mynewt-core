@@ -163,12 +163,12 @@ static const struct da1469x_spi_hw da1469x_spi2 = {
 
 struct da1469x_transfer {
     /* Transmit or receive buffer */
-    uint8_t *data;
-    /* Transfer length */
+    void *data;
+    /* Transfer length (number of items) */
     uint16_t len;
-    /* Number of bytes written to output FIFO */
+    /* Number of items written to output FIFO */
     uint16_t wlen;
-    /* Number of bytes read from input FIFO */
+    /* Number of items read from input FIFO */
     uint16_t rlen;
 
     uint8_t nostop : 1;
@@ -178,6 +178,8 @@ struct da1469x_transfer {
     uint8_t dma : 1;
     /* Transfer started */
     uint8_t started : 1;
+    /* Transfer is 16 bits */
+    uint8_t xfr_16: 1;
 };
 
 struct spi_da1469x_driver_data {
@@ -243,6 +245,9 @@ spi_da1469x_dma_done_cb(void *arg)
         transfer->rlen += transferred;
 
 #if MYNEWT_VAL(SPI_DA1469X_STAT)
+        if (dd->transfer.xfr_16) {
+            transferred *= 2;
+        }
         if (transfer->write) {
             STATS_INCN(dd->stats, written_bytes, transferred);
         } else {
@@ -261,17 +266,27 @@ static void
 spi_da1469x_isr(SPI_Type *regs, struct spi_da1469x_driver_data *dd)
 {
     struct da1469x_transfer *transfer = &dd->transfer;
-    uint8_t rx_byte;
+    uint16_t rxdata;
 
     while ((transfer->wlen < transfer->len) &&
            !(regs->SPI_CTRL_REG & SPI_SPI_CTRL_REG_SPI_TXH_Msk)) {
         if (transfer->write) {
-            regs->SPI_RX_TX_REG = transfer->data[transfer->wlen];
+            if (transfer->xfr_16) {
+                regs->SPI_RX_TX_REG = *(uint16_t *)transfer->data;
 #if MYNEWT_VAL(SPI_DA1469X_STAT)
-            STATS_INC(dd->stats, written_bytes);
+                STATS_INCN(dd->stats, written_bytes, 2);
 #endif
+                transfer->data = (uint16_t *)transfer->data + 1;
+            } else {
+                regs->SPI_RX_TX_REG = *(uint8_t *)transfer->data;
+#if MYNEWT_VAL(SPI_DA1469X_STAT)
+                STATS_INC(dd->stats, written_bytes);
+#endif
+                transfer->data = (uint8_t *)transfer->data + 1;
+            }
         } else {
-            regs->SPI_RX_TX_REG = 0xFF;
+            /* Write 16 bits in case 16-bit transfer used */
+            regs->SPI_RX_TX_REG = 0xFFFF;
         }
         transfer->wlen++;
     }
@@ -281,13 +296,22 @@ spi_da1469x_isr(SPI_Type *regs, struct spi_da1469x_driver_data *dd)
     }
 
     while (0 != (regs->SPI_CTRL_REG & SPI_SPI_CTRL_REG_SPI_INT_BIT_Msk)) {
-        rx_byte = regs->SPI_RX_TX_REG;
+        rxdata = regs->SPI_RX_TX_REG;
         if (transfer->rlen < transfer->len) {
             if (!transfer->write) {
-                transfer->data[transfer->rlen] = rx_byte;
-#if MYNEWT_VAL(SPI_DA1469X_STAT)
-                STATS_INC(dd->stats, read_bytes);
-#endif
+                if (transfer->xfr_16) {
+                    *(uint16_t *)transfer->data = (uint16_t)rxdata;
+                    transfer->data = (uint16_t *)transfer->data + 1;
+    #if MYNEWT_VAL(SPI_DA1469X_STAT)
+                    STATS_INCN(dd->stats, read_bytes, 2);
+    #endif
+                } else {
+                    *(uint8_t *)transfer->data = (uint8_t)rxdata;
+                    transfer->data = (uint8_t *)transfer->data + 1;
+    #if MYNEWT_VAL(SPI_DA1469X_STAT)
+                    STATS_INC(dd->stats, read_bytes);
+    #endif
+                }
             }
             transfer->rlen++;
         }
@@ -521,10 +545,16 @@ spi_da1469x_read(struct bus_dev *bdev, struct bus_node *bnode,
     dd->transfer.wlen = 0;
     dd->transfer.write = 0;
     dd->transfer.started = 1;
+    if ((regs->SPI_CTRL_REG & SPI_SPI_CTRL_REG_SPI_WORD_Msk) == SPI_CTRL_REG_16BIT_WORD) {
+        dd->transfer.xfr_16 = 1;
+    } else {
+        dd->transfer.xfr_16 = 0;
+    }
+
     if (length >= MIN_DMA_SIZE && dd->dma_chans[0] != NULL) {
         dd->transfer.dma = 1;
         /* NOTE: assumes if 16-bit not used; dma transfers are 8-bits */
-        if ((regs->SPI_CTRL_REG & SPI_SPI_CTRL_REG_SPI_WORD_Msk) == SPI_CTRL_REG_16BIT_WORD) {
+        if (dd->transfer.xfr_16) {
             da1469x_dma_configure(dd->dma_chans[0], &spi_read_rx_dma_cfg16, spi_da1469x_dma_done_cb, dd);
             da1469x_dma_configure(dd->dma_chans[1], &spi_read_tx_dma_cfg16, NULL, NULL);
         } else {
@@ -602,13 +632,18 @@ spi_da1469x_write(struct bus_dev *bdev, struct bus_node *bnode,
     dd->transfer.nostop = (flags & BUS_F_NOSTOP) ? 1 : 0;
     dd->transfer.write = 1;
     dd->transfer.started = 1;
+    if ((regs->SPI_CTRL_REG & SPI_SPI_CTRL_REG_SPI_WORD_Msk) == SPI_CTRL_REG_16BIT_WORD) {
+        dd->transfer.xfr_16 = 1;
+    } else {
+        dd->transfer.xfr_16 = 0;
+    }
+
     if (length >= MIN_DMA_SIZE && dd->dma_chans[0] != NULL) {
         dd->transfer.dma = 1;
         regs->SPI_CTRL_REG &= ~SPI_SPI_CTRL_REG_SPI_INT_BIT_Msk;
         spi_da1469x_int_disable(regs);
-
         /* NOTE: assumes if 16-bit not used; dma transfers are 8-bits */
-        if ((regs->SPI_CTRL_REG & SPI_SPI_CTRL_REG_SPI_WORD_Msk) == SPI_CTRL_REG_16BIT_WORD) {
+        if (dd->transfer.xfr_16) {
             da1469x_dma_configure(dd->dma_chans[0], &spi_write_rx_dma_cfg16, spi_da1469x_dma_done_cb, dd);
             da1469x_dma_configure(dd->dma_chans[1], &spi_write_tx_dma_cfg16, NULL, NULL);
         } else {
