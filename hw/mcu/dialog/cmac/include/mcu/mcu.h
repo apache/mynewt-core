@@ -31,6 +31,16 @@ extern "C" {
 #define MCU_MEM_SYSRAM_START_ADDRESS    (0x20000000)
 #define MCU_MEM_SYSRAM_END_ADDRESS      (0x20080000)
 
+#define MCU_CHIP_VARIANT_TSMC           1
+#define MCU_CHIP_VARIANT_GF             2
+
+static inline uint8_t
+mcu_chip_variant_get(void)
+{
+    extern uint8_t g_mcu_chip_variant;
+    return g_mcu_chip_variant;
+}
+
 /* Map diagnostic signal to diagnostic port (output) */
 #define MCU_DIAG_MAP(_port, _word, _evt)                                \
     CMAC->CM_DIAG_PORT ## _port ## _REG =                               \
