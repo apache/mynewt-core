@@ -197,7 +197,12 @@ cmac_sleep_calculate_wakeup_time(void)
          */
         T_LPTICK_U(2) + T_LPTICK_U(2) +
         max(T_LPTICK_U(3), T_USEC(g_cmac_shared_data.xtal32m_settle_us)) +
-        T_LPTICK(2) + T_USEC(50);
+        T_LPTICK(2) + T_USEC(50) +
+        /*
+         * Add an extra 500us of settle time due to occasional crashes due to
+         * unknown additional wakeup delay. 
+         */
+        T_USEC(500); 
 }
 
 void
