@@ -28,12 +28,38 @@
 #include <ipc_cmac/diag.h>
 #include "CMAC.h"
 
+uint8_t g_mcu_chip_variant;
+
+static inline uint32_t
+get_reg32_bits(uint32_t addr, uint32_t mask)
+{
+    volatile uint32_t *reg = (volatile uint32_t *)addr;
+
+    return (*reg & mask) >> __builtin_ctz(mask);
+}
+
 static inline void
 set_reg32_bits(uint32_t addr, uint32_t mask, uint32_t val)
 {
     volatile uint32_t *reg = (volatile uint32_t *)addr;
 
     *reg = (*reg & (~mask)) | (val << __builtin_ctz(mask));
+}
+
+static void
+read_chip_variant(void)
+{
+    switch (get_reg32_bits(0x50040200, 0xff)) {
+    default:
+        /* use TSMC as default chip variant and hope it will work for unknown
+         * chips */
+    case '2':
+        g_mcu_chip_variant = MCU_CHIP_VARIANT_TSMC;
+        break;
+    case '3':
+        g_mcu_chip_variant = MCU_CHIP_VARIANT_GF;
+        break;
+    }
 }
 
 void
@@ -47,6 +73,8 @@ SystemInit(void)
     while (!hal_debugger_connected());
     for (int i = 0; i < 1000000; i++);
 #endif
+
+    read_chip_variant();
 
     CMAC->CM_CTRL_REG &= ~CMAC_CM_CTRL_REG_CM_BS_RESET_N_Msk;
     CMAC->CM_CTRL_REG |= CMAC_CM_CTRL_REG_CM_BS_RESET_N_Msk;
