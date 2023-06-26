@@ -18,7 +18,6 @@
 
 . $CORE_PATH/hw/scripts/common.sh
 
-GDB=arm-none-eabi-gdb
 CONNECTION_MODE_DEFAULT="halt"
 
 #
@@ -69,6 +68,7 @@ pyocd_load () {
 #
 pyocd_debug () {
     windows_detect
+    gdb_detect
     PORT=3333
 
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD

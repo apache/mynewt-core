@@ -125,3 +125,34 @@ detect_programmer() {
 
     echo "Detected programmer: $DETECTED_PROGRAMMER"
 }
+
+gdb_detect() {
+    # GDB setup previously, no need to detect
+    if [ -n "$GDB" ] ; then return ; fi
+
+    GDB=gdb
+
+    case ${MYNEWT_VAL_ARCH_NAME} in
+        \"cortex*\")
+            if which arm-none-eabi-gdb >/dev/null 2>/dev/null ; then
+                GDB=arm-none-eabi-gdb
+            elif which gdb-multiarch >/dev/null 2>/dev/null ; then
+                GDB=gdb-multiarch
+            fi
+            ;;
+        \"rv32*\")
+            if which riscv64-unknown-elf-gdb >/dev/null 2>/dev/null ; then
+                GDB=riscv64-unknown-elf-gdb
+            elif which riscv-none-embed-gdb >/dev/null 2>/dev/null ; then
+                GDB=riscv-none-embed-gdb
+            elif which gdb-multiarch >/dev/null 2>/dev/null ; then
+                GDB=gdb-multiarch
+            fi
+            ;;
+        *)
+            if which gdb-multiarch >/dev/null 2>/dev/null ; then
+                GDB=gdb-multiarch
+            fi
+            ;;
+    esac
+}
