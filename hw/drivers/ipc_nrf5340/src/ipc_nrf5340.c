@@ -327,7 +327,14 @@ ipc_nrf5340_init(void)
     }
 
     /* Start Network Core */
+    /* Workaround for Errata 161: "RESET: Core is not fully reset after Force-OFF" */
+    *(volatile uint32_t *) ((uint32_t)NRF_RESET + 0x618ul) = 1ul;
     NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
+    os_cputime_delay_usecs(5);
+    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
+    os_cputime_delay_usecs(1);
+    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
+    *(volatile uint32_t *) ((uint32_t)NRF_RESET + 0x618ul) = 0;
 
     /*
      * Waits for NET core to start and init it's side of IPC.
