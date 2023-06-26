@@ -18,7 +18,6 @@
 . $CORE_PATH/hw/scripts/common.sh
 
 CFG_RESET="reset halt"
-GDB=arm-none-eabi-gdb
 
 #
 # FILE_NAME must contain the name of the file to load
@@ -72,6 +71,7 @@ openocd_debug () {
     OCD_CMD_FILE=.openocd_cmds
 
     windows_detect
+    gdb_detect
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
 
     echo "gdb_port $PORT" > $OCD_CMD_FILE

@@ -50,6 +50,7 @@ jlink_load () {
     GDB_OUT_FILE=.gdb_out
 
     windows_detect
+    gdb_detect
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
     jlink_target_cmd
     jlink_sn
@@ -96,7 +97,7 @@ jlink_load () {
 
     echo "quit" >> $GDB_CMD_FILE
 
-    msgs=`arm-none-eabi-gdb -x $GDB_CMD_FILE 2>&1`
+    msgs=`$GDB -x $GDB_CMD_FILE 2>&1`
     echo "$msgs" > $GDB_OUT_FILE
 
     rm $GDB_CMD_FILE
@@ -139,6 +140,7 @@ jlink_load () {
 #
 jlink_debug() {
     windows_detect
+    gdb_detect
     if [ $WINDOWS -eq 1 ]; then
         JLINK_GDB_SERVER=JLinkGDBServerCL
     fi
@@ -189,7 +191,7 @@ jlink_debug() {
             FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
             $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
         else
-            arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
+            $GDB -x $GDB_CMD_FILE $FILE_NAME
             rm $GDB_CMD_FILE
         fi
     else

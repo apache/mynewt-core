@@ -17,8 +17,6 @@
 #
 . $CORE_PATH/hw/scripts/common.sh
 
-GDB=arm-none-eabi-gdb
-
 #
 # FILE_NAME must contain the name of the file to load
 # FLASH_OFFSET must contain the offset in flash where to place it
