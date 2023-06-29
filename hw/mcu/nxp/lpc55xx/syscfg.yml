@@ -1,0 +1,385 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 512
+        restrictions: $notnull
+
+    LPC55XX_BOOT_CLOCK:
+        description: >
+            Bootclock selection
+        choices:
+            - FRO12M
+            - FROHF96M
+            - PLL100M
+            - PLL150M
+            - PLL1_150M
+        value: FRO12M
+
+    UART_0:
+        description: 'Whether to enable UART0 (Flexcomm0)'
+        value:  0
+    UART_0_CLK_SOURCE:
+        description: 'UART0 (Flexcomm0) clock source'
+        value:  kMAIN_CLK_to_FLEXCOMM0
+    UART_0_PIN_TX:
+        description: 'TX pin for UART0'
+        value: P0_30_FC0_TXD_SCL_MISO
+    UART_0_PIN_RX:
+        description: 'RX pin for UART0'
+        value:  P0_29_FC0_RXD_SDA_MOSI
+
+    UART_1:
+        description: 'Whether to enable UART1'
+        value:  0
+    UART_1_CLK_SOURCE:
+        description: 'UART1 (Flexcomm1) clock source'
+        value:  kMAIN_CLK_to_FLEXCOMM1
+    UART_1_PIN_TX:
+        description: 'TX pin for UART1'
+        value:  -1
+    UART_1_PIN_RX:
+        description: 'RX pin for UART1x'
+        value:  -1
+
+    UART_2:
+        description: 'Whether to enable UART2'
+        value:  0
+    UART_2_CLK_SOURCE:
+        description: 'UART2 (Flexcomm2) clock source'
+        value:  kMAIN_CLK_to_FLEXCOMM2
+    UART_2_PIN_TX:
+        description: 'TX pin for UART2'
+        value:  -1
+    UART_2_PIN_RX:
+        description: 'RX pin for UART2'
+        value:  -1
+
+    UART_3:
+        description: 'Whether to enable UART3'
+        value:  0
+    UART_3_CLK_SOURCE:
+        description: 'UART3 (Flexcomm3) clock source'
+        value:  kMAIN_CLK_to_FLEXCOMM3
+    UART_3_PIN_TX:
+        description: 'TX pin for UART3'
+        value:  -1
+    UART_3_PIN_RX:
+        description: 'RX pin for UART3'
+        value:  -1
+
+    UART_4:
+        description: 'Whether to enable UART4'
+        value:  0
+    UART_4_CLK_SOURCE:
+        description: 'UART4 (Flexcomm4) clock source'
+        value:  kMAIN_CLK_to_FLEXCOMM4
+    UART_4_PIN_TX:
+        description: 'TX pin for UART4'
+        value:  -1
+    UART_4_PIN_RX:
+        description: 'RX pin for UART4'
+        value:  -1
+
+    UART_5:
+        description: 'Whether to enable UART5'
+        value:  0
+    UART_5_CLK_SOURCE:
+        description: 'UART5 (Flexcomm5) clock source'
+        value:  kMAIN_CLK_to_FLEXCOMM5
+    UART_5_PIN_TX:
+        description: 'TX pin for UART5'
+        value:  -1
+    UART_5_PIN_RX:
+        description: 'RX pin for UART5'
+        value:  -1
+
+    UART_6:
+        description: 'Whether to enable UART6'
+        value:  0
+    UART_6_CLK_SOURCE:
+        description: 'UART6 (Flexcomm6) clock source'
+        value:  kMAIN_CLK_to_FLEXCOMM6
+    UART_6_PIN_TX:
+        description: 'TX pin for UART6'
+        value:  -1
+    UART_6_PIN_RX:
+        description: 'RX pin for UART6'
+        value:  -1
+
+    UART_7:
+        description: 'Whether to enable UART7'
+        value:  0
+    UART_7_CLK_SOURCE:
+        description: 'UART7 (Flexcomm7) clock source'
+        value:  kMAIN_CLK_to_FLEXCOMM7
+    UART_7_PIN_TX:
+        description: 'TX pin for UART7'
+        value:  -1
+    UART_7_PIN_RX:
+        description: 'RX pin for UART7'
+        value:  -1
+
+    I2C_0:
+        description: 'Enable I2C0'
+        value: 0
+    I2C_0_PORT:
+        description: 'GPIO port for I2C0'
+        value: PORTB
+    I2C_0_MUX:
+        description: 'Pin mux selection for I2C0'
+        value: kPORT_MuxAlt2
+    I2C_0_PIN_SCL:
+        description: 'SCL pin for I2C_0'
+        value: 0
+    I2C_0_PIN_SDA:
+        description: 'SDA pin for I2C_0'
+        value: 1
+    I2C_0_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_0'
+        value: 100
+
+    I2C_1:
+        description: 'Enable I2C1.'
+        value: 0
+    I2C_1_PORT:
+        description: 'GPIO port for I2C1'
+        value: PORTC
+    I2C_1_MUX:
+        description: 'Pin mux selection for I2C1'
+        value: kPORT_MuxAlt2
+    I2C_1_PIN_SCL:
+        description: 'SCL pin for I2C_1'
+        value: 10
+    I2C_1_PIN_SDA:
+        description: 'SDA pin for I2C_1'
+        value: 11
+    I2C_1_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_1'
+        value: 100
+
+    I2C_2:
+        description: 'Enable I2C2.'
+        value: 0
+    I2C_2_PORT:
+        description: 'GPIO port for I2C2'
+        value: PORTA
+    I2C_2_MUX:
+        description: 'Pin mux selection for I2C2'
+        value: kPORT_MuxAlt4
+    I2C_2_PIN_SCL:
+        description: 'SCL pin for I2C_2'
+        value: 2
+    I2C_2_PIN_SDA:
+        description: 'SDA pin for I2C_2'
+        value: 1
+    I2C_2_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_2'
+        value: 100
+
+    I2C_3:
+        description: 'Enable I2C3.'
+        value: 0
+    I2C_3_PORT:
+        description: 'GPIO port for I2C3'
+        value: PORTA
+    I2C_3_MUX:
+        description: 'Pin mux selection for I2C3'
+        value: kPORT_MuxAlt4
+    I2C_3_PIN_SCL:
+        description: 'SCL pin for I2C_3'
+        value: 2
+    I2C_3_PIN_SDA:
+        description: 'SDA pin for I2C_3'
+        value: 1
+    I2C_3_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_3'
+        value: 100
+
+    SPI_0_MASTER:
+        description: 'Enable NXP SPI Master 0'
+        value: 0
+        restrictions:
+            - "!SPI_0_SLAVE"
+    SPI_0_MASTER_PORT:
+        description: 'GPIO port for SPI_0_MASTER'
+        value: PORTA
+    SPI_0_MASTER_MUX:
+        description: 'Pin mux selection for SPI_0_MASTER'
+        value: kPORT_MuxAlt2
+    SPI_0_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_0_MASTER'
+        value: 15
+    SPI_0_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value: 16
+    SPI_0_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_0_MASTER'
+        value: 17
+
+    SPI_0_SLAVE:
+        description: 'Enable NXP SPI Slave 0'
+        value: 0
+        restrictions:
+            - "!SPI_0_MASTER"
+    SPI_0_SLAVE_PORT:
+        description: 'GPIO port for SPI_0_SLAVE'
+        value: PORTA
+    SPI_0_SLAVE_MUX:
+        description: 'Pin mux selection for SPI_0_SLAVE'
+        value: kPORT_MuxAlt2
+    SPI_0_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_0_SLAVE'
+        value: 15
+    SPI_0_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_SLAVE'
+        value: 17
+    SPI_0_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_0_SLAVE'
+        value: 16
+    SPI_0_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_0_SLAVE'
+        value: 14
+
+    SPI_1_MASTER:
+        description: 'Enable NXP SPI Master 1'
+        value: 0
+        restrictions:
+            - "!SPI_1_SLAVE"
+    SPI_1_MASTER_PORT:
+        description: 'GPIO port for SPI_1_MASTER'
+        value: PORTD
+    SPI_1_MASTER_MUX:
+        description: 'Pin mux selection for SPI_1_MASTER'
+        value: kPORT_MuxAlt7
+    SPI_1_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_1_MASTER'
+        value: 5
+    SPI_1_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_MASTER'
+        value: 6
+    SPI_1_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_1_MASTER'
+        value: 7
+
+    SPI_1_SLAVE:
+        description: 'Enable NXP SPI Slave 1'
+        value: 0
+        restrictions:
+            - "!SPI_1_MASTER"
+    SPI_1_SLAVE_PORT:
+        description: 'GPIO port for SPI_0_SLAVE'
+        value: PORTD
+    SPI_1_SLAVE_MUX:
+        description: 'Pin mux selection for SPI_0_SLAVE'
+        value: kPORT_MuxAlt7
+    SPI_1_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_1_SLAVE'
+        value: 5
+    SPI_1_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_SLAVE'
+        value: 7
+    SPI_1_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_1_SLAVE'
+        value: 6
+    SPI_1_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_1_SLAVE'
+        value: 4
+
+    SPI_2_MASTER:
+        description: 'Enable NXP SPI Master 2'
+        value: 0
+        restrictions:
+            - "!SPI_2_SLAVE"
+    SPI_2_MASTER_PORT:
+        description: 'GPIO port for SPI_1_MASTER'
+        value: PORTB
+    SPI_2_MASTER_MUX:
+        description: 'Pin mux selection for SPI_1_MASTER'
+        value: kPORT_MuxAlt2
+    SPI_2_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_2_MASTER'
+        value: 21
+    SPI_2_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_2_MASTER'
+        value: 22
+    SPI_2_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_2_MASTER'
+        value: 23
+
+    SPI_2_SLAVE:
+        description: 'Enable NXP SPI Slave 2'
+        value: 0
+        restrictions:
+            - "!SPI_2_MASTER"
+    SPI_2_SLAVE_PORT:
+        description: 'GPIO port for SPI_0_SLAVE'
+        value: PORTB
+    SPI_2_SLAVE_MUX:
+        description: 'Pin mux selection for SPI_0_SLAVE'
+        value: kPORT_MuxAlt2
+    SPI_2_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_2_SLAVE'
+        value: 21
+    SPI_2_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_2_SLAVE'
+        value: 23
+    SPI_2_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_2_SLAVE'
+        value: 22
+    SPI_2_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_2_SLAVE'
+        value: 20
+
+    CTIMER_AUTO_OFF_COUNT:
+        description: >
+            Automatically turn off timer when not in use for number of
+            overflow events.
+        value: 1
+    TIMER_0:
+        description: "Whether to enable Timer 0"
+        value:  1
+    TIMER_1:
+        description: "Whether to enable Timer 1"
+        value:  0
+    TIMER_2:
+        description: "Whether to enable Timer 2"
+        value:  0
+    TIMER_3:
+        description: "Whether to enable Timer 3"
+        value:  0
+    TIMER_4:
+        description: "Whether to enable Timer 4"
+        value:  0
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 1000
+    MCU_LPCXXXX: 1
+    MCUX_DRIVERS_WWDT: 1
+    MCUX_DRIVERS_FLEXCOMM: 1
+    MCUX_DRIVERS_PINT: 1
+    MCUX_DRIVERS_LPC_GPIO: 1
+    MCUX_DRIVERS_LPC_IOCON: 1
+    MCUX_DRIVERS_LPC_DMA: 1
+    MCUX_DRIVERS_IAP1: 1
+    MCUX_DRIVERS_COMMON: 1
+    MCUX_DRIVERS_CTIMER: 1
