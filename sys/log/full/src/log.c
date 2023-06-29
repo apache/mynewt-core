@@ -540,7 +540,10 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
 
     OS_ENTER_CRITICAL(sr);
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
-    idx = g_log_info.li_next_index++;
+    if (log->l_log->log_type == LOG_TYPE_STORAGE) {
+        g_log_info.li_next_index++;
+    }
+    idx = g_log_info.li_next_index;
 #else
     idx = log->l_idx++;
 #endif
