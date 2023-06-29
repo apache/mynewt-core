@@ -18,7 +18,7 @@
  */
 #include "hal/hal_system.h"
 #include "syscfg/syscfg.h"
-#include "mcu/kinetis_common.h"
+#include <fsl_device_registers.h>
 #include "fsl_rcm.h"
 
 enum hal_reset_reason

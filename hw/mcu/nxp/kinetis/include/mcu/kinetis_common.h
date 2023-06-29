@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include <fsl_device_registers.h>
+
 #if MYNEWT_VAL(BSP_MK64F12)
 #include "MK64F12.h"
 #elif MYNEWT_VAL(BSP_MK80F)

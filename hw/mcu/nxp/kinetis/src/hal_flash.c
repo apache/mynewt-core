@@ -30,7 +30,6 @@
 #include <hal/hal_flash_int.h>
 
 #include "syscfg/syscfg.h"
-#include "mcu/kinetis_common.h"
 #include "fsl_flash.h"
 
 /*

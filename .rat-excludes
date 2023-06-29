@@ -165,19 +165,13 @@ clock_config.c
 clock_config.h
 
 # NXP SDK - BSD License.
-nxp-kinetis-sdk
-fsl_clock.c
 MK64FN1M0xxx12_flash.ld
 boot-MK64FN1M0xxx12_flash.ld
 startup_MK64F12.S
 MK82FN256xxx15_flash.ld
 boot-MK82FN256xxx15_flash.ld
 startup_MK82F25615.S
-MK82F25615.h
-MK82F25615_features.h
-system_MK82F25615.h
 system_MK82F25615.c
-fsl_clock.h
 fsl_ftfx_controller.c
 
 # LWIP - BSD License.
