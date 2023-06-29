@@ -1,0 +1,1223 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_K32L2A31A:
+        description: MCU K32L2A31A is used.
+        value:
+    MCU_K32L2A41A:
+        description: MCU K32L2A41A is used.
+        value:
+    MCU_K32L2B11A:
+        description: MCU K32L2B11A is used.
+        value:
+    MCU_K32L2B21A:
+        description: MCU K32L2B21A is used.
+        value:
+    MCU_K32L2B31A:
+        description: MCU K32L2B31A is used.
+        value:
+    MCU_K32L3A60:
+        description: MCU K32L3A60 is used.
+        value:
+    MCU_LPC51U68:
+        description: MCU LPC51U68 is used.
+        value:
+    MCU_LPC54005:
+        description: MCU LPC54005 is used.
+        value:
+    MCU_LPC54016:
+        description: MCU LPC54016 is used.
+        value:
+    MCU_LPC54018:
+        description: MCU LPC54018 is used.
+        value:
+    MCU_LPC54018M:
+        description: MCU LPC54018M is used.
+        value:
+    MCU_LPC54113:
+        description: MCU LPC54113 is used.
+        value:
+    MCU_LPC54114:
+        description: MCU LPC54114 is used.
+        value:
+    MCU_LPC54605:
+        description: MCU LPC54605 is used.
+        value:
+    MCU_LPC54606:
+        description: MCU LPC54606 is used.
+        value:
+    MCU_LPC54607:
+        description: MCU LPC54607 is used.
+        value:
+    MCU_LPC54608:
+        description: MCU LPC54608 is used.
+        value:
+    MCU_LPC54616:
+        description: MCU LPC54616 is used.
+        value:
+    MCU_LPC54618:
+        description: MCU LPC54618 is used.
+        value:
+    MCU_LPC54628:
+        description: MCU LPC54628 is used.
+        value:
+    MCU_LPC54S005:
+        description: MCU LPC54S005 is used.
+        value:
+    MCU_LPC54S016:
+        description: MCU LPC54S016 is used.
+        value:
+    MCU_LPC54S018:
+        description: MCU LPC54S018 is used.
+        value:
+    MCU_LPC54S018M:
+        description: MCU LPC54S018M is used.
+        value:
+    MCU_LPC5502:
+        description: MCU LPC5502 is used.
+        value:
+    MCU_LPC5502CPXXXX:
+        description: MCU LPC5502CPXXXX is used.
+        value:
+    MCU_LPC5504:
+        description: MCU LPC5504 is used.
+        value:
+    MCU_LPC5504CPXXXX:
+        description: MCU LPC5504CPXXXX is used.
+        value:
+    MCU_LPC5506:
+        description: MCU LPC5506 is used.
+        value:
+    MCU_LPC5506CPXXXX:
+        description: MCU LPC5506CPXXXX is used.
+        value:
+    MCU_LPC5512:
+        description: MCU LPC5512 is used.
+        value:
+    MCU_LPC5514:
+        description: MCU LPC5514 is used.
+        value:
+    MCU_LPC5516:
+        description: MCU LPC5516 is used.
+        value:
+    MCU_LPC5526:
+        description: MCU LPC5526 is used.
+        value:
+    MCU_LPC5528:
+        description: MCU LPC5528 is used.
+        value:
+    MCU_LPC55S04:
+        description: MCU LPC55S04 is used.
+        value:
+    MCU_LPC55S06:
+        description: MCU LPC55S06 is used.
+        value:
+    MCU_LPC55S14:
+        description: MCU LPC55S14 is used.
+        value:
+    MCU_LPC55S16:
+        description: MCU LPC55S16 is used.
+        value:
+    MCU_LPC55S26:
+        description: MCU LPC55S26 is used.
+        value:
+    MCU_LPC55S28:
+        description: MCU LPC55S28 is used.
+        value:
+    MCU_LPC55S66:
+        description: MCU LPC55S66 is used.
+        value:
+    MCU_LPC55S69:
+        description: MCU LPC55S69 is used.
+        value:
+    MCU_LPC802:
+        description: MCU LPC802 is used.
+        value:
+    MCU_LPC804:
+        description: MCU LPC804 is used.
+        value:
+    MCU_LPC810:
+        description: MCU LPC810 is used.
+        value:
+    MCU_LPC811:
+        description: MCU LPC811 is used.
+        value:
+    MCU_LPC812:
+        description: MCU LPC812 is used.
+        value:
+    MCU_LPC822:
+        description: MCU LPC822 is used.
+        value:
+    MCU_LPC824:
+        description: MCU LPC824 is used.
+        value:
+    MCU_LPC832:
+        description: MCU LPC832 is used.
+        value:
+    MCU_LPC834:
+        description: MCU LPC834 is used.
+        value:
+    MCU_LPC844:
+        description: MCU LPC844 is used.
+        value:
+    MCU_LPC845:
+        description: MCU LPC845 is used.
+        value:
+    MCU_MCIMX7U3:
+        description: MCU MCIMX7U3 is used.
+        value:
+    MCU_MCIMX7U5:
+        description: MCU MCIMX7U5 is used.
+        value:
+    MCU_MIMX8DX1:
+        description: MCU MIMX8DX1 is used.
+        value:
+    MCU_MIMX8DX2:
+        description: MCU MIMX8DX2 is used.
+        value:
+    MCU_MIMX8DX3:
+        description: MCU MIMX8DX3 is used.
+        value:
+    MCU_MIMX8DX4:
+        description: MCU MIMX8DX4 is used.
+        value:
+    MCU_MIMX8DX5:
+        description: MCU MIMX8DX5 is used.
+        value:
+    MCU_MIMX8DX6:
+        description: MCU MIMX8DX6 is used.
+        value:
+    MCU_MIMX8MD6:
+        description: MCU MIMX8MD6 is used.
+        value:
+    MCU_MIMX8MD7:
+        description: MCU MIMX8MD7 is used.
+        value:
+    MCU_MIMX8ML3:
+        description: MCU MIMX8ML3 is used.
+        value:
+    MCU_MIMX8ML4:
+        description: MCU MIMX8ML4 is used.
+        value:
+    MCU_MIMX8ML6:
+        description: MCU MIMX8ML6 is used.
+        value:
+    MCU_MIMX8ML8:
+        description: MCU MIMX8ML8 is used.
+        value:
+    MCU_MIMX8MM1:
+        description: MCU MIMX8MM1 is used.
+        value:
+    MCU_MIMX8MM2:
+        description: MCU MIMX8MM2 is used.
+        value:
+    MCU_MIMX8MM3:
+        description: MCU MIMX8MM3 is used.
+        value:
+    MCU_MIMX8MM4:
+        description: MCU MIMX8MM4 is used.
+        value:
+    MCU_MIMX8MM5:
+        description: MCU MIMX8MM5 is used.
+        value:
+    MCU_MIMX8MM6:
+        description: MCU MIMX8MM6 is used.
+        value:
+    MCU_MIMX8MN1:
+        description: MCU MIMX8MN1 is used.
+        value:
+    MCU_MIMX8MN2:
+        description: MCU MIMX8MN2 is used.
+        value:
+    MCU_MIMX8MN3:
+        description: MCU MIMX8MN3 is used.
+        value:
+    MCU_MIMX8MN4:
+        description: MCU MIMX8MN4 is used.
+        value:
+    MCU_MIMX8MN5:
+        description: MCU MIMX8MN5 is used.
+        value:
+    MCU_MIMX8MN6:
+        description: MCU MIMX8MN6 is used.
+        value:
+    MCU_MIMX8MQ5:
+        description: MCU MIMX8MQ5 is used.
+        value:
+    MCU_MIMX8MQ6:
+        description: MCU MIMX8MQ6 is used.
+        value:
+    MCU_MIMX8MQ7:
+        description: MCU MIMX8MQ7 is used.
+        value:
+    MCU_MIMX8QM6:
+        description: MCU MIMX8QM6 is used.
+        value:
+    MCU_MIMX8QX1:
+        description: MCU MIMX8QX1 is used.
+        value:
+    MCU_MIMX8QX2:
+        description: MCU MIMX8QX2 is used.
+        value:
+    MCU_MIMX8QX3:
+        description: MCU MIMX8QX3 is used.
+        value:
+    MCU_MIMX8QX4:
+        description: MCU MIMX8QX4 is used.
+        value:
+    MCU_MIMX8QX5:
+        description: MCU MIMX8QX5 is used.
+        value:
+    MCU_MIMX8QX6:
+        description: MCU MIMX8QX6 is used.
+        value:
+    MCU_MIMX8UX5:
+        description: MCU MIMX8UX5 is used.
+        value:
+    MCU_MIMX8UX6:
+        description: MCU MIMX8UX6 is used.
+        value:
+    MCU_MIMXRT1011:
+        description: MCU MIMXRT1011 is used.
+        value:
+    MCU_MIMXRT1015:
+        description: MCU MIMXRT1015 is used.
+        value:
+    MCU_MIMXRT1021:
+        description: MCU MIMXRT1021 is used.
+        value:
+    MCU_MIMXRT1024:
+        description: MCU MIMXRT1024 is used.
+        value:
+    MCU_MIMXRT1051:
+        description: MCU MIMXRT1051 is used.
+        value:
+    MCU_MIMXRT1052:
+        description: MCU MIMXRT1052 is used.
+        value:
+    MCU_MIMXRT1061:
+        description: MCU MIMXRT1061 is used.
+        value:
+    MCU_MIMXRT1062:
+        description: MCU MIMXRT1062 is used.
+        value:
+    MCU_MIMXRT1064:
+        description: MCU MIMXRT1064 is used.
+        value:
+    MCU_MIMXRT1165:
+        description: MCU MIMXRT1165 is used.
+        value:
+    MCU_MIMXRT1166:
+        description: MCU MIMXRT1166 is used.
+        value:
+    MCU_MIMXRT1171:
+        description: MCU MIMXRT1171 is used.
+        value:
+    MCU_MIMXRT1172:
+        description: MCU MIMXRT1172 is used.
+        value:
+    MCU_MIMXRT1173:
+        description: MCU MIMXRT1173 is used.
+        value:
+    MCU_MIMXRT1175:
+        description: MCU MIMXRT1175 is used.
+        value:
+    MCU_MIMXRT1176:
+        description: MCU MIMXRT1176 is used.
+        value:
+    MCU_MIMXRT533S:
+        description: MCU MIMXRT533S is used.
+        value:
+    MCU_MIMXRT555S:
+        description: MCU MIMXRT555S is used.
+        value:
+    MCU_MIMXRT595S:
+        description: MCU MIMXRT595S is used.
+        value:
+    MCU_MIMXRT633S:
+        description: MCU MIMXRT633S is used.
+        value:
+    MCU_MIMXRT685S:
+        description: MCU MIMXRT685S is used.
+        value:
+    MCU_MK02F12810:
+        description: MCU MK02F12810 is used.
+        value:
+    MCU_MK22F12810:
+        description: MCU MK22F12810 is used.
+        value:
+    MCU_MK22F25612:
+        description: MCU MK22F25612 is used.
+        value:
+    MCU_MK22F51212:
+        description: MCU MK22F51212 is used.
+        value:
+    MCU_MK24F12:
+        description: MCU MK24F12 is used.
+        value:
+    MCU_MK26F18:
+        description: MCU MK26F18 is used.
+        value:
+    MCU_MK27FA15:
+        description: MCU MK27FA15 is used.
+        value:
+    MCU_MK28FA15:
+        description: MCU MK28FA15 is used.
+        value:
+    MCU_MK63F12:
+        description: MCU MK63F12 is used.
+        value:
+    MCU_MK64F12:
+        description: MCU MK64F12 is used.
+        value:
+    MCU_MK65F18:
+        description: MCU MK65F18 is used.
+        value:
+    MCU_MK66F18:
+        description: MCU MK66F18 is used.
+        value:
+    MCU_MK80F25615:
+        description: MCU MK80F25615 is used.
+        value:
+    MCU_MK82F25615:
+        description: MCU MK82F25615 is used.
+        value:
+    MCU_MKE02Z4:
+        description: MCU MKE02Z4 is used.
+        value:
+    MCU_MKE04Z1284:
+        description: MCU MKE04Z1284 is used.
+        value:
+    MCU_MKE04Z4:
+        description: MCU MKE04Z4 is used.
+        value:
+    MCU_MKE06Z4:
+        description: MCU MKE06Z4 is used.
+        value:
+    MCU_MKE12Z7:
+        description: MCU MKE12Z7 is used.
+        value:
+    MCU_MKE13Z7:
+        description: MCU MKE13Z7 is used.
+        value:
+    MCU_MKE14F16:
+        description: MCU MKE14F16 is used.
+        value:
+    MCU_MKE14Z4:
+        description: MCU MKE14Z4 is used.
+        value:
+    MCU_MKE14Z7:
+        description: MCU MKE14Z7 is used.
+        value:
+    MCU_MKE15Z4:
+        description: MCU MKE15Z4 is used.
+        value:
+    MCU_MKE15Z7:
+        description: MCU MKE15Z7 is used.
+        value:
+    MCU_MKE16F16:
+        description: MCU MKE16F16 is used.
+        value:
+    MCU_MKE16Z4:
+        description: MCU MKE16Z4 is used.
+        value:
+    MCU_MKE17Z7:
+        description: MCU MKE17Z7 is used.
+        value:
+    MCU_MKE18F16:
+        description: MCU MKE18F16 is used.
+        value:
+    MCU_MKL17Z644:
+        description: MCU MKL17Z644 is used.
+        value:
+    MCU_MKL25Z4:
+        description: MCU MKL25Z4 is used.
+        value:
+    MCU_MKL27Z644:
+        description: MCU MKL27Z644 is used.
+        value:
+    MCU_MKM14ZA5:
+        description: MCU MKM14ZA5 is used.
+        value:
+    MCU_MKM33ZA5:
+        description: MCU MKM33ZA5 is used.
+        value:
+    MCU_MKM34Z7:
+        description: MCU MKM34Z7 is used.
+        value:
+    MCU_MKM34ZA5:
+        description: MCU MKM34ZA5 is used.
+        value:
+    MCU_MKM35Z7:
+        description: MCU MKM35Z7 is used.
+        value:
+    MCU_MKV10Z1287:
+        description: MCU MKV10Z1287 is used.
+        value:
+    MCU_MKV10Z7:
+        description: MCU MKV10Z7 is used.
+        value:
+    MCU_MKV11Z7:
+        description: MCU MKV11Z7 is used.
+        value:
+    MCU_MKV30F12810:
+        description: MCU MKV30F12810 is used.
+        value:
+    MCU_MKV31F12810:
+        description: MCU MKV31F12810 is used.
+        value:
+    MCU_MKV31F25612:
+        description: MCU MKV31F25612 is used.
+        value:
+    MCU_MKV31F51212:
+        description: MCU MKV31F51212 is used.
+        value:
+    MCU_MKV56F24:
+        description: MCU MKV56F24 is used.
+        value:
+    MCU_MKV58F24:
+        description: MCU MKV58F24 is used.
+        value:
+    MCU_MKW20Z4:
+        description: MCU MKW20Z4 is used.
+        value:
+    MCU_MKW21Z4:
+        description: MCU MKW21Z4 is used.
+        value:
+    MCU_MKW22D5:
+        description: MCU MKW22D5 is used.
+        value:
+    MCU_MKW24D5:
+        description: MCU MKW24D5 is used.
+        value:
+    MCU_MKW30Z4:
+        description: MCU MKW30Z4 is used.
+        value:
+    MCU_MKW31Z4:
+        description: MCU MKW31Z4 is used.
+        value:
+    MCU_MKW40Z4:
+        description: MCU MKW40Z4 is used.
+        value:
+    MCU_MKW41Z4:
+        description: MCU MKW41Z4 is used.
+        value:
+    MCU_LPCXXXX:
+        description: LPC_XXXXX MCU
+        value:
+
+    MCUX_DRIVERS_ACMP:
+        description: Add drivers/acmp to the build
+        value:
+    MCUX_DRIVERS_ACMP_1:
+        description: Add drivers/acmp_1 to the build
+        value:
+    MCUX_DRIVERS_ADC12:
+        description: Add drivers/adc12 to the build
+        value:
+    MCUX_DRIVERS_ADC16:
+        description: Add drivers/adc16 to the build
+        value:
+    MCUX_DRIVERS_ADC_12B1MSPS_SAR:
+        description: Add drivers/adc_12b1msps_sar to the build
+        value:
+    MCUX_DRIVERS_ADC_5V12B_LL18_015:
+        description: Add drivers/adc_5v12b_ll18_015 to the build
+        value:
+    MCUX_DRIVERS_ADC_ETC:
+        description: Add drivers/adc_etc to the build
+        value:
+    MCUX_DRIVERS_AES:
+        description: Add drivers/aes to the build
+        value:
+    MCUX_DRIVERS_AFE:
+        description: Add drivers/afe to the build
+        value:
+    MCUX_DRIVERS_AIPSTZ:
+        description: Add drivers/aipstz to the build
+        value:
+    MCUX_DRIVERS_ANACTRL:
+        description: Add drivers/anactrl to the build
+        value:
+    MCUX_DRIVERS_AOI:
+        description: Add drivers/aoi to the build
+        value:
+    MCUX_DRIVERS_ASMC:
+        description: Add drivers/asmc to the build
+        value:
+    MCUX_DRIVERS_ASRC:
+        description: Add drivers/asrc to the build
+        value:
+    MCUX_DRIVERS_BEE:
+        description: Add drivers/bee to the build
+        value:
+    MCUX_DRIVERS_CAAM:
+        description: Add drivers/caam to the build
+        value:
+    MCUX_DRIVERS_CACHE:
+        description: Add drivers/cache to the build
+        value:
+    MCUX_DRIVERS_CAPT:
+        description: Add drivers/capt to the build
+        value:
+    MCUX_DRIVERS_CASPER:
+        description: Add drivers/casper to the build
+        value:
+    MCUX_DRIVERS_CAU3:
+        description: Add drivers/cau3 to the build
+        value:
+    MCUX_DRIVERS_CDOG:
+        description: Add drivers/cdog to the build
+        value:
+    MCUX_DRIVERS_CI_PI:
+        description: Add drivers/ci_pi to the build
+        value:
+    MCUX_DRIVERS_CMP:
+        description: Add drivers/cmp to the build
+        value:
+    MCUX_DRIVERS_CMP_1:
+        description: Add drivers/cmp_1 to the build
+        value:
+    MCUX_DRIVERS_CMT:
+        description: Add drivers/cmt to the build
+        value:
+    MCUX_DRIVERS_COMMON:
+        description: Add drivers/common to the build
+        value:
+    MCUX_DRIVERS_COP:
+        description: Add drivers/cop to the build
+        value:
+    MCUX_DRIVERS_CRC:
+        description: Add drivers/crc to the build
+        value:
+    MCUX_DRIVERS_CSI:
+        description: Add drivers/csi to the build
+        value:
+    MCUX_DRIVERS_CTIMER:
+        description: Add drivers/ctimer to the build
+        value:
+    MCUX_DRIVERS_CWT:
+        description: Add drivers/cwt to the build
+        value:
+    MCUX_DRIVERS_DAC:
+        description: Add drivers/dac to the build
+        value:
+    MCUX_DRIVERS_DAC12:
+        description: Add drivers/dac12 to the build
+        value:
+    MCUX_DRIVERS_DAC32:
+        description: Add drivers/dac32 to the build
+        value:
+    MCUX_DRIVERS_DAC_1:
+        description: Add drivers/dac_1 to the build
+        value:
+    MCUX_DRIVERS_DCDC_1:
+        description: Add drivers/dcdc_1 to the build
+        value:
+    MCUX_DRIVERS_DCIC:
+        description: Add drivers/dcic to the build
+        value:
+    MCUX_DRIVERS_DCP:
+        description: Add drivers/dcp to the build
+        value:
+    MCUX_DRIVERS_DMA:
+        description: Add drivers/dma to the build
+        value:
+    MCUX_DRIVERS_DMA3:
+        description: Add drivers/dma3 to the build
+        value:
+    MCUX_DRIVERS_DMAMUX:
+        description: Add drivers/dmamux to the build
+        value:
+    MCUX_DRIVERS_DMIC:
+        description: Add drivers/dmic to the build
+        value:
+    MCUX_DRIVERS_DPR:
+        description: Add drivers/dpr to the build
+        value:
+    MCUX_DRIVERS_DPU:
+        description: Add drivers/dpu to the build
+        value:
+    MCUX_DRIVERS_DPU_IRQSTEER:
+        description: Add drivers/dpu_irqsteer to the build
+        value:
+    MCUX_DRIVERS_DSPI:
+        description: Add drivers/dspi to the build
+        value:
+    MCUX_DRIVERS_EASRC:
+        description: Add drivers/easrc to the build
+        value:
+    MCUX_DRIVERS_ECSPI:
+        description: Add drivers/ecspi to the build
+        value:
+    MCUX_DRIVERS_EDMA:
+        description: Add drivers/edma to the build
+        value:
+    MCUX_DRIVERS_EEPROM:
+        description: Add drivers/eeprom to the build
+        value:
+    MCUX_DRIVERS_ELCDIF:
+        description: Add drivers/elcdif to the build
+        value:
+    MCUX_DRIVERS_EMC:
+        description: Add drivers/emc to the build
+        value:
+    MCUX_DRIVERS_ENC:
+        description: Add drivers/enc to the build
+        value:
+    MCUX_DRIVERS_ENET:
+        description: Add drivers/enet to the build
+        value:
+    MCUX_DRIVERS_ENET_QOS:
+        description: Add drivers/enet_qos to the build
+        value:
+    MCUX_DRIVERS_ESAI:
+        description: Add drivers/esai to the build
+        value:
+    MCUX_DRIVERS_EWM:
+        description: Add drivers/ewm to the build
+        value:
+    MCUX_DRIVERS_FLASH:
+        description: Add drivers/flash to the build
+        value:
+    MCUX_DRIVERS_FLASH_FTMR:
+        description: Add drivers/flash_ftmr to the build
+        value:
+    MCUX_DRIVERS_FLASHIAP:
+        description: Add drivers/flashiap to the build
+        value:
+    MCUX_DRIVERS_FLEXBUS:
+        description: Add drivers/flexbus to the build
+        value:
+    MCUX_DRIVERS_FLEXCAN:
+        description: Add drivers/flexcan to the build
+        value:
+    MCUX_DRIVERS_FLEXCOMM:
+        description: Add drivers/flexcomm to the build
+        value:
+    MCUX_DRIVERS_FLEXIO:
+        description: Add drivers/flexio to the build
+        value:
+    MCUX_DRIVERS_FLEXRAM:
+        description: Add drivers/flexram to the build
+        value:
+    MCUX_DRIVERS_FLEXSPI:
+        description: Add drivers/flexspi to the build
+        value:
+    MCUX_DRIVERS_FMC:
+        description: Add drivers/fmc to the build
+        value:
+    MCUX_DRIVERS_FMEAS:
+        description: Add drivers/fmeas to the build
+        value:
+    MCUX_DRIVERS_FTM:
+        description: Add drivers/ftm to the build
+        value:
+    MCUX_DRIVERS_GINT:
+        description: Add drivers/gint to the build
+        value:
+    MCUX_DRIVERS_GPC_1:
+        description: Add drivers/gpc_1 to the build
+        value:
+    MCUX_DRIVERS_GPC_2:
+        description: Add drivers/gpc_2 to the build
+        value:
+    MCUX_DRIVERS_GPIO:
+        description: Add drivers/gpio to the build
+        value:
+    MCUX_DRIVERS_GPIO_1:
+        description: Add drivers/gpio_1 to the build
+        value:
+    MCUX_DRIVERS_GPT:
+        description: Add drivers/gpt to the build
+        value:
+    MCUX_DRIVERS_HASHCRYPT:
+        description: Add drivers/hashcrypt to the build
+        value:
+    MCUX_DRIVERS_HSADC:
+        description: Add drivers/hsadc to the build
+        value:
+    MCUX_DRIVERS_HSCMP:
+        description: Add drivers/hscmp to the build
+        value:
+    MCUX_DRIVERS_I2C:
+        description: Add drivers/i2c to the build
+        value:
+    MCUX_DRIVERS_I3C:
+        description: Add drivers/i3c to the build
+        value:
+    MCUX_DRIVERS_IAP:
+        description: Add drivers/iap to the build
+        value:
+    MCUX_DRIVERS_IAP1:
+        description: Add drivers/iap1 to the build
+        value:
+    MCUX_DRIVERS_IEE:
+        description: Add drivers/iee to the build
+        value:
+    MCUX_DRIVERS_IEE_APC:
+        description: Add drivers/iee_apc to the build
+        value:
+    MCUX_DRIVERS_IGPIO:
+        description: Add drivers/igpio to the build
+        value:
+    MCUX_DRIVERS_II2C:
+        description: Add drivers/ii2c to the build
+        value:
+    MCUX_DRIVERS_INPUTMUX:
+        description: Add drivers/inputmux to the build
+        value:
+    MCUX_DRIVERS_INTMUX:
+        description: Add drivers/intmux to the build
+        value:
+    MCUX_DRIVERS_IPWM:
+        description: Add drivers/ipwm to the build
+        value:
+    MCUX_DRIVERS_IRQ:
+        description: Add drivers/irq to the build
+        value:
+    MCUX_DRIVERS_IRQSTEER:
+        description: Add drivers/irqsteer to the build
+        value:
+    MCUX_DRIVERS_IRTC:
+        description: Add drivers/irtc to the build
+        value:
+    MCUX_DRIVERS_ISI:
+        description: Add drivers/isi to the build
+        value:
+    MCUX_DRIVERS_ITRC:
+        description: Add drivers/itrc to the build
+        value:
+    MCUX_DRIVERS_IUART:
+        description: Add drivers/iuart to the build
+        value:
+    MCUX_DRIVERS_KBI:
+        description: Add drivers/kbi to the build
+        value:
+    MCUX_DRIVERS_KEY_MANAGER:
+        description: Add drivers/key_manager to the build
+        value:
+    MCUX_DRIVERS_KPP:
+        description: Add drivers/kpp to the build
+        value:
+    MCUX_DRIVERS_LCDIF:
+        description: Add drivers/lcdif to the build
+        value:
+    MCUX_DRIVERS_LCDIFV2:
+        description: Add drivers/lcdifv2 to the build
+        value:
+    MCUX_DRIVERS_LDB:
+        description: Add drivers/ldb to the build
+        value:
+    MCUX_DRIVERS_LDB_COMBO_PHY:
+        description: Add drivers/ldb_combo_phy to the build
+        value:
+    MCUX_DRIVERS_LLWU:
+        description: Add drivers/llwu to the build
+        value:
+    MCUX_DRIVERS_LMEM:
+        description: Add drivers/lmem to the build
+        value:
+    MCUX_DRIVERS_LPADC:
+        description: Add drivers/lpadc to the build
+        value:
+    MCUX_DRIVERS_LPC_ACOMP:
+        description: Add drivers/lpc_acomp to the build
+        value:
+    MCUX_DRIVERS_LPC_ADC:
+        description: Add drivers/lpc_adc to the build
+        value:
+    MCUX_DRIVERS_LPC_CRC:
+        description: Add drivers/lpc_crc to the build
+        value:
+    MCUX_DRIVERS_LPC_DAC:
+        description: Add drivers/lpc_dac to the build
+        value:
+    MCUX_DRIVERS_LPC_DMA:
+        description: Add drivers/lpc_dma to the build
+        value:
+    MCUX_DRIVERS_LPC_ENET:
+        description: Add drivers/lpc_enet to the build
+        value:
+    MCUX_DRIVERS_LPC_FREQME:
+        description: Add drivers/lpc_freqme to the build
+        value:
+    MCUX_DRIVERS_LPC_GPIO:
+        description: Add drivers/lpc_gpio to the build
+        value:
+    MCUX_DRIVERS_LPC_I2C:
+        description: Add drivers/lpc_i2c to the build
+        value:
+    MCUX_DRIVERS_LPC_IOCON:
+        description: Add drivers/lpc_iocon to the build
+        value:
+    MCUX_DRIVERS_LPC_IOCON_LITE:
+        description: Add drivers/lpc_iocon_lite to the build
+        value:
+    MCUX_DRIVERS_LPC_IOPCTL:
+        description: Add drivers/lpc_iopctl to the build
+        value:
+    MCUX_DRIVERS_LPC_LCDC:
+        description: Add drivers/lpc_lcdc to the build
+        value:
+    MCUX_DRIVERS_LPC_MINISPI:
+        description: Add drivers/lpc_minispi to the build
+        value:
+    MCUX_DRIVERS_LPC_MINIUSART:
+        description: Add drivers/lpc_miniusart to the build
+        value:
+    MCUX_DRIVERS_LPC_RIT:
+        description: Add drivers/lpc_rit to the build
+        value:
+    MCUX_DRIVERS_LPC_RTC:
+        description: Add drivers/lpc_rtc to the build
+        value:
+    MCUX_DRIVERS_LPCMP:
+        description: Add drivers/lpcmp to the build
+        value:
+    MCUX_DRIVERS_LPI2C:
+        description: Add drivers/lpi2c to the build
+        value:
+    MCUX_DRIVERS_LPIT:
+        description: Add drivers/lpit to the build
+        value:
+    MCUX_DRIVERS_LPSCI:
+        description: Add drivers/lpsci to the build
+        value:
+    MCUX_DRIVERS_LPSPI:
+        description: Add drivers/lpspi to the build
+        value:
+    MCUX_DRIVERS_LPTMR:
+        description: Add drivers/lptmr to the build
+        value:
+    MCUX_DRIVERS_LPUART:
+        description: Add drivers/lpuart to the build
+        value:
+    MCUX_DRIVERS_LTC:
+        description: Add drivers/ltc to the build
+        value:
+    MCUX_DRIVERS_MAILBOX:
+        description: Add drivers/mailbox to the build
+        value:
+    MCUX_DRIVERS_MCAN:
+        description: Add drivers/mcan to the build
+        value:
+    MCUX_DRIVERS_MECC:
+        description: Add drivers/mecc to the build
+        value:
+    MCUX_DRIVERS_MIPI_CSI2RX:
+        description: Add drivers/mipi_csi2rx to the build
+        value:
+    MCUX_DRIVERS_MIPI_DSI:
+        description: Add drivers/mipi_dsi to the build
+        value:
+    MCUX_DRIVERS_MIPI_DSI_SPLIT:
+        description: Add drivers/mipi_dsi_split to the build
+        value:
+    MCUX_DRIVERS_MMAU:
+        description: Add drivers/mmau to the build
+        value:
+    MCUX_DRIVERS_MMDVSQ:
+        description: Add drivers/mmdvsq to the build
+        value:
+    MCUX_DRIVERS_MRT:
+        description: Add drivers/mrt to the build
+        value:
+    MCUX_DRIVERS_MSCAN:
+        description: Add drivers/mscan to the build
+        value:
+    MCUX_DRIVERS_MSMC:
+        description: Add drivers/msmc to the build
+        value:
+    MCUX_DRIVERS_MU:
+        description: Add drivers/mu to the build
+        value:
+    MCUX_DRIVERS_OCOTP:
+        description: Add drivers/ocotp to the build
+        value:
+    MCUX_DRIVERS_OPAMP:
+        description: Add drivers/opamp to the build
+        value:
+    MCUX_DRIVERS_OSTIMER:
+        description: Add drivers/ostimer to the build
+        value:
+    MCUX_DRIVERS_OTFAD:
+        description: Add drivers/otfad to the build
+        value:
+    MCUX_DRIVERS_OTP:
+        description: Add drivers/otp to the build
+        value:
+    MCUX_DRIVERS_PDB:
+        description: Add drivers/pdb to the build
+        value:
+    MCUX_DRIVERS_PDM:
+        description: Add drivers/pdm to the build
+        value:
+    MCUX_DRIVERS_PINT:
+        description: Add drivers/pint to the build
+        value:
+    MCUX_DRIVERS_PIT:
+        description: Add drivers/pit to the build
+        value:
+    MCUX_DRIVERS_PLU:
+        description: Add drivers/plu to the build
+        value:
+    MCUX_DRIVERS_PMC:
+        description: Add drivers/pmc to the build
+        value:
+    MCUX_DRIVERS_PMC0:
+        description: Add drivers/pmc0 to the build
+        value:
+    MCUX_DRIVERS_PMU:
+        description: Add drivers/pmu to the build
+        value:
+    MCUX_DRIVERS_PORT:
+        description: Add drivers/port to the build
+        value:
+    MCUX_DRIVERS_POWERQUAD:
+        description: Add drivers/powerquad to the build
+        value:
+    MCUX_DRIVERS_PRG:
+        description: Add drivers/prg to the build
+        value:
+    MCUX_DRIVERS_PRINCE:
+        description: Add drivers/prince to the build
+        value:
+    MCUX_DRIVERS_PUF:
+        description: Add drivers/puf to the build
+        value:
+    MCUX_DRIVERS_PUF_V3:
+        description: Add drivers/puf_v3 to the build
+        value:
+    MCUX_DRIVERS_PWM:
+        description: Add drivers/pwm to the build
+        value:
+    MCUX_DRIVERS_PWT:
+        description: Add drivers/pwt to the build
+        value:
+    MCUX_DRIVERS_PWT_1:
+        description: Add drivers/pwt_1 to the build
+        value:
+    MCUX_DRIVERS_PXP:
+        description: Add drivers/pxp to the build
+        value:
+    MCUX_DRIVERS_QSPI:
+        description: Add drivers/qspi to the build
+        value:
+    MCUX_DRIVERS_QTMR_1:
+        description: Add drivers/qtmr_1 to the build
+        value:
+    MCUX_DRIVERS_QTMR_2:
+        description: Add drivers/qtmr_2 to the build
+        value:
+    MCUX_DRIVERS_RCM:
+        description: Add drivers/rcm to the build
+        value:
+    MCUX_DRIVERS_RDC:
+        description: Add drivers/rdc to the build
+        value:
+    MCUX_DRIVERS_RDC_SEMA42:
+        description: Add drivers/rdc_sema42 to the build
+        value:
+    MCUX_DRIVERS_RGPIO:
+        description: Add drivers/rgpio to the build
+        value:
+    MCUX_DRIVERS_RNG:
+        description: Add drivers/rng to the build
+        value:
+    MCUX_DRIVERS_RNG_1:
+        description: Add drivers/rng_1 to the build
+        value:
+    MCUX_DRIVERS_RNGA:
+        description: Add drivers/rnga to the build
+        value:
+    MCUX_DRIVERS_RTC:
+        description: Add drivers/rtc to the build
+        value:
+    MCUX_DRIVERS_RTC_1:
+        description: Add drivers/rtc_1 to the build
+        value:
+    MCUX_DRIVERS_RTWDOG:
+        description: Add drivers/rtwdog to the build
+        value:
+    MCUX_DRIVERS_SAI:
+        description: Add drivers/sai to the build
+        value:
+    MCUX_DRIVERS_SCTIMER:
+        description: Add drivers/sctimer to the build
+        value:
+    MCUX_DRIVERS_SDHC:
+        description: Add drivers/sdhc to the build
+        value:
+    MCUX_DRIVERS_SDIF:
+        description: Add drivers/sdif to the build
+        value:
+    MCUX_DRIVERS_SDMA:
+        description: Add drivers/sdma to the build
+        value:
+    MCUX_DRIVERS_SDRAMC:
+        description: Add drivers/sdramc to the build
+        value:
+    MCUX_DRIVERS_SEMA4:
+        description: Add drivers/sema4 to the build
+        value:
+    MCUX_DRIVERS_SEMA42:
+        description: Add drivers/sema42 to the build
+        value:
+    MCUX_DRIVERS_SEMC:
+        description: Add drivers/semc to the build
+        value:
+    MCUX_DRIVERS_SHA:
+        description: Add drivers/sha to the build
+        value:
+    MCUX_DRIVERS_SIM:
+        description: Add drivers/sim to the build
+        value:
+    MCUX_DRIVERS_SLCD:
+        description: Add drivers/slcd to the build
+        value:
+    MCUX_DRIVERS_SMARTCARD:
+        description: Add drivers/smartcard to the build
+        value:
+    MCUX_DRIVERS_SMARTDMA:
+        description: Add drivers/smartdma to the build
+        value:
+    MCUX_DRIVERS_SMC:
+        description: Add drivers/smc to the build
+        value:
+    MCUX_DRIVERS_SNVS_HP:
+        description: Add drivers/snvs_hp to the build
+        value:
+    MCUX_DRIVERS_SNVS_LP:
+        description: Add drivers/snvs_lp to the build
+        value:
+    MCUX_DRIVERS_SPDIF:
+        description: Add drivers/spdif to the build
+        value:
+    MCUX_DRIVERS_SPI:
+        description: Add drivers/spi to the build
+        value:
+    MCUX_DRIVERS_SPIFI:
+        description: Add drivers/spifi to the build
+        value:
+    MCUX_DRIVERS_SPM:
+        description: Add drivers/spm to the build
+        value:
+    MCUX_DRIVERS_SRC:
+        description: Add drivers/src to the build
+        value:
+    MCUX_DRIVERS_SSARC:
+        description: Add drivers/ssarc to the build
+        value:
+    MCUX_DRIVERS_SWM:
+        description: Add drivers/swm to the build
+        value:
+    MCUX_DRIVERS_SYSCON:
+        description: Add drivers/syscon to the build
+        value:
+    MCUX_DRIVERS_SYSCTL:
+        description: Add drivers/sysctl to the build
+        value:
+    MCUX_DRIVERS_SYSMPU:
+        description: Add drivers/sysmpu to the build
+        value:
+    MCUX_DRIVERS_TEMPMON:
+        description: Add drivers/tempmon to the build
+        value:
+    MCUX_DRIVERS_TEMPSENSOR:
+        description: Add drivers/tempsensor to the build
+        value:
+    MCUX_DRIVERS_TMU:
+        description: Add drivers/tmu to the build
+        value:
+    MCUX_DRIVERS_TMU_1:
+        description: Add drivers/tmu_1 to the build
+        value:
+    MCUX_DRIVERS_TMU_2:
+        description: Add drivers/tmu_2 to the build
+        value:
+    MCUX_DRIVERS_TPM:
+        description: Add drivers/tpm to the build
+        value:
+    MCUX_DRIVERS_TRGMUX:
+        description: Add drivers/trgmux to the build
+        value:
+    MCUX_DRIVERS_TRNG:
+        description: Add drivers/trng to the build
+        value:
+    MCUX_DRIVERS_TSC:
+        description: Add drivers/tsc to the build
+        value:
+    MCUX_DRIVERS_TSI:
+        description: Add drivers/tsi to the build
+        value:
+    MCUX_DRIVERS_TSTMR:
+        description: Add drivers/tstmr to the build
+        value:
+    MCUX_DRIVERS_UART:
+        description: Add drivers/uart to the build
+        value:
+    MCUX_DRIVERS_USDHC:
+        description: Add drivers/usdhc to the build
+        value:
+    MCUX_DRIVERS_UTICK:
+        description: Add drivers/utick to the build
+        value:
+    MCUX_DRIVERS_VREF:
+        description: Add drivers/vref to the build
+        value:
+    MCUX_DRIVERS_VREF_1:
+        description: Add drivers/vref_1 to the build
+        value:
+    MCUX_DRIVERS_WDOG:
+        description: Add drivers/wdog to the build
+        value:
+    MCUX_DRIVERS_WDOG01:
+        description: Add drivers/wdog01 to the build
+        value:
+    MCUX_DRIVERS_WDOG32:
+        description: Add drivers/wdog32 to the build
+        value:
+    MCUX_DRIVERS_WDOG8:
+        description: Add drivers/wdog8 to the build
+        value:
+    MCUX_DRIVERS_WKT:
+        description: Add drivers/wkt to the build
+        value:
+    MCUX_DRIVERS_WWDT:
+        description: Add drivers/wwdt to the build
+        value:
+    MCUX_DRIVERS_XBAR:
+        description: Add drivers/xbar to the build
+        value:
+    MCUX_DRIVERS_XBARA:
+        description: Add drivers/xbara to the build
+        value:
+    MCUX_DRIVERS_XBARB:
+        description: Add drivers/xbarb to the build
+        value:
+    MCUX_DRIVERS_XECC:
+        description: Add drivers/xecc to the build
+        value:
+    MCUX_DRIVERS_XRDC:
+        description: Add drivers/xrdc to the build
+        value:
+    MCUX_DRIVERS_XRDC2:
+        description: Add drivers/xrdc2 to the build
+        value:

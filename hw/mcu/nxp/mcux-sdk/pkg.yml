@@ -1,0 +1,1279 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/mcu/nxp/mcux-sdk
+pkg.description:
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - mcux-sdk
+
+pkg.type: sdk
+
+pkg.cflags:
+    - -Wno-incompatible-pointer-types
+
+pkg.include_dirs:
+    - include
+    - "@nxp-mcux-sdk/drivers/common"
+    - "@nxp-mcux-sdk/drivers/smc"
+    - "@nxp-mcux-sdk/drivers/flash_ftmr"
+    - "@nxp-mcux-sdk/drivers/port"
+    - "@nxp-mcux-sdk/components/lists"
+    - "@nxp-mcux-sdk/components/serial_manager"
+
+pkg.include_dirs.MCU_LPC55S28:
+    - "@nxp-mcux-sdk/devices/LPC55S28"
+    - "@nxp-mcux-sdk/devices/LPC55S28/drivers"
+pkg.src_dirs.MCU_LPC55S28:
+    - "@nxp-mcux-sdk/devices/LPC55S28/drivers"
+pkg.source_files.MCU_LPC55S28:
+    - "@nxp-mcux-sdk/devices/LPC55S28/system_LPC55S28.c"
+
+pkg.include_dirs.MCU_LPC55S69:
+    - "@nxp-mcux-sdk/devices/LPC55S69"
+    - "@nxp-mcux-sdk/devices/LPC55S69/drivers"
+
+pkg.src_dirs.MCU_LPC55S69:
+    - "@nxp-mcux-sdk/devices/LPC55S69/drivers"
+pkg.source_files.MCU_LPC55S69:
+    - "@nxp-mcux-sdk/devices/LPC55S69/system_LPC55S69_cm33_core0.c"
+
+pkg.include_dirs.MCU_MK64F12:
+    - "@nxp-mcux-sdk/devices/MK64F12/drivers"
+    - "@nxp-mcux-sdk/devices/MK64F12"
+pkg.src_dirs.MCU_MK64F12:
+    - "@nxp-mcux-sdk/devices/MK64F12/drivers"
+pkg.source_files.MCU_MK64F12:
+    - "@nxp-mcux-sdk/devices/MK64F12/system_MK64F12.c"
+
+pkg.include_dirs.MCU_MK65F18:
+    - "@nxp-mcux-sdk/devices/MK65F18"
+    - "@nxp-mcux-sdk/devices/MK65F18/drivers"
+
+pkg.include_dirs.MCU_MK66F18:
+    - "@nxp-mcux-sdk/devices/MK66F18"
+    - "@nxp-mcux-sdk/devices/MK66F18/drivers"
+
+pkg.include_dirs.MCU_MK80F25615:
+    - "@nxp-mcux-sdk/devices/MK80F25615"
+    - "@nxp-mcux-sdk/devices/MK80F25615/drivers"
+
+pkg.include_dirs.MCU_MK82F25615:
+    - "@nxp-mcux-sdk/devices/MK82F25615"
+    - "@nxp-mcux-sdk/devices/MK82F25615/drivers"
+pkg.src_dirs.MCU_MK82F25615:
+    - "@nxp-mcux-sdk/devices/MK82F25615/drivers"
+pkg.ign_files.MCU_MK82F25615:
+    # Modified mynewt version exists
+    - "drivers/flash/fsl_ftfx_controller.c"
+
+# Drivers shared among different MCUs
+
+pkg.include_dirs.MCUX_DRIVERS_ACMP:
+    - "@nxp-mcux-sdk/drivers/acmp"
+pkg.src_dirs.MCUX_DRIVERS_ACMP:
+    - "@nxp-mcux-sdk/drivers/acmp"
+
+pkg.include_dirs.MCUX_DRIVERS_ACMP_1:
+    - "@nxp-mcux-sdk/drivers/acmp_1"
+pkg.src_dirs.MCUX_DRIVERS_ACMP_1:
+    - "@nxp-mcux-sdk/drivers/acmp_1"
+
+pkg.include_dirs.MCUX_DRIVERS_ADC12:
+    - "@nxp-mcux-sdk/drivers/adc12"
+pkg.src_dirs.MCUX_DRIVERS_ADC12:
+    - "@nxp-mcux-sdk/drivers/adc12"
+
+pkg.include_dirs.MCUX_DRIVERS_ADC16:
+    - "@nxp-mcux-sdk/drivers/adc16"
+pkg.src_dirs.MCUX_DRIVERS_ADC16:
+    - "@nxp-mcux-sdk/drivers/adc16"
+
+pkg.include_dirs.MCUX_DRIVERS_ADC_12B1MSPS_SAR:
+    - "@nxp-mcux-sdk/drivers/adc_12b1msps_sar"
+pkg.src_dirs.MCUX_DRIVERS_ADC_12B1MSPS_SAR:
+    - "@nxp-mcux-sdk/drivers/adc_12b1msps_sar"
+
+pkg.include_dirs.MCUX_DRIVERS_ADC_5V12B_LL18_015:
+    - "@nxp-mcux-sdk/drivers/adc_5v12b_ll18_015"
+pkg.src_dirs.MCUX_DRIVERS_ADC_5V12B_LL18_015:
+    - "@nxp-mcux-sdk/drivers/adc_5v12b_ll18_015"
+
+pkg.include_dirs.MCUX_DRIVERS_ADC_ETC:
+    - "@nxp-mcux-sdk/drivers/adc_etc"
+pkg.src_dirs.MCUX_DRIVERS_ADC_ETC:
+    - "@nxp-mcux-sdk/drivers/adc_etc"
+
+pkg.include_dirs.MCUX_DRIVERS_AES:
+    - "@nxp-mcux-sdk/drivers/aes"
+pkg.src_dirs.MCUX_DRIVERS_AES:
+    - "@nxp-mcux-sdk/drivers/aes"
+
+pkg.include_dirs.MCUX_DRIVERS_AFE:
+    - "@nxp-mcux-sdk/drivers/afe"
+pkg.src_dirs.MCUX_DRIVERS_AFE:
+    - "@nxp-mcux-sdk/drivers/afe"
+
+pkg.include_dirs.MCUX_DRIVERS_AIPSTZ:
+    - "@nxp-mcux-sdk/drivers/aipstz"
+pkg.src_dirs.MCUX_DRIVERS_AIPSTZ:
+    - "@nxp-mcux-sdk/drivers/aipstz"
+
+pkg.include_dirs.MCUX_DRIVERS_ANACTRL:
+    - "@nxp-mcux-sdk/drivers/anactrl"
+pkg.src_dirs.MCUX_DRIVERS_ANACTRL:
+    - "@nxp-mcux-sdk/drivers/anactrl"
+
+pkg.include_dirs.MCUX_DRIVERS_AOI:
+    - "@nxp-mcux-sdk/drivers/aoi"
+pkg.src_dirs.MCUX_DRIVERS_AOI:
+    - "@nxp-mcux-sdk/drivers/aoi"
+
+pkg.include_dirs.MCUX_DRIVERS_ASMC:
+    - "@nxp-mcux-sdk/drivers/asmc"
+pkg.src_dirs.MCUX_DRIVERS_ASMC:
+    - "@nxp-mcux-sdk/drivers/asmc"
+
+pkg.include_dirs.MCUX_DRIVERS_ASRC:
+    - "@nxp-mcux-sdk/drivers/asrc"
+pkg.src_dirs.MCUX_DRIVERS_ASRC:
+    - "@nxp-mcux-sdk/drivers/asrc"
+
+pkg.include_dirs.MCUX_DRIVERS_BEE:
+    - "@nxp-mcux-sdk/drivers/bee"
+pkg.src_dirs.MCUX_DRIVERS_BEE:
+    - "@nxp-mcux-sdk/drivers/bee"
+
+pkg.include_dirs.MCUX_DRIVERS_CAAM:
+    - "@nxp-mcux-sdk/drivers/caam"
+pkg.src_dirs.MCUX_DRIVERS_CAAM:
+    - "@nxp-mcux-sdk/drivers/caam"
+
+pkg.include_dirs.MCUX_DRIVERS_CACHE:
+    - "@nxp-mcux-sdk/drivers/cache"
+pkg.src_dirs.MCUX_DRIVERS_CACHE:
+    - "@nxp-mcux-sdk/drivers/cache"
+
+pkg.include_dirs.MCUX_DRIVERS_CAPT:
+    - "@nxp-mcux-sdk/drivers/capt"
+pkg.src_dirs.MCUX_DRIVERS_CAPT:
+    - "@nxp-mcux-sdk/drivers/capt"
+
+pkg.include_dirs.MCUX_DRIVERS_CASPER:
+    - "@nxp-mcux-sdk/drivers/casper"
+pkg.src_dirs.MCUX_DRIVERS_CASPER:
+    - "@nxp-mcux-sdk/drivers/casper"
+
+pkg.include_dirs.MCUX_DRIVERS_CAU3:
+    - "@nxp-mcux-sdk/drivers/cau3"
+pkg.src_dirs.MCUX_DRIVERS_CAU3:
+    - "@nxp-mcux-sdk/drivers/cau3"
+
+pkg.include_dirs.MCUX_DRIVERS_CDOG:
+    - "@nxp-mcux-sdk/drivers/cdog"
+pkg.src_dirs.MCUX_DRIVERS_CDOG:
+    - "@nxp-mcux-sdk/drivers/cdog"
+
+pkg.include_dirs.MCUX_DRIVERS_CI_PI:
+    - "@nxp-mcux-sdk/drivers/ci_pi"
+pkg.src_dirs.MCUX_DRIVERS_CI_PI:
+    - "@nxp-mcux-sdk/drivers/ci_pi"
+
+pkg.include_dirs.MCUX_DRIVERS_CMP:
+    - "@nxp-mcux-sdk/drivers/cmp"
+pkg.src_dirs.MCUX_DRIVERS_CMP:
+    - "@nxp-mcux-sdk/drivers/cmp"
+
+pkg.include_dirs.MCUX_DRIVERS_CMP_1:
+    - "@nxp-mcux-sdk/drivers/cmp_1"
+pkg.src_dirs.MCUX_DRIVERS_CMP_1:
+    - "@nxp-mcux-sdk/drivers/cmp_1"
+
+pkg.include_dirs.MCUX_DRIVERS_CMT:
+    - "@nxp-mcux-sdk/drivers/cmt"
+pkg.src_dirs.MCUX_DRIVERS_CMT:
+    - "@nxp-mcux-sdk/drivers/cmt"
+
+pkg.include_dirs.MCUX_DRIVERS_COMMON:
+    - "@nxp-mcux-sdk/drivers/common"
+pkg.source_files.MCUX_DRIVERS_COMMON:
+    - "@nxp-mcux-sdk/drivers/common/fsl_common_arm.c"
+
+pkg.include_dirs.MCUX_DRIVERS_COP:
+    - "@nxp-mcux-sdk/drivers/cop"
+pkg.src_dirs.MCUX_DRIVERS_COP:
+    - "@nxp-mcux-sdk/drivers/cop"
+
+pkg.include_dirs.MCUX_DRIVERS_CRC:
+    - "@nxp-mcux-sdk/drivers/crc"
+pkg.src_dirs.MCUX_DRIVERS_CRC:
+    - "@nxp-mcux-sdk/drivers/crc"
+
+pkg.include_dirs.MCUX_DRIVERS_CSI:
+    - "@nxp-mcux-sdk/drivers/csi"
+pkg.src_dirs.MCUX_DRIVERS_CSI:
+    - "@nxp-mcux-sdk/drivers/csi"
+
+pkg.include_dirs.MCUX_DRIVERS_CTIMER:
+    - "@nxp-mcux-sdk/drivers/ctimer"
+pkg.src_dirs.MCUX_DRIVERS_CTIMER:
+    - "@nxp-mcux-sdk/drivers/ctimer"
+
+pkg.include_dirs.MCUX_DRIVERS_CWT:
+    - "@nxp-mcux-sdk/drivers/cwt"
+pkg.src_dirs.MCUX_DRIVERS_CWT:
+    - "@nxp-mcux-sdk/drivers/cwt"
+
+pkg.include_dirs.MCUX_DRIVERS_DAC:
+    - "@nxp-mcux-sdk/drivers/dac"
+pkg.src_dirs.MCUX_DRIVERS_DAC:
+    - "@nxp-mcux-sdk/drivers/dac"
+
+pkg.include_dirs.MCUX_DRIVERS_DAC12:
+    - "@nxp-mcux-sdk/drivers/dac12"
+pkg.src_dirs.MCUX_DRIVERS_DAC12:
+    - "@nxp-mcux-sdk/drivers/dac12"
+
+pkg.include_dirs.MCUX_DRIVERS_DAC32:
+    - "@nxp-mcux-sdk/drivers/dac32"
+pkg.src_dirs.MCUX_DRIVERS_DAC32:
+    - "@nxp-mcux-sdk/drivers/dac32"
+
+pkg.include_dirs.MCUX_DRIVERS_DAC_1:
+    - "@nxp-mcux-sdk/drivers/dac_1"
+pkg.src_dirs.MCUX_DRIVERS_DAC_1:
+    - "@nxp-mcux-sdk/drivers/dac_1"
+
+pkg.include_dirs.MCUX_DRIVERS_DCDC_1:
+    - "@nxp-mcux-sdk/drivers/dcdc_1"
+pkg.src_dirs.MCUX_DRIVERS_DCDC_1:
+    - "@nxp-mcux-sdk/drivers/dcdc_1"
+
+pkg.include_dirs.MCUX_DRIVERS_DCIC:
+    - "@nxp-mcux-sdk/drivers/dcic"
+pkg.src_dirs.MCUX_DRIVERS_DCIC:
+    - "@nxp-mcux-sdk/drivers/dcic"
+
+pkg.include_dirs.MCUX_DRIVERS_DCP:
+    - "@nxp-mcux-sdk/drivers/dcp"
+pkg.src_dirs.MCUX_DRIVERS_DCP:
+    - "@nxp-mcux-sdk/drivers/dcp"
+
+pkg.include_dirs.MCUX_DRIVERS_DMA:
+    - "@nxp-mcux-sdk/drivers/dma"
+pkg.src_dirs.MCUX_DRIVERS_DMA:
+    - "@nxp-mcux-sdk/drivers/dma"
+
+pkg.include_dirs.MCUX_DRIVERS_DMA3:
+    - "@nxp-mcux-sdk/drivers/dma3"
+pkg.src_dirs.MCUX_DRIVERS_DMA3:
+    - "@nxp-mcux-sdk/drivers/dma3"
+
+pkg.include_dirs.MCUX_DRIVERS_DMAMUX:
+    - "@nxp-mcux-sdk/drivers/dmamux"
+pkg.src_dirs.MCUX_DRIVERS_DMAMUX:
+    - "@nxp-mcux-sdk/drivers/dmamux"
+
+pkg.include_dirs.MCUX_DRIVERS_DMIC:
+    - "@nxp-mcux-sdk/drivers/dmic"
+pkg.src_dirs.MCUX_DRIVERS_DMIC:
+    - "@nxp-mcux-sdk/drivers/dmic"
+
+pkg.include_dirs.MCUX_DRIVERS_DPR:
+    - "@nxp-mcux-sdk/drivers/dpr"
+pkg.src_dirs.MCUX_DRIVERS_DPR:
+    - "@nxp-mcux-sdk/drivers/dpr"
+
+pkg.include_dirs.MCUX_DRIVERS_DPU:
+    - "@nxp-mcux-sdk/drivers/dpu"
+pkg.src_dirs.MCUX_DRIVERS_DPU:
+    - "@nxp-mcux-sdk/drivers/dpu"
+
+pkg.include_dirs.MCUX_DRIVERS_DPU_IRQSTEER:
+    - "@nxp-mcux-sdk/drivers/dpu_irqsteer"
+pkg.src_dirs.MCUX_DRIVERS_DPU_IRQSTEER:
+    - "@nxp-mcux-sdk/drivers/dpu_irqsteer"
+
+pkg.include_dirs.MCUX_DRIVERS_DSPI:
+    - "@nxp-mcux-sdk/drivers/dspi"
+pkg.src_dirs.MCUX_DRIVERS_DSPI:
+    - "@nxp-mcux-sdk/drivers/dspi"
+
+pkg.include_dirs.MCUX_DRIVERS_EASRC:
+    - "@nxp-mcux-sdk/drivers/easrc"
+pkg.src_dirs.MCUX_DRIVERS_EASRC:
+    - "@nxp-mcux-sdk/drivers/easrc"
+
+pkg.include_dirs.MCUX_DRIVERS_ECSPI:
+    - "@nxp-mcux-sdk/drivers/ecspi"
+pkg.src_dirs.MCUX_DRIVERS_ECSPI:
+    - "@nxp-mcux-sdk/drivers/ecspi"
+
+pkg.include_dirs.MCUX_DRIVERS_EDMA:
+    - "@nxp-mcux-sdk/drivers/edma"
+pkg.src_dirs.MCUX_DRIVERS_EDMA:
+    - "@nxp-mcux-sdk/drivers/edma"
+
+pkg.include_dirs.MCUX_DRIVERS_EEPROM:
+    - "@nxp-mcux-sdk/drivers/eeprom"
+pkg.src_dirs.MCUX_DRIVERS_EEPROM:
+    - "@nxp-mcux-sdk/drivers/eeprom"
+
+pkg.include_dirs.MCUX_DRIVERS_ELCDIF:
+    - "@nxp-mcux-sdk/drivers/elcdif"
+pkg.src_dirs.MCUX_DRIVERS_ELCDIF:
+    - "@nxp-mcux-sdk/drivers/elcdif"
+
+pkg.include_dirs.MCUX_DRIVERS_EMC:
+    - "@nxp-mcux-sdk/drivers/emc"
+pkg.src_dirs.MCUX_DRIVERS_EMC:
+    - "@nxp-mcux-sdk/drivers/emc"
+
+pkg.include_dirs.MCUX_DRIVERS_ENC:
+    - "@nxp-mcux-sdk/drivers/enc"
+pkg.src_dirs.MCUX_DRIVERS_ENC:
+    - "@nxp-mcux-sdk/drivers/enc"
+
+pkg.include_dirs.MCUX_DRIVERS_ENET:
+    - "@nxp-mcux-sdk/drivers/enet"
+pkg.src_dirs.MCUX_DRIVERS_ENET:
+    - "@nxp-mcux-sdk/drivers/enet"
+
+pkg.include_dirs.MCUX_DRIVERS_ENET_QOS:
+    - "@nxp-mcux-sdk/drivers/enet_qos"
+pkg.src_dirs.MCUX_DRIVERS_ENET_QOS:
+    - "@nxp-mcux-sdk/drivers/enet_qos"
+
+pkg.include_dirs.MCUX_DRIVERS_ESAI:
+    - "@nxp-mcux-sdk/drivers/esai"
+pkg.src_dirs.MCUX_DRIVERS_ESAI:
+    - "@nxp-mcux-sdk/drivers/esai"
+
+pkg.include_dirs.MCUX_DRIVERS_EWM:
+    - "@nxp-mcux-sdk/drivers/ewm"
+pkg.src_dirs.MCUX_DRIVERS_EWM:
+    - "@nxp-mcux-sdk/drivers/ewm"
+
+pkg.include_dirs.MCUX_DRIVERS_FLASH:
+    - "@nxp-mcux-sdk/drivers/flash"
+pkg.src_dirs.MCUX_DRIVERS_FLASH:
+    - "@nxp-mcux-sdk/drivers/flash"
+
+pkg.include_dirs.MCUX_DRIVERS_FLASH_FTMR:
+    - "@nxp-mcux-sdk/drivers/flash_ftmr"
+pkg.src_dirs.MCUX_DRIVERS_FLASH_FTMR:
+    - "@nxp-mcux-sdk/drivers/flash_ftmr"
+
+pkg.include_dirs.MCUX_DRIVERS_FLASHIAP:
+    - "@nxp-mcux-sdk/drivers/flashiap"
+pkg.src_dirs.MCUX_DRIVERS_FLASHIAP:
+    - "@nxp-mcux-sdk/drivers/flashiap"
+
+pkg.include_dirs.MCUX_DRIVERS_FLEXBUS:
+    - "@nxp-mcux-sdk/drivers/flexbus"
+pkg.src_dirs.MCUX_DRIVERS_FLEXBUS:
+    - "@nxp-mcux-sdk/drivers/flexbus"
+
+pkg.include_dirs.MCUX_DRIVERS_FLEXCAN:
+    - "@nxp-mcux-sdk/drivers/flexcan"
+pkg.src_dirs.MCUX_DRIVERS_FLEXCAN:
+    - "@nxp-mcux-sdk/drivers/flexcan"
+
+pkg.include_dirs.MCUX_DRIVERS_FLEXCOMM:
+    - "@nxp-mcux-sdk/drivers/flexcomm"
+pkg.src_dirs.MCUX_DRIVERS_FLEXCOMM:
+    - "@nxp-mcux-sdk/drivers/flexcomm"
+
+pkg.include_dirs.MCUX_DRIVERS_FLEXIO:
+    - "@nxp-mcux-sdk/drivers/flexio"
+pkg.src_dirs.MCUX_DRIVERS_FLEXIO:
+    - "@nxp-mcux-sdk/drivers/flexio"
+
+pkg.include_dirs.MCUX_DRIVERS_FLEXRAM:
+    - "@nxp-mcux-sdk/drivers/flexram"
+pkg.src_dirs.MCUX_DRIVERS_FLEXRAM:
+    - "@nxp-mcux-sdk/drivers/flexram"
+
+pkg.include_dirs.MCUX_DRIVERS_FLEXSPI:
+    - "@nxp-mcux-sdk/drivers/flexspi"
+pkg.src_dirs.MCUX_DRIVERS_FLEXSPI:
+    - "@nxp-mcux-sdk/drivers/flexspi"
+
+pkg.include_dirs.MCUX_DRIVERS_FMC:
+    - "@nxp-mcux-sdk/drivers/fmc"
+pkg.src_dirs.MCUX_DRIVERS_FMC:
+    - "@nxp-mcux-sdk/drivers/fmc"
+
+pkg.include_dirs.MCUX_DRIVERS_FMEAS:
+    - "@nxp-mcux-sdk/drivers/fmeas"
+pkg.src_dirs.MCUX_DRIVERS_FMEAS:
+    - "@nxp-mcux-sdk/drivers/fmeas"
+
+pkg.include_dirs.MCUX_DRIVERS_FTM:
+    - "@nxp-mcux-sdk/drivers/ftm"
+pkg.src_dirs.MCUX_DRIVERS_FTM:
+    - "@nxp-mcux-sdk/drivers/ftm"
+
+pkg.include_dirs.MCUX_DRIVERS_GINT:
+    - "@nxp-mcux-sdk/drivers/gint"
+pkg.src_dirs.MCUX_DRIVERS_GINT:
+    - "@nxp-mcux-sdk/drivers/gint"
+
+pkg.include_dirs.MCUX_DRIVERS_GPC_1:
+    - "@nxp-mcux-sdk/drivers/gpc_1"
+pkg.src_dirs.MCUX_DRIVERS_GPC_1:
+    - "@nxp-mcux-sdk/drivers/gpc_1"
+
+pkg.include_dirs.MCUX_DRIVERS_GPC_2:
+    - "@nxp-mcux-sdk/drivers/gpc_2"
+pkg.src_dirs.MCUX_DRIVERS_GPC_2:
+    - "@nxp-mcux-sdk/drivers/gpc_2"
+
+pkg.include_dirs.MCUX_DRIVERS_GPIO:
+    - "@nxp-mcux-sdk/drivers/gpio"
+pkg.src_dirs.MCUX_DRIVERS_GPIO:
+    - "@nxp-mcux-sdk/drivers/gpio"
+
+pkg.include_dirs.MCUX_DRIVERS_GPIO_1:
+    - "@nxp-mcux-sdk/drivers/gpio_1"
+pkg.src_dirs.MCUX_DRIVERS_GPIO_1:
+    - "@nxp-mcux-sdk/drivers/gpio_1"
+
+pkg.include_dirs.MCUX_DRIVERS_GPT:
+    - "@nxp-mcux-sdk/drivers/gpt"
+pkg.src_dirs.MCUX_DRIVERS_GPT:
+    - "@nxp-mcux-sdk/drivers/gpt"
+
+pkg.include_dirs.MCUX_DRIVERS_HASHCRYPT:
+    - "@nxp-mcux-sdk/drivers/hashcrypt"
+pkg.src_dirs.MCUX_DRIVERS_HASHCRYPT:
+    - "@nxp-mcux-sdk/drivers/hashcrypt"
+
+pkg.include_dirs.MCUX_DRIVERS_HSADC:
+    - "@nxp-mcux-sdk/drivers/hsadc"
+pkg.src_dirs.MCUX_DRIVERS_HSADC:
+    - "@nxp-mcux-sdk/drivers/hsadc"
+
+pkg.include_dirs.MCUX_DRIVERS_HSCMP:
+    - "@nxp-mcux-sdk/drivers/hscmp"
+pkg.src_dirs.MCUX_DRIVERS_HSCMP:
+    - "@nxp-mcux-sdk/drivers/hscmp"
+
+pkg.include_dirs.MCUX_DRIVERS_I2C:
+    - "@nxp-mcux-sdk/drivers/i2c"
+pkg.src_dirs.MCUX_DRIVERS_I2C:
+    - "@nxp-mcux-sdk/drivers/i2c"
+
+pkg.include_dirs.MCUX_DRIVERS_I3C:
+    - "@nxp-mcux-sdk/drivers/i3c"
+pkg.src_dirs.MCUX_DRIVERS_I3C:
+    - "@nxp-mcux-sdk/drivers/i3c"
+
+pkg.include_dirs.MCUX_DRIVERS_IAP:
+    - "@nxp-mcux-sdk/drivers/iap"
+pkg.src_dirs.MCUX_DRIVERS_IAP:
+    - "@nxp-mcux-sdk/drivers/iap"
+
+pkg.include_dirs.MCUX_DRIVERS_IAP1:
+    - "@nxp-mcux-sdk/drivers/iap1"
+pkg.src_dirs.MCUX_DRIVERS_IAP1:
+    - "@nxp-mcux-sdk/drivers/iap1"
+
+pkg.include_dirs.MCUX_DRIVERS_IEE:
+    - "@nxp-mcux-sdk/drivers/iee"
+pkg.src_dirs.MCUX_DRIVERS_IEE:
+    - "@nxp-mcux-sdk/drivers/iee"
+
+pkg.include_dirs.MCUX_DRIVERS_IEE_APC:
+    - "@nxp-mcux-sdk/drivers/iee_apc"
+pkg.src_dirs.MCUX_DRIVERS_IEE_APC:
+    - "@nxp-mcux-sdk/drivers/iee_apc"
+
+pkg.include_dirs.MCUX_DRIVERS_IGPIO:
+    - "@nxp-mcux-sdk/drivers/igpio"
+pkg.src_dirs.MCUX_DRIVERS_IGPIO:
+    - "@nxp-mcux-sdk/drivers/igpio"
+
+pkg.include_dirs.MCUX_DRIVERS_II2C:
+    - "@nxp-mcux-sdk/drivers/ii2c"
+pkg.src_dirs.MCUX_DRIVERS_II2C:
+    - "@nxp-mcux-sdk/drivers/ii2c"
+
+pkg.include_dirs.MCUX_DRIVERS_INPUTMUX:
+    - "@nxp-mcux-sdk/drivers/inputmux"
+pkg.src_dirs.MCUX_DRIVERS_INPUTMUX:
+    - "@nxp-mcux-sdk/drivers/inputmux"
+
+pkg.include_dirs.MCUX_DRIVERS_INTMUX:
+    - "@nxp-mcux-sdk/drivers/intmux"
+pkg.src_dirs.MCUX_DRIVERS_INTMUX:
+    - "@nxp-mcux-sdk/drivers/intmux"
+
+pkg.include_dirs.MCUX_DRIVERS_IPWM:
+    - "@nxp-mcux-sdk/drivers/ipwm"
+pkg.src_dirs.MCUX_DRIVERS_IPWM:
+    - "@nxp-mcux-sdk/drivers/ipwm"
+
+pkg.include_dirs.MCUX_DRIVERS_IRQ:
+    - "@nxp-mcux-sdk/drivers/irq"
+pkg.src_dirs.MCUX_DRIVERS_IRQ:
+    - "@nxp-mcux-sdk/drivers/irq"
+
+pkg.include_dirs.MCUX_DRIVERS_IRQSTEER:
+    - "@nxp-mcux-sdk/drivers/irqsteer"
+pkg.src_dirs.MCUX_DRIVERS_IRQSTEER:
+    - "@nxp-mcux-sdk/drivers/irqsteer"
+
+pkg.include_dirs.MCUX_DRIVERS_IRTC:
+    - "@nxp-mcux-sdk/drivers/irtc"
+pkg.src_dirs.MCUX_DRIVERS_IRTC:
+    - "@nxp-mcux-sdk/drivers/irtc"
+
+pkg.include_dirs.MCUX_DRIVERS_ISI:
+    - "@nxp-mcux-sdk/drivers/isi"
+pkg.src_dirs.MCUX_DRIVERS_ISI:
+    - "@nxp-mcux-sdk/drivers/isi"
+
+pkg.include_dirs.MCUX_DRIVERS_ITRC:
+    - "@nxp-mcux-sdk/drivers/itrc"
+pkg.src_dirs.MCUX_DRIVERS_ITRC:
+    - "@nxp-mcux-sdk/drivers/itrc"
+
+pkg.include_dirs.MCUX_DRIVERS_IUART:
+    - "@nxp-mcux-sdk/drivers/iuart"
+pkg.src_dirs.MCUX_DRIVERS_IUART:
+    - "@nxp-mcux-sdk/drivers/iuart"
+
+pkg.include_dirs.MCUX_DRIVERS_KBI:
+    - "@nxp-mcux-sdk/drivers/kbi"
+pkg.src_dirs.MCUX_DRIVERS_KBI:
+    - "@nxp-mcux-sdk/drivers/kbi"
+
+pkg.include_dirs.MCUX_DRIVERS_KEY_MANAGER:
+    - "@nxp-mcux-sdk/drivers/key_manager"
+pkg.src_dirs.MCUX_DRIVERS_KEY_MANAGER:
+    - "@nxp-mcux-sdk/drivers/key_manager"
+
+pkg.include_dirs.MCUX_DRIVERS_KPP:
+    - "@nxp-mcux-sdk/drivers/kpp"
+pkg.src_dirs.MCUX_DRIVERS_KPP:
+    - "@nxp-mcux-sdk/drivers/kpp"
+
+pkg.include_dirs.MCUX_DRIVERS_LCDIF:
+    - "@nxp-mcux-sdk/drivers/lcdif"
+pkg.src_dirs.MCUX_DRIVERS_LCDIF:
+    - "@nxp-mcux-sdk/drivers/lcdif"
+
+pkg.include_dirs.MCUX_DRIVERS_LCDIFV2:
+    - "@nxp-mcux-sdk/drivers/lcdifv2"
+pkg.src_dirs.MCUX_DRIVERS_LCDIFV2:
+    - "@nxp-mcux-sdk/drivers/lcdifv2"
+
+pkg.include_dirs.MCUX_DRIVERS_LDB:
+    - "@nxp-mcux-sdk/drivers/ldb"
+pkg.src_dirs.MCUX_DRIVERS_LDB:
+    - "@nxp-mcux-sdk/drivers/ldb"
+
+pkg.include_dirs.MCUX_DRIVERS_LDB_COMBO_PHY:
+    - "@nxp-mcux-sdk/drivers/ldb_combo_phy"
+pkg.src_dirs.MCUX_DRIVERS_LDB_COMBO_PHY:
+    - "@nxp-mcux-sdk/drivers/ldb_combo_phy"
+
+pkg.include_dirs.MCUX_DRIVERS_LLWU:
+    - "@nxp-mcux-sdk/drivers/llwu"
+pkg.src_dirs.MCUX_DRIVERS_LLWU:
+    - "@nxp-mcux-sdk/drivers/llwu"
+
+pkg.include_dirs.MCUX_DRIVERS_LMEM:
+    - "@nxp-mcux-sdk/drivers/lmem"
+pkg.src_dirs.MCUX_DRIVERS_LMEM:
+    - "@nxp-mcux-sdk/drivers/lmem"
+
+pkg.include_dirs.MCUX_DRIVERS_LPADC:
+    - "@nxp-mcux-sdk/drivers/lpadc"
+pkg.src_dirs.MCUX_DRIVERS_LPADC:
+    - "@nxp-mcux-sdk/drivers/lpadc"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_ACOMP:
+    - "@nxp-mcux-sdk/drivers/lpc_acomp"
+pkg.src_dirs.MCUX_DRIVERS_LPC_ACOMP:
+    - "@nxp-mcux-sdk/drivers/lpc_acomp"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_ADC:
+    - "@nxp-mcux-sdk/drivers/lpc_adc"
+pkg.src_dirs.MCUX_DRIVERS_LPC_ADC:
+    - "@nxp-mcux-sdk/drivers/lpc_adc"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_CRC:
+    - "@nxp-mcux-sdk/drivers/lpc_crc"
+pkg.src_dirs.MCUX_DRIVERS_LPC_CRC:
+    - "@nxp-mcux-sdk/drivers/lpc_crc"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_DAC:
+    - "@nxp-mcux-sdk/drivers/lpc_dac"
+pkg.src_dirs.MCUX_DRIVERS_LPC_DAC:
+    - "@nxp-mcux-sdk/drivers/lpc_dac"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_DMA:
+    - "@nxp-mcux-sdk/drivers/lpc_dma"
+pkg.src_dirs.MCUX_DRIVERS_LPC_DMA:
+    - "@nxp-mcux-sdk/drivers/lpc_dma"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_ENET:
+    - "@nxp-mcux-sdk/drivers/lpc_enet"
+pkg.src_dirs.MCUX_DRIVERS_LPC_ENET:
+    - "@nxp-mcux-sdk/drivers/lpc_enet"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_FREQME:
+    - "@nxp-mcux-sdk/drivers/lpc_freqme"
+pkg.src_dirs.MCUX_DRIVERS_LPC_FREQME:
+    - "@nxp-mcux-sdk/drivers/lpc_freqme"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_GPIO:
+    - "@nxp-mcux-sdk/drivers/lpc_gpio"
+pkg.src_dirs.MCUX_DRIVERS_LPC_GPIO:
+    - "@nxp-mcux-sdk/drivers/lpc_gpio"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_I2C:
+    - "@nxp-mcux-sdk/drivers/lpc_i2c"
+pkg.src_dirs.MCUX_DRIVERS_LPC_I2C:
+    - "@nxp-mcux-sdk/drivers/lpc_i2c"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_IOCON:
+    - "@nxp-mcux-sdk/drivers/lpc_iocon"
+pkg.src_dirs.MCUX_DRIVERS_LPC_IOCON:
+    - "@nxp-mcux-sdk/drivers/lpc_iocon"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_IOCON_LITE:
+    - "@nxp-mcux-sdk/drivers/lpc_iocon_lite"
+pkg.src_dirs.MCUX_DRIVERS_LPC_IOCON_LITE:
+    - "@nxp-mcux-sdk/drivers/lpc_iocon_lite"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_IOPCTL:
+    - "@nxp-mcux-sdk/drivers/lpc_iopctl"
+pkg.src_dirs.MCUX_DRIVERS_LPC_IOPCTL:
+    - "@nxp-mcux-sdk/drivers/lpc_iopctl"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_LCDC:
+    - "@nxp-mcux-sdk/drivers/lpc_lcdc"
+pkg.src_dirs.MCUX_DRIVERS_LPC_LCDC:
+    - "@nxp-mcux-sdk/drivers/lpc_lcdc"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_MINISPI:
+    - "@nxp-mcux-sdk/drivers/lpc_minispi"
+pkg.src_dirs.MCUX_DRIVERS_LPC_MINISPI:
+    - "@nxp-mcux-sdk/drivers/lpc_minispi"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_MINIUSART:
+    - "@nxp-mcux-sdk/drivers/lpc_miniusart"
+pkg.src_dirs.MCUX_DRIVERS_LPC_MINIUSART:
+    - "@nxp-mcux-sdk/drivers/lpc_miniusart"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_RIT:
+    - "@nxp-mcux-sdk/drivers/lpc_rit"
+pkg.src_dirs.MCUX_DRIVERS_LPC_RIT:
+    - "@nxp-mcux-sdk/drivers/lpc_rit"
+
+pkg.include_dirs.MCUX_DRIVERS_LPC_RTC:
+    - "@nxp-mcux-sdk/drivers/lpc_rtc"
+pkg.src_dirs.MCUX_DRIVERS_LPC_RTC:
+    - "@nxp-mcux-sdk/drivers/lpc_rtc"
+
+pkg.include_dirs.MCUX_DRIVERS_LPCMP:
+    - "@nxp-mcux-sdk/drivers/lpcmp"
+pkg.src_dirs.MCUX_DRIVERS_LPCMP:
+    - "@nxp-mcux-sdk/drivers/lpcmp"
+
+pkg.include_dirs.MCUX_DRIVERS_LPI2C:
+    - "@nxp-mcux-sdk/drivers/lpi2c"
+pkg.src_dirs.MCUX_DRIVERS_LPI2C:
+    - "@nxp-mcux-sdk/drivers/lpi2c"
+
+pkg.include_dirs.MCUX_DRIVERS_LPIT:
+    - "@nxp-mcux-sdk/drivers/lpit"
+pkg.src_dirs.MCUX_DRIVERS_LPIT:
+    - "@nxp-mcux-sdk/drivers/lpit"
+
+pkg.include_dirs.MCUX_DRIVERS_LPSCI:
+    - "@nxp-mcux-sdk/drivers/lpsci"
+pkg.src_dirs.MCUX_DRIVERS_LPSCI:
+    - "@nxp-mcux-sdk/drivers/lpsci"
+
+pkg.include_dirs.MCUX_DRIVERS_LPSPI:
+    - "@nxp-mcux-sdk/drivers/lpspi"
+pkg.src_dirs.MCUX_DRIVERS_LPSPI:
+    - "@nxp-mcux-sdk/drivers/lpspi"
+
+pkg.include_dirs.MCUX_DRIVERS_LPTMR:
+    - "@nxp-mcux-sdk/drivers/lptmr"
+pkg.src_dirs.MCUX_DRIVERS_LPTMR:
+    - "@nxp-mcux-sdk/drivers/lptmr"
+
+pkg.include_dirs.MCUX_DRIVERS_LPUART:
+    - "@nxp-mcux-sdk/drivers/lpuart"
+pkg.src_dirs.MCUX_DRIVERS_LPUART:
+    - "@nxp-mcux-sdk/drivers/lpuart"
+
+pkg.include_dirs.MCUX_DRIVERS_LTC:
+    - "@nxp-mcux-sdk/drivers/ltc"
+pkg.src_dirs.MCUX_DRIVERS_LTC:
+    - "@nxp-mcux-sdk/drivers/ltc"
+
+pkg.include_dirs.MCUX_DRIVERS_MAILBOX:
+    - "@nxp-mcux-sdk/drivers/mailbox"
+pkg.src_dirs.MCUX_DRIVERS_MAILBOX:
+    - "@nxp-mcux-sdk/drivers/mailbox"
+
+pkg.include_dirs.MCUX_DRIVERS_MCAN:
+    - "@nxp-mcux-sdk/drivers/mcan"
+pkg.src_dirs.MCUX_DRIVERS_MCAN:
+    - "@nxp-mcux-sdk/drivers/mcan"
+
+pkg.include_dirs.MCUX_DRIVERS_MECC:
+    - "@nxp-mcux-sdk/drivers/mecc"
+pkg.src_dirs.MCUX_DRIVERS_MECC:
+    - "@nxp-mcux-sdk/drivers/mecc"
+
+pkg.include_dirs.MCUX_DRIVERS_MIPI_CSI2RX:
+    - "@nxp-mcux-sdk/drivers/mipi_csi2rx"
+pkg.src_dirs.MCUX_DRIVERS_MIPI_CSI2RX:
+    - "@nxp-mcux-sdk/drivers/mipi_csi2rx"
+
+pkg.include_dirs.MCUX_DRIVERS_MIPI_DSI:
+    - "@nxp-mcux-sdk/drivers/mipi_dsi"
+pkg.src_dirs.MCUX_DRIVERS_MIPI_DSI:
+    - "@nxp-mcux-sdk/drivers/mipi_dsi"
+
+pkg.include_dirs.MCUX_DRIVERS_MIPI_DSI_SPLIT:
+    - "@nxp-mcux-sdk/drivers/mipi_dsi_split"
+pkg.src_dirs.MCUX_DRIVERS_MIPI_DSI_SPLIT:
+    - "@nxp-mcux-sdk/drivers/mipi_dsi_split"
+
+pkg.include_dirs.MCUX_DRIVERS_MMAU:
+    - "@nxp-mcux-sdk/drivers/mmau"
+pkg.src_dirs.MCUX_DRIVERS_MMAU:
+    - "@nxp-mcux-sdk/drivers/mmau"
+
+pkg.include_dirs.MCUX_DRIVERS_MMDVSQ:
+    - "@nxp-mcux-sdk/drivers/mmdvsq"
+pkg.src_dirs.MCUX_DRIVERS_MMDVSQ:
+    - "@nxp-mcux-sdk/drivers/mmdvsq"
+
+pkg.include_dirs.MCUX_DRIVERS_MRT:
+    - "@nxp-mcux-sdk/drivers/mrt"
+pkg.src_dirs.MCUX_DRIVERS_MRT:
+    - "@nxp-mcux-sdk/drivers/mrt"
+
+pkg.include_dirs.MCUX_DRIVERS_MSCAN:
+    - "@nxp-mcux-sdk/drivers/mscan"
+pkg.src_dirs.MCUX_DRIVERS_MSCAN:
+    - "@nxp-mcux-sdk/drivers/mscan"
+
+pkg.include_dirs.MCUX_DRIVERS_MSMC:
+    - "@nxp-mcux-sdk/drivers/msmc"
+pkg.src_dirs.MCUX_DRIVERS_MSMC:
+    - "@nxp-mcux-sdk/drivers/msmc"
+
+pkg.include_dirs.MCUX_DRIVERS_MU:
+    - "@nxp-mcux-sdk/drivers/mu"
+pkg.src_dirs.MCUX_DRIVERS_MU:
+    - "@nxp-mcux-sdk/drivers/mu"
+
+pkg.include_dirs.MCUX_DRIVERS_OCOTP:
+    - "@nxp-mcux-sdk/drivers/ocotp"
+pkg.src_dirs.MCUX_DRIVERS_OCOTP:
+    - "@nxp-mcux-sdk/drivers/ocotp"
+
+pkg.include_dirs.MCUX_DRIVERS_OPAMP:
+    - "@nxp-mcux-sdk/drivers/opamp"
+pkg.src_dirs.MCUX_DRIVERS_OPAMP:
+    - "@nxp-mcux-sdk/drivers/opamp"
+
+pkg.include_dirs.MCUX_DRIVERS_OSTIMER:
+    - "@nxp-mcux-sdk/drivers/ostimer"
+pkg.src_dirs.MCUX_DRIVERS_OSTIMER:
+    - "@nxp-mcux-sdk/drivers/ostimer"
+
+pkg.include_dirs.MCUX_DRIVERS_OTFAD:
+    - "@nxp-mcux-sdk/drivers/otfad"
+pkg.src_dirs.MCUX_DRIVERS_OTFAD:
+    - "@nxp-mcux-sdk/drivers/otfad"
+
+pkg.include_dirs.MCUX_DRIVERS_OTP:
+    - "@nxp-mcux-sdk/drivers/otp"
+pkg.src_dirs.MCUX_DRIVERS_OTP:
+    - "@nxp-mcux-sdk/drivers/otp"
+
+pkg.include_dirs.MCUX_DRIVERS_PDB:
+    - "@nxp-mcux-sdk/drivers/pdb"
+pkg.src_dirs.MCUX_DRIVERS_PDB:
+    - "@nxp-mcux-sdk/drivers/pdb"
+
+pkg.include_dirs.MCUX_DRIVERS_PDM:
+    - "@nxp-mcux-sdk/drivers/pdm"
+pkg.src_dirs.MCUX_DRIVERS_PDM:
+    - "@nxp-mcux-sdk/drivers/pdm"
+
+pkg.include_dirs.MCUX_DRIVERS_PINT:
+    - "@nxp-mcux-sdk/drivers/pint"
+pkg.src_dirs.MCUX_DRIVERS_PINT:
+    - "@nxp-mcux-sdk/drivers/pint"
+
+pkg.include_dirs.MCUX_DRIVERS_PIT:
+    - "@nxp-mcux-sdk/drivers/pit"
+pkg.src_dirs.MCUX_DRIVERS_PIT:
+    - "@nxp-mcux-sdk/drivers/pit"
+
+pkg.include_dirs.MCUX_DRIVERS_PLU:
+    - "@nxp-mcux-sdk/drivers/plu"
+pkg.src_dirs.MCUX_DRIVERS_PLU:
+    - "@nxp-mcux-sdk/drivers/plu"
+
+pkg.include_dirs.MCUX_DRIVERS_PMC:
+    - "@nxp-mcux-sdk/drivers/pmc"
+pkg.src_dirs.MCUX_DRIVERS_PMC:
+    - "@nxp-mcux-sdk/drivers/pmc"
+
+pkg.include_dirs.MCUX_DRIVERS_PMC0:
+    - "@nxp-mcux-sdk/drivers/pmc0"
+pkg.src_dirs.MCUX_DRIVERS_PMC0:
+    - "@nxp-mcux-sdk/drivers/pmc0"
+
+pkg.include_dirs.MCUX_DRIVERS_PMU:
+    - "@nxp-mcux-sdk/drivers/pmu"
+pkg.src_dirs.MCUX_DRIVERS_PMU:
+    - "@nxp-mcux-sdk/drivers/pmu"
+
+pkg.include_dirs.MCUX_DRIVERS_PORT:
+    - "@nxp-mcux-sdk/drivers/port"
+pkg.src_dirs.MCUX_DRIVERS_PORT:
+    - "@nxp-mcux-sdk/drivers/port"
+
+pkg.include_dirs.MCUX_DRIVERS_POWERQUAD:
+    - "@nxp-mcux-sdk/drivers/powerquad"
+pkg.src_dirs.MCUX_DRIVERS_POWERQUAD:
+    - "@nxp-mcux-sdk/drivers/powerquad"
+
+pkg.include_dirs.MCUX_DRIVERS_PRG:
+    - "@nxp-mcux-sdk/drivers/prg"
+pkg.src_dirs.MCUX_DRIVERS_PRG:
+    - "@nxp-mcux-sdk/drivers/prg"
+
+pkg.include_dirs.MCUX_DRIVERS_PRINCE:
+    - "@nxp-mcux-sdk/drivers/prince"
+pkg.src_dirs.MCUX_DRIVERS_PRINCE:
+    - "@nxp-mcux-sdk/drivers/prince"
+
+pkg.include_dirs.MCUX_DRIVERS_PUF:
+    - "@nxp-mcux-sdk/drivers/puf"
+pkg.src_dirs.MCUX_DRIVERS_PUF:
+    - "@nxp-mcux-sdk/drivers/puf"
+
+pkg.include_dirs.MCUX_DRIVERS_PUF_V3:
+    - "@nxp-mcux-sdk/drivers/puf_v3"
+pkg.src_dirs.MCUX_DRIVERS_PUF_V3:
+    - "@nxp-mcux-sdk/drivers/puf_v3"
+
+pkg.include_dirs.MCUX_DRIVERS_PWM:
+    - "@nxp-mcux-sdk/drivers/pwm"
+pkg.src_dirs.MCUX_DRIVERS_PWM:
+    - "@nxp-mcux-sdk/drivers/pwm"
+
+pkg.include_dirs.MCUX_DRIVERS_PWT:
+    - "@nxp-mcux-sdk/drivers/pwt"
+pkg.src_dirs.MCUX_DRIVERS_PWT:
+    - "@nxp-mcux-sdk/drivers/pwt"
+
+pkg.include_dirs.MCUX_DRIVERS_PWT_1:
+    - "@nxp-mcux-sdk/drivers/pwt_1"
+pkg.src_dirs.MCUX_DRIVERS_PWT_1:
+    - "@nxp-mcux-sdk/drivers/pwt_1"
+
+pkg.include_dirs.MCUX_DRIVERS_PXP:
+    - "@nxp-mcux-sdk/drivers/pxp"
+pkg.src_dirs.MCUX_DRIVERS_PXP:
+    - "@nxp-mcux-sdk/drivers/pxp"
+
+pkg.include_dirs.MCUX_DRIVERS_QSPI:
+    - "@nxp-mcux-sdk/drivers/qspi"
+pkg.src_dirs.MCUX_DRIVERS_QSPI:
+    - "@nxp-mcux-sdk/drivers/qspi"
+
+pkg.include_dirs.MCUX_DRIVERS_QTMR_1:
+    - "@nxp-mcux-sdk/drivers/qtmr_1"
+pkg.src_dirs.MCUX_DRIVERS_QTMR_1:
+    - "@nxp-mcux-sdk/drivers/qtmr_1"
+
+pkg.include_dirs.MCUX_DRIVERS_QTMR_2:
+    - "@nxp-mcux-sdk/drivers/qtmr_2"
+pkg.src_dirs.MCUX_DRIVERS_QTMR_2:
+    - "@nxp-mcux-sdk/drivers/qtmr_2"
+
+pkg.include_dirs.MCUX_DRIVERS_RCM:
+    - "@nxp-mcux-sdk/drivers/rcm"
+pkg.src_dirs.MCUX_DRIVERS_RCM:
+    - "@nxp-mcux-sdk/drivers/rcm"
+
+pkg.include_dirs.MCUX_DRIVERS_RDC:
+    - "@nxp-mcux-sdk/drivers/rdc"
+pkg.src_dirs.MCUX_DRIVERS_RDC:
+    - "@nxp-mcux-sdk/drivers/rdc"
+
+pkg.include_dirs.MCUX_DRIVERS_RDC_SEMA42:
+    - "@nxp-mcux-sdk/drivers/rdc_sema42"
+pkg.src_dirs.MCUX_DRIVERS_RDC_SEMA42:
+    - "@nxp-mcux-sdk/drivers/rdc_sema42"
+
+pkg.include_dirs.MCUX_DRIVERS_RGPIO:
+    - "@nxp-mcux-sdk/drivers/rgpio"
+pkg.src_dirs.MCUX_DRIVERS_RGPIO:
+    - "@nxp-mcux-sdk/drivers/rgpio"
+
+pkg.include_dirs.MCUX_DRIVERS_RNG:
+    - "@nxp-mcux-sdk/drivers/rng"
+pkg.src_dirs.MCUX_DRIVERS_RNG:
+    - "@nxp-mcux-sdk/drivers/rng"
+
+pkg.include_dirs.MCUX_DRIVERS_RNG_1:
+    - "@nxp-mcux-sdk/drivers/rng_1"
+pkg.src_dirs.MCUX_DRIVERS_RNG_1:
+    - "@nxp-mcux-sdk/drivers/rng_1"
+
+pkg.include_dirs.MCUX_DRIVERS_RNGA:
+    - "@nxp-mcux-sdk/drivers/rnga"
+pkg.src_dirs.MCUX_DRIVERS_RNGA:
+    - "@nxp-mcux-sdk/drivers/rnga"
+
+pkg.include_dirs.MCUX_DRIVERS_RTC:
+    - "@nxp-mcux-sdk/drivers/rtc"
+pkg.src_dirs.MCUX_DRIVERS_RTC:
+    - "@nxp-mcux-sdk/drivers/rtc"
+
+pkg.include_dirs.MCUX_DRIVERS_RTC_1:
+    - "@nxp-mcux-sdk/drivers/rtc_1"
+pkg.src_dirs.MCUX_DRIVERS_RTC_1:
+    - "@nxp-mcux-sdk/drivers/rtc_1"
+
+pkg.include_dirs.MCUX_DRIVERS_RTWDOG:
+    - "@nxp-mcux-sdk/drivers/rtwdog"
+pkg.src_dirs.MCUX_DRIVERS_RTWDOG:
+    - "@nxp-mcux-sdk/drivers/rtwdog"
+
+pkg.include_dirs.MCUX_DRIVERS_SAI:
+    - "@nxp-mcux-sdk/drivers/sai"
+pkg.src_dirs.MCUX_DRIVERS_SAI:
+    - "@nxp-mcux-sdk/drivers/sai"
+
+pkg.include_dirs.MCUX_DRIVERS_SCTIMER:
+    - "@nxp-mcux-sdk/drivers/sctimer"
+pkg.src_dirs.MCUX_DRIVERS_SCTIMER:
+    - "@nxp-mcux-sdk/drivers/sctimer"
+
+pkg.include_dirs.MCUX_DRIVERS_SDHC:
+    - "@nxp-mcux-sdk/drivers/sdhc"
+pkg.src_dirs.MCUX_DRIVERS_SDHC:
+    - "@nxp-mcux-sdk/drivers/sdhc"
+
+pkg.include_dirs.MCUX_DRIVERS_SDIF:
+    - "@nxp-mcux-sdk/drivers/sdif"
+pkg.src_dirs.MCUX_DRIVERS_SDIF:
+    - "@nxp-mcux-sdk/drivers/sdif"
+
+pkg.include_dirs.MCUX_DRIVERS_SDMA:
+    - "@nxp-mcux-sdk/drivers/sdma"
+pkg.src_dirs.MCUX_DRIVERS_SDMA:
+    - "@nxp-mcux-sdk/drivers/sdma"
+
+pkg.include_dirs.MCUX_DRIVERS_SDRAMC:
+    - "@nxp-mcux-sdk/drivers/sdramc"
+pkg.src_dirs.MCUX_DRIVERS_SDRAMC:
+    - "@nxp-mcux-sdk/drivers/sdramc"
+
+pkg.include_dirs.MCUX_DRIVERS_SEMA4:
+    - "@nxp-mcux-sdk/drivers/sema4"
+pkg.src_dirs.MCUX_DRIVERS_SEMA4:
+    - "@nxp-mcux-sdk/drivers/sema4"
+
+pkg.include_dirs.MCUX_DRIVERS_SEMA42:
+    - "@nxp-mcux-sdk/drivers/sema42"
+pkg.src_dirs.MCUX_DRIVERS_SEMA42:
+    - "@nxp-mcux-sdk/drivers/sema42"
+
+pkg.include_dirs.MCUX_DRIVERS_SEMC:
+    - "@nxp-mcux-sdk/drivers/semc"
+pkg.src_dirs.MCUX_DRIVERS_SEMC:
+    - "@nxp-mcux-sdk/drivers/semc"
+
+pkg.include_dirs.MCUX_DRIVERS_SHA:
+    - "@nxp-mcux-sdk/drivers/sha"
+pkg.src_dirs.MCUX_DRIVERS_SHA:
+    - "@nxp-mcux-sdk/drivers/sha"
+
+pkg.include_dirs.MCUX_DRIVERS_SIM:
+    - "@nxp-mcux-sdk/drivers/sim"
+pkg.src_dirs.MCUX_DRIVERS_SIM:
+    - "@nxp-mcux-sdk/drivers/sim"
+
+pkg.include_dirs.MCUX_DRIVERS_SLCD:
+    - "@nxp-mcux-sdk/drivers/slcd"
+pkg.src_dirs.MCUX_DRIVERS_SLCD:
+    - "@nxp-mcux-sdk/drivers/slcd"
+
+pkg.include_dirs.MCUX_DRIVERS_SMARTCARD:
+    - "@nxp-mcux-sdk/drivers/smartcard"
+pkg.src_dirs.MCUX_DRIVERS_SMARTCARD:
+    - "@nxp-mcux-sdk/drivers/smartcard"
+
+pkg.include_dirs.MCUX_DRIVERS_SMARTDMA:
+    - "@nxp-mcux-sdk/drivers/smartdma"
+pkg.src_dirs.MCUX_DRIVERS_SMARTDMA:
+    - "@nxp-mcux-sdk/drivers/smartdma"
+
+pkg.include_dirs.MCUX_DRIVERS_SMC:
+    - "@nxp-mcux-sdk/drivers/smc"
+pkg.src_dirs.MCUX_DRIVERS_SMC:
+    - "@nxp-mcux-sdk/drivers/smc"
+
+pkg.include_dirs.MCUX_DRIVERS_SNVS_HP:
+    - "@nxp-mcux-sdk/drivers/snvs_hp"
+pkg.src_dirs.MCUX_DRIVERS_SNVS_HP:
+    - "@nxp-mcux-sdk/drivers/snvs_hp"
+
+pkg.include_dirs.MCUX_DRIVERS_SNVS_LP:
+    - "@nxp-mcux-sdk/drivers/snvs_lp"
+pkg.src_dirs.MCUX_DRIVERS_SNVS_LP:
+    - "@nxp-mcux-sdk/drivers/snvs_lp"
+
+pkg.include_dirs.MCUX_DRIVERS_SPDIF:
+    - "@nxp-mcux-sdk/drivers/spdif"
+pkg.src_dirs.MCUX_DRIVERS_SPDIF:
+    - "@nxp-mcux-sdk/drivers/spdif"
+
+pkg.include_dirs.MCUX_DRIVERS_SPI:
+    - "@nxp-mcux-sdk/drivers/spi"
+pkg.src_dirs.MCUX_DRIVERS_SPI:
+    - "@nxp-mcux-sdk/drivers/spi"
+
+pkg.include_dirs.MCUX_DRIVERS_SPIFI:
+    - "@nxp-mcux-sdk/drivers/spifi"
+pkg.src_dirs.MCUX_DRIVERS_SPIFI:
+    - "@nxp-mcux-sdk/drivers/spifi"
+
+pkg.include_dirs.MCUX_DRIVERS_SPM:
+    - "@nxp-mcux-sdk/drivers/spm"
+pkg.src_dirs.MCUX_DRIVERS_SPM:
+    - "@nxp-mcux-sdk/drivers/spm"
+
+pkg.include_dirs.MCUX_DRIVERS_SRC:
+    - "@nxp-mcux-sdk/drivers/src"
+pkg.src_dirs.MCUX_DRIVERS_SRC:
+    - "@nxp-mcux-sdk/drivers/src"
+
+pkg.include_dirs.MCUX_DRIVERS_SSARC:
+    - "@nxp-mcux-sdk/drivers/ssarc"
+pkg.src_dirs.MCUX_DRIVERS_SSARC:
+    - "@nxp-mcux-sdk/drivers/ssarc"
+
+pkg.include_dirs.MCUX_DRIVERS_SWM:
+    - "@nxp-mcux-sdk/drivers/swm"
+pkg.src_dirs.MCUX_DRIVERS_SWM:
+    - "@nxp-mcux-sdk/drivers/swm"
+
+pkg.include_dirs.MCUX_DRIVERS_SYSCON:
+    - "@nxp-mcux-sdk/drivers/syscon"
+pkg.src_dirs.MCUX_DRIVERS_SYSCON:
+    - "@nxp-mcux-sdk/drivers/syscon"
+
+pkg.include_dirs.MCUX_DRIVERS_SYSCTL:
+    - "@nxp-mcux-sdk/drivers/sysctl"
+pkg.src_dirs.MCUX_DRIVERS_SYSCTL:
+    - "@nxp-mcux-sdk/drivers/sysctl"
+
+pkg.include_dirs.MCUX_DRIVERS_SYSMPU:
+    - "@nxp-mcux-sdk/drivers/sysmpu"
+pkg.src_dirs.MCUX_DRIVERS_SYSMPU:
+    - "@nxp-mcux-sdk/drivers/sysmpu"
+
+pkg.include_dirs.MCUX_DRIVERS_TEMPMON:
+    - "@nxp-mcux-sdk/drivers/tempmon"
+pkg.src_dirs.MCUX_DRIVERS_TEMPMON:
+    - "@nxp-mcux-sdk/drivers/tempmon"
+
+pkg.include_dirs.MCUX_DRIVERS_TEMPSENSOR:
+    - "@nxp-mcux-sdk/drivers/tempsensor"
+pkg.src_dirs.MCUX_DRIVERS_TEMPSENSOR:
+    - "@nxp-mcux-sdk/drivers/tempsensor"
+
+pkg.include_dirs.MCUX_DRIVERS_TMU:
+    - "@nxp-mcux-sdk/drivers/tmu"
+pkg.src_dirs.MCUX_DRIVERS_TMU:
+    - "@nxp-mcux-sdk/drivers/tmu"
+
+pkg.include_dirs.MCUX_DRIVERS_TMU_1:
+    - "@nxp-mcux-sdk/drivers/tmu_1"
+pkg.src_dirs.MCUX_DRIVERS_TMU_1:
+    - "@nxp-mcux-sdk/drivers/tmu_1"
+
+pkg.include_dirs.MCUX_DRIVERS_TMU_2:
+    - "@nxp-mcux-sdk/drivers/tmu_2"
+pkg.src_dirs.MCUX_DRIVERS_TMU_2:
+    - "@nxp-mcux-sdk/drivers/tmu_2"
+
+pkg.include_dirs.MCUX_DRIVERS_TPM:
+    - "@nxp-mcux-sdk/drivers/tpm"
+pkg.src_dirs.MCUX_DRIVERS_TPM:
+    - "@nxp-mcux-sdk/drivers/tpm"
+
+pkg.include_dirs.MCUX_DRIVERS_TRGMUX:
+    - "@nxp-mcux-sdk/drivers/trgmux"
+pkg.src_dirs.MCUX_DRIVERS_TRGMUX:
+    - "@nxp-mcux-sdk/drivers/trgmux"
+
+pkg.include_dirs.MCUX_DRIVERS_TRNG:
+    - "@nxp-mcux-sdk/drivers/trng"
+pkg.src_dirs.MCUX_DRIVERS_TRNG:
+    - "@nxp-mcux-sdk/drivers/trng"
+
+pkg.include_dirs.MCUX_DRIVERS_TSC:
+    - "@nxp-mcux-sdk/drivers/tsc"
+pkg.src_dirs.MCUX_DRIVERS_TSC:
+    - "@nxp-mcux-sdk/drivers/tsc"
+
+pkg.include_dirs.MCUX_DRIVERS_TSI:
+    - "@nxp-mcux-sdk/drivers/tsi"
+pkg.src_dirs.MCUX_DRIVERS_TSI:
+    - "@nxp-mcux-sdk/drivers/tsi"
+
+pkg.include_dirs.MCUX_DRIVERS_TSTMR:
+    - "@nxp-mcux-sdk/drivers/tstmr"
+pkg.src_dirs.MCUX_DRIVERS_TSTMR:
+    - "@nxp-mcux-sdk/drivers/tstmr"
+
+pkg.include_dirs.MCUX_DRIVERS_UART:
+    - "@nxp-mcux-sdk/drivers/uart"
+pkg.src_dirs.MCUX_DRIVERS_UART:
+    - "@nxp-mcux-sdk/drivers/uart"
+
+pkg.include_dirs.MCUX_DRIVERS_USDHC:
+    - "@nxp-mcux-sdk/drivers/usdhc"
+pkg.src_dirs.MCUX_DRIVERS_USDHC:
+    - "@nxp-mcux-sdk/drivers/usdhc"
+
+pkg.include_dirs.MCUX_DRIVERS_UTICK:
+    - "@nxp-mcux-sdk/drivers/utick"
+pkg.src_dirs.MCUX_DRIVERS_UTICK:
+    - "@nxp-mcux-sdk/drivers/utick"
+
+pkg.include_dirs.MCUX_DRIVERS_VREF:
+    - "@nxp-mcux-sdk/drivers/vref"
+pkg.src_dirs.MCUX_DRIVERS_VREF:
+    - "@nxp-mcux-sdk/drivers/vref"
+
+pkg.include_dirs.MCUX_DRIVERS_VREF_1:
+    - "@nxp-mcux-sdk/drivers/vref_1"
+pkg.src_dirs.MCUX_DRIVERS_VREF_1:
+    - "@nxp-mcux-sdk/drivers/vref_1"
+
+pkg.include_dirs.MCUX_DRIVERS_WDOG:
+    - "@nxp-mcux-sdk/drivers/wdog"
+pkg.src_dirs.MCUX_DRIVERS_WDOG:
+    - "@nxp-mcux-sdk/drivers/wdog"
+
+pkg.include_dirs.MCUX_DRIVERS_WDOG01:
+    - "@nxp-mcux-sdk/drivers/wdog01"
+pkg.src_dirs.MCUX_DRIVERS_WDOG01:
+    - "@nxp-mcux-sdk/drivers/wdog01"
+
+pkg.include_dirs.MCUX_DRIVERS_WDOG32:
+    - "@nxp-mcux-sdk/drivers/wdog32"
+pkg.src_dirs.MCUX_DRIVERS_WDOG32:
+    - "@nxp-mcux-sdk/drivers/wdog32"
+
+pkg.include_dirs.MCUX_DRIVERS_WDOG8:
+    - "@nxp-mcux-sdk/drivers/wdog8"
+pkg.src_dirs.MCUX_DRIVERS_WDOG8:
+    - "@nxp-mcux-sdk/drivers/wdog8"
+
+pkg.include_dirs.MCUX_DRIVERS_WKT:
+    - "@nxp-mcux-sdk/drivers/wkt"
+pkg.src_dirs.MCUX_DRIVERS_WKT:
+    - "@nxp-mcux-sdk/drivers/wkt"
+
+pkg.include_dirs.MCUX_DRIVERS_WWDT:
+    - "@nxp-mcux-sdk/drivers/wwdt"
+pkg.src_dirs.MCUX_DRIVERS_WWDT:
+    - "@nxp-mcux-sdk/drivers/wwdt"
+
+pkg.include_dirs.MCUX_DRIVERS_XBAR:
+    - "@nxp-mcux-sdk/drivers/xbar"
+pkg.src_dirs.MCUX_DRIVERS_XBAR:
+    - "@nxp-mcux-sdk/drivers/xbar"
+
+pkg.include_dirs.MCUX_DRIVERS_XBARA:
+    - "@nxp-mcux-sdk/drivers/xbara"
+pkg.src_dirs.MCUX_DRIVERS_XBARA:
+    - "@nxp-mcux-sdk/drivers/xbara"
+
+pkg.include_dirs.MCUX_DRIVERS_XBARB:
+    - "@nxp-mcux-sdk/drivers/xbarb"
+pkg.src_dirs.MCUX_DRIVERS_XBARB:
+    - "@nxp-mcux-sdk/drivers/xbarb"
+
+pkg.include_dirs.MCUX_DRIVERS_XECC:
+    - "@nxp-mcux-sdk/drivers/xecc"
+pkg.src_dirs.MCUX_DRIVERS_XECC:
+    - "@nxp-mcux-sdk/drivers/xecc"
+
+pkg.include_dirs.MCUX_DRIVERS_XRDC:
+    - "@nxp-mcux-sdk/drivers/xrdc"
+pkg.src_dirs.MCUX_DRIVERS_XRDC:
+    - "@nxp-mcux-sdk/drivers/xrdc"
+
+pkg.include_dirs.MCUX_DRIVERS_XRDC2:
+    - "@nxp-mcux-sdk/drivers/xrdc2"
+pkg.src_dirs.MCUX_DRIVERS_XRDC2:
+    - "@nxp-mcux-sdk/drivers/xrdc2"
+
+pkg.ign_files:
+    - ".*freertos.c"
+
+pkg.ign_files.BSP_MK64F12:
+    - "fsl_cache.*"
+    - ".*_dma.c"
+
+# Files _dma.c and _edma.c are in the same directories but are mutually exclusive
+pkg.ign_files.MCUX_DRIVERS_EDMA:
+    - ".*_dma.c"
+
+pkg.ign_files.MCUX_DRIVERS_DMA:
+    - ".*_edma.c"
+
+pkg.ign_dirs:
+    - "@nxp-mcux-sdk/components"
+    - "@nxp-mcux-sdk/midleware"
+    - "@nxp-mcux-sdk/tools"
+    - "@nxp-mcux-sdk/utilities"
+
+repository.nxp-mcux-sdk:
+    type: github
+    vers: MCUX_2.13.1-commit
+    branch: main
+    user: nxp-mcuxpresso
+    repo: mcux-sdk
