@@ -1,0 +1,62 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/mcu/nxp/lpc55xx
+pkg.description: LPC55xx common MCU definitions and files
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+
+pkg.type: sdk
+
+pkg.include_dirs:
+    - "@nxp-mcux-sdk/CMSIS/Include"
+    - "@nxp-mcux-sdk/drivers/common"
+
+pkg.include_dirs.MCU_LPC55S69:
+    - "@nxp-mcux-sdk/utilities/debug_console_lite"
+pkg.source_files.MCU_LPC55S69:
+    - "@nxp-mcux-sdk/devices/LPC55S69/system_LPC55S69_cm33_core0.c"
+
+pkg.src_dirs:
+    - "src"
+
+pkg.deps:
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/hw/mcu/nxp/mcux-sdk"
+
+pkg.deps.UART_0:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_1:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_2:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_3:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_4:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_5:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
