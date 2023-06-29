@@ -24,7 +24,7 @@
  * include board definition file here so that
  * SCB register can be defined for os_fault.c
  */
-#include "mcu/kinetis_common.h"
+#include <fsl_device_registers.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

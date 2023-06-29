@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,22 +15,5 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-pkg.name: hw/mcu/nxp/kinetis
-pkg.description: Kinetis common MCU definitions and files
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
-    - "@apache-mynewt-core/hw/mcu/nxp"
-
-pkg.ign_files.!MCUX_DRIVERS_LPUART:
-  - "hal_lpuart.c"
-
-pkg.ign_files.!MCUX_DRIVERS_UART:
-  - "hal_uart.c"
-
-pkg.cflags:
-    - -Wno-incompatible-pointer-types
+syscfg.vals:
+    MCU_MK82F25615: 1
