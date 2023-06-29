@@ -76,7 +76,6 @@ static uint8_t const s_uartExists[] = NXP_UART_EXISTS;
 static uint8_t const s_uartEnabled[] = NXP_UART_ENABLED;
 static UART_Type *const s_uartBases[] = UART_BASE_PTRS;
 static clock_name_t s_uartClocks[] = NXP_UART_CLOCKS;
-static uint8_t const s_uartIRQ[] = UART_RX_TX_IRQS;
 static PORT_Type *const s_uartPort[] = NXP_UART_PORTS;
 static clock_ip_name_t const s_uartPortClocks[] = NXP_UART_PORT_CLOCKS;
 static uint8_t const s_uartPIN_RX[] = NXP_UART_PIN_RX;

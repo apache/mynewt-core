@@ -24,3 +24,4 @@ pkg.homepage: "http://mynewt.apache.org/"
 
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nxp/kinetis"
+    - "@apache-mynewt-core/hw/mcu/nxp/mcux-sdk"

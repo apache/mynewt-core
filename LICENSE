@@ -503,10 +503,6 @@ which is available under the "modified Tcl/Tk" license.  Bundled files are:
     * hw/bsp/ublox_bmd_345/split-ublox_bmd_345.ld
     * hw/bsp/ublox_bmd_345/ublox_bmd_345_no_boot.ld
 
-This product bundles part of NXP/FreeScale SDK, which is available
-under the "3-clause BSD" license. Bundled files are:
-    * hw/mcu/nxp/src/ext
-
 This product bundles part of NXP mkw41z, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/nxp/mkw41z/include/mcu/MKW41Z4.h
@@ -526,13 +522,6 @@ This product bundles part of NXP frdm-k64f, which is available under the
     * hw/bsp/frdm-k64f/src/clock_config.c
     * hw/bsp/frdm-k64f/src/clock_config.h
     * hw/bsp/frdm-k64f/src/arch/cortex_m4/startup_MK64F12.S
-
-This product bundles part of NXP Kinetis mk64f12, which is available under the
-"3-clause BSD" license.  Bundled files are:
-    * hw/mcu/nxp/kinetis/MK64F12/include/MK64F12.h
-    * hw/mcu/nxp/kinetis/MK64F12/include/MK64F12_features.h
-    * hw/mcu/nxp/kinetis/MK64F12/include/system_MK64F12.h
-    * hw/mcu/nxp/kinetis/MK64F12/src/system_MK64F12.c
 
 This product bundles part of mips architecture and ci40, which is available
 under the "3-clause BSD" license.  Bundled files are:
