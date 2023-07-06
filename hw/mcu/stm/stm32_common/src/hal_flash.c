@@ -100,6 +100,8 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
     num_words = ((num_bytes - 1) >> 2) + 1;
 #elif MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 8
     num_words = ((num_bytes - 1) >> 3) + 1;
+#elif MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 16
+    num_words = ((num_bytes - 1) >> 4) + 1;
 #else
     #error "Unsupported MCU_FLASH_MIN_WRITE_SIZE"
 #endif
