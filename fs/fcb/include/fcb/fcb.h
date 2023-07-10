@@ -36,33 +36,33 @@ extern "C" {
 #include <os/os_mutex.h>
 #include <flash_map/flash_map.h>
 
-#define FCB_MAX_LEN	(CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
+#define FCB_MAX_LEN (CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
 
 /**
  * Entry location is pointer to area (within fcb->f_sectors), and offset
  * within that area.
  */
 struct fcb_entry {
-    struct flash_area *fe_area;	/* ptr to area within fcb->f_sectors */
-    uint32_t fe_elem_off;	/* start of entry */
-    uint32_t fe_data_off;	/* start of data */
-    uint16_t fe_data_len;	/* size of data area */
+    struct flash_area *fe_area; /* ptr to area within fcb->f_sectors */
+    uint32_t fe_elem_off;   /* start of entry */
+    uint32_t fe_data_off;   /* start of data */
+    uint16_t fe_data_len;   /* size of data area */
 };
 
 struct fcb {
     /* Caller of fcb_init fills this in */
-    uint32_t f_magic;		/* As placed on the disk */
-    uint16_t f_version;  	/* Current version number of the data */
-    uint16_t f_sector_cnt;	/* Number of elements in sector array */
-    uint16_t f_scratch_cnt;	/* How many sectors should be kept empty */
+    uint32_t f_magic;       /* As placed on the disk */
+    uint8_t f_version;      /* Current version number of the data */
+    uint16_t f_sector_cnt;  /* Number of elements in sector array */
+    uint16_t f_scratch_cnt; /* How many sectors should be kept empty */
     struct flash_area *f_sectors; /* Array of sectors, must be contiguous */
 
     /* Flash circular buffer internal state */
-    struct os_mutex f_mtx;	/* Locking for accessing the FCB data */
+    struct os_mutex f_mtx;  /* Locking for accessing the FCB data */
     struct flash_area *f_oldest;
     struct fcb_entry f_active;
     uint16_t f_active_id;
-    uint8_t f_align;		/* writes to flash have to aligned to this */
+    uint8_t f_align;        /* writes to flash have to aligned to this */
 };
 
 /**
@@ -127,7 +127,7 @@ int fcb_is_empty(struct fcb *fcb);
  */
 int
 fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
-        struct fcb_entry *last_n_entry);
+                  struct fcb_entry *last_n_entry);
 
 /**
  * Clears FCB passed to it
