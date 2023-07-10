@@ -42,8 +42,9 @@ static __IOM uint32_t * const retained_regs[] = {
     &CMAC->CM_LL_INT_SEL_REG,
     &CMAC->CM_LL_TIMER1_EQ_X_HI_REG,
     &CMAC->CM_LL_TIMER1_EQ_X_LO_REG,
-    &CMAC->CM_LL_TIMER1_36_10_EQ_Y_REG,
-    &CMAC->CM_LL_TIMER1_9_0_EQ_Y_REG,
+    &CMAC->CM_LL_TIMER1_EQ_Y_HI_REG,
+    &CMAC->CM_LL_TIMER1_EQ_Y_LO_REG,
+    &CMAC->CM_LL_TIMER1_EQ_Y_CTRL_REG,
     &CMAC->CM_ERROR_DIS_REG,
 #if MYNEWT_VAL(CMAC_DEBUG_DIAG_ENABLE)
     &CMAC->CM_DIAG_PORT0_REG,
@@ -196,7 +197,12 @@ cmac_sleep_calculate_wakeup_time(void)
          */
         T_LPTICK_U(2) + T_LPTICK_U(2) +
         max(T_LPTICK_U(3), T_USEC(g_cmac_shared_data.xtal32m_settle_us)) +
-        T_LPTICK(2) + T_USEC(50);
+        T_LPTICK(2) + T_USEC(50) +
+        /*
+         * Add an extra 500us of settle time due to occasional crashes due to
+         * unknown additional wakeup delay. 
+         */
+        T_USEC(500); 
 }
 
 void
