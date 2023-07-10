@@ -46,6 +46,12 @@ extern "C" {
 
 extern struct disk_ops mmc_ops;
 
+struct mmc_spi_cfg {
+    uint32_t initial_freq_khz;
+    uint32_t freq_khz;
+    uint8_t clock_mode;
+};
+
 /**
  * Initialize the MMC driver
  *
@@ -56,7 +62,7 @@ extern struct disk_ops mmc_ops;
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_init(int spi_num, void *spi_cfg, int ss_pin);
+mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin);
 
 /**
  * Read data from MMC
