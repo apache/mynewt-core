@@ -400,27 +400,29 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len)
         goto out;
     }
 
-    /**
-     * 7.3.3 Control tokens
-     *   Wait up to 200ms for control token.
-     */
-    timeout = os_time_get() + OS_TICKS_PER_SEC / 5;
-    do {
-        res = hal_spi_tx_val(mmc->spi_num, 0xff);
-        if (res != 0xFF) break;
-        os_time_delay(OS_TICKS_PER_SEC / 20);
-    } while (os_time_get() < timeout);
-
-    /**
-     * 7.3.3.2 Start Block Tokens and Stop Tran Token
-     */
-    if (res != START_BLOCK) {
-        rc = MMC_TIMEOUT;
-        goto out;
-    }
-
     index = 0;
     while (block_count--) {
+        /**
+         * 7.3.3 Control tokens
+         *   Wait up to 200ms for control token.
+         */
+        timeout = os_time_get() + OS_TICKS_PER_SEC / 5;
+        do {
+            res = hal_spi_tx_val(mmc->spi_num, 0xff);
+            if (res != 0xFF) {
+                break;
+            }
+            os_time_delay(OS_TICKS_PER_SEC / 20);
+        } while (os_time_get() < timeout);
+
+        /**
+         * 7.3.3.2 Start Block Tokens and Stop Tran Token
+         */
+        if (res != START_BLOCK) {
+            rc = MMC_TIMEOUT;
+            goto out;
+        }
+
         for (n = 0; n < BLOCK_LEN; n++) {
             g_block_buf[n] = hal_spi_tx_val(mmc->spi_num, 0xff);
         }
