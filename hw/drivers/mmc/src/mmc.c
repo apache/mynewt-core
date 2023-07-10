@@ -65,22 +65,11 @@
 
 static uint8_t g_block_buf[BLOCK_LEN];
 
-static struct hal_spi_settings mmc_settings = {
-    .data_order = HAL_SPI_MSB_FIRST,
-    .data_mode  = HAL_SPI_MODE0,
-    /* XXX: MMC initialization accepts clocks in the range 100-400KHz */
-    /* TODO: switch to high-speed aka 25MHz after initialization. */
-    /* Currently the lowest clock acceptable is 125KHz */
-    .baudrate   = 125,
-    .word_size  = HAL_SPI_WORD_SIZE_8BIT,
-};
-
 /* FIXME: currently limited to single MMC spi device */
 static struct mmc_cfg {
-    int                      spi_num;
-    int                      ss_pin;
-    void                     *spi_cfg;
-    struct hal_spi_settings  *settings;
+    int spi_num;
+    int ss_pin;
+    struct mmc_spi_cfg mmc_spi_cfg;
 } g_mmc_cfg;
 
 static int
@@ -173,12 +162,11 @@ send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
  * @param spi_num Number of the SPI channel to be used by MMC
  * @param spi_cfg Low-level device specific SPI configuration
  * @param ss_pin Number of SS pin if SW controlled, -1 otherwise
- * @param mmc_spi_cfg 
  *
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_init(int spi_num, void *spi_cfg, int ss_pin)
+mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin)
 {
     int rc;
     int i;
@@ -186,23 +174,22 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     uint8_t cmd_resp[4];
     uint32_t ocr;
     os_time_t timeout;
-    struct mmc_cfg *mmc;
-
     /* TODO: create new struct for every new spi mmc, add to SLIST */
-    mmc = &g_mmc_cfg;
-    mmc->spi_num = spi_num;
+    struct mmc_cfg *mmc = &g_mmc_cfg;
     mmc->ss_pin = ss_pin;
-    mmc->spi_cfg = spi_cfg;
-    mmc->settings = &mmc_settings;
+    mmc->mmc_spi_cfg = *spi_cfg;
+
+    mmc->spi_num = spi_num;
+    struct hal_spi_settings spi_settings = {
+        .data_order = HAL_SPI_MSB_FIRST,
+        .data_mode = mmc->mmc_spi_cfg.clock_mode,
+        .baudrate = mmc->mmc_spi_cfg.initial_freq_khz,
+        .word_size = HAL_SPI_WORD_SIZE_8BIT,
+    };
 
     hal_gpio_init_out(mmc->ss_pin, 1);
 
-    rc = hal_spi_init(mmc->spi_num, mmc->spi_cfg, HAL_SPI_TYPE_MASTER);
-    if (rc) {
-        return (rc);
-    }
-
-    rc = hal_spi_config(mmc->spi_num, mmc->settings);
+    rc = hal_spi_config(mmc->spi_num, &spi_settings);
     if (rc) {
         return (rc);
     }
@@ -232,11 +219,18 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     /* put card in idle state */
     status = send_mmc_cmd(mmc, CMD0, 0);
 
+    hal_gpio_write(mmc->ss_pin, 1);
     /* No card inserted or bad card? */
     if (status != R_IDLE) {
         rc = error_by_response(status);
         goto out;
     }
+
+    hal_spi_disable(mmc->spi_num);
+    spi_settings.baudrate = mmc->mmc_spi_cfg.freq_khz;
+    rc = hal_spi_config(mmc->spi_num, &spi_settings);
+    hal_spi_enable(mmc->spi_num);
+    hal_gpio_write(mmc->ss_pin, 0);
 
     /**
      * FIXME: while doing a hot-swap of the card or powering off the board
