@@ -121,7 +121,7 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
         /* FIXME: L1 was previously unlocking flash before erasing/programming,
          * and locking again afterwards. Maybe all MCUs should do the same?
          */
-#if MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32H7)
+#if MYNEWT_VAL(MCU_STM32U5)
         rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, (uint32_t)&val);
 #else
         rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, val);
@@ -156,6 +156,7 @@ stm32_flash_write_non_linear(const struct hal_flash *dev, uint32_t address,
     const uint8_t *sptr;
     uint32_t i;
     int rc;
+    int inc = MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE);
 
     sptr = src;
     /*
@@ -163,13 +164,17 @@ stm32_flash_write_non_linear(const struct hal_flash *dev, uint32_t address,
      */
     STM32_HAL_FLASH_CLEAR_ERRORS();
 
-    for (i = 0; i < num_bytes; i++) {
+    for (i = 0; i < num_bytes; i += inc) {
+#if MYNEWT_VAL(MCU_STM32H7)
+        rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, (uint32_t)(sptr + i));
+#else
         rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, sptr[i]);
+#endif
         if (rc != 0) {
             return rc;
         }
 
-        address++;
+        address += inc;
     }
 
     return 0;
@@ -205,6 +210,12 @@ stm32_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
             eraseinit.TypeErase = FLASH_TYPEERASE_SECTORS;
 #ifdef FLASH_OPTCR_nDBANK
             eraseinit.Banks = FLASH_BANK_1; /* Only used for mass erase */
+#elif defined STM32H7
+#if defined (DUAL_BANK)
+            eraseinit.Banks = IS_FLASH_PROGRAM_ADDRESS_BANK1(ADDRESS) ? FLASH_BANK_1 : FLASH_BANK_2;
+#else
+            eraseinit.Banks = FLASH_BANK_1;
+#endif
 #endif
             eraseinit.Sector = i;
             eraseinit.NbSectors = 1;
