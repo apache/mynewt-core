@@ -27,6 +27,7 @@ enc_flash_test_fcb_init(struct fcb *fcb)
     fcb->f_sector_cnt = ENC_TEST_FLASH_AREA_CNT;
     fcb->f_scratch_cnt = 0;
     fcb->f_sectors = enc_test_flash_areas;
+    fcb->f_version = 0xa; /* arbitrary version for the test */
 }
 
 TEST_CASE_SELF(enc_flash_test_fcb)
