@@ -402,43 +402,34 @@ hal_spi_config_master(struct nrf5340_hal_spi *spi,
     }
     spim->CONFIG = nrf_config;
 
-    switch (settings->baudrate) {
-        case 125:
-            frequency = SPIM_FREQUENCY_FREQUENCY_K125;
-            break;
-        case 250:
-            frequency = SPIM_FREQUENCY_FREQUENCY_K250;
-            break;
-        case 500:
-            frequency = SPIM_FREQUENCY_FREQUENCY_K500;
-            break;
-        case 1000:
-            frequency = SPIM_FREQUENCY_FREQUENCY_M1;
-            break;
-        case 2000:
-            frequency = SPIM_FREQUENCY_FREQUENCY_M2;
-            break;
-        case 4000:
-            frequency = SPIM_FREQUENCY_FREQUENCY_M4;
-            break;
-        case 8000:
-            frequency = SPIM_FREQUENCY_FREQUENCY_M8;
-            break;
-            /* 16 and 32 MHz is only supported on SPI_4_MASTER */
-#if defined(SPIM_FREQUENCY_FREQUENCY_M16) && MYNEWT_VAL(SPI_4_MASTER)
-        case 16000:
-            frequency = SPIM_FREQUENCY_FREQUENCY_M16;
-            break;
-#endif
+    /* 16 and 32 MHz is only supported on SPI_4_MASTER */
 #if defined(SPIM_FREQUENCY_FREQUENCY_M32) && MYNEWT_VAL(SPI_4_MASTER)
-        case 32000:
-            frequency = SPIM_FREQUENCY_FREQUENCY_M32;
-            break;
+    if (settings->baudrate >= 32000 && spim == NRF_SPIM4) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_M32;
+    } else
 #endif
-        default:
-            frequency = 0;
-            rc = EINVAL;
-            break;
+#if defined(SPIM_FREQUENCY_FREQUENCY_M16) && MYNEWT_VAL(SPI_4_MASTER)
+    if (settings->baudrate >= 16000 && spim == NRF_SPIM4) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_M16;
+    } else
+#endif
+    if (settings->baudrate >= 8000) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_M8;
+    } else if (settings->baudrate >= 4000) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_M4;
+    } else if (settings->baudrate >= 2000) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_M2;
+    } else if (settings->baudrate >= 1000) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_M1;
+    } else if (settings->baudrate >= 500) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_K500;
+    } else if (settings->baudrate >= 250) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_K250;
+    } else if (settings->baudrate >= 125) {
+        frequency = SPIM_FREQUENCY_FREQUENCY_K125;
+    } else {
+        frequency = 0;
+        rc = EINVAL;
     }
     spim->FREQUENCY = frequency;
 
