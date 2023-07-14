@@ -63,12 +63,12 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
         break;
     case JSON_VALUE_TYPE_UINT64:
         len = sprintf(encoder->je_encode_buf, "%llu",
-                      jv->jv_val.u);
+                      (long long unsigned)jv->jv_val.u);
         encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
         break;
     case JSON_VALUE_TYPE_INT64:
         len = sprintf(encoder->je_encode_buf, "%lld",
-                      jv->jv_val.u);
+                      (long long)jv->jv_val.u);
         encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
         break;
     case JSON_VALUE_TYPE_STRING:

@@ -31,7 +31,7 @@ struct os_callout_list g_callout_list;
 void os_callout_init(struct os_callout *c, struct os_eventq *evq,
                      os_event_fn *ev_cb, void *ev_arg)
 {
-    os_trace_api_u32x2(OS_TRACE_ID_CALLOUT_INIT, (uint32_t)c, (uint32_t)evq);
+    os_trace_api_u32x2(OS_TRACE_ID_CALLOUT_INIT, (uintptr_t)c, (uintptr_t)evq);
 
     memset(c, 0, sizeof(*c));
     c->c_ev.ev_cb = ev_cb;
@@ -46,7 +46,7 @@ os_callout_stop(struct os_callout *c)
 {
     os_sr_t sr;
 
-    os_trace_api_u32(OS_TRACE_ID_CALLOUT_STOP, (uint32_t)c);
+    os_trace_api_u32(OS_TRACE_ID_CALLOUT_STOP, (uintptr_t)c);
 
     OS_ENTER_CRITICAL(sr);
 
@@ -74,7 +74,7 @@ os_callout_reset(struct os_callout *c, os_time_t ticks)
     /* Ensure this callout has been initialized. */
     assert(c->c_evq != NULL);
 
-    os_trace_api_u32x2(OS_TRACE_ID_CALLOUT_RESET, (uint32_t)c, (uint32_t)ticks);
+    os_trace_api_u32x2(OS_TRACE_ID_CALLOUT_RESET, (uintptr_t)c, (uint32_t)ticks);
 
     if (ticks > INT32_MAX) {
         ret = OS_EINVAL;

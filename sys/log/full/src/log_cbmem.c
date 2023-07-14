@@ -248,8 +248,8 @@ log_cbmem_storage_info(struct log *log, struct log_storage_info *info)
 
     size = cbmem->c_buf_end - cbmem->c_buf;
 
-    used = (uint32_t)cbmem->c_entry_end + cbmem->c_entry_end->ceh_len -
-           (uint32_t)cbmem->c_entry_start;
+    used = (uintptr_t)cbmem->c_entry_end + cbmem->c_entry_end->ceh_len -
+           (uintptr_t)cbmem->c_entry_start;
     if ((int32_t)used < 0) {
         used += size;
     }
