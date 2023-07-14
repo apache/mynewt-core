@@ -655,7 +655,7 @@ struct spiflash_dev spiflash_dev = {
     /* SPI settings */
     .spi_settings = {
         .data_order = HAL_SPI_MSB_FIRST,
-        .data_mode  = HAL_SPI_MODE3,
+        .data_mode  = MYNEWT_VAL(SPIFLASH_SPI_MODE),
         .baudrate   = MYNEWT_VAL(SPIFLASH_BAUDRATE),
         .word_size  = HAL_SPI_WORD_SIZE_8BIT,
     },
