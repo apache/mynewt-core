@@ -31,7 +31,7 @@ struct os_task;
 struct stack_frame;
 
 struct stack_frame {
-    int sf_mainsp;              /* stack on which main() is executing */
+    uintptr_t sf_mainsp;              /* stack on which main() is executing */
     sigjmp_buf sf_jb;
     struct os_task *sf_task;
 };
