@@ -47,7 +47,7 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
 struct bus_spi_node_cfg flash_spi_cfg = {
     .node_cfg.bus_name = MYNEWT_VAL(BSP_FLASH_SPI_BUS),
     .pin_cs = MYNEWT_VAL(SPIFLASH_SPI_CS_PIN),
-    .mode = BUS_SPI_MODE_3,
+    .mode = MYNEWT_VAL(SPIFLASH_SPI_MODE),
     .data_order = HAL_SPI_MSB_FIRST,
     .freq = MYNEWT_VAL(SPIFLASH_BAUDRATE),
 };

@@ -28,6 +28,13 @@ syscfg.defs:
         description: 'SPI interface CS pin'
         value:  -1
 
+    SPIFLASH_SPI_MODE:
+        description: >
+            SPI clock mode. Most devices support HAL_SPI_MODE0 (clock low when idle,
+            first edge latches data) and HAL_SPI_MODE3 (clock high when idle,
+            second clock edge latches data).
+        value: HAL_SPI_MODE3
+
     SPIFLASH_SECTOR_COUNT:
         description: 'Number of sectors'
         value:  0
