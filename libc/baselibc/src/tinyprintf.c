@@ -249,6 +249,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
     char ch;
     char lng;
     void *v;
+    va_list va_to_pass;
 #if MYNEWT_VAL(FLOAT_USER)
     double d;
     int n;
@@ -256,6 +257,12 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
     int i;
 
     p.bf = bf;
+
+    /* On some architectures va_list type is an array type, which will cause
+     * compilation errors if we simply pass &va to functions. Creating the copy
+     * of va and passing it to functions is a workaround of this issue.
+     */
+    va_copy(va_to_pass, va);
 
     while ((ch = *(fmt++))) {
         if (ch != '%') {
@@ -294,7 +301,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
 
             /* Width */
             if (ch == '*') {
-                i = intarg(0, 1, &va);
+                i = intarg(0, 1, &va_to_pass);
                 if (i > UCHAR_MAX) {
                     p.width = UCHAR_MAX;
                 } else if (i > 0) {
@@ -331,29 +338,29 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 goto abort;
             case 'u':
                 p.base = 10;
-                ui2a(intarg(lng, 0, &va), &p);
+                ui2a(intarg(lng, 0, &va_to_pass), &p);
                 written += putchw(putp, &p);
                 break;
             case 'd':
             case 'i':
                 p.base = 10;
-                i2a(intarg(lng, 1, &va), &p);
+                i2a(intarg(lng, 1, &va_to_pass), &p);
                 written += putchw(putp, &p);
                 break;
             case 'x':
             case 'X':
                 p.base = 16;
                 p.uc = (ch == 'X');
-                ui2a(intarg(lng, 0, &va), &p);
+                ui2a(intarg(lng, 0, &va_to_pass), &p);
                 written += putchw(putp, &p);
                 break;
             case 'o':
                 p.base = 8;
-                ui2a(intarg(lng, 0, &va), &p);
+                ui2a(intarg(lng, 0, &va_to_pass), &p);
                 written += putchw(putp, &p);
                 break;
             case 'p':
-                v = va_arg(va, void *);
+                v = va_arg(va_to_pass, void *);
                 p.base = 16;
                 ui2a((uintptr_t)v, &p);
                 p.width = 2 * sizeof(void*);
@@ -363,10 +370,10 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 written += putchw(putp, &p);
                 break;
             case 'c':
-                written += putf(putp, (char)(va_arg(va, int)));
+                written += putf(putp, (char)(va_arg(va_to_pass, int)));
                 break;
             case 's':
-                p.bf = va_arg(va, char *);
+                p.bf = va_arg(va_to_pass, char *);
                 written += putchw(putp, &p);
                 p.bf = bf;
                 break;
