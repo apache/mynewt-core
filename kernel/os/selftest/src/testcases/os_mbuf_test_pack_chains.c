@@ -18,9 +18,6 @@
  */
 #include "os_test_priv.h"
 
-#if MBUF_TEST_POOL_BUF_SIZE != 256
-    #error "Test pool buffer size must be 256!"
-#endif
 
 /* This structure is used to create mbuf chains. It contains the length
    of data that should be in each mbuf in the chain and the amount of

@@ -22,6 +22,9 @@ TEST_CASE_SELF(os_mbuf_test_extend)
 {
     struct os_mbuf *om;
     void *v;
+    int trailingspace_check;
+    int om_len_check;
+    int pkthdr_len_check;
 
     os_mbuf_test_setup();
 
@@ -29,63 +32,76 @@ TEST_CASE_SELF(os_mbuf_test_extend)
     om = os_mbuf_get_pkthdr(&os_mbuf_pool, 10);
     TEST_ASSERT_FATAL(om != NULL);
 
-    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == 222);
+    trailingspace_check = MBUF_TEST_POOL_BUF_SIZE - sizeof(struct os_mbuf) -
+                          sizeof(struct os_mbuf_pkthdr) - 10;
+    om_len_check = 0;
+    pkthdr_len_check = 10 + sizeof(struct os_mbuf_pkthdr);
+
+    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == trailingspace_check);
     TEST_ASSERT(SLIST_NEXT(om, om_next) == NULL);
-    os_mbuf_test_misc_assert_sane(om, NULL, 0, 0, 18);
+    os_mbuf_test_misc_assert_sane(om, NULL, om_len_check, om_len_check, pkthdr_len_check);
 
     v = os_mbuf_extend(om, 20);
+    trailingspace_check -= 20;
+    om_len_check += 20;
     TEST_ASSERT(v != NULL);
     TEST_ASSERT(v == om->om_data);
     TEST_ASSERT(om->om_len == 20);
 
-    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == 202);
+    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == trailingspace_check);
     TEST_ASSERT(SLIST_NEXT(om, om_next) == NULL);
-    os_mbuf_test_misc_assert_sane(om, NULL, 20, 20, 18);
+    os_mbuf_test_misc_assert_sane(om, NULL, om_len_check, om_len_check, pkthdr_len_check);
 
     v = os_mbuf_extend(om, 100);
+    trailingspace_check -= 100;
+    om_len_check += 100;
     TEST_ASSERT(v != NULL);
     TEST_ASSERT(v == om->om_data + 20);
-    TEST_ASSERT(om->om_len == 120);
+    TEST_ASSERT(om->om_len == om_len_check);
 
-    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == 102);
+    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == trailingspace_check);
     TEST_ASSERT(SLIST_NEXT(om, om_next) == NULL);
-    os_mbuf_test_misc_assert_sane(om, NULL, 120, 120, 18);
+    os_mbuf_test_misc_assert_sane(om, NULL, om_len_check, om_len_check, pkthdr_len_check);
 
     v = os_mbuf_extend(om, 101);
+    trailingspace_check -= 101;
+    om_len_check += 101;
     TEST_ASSERT(v != NULL);
     TEST_ASSERT(v == om->om_data + 120);
-    TEST_ASSERT(om->om_len == 221);
+    TEST_ASSERT(om->om_len == om_len_check);
 
-    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == 1);
+    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == trailingspace_check);
     TEST_ASSERT(SLIST_NEXT(om, om_next) == NULL);
-    os_mbuf_test_misc_assert_sane(om, NULL, 221, 221, 18);
+    os_mbuf_test_misc_assert_sane(om, NULL, om_len_check, om_len_check, pkthdr_len_check);
 
-    v = os_mbuf_extend(om, 1);
+    v = os_mbuf_extend(om, trailingspace_check);
+    om_len_check += trailingspace_check;
+    trailingspace_check = 0;
     TEST_ASSERT(v != NULL);
     TEST_ASSERT(v == om->om_data + 221);
-    TEST_ASSERT(om->om_len == 222);
+    TEST_ASSERT(om->om_len == om_len_check);
 
-    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == 0);
+    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == trailingspace_check);
     TEST_ASSERT(SLIST_NEXT(om, om_next) == NULL);
-    os_mbuf_test_misc_assert_sane(om, NULL, 222, 222, 18);
+    os_mbuf_test_misc_assert_sane(om, NULL, om_len_check, om_len_check, pkthdr_len_check);
 
     /* Overflow into next buffer. */
     v = os_mbuf_extend(om, 1);
-    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == 0);
+    TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == trailingspace_check);
     TEST_ASSERT(SLIST_NEXT(om, om_next) != NULL);
 
     TEST_ASSERT(v == SLIST_NEXT(om, om_next)->om_data);
-    TEST_ASSERT(om->om_len == 222);
+    TEST_ASSERT(om->om_len == om_len_check);
     TEST_ASSERT(SLIST_NEXT(om, om_next)->om_len == 1);
-    os_mbuf_test_misc_assert_sane(om, NULL, 222, 223, 18);
+    os_mbuf_test_misc_assert_sane(om, NULL, om_len_check, om_len_check + 1, pkthdr_len_check);
 
     /*** Attempt to extend by an amount larger than max buf size fails. */
-    v = os_mbuf_extend(om, 257);
+    v = os_mbuf_extend(om, MBUF_TEST_POOL_BUF_SIZE + 1);
     TEST_ASSERT(v == NULL);
     TEST_ASSERT(OS_MBUF_TRAILINGSPACE(om) == 0);
     TEST_ASSERT(SLIST_NEXT(om, om_next) != NULL);
 
-    TEST_ASSERT(om->om_len == 222);
+    TEST_ASSERT(om->om_len == om_len_check);
     TEST_ASSERT(SLIST_NEXT(om, om_next)->om_len == 1);
-    os_mbuf_test_misc_assert_sane(om, NULL, 222, 223, 18);
+    os_mbuf_test_misc_assert_sane(om, NULL, om_len_check, om_len_check + 1, pkthdr_len_check);
 }
