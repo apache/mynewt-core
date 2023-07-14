@@ -25,7 +25,7 @@
  * os_arch_frame_init() expects them to be.
  */
 CTASSERT(offsetof(struct stack_frame, sf_mainsp) == 0);
-CTASSERT(offsetof(struct stack_frame, sf_jb) == 4);
+CTASSERT(offsetof(struct stack_frame, sf_jb) == __SIZEOF_POINTER__);
 
 void
 os_arch_task_start(struct stack_frame *sf, int rc)
