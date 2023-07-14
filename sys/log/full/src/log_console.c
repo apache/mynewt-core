@@ -53,7 +53,7 @@ log_console_get(void)
 static void
 log_console_print_hdr(const struct log_entry_hdr *hdr)
 {
-    console_printf("[ts=%lluus, mod=%u level=%u ",
+    console_printf("[ts=" "%" PRIu64 "us, mod=%u level=%u ",
                    hdr->ue_ts, hdr->ue_module, hdr->ue_level);
 
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {

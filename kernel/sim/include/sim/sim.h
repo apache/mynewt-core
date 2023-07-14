@@ -56,11 +56,11 @@ void sim_tick_idle(os_time_t ticks);
 #define OS_PRINT_ASSERT_SIM(file, line, func, e) do                         \
 {                                                                           \
     if (!(file)) {                                                          \
-        dprintf(1, "Assert @ 0x%x\n",                                       \
-                (unsigned int)__builtin_return_address(0));                 \
+        dprintf(1, "Assert @ 0x%lx\n",                                      \
+                (long unsigned int)__builtin_return_address(0));            \
     } else {                                                                \
-        dprintf(1, "Assert @ 0x%x - %s:%d\n",                               \
-                (unsigned int)__builtin_return_address(0),                  \
+        dprintf(1, "Assert @ 0x%lx - %s:%d\n",                              \
+                (long unsigned int)__builtin_return_address(0),             \
                 (file), (line));                                            \
     }                                                                       \
 } while (0)

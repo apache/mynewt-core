@@ -288,7 +288,7 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
         } else {
             val = *(int64_t *)vp;
         }
-        snprintf(buf, buf_len, "%lld", val);
+        snprintf(buf, buf_len, "%" PRId64, val);
         return buf;
     case CONF_UINT8:
     case CONF_UINT16:
@@ -303,7 +303,7 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
         } else {
             uval = *(uint64_t *)vp;
         }
-        snprintf(buf, buf_len, "%llu", uval);
+        snprintf(buf, buf_len, "%" PRIu64, uval);
         return buf;
     case CONF_FLOAT:
         fval = *(float *)vp;
