@@ -22,6 +22,8 @@
 
 static STAILQ_HEAD(, os_dev) g_os_dev_list;
 
+static uint8_t g_os_dev_init_stage;
+
 static int
 os_dev_init(struct os_dev *dev, const char *name, uint8_t stage,
         uint8_t priority, os_dev_init_func_t od_init, void *arg)
@@ -126,7 +128,7 @@ os_dev_create(struct os_dev *dev, const char *name, uint8_t stage,
         goto err;
     }
 
-    if (g_os_started) {
+    if (g_os_dev_init_stage >= stage && (dev->od_flags & OS_DEV_F_STATUS_READY) == 0) {
         rc = os_dev_initialize(dev);
     }
 err:
@@ -139,8 +141,9 @@ os_dev_initialize_all(uint8_t stage)
     struct os_dev *dev;
     int rc = 0;
 
+    g_os_dev_init_stage = stage;
     STAILQ_FOREACH(dev, &g_os_dev_list, od_next) {
-        if (dev->od_stage == stage) {
+        if ((dev->od_flags & OS_DEV_F_STATUS_READY) == 0 && dev->od_stage <= stage) {
             rc = os_dev_initialize(dev);
             if (rc) {
                 break;
