@@ -261,7 +261,7 @@ static const struct spi_pin_def spi_pin[] = {
  * @param pin       pin number
  * @param func      required pin function
  * @return          alternate function number of SPI_AF_INVALID if pin
- *                  can't be setup for this funciton.
+ *                  can't be setup for this function.
  */
 enum spi_alt_num
 spi_stm32_pin_af(int spi_num, int pin, enum spi_pin_func func)
@@ -685,24 +685,32 @@ spi_stm32_read(struct bus_dev *bdev, struct bus_node *bnode,
 
     dd = driver_data(dev);
 
-    assert(os_sem_get_count(&dd->sem) == 0);
-
     if (node->pin_cs >= 0) {
         hal_gpio_write(node->pin_cs, 0);
     }
-    if (MIN_DMA_RX_SIZE >= 0 && length >= MIN_DMA_RX_SIZE) {
-        HAL_SPI_Receive_DMA(&dd->hspi, (uint8_t *)buf, length);
+
+    if (MYNEWT_VAL(OS_SCHEDULING)) {
+        assert(os_sem_get_count(&dd->sem) == 0);
+
+        if (MIN_DMA_RX_SIZE >= 0 && length >= MIN_DMA_RX_SIZE) {
+            HAL_SPI_Receive_DMA(&dd->hspi, (uint8_t *)buf, length);
+        } else {
+            HAL_SPI_Receive_IT(&dd->hspi, (uint8_t *)buf, length);
+        }
+
+        rc = os_sem_pend(&dd->sem, timeout);
+
+        if (rc) {
+            HAL_SPI_Abort(&dd->hspi);
+        }
+
+        rc = os_error_to_sys(rc);
     } else {
-        HAL_SPI_Receive_IT(&dd->hspi, (uint8_t *)buf, length);
+        rc = HAL_SPI_Receive(&dd->hspi, (uint8_t *)buf, length, timeout);
+        if (rc != HAL_OK) {
+            rc = SYS_EIO;
+        }
     }
-
-    rc = os_sem_pend(&dd->sem, timeout);
-
-    if (rc) {
-        HAL_SPI_Abort(&dd->hspi);
-    }
-
-    rc = os_error_to_sys(rc);
 
     if ((rc != 0 || !(flags & BUS_F_NOSTOP)) && node->pin_cs >= 0) {
         hal_gpio_write(node->pin_cs, 1);
@@ -726,27 +734,33 @@ spi_stm32_write(struct bus_dev *bdev, struct bus_node *bnode,
 
     dd = driver_data(dev);
 
-    assert(os_sem_get_count(&dd->sem) == 0);
-
     /* Activate CS */
     if (node->pin_cs >= 0) {
         hal_gpio_write(node->pin_cs, 0);
     }
 
-    if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
-        HAL_SPI_Transmit_DMA(&dd->hspi, (uint8_t *)buf, length);
+    if (MYNEWT_VAL(OS_SCHEDULING)) {
+        assert(os_sem_get_count(&dd->sem) == 0);
+
+        if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
+            HAL_SPI_Transmit_DMA(&dd->hspi, (uint8_t *)buf, length);
+        } else {
+            HAL_SPI_Transmit_IT(&dd->hspi, (uint8_t *)buf, length);
+        }
+
+        rc = os_sem_pend(&dd->sem, timeout);
+
+        if (rc) {
+            HAL_SPI_Abort(&dd->hspi);
+        }
+
+        rc = os_error_to_sys(rc);
     } else {
-        HAL_SPI_Transmit_IT(&dd->hspi, (uint8_t *)buf, length);
+        rc = HAL_SPI_Transmit(&dd->hspi, (uint8_t *)buf, length, timeout);
+        if (rc != HAL_OK) {
+            rc = SYS_EIO;
+        }
     }
-
-    rc = os_sem_pend(&dd->sem, timeout);
-
-    if (rc) {
-        HAL_SPI_Abort(&dd->hspi);
-    }
-
-    rc = os_error_to_sys(rc);
-
     /* Deactivate CS if needed */
     if ((rc != 0 || !(flags & BUS_F_NOSTOP)) && node->pin_cs >= 0) {
         hal_gpio_write(node->pin_cs, 1);
@@ -770,26 +784,33 @@ spi_stm32_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
 
     dd = driver_data(dev);
 
-    assert(os_sem_get_count(&dd->sem) == 0);
-
     /* Activate CS */
     if (node->pin_cs >= 0) {
         hal_gpio_write(node->pin_cs, 0);
     }
 
-    if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
-        HAL_SPI_TransmitReceive_DMA(&dd->hspi, (uint8_t *)wbuf, rbuf, length);
+    if (MYNEWT_VAL(OS_SCHEDULING)) {
+        assert(os_sem_get_count(&dd->sem) == 0);
+
+        if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
+            HAL_SPI_TransmitReceive_DMA(&dd->hspi, (uint8_t *)wbuf, rbuf, length);
+        } else {
+            HAL_SPI_TransmitReceive_IT(&dd->hspi, (uint8_t *)wbuf, rbuf, length);
+        }
+
+        rc = os_sem_pend(&dd->sem, timeout);
+
+        if (rc) {
+            HAL_SPI_Abort(&dd->hspi);
+        }
+
+        rc = os_error_to_sys(rc);
     } else {
-        HAL_SPI_TransmitReceive_IT(&dd->hspi, (uint8_t *)wbuf, rbuf, length);
+        rc = HAL_SPI_TransmitReceive(&dd->hspi, (uint8_t *)wbuf, rbuf, length, timeout);
+        if (rc != HAL_OK) {
+            rc = SYS_EIO;
+        }
     }
-
-    rc = os_sem_pend(&dd->sem, timeout);
-
-    if (rc) {
-        HAL_SPI_Abort(&dd->hspi);
-    }
-
-    rc = os_error_to_sys(rc);
 
     /* Deactivate CS if needed */
     if ((rc != 0 || !(flags & BUS_F_NOSTOP)) && node->pin_cs >= 0) {
@@ -934,7 +955,9 @@ bus_spi_stm32_dev_init_func(struct os_dev *odev, void *arg)
 
     stm32_init_interrupt(spi_hw->irqn, 0, spi_hw->irq_handler);
 
-    os_sem_init(&dd->sem, 0);
+    if (MYNEWT_VAL(OS_SCHEDULING)) {
+        os_sem_init(&dd->sem, 0);
+    }
 
 #if MYNEWT_VAL(SPI_STM32_STAT)
     asprintf(&stats_name, "spi_stm32_%d", cfg->spi_num);
