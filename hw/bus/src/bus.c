@@ -511,13 +511,15 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
         timeout = g_bus_node_lock_timeout;
     }
 
-    err = os_mutex_pend(&bdev->lock, timeout);
-    if (err == OS_TIMEOUT) {
-        BUS_STATS_INC(bdev, bnode, lock_timeouts);
-        return SYS_ETIMEOUT;
-    }
+    if (MYNEWT_VAL(OS_SCHEDULING)) {
+        err = os_mutex_pend(&bdev->lock, timeout);
+        if (err == OS_TIMEOUT) {
+            BUS_STATS_INC(bdev, bnode, lock_timeouts);
+            return SYS_ETIMEOUT;
+        }
 
-    assert(err == OS_OK || err == OS_NOT_STARTED);
+        assert(err == OS_OK || err == OS_NOT_STARTED);
+    }
 
 #if MYNEWT_VAL(BUS_PM)
     /* In auto PM we need to enable bus device on first lock */
@@ -538,7 +540,7 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
      * on nested lock it means that most likely bus device was locked for one
      * node and then access is done on another node which is not correct.
      */
-    if (os_mutex_get_level(&bdev->lock) != 1) {
+    if (MYNEWT_VAL(OS_SCHEDULING) && os_mutex_get_level(&bdev->lock) != 1) {
         (void)bus_node_unlock(node);
         return SYS_EACCES;
     }
@@ -577,6 +579,9 @@ bus_node_unlock(struct os_dev *node)
     }
 #endif
 
+    if (!MYNEWT_VAL(OS_SCHEDULING)) {
+        return 0;
+    }
     err = os_mutex_release(&bdev->lock);
 
     /*
