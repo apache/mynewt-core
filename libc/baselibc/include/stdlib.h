@@ -57,6 +57,7 @@ __extern long strtol(const char *, char **, int);
 __extern long long strtoll(const char *, char **, int);
 __extern unsigned long strtoul(const char *, char **, int);
 __extern unsigned long long strtoull(const char *, char **, int);
+__extern float strtof(const char *, char **);
 
 typedef int (*__comparefunc_t) (const void *, const void *);
 __extern void *bsearch(const void *, const void *, size_t, size_t,
