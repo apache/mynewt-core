@@ -19,6 +19,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <float.h>
 
 #include "os/mynewt.h"
 #include "base64/base64.h"
@@ -154,6 +156,7 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
 {
     int64_t val;
     uint64_t uval;
+    float fval;
     char *eptr;
 
     if (!val_str) {
@@ -220,6 +223,16 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
             *(uint64_t *)vp = uval;
         }
         break;
+    case CONF_FLOAT:
+        fval = strtof(val_str, &eptr);
+        if (*eptr != '\0') {
+            goto err;
+        }
+        if ((fval < FLT_MIN) || (fval > FLT_MAX)) {
+            goto err;
+        }
+        *(float *)vp = fval;
+        break;
     case CONF_STRING:
         val = strlen(val_str);
         if (val + 1 > maxlen) {
@@ -256,6 +269,7 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
 {
     int64_t val;
     uint64_t uval;
+    float fval;
 
     if (type == CONF_STRING) {
         return vp;
@@ -293,6 +307,10 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
             uval = *(uint64_t *)vp;
         }
         snprintf(buf, buf_len, "%llu", uval);
+        return buf;
+    case CONF_FLOAT:
+        fval = *(float *)vp;
+        snprintf(buf, buf_len, "%f", fval);
         return buf;
     default:
         return NULL;
