@@ -24,8 +24,8 @@
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_prail.h"
 #include "mcu/da1469x_retreg.h"
-#if MYNEWT_VAL_CHOICE(BLE_HCI_TRANSPORT, dialog_cmac)
-#include "cmac_driver/cmac_shared.h"
+#if MYNEWT_VAL_CHOICE(BLE_TRANSPORT_LL, dialog_cmac)
+#include <ipc_cmac/shm.h>
 #endif
 #include "os/util.h"
 
@@ -179,9 +179,9 @@ da1469x_prail_dcdc_restore(void)
     if (CRG_TOP->ANA_STATUS_REG & CRG_TOP_ANA_STATUS_REG_COMP_VBAT_HIGH_Msk) {
         da1469x_retreg_restore(g_mcu_dcdc_config, ARRAY_SIZE(g_mcu_dcdc_config));
         DCDC->DCDC_CTRL1_REG |= DCDC_DCDC_CTRL1_REG_DCDC_ENABLE_Msk;
-#if MYNEWT_VAL_CHOICE(BLE_HCI_TRANSPORT, dialog_cmac)
+#if MYNEWT_VAL_CHOICE(BLE_TRANSPORT_LL, dialog_cmac)
         /* Enable turning DCDC on from CMAC core. */
-        g_cmac_shared_data->dcdc.enabled = 1;
+        g_cmac_shm_dcdc->enabled = 1;
 #endif
     }
 }
@@ -190,9 +190,9 @@ da1469x_prail_dcdc_restore(void)
 void
 da1469x_prail_dcdc_disable(void)
 {
-#if MYNEWT_VAL_CHOICE(BLE_HCI_TRANSPORT, dialog_cmac)
+#if MYNEWT_VAL_CHOICE(BLE_TRANSPORT_LL, dialog_cmac)
     /* Prevent CMAC from turning DCDC on. */
-    g_cmac_shared_data->dcdc.enabled = 0;
+    g_cmac_shm_dcdc->enabled = 0;
 #endif
     DCDC->DCDC_CTRL1_REG &= ~DCDC_DCDC_CTRL1_REG_DCDC_ENABLE_Msk;
 }
