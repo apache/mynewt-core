@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <os/mynewt.h>
+#include <bsp/bsp.h>
 #include <hal/hal_spi.h>
 #include <hal/hal_gpio.h>
 #include <disk/disk.h>
@@ -63,14 +65,23 @@
 
 #define BLOCK_LEN           (512)
 
-static uint8_t g_block_buf[BLOCK_LEN];
+static uint8_t g_block_buf[BLOCK_LEN + 2];
 
-/* FIXME: currently limited to single MMC spi device */
-static struct mmc_cfg {
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+static struct mmc {
     int spi_num;
     int ss_pin;
     struct mmc_spi_cfg mmc_spi_cfg;
-} g_mmc_cfg;
+} g_mmc;
+
+/* FIXME: currently limited to single MMC spi device */
+static struct mmc *mmcs[1] = { &g_mmc };
+
+#else
+static struct mmc *mmcs[1];
+static uint8_t mmcs_count;
+#endif
 
 static int
 error_by_response(uint8_t status)
@@ -100,22 +111,81 @@ error_by_response(uint8_t status)
     return (rc);
 }
 
-static struct mmc_cfg *
+static struct mmc *
 mmc_cfg_dev(uint8_t id)
 {
     if (id != 0) {
         return NULL;
     }
 
-    return &g_mmc_cfg;
+    return mmcs[0];
+}
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+static void
+mmc_spi_set_cs(struct mmc *mmc, int cs)
+{
+    /* Let bus driver actiave CS, deactivation is done here */
+    if (cs) {
+        hal_gpio_write(mmc->node.pin_cs, cs);
+    }
+}
+
+static int
+mmc_spi_tx(struct mmc *mmc, const uint8_t *buf, uint16_t count)
+{
+    return bus_node_write(&mmc->node.bnode.odev, buf, count, 1000, BUS_F_NOSTOP);
+}
+
+static int
+mmc_spi_rx(struct mmc *mmc, uint8_t *buf, uint16_t count)
+{
+    memset(buf, 0xFF, count);
+    return bus_node_duplex_write_read(&mmc->node.bnode.odev, buf, buf, count, 1000, BUS_F_NOSTOP);
+}
+
+#else
+
+static void
+mmc_spi_set_cs(struct mmc *mmc, int cs)
+{
+    hal_gpio_write(mmc->ss_pin, cs);
+}
+
+static int
+mmc_spi_tx(struct mmc *mmc, const uint8_t *buf, uint16_t count)
+{
+    for (int i = 0; i < count; i++) {
+        hal_spi_tx_val(mmc->spi_num, buf[i]);
+    }
+    return 0;
+}
+
+static int
+mmc_spi_rx(struct mmc *mmc, uint8_t *buf, uint16_t count)
+{
+    for (int i = 0; i < count; i++) {
+        buf[i] = hal_spi_tx_val(mmc->spi_num, 0xFF);
+    }
+    return 0;
+}
+
+#endif
+
+static int
+mmc_spi_tx_byte(struct mmc *mmc, uint8_t b)
+{
+    return mmc_spi_tx(mmc, &b, 1);
 }
 
 static uint8_t
-send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
+send_mmc_cmd(struct mmc *mmc, uint8_t cmd, uint32_t payload)
 {
     int n;
     uint8_t status;
     uint8_t crc;
+    uint8_t buf[6];
 
     if (cmd & 0x80) {
         /* TODO: refactor recursion? */
@@ -124,12 +194,11 @@ send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
     }
 
     /* 4.7.2: Command Format */
-    hal_spi_tx_val(mmc->spi_num, 0x40 | (cmd & ~0x80));
-
-    hal_spi_tx_val(mmc->spi_num, payload >> 24 & 0xff);
-    hal_spi_tx_val(mmc->spi_num, payload >> 16 & 0xff);
-    hal_spi_tx_val(mmc->spi_num, payload >>  8 & 0xff);
-    hal_spi_tx_val(mmc->spi_num, payload       & 0xff);
+    buf[0] = 0x40 | (cmd & ~0x80);
+    buf[1] = (uint8_t)(payload >> 24);
+    buf[2] = (uint8_t)(payload >> 16);
+    buf[3] = (uint8_t)(payload >> 8);
+    buf[4] = (uint8_t)(payload);
 
     /**
      * 7.2.2 Bus Transfer Protection
@@ -145,28 +214,27 @@ send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
         case CMD8:
             crc = 0x87;
             break;
+    default:
+        break;
     }
-    hal_spi_tx_val(mmc->spi_num, crc);
+    buf[5] = crc;
+    mmc_spi_tx(mmc, buf, 6);
 
     for (n = 255; n > 0; n--) {
-        status = hal_spi_tx_val(mmc->spi_num, 0xff);
-        if ((status & 0x80) == 0) break;
+        mmc_spi_rx(mmc, buf, 1);
+        status = buf[0];
+        if ((status & 0x80) == 0) {
+            break;
+        }
     }
 
     return status;
 }
 
-/**
- * Initialize the MMC driver
- *
- * @param spi_num Number of the SPI channel to be used by MMC
- * @param spi_cfg Low-level device specific SPI configuration
- * @param ss_pin Number of SS pin if SW controlled, -1 otherwise
- *
- * @return 0 on success, non-zero on failure
- */
-int
-mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+static void
+mmc_open_cb(struct bus_node *node)
 {
     int rc;
     int i;
@@ -174,31 +242,7 @@ mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin)
     uint8_t cmd_resp[4];
     uint32_t ocr;
     os_time_t timeout;
-    /* TODO: create new struct for every new spi mmc, add to SLIST */
-    struct mmc_cfg *mmc = &g_mmc_cfg;
-    mmc->ss_pin = ss_pin;
-    mmc->mmc_spi_cfg = *spi_cfg;
-
-    mmc->spi_num = spi_num;
-    struct hal_spi_settings spi_settings = {
-        .data_order = HAL_SPI_MSB_FIRST,
-        .data_mode = mmc->mmc_spi_cfg.clock_mode,
-        .baudrate = mmc->mmc_spi_cfg.initial_freq_khz,
-        .word_size = HAL_SPI_WORD_SIZE_8BIT,
-    };
-
-    hal_gpio_init_out(mmc->ss_pin, 1);
-
-    rc = hal_spi_config(mmc->spi_num, &spi_settings);
-    if (rc) {
-        return (rc);
-    }
-
-    hal_spi_set_txrx_cb(mmc->spi_num, NULL, NULL);
-    rc = hal_spi_enable(mmc->spi_num);
-    if (rc) {
-        return (rc);
-    }
+    struct mmc *mmc = (struct mmc *)node;
 
     /**
      * NOTE: The state machine below follows:
@@ -209,28 +253,20 @@ mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin)
     /* give 10ms for VDD rampup */
     os_time_delay(OS_TICKS_PER_SEC / 100);
 
-    hal_gpio_write(mmc->ss_pin, 0);
-
     /* send the required >= 74 clock cycles (10 bytes, 80 clock cycles). */
     for (i = 0; i < 10; i++) {
-        hal_spi_tx_val(mmc->spi_num, 0xff);
+        mmc_spi_tx_byte(mmc, 0xff);
     }
 
     /* put card in idle state */
     status = send_mmc_cmd(mmc, CMD0, 0);
 
-    hal_gpio_write(mmc->ss_pin, 1);
+    mmc_spi_set_cs(mmc, 1);
     /* No card inserted or bad card? */
     if (status != R_IDLE) {
         rc = error_by_response(status);
         goto out;
     }
-
-    hal_spi_disable(mmc->spi_num);
-    spi_settings.baudrate = mmc->mmc_spi_cfg.freq_khz;
-    rc = hal_spi_config(mmc->spi_num, &spi_settings);
-    hal_spi_enable(mmc->spi_num);
-    hal_gpio_write(mmc->ss_pin, 0);
 
     /**
      * FIXME: while doing a hot-swap of the card or powering off the board
@@ -254,9 +290,7 @@ mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin)
          */
 
         /* Read the contents of R7 */
-        for (i = 0; i < 4; i++) {
-            cmd_resp[i] = (uint8_t) hal_spi_tx_val(mmc->spi_num, 0xff);
-        }
+        mmc_spi_rx(mmc, cmd_resp, 4);
 
         /* Did the card return the same pattern? */
         if (cmd_resp[3] != 0xAA) {
@@ -296,9 +330,7 @@ mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin)
          */
 
         status = send_mmc_cmd(mmc, CMD58, 0);
-        for (i = 0; i < 4; i++) {
-            cmd_resp[i] = (uint8_t) hal_spi_tx_val(mmc->spi_num, 0xff);
-        }
+        mmc_spi_rx(mmc, cmd_resp, 4);
         if (status == 0 && (cmd_resp[0] & (1 << 6))) {  /* FIXME: CCS */
             /**
              * TODO: if CCS is set this is an SDHC or SDXC card!
@@ -329,9 +361,203 @@ mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin)
     }
 
 out:
-    hal_gpio_write(mmc->ss_pin, 1);
+    mmc_spi_set_cs(mmc, 1);
+    (void)rc;
+}
+
+int
+mmc_create_dev(struct mmc *mmc, const char *name, struct mmc_config *mmc_cfg)
+{
+    int rc;
+    struct bus_node_callbacks cbs = {
+        .open = mmc_open_cb,
+    };
+
+    bus_node_set_callbacks((struct os_dev *)mmc, &cbs);
+
+    rc = bus_spi_node_create(name, &mmc->node, &mmc_cfg->spi_cfg, NULL);
+    if (rc == 0 && mmcs_count < ARRAY_SIZE(mmcs)) {
+        mmcs[mmcs_count++] = mmc;
+    }
+
     return rc;
 }
+
+#else
+/**
+ * Initialize the MMC driver
+ *
+ * @param spi_num Number of the SPI channel to be used by MMC
+ * @param spi_cfg Low-level device specific SPI configuration
+ * @param ss_pin Number of SS pin if SW controlled, -1 otherwise
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin)
+{
+    int rc;
+    int i;
+    uint8_t status;
+    uint8_t cmd_resp[4];
+    uint32_t ocr;
+    os_time_t timeout;
+    /* TODO: create new struct for every new spi mmc, add to SLIST */
+    struct mmc *mmc = mmcs[0];
+    mmc->ss_pin = ss_pin;
+    mmc->mmc_spi_cfg = *spi_cfg;
+
+    mmc->spi_num = spi_num;
+    struct hal_spi_settings spi_settings = {
+        .data_order = HAL_SPI_MSB_FIRST,
+        .data_mode = mmc->mmc_spi_cfg.clock_mode,
+        .baudrate = mmc->mmc_spi_cfg.initial_freq_khz,
+        .word_size = HAL_SPI_WORD_SIZE_8BIT,
+    };
+
+    hal_gpio_init_out(mmc->ss_pin, 1);
+
+    rc = hal_spi_config(mmc->spi_num, &spi_settings);
+    if (rc) {
+        return (rc);
+    }
+
+    hal_spi_set_txrx_cb(mmc->spi_num, NULL, NULL);
+    rc = hal_spi_enable(mmc->spi_num);
+    if (rc) {
+        return (rc);
+    }
+
+    /**
+     * NOTE: The state machine below follows:
+     *       Section 6.4.1: Power Up Sequence for SD Bus Interface.
+     *       Section 7.2.1: Mode Selection and Initialization.
+     */
+
+    /* give 10ms for VDD rampup */
+    os_time_delay(OS_TICKS_PER_SEC / 100);
+
+    mmc_spi_set_cs(mmc, 0);
+
+    /* send the required >= 74 clock cycles (10 bytes, 80 clock cycles). */
+    for (i = 0; i < 10; i++) {
+        mmc_spi_tx_byte(mmc, 0xff);
+    }
+
+    /* put card in idle state */
+    status = send_mmc_cmd(mmc, CMD0, 0);
+
+    mmc_spi_set_cs(mmc, 1);
+    /* No card inserted or bad card? */
+    if (status != R_IDLE) {
+        rc = error_by_response(status);
+        goto out;
+    }
+
+    hal_spi_disable(mmc->spi_num);
+    spi_settings.baudrate = mmc->mmc_spi_cfg.freq_khz;
+    rc = hal_spi_config(mmc->spi_num, &spi_settings);
+    hal_spi_enable(mmc->spi_num);
+    mmc_spi_set_cs(mmc, 0);
+
+    /**
+     * FIXME: while doing a hot-swap of the card or powering off the board
+     * it is required to send a CMD1 here otherwise CMD8's response will
+     * be always invalid.
+     *
+     * Why is this happening? CMD1 should never be required for SDxC cards...
+     */
+
+    /**
+     * 4.3.13: Ask for 2.7-3.3V range, send 0xAA pattern
+     *
+     * NOTE: cards that are not compliant with "Physical Spec Version 2.00"
+     *       will answer this with R_ILLEGAL_COMMAND.
+     */
+    status = send_mmc_cmd(mmc, CMD8, 0x1AA);
+    if (status != 0xff && !(status & R_ILLEGAL_COMMAND)) {
+
+        /**
+         * Ver2.00 or later SD Memory Card
+         */
+
+        /* Read the contents of R7 */
+        mmc_spi_rx(mmc, cmd_resp, 4);
+
+        /* Did the card return the same pattern? */
+        if (cmd_resp[3] != 0xAA) {
+            rc = MMC_RESPONSE_ERROR;
+            goto out;
+        }
+
+        /**
+         * 4.3.13 Send Interface Condition Command (CMD8)
+         *   Check VHS for 2.7-3.6V support
+         */
+        if (cmd_resp[2] != 0x01) {
+            rc = MMC_VOLTAGE_ERROR;
+            goto out;
+        }
+
+        /**
+         * Wait for card to leave IDLE state or time out
+         */
+
+        timeout = os_time_get() + OS_TICKS_PER_SEC;
+        for (;;) {
+            status = send_mmc_cmd(mmc, ACMD41, HCS);
+            if ((status & R_IDLE) == 0 || os_time_get() > timeout) {
+                break;
+            }
+            os_time_delay(OS_TICKS_PER_SEC / 10);
+        }
+
+        if (status) {
+            rc = error_by_response(status);
+            goto out;
+        }
+
+        /**
+         * Check if this is an high density card
+         */
+
+        status = send_mmc_cmd(mmc, CMD58, 0);
+        mmc_spi_rx(mmc, cmd_resp, 4);
+        if (status == 0 && (cmd_resp[0] & (1 << 6))) {  /* FIXME: CCS */
+            /**
+             * TODO: if CCS is set this is an SDHC or SDXC card!
+             *       SDSC uses byte addressing, SDHC/SDXC block addressing
+             *
+             *       can also check the whole voltage range supported here
+             */
+        }
+
+    } else if (status != 0xff && status & R_ILLEGAL_COMMAND) {
+
+        /**
+         * Ver1.x SD Memory Card or Not SD Memory Card
+         */
+
+        ocr = send_mmc_cmd(mmc, CMD58, 0);
+
+        /* TODO: check if voltage range is ok! */
+
+        if (ocr & R_ILLEGAL_COMMAND) {
+
+        }
+
+        /* TODO: set blocklen */
+
+    } else {
+        rc = error_by_response(status);
+    }
+
+out:
+    mmc_spi_set_cs(mmc, 1);
+    return rc;
+}
+
+#endif
 
 /**
  * Commands that return response in R1b format and write
@@ -339,15 +565,17 @@ out:
  * operations are in progress.
  */
 static uint8_t
-wait_busy(struct mmc_cfg *mmc)
+wait_busy(struct mmc *mmc)
 {
     os_time_t timeout;
     uint8_t res;
 
     timeout = os_time_get() + OS_TICKS_PER_SEC / 2;
     do {
-        res = hal_spi_tx_val(mmc->spi_num, 0xff);
-        if (res) break;
+        mmc_spi_rx(mmc, &res, 1);
+        if (res) {
+            break;
+        }
         os_time_delay(OS_TICKS_PER_SEC / 1000);
     } while (os_time_get() < timeout);
 
@@ -363,7 +591,6 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len)
     uint8_t cmd;
     uint8_t res;
     int rc;
-    uint32_t n;
     size_t block_len;
     size_t block_count;
     os_time_t timeout;
@@ -371,7 +598,7 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len)
     size_t offset;
     size_t index;
     size_t amount;
-    struct mmc_cfg *mmc;
+    struct mmc *mmc;
 
     mmc = mmc_cfg_dev(mmc_id);
     if (mmc == NULL) {
@@ -385,7 +612,7 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len)
     block_addr = addr / BLOCK_LEN;
     offset = addr - (block_addr * BLOCK_LEN);
 
-    hal_gpio_write(mmc->ss_pin, 0);
+    mmc_spi_set_cs(mmc, 0);
 
     cmd = (block_count == 1) ? CMD17 : CMD18;
     res = send_mmc_cmd(mmc, cmd, block_addr);
@@ -402,7 +629,7 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len)
          */
         timeout = os_time_get() + OS_TICKS_PER_SEC / 5;
         do {
-            res = hal_spi_tx_val(mmc->spi_num, 0xff);
+            mmc_spi_rx(mmc, &res, 1);
             if (res != 0xFF) {
                 break;
             }
@@ -417,13 +644,9 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len)
             goto out;
         }
 
-        for (n = 0; n < BLOCK_LEN; n++) {
-            g_block_buf[n] = hal_spi_tx_val(mmc->spi_num, 0xff);
-        }
+        mmc_spi_rx(mmc, g_block_buf, BLOCK_LEN + 2 /* CRC */);
 
         /* TODO: CRC-16 not used here but would be cool to have */
-        hal_spi_tx_val(mmc->spi_num, 0xff);
-        hal_spi_tx_val(mmc->spi_num, 0xff);
 
         amount = MIN(BLOCK_LEN - offset, len);
 
@@ -440,7 +663,7 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len)
     }
 
 out:
-    hal_gpio_write(mmc->ss_pin, 1);
+    mmc_spi_set_cs(mmc, 1);
     return (rc);
 }
 
@@ -452,7 +675,6 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
 {
     uint8_t cmd;
     uint8_t res;
-    uint32_t n;
     size_t block_len;
     size_t block_count;
     os_time_t timeout;
@@ -461,7 +683,7 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
     size_t index;
     size_t amount;
     int rc;
-    struct mmc_cfg *mmc;
+    struct mmc *mmc;
 
     mmc = mmc_cfg_dev(mmc_id);
     if (mmc == NULL) {
@@ -473,7 +695,7 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
     block_addr = addr / BLOCK_LEN;
     offset = addr - (block_addr * BLOCK_LEN);
 
-    hal_gpio_write(mmc->ss_pin, 0);
+    mmc_spi_set_cs(mmc, 0);
 
     /**
      * This code ensures that if the requested address doesn't align with the
@@ -492,8 +714,10 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
 
         timeout = os_time_get() + OS_TICKS_PER_SEC / 5;
         do {
-            res = hal_spi_tx_val(mmc->spi_num, 0xff);
-            if (res != 0xff) break;
+            mmc_spi_rx(mmc, &res, 1);
+            if (res != 0xff) {
+                break;
+            }
             os_time_delay(OS_TICKS_PER_SEC / 20);
         } while (os_time_get() < timeout);
 
@@ -502,12 +726,7 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
             goto out;
         }
 
-        for (n = 0; n < BLOCK_LEN; n++) {
-            g_block_buf[n] = hal_spi_tx_val(mmc->spi_num, 0xff);
-        }
-
-        hal_spi_tx_val(mmc->spi_num, 0xff);
-        hal_spi_tx_val(mmc->spi_num, 0xff);
+        mmc_spi_rx(mmc, g_block_buf, BLOCK_LEN + 2);
     }
 
     /* now start write */
@@ -525,26 +744,23 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
          * 7.3.3.2 Start Block Tokens and Stop Tran Token
          */
         if (cmd == CMD24) {
-            hal_spi_tx_val(mmc->spi_num, START_BLOCK);
+            mmc_spi_tx_byte(mmc, START_BLOCK);
         } else {
-            hal_spi_tx_val(mmc->spi_num, START_BLOCK_TOKEN);
+            mmc_spi_tx_byte(mmc, START_BLOCK_TOKEN);
         }
 
         amount = MIN(BLOCK_LEN - offset, len);
         memcpy(&g_block_buf[offset], ((uint8_t *)buf + index), amount);
 
-        for (n = 0; n < BLOCK_LEN; n++) {
-            hal_spi_tx_val(mmc->spi_num, g_block_buf[n]);
-        }
-
         /* CRC */
-        hal_spi_tx_val(mmc->spi_num, 0xff);
-        hal_spi_tx_val(mmc->spi_num, 0xff);
+        g_block_buf[BLOCK_LEN] = 0xFF;
+        g_block_buf[BLOCK_LEN + 1] = 0xFF;
+        mmc_spi_tx(mmc, g_block_buf, BLOCK_LEN + 2);
 
         /**
          * 7.3.3.1 Data Response Token
          */
-        res = hal_spi_tx_val(mmc->spi_num, 0xff);
+        mmc_spi_rx(mmc, &res, 1);
         if ((res & 0x1f) != 0x05) {
             break;
         }
@@ -559,7 +775,7 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
     }
 
     if (cmd == CMD25) {
-        hal_spi_tx_val(mmc->spi_num, STOP_TRAN_TOKEN);
+        mmc_spi_tx_byte(mmc, STOP_TRAN_TOKEN);
         wait_busy(mmc);
     }
 
@@ -579,7 +795,7 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
     wait_busy(mmc);
 
 out:
-    hal_gpio_write(mmc->ss_pin, 1);
+    mmc_spi_set_cs(mmc, 1);
     return (rc);
 }
 
@@ -600,3 +816,51 @@ struct disk_ops mmc_ops = {
     .write = &mmc_write,
     .ioctl = &mmc_ioctl,
 };
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static struct mmc mmc;
+static struct mmc_config mmc_config = {
+    .spi_cfg = {
+        .pin_cs = MYNEWT_VAL(MMC_SPI_CS_PIN),
+        .freq = MYNEWT_VAL(MMC_SPI_FREQ),
+        .data_order = BUS_SPI_DATA_ORDER_MSB,
+        .mode = BUS_SPI_MODE_0,
+        .node_cfg.bus_name = MYNEWT_VAL(MMC_SPI_BUS_NAME),
+        .node_cfg.lock_timeout_ms = 1000,
+    }
+};
+#endif
+
+void
+mmc_pkg_init(void)
+{
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    if (0 == mmc_create_dev(&mmc, MYNEWT_VAL(MMC_DEV_NAME), &mmc_config)) {
+        if (MYNEWT_VAL(MMC_AUTO_MOUNT)) {
+            os_dev_open(MYNEWT_VAL(MMC_DEV_NAME), 1000, NULL);
+        }
+    }
+#else
+    struct mmc_spi_cfg spi_cfg = {
+        .clock_mode = HAL_SPI_MODE0,
+        .initial_freq_khz = 400,
+        .freq_khz = MYNEWT_VAL(MMC_SPI_FREQ),
+    };
+    mmc_init(MYNEWT_VAL(MMC_SPI_NUM), &spi_cfg, MYNEWT_VAL(MMC_SPI_CS_PIN));
+#endif
+    if (MYNEWT_VAL(MMC_AUTO_MOUNT)) {
+        uint8_t *sector = malloc(512);
+
+        if (sector == NULL) {
+        } else {
+            /* For now only FAT partition are mounted */
+            if (mmc_read(0, 0, sector, 512) == 0) {
+                /* Check if first partition is FAT */
+                if (sector[450] == 0x0C) {
+                    disk_register(MYNEWT_VAL(MMC_DEV_NAME), "fatfs", &mmc_ops);
+                }
+            }
+        }
+        free(sector);
+    }
+}

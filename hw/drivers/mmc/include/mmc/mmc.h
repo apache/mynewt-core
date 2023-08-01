@@ -22,6 +22,9 @@
 
 #include "os/mynewt.h"
 #include <disk/disk.h>
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include <bus/drivers/spi_common.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,6 +98,17 @@ mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len);
  */
 int
 mmc_ioctl(uint8_t mmc_id, uint32_t cmd, void *arg);
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+struct mmc_config {
+    struct bus_spi_node_cfg spi_cfg;
+};
+struct mmc {
+    struct bus_spi_node node;
+};
+
+int mmc_create_dev(struct mmc *mmc, const char *name, struct mmc_config *mmc_cfg);
+#endif
 
 #ifdef __cplusplus
 }
