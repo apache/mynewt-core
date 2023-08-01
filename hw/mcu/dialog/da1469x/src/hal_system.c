@@ -139,6 +139,9 @@ hal_system_clock_start(void)
      */
     da1469x_clock_lp_rcx_disable();
 #endif
+
+    /* TODO: we should calibrate this periodically */
+    da1469x_clock_lp_rc32k_calibrate();
 }
 
 enum hal_reset_reason
