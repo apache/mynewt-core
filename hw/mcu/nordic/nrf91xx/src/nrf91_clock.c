@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include "mcu/nrf91_hal.h"
 #include "nrfx.h"
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config_nrf91.h"
 
 static uint8_t nrf91_clock_hfxo_refcnt;
 

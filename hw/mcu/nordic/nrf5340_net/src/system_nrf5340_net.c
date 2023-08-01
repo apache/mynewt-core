@@ -57,7 +57,7 @@ void SystemInit(void)
     /* Trimming of the device. Copy all the trimming values from FICR into the target addresses. Trim
      until one ADDR is not initialized. */
     uint32_t index = 0;
-    for (index = 0; index < 32ul && NRF_FICR_NS->TRIMCNF[index].ADDR != (uint32_t *)0xFFFFFFFFul; index++){
+    for (index = 0; index < 32ul && NRF_FICR_NS->TRIMCNF[index].ADDR != 0xFFFFFFFFul; index++){
         #if defined ( __ICCARM__ )
             /* IAR will complain about the order of volatile pointer accesses. */
             #pragma diag_suppress=Pa082

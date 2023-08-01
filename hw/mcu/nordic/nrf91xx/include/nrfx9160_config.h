@@ -21,7 +21,7 @@
 #define NRFX9160_CONFIG_H__
 
 #include "syscfg/syscfg.h"
-#include "nrfx_config_nrf9160.h"
+#include "nrfx_config_nrf91.h"
 
 #ifndef NRFX_CLOCK_ENABLED
 #define NRFX_CLOCK_ENABLED 0
