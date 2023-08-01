@@ -208,10 +208,83 @@ da1469x_clock_lp_rcx_calibrate(void)
         da1469x_clock_calibrate(3, MYNEWT_VAL(MCU_CLOCK_RCX_CAL_REF_CNT));
 }
 
+#define RC32K_TARGET_FREQ   32000
+#define RC32K_TRIM_MIN      0
+#define RC32K_TRIM_MAX      15
+
+static inline uint32_t
+rc32k_trim_get(void)
+{
+    return (CRG_TOP->CLK_RC32K_REG & CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Msk) >>
+           CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Pos;
+}
+
+static inline void
+rc32k_trim_set(uint32_t trim)
+{
+    CRG_TOP->CLK_RC32K_REG =
+        (CRG_TOP->CLK_RC32K_REG & ~CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Msk) |
+        (trim << CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Pos);
+}
+
 void
 da1469x_clock_lp_rc32k_calibrate(void)
 {
-    g_mcu_clock_rc32k_freq = da1469x_clock_calibrate(0, 100);
+    uint32_t trim;
+    uint32_t trim_prev;
+    uint32_t freq;
+    uint32_t freq_prev;
+    uint32_t freq_delta;
+    uint32_t freq_delta_prev;
+    bool trim_ok;
+
+    if (!(CRG_TOP->CLK_RC32K_REG & CRG_TOP_CLK_RC32K_REG_RC32K_ENABLE_Msk)) {
+        return;
+    }
+
+    freq = 0;
+    freq_delta = INT32_MAX;
+
+    trim = rc32k_trim_get();
+    trim_prev = trim;
+    trim_ok = false;
+
+    do {
+        freq_prev = freq;
+        freq_delta_prev = freq_delta;
+
+        freq = da1469x_clock_calibrate(0, MYNEWT_VAL(MCU_CLOCK_RC32K_CAL_REF_CNT));
+
+        freq_delta = freq - RC32K_TARGET_FREQ;
+        freq_delta = (int32_t)freq_delta < 0 ? -freq_delta : freq_delta;
+
+        if (freq_delta > freq_delta_prev) {
+            /* Previous trim value was closer to target frequency, use it */
+            freq = freq_prev;
+            rc32k_trim_set(trim_prev);
+            trim_ok = true;
+        } else if (freq > RC32K_TARGET_FREQ) {
+            /* Decrease trim value if possible */
+            if (trim > RC32K_TRIM_MIN) {
+                trim_prev = trim;
+                rc32k_trim_set(--trim);
+            } else {
+                trim_ok = true;
+            }
+        } else if (freq < RC32K_TARGET_FREQ) {
+            /* Increase trim value if possible */
+            if (trim < RC32K_TRIM_MAX) {
+                trim_prev = trim;
+                rc32k_trim_set(++trim);
+            } else {
+                trim_ok = true;
+            }
+        } else {
+            trim_ok = true;
+        }
+    } while (!trim_ok);
+
+    g_mcu_clock_rc32k_freq = freq;
 }
 
 void

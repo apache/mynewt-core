@@ -77,6 +77,12 @@ syscfg.defs:
         value: 100
         restrictions: '!0'
 
+    MCU_CLOCK_RC32K_CAL_REF_CNT:
+        description: >
+            Reference count value for calibration of RC32K clock.
+        value: 1
+        restrictions: '!0'
+
     MCU_SYSCLK_SOURCE:
         description: >
             Specifies system clock source
