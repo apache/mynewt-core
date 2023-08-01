@@ -58,7 +58,7 @@ pkg.deps:
 
 repository.nordic-nrfx:
     type: github
-    vers: v2.8.0-commit
+    vers: v2.11.0-commit
     branch: master
     user: NordicSemiconductor
     repo: nrfx
