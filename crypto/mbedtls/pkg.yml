@@ -34,14 +34,15 @@ pkg.cflags.TEST: -DTEST
 pkg.include_dirs:
     - "include"
     - "@mbedtls/include"
+    - "@mbedtls/library"
 
 pkg.src_dirs:
-    - "@mbedtls/library/"
+    - "@mbedtls/library"
     - "src"
 
 repository.mbedtls:
     type: github
-    vers: v2.16.12-commit
+    vers: v2.28.3-commit
     branch: master
     user: Mbed-TLS
     repo: mbedtls
