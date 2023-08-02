@@ -496,6 +496,12 @@ extern "C" {
 #define MBEDTLS_BIGNUM_ALT
 #endif
 
+/* TODO configure when supported */
+#undef MBEDTLS_PSA_CRYPTO_C
+#undef MBEDTLS_PSA_CRYPTO_SE_C
+#undef MBEDTLS_PSA_CRYPTO_STORAGE_C
+#undef MBEDTLS_PSA_ITS_FILE_C
+
 #ifdef __cplusplus
 }
 #endif

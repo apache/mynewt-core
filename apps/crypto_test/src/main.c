@@ -27,6 +27,8 @@
 #include "mbedtls/aes.h"
 #include "tinycrypt/aes.h"
 
+#include <mbedtls/gcm_mynewt.h>
+
 struct vector_data {
     char *plain;
     char *cipher;
