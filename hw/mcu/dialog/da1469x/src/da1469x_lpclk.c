@@ -79,6 +79,10 @@ da1469x_lpclk_updated(void)
 void
 da1469x_lpclk_init(void)
 {
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    da1469x_lpclk_enabled();
+#endif
+
 #if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
     static struct hal_timer lpclk_settle_tmr;
     da1469x_clock_lp_xtal32k_enable();
