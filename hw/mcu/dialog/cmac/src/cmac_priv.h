@@ -30,7 +30,7 @@ extern "C" {
 extern int8_t g_cmac_pdc_cmac2sys;
 
 void cmac_sleep(void);
-void cmac_sleep_recalculate(void);
+void cmac_sleep_wakeup_time_update(uint16_t wakeup_lpclk_ticks);
 
 #ifdef __cplusplus
 }

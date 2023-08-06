@@ -72,9 +72,9 @@ static uint32_t g_retained_regs_val[ ARRAY_SIZE(retained_regs) ];
 static uint32_t g_mcu_wait_for_swd_start;
 
 /* Minimum time required to go to sleep (until switch to SLP) and then wake up */
-static uint32_t g_mcu_wakeup_usecs_min;
+static uint32_t g_mcu_sleep_lp_ticks_min;
 
-static bool
+static inline bool
 cmac_sleep_is_switch_allowed(void)
 {
     return (ble_phy_xcvr_state_get() == 0) &&
@@ -168,44 +168,34 @@ cmac_sleep_wait4xtal(void)
     *(volatile uint32_t *)0x5000001c = 1;
 }
 
-#define T_USEC(_t)          (_t)
-#define T_LPTICK(_t)        ((_t) * cmac_timer_slp_tick_us())
-#define T_LPTICK_U(_t)      (T_LPTICK(_t) * 15 / 10)
+#define T_USEC(_t)          (((_t) + cmac_timer_slp_tick_us() - 1) / \
+                             cmac_timer_slp_tick_us())
+#define T_LPTICK(_t)        (_t)
 
-static void
-cmac_sleep_calculate_wakeup_time(void)
+void
+cmac_sleep_wakeup_time_update(uint16_t wakeup_lpclk_ticks)
 {
-    assert(g_cmac_shm_ctrl.xtal32m_settle_us);
+    if (wakeup_lpclk_ticks == 0) {
+        g_mcu_sleep_lp_ticks_min = 0;
+        return;
+    }
 
-    g_mcu_wakeup_usecs_min =
+    g_mcu_sleep_lp_ticks_min =
         /*
-         * We need ~12us to prepare for sleep before starting switch to SLP.
+         * We need ~15us to prepare for sleep before starting switch to SLP.
          * Switch to SLP is done by switching SLP clock to LPCLK first and then
          * enabling SLP. The former has to be synchronized with negative edge of
          * LPCLK and the latter happens on positive edge of LPCLK so we just
          * assume 2 LPCLK ticks in worst case.
          */
-        T_USEC(12) + T_LPTICK(2) +
+        T_USEC(15) + T_LPTICK(2) +
         /*
-         * On wake up we assume fast wake up mode which has 3 phases that take
-         * up to 2, 2 and 3 LPCLK ticks respectively (need to add some margin
-         * here for worst-worst case). XTAL32M is started at 3rd phase and we
-         * need to wait for it to settle before switch back to LLT. This is done
-         * by disabling SLP and then switching SLP clock to PCLK. Both actions
-         * are synchronized with LPCLK negative edge so take 2 LPCLK ticks in
-         * worst case. Finally, LLP compensation takes around 50us.
+         * After wakeup (this includes XTAL32M settling) we need to switch back
+         * to LLT. This is done by disabling SLP and then switching SLP clock to
+         * PCLK. Both actions are synchronized with LPCLK negative edge so take
+         * 2 LPCLK ticks in worst case. Finally, LLT compensation takes ~50us.
          */
-        T_LPTICK_U(2) + T_LPTICK_U(2) +
-        max(T_LPTICK_U(3), T_USEC(g_cmac_shm_ctrl.xtal32m_settle_us)) +
-        T_LPTICK(2) + T_USEC(50);
-}
-
-void
-cmac_sleep_recalculate(void)
-{
-    if (cmac_timer_slp_update()) {
-        cmac_sleep_calculate_wakeup_time();
-    }
+        T_LPTICK(wakeup_lpclk_ticks) + T_LPTICK(2) + T_USEC(50);
 }
 
 extern bool ble_rf_try_recalibrate(uint32_t idle_time_us);
@@ -228,25 +218,21 @@ cmac_sleep(void)
     cmac_pdc_ack_all();
 
     wakeup_at = cmac_timer_next_at();
-
-    /*
-     * At this point in time we know exactly when next LLT interrupt should
-     * happen so need to make sure we can be up and running on time.
-     */
-
-    sleep_usecs = wakeup_at - cmac_timer_read32() - g_mcu_wakeup_usecs_min;
-    if ((int32_t)sleep_usecs <= 0) {
-        switch_to_slp = false;
-        deep_sleep = false;
-        goto do_sleep;
-    }
+    sleep_usecs = wakeup_at - cmac_timer_read32();
 
     if (ble_rf_try_recalibrate(sleep_usecs)) {
         goto skip_sleep;
     }
 
-    sleep_lp_ticks = cmac_timer_usecs_to_lp_ticks(sleep_usecs);
-    if (sleep_lp_ticks <= 1) {
+    if (g_mcu_sleep_lp_ticks_min == 0) {
+        switch_to_slp = false;
+        deep_sleep = false;
+        goto do_sleep;
+    }
+
+    sleep_lp_ticks = cmac_timer_usecs_to_lp_ticks(sleep_usecs) -
+                     g_mcu_sleep_lp_ticks_min;
+    if ((int32_t)sleep_lp_ticks <= 1) {
         switch_to_slp = false;
         deep_sleep = false;
         goto do_sleep;

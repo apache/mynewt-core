@@ -35,7 +35,7 @@ extern struct cmac_timer_ctrl g_cmac_timer_ctrl;
 void cmac_timer_init(void);
 void cmac_timer_slp_enable(uint32_t ticks);
 void cmac_timer_slp_disable(uint32_t exp_ticks);
-bool cmac_timer_slp_update(void);
+void cmac_timer_slp_update(uint16_t lp_clock_freq);
 bool cmac_timer_slp_is_ready(void);
 #if MYNEWT_VAL(MCU_SLP_TIMER_32K_ONLY)
 static inline uint32_t

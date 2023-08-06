@@ -28,10 +28,11 @@
 #include "hal/hal_timer.h"
 #include "os/os_cputime.h"
 #include "da1469x_priv.h"
+#if MYNEWT_PKG_apache_mynewt_core__hw_drivers_ipc_cmac
+#include "ipc_cmac/shm.h"
+#endif
 
 bool g_mcu_lpclk_available;
-
-static da1469x_lpclk_cb *g_da1469x_lpclk_cmac_cb;
 
 #if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
 static void
@@ -45,22 +46,29 @@ da1469x_lpclk_settle_tmr_cb(void *arg)
 static void
 da1469x_lpclk_notify(void)
 {
-    if (!g_da1469x_lpclk_cmac_cb || !g_mcu_lpclk_available) {
+    if (!g_mcu_lpclk_available) {
         return;
     }
 
-#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
-    g_da1469x_lpclk_cmac_cb(32768);
-#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
-    g_da1469x_lpclk_cmac_cb(da1469x_clock_lp_rcx_freq_get());
+#if MYNEWT_PKG_apache_mynewt_core__hw_drivers_ipc_cmac
+    cmac_host_req_sleep_update();
 #endif
 }
 
-void
-da1469x_lpclk_register_cmac_cb(da1469x_lpclk_cb *cb)
+uint16_t
+da1469x_lpclk_freq_get(void)
 {
-    g_da1469x_lpclk_cmac_cb = cb;
-    da1469x_lpclk_notify();
+    if (!g_mcu_lpclk_available) {
+        return 0;
+    }
+
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
+    return 32768;
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    return da1469x_clock_lp_rcx_freq_get();
+#else
+    return 0;
+#endif
 }
 
 void
