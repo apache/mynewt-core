@@ -61,6 +61,12 @@ gcc_startup_nrf9160.s
 gcc_startup_nrf9160_split.s
 nrf9160.h
 nrf9160_bitfields.h
+gcc_startup_cm0.s
+gcc_startup_cm0_split.s
+gcc_startup_cm4.s
+gcc_startup_cm4_split.s
+gcc_startup_cm33.s
+gcc_startup_cm33_split.s
 
 
 # Linker scripts for Nordics nRF5X - TCL license
@@ -119,6 +125,7 @@ split-vbluno51.ld
 vbluno51_no_boot.ld
 split-vbluno52.ld
 vbluno52_no_boot.ld
+boot-apollo2.ld
 apollo2.ld
 dwm1001-dev_no_boot.ld
 split-dwm1001-dev.ld
@@ -157,8 +164,8 @@ startup_STM32F40x.s
 clock_stm32f4xx.c
 
 # STM32F0xx HAL - BSD licence
-hw/mcu/stm/stm32f0xx/src/clock_stm32f0xx.c
-hw/mcu/stm/stm32f0xx/src/system_stm32f0xx.c
+clock_stm32f0xx.c
+system_stm32f0xx.c
 
 # baselibc - BSD License.
 # tinyprintf - BSD License.
@@ -166,15 +173,6 @@ hw/mcu/stm/stm32f0xx/src/system_stm32f0xx.c
 baselibc
 
 # CMSIS-CORE - BSD License.
-core_ca9.h
-core_caFunc.h
-core_caInstr.h
-core_ca_mmu.h
-core_cm0.h
-core_cm0plus.h
-core_cm3.h
-core_cm4.h
-core_cm4_simd.h
 core_cmFunc.h
 core_cmInstr.h
 cmsis_nvic.c
@@ -183,18 +181,10 @@ HAL_CM0.s
 HAL_CM3.s
 HAL_CM4.s
 HAL_CM33.s
-SVC_Table.s
-arm_common_tables.h
-arm_const_structs.h
-arm_math.h
-cmsis_armcc.h
-cmsis_armcc_V6.h
-cmsis_gcc.h
-core_cm7.h
-core_cmSimd.h
-core_sc000.h
-core_sc300.h
 HAL_CM7.s
+SVC_Table.s
+cmsis_armcc_V6.h
+core_cmSimd.h
 
 # microjson - BSD License.
 MSJSON_COPYING
@@ -278,8 +268,8 @@ sifive
 mqtt
 
 # CMSIS STM32f7 - BSD License.
-hw/mcu/stm/stm32f7xx/src/clock_stm32f7xx.c
-hw/mcu/stm/stm32f7xx/src/system_stm32f7xx.c
+clock_stm32f7xx.c
+system_stm32f7xx.c
 
 # CMSIS Cortex-H7, STM32h7 - BSD License.
 stm32h7xx
@@ -374,16 +364,9 @@ p32mz_boot.ld
 # Calliope SDK - BSD Licence
 split-calliope_mini.ld
 
-# Bluetooth Mesh - Apache 2.0 License
-mesh
-
 # pic32mx470_6lp_clicker BSP - one BSD licensed file (other are Apache):
 # /hw/bsp/pic32mx470_6lp_clicker/src/sbrk.c
 pic32mx470_6lp_clicker
-
-# pic32mz2048_wi-fire BSP - one BSD licensed file (other are Apache):
-# ./hw/bsp/pic32mz2048_wi-fire/src/sbrk.c
-pic32mz2048_wi-fire
 
 # SDK for Apollo2 - MIT/BSD/Apache License
 # hw/bsp/apollo2_evb/src/arch/cortex_m4/gcc_startup.s
@@ -400,8 +383,8 @@ apollo3.h
 system_apollo3.h
 
 # CMSIS Cortex-M4, STM32f3 - BSD License.
-hw/mcu/stm/stm32f3xx/src/clock_stm32f3xx.c
-hw/mcu/stm/stm32f3xx/src/system_stm32f3xx.c
+clock_stm32f3xx.c
+system_stm32f3xx.c
 
 # Nucleo-F303K8, Nucleo-F303RE - BSD License.
 startup_stm32f303x8.s
@@ -412,20 +395,12 @@ stm32f3xx_hal_conf.h
 docs
 
 # nrfX - BSD License
-nrfx
 nrfx_glue.h
 nrfx_config.h
-nrf51xxx
-nrf52xxx
-nrf91xx
-nrf52xxx-compat
-
-# cmsis-core - Apache License
-cmsis-core
 
 # stm32l1xx - BSD License
-hw/mcu/stm/stm32l1xx/src/clock_stm32l1xx.c
-hw/mcu/stm/stm32l1xx/src/system_stm32l1xx.c
+clock_stm32l1xx.c
+system_stm32l1xx.c
 
 # stm32f1xx - BSD License
 stm32f1xx
@@ -438,16 +413,17 @@ embarc_emsk
 olimex-p103
 
 # STM32L0xx SDK - BSD License
-hw/mcu/stm/stm32l0xx/src/system_stm32l0xx.c
-hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c
+system_stm32l0xx.c
+clock_stm32l0xx.c
 
 # STM32L4xx SDK - BSD License
-hw/mcu/stm/stm32l4xx/src/clock_stm32l4xx.c
-hw/mcu/stm/stm32l4xx/src/system_stm32l4xx.c
+clock_stm32l4xx.c
+system_stm32l4xx.c
 
 # STM32WBxx SDK - BSD License
-hw/mcu/stm/stm32wbxx/src/clock_stm32wbxx.c
-hw/mcu/stm/stm32wbxx/src/system_stm32wbxx.c
+clock_stm32wbxx.c
+system_stm32wbxx.c
+stm32wb55.ld
 
 # B-L072Z-LRWAN1 BSP - BSD License
 b-l072z-lrwan1
@@ -480,17 +456,6 @@ system_nrf5340.c
 gcc_startup_nrf5340.s
 system_nrf5340_net.c
 gcc_startup_nrf5340_net.s
-
-# LittleFS - BSD License
-lfs.c
-lfs_util.c
-lfs.h
-lfs_util.h
-DESIGN.md
-SPEC.md
-
-# OSDP library - APL2 license
-osdp
 
 # nucleo-l073rz BSP - BSD License
 stm32l0xx_hal_conf.h
