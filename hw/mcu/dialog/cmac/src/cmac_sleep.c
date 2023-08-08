@@ -198,11 +198,14 @@ cmac_sleep_calculate_wakeup_time(void)
         T_LPTICK_U(2) + T_LPTICK_U(2) +
         max(T_LPTICK_U(3), T_USEC(g_cmac_shared_data.xtal32m_settle_us)) +
         T_LPTICK(2) + T_USEC(50) +
+
         /*
-         * Add an extra 500us of settle time due to occasional crashes due to
-         * unknown additional wakeup delay. 
+         * We are adding 250 usecs as a safeguard as we know the above
+         * calculations are not correct and need modification. This is
+         * to prevent EQ_X comparator from firing off and causing an
+         * assert when we compensate the LL timer
          */
-        T_USEC(500); 
+        T_USEC(250);
 }
 
 void
