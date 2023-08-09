@@ -72,6 +72,7 @@ It currently supports the following hardware platforms:
 * Creator Ci40 module (dual MIPS interAptiv CPU)
 * EE-02 board with Semtech Sx1276 chip from Telenor (Cortex-M4) 
 * DA1469x Pro DK from Dialog Semiconductor (Cortex-M33)
+* nRF5340 DK from Nordic Semiconductor (Cortex-M33)
 
 Apache Mynewt uses the
 [Newt](https://www.github.com/apache/mynewt-newt) build and package
