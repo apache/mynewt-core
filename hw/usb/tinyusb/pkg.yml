@@ -31,7 +31,7 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@tinyusb/tinyusb"
+    - "@apache-mynewt-core/hw/usb/tinyusb/tinyusb_sdk"
 
 pkg.init.OS_SCHEDULING:
     tinyusb_start: 'MYNEWT_VAL(USBD_SYSINIT_STAGE)'
@@ -64,3 +64,4 @@ pkg.deps.USBD_DFU_STD:
     - "@apache-mynewt-core/hw/usb/tinyusb/dfu"
 pkg.req_apis:
     - TINYUSB_HW_INIT
+

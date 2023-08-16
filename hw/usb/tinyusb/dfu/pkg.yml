@@ -29,7 +29,6 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/usb/tinyusb"
-    - "@tinyusb/tinyusb"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@mcuboot/boot/bootutil"
 

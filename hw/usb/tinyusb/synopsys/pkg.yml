@@ -30,4 +30,4 @@ pkg.apis:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@tinyusb/tinyusb"
+    - "@apache-mynewt-core/hw/usb/tinyusb"
