@@ -17,24 +17,27 @@
 # under the License.
 #
 
-pkg.name: hw/usb/tinyusb/msc_fat_view
-pkg.description: USB MSC protocol that exposes virtual FAT disk
+pkg.name: hw/usb/tinyusb/tinyusb_sdk
+pkg.description: Package including TinyUSB sdk
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.homepage: "https://mynewt.apache.org/"
 pkg.keywords:
-    - msc
     - usb
 
+pkg.type: sdk
+
 pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/usb/tinyusb"
-    - "@apache-mynewt-core/mgmt/imgmgr"
-    - "@apache-mynewt-core/sys/coredump"
-    - "@mcuboot/boot/bootutil"
 
-pkg.init.!BOOT_LOADER:
-    msc_fat_view_pkg_init: $before:tinyusb_start
+pkg.include_dirs:
+    - "@tinyusb/src"
 
-pkg.init.MSC_FAT_VIEW_COREDUMP_FILES:
-    msc_fat_view_coredump_pkg_init: $before:msc_fat_view_pkg_init
+pkg.source_dirs:
+    - "@tinyusb/src"
+
+repository.tinyusb:
+    type: github
+    branch: master
+    vers: 0.15.0-commit
+    user: hathach
+    repo: tinyusb
