@@ -101,6 +101,8 @@ syscfg.defs:
         description: >
             Selected source for low frequency clock (LFCLK).
         value:
+        restrictions:
+            - $notnull
         choices:
             - LFRC      # 32.768 kHz RC oscillator
             - LFXO      # 32.768 kHz crystal oscillator
@@ -143,3 +145,6 @@ syscfg.vals.XTAL_RC:
     MCU_LFCLK_SOURCE: LFRC
 syscfg.vals.XTAL_32768_SYNTH:
     MCU_LFCLK_SOURCE: LFSYNTH
+
+syscfg.restrictions.BLE_CONTROLLER:
+    - 'MCU_LFCLK_SOURCE != "LFRC"'

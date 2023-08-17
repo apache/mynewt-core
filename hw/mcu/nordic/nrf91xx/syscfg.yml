@@ -43,6 +43,8 @@ syscfg.defs:
         description: >
             Selected source for low frequency clock (LFCLK).
         value:
+        restrictions:
+            - $notnull
         choices:
             - LFRC      # 32.768 kHz RC oscillator
             - LFXO      # 32.768 kHz crystal oscillator
