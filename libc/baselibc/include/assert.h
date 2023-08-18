@@ -29,6 +29,8 @@ extern "C" {
 
 #if !defined __cplusplus
 #define static_assert _Static_assert
+#elif !defined _Static_assert
+#define _Static_assert static_assert
 #endif
 
 #ifdef __cplusplus
