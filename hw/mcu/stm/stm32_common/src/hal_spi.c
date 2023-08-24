@@ -39,6 +39,15 @@
 
 #define STM32_HAL_SPI_MAX (6)
 
+#if defined(STM32F1) && !defined(HAL_SPI_ERROR_FRE)
+/*
+ * For some reason HAL_SPI_ERROR_FRE is not defined for STM32F1.
+ * It seems that it used to be. Definition is taken from STM32F0 since
+ * register bit accessed the same as in very other STM32 MCU.
+ */
+#define HAL_SPI_ERROR_FRE               (0x00000008U)   /*!< FRE error                              */
+#endif
+
 extern HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi,
         uint8_t *pData, uint16_t Size);
 
