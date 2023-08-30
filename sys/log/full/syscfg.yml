@@ -69,6 +69,10 @@ syscfg.defs:
         restrictions:
             - SHELL_TASK
 
+    LOG_SHELL_SHOW_INDEX:
+        description: '"log" command shows log index when dumping entries'
+        value: 0
+
     LOG_MGMT:
         description: 'Expose "log" command in mgmt.'
         value: 0
