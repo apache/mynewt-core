@@ -91,9 +91,10 @@ lcd_itf_write_bytes(const uint8_t *bytes, size_t size)
 }
 
 void
-lcd_itf_write_color_data(const void *pixels, size_t size)
+lcd_itf_write_color_data(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2, const void *pixels)
 {
     const uint16_t *data = (const uint16_t *)pixels;
+    size_t size = (x2 - x1 + 1) * (y2 - y1 + 1) * 2;
 
     LCD_DC_PIN_DATA();
     LCD_CS_PIN_ACTIVE();

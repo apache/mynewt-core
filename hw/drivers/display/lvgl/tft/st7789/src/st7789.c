@@ -208,8 +208,6 @@ st7789_drv_update(struct _lv_disp_drv_t *drv)
 void
 st7789_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
 {
-    int32_t y;
-    lv_coord_t w;
     uint8_t cmd[5];
 
     /* Truncate the area to the screen */
@@ -250,8 +248,6 @@ st7789_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
 #endif
 #endif
 
-    w = lv_area_get_width(area);
-
     /* Column addresses */
     cmd[0] = ST7789_CASET;
     cmd[1] = (uint8_t)(offsetx1 >> 8);
@@ -271,10 +267,7 @@ st7789_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
     cmd[0] = ST7789_RAMWR;
     lcd_ift_write_cmd(cmd, 1);
 
-    for (y = offsety1; y <= offsety2; y++) {
-        lcd_itf_write_color_data(color_p, w * sizeof(*color_p));
-        color_p += w;
-    }
+    lcd_itf_write_color_data(offsetx1, offsetx2, offsety1, offsety2, color_p);
 
     lv_disp_flush_ready(drv);
 }

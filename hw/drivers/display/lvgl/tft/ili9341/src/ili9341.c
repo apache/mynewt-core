@@ -206,9 +206,7 @@ ili9341_drv_update(struct _lv_disp_drv_t *drv)
 void
 ili9341_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
 {
-    int32_t y;
     uint8_t cmd[5];
-    lv_coord_t w;
 
     if (area->x2 < 0 || area->y2 < 0 || area->x1 >= ILI9341_HOR_RES || area->y1 >= ILI9341_VER_RES) {
         lv_disp_flush_ready(drv);
@@ -220,8 +218,6 @@ ili9341_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
     int32_t act_y1 = area->y1 < 0 ? 0 : area->y1;
     int32_t act_x2 = area->x2 >= ILI9341_HOR_RES ? ILI9341_HOR_RES - 1 : area->x2;
     int32_t act_y2 = area->y2 >= ILI9341_VER_RES ? ILI9341_VER_RES - 1 : area->y2;
-
-    w = lv_area_get_width(area);
 
     /* Column address */
     cmd[0] = ILI9341_CASET;
@@ -242,10 +238,7 @@ ili9341_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
     cmd[0] = ILI9341_RAMWR;
     lcd_ift_write_cmd(cmd, 1);
 
-    for (y = act_y1; y <= act_y2; y++) {
-        lcd_itf_write_color_data(color_p, w * sizeof(*color_p));
-        color_p += w;
-    }
+    lcd_itf_write_color_data(act_x1, act_x2, act_y1, act_y2, color_p);
 
     lv_disp_flush_ready(drv);
 }
