@@ -164,3 +164,35 @@ syscfg.defs:
     LV_USE_DEMO_WIDGETS:
         description: Enable Widgets demo.
         value: 1
+
+    LV_MEM_CUSTOM:
+        description: >
+            If set to 1 malloc/free/realloc is used by lvgl library instead of
+            lv_mem_free/lv_mem_alloc.
+        value: 0
+    LV_MEM_SIZE:
+        description: >
+            Size of the memory available for `lv_malloc()` in bytes.
+        value: 49152
+    LV_DISP_DRAW_BUF_LINES:
+        description: >
+            Number of line for buffer usd for drawing portion of the screen.
+        value: 10
+    LV_DISP_DOUBLE_BUFFER:
+        description: >
+            Enable double buffer when LCD interface has asynchronous write more.
+            It should be set to 1 one DMA is used for transferring color data to
+            display.
+        value: 0
+    LV_DISP_X_ALIGN:
+        description: >
+            Display driver X alignment requirement in bits.
+            If set to 0 display driver can draw pixels at any point.
+            If set to value grater than 0 X pixel coordinates will be rounded.
+        value: 0
+    LV_DISP_Y_ALIGN:
+        description: >
+            Display driver Y alignment requirement in bits.
+            If set to 0 display driver can draw pixels at any point.
+            If set to value grater than 0 X pixel coordinates will be rounded.
+        value: 0
