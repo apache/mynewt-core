@@ -38,10 +38,11 @@ static uint8_t *lv_color_16_swap_buffer;
 static size_t lv_color_16_swap_buffer_size;
 
 void
-lcd_itf_write_color_data(const void *pixels, size_t size)
+lcd_itf_write_color_data(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2, const void *pixels)
 {
     const void *color_data = pixels;
     size_t i;
+    size_t size = (x2 - x1 + 1) * (y2 - y1 + 1) * 2;
 
     LCD_DC_PIN_DATA();
     LCD_CS_PIN_ACTIVE();
