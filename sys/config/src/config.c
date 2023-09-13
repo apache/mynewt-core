@@ -228,9 +228,6 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
         if (*eptr != '\0') {
             goto err;
         }
-        if ((fval < FLT_MIN) || (fval > FLT_MAX)) {
-            goto err;
-        }
         *(float *)vp = fval;
         break;
     case CONF_STRING:
