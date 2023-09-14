@@ -20,6 +20,8 @@
 #ifndef H_BSP_
 #define H_BSP_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
