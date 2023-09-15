@@ -540,7 +540,18 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
 
     OS_ENTER_CRITICAL(sr);
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
+#if MYNEWT_VAL(LOG_SEQUENTIAL_IDX)
+    /*
+     * Avoid incrementing the global index for streamed logs in
+     * order to keep it sequentially increasing for persisted logs.
+     */
+    if (log->l_log->log_type != LOG_TYPE_STREAM) {
+        g_log_info.li_next_index++;
+    }
+    idx = g_log_info.li_next_index;
+#else
     idx = g_log_info.li_next_index++;
+#endif
 #else
     idx = log->l_idx++;
 #endif
