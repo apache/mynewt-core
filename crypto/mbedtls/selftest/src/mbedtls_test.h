@@ -24,8 +24,6 @@
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
 
-#include "mbedtls/mbedtls_test.h"
-
 #include "mbedtls/aes.h"
 #include "mbedtls/arc4.h"
 #include "mbedtls/aria.h"
@@ -63,7 +61,7 @@
 extern "C" {
 #endif
 
-/* This space intentionally left blank */
+TEST_SUITE_DECL(mbedtls_test_all);
 
 #ifdef __cplusplus
 }

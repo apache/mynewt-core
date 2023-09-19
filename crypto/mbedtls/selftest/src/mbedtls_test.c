@@ -22,7 +22,7 @@
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
 
-#include "mbedtls/mbedtls_test.h"
+#include "mbedtls_test.h"
 #include "mbedtls/sha1.h"
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
