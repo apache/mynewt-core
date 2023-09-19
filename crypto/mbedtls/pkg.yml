@@ -33,6 +33,7 @@ pkg.cflags.TEST: -DTEST
 
 pkg.include_dirs:
     - "include"
+    - "include/mbedtls"
     - "@mbedtls/include"
     - "@mbedtls/library"
 
