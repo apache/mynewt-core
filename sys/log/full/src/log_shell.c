@@ -70,6 +70,9 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
                        ueh->ue_imghash[2], ueh->ue_imghash[3]);
     }
     console_printf(" [%llu] ", ueh->ue_ts);
+#if MYNEWT_VAL(LOG_SHELL_SHOW_INDEX)
+    console_printf(" [ix=%lu] ", ueh->ue_index);
+#endif
 
     switch (ueh->ue_etype) {
     case LOG_ETYPE_STRING:

@@ -69,6 +69,10 @@ syscfg.defs:
         restrictions:
             - SHELL_TASK
 
+    LOG_SHELL_SHOW_INDEX:
+        description: '"log" command shows log index when dumping entries'
+        value: 0
+
     LOG_MGMT:
         description: 'Expose "log" command in mgmt.'
         value: 0
@@ -144,6 +148,12 @@ syscfg.defs:
         description: >
             Max entry length that can be copied from one fcb log to another.
         value: 256
+
+    LOG_SEQUENTIAL_IDX:
+        description: >
+            Don't increment the global index for LOG_STREAM_TYPE. This allows
+            the global index to be sequentially increasing for persisted logs.
+        value: 0
 
 syscfg.vals.LOG_NEWTMGR:
     LOG_MGMT: MYNEWT_VAL(LOG_MGMT)
