@@ -230,7 +230,7 @@ void
 mynewt_lv_drv_init(lv_disp_drv_t *driver)
 {
     if (MYNEWT_VAL(LCD_BL_PIN) >= 0) {
-        hal_gpio_init_out(MYNEWT_VAL(LCD_BL_PIN), 1);
+        hal_gpio_init_out(MYNEWT_VAL(LCD_BL_PIN), MYNEWT_VAL(LCD_BL_PIN_ACTIVE_LEVEL));
     }
     if (MYNEWT_VAL(LCD_RESET_PIN) >= 0) {
         hal_gpio_init_out(MYNEWT_VAL(LCD_RESET_PIN), 1);
