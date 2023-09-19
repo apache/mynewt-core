@@ -36,6 +36,9 @@ syscfg.defs:
     LCD_BL_PIN:
         description: LCD backlight pin.
         value: -1
+    LCD_BL_PIN_ACTIVE_LEVEL:
+        description: Value for LCD_BL_PIN to turn backlight on.
+        value: 1
     LCD_RESET_PIN:
         description: LCD command/data pin for SPI or parallel port.
         value: -1
