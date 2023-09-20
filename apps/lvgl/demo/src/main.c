@@ -35,7 +35,7 @@ main(int argc, char **argv)
     sysinit();
 
     if (MYNEWT_VAL_CHOICE(LVGL_DEMO, benchmark)) {
-        lv_demo_benchmark_run_scene(31);
+        lv_demo_benchmark();
     } else if (MYNEWT_VAL_CHOICE(LVGL_DEMO, keypad_encoder)) {
         lv_demo_keypad_encoder();
     } else if (MYNEWT_VAL_CHOICE(LVGL_DEMO, music)) {
