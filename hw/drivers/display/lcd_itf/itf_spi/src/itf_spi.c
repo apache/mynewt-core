@@ -34,33 +34,21 @@ static struct bus_spi_node_cfg lcd_spi_cfg = {
 };
 static struct os_dev *lcd_dev;
 
-static uint8_t *lv_color_16_swap_buffer;
-static size_t lv_color_16_swap_buffer_size;
-
 void
-lcd_itf_write_color_data(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2, const void *pixels)
+lcd_itf_write_color_data(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2, void *pixels)
 {
-    const void *color_data = pixels;
+    uint8_t *color_data = pixels;
+    uint8_t b;
     size_t i;
     size_t size = (x2 - x1 + 1) * (y2 - y1 + 1) * 2;
 
     LCD_DC_PIN_DATA();
     LCD_CS_PIN_ACTIVE();
     if (LV_COLOR_16_SWAP == 0) {
-        if (size > lv_color_16_swap_buffer_size) {
-            lv_color_16_swap_buffer = realloc(lv_color_16_swap_buffer, size);
-            if (lv_color_16_swap_buffer) {
-                lv_color_16_swap_buffer_size = size;
-            } else {
-                lv_color_16_swap_buffer_size = 0;
-            }
-        }
-        if (lv_color_16_swap_buffer) {
-            color_data = lv_color_16_swap_buffer;
-            for (i = 0; i < size; i += 2) {
-                lv_color_16_swap_buffer[i] = ((uint8_t *)pixels)[i + 1];
-                lv_color_16_swap_buffer[i + 1] = ((uint8_t *)pixels)[i];
-            }
+        for (i = 0; i < size; i += 2) {
+            b = color_data[i];
+            color_data[i] = color_data[i + 1];
+            color_data[i + 1] = b;
         }
     }
     bus_node_write(lcd_dev, color_data, size, 1000, BUS_F_NOSTOP);
