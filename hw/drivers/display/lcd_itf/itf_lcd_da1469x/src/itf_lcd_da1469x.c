@@ -29,7 +29,7 @@ static uint16_t display_resx;
 static uint16_t display_resy;
 
 void
-lcd_itf_write_color_data(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2, const void *pixels)
+lcd_itf_write_color_data(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2, void *pixels)
 {
     uint16_t width = 1 + x2 - x1;
     uint16_t height = 1 + y2 - y1;
