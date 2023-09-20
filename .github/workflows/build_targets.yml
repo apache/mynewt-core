@@ -42,10 +42,21 @@ jobs:
              go version
              go install mynewt.apache.org/newt/newt@latest
       - name: Setup project
+        shell: bash
         run: |
              cp .github/project.yml project.yml
              newt upgrade --shallow=1
-             cp -r .github/targets ci_targets
+             rm -rf targets
       - name: Build targets
         shell: bash
-        run: ls ci_targets | xargs -n1 sh -c 'echo "Testing $0"; newt build -q $0'
+        run: |
+             cp -r .github/targets targets/
+             ls targets | xargs -n1 sh -c 'echo "Testing $0"; newt build -q $0'
+             rm -rf targets
+      - name: Build Linux-only targets
+        shell: bash
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+             cp -r .github/targets_linux targets
+             ls targets | xargs -n1 sh -c 'echo "Testing $0"; newt build -q  $0'
+             rm -rf targets
