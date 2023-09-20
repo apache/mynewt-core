@@ -29,6 +29,8 @@ if [ $RUNNER_OS != "Linux" ]; then
     IGNORED_BSPS+=" native"
 fi
 
+BSP_COUNT=0
+
 for bsp in ${BSPS}; do
     # NOTE: do not remove the spaces around IGNORED_BSPS; it's required to
     #       match against the first and last entries
@@ -36,6 +38,17 @@ for bsp in ${BSPS}; do
         echo "Skipping bsp=$bsp"
         continue
     fi
+
+    # Limit build on non-Linux VMs to 10 BSPs
+    if [ $RUNNER_OS != "Linux" ]; then
+       ((BSP_COUNT++))
+
+       if [ $BSP_COUNT -gt 10 ]; then
+            echo "Skipping bsp=$bsp (limit reached)"
+            continue
+       fi
+    fi
+
 
     echo "Testing bsp=$bsp"
 
