@@ -72,6 +72,25 @@ syscfg.defs:
         description: Add LVGL demos to build.
         value: 1
 
+    LV_USE_LOG:
+        description: >
+            Enable LVGL logging
+        value: 0
+    LV_LOG_LEVEL:
+        description: >
+            LVGL log level on of:
+            - LV_LOG_LEVEL_TRACE       A lot of logs to give detailed information
+            - LV_LOG_LEVEL_INFO        Log important events
+            - LV_LOG_LEVEL_WARN        Log if something unwanted happened but didn't cause a problem
+            - LV_LOG_LEVEL_ERROR       Only critical issue, when the system may fail
+            - LV_LOG_LEVEL_USER        Only logs added by the user
+            - LV_LOG_LEVEL_NONE        Do not log anything
+        value: LV_LOG_LEVEL_WARN
+    LV_LOG_PRINTF:
+        description: >
+            Use printf for writing logs.
+        value: 1
+
     LV_FONT_DEFAULT:
         description: Set default LVGL font.
         value: 'lv_font_montserrat_14'
