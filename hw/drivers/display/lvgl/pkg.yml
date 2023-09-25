@@ -69,6 +69,8 @@ pkg.deps.LVGL_ST7735S:
 pkg.deps.LVGL_ST7789:
     - "@apache-mynewt-core/hw/drivers/display/lvgl/tft/st7789"
 
+pkg.deps.LVGL_CST816S:
+    - "@apache-mynewt-core/hw/drivers/display/lvgl/indev/cst816s"
 pkg.deps.LVGL_XPT2046:
     - "@apache-mynewt-core/hw/drivers/display/lvgl/indev/xpt2046"
 pkg.deps.LVGL_STMPE610:

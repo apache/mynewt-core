@@ -43,6 +43,9 @@ syscfg.defs:
     LVGL_STMPE610:
         description: Enable STMPE610 touchscreen driver.
         value:
+    LVGL_CST816S:
+        description: Enable CST816S touchscreen driver.
+        value:
     LVGL_ADC_TOUCH:
         description: Enable ADC touchscreen driver.
         value:
