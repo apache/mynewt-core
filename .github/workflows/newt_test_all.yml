@@ -39,8 +39,16 @@ jobs:
              go version
              go install mynewt.apache.org/newt/newt@latest
       - name: Setup project
+        shell: bash
         run: |
-             cp .github/project.yml project.yml
+             newt new build
+             cp -f .github/project.yml build/project.yml
+             cd build
              newt upgrade --shallow=1
+             rm -rf repos/apache-mynewt-core
+             git clone .. repos/apache-mynewt-core
+             cd ..
       - name: newt test all
-        run: newt test all
+        run: |
+             cd build
+             newt test all

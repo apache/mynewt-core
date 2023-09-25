@@ -44,19 +44,28 @@ jobs:
       - name: Setup project
         shell: bash
         run: |
-             cp .github/project.yml project.yml
+             newt new build
+             cp -f .github/project.yml build/project.yml
+             cd build
              newt upgrade --shallow=1
              rm -rf targets
+             rm -rf repos/apache-mynewt-core
+             git clone .. repos/apache-mynewt-core
+             cd ..
       - name: Build targets
         shell: bash
         run: |
-             cp -r .github/targets targets/
+             cp -r .github/targets build/targets
+             cd build
              ls targets | xargs -n1 sh -c 'echo "Testing $0"; newt build -q $0'
              rm -rf targets
+             cd ..
       - name: Build Linux-only targets
         shell: bash
         if: matrix.os == 'ubuntu-latest'
         run: |
-             cp -r .github/targets_linux targets
+             cp -r .github/targets_linux build/targets
+             cd build
              ls targets | xargs -n1 sh -c 'echo "Testing $0"; newt build -q  $0'
              rm -rf targets
+             cd ..
