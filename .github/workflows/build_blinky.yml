@@ -47,10 +47,17 @@ jobs:
              go version
              go install mynewt.apache.org/newt/newt@latest
       - name: Setup Blinky project
+        shell: bash
         run: |
-             cp .github/project.yml project.yml
+             newt new build
+             cp -f .github/project.yml build/project.yml
+             cd build
              newt upgrade --shallow=1
-             git clone https://github.com/apache/mynewt-blinky.git /tmp/blinky
-             cp -r /tmp/blinky/apps/blinky/ apps/blinky
+             rm -rf repos/apache-mynewt-core
+             git clone .. repos/apache-mynewt-core
+             cd ..
       - name: Build Blinky
-        run: bash .github/test_build_blinky.sh
+        shell: bash
+        run: |
+             cd build
+             bash ../.github/test_build_blinky.sh
