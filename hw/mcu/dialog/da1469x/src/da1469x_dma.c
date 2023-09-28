@@ -164,17 +164,22 @@ int
 da1469x_dma_acquire_periph(int cidx, uint8_t periph,
                            struct da1469x_dma_regs *chans[2])
 {
+    int sr;
+    int rc = 0;
     assert(cidx < MCU_DMA_CHAN_MAX && periph < MCU_DMA_PERIPH_NONE);
+    OS_ENTER_CRITICAL(sr);
 
     if (cidx < 0) {
         cidx = find_free_pair();
         if (cidx < 0) {
-            return SYS_ENOENT;
+            rc = SYS_ENOENT;
+            goto out;
         }
     } else {
         cidx &= 0xfe;
         if (g_da1469x_dma_acquired & (3 << cidx)) {
-            return SYS_EBUSY;
+            rc = SYS_EBUSY;
+            goto out;
         }
     }
 
@@ -191,8 +196,9 @@ da1469x_dma_acquire_periph(int cidx, uint8_t periph,
 
     chans[0]->DMA_CTRL_REG |= DMA_DMA0_CTRL_REG_DREQ_MODE_Msk;
     chans[1]->DMA_CTRL_REG |= DMA_DMA0_CTRL_REG_DREQ_MODE_Msk;
-
-    return 0;
+out:
+    OS_EXIT_CRITICAL(sr);
+    return rc;
 }
 
 int
