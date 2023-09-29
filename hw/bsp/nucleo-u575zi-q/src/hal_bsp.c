@@ -90,8 +90,8 @@ const struct stm32_uart_cfg os_bsp_uart1_cfg = {
  */
 const struct stm32_hal_i2c_cfg os_bsp_i2c0_cfg = {
     .hic_i2c = I2C1,
-    .hic_rcc_reg = &RCC->APB1ENR,
-    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_rcc_reg = &RCC->APB1ENR1,
+    .hic_rcc_dev = RCC_APB1ENR1_I2C1EN,
     .hic_pin_sda = MYNEWT_VAL(I2C_0_PIN_SDA),
     .hic_pin_scl = MYNEWT_VAL(I2C_0_PIN_SCL),
     .hic_pin_af = GPIO_AF4_I2C1,
@@ -103,8 +103,8 @@ const struct stm32_hal_i2c_cfg os_bsp_i2c0_cfg = {
 #if MYNEWT_VAL(I2C_1)
 const struct stm32_hal_i2c_cfg os_bsp_i2c1_cfg = {
     .hic_i2c = I2C2,
-    .hic_rcc_reg = &RCC->APB1ENR,
-    .hic_rcc_dev = RCC_APB1ENR_I2C2EN,
+    .hic_rcc_reg = &RCC->APB1ENR1,
+    .hic_rcc_dev = RCC_APB1ENR1_I2C2EN,
     .hic_pin_sda = MYNEWT_VAL(I2C_1_PIN_SDA),
     .hic_pin_scl = MYNEWT_VAL(I2C_1_PIN_SCL),
     .hic_pin_af = GPIO_AF4_I2C2,
@@ -116,8 +116,8 @@ const struct stm32_hal_i2c_cfg os_bsp_i2c1_cfg = {
 #if MYNEWT_VAL(I2C_2)
 const struct stm32_hal_i2c_cfg os_bsp_i2c2_cfg = {
     .hic_i2c = I2C3,
-    .hic_rcc_reg = &RCC->APB1ENR,
-    .hic_rcc_dev = RCC_APB1ENR_I2C3EN,
+    .hic_rcc_reg = &RCC->APB3ENR,
+    .hic_rcc_dev = RCC_APB3ENR_I2C3EN,
     .hic_pin_sda = MYNEWT_VAL(I2C_2_PIN_SDA),
     .hic_pin_scl = MYNEWT_VAL(I2C_2_PIN_SCL),
     .hic_pin_af = GPIO_AF4_I2C3,
@@ -129,8 +129,8 @@ const struct stm32_hal_i2c_cfg os_bsp_i2c2_cfg = {
 #if MYNEWT_VAL(I2C_3)
 const struct stm32_hal_i2c_cfg os_bsp_i2c3_cfg = {
     .hic_i2c = I2C4,
-    .hic_rcc_reg = &RCC->APB1ENR,
-    .hic_rcc_dev = RCC_APB1ENR_I2C4EN,
+    .hic_rcc_reg = &RCC->APB1ENR2,
+    .hic_rcc_dev = RCC_APB1ENR2_I2C4EN,
     .hic_pin_sda = MYNEWT_VAL(I2C_3_PIN_SDA),
     .hic_pin_scl = MYNEWT_VAL(I2C_3_PIN_SCL),
     .hic_pin_af = GPIO_AF4_I2C4,
