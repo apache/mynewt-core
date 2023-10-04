@@ -700,7 +700,9 @@ SECTIONS
     _app_reset = .;
     KEEP(*(.reset))
     KEEP(*(.reset.startup))
-  } > kseg0_program_mem
+    KEEP(*(.cache_init.*))
+    KEEP(*(.kseg1.*))
+  } > kseg1_program_mem AT >kseg0_program_mem
   .bev_excpt /*_BEV_EXCPT_ADDR*/ :
   {
     KEEP(*(.bev_handler))
