@@ -784,7 +784,7 @@ int
 hal_timer_stop(struct hal_timer *timer)
 {
     struct stm32_hal_tmr *tmr;
-    struct hal_timer *ht;
+    struct hal_timer *ht = NULL;
     int sr;
     int reset_ocmp;
 

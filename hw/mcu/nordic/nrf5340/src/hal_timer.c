@@ -860,7 +860,7 @@ hal_timer_stop(struct hal_timer *timer)
 {
     uint32_t ctx;
     int reset_ocmp;
-    struct hal_timer *entry;
+    struct hal_timer *entry = NULL;
     struct nrf5340_hal_timer *bsptimer;
 
     if (timer == NULL) {
