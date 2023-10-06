@@ -148,7 +148,7 @@ hal_timer_get_resolution(int num)
 {
     struct native_timer *nt;
 
-    if (num >= 0) {
+    if (num != 0) {
         return 0;
     }
     nt = &native_timers[num];
