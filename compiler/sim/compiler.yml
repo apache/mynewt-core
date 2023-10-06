@@ -29,6 +29,8 @@ compiler.flags.base: [-m32, -Wall, -Werror, -ggdb, -ffunction-sections, -fdata-s
 compiler.ld.resolve_circular_deps: true
 
 compiler.flags.default: [compiler.flags.base, -O1]
+compiler.flags.optimized: [compiler.flags.base, -Os]
+compiler.flags.speed: [compiler.flags.base, -O2]
 compiler.flags.debug: [compiler.flags.base, -O0]
 compiler.as.flags: [-x, assembler-with-cpp]
 compiler.ld.mapfile: false
