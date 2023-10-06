@@ -61,3 +61,8 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM2'
     TIMER_1_TIM: 'TIM3'
     TIMER_2_TIM: 'TIM21'
+
+# Disable UART for bootloader, otherwise may not fit on flash
+# with default build
+syscfg.vals.BOOT_LOADER:
+    UART_0: 0
