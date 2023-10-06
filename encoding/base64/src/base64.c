@@ -42,6 +42,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <os/mynewt.h>
 #include <base64/base64.h>
@@ -233,6 +234,7 @@ base64_decoder_go(struct base64_decoder *dec)
         }
 
         /* Account for possibility of partial token from previous call. */
+        assert(dec->buf_len < 4);
         read_len = 4 - dec->buf_len;
 
         /* Detect invalid input. */
