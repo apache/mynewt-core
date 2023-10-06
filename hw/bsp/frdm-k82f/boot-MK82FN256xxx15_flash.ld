@@ -84,6 +84,7 @@ SECTIONS
     KEEP (*(.init))
     KEEP (*(.fini))
     . = ALIGN(4);
+    PROVIDE(mynewt_main = main);
   } > FLASH
 
   .ARM.extab :
