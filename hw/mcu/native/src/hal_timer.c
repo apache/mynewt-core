@@ -331,7 +331,7 @@ int
 hal_timer_stop(struct hal_timer *timer)
 {
     struct native_timer *nt;
-    struct hal_timer *ht;
+    struct hal_timer *ht = NULL;
     int reset_ocmp;
     os_sr_t sr;
 

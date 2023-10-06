@@ -405,7 +405,7 @@ int
 hal_timer_stop(struct hal_timer *timer)
 {
     struct kinetis_hal_tmr *tmr;
-    struct hal_timer *entry;
+    struct hal_timer *entry = NULL;
     bool reset_period;
     os_sr_t sr;
 
