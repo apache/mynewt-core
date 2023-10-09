@@ -32,4 +32,4 @@ pkg.deps:
     - "@tinyusb/tinyusb"
 
 pkg.init:
-    usb_cdc_console_pkg_init: 'MYNEWT_VAL(CONSOLE_SYSINIT_STAGE)'
+    usb_cdc_console_pkg_init: 'MYNEWT_VAL(CONSOLE_USB_CDC_SYSINIT_STAGE)'
