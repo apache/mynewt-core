@@ -30,7 +30,7 @@ syscfg.vals:
     LOG_LEVEL: 255
 
     # Turn strict scheduling on
-    BLE_LL_STRICT_CONN_SCHEDULING: 1
+    BLE_LL_CONN_STRICT_SCHED: 1
 
     # Config in RAM
     BLE_STORE_CONFIG_PERSIST: 0
