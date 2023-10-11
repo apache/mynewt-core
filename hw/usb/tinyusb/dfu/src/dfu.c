@@ -33,8 +33,6 @@
  */
 #define FIRMWARE_SLOT       MYNEWT_VAL(USBD_DFU_SLOT_ID)
 
-#if MYNEWT_VAL(USBD_DFU_RESET_AFTER_DOWNLOAD)
-
 struct os_callout delayed_reset_callout;
 struct os_callout auto_confirm_callout;
 
@@ -43,8 +41,6 @@ delayed_reset_cb(struct os_event *event)
 {
     hal_system_reset();
 }
-
-#endif
 
 /*
  * DFU callbacks
