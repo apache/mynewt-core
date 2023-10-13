@@ -55,6 +55,12 @@ hal_watchdog_enable(void)
 }
 
 void
+hal_watchdog_disable(void)
+{
+    GPREG->SET_FREEZE_REG |= GPREG_SET_FREEZE_REG_FRZ_SYS_WDOG_Msk;
+}
+
+void
 hal_watchdog_tickle(void)
 {
     while (SYS_WDOG->WATCHDOG_CTRL_REG & SYS_WDOG_WATCHDOG_CTRL_REG_WRITE_BUSY_Msk) {

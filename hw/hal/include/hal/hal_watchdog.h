@@ -52,6 +52,11 @@ int hal_watchdog_init(uint32_t expire_msecs);
 void hal_watchdog_enable(void);
 
 /**
+ * Stops the watchdog.
+ */
+void hal_watchdog_disable(void);
+
+/**
  * Tickles the watchdog.   This needs to be done periodically, before
  * the value configured in :c:func:`hal_watchdog_init()` expires.
  */

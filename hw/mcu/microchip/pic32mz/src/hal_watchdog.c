@@ -40,6 +40,12 @@ hal_watchdog_enable(void)
 }
 
 void
+hal_watchdog_disable(void)
+{
+    return;
+}
+
+void
 hal_watchdog_tickle(void)
 {
     volatile uint16_t *wdtclrkey = (volatile uint16_t *)&WDTCON + 1;
