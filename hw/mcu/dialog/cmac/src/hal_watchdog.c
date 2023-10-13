@@ -35,6 +35,13 @@ hal_watchdog_enable(void)
 }
 
 void
+hal_watchdog_disable(void)
+{
+    GPREG->SET_FREEZE_REG |= GPREG_SET_FREEZE_REG_FRZ_CMAC_WDOG_Msk;
+    return;
+}
+
+void
 hal_watchdog_tickle(void)
 {
     uint32_t cnt;

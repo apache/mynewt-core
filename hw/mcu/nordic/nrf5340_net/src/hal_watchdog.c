@@ -71,6 +71,11 @@ hal_watchdog_enable(void)
 }
 
 void
+hal_watchdog_disable(void)
+{
+}
+
+void
 hal_watchdog_tickle(void)
 {
     NRF_WDT_NS->RR[0] = WDT_RR_RR_Reload;

@@ -31,6 +31,11 @@ hal_watchdog_enable(void)
 }
 
 void
+hal_watchdog_disable(void)
+{
+}
+
+void
 hal_watchdog_tickle(void)
 {
 }

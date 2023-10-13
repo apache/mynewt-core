@@ -35,6 +35,12 @@ hal_watchdog_enable(void)
 }
 
 void
+hal_watchdog_disable(void)
+{
+    /* XXX: Unimplemented. */
+}
+
+void
 hal_watchdog_tickle(void)
 {
     /* XXX: Unimplemented. */

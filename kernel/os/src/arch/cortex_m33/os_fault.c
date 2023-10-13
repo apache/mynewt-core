@@ -244,7 +244,7 @@ os_default_irq(struct trap_frame *tf)
 #endif
 
 #if MYNEWT_VAL(OS_COREDUMP)
-    hal_watchdog_tickle();
+    hal_watchdog_disable();
 #if MYNEWT_VAL(OS_COREDUMP_CB)
     os_coredump_cb(tf);
 #else
