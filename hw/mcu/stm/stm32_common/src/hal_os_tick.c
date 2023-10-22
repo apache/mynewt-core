@@ -69,7 +69,7 @@ __WFI(void)
 #define SYNCH_PREDIV        (32768 / (ASYNCH_PREDIV + 1) - 1)
 #define SUB_SECONDS_BITS    12
 
-#if defined(STM32L0) || defined(STM32F0)
+#if defined(STM32L0) || defined(STM32F0) || defined(STM32U5)
 #define RTC_IRQ RTC_IRQn
 #else
 #define RTC_IRQ RTC_Alarm_IRQn
@@ -320,6 +320,12 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     NVIC_SetPriority(RTC_IRQ, prio);
     NVIC_SetVector(RTC_IRQ, (uint32_t)RTC_Alarm_IRQHandler);
 
+#ifdef __HAL_RCC_RTCAPB_CLK_ENABLE
+    __HAL_RCC_RTCAPB_CLK_ENABLE();
+#endif
+#ifdef __HAL_RCC_RTCAPB_CLKAM_ENABLE
+    __HAL_RCC_RTCAPB_CLKAM_ENABLE();
+#endif
     /* If RTC is already on get time and date before reinit. */
     if (IS_RTC_ENABLED) {
         HAL_RTC_GetTime(&rtc, &rtc_time, RTC_FORMAT_BIN);
@@ -331,10 +337,10 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
 
     __HAL_DBGMCU_FREEZE_RTC();
 
-#if !MYNEWT_VAL(MCU_STM32F0)
-    DBGMCU->CR |= (DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY);
-#else
+#if MYNEWT_VAL(MCU_STM32F0) || MYNEWT_VAL(MCU_STM32U5)
     DBGMCU->CR |= (DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY);
+#else
+    DBGMCU->CR |= (DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY);
 #endif
 
     OS_ENTER_CRITICAL(sr);
