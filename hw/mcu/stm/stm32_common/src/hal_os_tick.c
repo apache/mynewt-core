@@ -156,7 +156,8 @@ rtc_update_time(void)
     now = rtc_time_to_sub_seconds(&alarm.AlarmTime);
     delta = now - last_rtc_time;
     if (delta < 0) {
-        delta += 3600 << SUB_SECONDS_BITS;
+        /* Day changed, correct delta */
+        delta += (24 * 3600) << SUB_SECONDS_BITS;
     }
     alarm.AlarmTime.SubSeconds = alarm.AlarmTime.SecondFraction - (now & alarm.AlarmTime.SecondFraction);
     alarm.AlarmTime.SubSeconds -= sub_seconds_per_tick;
