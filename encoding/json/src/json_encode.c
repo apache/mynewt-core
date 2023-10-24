@@ -56,91 +56,91 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
     int len;
 
     switch (jv->jv_type) {
-        case JSON_VALUE_TYPE_BOOL:
-            len = sprintf(encoder->je_encode_buf, "%s",
-                    jv->jv_val.u > 0 ? "true" : "false");
-            encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
-            break;
-        case JSON_VALUE_TYPE_UINT64:
-            len = sprintf(encoder->je_encode_buf, "%llu",
-                    jv->jv_val.u);
-            encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
-            break;
-        case JSON_VALUE_TYPE_INT64:
-            len = sprintf(encoder->je_encode_buf, "%lld",
-                    jv->jv_val.u);
-            encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
-            break;
-        case JSON_VALUE_TYPE_STRING:
-            encoder->je_write(encoder->je_arg, "\"", sizeof("\"")-1);
-            for (i = 0; i < jv->jv_len; i++) {
-                switch (jv->jv_val.str[i]) {
-                    case '"':
-                    case '/':
-                    case '\\':
-                        encoder->je_write(encoder->je_arg, "\\",
-                                sizeof("\\")-1);
-                        encoder->je_write(encoder->je_arg,
-                                (char *) &jv->jv_val.str[i], 1);
+    case JSON_VALUE_TYPE_BOOL:
+        len = sprintf(encoder->je_encode_buf, "%s",
+                      jv->jv_val.u > 0 ? "true" : "false");
+        encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
+        break;
+    case JSON_VALUE_TYPE_UINT64:
+        len = sprintf(encoder->je_encode_buf, "%llu",
+                      jv->jv_val.u);
+        encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
+        break;
+    case JSON_VALUE_TYPE_INT64:
+        len = sprintf(encoder->je_encode_buf, "%lld",
+                      jv->jv_val.u);
+        encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
+        break;
+    case JSON_VALUE_TYPE_STRING:
+        encoder->je_write(encoder->je_arg, "\"", sizeof("\"")-1);
+        for (i = 0; i < jv->jv_len; i++) {
+            switch (jv->jv_val.str[i]) {
+            case '"':
+            case '/':
+            case '\\':
+                encoder->je_write(encoder->je_arg, "\\",
+                                  sizeof("\\")-1);
+                encoder->je_write(encoder->je_arg,
+                                  (char *) &jv->jv_val.str[i], 1);
 
-                        break;
-                    case '\t':
-                        encoder->je_write(encoder->je_arg, "\\t",
-                                sizeof("\\t")-1);
-                        break;
-                    case '\r':
-                        encoder->je_write(encoder->je_arg, "\\r",
-                                sizeof("\\r")-1);
-                        break;
-                    case '\n':
-                        encoder->je_write(encoder->je_arg, "\\n",
-                                sizeof("\\n")-1);
-                        break;
-                    case '\f':
-                        encoder->je_write(encoder->je_arg, "\\f",
-                                sizeof("\\f")-1);
-                        break;
-                    case '\b':
-                        encoder->je_write(encoder->je_arg, "\\b",
-                                sizeof("\\b")-1);
-                        break;
-                   default:
-                        encoder->je_write(encoder->je_arg,
-                                (char *) &jv->jv_val.str[i], 1);
-                        break;
-                }
+                break;
+            case '\t':
+                encoder->je_write(encoder->je_arg, "\\t",
+                                  sizeof("\\t")-1);
+                break;
+            case '\r':
+                encoder->je_write(encoder->je_arg, "\\r",
+                                  sizeof("\\r")-1);
+                break;
+            case '\n':
+                encoder->je_write(encoder->je_arg, "\\n",
+                                  sizeof("\\n")-1);
+                break;
+            case '\f':
+                encoder->je_write(encoder->je_arg, "\\f",
+                                  sizeof("\\f")-1);
+                break;
+            case '\b':
+                encoder->je_write(encoder->je_arg, "\\b",
+                                  sizeof("\\b")-1);
+                break;
+            default:
+                encoder->je_write(encoder->je_arg,
+                                  (char *) &jv->jv_val.str[i], 1);
+                break;
+            }
 
+        }
+        encoder->je_write(encoder->je_arg, "\"", sizeof("\"")-1);
+        break;
+    case JSON_VALUE_TYPE_ARRAY:
+        JSON_ENCODE_ARRAY_START(encoder);
+        for (i = 0; i < jv->jv_len; i++) {
+            rc = json_encode_value(encoder, jv->jv_val.composite.values[i]);
+            if (rc != 0) {
+                goto err;
             }
-            encoder->je_write(encoder->je_arg, "\"", sizeof("\"")-1);
-            break;
-        case JSON_VALUE_TYPE_ARRAY:
-            JSON_ENCODE_ARRAY_START(encoder);
-            for (i = 0; i < jv->jv_len; i++) {
-                rc = json_encode_value(encoder, jv->jv_val.composite.values[i]);
-                if (rc != 0) {
-                    goto err;
-                }
-                if (i != jv->jv_len - 1) {
-                    encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
-                }
+            if (i != jv->jv_len - 1) {
+                encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
             }
-            JSON_ENCODE_ARRAY_END(encoder);
-            break;
-        case JSON_VALUE_TYPE_OBJECT:
-            JSON_ENCODE_OBJECT_START(encoder);
-            for (i = 0; i < jv->jv_len; i++) {
-                rc = json_encode_object_entry(encoder,
-                        jv->jv_val.composite.keys[i],
-                        jv->jv_val.composite.values[i]);
-                if (rc != 0) {
-                    goto err;
-                }
+        }
+        JSON_ENCODE_ARRAY_END(encoder);
+        break;
+    case JSON_VALUE_TYPE_OBJECT:
+        JSON_ENCODE_OBJECT_START(encoder);
+        for (i = 0; i < jv->jv_len; i++) {
+            rc = json_encode_object_entry(encoder,
+                                          jv->jv_val.composite.keys[i],
+                                          jv->jv_val.composite.values[i]);
+            if (rc != 0) {
+                goto err;
             }
-            JSON_ENCODE_OBJECT_END(encoder);
-            break;
-        default:
-            rc = -1;
-            goto err;
+        }
+        JSON_ENCODE_OBJECT_END(encoder);
+        break;
+    default:
+        rc = -1;
+        goto err;
     }
 
 
