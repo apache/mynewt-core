@@ -174,16 +174,6 @@ SystemClock_Config(void)
         assert(0);
     }
 
-#if MYNEWT_VAL(STM32_CLOCK_ENABLE_OVERDRIVE)
-    /*
-     * Activate the Over-Drive mode
-     */
-    status = HAL_PWREx_EnableOverDrive();
-    if (status != HAL_OK) {
-        assert(0);
-    }
-#endif
-
     /*
      * Select PLL as system clock source and configure the HCLK, PCLK1 and
      * PCLK2 clocks dividers. HSI and HSE are also valid system clock sources,
