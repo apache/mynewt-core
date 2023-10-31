@@ -68,6 +68,12 @@ syscfg.vals:
     # nRF5340 Network Core doesn't have floating point unit
     HARDFLOAT: 0
 
+    # Flasher parameters
+    MYNEWT_DOWNLOADER: nrfjprog
+    JLINK_TARGET: NRF5340_XXAA_NET
+    NRFJPROG_COPROCESSOR: CP_NETWORK
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x0
+
 syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_3: 1
