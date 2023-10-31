@@ -34,6 +34,7 @@ pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
+    - "@apache-mynewt-core/hw/scripts"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340"
     - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/sys/flash_map"

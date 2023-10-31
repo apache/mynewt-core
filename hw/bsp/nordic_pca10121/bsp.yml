@@ -28,7 +28,7 @@ bsp.linkerscript:
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nordic_pca10121/boot-nrf5340.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/nrf5340.ld"
-bsp.downloadscript: "hw/bsp/nordic_pca10121/download.sh"
+bsp.downloadscript: "hw/scripts/download.sh"
 bsp.debugscript: "hw/bsp/nordic_pca10121/debug.sh"
 
 bsp.flash_map:
