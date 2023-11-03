@@ -115,6 +115,12 @@
 #define SSD1306_PANEL_VCOM_DESEL_LEVEL          0x20
 #define SSD1306_PANEL_PUMP_VOLTAGE              SSD1306_SET_PUMP_VOLTAGE_90
 
+#if MYNEWT_VAL_CHOICE(SSD1306_ADDRESSING_MODE, horizontal)
+#define ADDRESSING_MODE SSD1306_SET_MEM_ADDRESSING_HORIZONTAL
+#else
+#define ADDRESSING_MODE SSD1306_SET_MEM_ADDRESSING_PAGE
+#endif
+
 LCD_SEQUENCE(init_cmds)
     LCD_SEQUENCE_LCD_CS_INACTIVATE(),
     LCD_SEQUENCE_LCD_DC_DATA(),
@@ -125,7 +131,7 @@ LCD_SEQUENCE(init_cmds)
     2, SSD1306_SET_DISPLAY_OFFSET, 0,
     1, SSD1306_SET_START_LINE + 0,
     2, SDD1406_CHARGE_PUMP_SETTING, SDD1406_CHARGE_PUMP_SETTING_ENABLE,
-    2, SSD1306_SET_MEM_ADDRESSING_MODE, SSD1306_SET_MEM_ADDRESSING_HORIZONTAL,
+    2, SSD1306_SET_MEM_ADDRESSING_MODE, ADDRESSING_MODE,
     1, SSD1306_SET_SEGMENT_MAP_REMAPED,
     1, SSD1306_SET_COM_OUTPUT_SCAN_FLIPPED,
 
@@ -156,6 +162,7 @@ ssd1306_init(lv_disp_drv_t *driver)
     lcd_command_sequence(init_cmds);
 }
 
+#if MYNEWT_VAL_CHOICE(SSD1306_ADDRESSING_MODE, horizontal)
 void
 ssd1306_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
 {
@@ -178,6 +185,30 @@ ssd1306_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
 
     lv_disp_flush_ready(drv);
 }
+#else
+void
+ssd1306_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
+{
+    uint8_t page1 = area->y1 >> 3;
+    uint8_t page2 = area->y2 >> 3;
+
+    uint8_t *buf = (uint8_t *)color_p;
+    int width = area->x2 - area->x1 + 1;
+    uint8_t b[3];
+
+    for (; page1 <= page2; ++page1, buf += width) {
+        b[0] = SSD1306_SET_PAGE_START_ADDRESS + page1;
+        lcd_ift_write_cmd(b, 1);
+        b[0] = SSD1306_SET_LOWER_COL_ADDRESS + (area->x1 & 0xF);
+        lcd_ift_write_cmd(b, 1);
+        b[0] = SSD1306_SET_HIGHER_COL_ADDRESS + ((area->x1 >> 4) & 0xF);
+        lcd_ift_write_cmd(b, 1);
+
+        lcd_itf_write_color_data(area->x1, area->x2, page1 << 3, ((page1 + 1) << 3) - 1, buf);
+    }
+    lv_disp_flush_ready(drv);
+}
+#endif
 
 void
 ssd1306_set_px_cb(struct _lv_disp_drv_t *disp_drv, uint8_t *buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
@@ -196,6 +227,9 @@ ssd1306_set_px_cb(struct _lv_disp_drv_t *disp_drv, uint8_t *buf, lv_coord_t buf_
 void
 mynewt_lv_drv_init(lv_disp_drv_t *driver)
 {
+    if (MYNEWT_VAL(LCD_RESET_PIN) >= 0) {
+        hal_gpio_init_out(MYNEWT_VAL(LCD_RESET_PIN), 1);
+    }
     lcd_itf_init();
     driver->flush_cb = ssd1306_flush;
     driver->set_px_cb = ssd1306_set_px_cb;

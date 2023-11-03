@@ -17,6 +17,12 @@
 #
 
 syscfg.defs:
+    SSD1306_ADDRESSING_MODE:
+        description: Addressing mode.
+        choices:
+            - horizontal
+            - page
+        value: horizontal
 
 syscfg.vals:
     LVGL_DISPLAY_HORIZONTAL_RESOLUTION: 128
