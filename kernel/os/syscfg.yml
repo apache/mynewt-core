@@ -37,6 +37,12 @@ syscfg.defs:
         value: 0
         restriction: 
             - 'OS_COREDUMP if 1'
+    OS_DEFAULT_IRQ_CB:
+        description: >
+            Calls a custom default irq callback function inside
+            os_default_irq. If enabled it is the first function
+            executed in os_default_irq.
+        value: 0
     OS_CRASH_STACKTRACE:
         description: 'Attempt to print stack trace when system crashes.'
         value: 0

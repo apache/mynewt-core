@@ -213,6 +213,10 @@ os_default_irq(struct trap_frame *tf)
     uint32_t orig_sp;
 #endif
 
+#if MYNEWT_VAL(OS_DEFAULT_IRQ_CB)
+    os_default_irq_cb();
+#endif
+
     /* Stop MTB if implemented so interrupt handler execution is not recorded */
     mtb_stop();
 
