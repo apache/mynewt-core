@@ -27,20 +27,60 @@ syscfg.defs:
     SPI1_RX_DMA:
         description: >
             DMA channel to use for SPI1.  DMA number can be 1 or 2.
-            channel can be 1-7.
+            stream can be 1-7.
         value: DMA1_stream1_spi1_rx
     SPI1_TX_DMA:
         description: >
             DMA channel to use for SPI1.  DMA number can be 1 or 2.
-            channel can be 1-7.
+            stream can be 1-7.
         value: DMA1_stream2_spi1_tx
     SPI2_RX_DMA:
         description: >
             DMA channel to use for SPI2.  DMA number can be 1 or 2.
-            channel can be 1-7.
+            stream can be 1-7.
         value: DMA1_stream3_spi2_rx
     SPI2_TX_DMA:
         description: >
             DMA channel to use for SPI2.  DMA number can be 1 or 2.
-            channel can be 1-7.
+            stream can be 1-7.
         value: DMA1_stream4_spi2_tx
+    SPI3_RX_DMA:
+        description: >
+            DMA channel to use for SPI3.  DMA number can be 1 or 2.
+            stream can be 1-7.
+        value: DMA1_stream1_spi3_rx
+    SPI3_TX_DMA:
+        description: >
+            DMA channel to use for SPI3.  DMA number can be 1 or 2.
+            stream can be 1-7.
+        value: DMA1_stream2_spi3_tx
+    SPI4_RX_DMA:
+        description: >
+            DMA channel to use for SPI4.  DMA number can be 1 or 2.
+            stream can be 1-7.
+        value: DMA1_stream3_spi4_rx
+    SPI4_TX_DMA:
+        description: >
+            DMA channel to use for SPI4.  DMA number can be 1 or 2.
+            stream can be 1-7.
+        value: DMA1_stream4_spi4_tx
+    SPI5_RX_DMA:
+        description: >
+            DMA channel to use for SPI5.  DMA number can be 1 or 2.
+            stream can be 1-7.
+        value: DMA1_stream1_spi5_rx
+    SPI5_TX_DMA:
+        description: >
+            DMA channel to use for SPI5.  DMA number can be 1 or 2.
+            stream can be 1-7.
+        value: DMA1_stream2_spi5_tx
+    SPI6_RX_DMA:
+        description: >
+            DMA channel to use for SPI6.  DMA number can be 1 or 2.
+            stream can be 1-7.
+        value: DMA1_stream3_spi6_rx
+    SPI6_TX_DMA:
+        description: >
+            DMA channel to use for SPI6.  DMA number can be 1 or 2.
+            stream can be 1-7.
+        value: DMA1_stream4_spi6_tx
