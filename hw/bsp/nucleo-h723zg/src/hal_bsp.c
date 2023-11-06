@@ -253,6 +253,38 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    RCC->AHB1ENR = 0;
+    RCC->AHB2ENR = 0;
+    RCC->AHB3ENR = 0;
+    RCC->AHB4ENR = 0;
+
+    RCC->APB1LENR = 0;
+    RCC->APB1HENR = 0;
+    RCC->APB2ENR = 0;
+    RCC->APB3ENR = 0;
+    RCC->APB4ENR = 0x0001000;
+
+    RCC->AHB1RSTR = 0x06038203;
+    RCC->AHB2RSTR = 0x60030271;
+    RCC->AHB3RSTR = 0x00E95011;
+    RCC->AHB4RSTR = 0x132806FF;
+
+    RCC->APB1LRSTR = 0xEAFFC3FF;
+    RCC->APB1LRSTR = 0x03000136;
+    RCC->APB2RSTR = 0x40A730F3;
+    RCC->APB3RSTR = 0x00000008;
+    RCC->APB4RSTR = 0x0420DEAA;
+
+    RCC->AHB1RSTR = 0;
+    RCC->AHB2RSTR = 0;
+    RCC->AHB3RSTR = 0;
+    RCC->AHB4RSTR = 0;
+
+    RCC->APB1LRSTR = 0;
+    RCC->APB1LRSTR = 0;
+    RCC->APB2RSTR = 0;
+    RCC->APB3RSTR = 0;
+    RCC->APB4RSTR = 0;
 }
 
 /**
