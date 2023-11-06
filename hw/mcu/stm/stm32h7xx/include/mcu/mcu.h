@@ -26,9 +26,7 @@
 extern "C" {
 #endif
 
-#if defined(STM32H723xx)
 #define STM32_SYSTEM_MEMORY     0x1FF00000
-#endif
 
 #ifdef __cplusplus
 }

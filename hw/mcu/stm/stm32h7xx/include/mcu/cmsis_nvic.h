@@ -18,7 +18,7 @@
 #define NVIC_USER_IRQ_OFFSET  16
 #define NVIC_NUM_VECTORS      (16 + MCU_NUM_PERIPH_VECTORS)
 
-#include "stm32h723xx.h"
+#include "stm32h7xx.h"
 
 #ifdef __cplusplus
 extern "C" {
