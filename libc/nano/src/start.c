@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include "os/mynewt.h"
 
-extern int main(int argc, char **argv);
+extern int mynewt_main(int argc, char **argv);
 void __libc_init_array(void);
 
 /*
@@ -39,10 +39,10 @@ void _start(void)
 #if !MYNEWT_VAL(OS_SCHEDULING)
     int rc;
 
-    rc = main(0, NULL);
+    rc = mynewt_main(0, NULL);
     exit(rc);
 #else
-    os_init(main);
+    os_init(mynewt_main);
     os_start();
 #endif
 }
