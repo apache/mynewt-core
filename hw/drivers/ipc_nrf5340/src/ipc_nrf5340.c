@@ -403,7 +403,7 @@ ipc_nrf5340_reset(void)
     }
 
     /* Start Network Core */
-    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Release;
+    ipc_nrf5340_netcore_init();
 }
 #endif
 
