@@ -264,7 +264,11 @@ ipc_nrf5340_init(void)
     NRF_GPIO_Type *nrf_gpio;
 #endif
 
+    /* Make sure network core if off when we set up IPC */
+    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
+
     memset(ipc_shared, 0, sizeof(ipc_shared));
+    memset(shms, 0, sizeof(shms));
 
 #if MYNEWT_VAL(NRF5340_EMBED_NET_CORE)
     /*
@@ -285,10 +289,6 @@ ipc_nrf5340_init(void)
         }
     }
 #endif
-
-    /* Make sure network core if off when we set up IPC */
-    NRF_RESET->NETWORK.FORCEOFF = RESET_NETWORK_FORCEOFF_FORCEOFF_Hold;
-    memset(shms, 0, sizeof(shms));
 
     for (i = 0; i < IPC_MAX_CHANS; ++i) {
         shms[i].buf = shms_bufs[i];
@@ -325,7 +325,11 @@ ipc_nrf5340_init(void)
         /* this allows netcore to access appcore RAM */
         NRF_SPU_S->EXTDOMAIN[0].PERM = SPU_EXTDOMAIN_PERM_SECATTR_Secure << SPU_EXTDOMAIN_PERM_SECATTR_Pos;
     }
+}
 
+void
+ipc_nrf5340_netcore_init(void)
+{
     /* Start Network Core */
     /* Workaround for Errata 161: "RESET: Core is not fully reset after Force-OFF" */
     *(volatile uint32_t *) ((uint32_t)NRF_RESET + 0x618ul) = 1ul;
@@ -358,10 +362,14 @@ ipc_nrf5340_init(void)
 
     ipc_nrf5340_init_nrf_ipc();
     NRF_IPC->SEND_CNF[NET_CRASH_CHANNEL] = (0x01UL << NET_CRASH_CHANNEL);
+}
 
+void
+ipc_nrf5340_netcore_init(void)
+{
     /*
      * If ipc_state is already APP_AND_NET_RUNNING it means that net core
-     * restarted without app core involvment, notify app core about such
+     * restarted without app core involvement, notify app core about such
      * case.
      */
     if (ipc_shared->ipc_state == APP_AND_NET_RUNNING) {

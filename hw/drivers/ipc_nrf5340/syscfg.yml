@@ -41,6 +41,14 @@ syscfg.defs:
             Sysinit stage for nRF53 IPC
         value: 10
 
+    IPC_NRF5340_NETCORE_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for nRF53 IPC networking core start. On application
+            core this enables networking core and wait for it to notify that IPC
+            is ready. On networking core this notifies application core that IPC
+            is ready.
+        value: 11
+
     IPC_NRF5340_NET_GPIO:
         description: >
             List of comma separated GPIO that should be configured for Network
