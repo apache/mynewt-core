@@ -50,8 +50,9 @@ jobs:
              cp -f .github/project.yml build/project.yml
              cd build
              newt upgrade --shallow=1
-             rm -rf repos/apache-mynewt-core
-             git clone .. repos/apache-mynewt-core
+             git -C repos/apache-mynewt-core fetch origin $GITHUB_SHA
+             sed -i "s/0.0.0/$GITHUB_SHA-commit/g" project.yml
+             newt upgrade --shallow=1
              cd ..
       - name: Build targets
         shell: bash
