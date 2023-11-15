@@ -1,0 +1,95 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: "hw/mcu/atmel/samd21xx/ext"
+
+pkg.type: sdk
+
+repository.atmel-samd21xx:
+    type: github
+    vers: mynewt_1_10_0_tag-commit
+    branch: master
+    user: runtimeco
+    repo: mynewt_arduino_zero
+
+pkg.deps:
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/cmsis-core"
+
+pkg.include_dirs:
+    - "@apache-mynewt-core/hw/mcu/atmel/samd21xx/include/mcu"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/common/utils"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/ac"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/adc"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/adc/adc_sam_d_r"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/bod"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/bod/bod_sam_d_r"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/dac"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/dac/dac_sam_d_c"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/dma/module_config"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/events"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/extint"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/extint/module_config"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/i2s"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/nvm"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/pac"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/port"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/rtc"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/sercom"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/sercom/i2c"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/sercom/spi"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/sercom/spi/module_config"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/sercom/spi_master_vec/module-config"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/sercom/usart"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system/clock"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system/clock/clock_samd21_r21_da"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system/clock/clock_samd21_r21_da/module_config"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system/interrupt"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system/interrupt/system_interrupt_samd21"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system/pinmux"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system/power/power_sam_d_r"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/system/reset/reset_sam_d_r"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/tc"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers/wdt"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/utils"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/utils/header_files"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/utils/preprocessor"
+
+pkg.src_dirs:
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/drivers"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/sam0/utils"
+    - "@atmel-samd21xx/hw/mcu/atmel/samd21xx/src/common"
+
+
+pkg.cflags:
+    - -std=c99
+#   - -DI2C_MASTER_CALLBACK_MODE=true
+#   - -DI2C_SLAVE_CALLBACK_MODE=true
+    - -DWDT_CALLBACK_MODE=true
+    - -DUSART_CALLBACK_MODE=true
+    - -DCONF_SPI_MASTER_ENABLE=true
+    - -DRTC_CALENDAR_ASYNC=true
+    - -DRTC_COUNT_ASYNC=true
+    - -DI2S_CALLBACK_MODE=true
+    - -DAC_CALLBACK_MODE=true
+    - -DEVENTS_INTERRUPT_HOOKS_MODE=true
+    - -DEXTINT_CALLBACK_MODE=true
+    - -DSPI_CALLBACK_MODE=true

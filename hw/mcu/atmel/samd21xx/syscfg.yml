@@ -1,0 +1,92 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 1
+
+    SPI_0:
+        description: 'Whether to enable SPI0'
+        value:  0
+    SPI_0_TYPE:
+        description: 'Decide whether SPI0 operates in master or slave mode'
+        value: 'HAL_SPI_TYPE_MASTER'
+
+    SPI_1:
+        description: 'Whether to enable SPI1'
+        value:  0
+    SPI_1_TYPE:
+        description: 'Decide whether SPI1 operates in master or slave mode'
+        value: 'HAL_SPI_TYPE_MASTER'
+
+    SPI_2:
+        description: 'Whether to enable SPI2, aka WINC1500 SPI'
+        value:  0
+    SPI_2_TYPE:
+        description: 'SPI2 mode, should be master'
+        value: 'HAL_SPI_TYPE_MASTER'
+
+    SPI_3:
+        description: 'Whether to enable SPI3'
+        value:  0
+    SPI_3_TYPE:
+        description: 'Decide whether SPI3 operates in master or slave mode'
+        value: 'HAL_SPI_TYPE_MASTER'
+
+    I2C_0:
+        description: 'Whether to enable I2C interface 0'
+        value:  0
+    I2C_0_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  100
+    I2C_1:
+        description: 'Whether to enable I2C interface 1'
+        value:  0
+    I2C_1_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_1 bus'
+        value:  100
+    I2C_2:
+        description: 'Whether to enable I2C interface 2'
+        value:  0
+    I2C_2_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_2 bus'
+        value:  100
+    I2C_3:
+        description: 'Whether to enable I2C interface 3'
+        value:  0
+    I2C_3_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_3 bus'
+        value:  100
+    I2C_4:
+        description: 'Whether to enable I2C interface 4'
+        value:  0
+    I2C_4_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_4 bus'
+        value:  100
+    I2C_5:
+        description: 'Whether to enable I2C interface 5'
+        value:  0
+    I2C_5_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_5 bus'
+        value:  100
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 1000
