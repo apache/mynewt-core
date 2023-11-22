@@ -98,6 +98,73 @@ i2c_reset(I2C_HandleTypeDef *hi2c)
 }
 #endif
 
+#if !MYNEWT_VAL(STM32_HAL_I2C_HAS_CLOCKSPEED)
+#ifndef __LL_I2C_CONVERT_TIMINGS
+/* This is copy of macro from STM HAL for HALs that don't have it */
+#define __LL_I2C_CONVERT_TIMINGS(__PRESCALER__, __SETUP_TIME__, __HOLD_TIME__, __SCLH_PERIOD__, __SCLL_PERIOD__) \
+    ((((uint32_t)(__PRESCALER__) << I2C_TIMINGR_PRESC_Pos) & I2C_TIMINGR_PRESC) | \
+     (((uint32_t)(__SETUP_TIME__) << I2C_TIMINGR_SCLDEL_Pos) & I2C_TIMINGR_SCLDEL) | \
+     (((uint32_t)(__HOLD_TIME__) << I2C_TIMINGR_SDADEL_Pos) & I2C_TIMINGR_SDADEL) | \
+     (((uint32_t)(__SCLH_PERIOD__) << I2C_TIMINGR_SCLH_Pos) & I2C_TIMINGR_SCLH) | \
+     (((uint32_t)(__SCLL_PERIOD__) << I2C_TIMINGR_SCLL_Pos) & I2C_TIMINGR_SCLL))
+#endif
+
+static uint32_t
+hal_i2c_timing(uint32_t i2c_speed, uint32_t clock)
+{
+    uint32_t i2c_hold_time_min, i2c_setup_time_min;
+    uint32_t i2c_h_min_time, i2c_l_min_time;
+    uint32_t presc;
+    uint32_t timing = 0U;
+
+    /* Timings from I2S specification for standard/fast/fast+ */
+    if (i2c_speed < 400000) {
+        i2c_h_min_time = 4000U;
+        i2c_l_min_time = 4700U;
+        i2c_hold_time_min = 500U;
+        i2c_setup_time_min = 1250U;
+    } else if (i2c_speed < 1000000) {
+        i2c_h_min_time = 600U;
+        i2c_l_min_time = 1300U;
+        i2c_hold_time_min = 375U;
+        i2c_setup_time_min = 500U;
+    } else {
+        i2c_h_min_time = 260U;
+        i2c_l_min_time = 500U;
+        i2c_hold_time_min = 130U;
+        i2c_setup_time_min = 50U;
+    }
+    uint32_t clock_khz = clock / 1000;
+    presc = ((i2c_h_min_time * clock_khz / 1000) + 255999) / 256000;
+    uint32_t presc_max = ((i2c_l_min_time * clock_khz / 1000) + 255999) / 256000;
+    presc = max(presc, presc_max);
+    presc_max = ((i2c_hold_time_min * clock_khz / 1000) + 14999) / 15000;
+    presc = max(presc, presc_max);
+    presc_max = ((i2c_setup_time_min * clock_khz / 1000) + 15999) / 16000;
+    presc = max(presc, presc_max);
+
+    if (presc <= 16) {
+        uint32_t t_presc = clock / presc;
+        uint32_t ns_presc = 1000000000 / t_presc;
+        uint32_t sclh = (i2c_h_min_time + ns_presc - 1) / ns_presc;
+        uint32_t scll = (i2c_l_min_time + ns_presc - 1) / ns_presc;
+        uint32_t sdadel = (i2c_hold_time_min + ns_presc - 1) / ns_presc;
+        uint32_t scldel = (i2c_setup_time_min + ns_presc - 1) / ns_presc;
+
+        uint32_t scl_h_l = (t_presc / i2c_speed) - 5;
+        if (scl_h_l > sclh + scll) {
+            uint32_t scl_h_l_fill = scl_h_l - (sclh + scll);
+            scll += scl_h_l_fill / 2;
+            sclh += (scl_h_l_fill + 1) / 2;
+        }
+        timing = __LL_I2C_CONVERT_TIMINGS(presc - 1,
+                                          scldel - 1, sdadel, sclh - 1, scll - 1);
+    }
+
+    return timing;
+}
+#endif
+
 int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
@@ -116,7 +183,11 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     init = &dev->hid_handle.Init;
     dev->hid_handle.Instance = cfg->hic_i2c;
 #if !MYNEWT_VAL(STM32_HAL_I2C_HAS_CLOCKSPEED)
-    init->Timing = cfg->hic_timingr;
+    if (cfg->hic_timingr) {
+        init->Timing = cfg->hic_timingr;
+    } else {
+        init->Timing = hal_i2c_timing(cfg->hic_speed, HAL_RCC_GetPCLK1Freq());
+    }
 #else
     init->ClockSpeed = cfg->hic_speed;
 #endif
@@ -258,3 +329,4 @@ hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
 
     return rc;
 }
+
