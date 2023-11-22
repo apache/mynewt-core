@@ -97,7 +97,9 @@ syscfg.defs:
     MCU_ICACHE_ENABLED:
        description: >
             Enabled Instruction code cache
-       value: 1
+       value: 0
+       restrictions:
+            - '!(MCU_TARGET == "nRF52810" || MCU_TARGET == "nRF52811")'
 
     MCU_COMMON_STARTUP:
         description: >
@@ -481,6 +483,9 @@ syscfg.vals.MCU_NRF52832:
     MCU_TARGET: nRF52832
 syscfg.vals.MCU_NRF52840:
     MCU_TARGET: nRF52840
+
+syscfg.vals.'(MCU_TARGET == "nRF52832" || MCU_TARGET == "nRF52840")':
+    MCU_ICACHE_ENABLED: 1
 
 syscfg.vals.XTAL_32768:
     MCU_LFCLK_SOURCE: LFXO
