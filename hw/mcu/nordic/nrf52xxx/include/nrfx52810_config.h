@@ -103,7 +103,7 @@
 #endif
 
 #ifndef NRFX_TIMER3_ENABLED
-#define NRFX_TIMER3_ENABLED 1
+#define NRFX_TIMER3_ENABLED 0
 #endif
 
 #ifndef NRFX_TWIM_ENABLED
