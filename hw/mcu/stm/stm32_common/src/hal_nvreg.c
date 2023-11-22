@@ -20,7 +20,7 @@
 #include <hal/hal_nvreg.h>
 #include <mcu/stm32_hal.h>
 
-#if defined(RTC_BACKUP_SUPPORT) && defined(HAL_PWR_MODULE_ENABLED)
+#if (defined(RTC_BACKUP_SUPPORT) || defined(RTC_BKP_NUMBER)) && defined(HAL_PWR_MODULE_ENABLED)
 #define PWR_ENABLED 1
 #endif
 
@@ -33,58 +33,14 @@
 /* RTC backup registers are 32-bits wide */
 #define HAL_NVREG_WIDTH_BYTES (4)
 
-#if PWR_ENABLED
-static volatile uint32_t *regs[HAL_NVREG_MAX] = {
-#if HAL_NVREG_MAX > 0
-    &RTC->BKP0R,
-    &RTC->BKP1R,
-    &RTC->BKP2R,
-    &RTC->BKP3R,
-    &RTC->BKP4R,
-#endif /* HAL_NVREG_MAX > 0 */
-#if HAL_NVREG_MAX > 5
-    &RTC->BKP5R,
-    &RTC->BKP6R,
-    &RTC->BKP7R,
-    &RTC->BKP8R,
-    &RTC->BKP9R,
-    &RTC->BKP10R,
-    &RTC->BKP11R,
-    &RTC->BKP12R,
-    &RTC->BKP13R,
-    &RTC->BKP14R,
-    &RTC->BKP15R,
-#endif /* HAL_NVREG_MAX > 5 */
-#if HAL_NVREG_MAX > 16
-    &RTC->BKP16R,
-    &RTC->BKP17R,
-    &RTC->BKP18R,
-    &RTC->BKP19R,
-#endif /* HAL_NVREG_MAX > 16 */
-#if HAL_NVREG_MAX > 20
-    &RTC->BKP20R,
-    &RTC->BKP21R,
-    &RTC->BKP22R,
-    &RTC->BKP23R,
-    &RTC->BKP24R,
-    &RTC->BKP25R,
-    &RTC->BKP26R,
-    &RTC->BKP27R,
-    &RTC->BKP28R,
-    &RTC->BKP29R,
-    &RTC->BKP30R,
-    &RTC->BKP31R,
-#endif /* HAL_NVREG_MAX > 20 */
-};
-#endif /* PWR_ENABLED */
-
 void
 hal_nvreg_write(unsigned int reg, uint32_t val)
 {
 #if PWR_ENABLED
+    RTC_HandleTypeDef hrtc = { .Instance = RTC };
     if (reg < HAL_NVREG_MAX) {
         HAL_PWR_EnableBkUpAccess();
-        *regs[reg] = val;
+        HAL_RTCEx_BKUPWrite(&hrtc, reg, val);
         HAL_PWR_DisableBkUpAccess();
     }
 #endif
@@ -95,9 +51,10 @@ hal_nvreg_read(unsigned int reg)
 {
     uint32_t val = 0;
 #if PWR_ENABLED
+    RTC_HandleTypeDef hrtc = { .Instance = RTC };
     if (reg < HAL_NVREG_MAX) {
         HAL_PWR_EnableBkUpAccess();
-        val = *regs[reg];
+        val = HAL_RTCEx_BKUPRead(&hrtc, reg);
         HAL_PWR_DisableBkUpAccess();
     }
 #endif
