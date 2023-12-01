@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: apps/lvgl/demo
+pkg.name: apps/lvgl_demo
 pkg.type: app
 pkg.description: Application that runs LVGL demos.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
