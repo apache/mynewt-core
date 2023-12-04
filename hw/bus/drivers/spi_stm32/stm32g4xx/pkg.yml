@@ -17,49 +17,12 @@
 # under the License.
 #
 
-pkg.name: hw/bus/drivers/spi_stm32
-pkg.description: SPI bus driver that uses ST HAL with interrupts and DMA
+pkg.name: hw/bus/drivers/spi_stm32/stm32g4xx
+pkg.description: STM32G4 specific part of STM32 SPI driver
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
     - hw/bus
-    - hw/bus/drivers/spi_common
-
-pkg.deps.MCU_STM32F0:
-    - hw/bus/drivers/spi_stm32/stm32f0xx
-
-pkg.deps.MCU_STM32F1:
-    - hw/bus/drivers/spi_stm32/stm32f1xx
-
-pkg.deps.MCU_STM32F3:
-    - hw/bus/drivers/spi_stm32/stm32f3xx
-
-pkg.deps.MCU_STM32F4:
-    - hw/bus/drivers/spi_stm32/stm32f4xx
-
-pkg.deps.MCU_STM32F7:
-    - hw/bus/drivers/spi_stm32/stm32f7xx
-
-pkg.deps.MCU_STM32G4:
-    - hw/bus/drivers/spi_stm32/stm32g4xx
-
-pkg.deps.MCU_STM32L0:
-    - hw/bus/drivers/spi_stm32/stm32l0xx
-
-pkg.deps.MCU_STM32L1:
-    - hw/bus/drivers/spi_stm32/stm32l1xx
-
-pkg.deps.MCU_STM32L4:
-    - hw/bus/drivers/spi_stm32/stm32l4xx
-
-pkg.deps.MCU_STM32U5:
-    - hw/bus/drivers/spi_stm32/stm32u5xx
-
-pkg.deps.MCU_STM32WB:
-    - hw/bus/drivers/spi_stm32/stm32wbxx
-
-pkg.deps.MCU_STM32H7:
-    - hw/bus/drivers/spi_stm32/stm32h7xx
-    
+    - hw/bus/drivers/spi_stm32
