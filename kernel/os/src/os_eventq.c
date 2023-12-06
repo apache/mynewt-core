@@ -69,7 +69,8 @@ os_eventq_put(struct os_eventq *evq, struct os_event *ev)
          * Check if task is sleeping, because another event
          * queue may have woken this task up beforehand.
          */
-        if (evq->evq_task->t_state == OS_TASK_SLEEP) {
+        if (evq->evq_task->t_state == OS_TASK_SLEEP &&
+            evq->evq_task->t_flags & OS_TASK_FLAG_EVQ_WAIT) {
             os_sched_wakeup(evq->evq_task);
             resched = 1;
         }
