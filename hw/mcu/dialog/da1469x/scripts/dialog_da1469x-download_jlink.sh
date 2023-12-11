@@ -143,7 +143,7 @@ set *(int *)0x500000BC = 4
 set \$sp=*(int *)0x20000000
 set \$pc=*(int *)0x20000004
 set {int}0x38000080 = 0
-b main
+b mynewt_main
 c
 d 1
 
