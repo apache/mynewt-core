@@ -220,10 +220,6 @@ i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
 {
     int i;
 
-    if (cfg->ratio != 0 || cfg->mck_setup != 0) {
-        /* User provided custom clock setup, no need to use stock values */
-        return;
-    }
 #if NRF_I2S_HAS_CLKCONFIG
     float src_frq;
     uint32_t ratio;
@@ -236,6 +232,11 @@ i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
             nrfx_clock_hfclkaudio_config_set(39854);
         }
         NRF_CLOCK->TASKS_HFCLKAUDIOSTART = 1;
+        if (cfg->mck_setup != 0) {
+            /* User provided custom clock setup, no need to compute values */
+            return;
+        }
+
         src_frq = (32000000 * (4 + nrfx_clock_hfclkaudio_config_get() * 0.000015259f) / 12);
         if (cfg->sample_width == NRF_I2S_SWIDTH_24BIT) {
             cfg->ratio = NRF_I2S_RATIO_48X;
@@ -250,6 +251,9 @@ i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
         }
         mck = sample_rate * ratio;
         cfg->mck_setup = 4096 * (mck * 1048576ull / (src_frq + mck / 2));
+        return;
+    } else if (cfg->mck_setup != 0) {
+        /* User provided custom clock setup, no need to use stock values */
         return;
     }
 #endif
