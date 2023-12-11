@@ -94,6 +94,7 @@ i2s_nrfx_data_handler(const nrfx_i2s_buffers_t *p_released, uint32_t status)
         assert(buffer->sample_data == p_released->p_tx_buffer || buffer->sample_data == p_released->p_rx_buffer);
         i2s_nrfx.nrfx_buffers[0] = i2s_nrfx.nrfx_buffers[1];
         i2s_nrfx.nrfx_buffers[1] = NULL;
+        buffer->sample_count = buffer->capacity;
         i2s_driver_buffer_put(i2s_nrfx.i2s, buffer);
     }
     if (i2s_nrfx.running && i2s_nrfx.nrfx_queued_count < 2) {
