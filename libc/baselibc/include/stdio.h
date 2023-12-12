@@ -97,10 +97,7 @@ __extern_inline int putchar(int c)
 #define getc(f) fgetc(f)
 #define getchar() fgetc(stdin)
 
-__extern_inline int fflush(FILE *stream)
-{
-	return 0;
-}
+__extern int fflush(FILE *stream);
 
 __extern int printf(const char *, ...);
 __extern int vprintf(const char *, va_list);

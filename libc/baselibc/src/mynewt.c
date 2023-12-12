@@ -48,6 +48,12 @@ struct File *const stdin = &_stdin;
 struct File *const stdout = &_stdin;
 struct File *const stderr = &_stdin;
 
+int __attribute__((weak))
+fflush(FILE *stream)
+{
+    return 0;
+}
+
 #if MYNEWT_VAL(BASELIBC_THREAD_SAFE_HEAP_ALLOCATION)
 
 static struct os_mutex heap_mutex;
