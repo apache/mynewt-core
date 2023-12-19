@@ -1807,6 +1807,10 @@ boot_preboot(void)
     os_cputime_delay_usecs(30);
     if (hal_gpio_read(MYNEWT_VAL(MSC_FAT_BOOT_PIN)) == MYNEWT_VAL(MSC_FAT_BOOT_PIN_VALUE)) {
         hal_gpio_deinit(MYNEWT_VAL(MSC_FAT_BOOT_PIN));
+#if MYNEWT_VAL(MSC_FAT_VIEW_COREDUMP_FILES)
+        extern void msc_fat_view_coredump_pkg_init(void);
+        msc_fat_view_coredump_pkg_init();
+#endif
         msc_fat_view_pkg_init();
         tinyusb_start();
     }
