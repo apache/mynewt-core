@@ -36,5 +36,5 @@ pkg.deps:
 pkg.init.!BOOT_LOADER:
     msc_fat_view_pkg_init: $before:tinyusb_start
 
-pkg.init.MSC_FAT_VIEW_COREDUMP_FILES:
+pkg.init.'!BOOT_LOADER && MSC_FAT_VIEW_COREDUMP_FILES':
     msc_fat_view_coredump_pkg_init: $before:msc_fat_view_pkg_init
