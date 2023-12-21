@@ -1630,9 +1630,9 @@ tud_msc_inquiry_cb(uint8_t lun, uint8_t vendor_id[8], uint8_t product_id[16], ui
 bool
 tud_msc_test_unit_ready_cb(uint8_t lun)
 {
-    bool ret = medium_state >= MEDIUM_RELOAD;
+    bool ret = medium_state == MEDIUM_PRESENT;
 
-    if (medium_state == MEDIUM_RELOAD && last_scsi_command == SCSI_CMD_TEST_UNIT_READY) {
+    if (medium_state == MEDIUM_RELOAD) {
         /* This path will report medium not present */
         medium_state = REPORT_MEDIUM_CHANGE;
         init_disk_data();
