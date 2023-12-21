@@ -29,6 +29,9 @@ pkg.type: sdk
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
 
+pkg.cflags:
+    - -Wno-unused-variable
+
 pkg.include_dirs:
     - "@tinyusb/src"
 
