@@ -70,6 +70,19 @@ syscfg.defs:
         value: 0
 
 # MCU peripherals definitions
+    PWM_0:
+        description: 'Enable PWM 0'
+        value: 0
+    PWM_1:
+        description: 'Enable PWM 1'
+        value: 0
+    PWM_2:
+        description: 'Enable PWM 2'
+        value: 0
+    PWM_3:
+        description: 'Enable PWM 3'
+        value: 0
+
     I2C_0:
         description: 'Enable nRF91xx I2C 0'
         value: 0
