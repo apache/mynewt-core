@@ -58,10 +58,10 @@ static struct nrf52_pwm_dev_global instances[] =
     [0].in_use = false,
     [0].playing = false,
     [0].drv_instance = NRFX_PWM_INSTANCE(0),
-    [0].config = NRFX_PWM_DEFAULT_CONFIG(NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED),
+    [0].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED),
     [0].flags = NRFX_PWM_FLAG_LOOP,
     [0].duty_cycles = {0},
     [0].n_cycles = 1,
@@ -75,10 +75,10 @@ static struct nrf52_pwm_dev_global instances[] =
     [1].in_use = false,
     [1].playing = false,
     [1].drv_instance = NRFX_PWM_INSTANCE(1),
-    [1].config = NRFX_PWM_DEFAULT_CONFIG(NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED),
+    [1].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED),
     [1].flags = NRFX_PWM_FLAG_LOOP,
     [1].duty_cycles = {0},
     [1].n_cycles = 1,
@@ -92,10 +92,10 @@ static struct nrf52_pwm_dev_global instances[] =
     [2].in_use = false,
     [2].playing = false,
     [2].drv_instance = NRFX_PWM_INSTANCE(2),
-    [2].config = NRFX_PWM_DEFAULT_CONFIG(NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED),
+    [2].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED),
     [2].flags = NRFX_PWM_FLAG_LOOP,
     [2].duty_cycles = {0},
     [2].n_cycles = 1,
@@ -109,10 +109,10 @@ static struct nrf52_pwm_dev_global instances[] =
     [3].in_use = false,
     [3].playing = false,
     [3].drv_instance = NRFX_PWM_INSTANCE(3),
-    [3].config = NRFX_PWM_DEFAULT_CONFIG(NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED,
-                                         NRFX_PWM_PIN_NOT_USED),
+    [3].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED,
+                                         NRF_PWM_PIN_NOT_CONNECTED),
     [3].flags = NRFX_PWM_FLAG_LOOP,
     [3].duty_cycles = {0},
     [3].n_cycles = 1,
@@ -250,10 +250,10 @@ init_instance(int inst_id, nrfx_pwm_config_t* init_conf)
 
     config = &instances[inst_id].config;
     if (!init_conf) {
-        config->output_pins[0] = NRFX_PWM_PIN_NOT_USED;
-        config->output_pins[1] = NRFX_PWM_PIN_NOT_USED;
-        config->output_pins[2] = NRFX_PWM_PIN_NOT_USED;
-        config->output_pins[3] = NRFX_PWM_PIN_NOT_USED;
+        config->output_pins[0] = NRF_PWM_PIN_NOT_CONNECTED;
+        config->output_pins[1] = NRF_PWM_PIN_NOT_CONNECTED;
+        config->output_pins[2] = NRF_PWM_PIN_NOT_CONNECTED;
+        config->output_pins[3] = NRF_PWM_PIN_NOT_CONNECTED;
         config->irq_priority = 3; /* APP_IRQ_PRIORITY_LOW */
         config->base_clock = NRF_PWM_CLK_1MHz;
         config->count_mode = NRF_PWM_MODE_UP;
@@ -466,8 +466,7 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
     }
 
     config->output_pins[cnum] = (uint8_t) cfg->pin;
-    config->output_pins[cnum] |= (cfg->inverted) ?
-        NRFX_PWM_PIN_INVERTED : config->output_pins[cnum];
+    config->pin_inverted[cnum] = (cfg->inverted);
 
     if (instance->playing) {
         nrfx_pwm_uninit(&instance->drv_instance);
@@ -506,11 +505,11 @@ nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
     }
 
     config = &instances[inst_id].config;
-    if (config->output_pins[cnum] == NRFX_PWM_PIN_NOT_USED) {
+    if (config->output_pins[cnum] == NRF_PWM_PIN_NOT_CONNECTED) {
         return (EINVAL);
     }
 
-    inverted = ((config->output_pins[cnum] & NRFX_PWM_PIN_INVERTED) != 0);
+    inverted = config->pin_inverted[cnum];
 
     ((uint16_t *) &instances[inst_id].duty_cycles)[cnum] =
         (inverted) ? fraction : config->top_value - fraction;
