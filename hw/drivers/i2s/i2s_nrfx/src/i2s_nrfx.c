@@ -26,6 +26,7 @@
 #include <nrfx_clock.h>
 
 struct i2s_nrfx {
+    nrfx_i2s_t inst;
     nrfx_i2s_config_t nrfx_i2s_cfg;
     bool running;
     int8_t nrfx_queued_count;
@@ -33,7 +34,9 @@ struct i2s_nrfx {
     struct i2s_sample_buffer *nrfx_buffers[2];
 };
 
-static struct i2s_nrfx i2s_nrfx;
+static struct i2s_nrfx i2s_nrfx = {
+    NRFX_I2S_INSTANCE(0),
+};
 
 static void
 nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
@@ -64,9 +67,9 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
     i2s_nrfx.nrfx_queued_count++;
     if (i2s_nrfx.nrfx_queued_count == 1) {
         i2s_driver_state_changed (i2s, I2S_STATE_RUNNING);
-        err = nrfx_i2s_start(&nrfx_buffers, buffer_size, 0);
+        err = nrfx_i2s_start(&i2s_nrfx.inst, &nrfx_buffers, buffer_size, 0);
     } else {
-        err = nrfx_i2s_next_buffers_set(&nrfx_buffers);
+        err = nrfx_i2s_next_buffers_set(&i2s_nrfx.inst, &nrfx_buffers);
     }
 
     assert(err == NRFX_SUCCESS);
@@ -113,7 +116,7 @@ i2s_nrfx_init(struct i2s *i2s, const struct i2s_cfg *cfg)
 
     i2s_nrfx.i2s = i2s;
 
-    NVIC_SetVector(nrfx_get_irq_number(NRF_I2S), (uint32_t)nrfx_i2s_irq_handler);
+    NVIC_SetVector(nrfx_get_irq_number(NRF_I2S0), (uint32_t)nrfx_i2s_0_irq_handler);
 
     i2s_nrfx.nrfx_i2s_cfg = cfg->nrfx_i2s_cfg;
     switch (cfg->nrfx_i2s_cfg.sample_width) {
@@ -144,17 +147,17 @@ i2s_nrfx_init(struct i2s *i2s, const struct i2s_cfg *cfg)
     }
 
     i2s->direction = I2S_INVALID;
-    if (cfg->nrfx_i2s_cfg.sdin_pin != NRFX_I2S_PIN_NOT_USED) {
+    if (cfg->nrfx_i2s_cfg.sdin_pin != NRF_I2S_PIN_NOT_CONNECTED) {
         i2s->direction = I2S_IN;
     }
-    if (cfg->nrfx_i2s_cfg.sdout_pin != NRFX_I2S_PIN_NOT_USED) {
+    if (cfg->nrfx_i2s_cfg.sdout_pin != NRF_I2S_PIN_NOT_CONNECTED) {
         i2s->direction |= I2S_OUT;
     }
 
     rc = i2s_init(i2s, cfg->pool);
 
     if (rc != OS_OK) {
-        nrfx_i2s_uninit();
+        nrfx_i2s_uninit(&i2s_nrfx.inst);
         goto end;
     }
 
@@ -178,7 +181,7 @@ i2s_driver_stop(struct i2s *i2s)
 
     if (i2s_nrfx.running) {
         i2s_nrfx.running = false;
-        nrfx_i2s_stop();
+        nrfx_i2s_stop(&i2s_nrfx.inst);
     }
 
     while (NULL != (buffer = i2s_driver_buffer_get(i2s))) {
@@ -280,7 +283,7 @@ i2s_driver_start(struct i2s *i2s)
     if (!i2s_nrfx.running) {
         i2s_nrfx.running = true;
         i2s_nrfx_select_clock_cfg(&i2s_nrfx.nrfx_i2s_cfg, i2s->sample_rate);
-        nrfx_i2s_init(&i2s_nrfx.nrfx_i2s_cfg, i2s_nrfx_data_handler);
+        nrfx_i2s_init(&i2s_nrfx.inst, &i2s_nrfx.nrfx_i2s_cfg, i2s_nrfx_data_handler);
 
         assert(i2s_nrfx.nrfx_buffers[0] == NULL);
         assert(i2s_nrfx.nrfx_buffers[1] == NULL);
