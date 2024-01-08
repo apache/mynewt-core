@@ -85,7 +85,7 @@ tfm_uicr_protect_device(uint8_t *approtect, uint8_t *secure_approtect, uint8_t *
 }
 
 int SECURE_CALL
-tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_mcusel_t mcu_sel)
+tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_sel_t mcu_sel)
 {
     int err = 0;
     uint32_t pin_mask = (1u << (pin_number & 31));
@@ -95,7 +95,7 @@ tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_mcusel_t mcu_sel)
     } else if (((pin_number < 32) && (MYNEWT_VAL(TFM_MCU_SEL_GPIO0) & pin_mask)) ||
                ((pin_number >= 32) && (pin_number < 64) &&
                 (MYNEWT_VAL(TFM_MCU_SEL_GPIO1) & pin_mask))) {
-        nrf_gpio_pin_mcu_select(pin_number, mcu_sel);
+        nrf_gpio_pin_control_select(pin_number, mcu_sel);
     } else {
         err = TFM_ERR_ACCESS_DENIED;
     }
