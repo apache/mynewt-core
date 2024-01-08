@@ -63,7 +63,7 @@ int SECURE_CALL tfm_uicr_otp_write(uint8_t n, uint32_t val);
  *         TFM_ERR_INVALID_PARAM - when pin_number is not present on chip
  *         TFM_ERR_ACCESS_DENIED - when non-secure code is not allowed to change pin's MCU
  */
-int SECURE_CALL tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_mcusel_t mcu_sel);
+int SECURE_CALL tfm_gpio_pin_mcu_select(uint32_t pin_number, nrf_gpio_pin_sel_t mcu_sel);
 
 /**
  * Function to set or read device protection status
