@@ -52,6 +52,15 @@ hw/mcu/stm/stm32_common/src/stm32_driver_mod_spi.c
 # Nordic preserved code style
 hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
 hw/mcu/nordic/nrf51xxx/src/system_nrf51.c
+hw/mcu/nordic/include
+hw/mcu/nordic/nrf52xxx/include/nrfx_config_nrf52810.h
+hw/mcu/nordic/nrf52xxx/include/nrfx_config_nrf52811.h
+hw/mcu/nordic/nrf52xxx/include/nrfx_config_nrf52832.h
+hw/mcu/nordic/nrf52xxx/include/nrfx_config_nrf52840.h
+hw/mcu/nordic/nrf51xxx/include/nrfx_config_nrf51.h
+hw/mcu/nordic/nrf91xx/include/nrfx_config_nrf91.h
+hw/mcu/nordic/nrf5340/include/nrfx_config_nrf5340_application.h
+hw/mcu/nordic/nrf5340_net/include/nrfx_config_nrf5340_network.h
 
 # Skip upstream LittleFS code but check Mynewt glue
 fs/littlefs/include/littlefs/lfs.h

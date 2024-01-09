@@ -1,6 +1,8 @@
-/**
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+/*
+ * Copyright (c) 2017 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -58,14 +60,14 @@ extern "C" {
 /**
  * @brief Macro for placing a runtime assertion.
  *
- * @param expression  Expression to evaluate.
+ * @param expression Expression to be evaluated.
  */
 #define NRFX_ASSERT(expression) assert(expression)
 
 /**
  * @brief Macro for placing a compile time assertion.
  *
- * @param expression  Expression to evaluate.
+ * @param expression Expression to be evaluated.
  */
 #define NRFX_STATIC_ASSERT(expression) _Static_assert(expression, "")
 
@@ -75,7 +77,7 @@ extern "C" {
  * @brief Macro for setting the priority of a specific IRQ.
  *
  * @param irq_number  IRQ number.
- * @param priority    Priority to set.
+ * @param priority   Priority to be set.
  */
 #define NRFX_IRQ_PRIORITY_SET(irq_number, priority) NVIC_SetPriority(irq_number, priority)
 
@@ -125,17 +127,11 @@ extern "C" {
  */
 #define NRFX_IRQ_IS_PENDING(irq_number) (NVIC_GetPendingIRQ(irq_number) == 1)
 
-/**
- * @brief Macro for entering into a critical section.
- */
-static os_sr_t sr_from_macro __attribute__((unused));
+/** @brief Macro for entering into a critical section. */
+#define NRFX_CRITICAL_SECTION_ENTER() { os_sr_t sr; OS_ENTER_CRITICAL(sr)
 
-#define NRFX_CRITICAL_SECTION_ENTER() OS_ENTER_CRITICAL(sr_from_macro)
-
-/**
- * @brief Macro for exiting from a critical section.
- */
-#define NRFX_CRITICAL_SECTION_EXIT() OS_EXIT_CRITICAL(sr_from_macro)
+/** @brief Macro for exiting from a critical section. */
+#define NRFX_CRITICAL_SECTION_EXIT() OS_EXIT_CRITICAL(sr); }
 
 //------------------------------------------------------------------------------
 
@@ -223,6 +219,39 @@ static os_sr_t sr_from_macro __attribute__((unused));
  */
 #define NRFX_ATOMIC_FETCH_SUB(p_data, value) atomic_fetch_sub(p_data, value)
 
+/**
+ * @brief Macro for running compare and swap on an atomic object.
+ *
+ * Value is updated to the new value only if it previously equaled old value.
+ *
+ * @param[in,out] p_data    Atomic memory pointer.
+ * @param[in]     old_value Expected old value.
+ * @param[in]     new_value New value.
+ *
+ * @retval true  If value was updated.
+ * @retval false If value was not updated because location was not equal to @p old_value.
+ */
+#define NRFX_ATOMIC_CAS(p_data, old_value, new_value) atomic_compare_exchange_weak(p_data, &old_value, new_value)
+
+/**
+ * @brief Macro for counting leading zeros.
+ *
+ * @param[in] value A word value.
+ *
+ * @return Number of leading 0-bits in @p value, starting at the most significant bit position.
+ *         If x is 0, the result is undefined.
+ */
+#define NRFX_CLZ(value) __builtin_clz(value)
+
+/**
+ * @brief Macro for counting trailing zeros.
+ *
+ * @param[in] value A word value.
+ *
+ * @return Number of trailing 0-bits in @p value, starting at the least significant bit position.
+ *         If x is 0, the result is undefined.
+ */
+#define NRFX_CTZ(value) __builtin_ctz(value)
 //------------------------------------------------------------------------------
 
 /**
@@ -236,23 +265,33 @@ static os_sr_t sr_from_macro __attribute__((unused));
 //------------------------------------------------------------------------------
 
 /**
- * @brief Bitmask defining PPI channels reserved to be used outside of nrfx.
+ * @brief When set to a non-zero value, this macro specifies that inside HALs
+ *        the event registers are read back after clearing, on devices that
+ *        otherwise could defer the actual register modification.
  */
+#define NRFX_EVENT_READBACK_ENABLED 1
+
+//------------------------------------------------------------------------------
+
+/** @brief Bitmask that defines DPPI channels that are reserved for use outside of the nrfx library. */
+#define NRFX_DPPI_CHANNELS_USED   0
+
+/** @brief Bitmask that defines DPPI groups that are reserved for use outside of the nrfx library. */
+#define NRFX_DPPI_GROUPS_USED     0
+
+/** @brief Bitmask that defines PPI channels that are reserved for use outside of the nrfx library. */
 #define NRFX_PPI_CHANNELS_USED  0
 
-/**
- * @brief Bitmask defining PPI groups reserved to be used outside of nrfx.
- */
+/** @brief Bitmask that defines PPI groups that are reserved for use outside of the nrfx library. */
 #define NRFX_PPI_GROUPS_USED    0
 
-/**
- * @brief Bitmask defining SWI instances reserved to be used outside of nrfx.
- */
-#define NRFX_SWI_USED           0
+/** @brief Bitmask that defines GPIOTE channels that are reserved for use outside of the nrfx library. */
+#define NRFX_GPIOTE_CHANNELS_USED 0
 
-/**
- * @brief Bitmask defining TIMER instances reserved to be used outside of nrfx.
- */
+/** @brief Bitmask that defines EGU instances that are reserved for use outside of the nrfx library. */
+#define NRFX_EGUS_USED            0
+
+/** @brief Bitmask that defines TIMER instances that are reserved for use outside of the nrfx library. */
 #define NRFX_TIMERS_USED        0
 
 /** @} */
