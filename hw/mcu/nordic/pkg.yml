@@ -42,15 +42,15 @@ pkg.include_dirs:
     - "@nordic-nrfx/hal"
     - "@nordic-nrfx/helpers"
     - "@nordic-nrfx/mdk"
-    - "@nordic-nrfx/templates"
     - "@nordic-nrfx/."
     - "include"
 
 pkg.src_dirs:
     - "@nordic-nrfx/drivers/src"
-    - "@nordic-nrfx/helpers"
 
-pkg.cflags: -std=gnu99
+pkg.cflags:
+    - -std=gnu99
+    - -Wno-unused-variable
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
@@ -58,7 +58,7 @@ pkg.deps:
 
 repository.nordic-nrfx:
     type: github
-    vers: v2.11.0-commit
+    vers: v3.3.0-commit
     branch: master
     user: NordicSemiconductor
     repo: nrfx

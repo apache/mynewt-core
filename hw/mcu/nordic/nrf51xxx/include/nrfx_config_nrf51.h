@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef NRFX_CONFIG_H__
-#define NRFX_CONFIG_H__
+#ifndef NRFX_CONFIG_NRF51_H__
+#define NRFX_CONFIG_NRF51_H__
 
 #include "syscfg/syscfg.h"
 
@@ -65,4 +65,4 @@
 #define NRFX_ADC_CONFIG_DEBUG_COLOR 0
 #endif
 
-#endif // NRFX_CONFIG_H__
+#endif // NRFX_CONFIG_NRF51_H__
