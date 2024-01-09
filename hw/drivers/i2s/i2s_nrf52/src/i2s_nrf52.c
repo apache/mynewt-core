@@ -25,6 +25,7 @@
 #include <drivers/include/nrfx_i2s.h>
 
 struct nrf52_i2s {
+    nrfx_i2s_t inst;
     nrfx_i2s_config_t nrfx_i2s_cfg;
     bool running;
     int8_t nrfx_queued_count;
@@ -32,13 +33,16 @@ struct nrf52_i2s {
     struct i2s_sample_buffer *nrfx_buffers[2];
 };
 
-static struct nrf52_i2s nrf52_i2s;
+static struct nrf52_i2s nrf52_i2s = {
+    NRFX_I2S_INSTANCE(0),
+};
 
 static void
 nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
 {
     nrfx_i2s_buffers_t nrfx_buffers = {0};
     nrfx_err_t err;
+    uint16_t buffer_size;
 
     assert(i2s != NULL);
     if (buffer == NULL) {
@@ -47,6 +51,9 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
 
     if (i2s->direction == I2S_OUT || i2s->direction == I2S_OUT_IN) {
         nrfx_buffers.p_tx_buffer = buffer->sample_data;
+        buffer_size = buffer->sample_count * i2s->sample_size_in_bytes / 4;
+    } else {
+        buffer_size = buffer->capacity * i2s->sample_size_in_bytes / 4;
     }
     if (i2s->direction == I2S_IN || i2s->direction == I2S_OUT_IN) {
         nrfx_buffers.p_rx_buffer = buffer->sample_data;
@@ -59,9 +66,9 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
     nrf52_i2s.nrfx_queued_count++;
     if (nrf52_i2s.nrfx_queued_count == 1) {
         i2s_driver_state_changed (i2s, I2S_STATE_RUNNING);
-        err = nrfx_i2s_start(&nrfx_buffers, buffer->sample_count * i2s->sample_size_in_bytes / 4, 0);
+        err = nrfx_i2s_start(&nrf52_i2s.inst, &nrfx_buffers, buffer_size, 0);
     } else {
-        err = nrfx_i2s_next_buffers_set(&nrfx_buffers);
+        err = nrfx_i2s_next_buffers_set(&nrf52_i2s.inst, &nrfx_buffers);
     }
 
     assert(err == NRFX_SUCCESS);
@@ -89,6 +96,7 @@ nrf52_i2s_data_handler(const nrfx_i2s_buffers_t *p_released, uint32_t status)
         assert(buffer->sample_data == p_released->p_tx_buffer || buffer->sample_data == p_released->p_rx_buffer);
         nrf52_i2s.nrfx_buffers[0] = nrf52_i2s.nrfx_buffers[1];
         nrf52_i2s.nrfx_buffers[1] = NULL;
+        buffer->sample_count = buffer->capacity;
         i2s_driver_buffer_put(nrf52_i2s.i2s, buffer);
     }
     if (nrf52_i2s.running && nrf52_i2s.nrfx_queued_count < 2) {
@@ -107,7 +115,7 @@ nrf52_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
 
     nrf52_i2s.i2s = i2s;
 
-    NVIC_SetVector(nrfx_get_irq_number(NRF_I2S), (uint32_t) nrfx_i2s_irq_handler);
+    NVIC_SetVector(nrfx_get_irq_number(NRF_I2S), (uint32_t)nrfx_i2s_0_irq_handler);
 
     nrf52_i2s.nrfx_i2s_cfg = cfg->nrfx_i2s_cfg;
     switch (cfg->nrfx_i2s_cfg.sample_width) {
@@ -123,17 +131,17 @@ nrf52_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
     }
 
     i2s->direction = I2S_INVALID;
-    if (cfg->nrfx_i2s_cfg.sdin_pin != NRFX_I2S_PIN_NOT_USED) {
+    if (cfg->nrfx_i2s_cfg.sdin_pin != NRF_I2S_PIN_NOT_CONNECTED) {
         i2s->direction = I2S_IN;
     }
-    if (cfg->nrfx_i2s_cfg.sdout_pin != NRFX_I2S_PIN_NOT_USED) {
+    if (cfg->nrfx_i2s_cfg.sdout_pin != NRF_I2S_PIN_NOT_CONNECTED) {
         i2s->direction |= I2S_OUT;
     }
 
     rc = i2s_init(i2s, cfg->pool);
 
     if (rc != OS_OK) {
-        nrfx_i2s_uninit();
+        nrfx_i2s_uninit(&nrf52_i2s.inst);
         goto end;
     }
 
@@ -157,7 +165,7 @@ i2s_driver_stop(struct i2s *i2s)
 
     if (nrf52_i2s.running) {
         nrf52_i2s.running = false;
-        nrfx_i2s_stop();
+        nrfx_i2s_stop(&nrf52_i2s.inst);
     }
 
     while (NULL != (buffer = i2s_driver_buffer_get(i2s))) {
@@ -230,7 +238,7 @@ i2s_driver_start(struct i2s *i2s)
     if (!nrf52_i2s.running) {
         nrf52_i2s.running = true;
         nrf52_select_i2s_clock_cfg(&nrf52_i2s.nrfx_i2s_cfg, i2s->sample_rate);
-        nrfx_i2s_init(&nrf52_i2s.nrfx_i2s_cfg, nrf52_i2s_data_handler);
+        nrfx_i2s_init(&nrf52_i2s.inst, &nrf52_i2s.nrfx_i2s_cfg, nrf52_i2s_data_handler);
 
         assert(nrf52_i2s.nrfx_buffers[0] == NULL);
         assert(nrf52_i2s.nrfx_buffers[1] == NULL);
