@@ -29,6 +29,7 @@ pkg.keywords:
 
 pkg.cflags:
     - '-DNRF52'
+    - '-DNRF52832_XXAA'
     # TODO: Move to more specific variable, however this currently causes a build failure '-DNRF52832_XXAA'
 
 pkg.deps:

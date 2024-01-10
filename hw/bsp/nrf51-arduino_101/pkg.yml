@@ -28,6 +28,7 @@ pkg.keywords:
 
 pkg.cflags:
     - '-DNRF51'
+    - '-DNRF51822_XXAA'
 
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx"
