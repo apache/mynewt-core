@@ -30,6 +30,7 @@ pkg.keywords:
 
 pkg.cflags:
      - '-DNRF52'
+     - '-DNRF52832_XXAA'
 
 pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
