@@ -477,6 +477,28 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
 }
 
 void
+modlog_hexdump(uint8_t module, uint8_t level,
+               const void *data_ptr, uint16_t len, uint16_t line_break)
+{
+    int i;
+    const uint8_t *data;
+
+    assert(len > 0);
+
+    data = data_ptr;
+
+    for (i = 0; i < len; i++) {
+        if ((i != 0) && (line_break != 0) && (i % line_break == 0)) {
+            modlog_printf(module, level, "\n");
+        }
+
+        modlog_printf(module, level, "0x%02x ", data[i]);
+    }
+
+    modlog_printf(module, level, "\n");
+}
+
+void
 modlog_init(void)
 {
     int rc;
