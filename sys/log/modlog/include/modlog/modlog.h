@@ -188,6 +188,20 @@ int modlog_foreach(modlog_foreach_fn *fn, void *arg);
  */
 void modlog_printf(uint8_t module, uint8_t level, const char *msg, ...);
 
+/**
+ * @brief Writes a specified number of bytes as a text entry to the specified log module.
+ *
+ * @param module                The log module to write to.
+ * @param level                 The severity of the log entry to write.
+ * @param data_ptr              Pointer to data that will be written.
+ * @param len                   Number of bytes that will be written.
+ * @param line_break            Number of bytes to write after which
+ *                              a newline character will be written.
+ *                              To write all bytes in one line pass 0.
+ */
+void modlog_hexdump(uint8_t module, uint8_t level,
+                    const void *data_ptr, uint16_t len, uint16_t line_break);
+
 #else /* LOG_FULL */
 
 static inline int
@@ -238,6 +252,11 @@ static inline void
 modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
 { }
 
+static inline void
+modlog_hexdump(uint8_t module, uint8_t level,
+               const void *data_ptr, uint16_t len, uint16_t line_break)
+{  }
+
 #endif
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG || defined __DOXYGEN__
@@ -252,8 +271,27 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  */
 #define MODLOG_DEBUG(ml_mod_, ml_msg_, ...) \
     modlog_printf((ml_mod_), LOG_LEVEL_DEBUG, (ml_msg_), ##__VA_ARGS__)
+
+/**
+ * @brief Writes a specified number of bytes as a debug text entry
+ *        to the specified log module.
+ *
+ * This expands to nothing if the global log level is greater than
+ * `LOG_LEVEL_DEBUG`.
+ *
+ * @param ml_mod_               The log module to write to.
+ * @param ml_msg_               The "printf" formatted string to write.
+ * @param data_ptr_             Pointer to data that will be written.
+ * @param len_                  Number of bytes that will be written.
+ * @param line_break_           Number of bytes to write after which
+ *                              a newline character will be written.
+ *                              To write all bytes in one line pass 0.
+ */
+#define MODLOG_HEXDUMP_DEBUG(ml_mod_, data_ptr_, len_, line_break_) \
+    modlog_hexdump((ml_mod_), LOG_LEVEL_DEBUG, (data_ptr_), (len_), (line_break_))
 #else
 #define MODLOG_DEBUG(ml_mod_, ...) IGNORE(__VA_ARGS__)
+#define MODLOG_HEXDUMP_DEBUG(ml_mod_, data_ptr_, len_, line_break_)
 #endif
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_INFO || defined __DOXYGEN__
@@ -268,8 +306,27 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  */
 #define MODLOG_INFO(ml_mod_, ml_msg_, ...) \
     modlog_printf((ml_mod_), LOG_LEVEL_INFO, (ml_msg_), ##__VA_ARGS__)
+
+/**
+ * @brief Writes a specified number of bytes as an info text entry
+ *        to the specified log module.
+ *
+ * This expands to nothing if the global log level is greater than
+ * `LOG_LEVEL_INFO`.
+ *
+ * @param ml_mod_               The log module to write to.
+ * @param ml_msg_               The "printf" formatted string to write.
+ * @param data_ptr_             Pointer to data that will be written.
+ * @param len_                  Number of bytes that will be written.
+ * @param line_break_           Number of bytes to write after which
+ *                              a newline character will be written.
+ *                              To write all bytes in one line pass 0.
+ */
+#define MODLOG_HEXDUMP_INFO(ml_mod_, data_ptr_, len_, line_break_) \
+    modlog_hexdump((ml_mod_), LOG_LEVEL_INFO, (data_ptr_), (len_), (line_break_))
 #else
 #define MODLOG_INFO(ml_mod_, ...) IGNORE(__VA_ARGS__)
+#define MODLOG_HEXDUMP_INFO(ml_mod_, data_ptr_, len_, line_break_)
 #endif
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_WARN || defined __DOXYGEN__
@@ -284,8 +341,27 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  */
 #define MODLOG_WARN(ml_mod_, ml_msg_, ...) \
     modlog_printf((ml_mod_), LOG_LEVEL_WARN, (ml_msg_), ##__VA_ARGS__)
+
+/**
+ * @brief Writes a specified number of bytes as a warn text entry
+ *        to the specified log module.
+ *
+ * This expands to nothing if the global log level is greater than
+ * `LOG_LEVEL_WARN`.
+ *
+ * @param ml_mod_               The log module to write to.
+ * @param ml_msg_               The "printf" formatted string to write.
+ * @param data_ptr_             Pointer to data that will be written.
+ * @param len_                  Number of bytes that will be written.
+ * @param line_break_           Number of bytes to write after which
+ *                              a newline character will be written.
+ *                              To write all bytes in one line pass 0.
+ */
+#define MODLOG_HEXDUMP_WARN(ml_mod_, data_ptr_, len_, line_break_) \
+    modlog_hexdump((ml_mod_), LOG_LEVEL_WARN, (data_ptr_), (len_), (line_break_))
 #else
 #define MODLOG_WARN(ml_mod_, ...) IGNORE(__VA_ARGS__)
+#define MODLOG_HEXDUMP_WARN(ml_mod_, data_ptr_, len_, line_break_)
 #endif
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_ERROR || defined __DOXYGEN__
@@ -300,8 +376,27 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  */
 #define MODLOG_ERROR(ml_mod_, ml_msg_, ...) \
     modlog_printf((ml_mod_), LOG_LEVEL_ERROR, (ml_msg_), ##__VA_ARGS__)
+
+/**
+ * @brief Writes a specified number of bytes as an error text entry
+ *        to the specified log module.
+ *
+ * This expands to nothing if the global log level is greater than
+ * `LOG_LEVEL_ERROR`.
+ *
+ * @param ml_mod_               The log module to write to.
+ * @param ml_msg_               The "printf" formatted string to write.
+ * @param data_ptr_             Pointer to data that will be written.
+ * @param len_                  Number of bytes that will be written.
+ * @param line_break_           Number of bytes to write after which
+ *                              a newline character will be written.
+ *                              To write all bytes in one line pass 0.
+ */
+#define MODLOG_HEXDUMP_ERROR(ml_mod_, data_ptr_, len_, line_break_) \
+    modlog_hexdump((ml_mod_), LOG_LEVEL_ERROR, (data_ptr_), (len_), (line_break_))
 #else
 #define MODLOG_ERROR(ml_mod_, ...) IGNORE(__VA_ARGS__)
+#define MODLOG_HEXDUMP_ERROR(ml_mod_, data_ptr_, len_, line_break_)
 #endif
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_CRITICAL || defined __DOXYGEN__
@@ -316,8 +411,28 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  */
 #define MODLOG_CRITICAL(ml_mod_, ml_msg_, ...) \
     modlog_printf((ml_mod_), LOG_LEVEL_CRITICAL, (ml_msg_), ##__VA_ARGS__)
+
+/**
+ * @brief Writes a specified number of bytes as a critical text entry
+ *        to the specified log module.
+ *
+ * This expands to nothing if the global log level is greater than
+ * `LOG_LEVEL_CRITICAL`.
+ *
+ * @param ml_mod_               The log module to write to.
+ * @param ml_msg_               The "printf" formatted string to write.
+ * @param data_ptr_             Pointer to data that will be written.
+ * @param len_                  Number of bytes that will be written.
+ * @param line_break_           Number of bytes to write after which
+ *                              a newline character will be written.
+ *                              To write all bytes in one line pass 0.
+ */
+#define MODLOG_HEXDUMP_CRITICAL(ml_mod_, data_ptr_, len_, line_break_) \
+    modlog_hexdump((ml_mod_), LOG_LEVEL_CRITICAL, (data_ptr_), (len_), (line_break_))
+
 #else
 #define MODLOG_CRITICAL(ml_mod_, ...) IGNORE(__VA_ARGS__)
+#define MODLOG_HEXDUMP_CRITICAL(ml_mod_, data_ptr_, len_, line_break_)
 #endif
 
 /**
@@ -341,6 +456,31 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
     MODLOG_ ## ml_lvl_((ml_mod_), __VA_ARGS__)
 
 /**
+ * @brief Writes specified number of bytes as a text entry
+ * with the specified level to the specified log module.
+ *
+ * The provided log level must be one of the following tokens:
+ *     o CRITICAL
+ *     o ERROR
+ *     o WARN
+ *     o INFO
+ *     o DEBUG
+ *
+ * This expands to nothing if the global log level is greater than
+ * the specified level.
+ *
+ * @param ml_lvl_               The log level of the entry to write.
+ * @param ml_mod_               The log module to write to.
+ * @param data_ptr_             Pointer to data that will be written.
+ * @param len_                  Number of bytes that will be written.
+ * @param line_break_           Number of bytes to write after which
+ *                              a newline character will be written.
+ *                              To write all bytes in one line pass 0.
+ */
+#define MODLOG_HEXDUMP(ml_lvl_, ml_mod_, data_ptr_, len_, line_break_) \
+    MODLOG_HEXDUMP_ ## ml_lvl_((ml_mod_), (data_ptr_), (len_), (line_break_))
+
+/**
  * XXX: Deprecated.  Use LOG_DFLT instead.
  *
  * @brief Writes a formatted text entry with the specified level to the
@@ -360,6 +500,30 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  */
 #define MODLOG_DFLT(ml_lvl_, ...) \
     MODLOG(ml_lvl_, LOG_MODULE_DEFAULT, __VA_ARGS__)
+
+/**
+ * @brief Writes specified number of bytes as a text entry
+ * with the specified level to the default log module.
+ *
+ * The provided log level must be one of the following tokens:
+ *     o CRITICAL
+ *     o ERROR
+ *     o WARN
+ *     o INFO
+ *     o DEBUG
+ *
+ * This expands to nothing if the global log level is greater than
+ * the specified level.
+ *
+ * @param ml_lvl_               The log level of the entry to write.
+ * @param data_ptr_             Pointer to data that will be written.
+ * @param len_                  Number of bytes that will be written.
+ * @param line_break_           Number of bytes to write after which
+ *                              a newline character will be written.
+ *                              To write all bytes in one line pass 0.
+ */
+#define MODLOG_HEXDUMP_DFLT(ml_lvl_, data_ptr_, len_, line_break_) \
+    MODLOG_HEXDUMP(ml_lvl_, LOG_MODULE_DEFAULT, data_ptr_, len_, line_break_)
 
 /* If `MODLOG_LOG_MACROS` in enabled, retire the old `LOG_[...]` macros and
  * redefine them to use modlog.
