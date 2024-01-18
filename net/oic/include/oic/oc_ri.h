@@ -22,6 +22,7 @@
 #include "oic/oc_rep.h"
 #include "oic/oc_uuid.h"
 #include "oic/oc_ri_const.h"
+#include "oic/messaging/coap/transactions.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,9 +44,10 @@ typedef struct oc_request {
     int query_len;
     oc_response_t *response;
     struct coap_packet_rx *packet;
+    coap_transaction_t *transaction;
 } oc_request_t;
 
-typedef void (*oc_request_handler_t)(oc_request_t *, oc_interface_mask_t);
+typedef bool (*oc_request_handler_t)(oc_request_t *, oc_interface_mask_t);
 
 typedef struct oc_resource {
   SLIST_ENTRY(oc_resource) next;
@@ -90,10 +92,12 @@ oc_interface_mask_t oc_ri_get_interface_mask(char *iface, int if_len);
 
 struct coap_packet_rx;
 struct coap_packet;
-bool oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
+bool oc_ri_invoke_coap_entity_handler(coap_transaction_t **transaction,
+                                      struct coap_packet_rx *request,
                                       struct coap_packet *response,
                                       int32_t *offset,
-                                      struct oc_endpoint *endpoint);
+                                      struct oc_endpoint *endpoint,
+                                      bool *clear_transaction);
 
 #ifdef __cplusplus
 }

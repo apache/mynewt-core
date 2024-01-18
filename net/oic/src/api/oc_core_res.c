@@ -62,7 +62,7 @@ oc_core_encode_interfaces_mask(CborEncoder *parent,
     oc_rep_end_array((*parent), if);
 }
 
-static void
+static bool
 oc_core_device_handler(oc_request_t *req, oc_interface_mask_t interface)
 {
     struct oc_response_buffer *rsp_buf;
@@ -89,6 +89,8 @@ oc_core_device_handler(oc_request_t *req, oc_interface_mask_t interface)
     default:
         break;
     }
+
+    return true;
 }
 
 int
@@ -178,7 +180,7 @@ oc_core_add_new_device(const char *uri, const char *rt, const char *name,
     return &oc_device_info[device_count++].payload;
 }
 
-void
+bool
 oc_core_platform_handler(oc_request_t *req, oc_interface_mask_t interface)
 {
     struct oc_response_buffer *rsp_buf;
@@ -205,6 +207,8 @@ oc_core_platform_handler(oc_request_t *req, oc_interface_mask_t interface)
     default:
         break;
     }
+
+    return true;
 }
 
 oc_string_t *

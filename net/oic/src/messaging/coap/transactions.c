@@ -37,9 +37,9 @@
 #include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
-#include "oic/messaging/coap/transactions.h"
 #include "oic/messaging/coap/observe.h"
 #include "oic/oc_buffer.h"
+#include "oic/messaging/coap/transactions.h"
 
 #ifdef OC_CLIENT
 #include "oic/oc_client_state.h"
@@ -159,6 +159,27 @@ coap_clear_transaction(coap_transaction_t *t)
     if (t) {
         os_callout_stop(&t->retrans_timer);
         os_mbuf_free_chain(t->m);
+
+        /*
+         * Transaction might not be in the list yet.
+         */
+        SLIST_FOREACH(tmp, &oc_transaction_list, next) {
+            if (t == tmp) {
+                SLIST_REMOVE(&oc_transaction_list, t, coap_transaction, next);
+                break;
+            }
+        }
+        os_memblock_put(&oc_transaction_memb, t);
+  }
+}
+
+void
+coap_clear_transaction_nofree(coap_transaction_t *t)
+{
+    struct coap_transaction *tmp;
+
+    if (t) {
+        os_callout_stop(&t->retrans_timer);
 
         /*
          * Transaction might not be in the list yet.

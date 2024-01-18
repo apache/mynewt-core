@@ -61,6 +61,7 @@ coap_receive(struct os_mbuf **mp)
     static coap_transaction_t *transaction = NULL;
     struct os_mbuf *rsp;
     struct oc_endpoint endpoint; /* XXX */
+    bool clear_transaction = false;
 
     erbium_status_code = NO_ERROR;
 
@@ -151,8 +152,9 @@ coap_receive(struct os_mbuf **mp)
             new_offset = block_offset;
         }
 
-        if (oc_ri_invoke_coap_entity_handler(message, response, &new_offset,
-                                             OC_MBUF_ENDPOINT(m))) {
+        if (oc_ri_invoke_coap_entity_handler(&transaction, message, response, &new_offset,
+                                             OC_MBUF_ENDPOINT(m),
+                                             &clear_transaction)) {
             if (erbium_status_code == NO_ERROR) {
                 /*
                  * TODO coap_handle_blockwise(request, response,
@@ -264,6 +266,12 @@ coap_receive(struct os_mbuf **mp)
     } /* request or response */
 
 out:
+    if (clear_transaction == true) {
+        OC_LOG_INFO(" Transaction created but not sent for manual"
+                    " response without freeing the oic"
+                    " endpoint\n");
+        goto done;
+    }
     /* if(parsed correctly) */
     if (erbium_status_code == NO_ERROR) {
         if (transaction) { // Server transactions sent from here
@@ -307,6 +315,7 @@ out:
     }
 #endif /* OC_SERVER */
 
+done:
     /* if(new data) */
     return erbium_status_code;
 }

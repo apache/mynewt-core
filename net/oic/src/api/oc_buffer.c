@@ -21,6 +21,7 @@
 
 #include "oic/port/mynewt/config.h"
 #include "messaging/coap/engine.h"
+#include "messaging/coap/constants.h"
 
 #ifdef OC_SECURITY
 #include "security/oc_dtls.h"

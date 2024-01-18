@@ -390,15 +390,16 @@ oc_ri_check_trans_security(const oc_endpoint_t *oe,
 }
 
 bool
-oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
+oc_ri_invoke_coap_entity_handler(coap_transaction_t **transaction, struct coap_packet_rx *request,
                                  coap_packet_t *response, int32_t *offset,
-                                 oc_endpoint_t *endpoint)
+                                 oc_endpoint_t *endpoint, bool *clear_transaction)
 {
   /* Flags that capture status along various stages of processing
    *  the request.
    */
   bool method_impl = true, bad_request = false, success = true;
   bool authorized = true;
+  bool embed_response = true;
 
   /* This function is a server-side entry point solely for requests.
    *  Hence, "code" contains the CoAP method code.
@@ -422,6 +423,7 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
   response_obj.separate_response = 0;
   response_obj.response_buffer = &response_buffer;
 
+  request_obj.transaction = *transaction;
   request_obj.response = &response_obj;
   request_obj.query_len = 0;
   request_obj.resource = 0;
@@ -540,18 +542,28 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
              * implemented that method, then return a 4.05 response.
              */
       if (method == OC_GET && cur_resource->get_handler) {
-        cur_resource->get_handler(&request_obj, interface);
+        embed_response = cur_resource->get_handler(&request_obj, interface);
       } else if (method == OC_POST && cur_resource->post_handler) {
-        cur_resource->post_handler(&request_obj, interface);
+        embed_response = cur_resource->post_handler(&request_obj, interface);
       } else if (method == OC_PUT && cur_resource->put_handler) {
-        cur_resource->put_handler(&request_obj, interface);
+        embed_response = cur_resource->put_handler(&request_obj, interface);
       } else if (method == OC_DELETE && cur_resource->delete_handler) {
-        cur_resource->delete_handler(&request_obj, interface);
+        embed_response = cur_resource->delete_handler(&request_obj, interface);
       } else {
         method_impl = false;
       }
     }
   }
+
+  if (embed_response == false) {
+      success = true;
+      if (response_buffer.buffer) {
+          os_mbuf_free_chain(response_buffer.buffer);
+      }
+      *clear_transaction = true;
+      return true;
+  }
+  *clear_transaction = false;
 
   if (bad_request) {
     if (!m) {

@@ -395,6 +395,16 @@ int coap_get_payload(struct coap_packet_rx *pkt, struct os_mbuf **mp,
                      uint16_t *off);
 int coap_set_payload(coap_packet_t *, struct os_mbuf *m, size_t length);
 
+/**
+ * Raw coap receive, this enables applications to
+ * recursively process handlers
+ *
+ * @param mp Pointer to the mbuf pool
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int coap_receive(struct os_mbuf **mp);
+
 #ifdef __cplusplus
 }
 #endif

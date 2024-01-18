@@ -130,7 +130,7 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
   return matches;
 }
 
-static void
+static bool
 oc_core_discovery_handler(oc_request_t *req, oc_interface_mask_t interface)
 {
     char *rt = NULL;
@@ -168,6 +168,8 @@ oc_core_discovery_handler(oc_request_t *req, oc_interface_mask_t interface)
         /* There were rt/if selections and there were no matches, so ignore */
         req->response->response_buffer->code = OC_IGNORE;
     }
+
+    return true;
 }
 
 void

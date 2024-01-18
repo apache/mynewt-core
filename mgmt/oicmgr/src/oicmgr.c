@@ -186,7 +186,7 @@ oic_tx_rsp(struct omp_streamer *stmr, int retval, void *unused)
 /**
  * Processes a single OMP request and sends the corresponding response(s).
  */
-void
+bool
 omgr_process_request(oc_request_t *req, oc_interface_mask_t mask)
 {
     struct cbor_mbuf_reader reader;
@@ -245,6 +245,7 @@ done:
         oc_send_response(req, rc);
     }
 
+    return true;
 }
 
 int

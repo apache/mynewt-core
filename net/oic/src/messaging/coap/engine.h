@@ -44,7 +44,6 @@ extern "C" {
 #endif
 
 void coap_engine_init(void);
-int coap_receive(struct os_mbuf **mp);
 
 #ifdef __cplusplus
 }

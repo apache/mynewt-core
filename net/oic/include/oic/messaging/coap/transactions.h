@@ -35,10 +35,13 @@
 #define TRANSACTIONS_H
 
 #include "coap.h"
+#include "oic/port/oc_connectivity.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct oc_endpoint oc_endpoint_t;
 
 /*
  * Modulo mask (thus +1) for a random number to get the tick number for the
@@ -71,6 +74,7 @@ coap_transaction_t *coap_new_transaction(uint16_t mid, oc_endpoint_t *);
 
 void coap_send_transaction(coap_transaction_t *t);
 void coap_clear_transaction(coap_transaction_t *t);
+void coap_clear_transaction_nofree(coap_transaction_t *t);
 coap_transaction_t *coap_get_transaction_by_mid(uint16_t mid);
 
 void coap_check_transactions(void);

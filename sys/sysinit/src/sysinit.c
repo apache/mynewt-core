@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include "os/mynewt.h"
+#include <console/console.h>
 
 static void
 sysinit_dflt_panic_cb(const char *file, int line, const char *func,
@@ -32,6 +33,8 @@ sysinit_dflt_panic_cb(const char *file, int line, const char *func,
     }
 #endif
 
+    console_printf("msg: %s, file: %s, line: %d, func: %s, expr: %s\n",
+                   msg, file, line, func, expr);
     __assert_func(file, line, func, expr);
 }
 
