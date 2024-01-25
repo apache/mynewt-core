@@ -73,6 +73,8 @@ struct stm32_hal_spi_cfg {
 
 #define STM32_HAL_TIMER_MAX     (3)
 
+#define STM32_HAL_TIMER_TIM6_IRQ    54
+
 /* hw/drivers/trng */
 #include "stm32f4xx_hal_rng.h"
 
