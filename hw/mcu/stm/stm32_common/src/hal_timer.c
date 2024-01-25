@@ -193,138 +193,109 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 
 #ifdef TIM1
     if (regs == TIM1) {
-#if MYNEWT_VAL(MCU_STM32F0)
-        stm32_tmr_reg_irq(TIM1_CC_IRQn, func);
-#elif MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB)
-        stm32_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
-#elif MYNEWT_VAL(MCU_STM32U5)
-        stm32_tmr_reg_irq(TIM1_UP_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
-#endif
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM1_IRQ, func);
         __HAL_RCC_TIM1_CLK_ENABLE();
     }
 #endif
 #ifdef TIM2
     if (regs == TIM2) {
-        stm32_tmr_reg_irq(TIM2_IRQn, func);
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM2_IRQ, func);
         __HAL_RCC_TIM2_CLK_ENABLE();
     }
 #endif
 #ifdef TIM3
     if (regs == TIM3) {
-        stm32_tmr_reg_irq(TIM3_IRQn, func);
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM3_IRQ, func);
         __HAL_RCC_TIM3_CLK_ENABLE();
     }
 #endif
 #ifdef TIM4
     if (regs == TIM4) {
-        stm32_tmr_reg_irq(TIM4_IRQn, func);
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM4_IRQ, func);
         __HAL_RCC_TIM4_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM6
+    if (regs == TIM6) {
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM6_IRQ, func);
+        __HAL_RCC_TIM6_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM7
+    if (regs == TIM7) {
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM7_IRQ, func);
+        __HAL_RCC_TIM7_CLK_ENABLE();
     }
 #endif
 #ifdef TIM8
     if (regs == TIM8) {
-        stm32_tmr_reg_irq(TIM8_CC_IRQn, func);
-#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB) || MYNEWT_VAL(MCU_STM32U5)
-        stm32_tmr_reg_irq(TIM8_UP_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM8_UP_TIM13_IRQn, func);
-#endif
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM8_IRQ, func);
         __HAL_RCC_TIM8_CLK_ENABLE();
     }
 #endif
 #ifdef TIM9
     if (regs == TIM9) {
-#if MYNEWT_VAL(MCU_STM32L1)
-        stm32_tmr_reg_irq(TIM9_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM1_BRK_TIM9_IRQn, func);
-#endif
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM9_IRQ, func);
         __HAL_RCC_TIM9_CLK_ENABLE();
     }
 #endif
 #ifdef TIM10
     if (regs == TIM10) {
-#if MYNEWT_VAL(MCU_STM32L1) || MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB)
-        stm32_tmr_reg_irq(TIM10_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
-#endif
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM10_IRQ, func);
         __HAL_RCC_TIM10_CLK_ENABLE();
     }
 #endif
 #ifdef TIM11
     if (regs == TIM11) {
-#if MYNEWT_VAL(MCU_STM32L1)
-        stm32_tmr_reg_irq(TIM11_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM1_TRG_COM_TIM11_IRQn, func);
-#endif
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM11_IRQ, func);
         __HAL_RCC_TIM11_CLK_ENABLE();
     }
 #endif
 #ifdef TIM12
     if (regs == TIM12) {
-        stm32_tmr_reg_irq(TIM8_BRK_TIM12_IRQn, func);
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM12_IRQ, func);
         __HAL_RCC_TIM12_CLK_ENABLE();
     }
 #endif
 #ifdef TIM13
     if (regs == TIM13) {
-        stm32_tmr_reg_irq(TIM8_UP_TIM13_IRQn, func);
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM13_IRQ, func);
         __HAL_RCC_TIM13_CLK_ENABLE();
     }
 #endif
 #ifdef TIM14
     if (regs == TIM14) {
-#if MYNEWT_VAL(MCU_STM32F0)
-        stm32_tmr_reg_irq(TIM14_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM8_TRG_COM_TIM14_IRQn, func);
-#endif
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM14_IRQ, func);
         __HAL_RCC_TIM14_CLK_ENABLE();
     }
 #endif
 #ifdef TIM15
     if (regs == TIM15) {
-#if MYNEWT_VAL(MCU_STM32F0) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
-        stm32_tmr_reg_irq(TIM15_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM1_BRK_TIM15_IRQn, func);
-#endif
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM15_IRQ, func);
         __HAL_RCC_TIM15_CLK_ENABLE();
     }
 #endif
 #ifdef TIM16
     if (regs == TIM16) {
-#if MYNEWT_VAL(MCU_STM32F0) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
-        stm32_tmr_reg_irq(TIM16_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
-#endif
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM16_IRQ, func);
         __HAL_RCC_TIM16_CLK_ENABLE();
     }
 #endif
 #ifdef TIM17
     if (regs == TIM17) {
-#if MYNEWT_VAL(MCU_STM32F0) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
-        stm32_tmr_reg_irq(TIM17_IRQn, func);
-#else
-        stm32_tmr_reg_irq(TIM1_TRG_COM_TIM17_IRQn, func);
-#endif 
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM17_IRQ, func);
         __HAL_RCC_TIM17_CLK_ENABLE();
     }
 #endif
 #ifdef TIM21
     if (regs == TIM21) {
-        stm32_tmr_reg_irq(TIM21_IRQn, func);
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM21_IRQ, func);
         __HAL_RCC_TIM21_CLK_ENABLE();
     }
 #endif
 #ifdef TIM22
     if (regs == TIM22) {
-        stm32_tmr_reg_irq(TIM22_IRQn, func);
+        stm32_tmr_reg_irq(STM32_HAL_TIMER_TIM22_IRQ, func);
         __HAL_RCC_TIM22_CLK_ENABLE();
     }
 #endif

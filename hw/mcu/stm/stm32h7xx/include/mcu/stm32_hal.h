@@ -72,6 +72,11 @@ struct stm32_hal_spi_cfg {
 
 #define STM32_HAL_TIMER_MAX     (3)
 
+#define STM32_HAL_TIMER_TIM6_IRQ    TIM6_DAC_IRQn
+#define STM32_HAL_TIMER_TIM15_IRQ   TIM15_IRQn
+#define STM32_HAL_TIMER_TIM16_IRQ   TIM16_IRQn
+#define STM32_HAL_TIMER_TIM17_IRQ   TIM17_IRQn
+
 /* hw/drivers/trng */
 #include "stm32h7xx_hal_rng.h"
 

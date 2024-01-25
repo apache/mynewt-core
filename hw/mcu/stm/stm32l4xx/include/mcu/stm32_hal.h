@@ -67,6 +67,12 @@ struct stm32_hal_spi_cfg {
 
 #define STM32_HAL_TIMER_MAX     (3)
 
+#define STM32_HAL_TIMER_TIM1_IRQ    TIM1_UP_TIM16_IRQn
+#define STM32_HAL_TIMER_TIM6_IRQ    TIM6_DAC_IRQn
+#define STM32_HAL_TIMER_TIM8_IRQ    TIM8_UP_IRQn
+#define STM32_HAL_TIMER_TIM10_IRQ   TIM10_IRQn
+
+
 #define STM32_HAL_FLASH_INIT()        \
     do {                              \
         HAL_FLASH_Unlock();           \

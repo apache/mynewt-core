@@ -75,6 +75,12 @@ struct stm32_hal_spi_cfg {
 
 #define STM32_HAL_TIMER_MAX     (3)
 
+#define STM32_HAL_TIMER_TIM1_IRQ    TIM1_CC_IRQn
+#define STM32_HAL_TIMER_TIM14_IRQ   TIM14_IRQn
+#define STM32_HAL_TIMER_TIM15_IRQ   TIM15_IRQn
+#define STM32_HAL_TIMER_TIM16_IRQ   TIM16_IRQn
+#define STM32_HAL_TIMER_TIM17_IRQ   TIM17_IRQn
+
 /* hal_flash */
 #include "stm32f0xx_hal_def.h"
 #include "stm32f0xx_hal_flash.h"
