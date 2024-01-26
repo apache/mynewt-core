@@ -24,4 +24,15 @@ pkg.homepage: "http://www.keil.com/pack/doc/CMSIS/Core/html/index.html"
 pkg.keywords:
     - cmsis
     - core
+
 pkg.type: sdk
+
+pkg.include_dirs:
+    - "@arm-CMSIS_5/CMSIS/Core/Include"
+
+repository.arm-CMSIS_5:
+    type: github
+    vers: 5.3.0-commit
+    branch: master
+    user: ARM-software
+    repo: CMSIS_5
