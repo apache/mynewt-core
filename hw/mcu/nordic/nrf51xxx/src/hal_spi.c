@@ -129,11 +129,11 @@ nrf51_irqm_handler(struct nrf51_hal_spi *spi)
         }
         ++spi->nhs_rxd_bytes;
         if (spi->nhs_rxd_bytes == spi->nhs_buflen) {
+            spi->spi_xfr_flag = 0;
+            spim->INTENCLR = SPI_INTENCLR_READY_Msk;
             if (spi->txrx_cb_func) {
                 spi->txrx_cb_func(spi->txrx_cb_arg, spi->nhs_buflen);
             }
-            spi->spi_xfr_flag = 0;
-            spim->INTENCLR = SPI_INTENCLR_READY_Msk;
         }
         if (spi->nhs_txd_bytes != spi->nhs_buflen) {
             spim->TXD = spi->nhs_txbuf[spi->nhs_txd_bytes];
