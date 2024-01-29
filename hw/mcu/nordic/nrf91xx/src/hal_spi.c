@@ -170,12 +170,11 @@ nrf91_irqm_handler(struct nrf91_hal_spi *spi)
             }
             spim->TASKS_START = 1;
         } else {
-            if (spi->txrx_cb_func) {
-                spi->txrx_cb_func(spi->txrx_cb_arg, spi->buflen);
-
-            }
             spi->spi_xfr_flag = 0;
             spim->INTENCLR = SPIM_INTENSET_END_Msk;
+            if (spi->txrx_cb_func) {
+                spi->txrx_cb_func(spi->txrx_cb_arg, spi->buflen);
+            }
         }
     }
 }

@@ -121,12 +121,11 @@ nrf5340_net_spi0_irq_handler(void)
                 }
                 NRF_SPIM0_NS->TASKS_START = 1;
             } else {
-                if (spi->txrx_cb_func) {
-                    spi->txrx_cb_func(spi->txrx_cb_arg, spi->nhs_buflen);
-
-                }
                 spi->spi_xfr_flag = 0;
                 NRF_SPIM0_NS->INTENCLR = SPIM_INTENSET_END_Msk;
+                if (spi->txrx_cb_func) {
+                    spi->txrx_cb_func(spi->txrx_cb_arg, spi->nhs_buflen);
+                }
             }
         }
     }
