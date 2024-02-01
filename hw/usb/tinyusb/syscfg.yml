@@ -21,6 +21,16 @@ syscfg.defs:
     TINYUSB:
         description: Constant value
         value: 1
+    TINYUSB_AUTO_START:
+        description: >
+            Start USB stack during sysinit stage USBD_SYSINIT_STAGE.
+            If not set tinyusb_start() can be called manually by application code
+            later.
+        value: 1
+    TINYUSB_SHELL:
+        description: >
+            Enable shell for TinyUSB
+        value: 0
 
     USBD_TASK_PRIORITY:
         description: >
