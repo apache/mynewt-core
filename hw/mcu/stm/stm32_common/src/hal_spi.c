@@ -505,7 +505,7 @@ stm32_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *presca
      * SPI ports from 0.
      */
     switch (spi_num) {
-#if !MYNEWT_VAL(MCU_STM32F0)
+#if !MYNEWT_VAL(MCU_STM32F0) && !MYNEWT_VAL(MCU_STM32G0)
     case 0:
     case 3:
     case 4:
@@ -666,7 +666,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     case 0:
         __HAL_RCC_SPI1_CLK_ENABLE();
 #if !MYNEWT_VAL(MCU_STM32F1)
-    #if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0)
+    #if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0) && !MYNEWT_VAL(MCU_STM32G0)
         gpio.Alternate = GPIO_AF5_SPI1;
     #else
         gpio.Alternate = GPIO_AF0_SPI1;
@@ -678,7 +678,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     case 1:
         __HAL_RCC_SPI2_CLK_ENABLE();
 #if !MYNEWT_VAL(MCU_STM32F1)
-    #if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0)
+    #if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0) && !MYNEWT_VAL(MCU_STM32G0)
         gpio.Alternate = GPIO_AF5_SPI2;
     #else
         gpio.Alternate = GPIO_AF0_SPI2;
@@ -689,7 +689,9 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_2_ENABLED
     case 2:
         __HAL_RCC_SPI3_CLK_ENABLE();
-#if !MYNEWT_VAL(MCU_STM32F1)
+#if MYNEWT_VAL(MCU_STM32G0)
+        gpio.Alternate = GPIO_AF4_SPI3;
+#elif !MYNEWT_VAL(MCU_STM32F1)
         gpio.Alternate = GPIO_AF6_SPI3;
 #endif
         break;
@@ -845,6 +847,9 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     init->CRCPolynomial = 1;
 #ifdef SPI_NSS_PULSE_DISABLE
     init->NSSPMode = SPI_NSS_PULSE_DISABLE;
+#endif
+#ifdef SPI_MASTER_KEEP_IO_STATE_ENABLE
+    init->MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_ENABLE;
 #endif
 
     irq = stm32_resolve_spi_irq(&spi->handle);
