@@ -132,9 +132,14 @@ static struct hal_uart_irq uart_irqs[4];
 static struct hal_uart_irq uart_irqs[3];
 #endif
 
+#if MYNEWT_VAL(MCU_STM32G0)
+#define USART_CR1_RXNEIE    USART_CR1_RXNEIE_RXFNEIE
+#define USART_CR1_TXEIE     USART_CR1_TXEIE_TXFNFIE
+#endif
+
 #if !MYNEWT_VAL(STM32_HAL_UART_HAS_SR)
 #  define STATUS(x)     ((x)->ISR)
-#if MYNEWT_VAL(MCU_STM32H7)
+#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32G0)
 #  define RXNE          USART_ISR_RXNE_RXFNE
 #  define TXE           USART_ISR_TXE_TXFNF
 #else
@@ -144,7 +149,8 @@ static struct hal_uart_irq uart_irqs[3];
 #  define TC            USART_ISR_TC
 #  define RXDR(x)       ((x)->RDR)
 #  define TXDR(x)       ((x)->TDR)
-#if MYNEWT_VAL(MCU_STM32WB) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32WB) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32G4) || \
+    MYNEWT_VAL(MCU_STM32G0)
 #  define BAUD(x,y)     UART_DIV_SAMPLING16((x), (y), UART_PRESCALER_DIV1)
 #else
 #  define BAUD(x,y)     UART_DIV_SAMPLING16((x), (y))
@@ -557,7 +563,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 #else
     if (cfg->suc_uart == USART1) {
 #endif
-#if MYNEWT_VAL(MCU_STM32F0)
+#if MYNEWT_VAL(MCU_STM32F0) || MYNEWT_VAL(MCU_STM32G0)
         u->u_regs->BRR = BAUD(HAL_RCC_GetPCLK1Freq(), baudrate);
 #else
         u->u_regs->BRR = BAUD(HAL_RCC_GetPCLK2Freq(), baudrate);

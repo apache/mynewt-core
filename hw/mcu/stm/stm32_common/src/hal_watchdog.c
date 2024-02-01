@@ -52,6 +52,10 @@ hal_watchdog_init(uint32_t expire_msecs)
 void
 hal_watchdog_enable(void)
 {
+    /* For F0, L0, G0, DBG clock needs to be enabled to enable watchdog freeze in debug stop */
+#ifdef __HAL_RCC_DBGMCU_CLK_ENABLE
+    __HAL_RCC_DBGMCU_CLK_ENABLE();
+#endif
 #if MYNEWT_VAL(MCU_STM32H7)
     __HAL_DBGMCU_FREEZE_IWDG1();
 #else

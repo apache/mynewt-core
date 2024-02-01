@@ -1,0 +1,149 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 8
+
+    MCU_STM32G0:
+        description: MCUs are of STM32G0xx family
+        value: 1
+
+    STM32_CLOCK_VOLTAGESCALING_CONFIG:
+        description: >
+            Adjust voltage scaling.
+            PWR_REGULATOR_VOLTAGE_SCALE1_BOOST for system clock > 150MHz
+            PWR_REGULATOR_VOLTAGE_SCALE1 for system clock up to 150MHz
+            PWR_REGULATOR_VOLTAGE_SCALE2 for system clock <= 26MHz
+        value: PWR_REGULATOR_VOLTAGE_SCALE1_BOOST
+
+    STM32_CLOCK_LSI:
+        description: Enable low-speed internal clock source
+        value: 0
+
+    STM32_CLOCK_LSE:
+        description: Enable low-speed external clock source (aka RTC xtal)
+        value: 0
+
+    STM32_CLOCK_LSE_BYPASS:
+        description: 0 for 32768 xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSE:
+        description: Enable high-speed external clock source
+        value: 0
+
+    STM32_CLOCK_HSE_BYPASS:
+        description: 0 for xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSI:
+        description: Enable high-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_HSI_CALIBRATION:
+        description: HSI calibration value
+        value: 'RCC_HSICALIBRATION_DEFAULT'
+
+    STM32_CLOCK_HSI48:
+        description: Enable high-speed 48MHz internal clock source
+        value: 0
+
+    STM32_CLOCK_SYSCLK:
+        description: Select SYSCLK source
+        choices:
+            - HSI
+            - HSE
+            - PLL_R
+            - auto
+        value: auto
+
+    STM32_CLOCK_PLL:
+        description: Enable PLL
+        value: 0
+
+    STM32_CLOCK_PLL_PLLM:
+        description: PLL config M parameter
+        value: 4
+
+    STM32_CLOCK_PLL_PLLN:
+        description: PLL config N parameter
+        value: 85
+
+    STM32_CLOCK_PLL_PLLP:
+        description: PLL config P parameter
+        value: 2
+
+    STM32_CLOCK_PLL_PLLQ:
+        description: PLL config Q parameter
+        value: 2
+
+    STM32_CLOCK_PLL_PLLR:
+        description: PLL config R parameter
+        value: 2
+
+    STM32_CLOCK_AHB_DIVIDER:
+        description: AHB CLK1 prescaler
+        value: RCC_SYSCLK_DIV1
+
+    STM32_CLOCK_APB1_DIVIDER:
+        description: APB1 prescaler
+        value: RCC_HCLK_DIV1
+
+    STM32_CLOCK_APB2_DIVIDER:
+        description: APB2 prescaler
+        value: RCC_HCLK_DIV1
+
+    STM32_FLASH_LATENCY:
+        description: Number of wait-states
+        value: FLASH_LATENCY_2
+
+    STM32_ENABLE_ICACHE:
+        description: Enable instruction caching
+        value: 1
+
+    STM32_ENABLE_DCACHE:
+        description: Enable instruction caching
+        value: 1
+
+    STM32_FLASH_PREFETCH_ENABLE:
+        description: Enable pre-fetch of instructions (when latency > 0)
+        value: 1
+
+    STM32_HAL_SPI_HAS_FIFO:
+        description: This MCU has a SPI with FIFO
+        value: 1
+
+    STM32_HAL_I2C_HAS_CLOCKSPEED:
+        description: This MCU's I2C has no clock speed register (has TIMINGR)
+        value: 0
+
+    STM32_HAL_UART_HAS_SR:
+        description: This MCU's UART uses ISR register (not SR) for status.
+        value: 0
+
+    MCU_FLASH_ERASED_VAL:
+        description: Value read from erased flash.
+        value: 0xff
+
+syscfg.vals:
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 0x1C000
