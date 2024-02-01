@@ -34,6 +34,9 @@ syscfg.vals:
     MCU_TARGET: nRF52832
     MCU_COMMON_STARTUP: 1
 
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 0x10000
+
     # Set default pins for peripherals
     UART_0_PIN_TX: 29
     UART_0_PIN_RX: 28
