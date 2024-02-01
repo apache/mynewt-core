@@ -33,9 +33,11 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/usb/tinyusb/tinyusb_sdk"
 
-pkg.init.OS_SCHEDULING:
+pkg.init.'(OS_SCHEDULING!=0 && TINYUSB_AUTO_START!=0)':
     tinyusb_start: 'MYNEWT_VAL(USBD_SYSINIT_STAGE)'
 
+pkg.deps.TINYUSB_SHELL:
+    - "@apache-mynewt-core/hw/usb/tinyusb/shell"
 pkg.deps.USBD_STD_DESCRIPTORS:
     - "@apache-mynewt-core/hw/usb/tinyusb/std_descriptors"
 pkg.deps.'MCU_TARGET == "nRF52840"':
