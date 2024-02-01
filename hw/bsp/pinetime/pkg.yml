@@ -36,6 +36,7 @@ pkg.deps:
     - '@apache-mynewt-core/hw/mcu/nordic/nrf52xxx'
     - '@apache-mynewt-core/kernel/os'
     - '@apache-mynewt-core/libc/baselibc'
+    - "@apache-mynewt-core/boot/startup"
     - "@apache-mynewt-core/hw/drivers/flash/spiflash"
 
 pkg.deps.BSP_CHARGER:

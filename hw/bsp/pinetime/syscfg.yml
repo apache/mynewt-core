@@ -47,6 +47,9 @@ syscfg.vals:
     MCU_TARGET: nRF52832
     MCU_COMMON_STARTUP: 1
 
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 0x10000
+
     # 32.768 kHz crystal oscillator
     MCU_LFCLK_SOURCE: LFXO
 
