@@ -58,6 +58,10 @@ pkg.deps.MCU_STM32L0:
     - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev/stm32l0"
 pkg.deps.MCU_STM32WB:
     - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev/stm32wb55"
+pkg.deps.MCU_STM32G0:
+    - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev/stm32g0"
+pkg.deps.MCU_STM32G4:
+    - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev/stm32g4"
 pkg.deps.'(MCU_TARGET == "DA14691" || MCU_TARGET == "DA14695" || MCU_TARGET == "DA14697" || MCU_TARGET == "DA14699")':
     - "@apache-mynewt-core/hw/usb/tinyusb/da146xx"
 pkg.deps.MCU_PIC32MZ:
