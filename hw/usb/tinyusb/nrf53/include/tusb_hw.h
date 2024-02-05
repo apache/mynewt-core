@@ -89,7 +89,7 @@
 #if defined(MYNEWT_VAL_USBD_BTH_EVENT_EP)
 #define USBD_BTH_EVENT_EP       MYNEWT_VAL(USBD_BTH_EVENT_EP)
 #else
-#define USBD_BTH_EVENT_EP       0x84
+#define USBD_BTH_EVENT_EP       0x81
 #endif
 
 #if defined(MYNEWT_VAL_USBD_BTH_EVENT_EP_SIZE)
@@ -107,13 +107,13 @@
 #if defined(MYNEWT_VAL_USBD_BTH_DATA_OUT_EP)
 #define USBD_BTH_DATA_OUT_EP    MYNEWT_VAL(USBD_BTH_DATA_OUT_EP)
 #else
-#define USBD_BTH_DATA_OUT_EP    0x05
+#define USBD_BTH_DATA_OUT_EP    0x02
 #endif
 
 #if defined(MYNEWT_VAL_USBD_BTH_DATA_IN_EP)
 #define USBD_BTH_DATA_IN_EP     MYNEWT_VAL(USBD_BTH_DATA_IN_EP)
 #else
-#define USBD_BTH_DATA_IN_EP     0x85
+#define USBD_BTH_DATA_IN_EP     0x82
 #endif
 
 #if defined(MYNEWT_VAL_USBD_BTH_DATA_EP_SIZE)
