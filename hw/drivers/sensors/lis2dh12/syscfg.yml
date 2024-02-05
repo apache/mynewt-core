@@ -34,7 +34,6 @@ syscfg.defs:
         description: >
             Device name for lis2dh12 device used in shell
         value:
-        restriction: LIS2DH12_CLI == 0 || $notnull
     LIS2DH12_CLI:
         description: 'Enable shell support for the LIS2DH12'
         value: 0
@@ -82,6 +81,7 @@ syscfg.defs:
 
 syscfg.restrictions:
     - "(LIS2DH12_ENABLE_I2C == 1) || (LIS2DH12_ENABLE_SPI == 1)"
+    - '(LIS2DH12_CLI == 0) || (LIS2DH12_SHELL_DEV_NAME != "")'
 
 syscfg.logs:
     LIS2DH12_LOG:
