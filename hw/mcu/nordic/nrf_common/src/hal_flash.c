@@ -17,6 +17,8 @@
  * under the License.
  */
 
+/* XXX: nrfx nvmc driver does not support NRF54 devices yet */
+#ifndef NRF54L15_XXAA
 #include <string.h>
 #include <assert.h>
 #include <hal/hal_flash_int.h>
@@ -112,3 +114,4 @@ nrf_flash_init(const struct hal_flash *dev)
 {
     return 0;
 }
+#endif
