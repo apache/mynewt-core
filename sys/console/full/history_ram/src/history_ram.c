@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <os/mynewt.h>
 #include <console/history.h>
+#include <bsp/bsp.h>
 
 #ifndef bssnz_t
 /* Just in case bsp.h does not define it, in this case console history will
