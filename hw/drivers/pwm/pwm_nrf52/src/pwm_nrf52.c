@@ -35,7 +35,28 @@
 #include "pwm_nrf52/pwm_nrf52.h"
 
 /* Max number on PWM instances on existing nRF52xxx MCUs */
-#define NRF52_PWM_MAX_INSTANCES     4
+#if defined(NRF54L_SERIES)
+#define NRF52_PWM_MAX_INSTANCES 3
+#else
+#define NRF52_PWM_MAX_INSTANCES 4
+#endif
+
+#if defined(NRF54L_SERIES)
+#define PWM_0_ID               20
+#define PWM_1_ID               21
+#define PWM_2_ID               22
+#define PWM0_IRQn              PWM20_IRQn
+#define PWM1_IRQn              PWM21_IRQn
+#define PWM2_IRQn              PWM22_IRQn
+#define nrfx_pwm_0_irq_handler nrfx_pwm_20_irq_handler
+#define nrfx_pwm_1_irq_handler nrfx_pwm_21_irq_handler
+#define nrfx_pwm_2_irq_handler nrfx_pwm_22_irq_handler
+#else
+#define PWM_0_ID 0
+#define PWM_1_ID 1
+#define PWM_2_ID 2
+#define PWM_3_ID 3
+#endif
 
 struct nrf52_pwm_dev_global {
     bool in_use;
@@ -57,7 +78,7 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_0)
     [0].in_use = false,
     [0].playing = false,
-    [0].drv_instance = NRFX_PWM_INSTANCE(0),
+    [0].drv_instance = NRFX_PWM_INSTANCE(PWM_0_ID),
     [0].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
@@ -74,7 +95,7 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_1)
     [1].in_use = false,
     [1].playing = false,
-    [1].drv_instance = NRFX_PWM_INSTANCE(1),
+    [1].drv_instance = NRFX_PWM_INSTANCE(PWM_1_ID),
     [1].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
@@ -91,7 +112,7 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_2)
     [2].in_use = false,
     [2].playing = false,
-    [2].drv_instance = NRFX_PWM_INSTANCE(2),
+    [2].drv_instance = NRFX_PWM_INSTANCE(PWM_2_ID),
     [2].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
@@ -108,7 +129,7 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_3)
     [3].in_use = false,
     [3].playing = false,
-    [3].drv_instance = NRFX_PWM_INSTANCE(3),
+    [3].drv_instance = NRFX_PWM_INSTANCE(PWM_3_ID),
     [3].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
