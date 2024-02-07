@@ -136,15 +136,6 @@ SystemInit(void)
 
     /* Reset HSEBYP bit */
     RCC->CR &= 0xFFFBFFFFU;
-
-    /* Configure System Clock */
-    SystemClock_Config();
-
-    /* Update SystemCoreClock global variable */
-    SystemCoreClockUpdate();
-
-    /* Relocate the vector table */
-    NVIC_Relocate();
 }
 
 /**

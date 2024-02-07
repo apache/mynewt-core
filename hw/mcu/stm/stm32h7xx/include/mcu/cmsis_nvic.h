@@ -9,14 +9,12 @@
 
 #include <stdint.h>
 
-#if defined(STM32H723xx)
- #define MCU_NUM_PERIPH_VECTORS 163
-#else
- #error "Number of peripheral vectors not defined for this MCU."
-#endif
+extern uint32_t __isr_vector_start[];
+extern uint32_t __isr_vector_end[];
 
+/* Extract number of vectors from .interrupt section size */
+#define NVIC_NUM_VECTORS      (__isr_vector_end - __isr_vector_start)
 #define NVIC_USER_IRQ_OFFSET  16
-#define NVIC_NUM_VECTORS      (16 + MCU_NUM_PERIPH_VECTORS)
 
 #include "stm32h7xx.h"
 
