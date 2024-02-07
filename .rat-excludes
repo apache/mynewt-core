@@ -265,7 +265,6 @@ startup_stm32l152xc.s
 # NUCLEO-H723ZG BSP - BSD License
 stm32h7xx_hal_conf.h
 system_stm32h7xx.c
-startup_stm32h723xx.s
 
 # STM32U5 - BSD License
 system_stm32u5xx.c
