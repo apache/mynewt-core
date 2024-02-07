@@ -23,6 +23,9 @@ syscfg.defs:
             Used internally by the newt tool.
         value: 32
 
+    MCU_PATH:
+        value: '"repos/apache-mynewt-core/hw/mcu/stm/stm32h7xx"'
+
     MCU_STM32H7:
         description: MCUs are of STM32H7xx family
         value: 1
@@ -130,3 +133,7 @@ syscfg.defs:
     MCU_FLASH_ERASED_VAL:
         description: Value read from erased flash.
         value: 0xff
+
+syscfg.vals:
+    MCU_RAM_START: 0x24000000
+    MCU_RAM_SIZE: 0x1C000
