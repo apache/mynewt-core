@@ -330,7 +330,6 @@ This product bundles parts of STM32CubeH7, which is available under the
     * hw/mcu/stm/stm32h7xx/src/clock_stm32h7xx.c
     * hw/mcu/stm/stm32h7xx/src/system_stm32h7xx.c
     * hw/bsp/nucleo-h723zg/include/bsp/stm32h7xx_hal_conf.h
-    * hw/bsp/nucleo-h723zg/src/arch/cortex_m7/startup_stm32h723xx.s
 
 This product bundles parts of stm32l1xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
