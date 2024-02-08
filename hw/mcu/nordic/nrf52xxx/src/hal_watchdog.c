@@ -54,7 +54,7 @@ hal_watchdog_init(uint32_t expire_msecs)
     }
 
     NVIC_SetVector(WDT_IRQn, (uint32_t) nrf52_wdt_irq_handler);
-    NVIC_SetPriority(WDT_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
+    NVIC_SetPriority(WDT_IRQn, 0);
     NVIC_ClearPendingIRQ(WDT_IRQn);
     NVIC_EnableIRQ(WDT_IRQn);
     NRF_WDT->RREN |= 0x1;
