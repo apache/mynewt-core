@@ -39,6 +39,9 @@
 #include "tinycbor/compilersupport_p.h"
 #include "log_cbor_reader/log_cbor_reader.h"
 
+/* Global counter to yield so that watchdog is serviced in idle task */
+int g_log_dump_count;
+
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
                      const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
@@ -98,6 +101,11 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     }
 
     console_write("\n", 1);
+    if ((++g_log_dump_count) == 100) {
+        g_log_dump_count = 0;
+        /* Sleep for 5 ticks, to yield */
+        os_time_delay(5);
+    }
     return 0;
 }
 
