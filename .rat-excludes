@@ -14,7 +14,6 @@ repository.yml
 uncrustify.cfg
 README.md
 .mailmap
-version.txt
 .style_ignored_dirs
 
 # unit tests executables
@@ -26,41 +25,8 @@ crc16.*
 
 # Nordic nRF5 SDK - BSD License.
 system_nrf51.c
-gcc_startup_nrf51.s
-nrf51.h
-nrf51_bitfields.h
-nrf51_deprecated.h
-system_nrf51.h
-gcc_startup_nrf51_split.s
 system_nrf52.c
-gcc_startup_nrf52.s
-nrf51_to_nrf52.h
-nrf52.h
-nrf52_bitfields.h
-system_nrf52.h
-gcc_startup_nrf52_split.s
-gcc_startup_nrf52840.s
-nrf51_to_nrf52840.h
-nrf52840.h
-nrf52840_bitfields.h
-nrf52840_peripherals.h
-nrf52_to_nrf52840.h
-system_nrf52840.c
-system_nrf52840.h
-compiler_abstraction.h
-nrf.h
-nrf52_name_change.h
-system_nrf51422.c
-arm_startup_nrf51.s
-arm_startup_nrf52.s
-uicr_config.h
-iar_startup_nrf51.s
-iar_startup_nrf52.s
 system_nrf9160.c
-gcc_startup_nrf9160.s
-gcc_startup_nrf9160_split.s
-nrf9160.h
-nrf9160_bitfields.h
 gcc_startup_cm0.s
 gcc_startup_cm0_split.s
 gcc_startup_cm4.s
@@ -80,7 +46,6 @@ split-nrf51dk.ld
 boot-nrf51xxac.ld
 nrf51xxac.ld
 split-nrf51dk.ld
-split-nrf51dk-16kbram.ld
 nrf51.ld
 nrf52dk_no_boot.ld
 bmd300eval_no_boot.ld
@@ -99,8 +64,6 @@ split_ada_feather_nrf52.ld
 split-microbit.ld
 ble400_no_boot.ld
 split-ble400.ld
-nrf52-thingy_no_boot.ld
-split-nrf52-thingy.ld
 nordic_pca10028_no_boot.ld
 split-nordic_pca10028.ld
 nordic_pca10028-16k_no_boot.ld
@@ -173,8 +136,6 @@ system_stm32f0xx.c
 baselibc
 
 # CMSIS-CORE - BSD License.
-core_cmFunc.h
-core_cmInstr.h
 cmsis_nvic.c
 cmsis_nvic.h
 HAL_CM0.s
@@ -183,8 +144,6 @@ HAL_CM4.s
 HAL_CM33.s
 HAL_CM7.s
 SVC_Table.s
-cmsis_armcc_V6.h
-core_cmSimd.h
 
 # microjson - BSD License.
 MSJSON_COPYING
@@ -233,12 +192,7 @@ ff.h
 ffconf.h
 integer.h
 ff.c
-unicode.c
 00history.txt
-
-#Codesoucery License
-split-nrf52840pdk.ld
-nrf52840pdk_no_boot.ld
 
 # Freescale Semiconductor License
 boot-mkw41z512.ld
@@ -351,7 +305,6 @@ startup_stm32wb55xx_cm4.s
 stm32wbxx_hal_conf.h
 
 # Microchip PIC32 SDK - BSD License
-p32mz2048efg100.h
 pic32_init_cache.S
 pic32_init_tlb_ebi_sqi.S
 cache-err-exception.S

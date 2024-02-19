@@ -232,8 +232,8 @@ This product bundles and partly derives from parts of the Nordic nRF52 SDK,
 which are available under a BSD style license.  Relevant files are:
     * hw/mcu/nordic/nrf51xxx/src/system_nrf51.c
     * hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
-    * hw/mcu/nordic/nrf5340/include/nrfx_config.h
-    * hw/mcu/nordic/nrf5340_net/include/nrfx_config.h
+    * hw/mcu/nordic/nrf5340/include/nrfx_config_nrf5340_application.h
+    * hw/mcu/nordic/nrf5340_net/include/nrfx_config_nrf5340_network.h
     * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0.s
     * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0_split.s
     * hw/mcu/nordic/nrf52xxx/src/arch/cortex_m4/gcc_startup_cm4.s
@@ -249,10 +249,6 @@ code or tables extracted from it, as desired without restriction.
 
 This product bundles parts of CMSIS-CORE, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/cmsis-core/src/ext/cmsis_armcc_V6.h
-    * hw/cmsis-core/src/ext/core_cmFunc.h
-    * hw/cmsis-core/src/ext/core_cmInstr.h
-    * hw/cmsis-core/src/ext/core_cmSimd.h
     * kernel/os/src/arch/cortex_m0/m0/HAL_CM0.s
     * kernel/os/src/arch/cortex_m0/m0/SVC_Table.s
     * kernel/os/src/arch/cortex_m3/m3/HAL_CM3.s
