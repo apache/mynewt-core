@@ -25,7 +25,7 @@ compiler.path.archive: "ar"
 compiler.path.objdump: "objdump"
 compiler.path.objsize: "size"
 compiler.path.objcopy: "objcopy"
-compiler.flags.base: [-m32, -Wall, -Werror, -ggdb, -ffunction-sections, -fdata-sections, -fno-common]
+compiler.flags.base: [-Wall, -Werror, -ggdb, -ffunction-sections, -fdata-sections, -fno-common]
 compiler.ld.resolve_circular_deps: true
 
 compiler.flags.default: [compiler.flags.base, -O1]
