@@ -24,29 +24,14 @@
 int
 istream_flush(struct in_stream *istream)
 {
-    uint8_t buf[12];
-    int rc = 1;
-    int count = 0;
+    int rc;
 
     if (istream->vft->flush) {
         rc = istream->vft->flush(istream);
     } else {
-        while (rc > 0) {
-            rc = istream_available(istream);
-            if (rc < 0) {
-                break;
-            } else if (rc == 0) {
-                rc = count;
-                break;
-            } else {
-                rc = istream_read(istream, buf, sizeof(buf));
-                if (rc > 0) {
-                    count += rc;
-                } else if (rc == 0) {
-                    rc = count;
-                    break;
-                }
-            }
+        rc = istream_available(istream);
+        if (rc > 0) {
+            rc = istream_read(istream, NULL, rc);
         }
     }
 
@@ -68,7 +53,9 @@ mem_istream_read(struct in_stream *istream, uint8_t *buf, uint32_t count)
     if (count > mem->size - mem->read_ptr) {
         count = mem->size - mem->read_ptr;
     }
-    memcpy(buf, mem->buf + mem->read_ptr, count);
+    if (buf) {
+        memcpy(buf, mem->buf + mem->read_ptr, count);
+    }
     mem->read_ptr += count;
 
     return count;
