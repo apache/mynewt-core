@@ -909,18 +909,29 @@ free_cluster_chain(cluster_t cluster)
 void
 msc_fat_view_add_dir_entry(const file_entry_t *file)
 {
-    uint32_t file_size;
     int entry_ix = root_dir_entry_count++;
 
     root_dir[entry_ix].file = file;
     root_dir[entry_ix].dir_slots = fat_dir_entry_slots(file->name);
-    root_dir[entry_ix].first_cluster = 0;
-    file_size = file->size(file);
-    if (file_size > 0) {
-        root_dir[entry_ix].first_cluster = alloc_cluster_chain(0, cluster_count_from_bytes(file_size));
+    MSC_FAT_VIEW_LOG_DEBUG("Added root entry %s\n", file->name);
+}
+
+void
+msc_fat_view_update_dir_entry(int entry_ix)
+{
+    uint32_t file_size;
+    const file_entry_t *file = root_dir[entry_ix].file;
+
+    if (!root_dir[entry_ix].deleted) {
+        root_dir[entry_ix].first_cluster = 0;
+        file_size = file->size(file);
+        if (file_size > 0) {
+            root_dir[entry_ix].first_cluster = alloc_cluster_chain(0, cluster_count_from_bytes(file_size));
+        }
+        MSC_FAT_VIEW_LOG_DEBUG("Root file %s size %d, cluster %d (%d)\n", file->name, file_size,
+                               root_dir[entry_ix].first_cluster,
+                               cluster_count_from_bytes(file_size));
     }
-    MSC_FAT_VIEW_LOG_DEBUG("%s size %d, cluster %d (%d)\n", file->name, file_size, root_dir[entry_ix].first_cluster,
-                           cluster_count_from_bytes(file_size));
 }
 
 static dir_entry_t *
@@ -1561,8 +1572,6 @@ msc_fat_view_write_normal_sector(uint32_t sector, const uint8_t *buffer)
 static void
 init_disk_data(void)
 {
-    free_clusters = (cluster_t)((SECTOR_COUNT - FAT_CLUSTER2_FIRST_SECTOR) / SECTORS_PER_CLUSTER);
-    fat_chain_count = 0;
     root_dir_entry_count = 0;
 
     if (MYNEWT_VAL(MSC_FAT_VIEW_AUTOCONFIRM)) {
@@ -1594,11 +1603,25 @@ init_disk_data(void)
     if (MYNEWT_VAL(MSC_FAT_VIEW_COREDUMP_FILES)) {
         msc_fat_view_add_coredumps();
     }
+}
+
+static void
+update_disk_data(void)
+{
+    int i;
+
+    free_clusters = (cluster_t)((SECTOR_COUNT - FAT_CLUSTER2_FIRST_SECTOR) / SECTORS_PER_CLUSTER);
+    fat_chain_count = 0;
+
     if (unallocated_write.write_status < 0) {
         write_status = unallocated_write.write_status;
         msc_fat_view_add_dir_entry(&flash_result);
     }
     unallocated_write.write_status = NOT_TOUCHED_YET;
+
+    for (i = 0; i < root_dir_entry_count; ++i) {
+        msc_fat_view_update_dir_entry(i);
+    }
 }
 
 /*
@@ -1635,7 +1658,7 @@ tud_msc_test_unit_ready_cb(uint8_t lun)
     if (medium_state == MEDIUM_RELOAD) {
         /* This path will report medium not present */
         medium_state = REPORT_MEDIUM_CHANGE;
-        init_disk_data();
+        update_disk_data();
     } else if (medium_state == REPORT_MEDIUM_CHANGE) {
         /* This will report medium change notification */
         tud_msc_set_sense(lun, SCSI_SENSE_UNIT_ATTENTION, 0x28, 0);
@@ -1797,6 +1820,7 @@ void
 msc_fat_view_pkg_init(void)
 {
     medium_state = MEDIUM_RELOAD;
+    init_disk_data();
 }
 
 #if MYNEWT_VAL(MSC_FAT_BOOT_PIN) >= 0

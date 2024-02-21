@@ -37,4 +37,6 @@ pkg.init.'(!BOOT_LOADER && TINYUSB_AUTO_START!=0)':
     msc_fat_view_pkg_init: $before:tinyusb_start
 
 pkg.init.'!BOOT_LOADER && MSC_FAT_VIEW_COREDUMP_FILES':
-    msc_fat_view_coredump_pkg_init: $before:msc_fat_view_pkg_init
+    msc_fat_view_coredump_pkg_init:
+        - $after:msc_fat_view_pkg_init
+        - $before:tinyusb_start
