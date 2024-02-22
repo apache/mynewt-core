@@ -41,6 +41,6 @@ pkg.source_dirs:
 repository.tinyusb:
     type: github
     branch: master
-    vers: 0.15.0-commit
+    vers: 0f3d28593d583278e613eff20c723eb9c1f0461c-commit
     user: hathach
     repo: tinyusb
