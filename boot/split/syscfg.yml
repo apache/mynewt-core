@@ -18,7 +18,15 @@
 #
 
 syscfg.defs:
+    SPLIT_CONFIG_SUPPORT:
+        description: >
+            Enable use of sys/config in split code.
+        value: 0
+
     SPLIT_APP_SYSINIT_STAGE:
         description: >
             Sysinit stage for split image functionality.
         value: 500
+
+syscfg.defs.'(CONFIG_NFFS==1||CONFIG_LITTLEFS==1||CONFIG_FCB==1||CONFIG_FCB2==1)':
+    SPLIT_CONFIG_SUPPORT: 1

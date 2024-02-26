@@ -48,12 +48,14 @@ static struct scfg_group split_scfg = {
 void
 split_app_init(void)
 {
-    int rc;
+    int rc = 0;
 
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    rc = scfg_register(&split_scfg, "split");
+    if (MYNEWT_VAL(SPLIT_CONFIG_SUPPORT)) {
+        rc = scfg_register(&split_scfg, "split");
+    }
     assert(rc == 0);
 }
 
@@ -124,9 +126,11 @@ split_write_split(split_mode_t split_mode)
         return rc;
     }
 
-    rc = scfg_save_val(&split_scfg, &split_mode_cur);
-    if (rc != 0) {
-        return rc;
+    if (MYNEWT_VAL(SPLIT_CONFIG_SUPPORT)) {
+        rc = scfg_save_val(&split_scfg, &split_mode_cur);
+        if (rc != 0) {
+            return rc;
+        }
     }
 
     return 0;
