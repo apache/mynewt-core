@@ -29,6 +29,7 @@ hw/bsp/nucleo-f413zh/include/bsp/stm32f4xx_hal_conf.h
 hw/bsp/nucleo-f439zi/include/bsp/stm32f4xx_hal_conf.h
 hw/bsp/nucleo-f746zg/include/bsp/stm32f7xx_hal_conf.h
 hw/bsp/nucleo-f767zi/include/bsp/stm32f7xx_hal_conf.h
+hw/bsp/nucleo-g0b1re/include/bsp/stm32g0xx_hal_conf.h
 hw/bsp/nucleo-l073rz/include/bsp/stm32l0xx_hal_conf.h
 hw/bsp/nucleo-l476rg/include/bsp/stm32l4xx_hal_conf.h
 hw/bsp/olimex-p103/include/bsp/stm32f1xx_hal_conf.h
@@ -42,6 +43,7 @@ hw/bsp/stm32f4discovery/include/bsp/stm32f4xx_hal_conf.h
 hw/bsp/stm32f7discovery/include/bsp/stm32f7xx_hal_conf.h
 hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
 hw/bsp/nucleo-u575zi-q/include/bsp/stm32u5xx_hal_conf.h
+hw/mcu/stm/stm32g0xx/src/system_stm32g0xx.c
 hw/mcu/stm/stm32u5xx/src/system_stm32u5xx.c
 
 hw/mcu/stm/stm32_common/src/stm32_driver_mod_i2c_v1.c

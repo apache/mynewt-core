@@ -300,6 +300,11 @@ startup_stm32f103xb.s
 # NUCLEO-F411RE BSP - BSD License
 startup_STM32F411.s
 
+# NUCLEO-G0B1RE BSP - BSD License
+stm32g0xx_hal_conf.h
+system_stm32g0xx.c
+clock_stm32g0xx.c
+
 # NUCLEO-WB55 BSP - BSD License
 startup_stm32wb55xx_cm4.s
 stm32wbxx_hal_conf.h
