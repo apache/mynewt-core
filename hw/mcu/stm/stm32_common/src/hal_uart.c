@@ -362,56 +362,49 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
     uint32_t isr;
     struct hal_uart_irq *ui = NULL;
 
-    switch (irqn) {
-    case USART1_IRQn:
+    switch ((uint32_t)uart->u_regs) {
+    case USART1_BASE:
         isr = (uint32_t)&uart_irq1;
         ui = &uart_irqs[0];
         break;
 #ifdef USART2_BASE
-    case USART2_IRQn:
+    case USART2_BASE:
         isr = (uint32_t)&uart_irq2;
         ui = &uart_irqs[1];
         break;
 #endif
 #ifdef USART3_BASE
-  #if !MYNEWT_VAL(MCU_STM32F0)
-    case USART3_IRQn:
+    case USART3_BASE:
         isr = (uint32_t)&uart_irq3;
         ui = &uart_irqs[2];
         break;
-  #else
-    case USART3_4_IRQn:
-        isr = (uint32_t)&uart_irq3;
-        ui = &uart_irqs[2];
-        break;
-  #endif
 #endif
 #ifdef UART4_BASE
-    case UART4_IRQn:
+    case UART4_BASE:
         isr = (uint32_t)&uart_irq4;
         ui = &uart_irqs[3];
         break;
 #endif
 #ifdef UART5_BASE
-    case UART5_IRQn:
+    case UART5_BASE:
         isr = (uint32_t)&uart_irq5;
         ui = &uart_irqs[4];
         break;
 #endif
 #ifdef USART6_BASE
-    case USART6_IRQn:
+    case USART6_BASE:
         isr = (uint32_t)&uart_irq6;
         ui = &uart_irqs[5];
         break;
 #endif
 #ifdef UART7_BASE
-    case UART7_IRQn:
+    case UART7_BASE:
         isr = (uint32_t)&uart_irq7;
         ui = &uart_irqs[6];
         break;
 #endif
 #ifdef UART8_BASE
-    case UART8_IRQn:
+    case UART8_BASE:
         isr = (uint32_t)&uart_irq8;
         ui = &uart_irqs[7];
         break;
