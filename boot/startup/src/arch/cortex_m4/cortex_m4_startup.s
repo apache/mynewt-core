@@ -40,10 +40,10 @@ Reset_Handler:
 
 .L_copy_loop:
     subs    r2, #4
-    ittt    gt
-    ldrgt   r0, [r1, r2]
-    strgt   r0, [r3, r2]
-    bgt	.L_copy_loop
+    ittt    ge
+    ldrge   r0, [r1, r2]
+    strge   r0, [r3, r2]
+    bge	.L_copy_loop
 
     b   .L_for_each_copy_region
 
@@ -60,9 +60,9 @@ Reset_Handler:
 
 .L_zero_loop:
     subs    r2, #4
-    itt     gt
-    strgt   r0, [r1, r2]
-    bgt     .L_zero_loop
+    itt     ge
+    strge   r0, [r1, r2]
+    bge     .L_zero_loop
 
     b       .L_for_each_zero_region
 .L_zero_table_done:
