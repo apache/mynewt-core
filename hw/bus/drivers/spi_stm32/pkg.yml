@@ -42,6 +42,9 @@ pkg.deps.MCU_STM32F4:
 pkg.deps.MCU_STM32F7:
     - hw/bus/drivers/spi_stm32/stm32f7xx
 
+pkg.deps.MCU_STM32G0:
+    - hw/bus/drivers/spi_stm32/stm32g0xx
+
 pkg.deps.MCU_STM32G4:
     - hw/bus/drivers/spi_stm32/stm32g4xx
 
