@@ -46,6 +46,8 @@ pkg.deps.'MCU_TARGET == "nRF5340_APP"':
     - "@apache-mynewt-core/hw/usb/tinyusb/nrf53"
 pkg.deps.MCU_STM32F4:
     - "@apache-mynewt-core/hw/usb/tinyusb/synopsys"
+pkg.deps.MCU_STM32H7:
+    - "@apache-mynewt-core/hw/usb/tinyusb/synopsys"
 pkg.deps.MCU_STM32F7:
     - "@apache-mynewt-core/hw/usb/tinyusb/synopsys"
 pkg.deps.MCU_STM32L4:
