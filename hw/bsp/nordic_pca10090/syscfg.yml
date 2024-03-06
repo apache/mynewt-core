@@ -28,6 +28,10 @@ syscfg.defs:
         value: 0
 
 syscfg.vals:
+    MYNEWT_DOWNLOADER: nrfjprog
+    JLINK_TARGET: NRF9160_XXAA
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x0
+
     # Enable nRF9160 MCU and common startup code
     MCU_TARGET: nRF9160
     MCU_COMMON_STARTUP: 1

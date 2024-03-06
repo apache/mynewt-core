@@ -39,6 +39,7 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf91xx"
     - "@apache-mynewt-core/libc"
+    - "@apache-mynewt-core/hw/scripts"
 
 pkg.deps.UARTBB_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
