@@ -56,7 +56,7 @@ void stm32_periph_create(void);
 #define STM32_HAL_TIMER_TIM4_IRQ    TIM4_IRQn
 #endif
 #ifndef STM32_HAL_TIMER_TIM6_IRQ
-#define STM32_HAL_TIMER_TIM6_IRQ    TIM6_IRQn
+#define STM32_HAL_TIMER_TIM6_IRQ    TIM6_DAC_IRQn
 #endif
 #ifndef STM32_HAL_TIMER_TIM7_IRQ
 #define STM32_HAL_TIMER_TIM7_IRQ    TIM7_IRQn
