@@ -100,7 +100,7 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     stlink_load
     ;;
   *)
-    >&2 echo "Unknown downlaoder $MYNEWT_VAL_MYNEWT_DOWNLOADER"
+    >&2 echo "Unknown downloader $MYNEWT_VAL_MYNEWT_DOWNLOADER"
     exit 1
     ;;
 esac
