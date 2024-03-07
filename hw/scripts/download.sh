@@ -29,6 +29,13 @@
 #  - FLASH_OFFSET contains the flash offset to download to
 #  - BOOT_LOADER is set if downloading a bootloader
 
+check_downloader() {
+  if ! command -v $1 &> /dev/null; then
+    >&2 echo "$1 not found."
+    exit 1
+  fi
+}
+
 if [ "$MFG_IMAGE" ]; then
   if [ -z "$MYNEWT_VAL_MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET" ] ; then
     >&2 echo "Syscfg value MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET not set"
@@ -39,11 +46,13 @@ fi
 
 case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
   "ezflashcli")
+    check_downloader ezFlashCLI
     . $CORE_PATH/hw/scripts/ezflashcli.sh
     common_file_to_load
     ezflashcli_load
     ;;
   "jlink")
+    check_downloader JLinkExe
     . $CORE_PATH/hw/scripts/jlink.sh
     if [ -z "${MYNEWT_VAL_JLINK_TARGET}" ] ; then
       >&2 echo -e "\n\nSyscfg value MYNEWT_DOWNLOADER set to 'jlink' but JLINK_TARGET not set in syscfg."
@@ -54,11 +63,13 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     jlink_load
     ;;
   "nrfjprog")
+    check_downloader nrfjprog
     . $CORE_PATH/hw/scripts/nrfjprog.sh
     common_file_to_load
     nrfjprog_load
     ;;
   "openocd")
+    check_downloader openocd
     . $CORE_PATH/hw/scripts/openocd.sh
     if [ -n "${MYNEWT_VAL_MYNEWT_DOWNLOADER_OPENOCD_INTERFACE}" ] ; then
       CFG="-f ${MYNEWT_VAL_MYNEWT_DOWNLOADER_OPENOCD_INTERFACE}"
@@ -79,6 +90,7 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     openocd_reset_run
     ;;
   "pyocd")
+    check_downloader pyocd
     . $CORE_PATH/hw/scripts/pyocd.sh
     if [ -z "${MYNEWT_VAL_PYOCD_TARGET}" ] ; then
       >&2 echo -e "\n\nSyscfg value MYNEWT_DOWNLOADER set to 'pyocd' but PYOCD_TARGET not set in syscfg."
@@ -90,11 +102,13 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     pyocd_load
     ;;
   "stflash")
+    check_downloader st-flash
     . $CORE_PATH/hw/scripts/stlink.sh
     common_file_to_load
     stlink_load
     ;;
   "stm32_programmer_cli")
+    check_downloader STM32_Programmer_CLI
     . $CORE_PATH/hw/scripts/stm32_programmer.sh
     common_file_to_load
     stlink_load
