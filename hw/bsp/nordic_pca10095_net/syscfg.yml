@@ -31,7 +31,7 @@ syscfg.defs:
         value: 0
 
 syscfg.vals:
-    MYNEWT_DOWNLOADER: jlink
+    MYNEWT_DOWNLOADER: nrfjprog
     JLINK_TARGET: NRF5340_XXAA_NET
     NRFJPROG_COPROCESSOR: CP_NETWORK
     # Set default pins for peripherals

@@ -62,7 +62,7 @@ syscfg.vals:
     BOOT_SERIAL_DETECT_PIN: 13  # Button 1
 
     # Flasher parameters
-    MYNEWT_DOWNLOADER: jlink
+    MYNEWT_DOWNLOADER: nrfjprog
     MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x0
     PYOCD_TARGET: nrf52
     JLINK_TARGET: nRF52832_xxAA
