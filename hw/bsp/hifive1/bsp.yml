@@ -21,7 +21,7 @@ bsp.name: "HiFive1"
 bsp.url: https://www.sifive.com/boards/hifive1
 bsp.maker: "SiFive"
 bsp.arch: rv32imac
-bsp.compiler: compiler/riscv64
+bsp.compiler: compiler/riscv64-unknown-elf-sifive
 bsp.linkerscript:
     - "hw/bsp/hifive1/hifive1_app.ld"
     - "hw/bsp/hifive1/hifive1.ld"

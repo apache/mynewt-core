@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: compiler/riscv64
+pkg.name: compiler/riscv64-unknown-elf-sifive
 pkg.type: compiler
 pkg.description: Compiler definition for riscv64 gcc compiler.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
