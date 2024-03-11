@@ -25,11 +25,9 @@ pkg.keywords:
     - pic32
     - pic32mz
 
-pkg.deps.(UART_0 || UART_1 || UART_2 || UART_3 || UART_4 || UART_5):
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.ETH_0:
     - "@apache-mynewt-core/hw/drivers/lwip/pic32_eth"
