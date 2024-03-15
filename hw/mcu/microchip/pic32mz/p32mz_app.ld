@@ -1613,7 +1613,7 @@ SECTIONS
   {
     *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
     . = ALIGN(4) ;
-  } >kseg0_program_mem
+  }
   /*
    * Uninitialized constant global and static data (i.e., variables which will
    * always be zero).  Again, this is different from .sbss, which contains
