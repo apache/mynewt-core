@@ -1600,6 +1600,7 @@ SECTIONS
   .rodata   :
   {
     *( .gnu.linkonce.r.*)
+     INCLUDE "link_tables.ld.h"
     *(.rodata1)
     . = ALIGN(4) ;
   } >kseg0_program_mem
