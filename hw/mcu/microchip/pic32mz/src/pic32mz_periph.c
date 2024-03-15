@@ -471,7 +471,7 @@ pic32mz_periph_i2c_devs(void)
     }
 
     if (MYNEWT_VAL(I2C_4)) {
-        rc = hal_i2c_init(4, (void *)&i2c_3_cfg);
+        rc = hal_i2c_init(4, (void *)&i2c_4_cfg);
         assert(rc == 0);
     }
 }
