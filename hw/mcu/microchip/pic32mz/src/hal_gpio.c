@@ -347,6 +347,21 @@ hal_gpio_init_out(int pin, int val)
     return 0;
 }
 
+int
+hal_gpio_deinit(int pin)
+{
+    uint32_t port = GPIO_PORT(pin);
+    uint32_t mask = GPIO_MASK(pin);
+
+    /* Disable pull-up, pull-down and open drain */
+    CNPUxCLR(port) = mask;
+    CNPDxCLR(port) = mask;
+    ODCxCLR(port) = mask;
+
+    /* Configure pin direction as input */
+    TRISxSET(port) = mask;
+}
+
 void
 hal_gpio_write(int pin, int val)
 {
