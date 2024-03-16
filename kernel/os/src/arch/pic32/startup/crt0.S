@@ -633,6 +633,25 @@ __crt0_exit:
         .globl __crt0_exit
         .end _main_entry
 
+#if MYNEWT_VAL_MCU_NO_BOOTLOADER_BUILD
+        ##################################################################
+        # This is startup code for no boot loader application.
+        # This jumps from boot flash to program flash.
+        # It is not used for bootload/application build since it would
+        # generate huge image.
+        ##################################################################
+        .section .boot_reset,code
+        .align 2
+        .set reorder
+        .ent _boot_reset
+_boot_reset:
+        la      v0, _app_reset
+        jr      v0
+
+        .align 2
+        .end _boot_reset
+#endif
+
         .section .text.SystemInit,code
         .align 2
         .weak SystemInit
