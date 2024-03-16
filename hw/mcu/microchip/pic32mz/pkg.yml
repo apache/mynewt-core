@@ -28,6 +28,7 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+    - "@apache-mynewt-core/mgmt/image_header"
 
 pkg.deps.ETH_0:
     - "@apache-mynewt-core/hw/drivers/lwip/pic32_eth"

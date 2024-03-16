@@ -117,6 +117,7 @@ MEMORY
 {
   kseg1_boot_mem              : ORIGIN = 0x9FC00000, LENGTH = 0x480
   kseg1_boot_mem_4B0          : ORIGIN = 0xBFC004B0, LENGTH = 0xA50
+  kseg0_image_header_mem (r)  : ORIGIN = 0x9D000000, LENGTH = 0x20
   INCLUDE p32mz_app_mem.ld
   config_BFC0FF40             : ORIGIN = 0xBFC0FF40, LENGTH = 0x4
   config_BFC0FF44             : ORIGIN = 0xBFC0FF44, LENGTH = 0x4
@@ -695,6 +696,10 @@ SECTIONS
     KEEP(*(.boot_reset))
   } > kseg1_boot_mem
   /* Boot Sections */
+  .image_header :
+  {
+      KEEP(*(.image_header*))      /* Image header */
+  } > kseg0_image_header_mem
   .reset :
   {
     _app_reset = .;
