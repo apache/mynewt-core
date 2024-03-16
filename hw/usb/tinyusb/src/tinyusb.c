@@ -31,7 +31,7 @@
 
 #if MYNEWT_VAL(OS_SCHEDULING)
 static struct os_task usbd_task;
-static os_stack_t usbd_stack[OS_STACK_ALIGN(USBD_STACK_SIZE)];
+OS_TASK_STACK_DEFINE(usbd_stack, USBD_STACK_SIZE);
 #endif
 
 /**
