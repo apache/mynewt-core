@@ -294,14 +294,17 @@ log_find(const char *name)
     return log;
 }
 
+/* Argument for header/trailer walks */
 struct log_read_hdr_arg {
     struct log_entry_hdr *hdr;
     int read_success;
+    bool trailer_exists;
+    void *arg_trailer;
 };
 
 static int
-log_read_hdr_walk(struct log *log, struct log_offset *log_offset, const void *dptr,
-                  uint16_t len)
+log_read_hdr_trailer_walk(struct log *log, struct log_offset *log_offset,
+                          const void *dptr, uint16_t len)
 {
     struct log_read_hdr_arg *arg;
     int rc;
@@ -320,36 +323,79 @@ log_read_hdr_walk(struct log *log, struct log_offset *log_offset, const void *dp
         }
     }
 
+    if (arg->hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
+        if (log->l_process_trailer_cb) {
+            rc = log->l_process_trailer_cb(log, arg->arg_trailer, dptr, len);
+            if (!rc) {
+                arg->read_success = 1;
+                arg->trailer_exists = true;
+            } else {
+                arg->read_success = 0;
+                arg->trailer_exists = false;
+            }
+        }
+    } else {
+        arg->trailer_exists = false;
+    }
+
     /* Abort the walk; only one header needed. */
     return 1;
 }
 
 /**
- * Reads the final log entry's header from the specified log.
+ * Reads the final log entry's header and processes trailer if the flag
+ * indicates so from the specified log.
  *
  * @param log                   The log to read from.
  * @param out_hdr               On success, the last entry header gets written
- *                                  here.
+ *                              here.
+ * @param trailer_exists        Pointer to a boolean
  *
  * @return                      0 on success; nonzero on failure.
  */
-static int
-log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
+int
+log_read_last_hdr_trailer(struct log *log, struct log_entry_hdr *out_hdr,
+                          bool *trailer_exists)
 {
     struct log_read_hdr_arg arg;
+    uint8_t trailer_arg[LOG_FCB_FLAT_BUF_SIZE] = {0};
     struct log_offset log_offset = {};
+    int sr;
+    uint16_t len = 0;
 
     arg.hdr = out_hdr;
     arg.read_success = 0;
+    arg.trailer_exists = false;
+    arg.arg_trailer = trailer_arg;
 
     log_offset.lo_arg = &arg;
     log_offset.lo_ts = -1;
     log_offset.lo_index = 0;
     log_offset.lo_data_len = 0;
 
-    log_walk(log, log_read_hdr_walk, &log_offset);
+    log_walk(log, log_read_hdr_trailer_walk, &log_offset);
     if (!arg.read_success) {
         return -1;
+    }
+
+    if (trailer_exists) {
+        *trailer_exists = arg.trailer_exists;
+    }
+
+    if (arg.trailer_exists) {
+        len = log_trailer_data_len(log, out_hdr);
+        OS_ENTER_CRITICAL(sr);
+        /* If the trailer datalen is less than the size of the trailer arg
+         * buffer, we can use the buffer directly. Otherwise, we need to
+         * allocate memory for the trailer data and treat the l_trailer_arg
+         * as a pointer to the trailer.
+         */
+        if (len <= sizeof(log->l_trailer_arg)) {
+            log->l_trailer_arg = (void *)(uintptr_t)(*(uint32_t *)arg.arg_trailer);
+        } else {
+            memcpy(log->l_trailer_arg, arg.arg_trailer, len);
+        }
+        OS_EXIT_CRITICAL(sr);
     }
 
     return 0;
@@ -396,8 +442,13 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
      * monotonically increasing.
      */
     if (log->l_log->log_type == LOG_TYPE_STORAGE) {
-        rc = log_read_last_hdr(log, &hdr);
+        memset(&hdr, 0, sizeof(hdr));
+        rc = log_read_last_hdr_trailer(log, &hdr, NULL);
         if (rc == 0) {
+            /* If this is a persisted log, read the index from its most
+             * recent entry. We need to ensure the index of all subsequently
+             * written entries is monotonically increasing.
+             */
             OS_ENTER_CRITICAL(sr);
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
             if (hdr.ue_index > g_log_info.li_next_index) {
@@ -439,11 +490,66 @@ log_set_append_cb(struct log *log, log_append_cb *cb)
 uint16_t
 log_hdr_len(const struct log_entry_hdr *hdr)
 {
+    uint16_t len;
+
+    len = LOG_BASE_ENTRY_HDR_SIZE;
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
-        return LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN;
+        len += LOG_IMG_HASHLEN;
     }
 
-    return LOG_BASE_ENTRY_HDR_SIZE;
+    return len;
+}
+
+int
+log_len_in_medium(struct log *log, uint16_t len)
+{
+    if (log->l_log->log_len_in_medium) {
+        return log->l_log->log_len_in_medium(log, len);
+    }
+
+    return len;
+}
+
+uint16_t
+log_trailer_len(struct log *log, const struct log_entry_hdr *hdr)
+{
+    if (log->l_trailer_len_cb) {
+        return log->l_trailer_len_cb(log, hdr);
+    } else {
+        return 0;
+    }
+}
+
+uint16_t
+log_trailer_data_len(struct log *log, const struct log_entry_hdr *hdr)
+{
+    if (log->l_trailer_len_cb) {
+        return log->l_trailer_data_len_cb(log, hdr);
+    } else {
+        return 0;
+    }
+}
+
+int
+log_trailer_append(struct log *log, uint8_t *buf, uint16_t *buflen,
+                   void *loc, uint16_t *f_offset)
+{
+    if (log->l_trailer_append_cb) {
+        return log->l_trailer_append_cb(log, buf, buflen, loc, f_offset);
+    } else {
+        return SYS_ENOTSUP;
+    }
+}
+
+int
+log_mbuf_trailer_append(struct log *log, struct os_mbuf *om, void *loc,
+                        uint16_t f_offset)
+{
+    if (log->l_trailer_mbuf_append_cb) {
+        return log->l_trailer_mbuf_append_cb(log, om, loc, f_offset);
+    } else {
+        return SYS_ENOTSUP;
+    }
 }
 
 void
@@ -571,6 +677,10 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     }
 #endif
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    ue->ue_flags |= LOG_FLAGS_TRAILER_SUPPORT;
+#endif
+
 err:
     return (rc);
 }
@@ -600,7 +710,7 @@ int
 log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
                  void *data, uint16_t len)
 {
-    struct log_entry_hdr *hdr;
+    struct log_entry_hdr hdr;
     int rc;
 
     LOG_STATS_INC(log, writes);
@@ -610,20 +720,20 @@ log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
         goto err;
     }
 
-    hdr = (struct log_entry_hdr *)data;
-    rc = log_append_prepare(log, module, level, etype, hdr);
+    hdr = *(struct log_entry_hdr *)data;
+    rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
         LOG_STATS_INC(log, drops);
         goto err;
     }
 
-    rc = log->l_log->log_append(log, data, len + log_hdr_len(hdr));
+    rc = log->l_log->log_append(log, data, len + log_hdr_len(&hdr));
     if (rc != 0) {
         LOG_STATS_INC(log, errs);
         goto err;
     }
 
-    log_call_append_cb(log, hdr->ue_index);
+    log_call_append_cb(log, hdr.ue_index);
 
     return (0);
 err:
@@ -671,7 +781,7 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
     uint16_t hdr_len;
     int rc;
 
-    /* Remove a loyer of indirection for convenience. */
+    /* Remove a layer of indirection for convenience. */
     om = *om_ptr;
 
     LOG_STATS_INC(log, writes);
@@ -939,6 +1049,20 @@ err:
 }
 
 /**
+ * Reads entry length from the specified log.
+ *
+ * @return                      The number of bytes of entry length; 0 on failure.
+ */
+uint16_t
+log_read_entry_len(struct log *log, const void *dptr)
+{
+    if (log->l_log->log_read_entry_len) {
+        return log->l_log->log_read_entry_len(log, dptr);
+    }
+    return 0;
+}
+
+/**
  * Reads from the specified log.
  *
  * @return                      The number of bytes read; 0 on failure.
@@ -957,7 +1081,7 @@ log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
 int
 log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
 {
-    int bytes_read;
+    int bytes_read = 0;
 
     bytes_read = log_read(log, dptr, hdr, 0, LOG_BASE_ENTRY_HDR_SIZE);
     if (bytes_read != LOG_BASE_ENTRY_HDR_SIZE) {
@@ -1024,6 +1148,8 @@ int
 log_flush(struct log *log)
 {
     int rc;
+
+    log->l_trailer_arg = (uintptr_t)0;
 
     rc = log->l_log->log_flush(log);
     if (rc != 0) {

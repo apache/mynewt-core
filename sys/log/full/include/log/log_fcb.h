@@ -183,7 +183,7 @@ const struct log_fcb_bmark *
 log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index, int *min_diff);
 
 /**
- * Inserts a bookmark into the provided log.
+ * @brief Inserts a bookmark into the provided log.
  *
  * @param fcb_log               The log to insert a bookmark into.
  * @param entry                 The entry the bookmark should point to.
