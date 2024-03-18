@@ -25,6 +25,7 @@ static int
 log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
                       const void *body, int body_len)
 {
+    int rc = 0;
     struct cbmem *cbmem;
     struct cbmem_scat_gath sg = {
         .entries = (struct cbmem_scat_gath_entry[]) {
@@ -40,21 +41,43 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
                 .flat_buf = body,
                 .flat_len = body_len,
             },
+            {
+                .flat_buf = NULL,
+                .flat_len = 0,
+            },
+            {
+                .flat_buf = &log->l_num_entries,
+                .flat_len = 0
+            },
         },
-        .count = 3,
+        .count = 5,
     };
 
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         sg.entries[1].flat_len = LOG_IMG_HASHLEN;
     }
+
+    if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+        sg.entries[3].flat_buf = &(struct log_tlv) {LOG_TLV_NUM_ENTRIES, LOG_NUM_ENTRIES_SIZE};
+        sg.entries[3].flat_len = sizeof(struct log_tlv);
+        sg.entries[4].flat_len = LOG_NUM_ENTRIES_SIZE;
+#endif
+    }
+
     cbmem = (struct cbmem *) log->l_arg;
 
-    return cbmem_append_scat_gath(cbmem, &sg);
+    rc = cbmem_append_scat_gath(cbmem, &sg);
+
+    /* Increment after the log entries are written */
+    log->l_num_entries++;
+
+    return rc;
 }
 
 static int
 log_cbmem_append(struct log *log, void *buf, int len)
-{   
+{
     uint16_t hdr_len;
 
     hdr_len = log_hdr_len(buf);
@@ -67,6 +90,7 @@ static int
 log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
                            struct os_mbuf *om)
 {
+    int rc = 0;
     struct cbmem *cbmem;
     struct cbmem_scat_gath sg = {
         .entries = (struct cbmem_scat_gath_entry[]) {
@@ -81,16 +105,39 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
             {
                 .om = om,
             },
+            {
+                .flat_buf = NULL,
+                .flat_len = 0,
+            },
+            {
+                .flat_buf = &log->l_num_entries,
+                .flat_len = 0
+            },
         },
-        .count = 3,
+        .count = 5,
     };
 
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         sg.entries[1].flat_len = LOG_IMG_HASHLEN;
     }
+
+    if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+        sg.entries[3].flat_buf = &{LOG_TLV_NUM_ENTRIES, LOG_NUM_ENTRIES_SIZE};
+        sg.entries[3].flat_len = sizeof(struct log_tlv);
+        sg.entries[4].flat_len = LOG_NUM_ENTRIES_SIZE;
+        log->l_num_entries++;
+#endif
+    }
+
     cbmem = (struct cbmem *) log->l_arg;
 
-    return cbmem_append_scat_gath(cbmem, &sg);
+    rc = cbmem_append_scat_gath(cbmem, &sg);
+
+    /* Increment after the log entries are written */
+    log->l_num_entries++;
+
+    return rc;
 }
 
 static int
@@ -110,30 +157,40 @@ log_cbmem_append_mbuf(struct log *log, struct os_mbuf *om)
      * We do a pull up twice, once so that the base header is
      * contiguous, so that we read the flags correctly, second
      * time is so that we account for the image hash as well.
-     */    
+     */
 
     os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
-   
-    /* 
+
+    /*
      * We can just pass the om->om_data ptr as the log_entry_hdr
      * because the log_entry_hdr is a packed struct and does not
      * cause any alignment or padding issues
-     */  
+     */
     hdr_len = log_hdr_len((struct log_entry_hdr *)om->om_data);
-    
+
     os_mbuf_pullup(om, hdr_len);
-    
+
     memcpy(&hdr, om->om_data, hdr_len);
 
     os_mbuf_adj(om, hdr_len);
 
     rc = log_cbmem_append_mbuf_body(log, &hdr, om);
-    
+
     os_mbuf_prepend(om, hdr_len);
 
     memcpy(om->om_data, &hdr, hdr_len);
 
     return rc;
+}
+
+static uint16_t
+log_cbmem_read_entry_len(struct log *log, const void *dptr)
+{
+    struct cbmem_entry_hdr *hdr;
+
+    hdr = (struct cbmem_entry_hdr *) dptr;
+
+    return hdr->ceh_len;
 }
 
 static int
@@ -264,6 +321,7 @@ log_cbmem_storage_info(struct log *log, struct log_storage_info *info)
 const struct log_handler log_cbmem_handler = {
     .log_type = LOG_TYPE_MEMORY,
     .log_read = log_cbmem_read,
+    .log_read_entry_len = log_cbmem_read_entry_len,
     .log_read_mbuf = log_cbmem_read_mbuf,
     .log_append = log_cbmem_append,
     .log_append_body = log_cbmem_append_body,

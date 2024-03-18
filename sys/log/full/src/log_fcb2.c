@@ -202,14 +202,14 @@ err:
  * to satisfy the flash hardware's write alignment restrictions.
  */
 static int
-log_fcb2_hdr_body_bytes(uint8_t align, uint8_t hdr_len)
+log_fcb2_hdr_body_bytes(uint16_t align, uint16_t len)
 {
-    uint8_t mod;
+    uint16_t mod;
 
     /* Assume power-of-two alignment for faster modulo calculation. */
     assert((align & (align - 1)) == 0);
 
-    mod = hdr_len & (align - 1);
+    mod = len & (align - 1);
     if (mod == 0) {
         return 0;
     }
@@ -221,18 +221,21 @@ static int
 log_fcb2_append_body(struct log *log, const struct log_entry_hdr *hdr,
                      const void *body, int body_len)
 {
-    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN +
-                LOG_FCB2_MAX_ALIGN - 1];
+    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN + sizeof(struct log_tlv)
+                + LOG_NUM_ENTRIES_SIZE + LOG_FCB2_MAX_ALIGN * 2 - 1];
     struct fcb2_entry loc;
     const uint8_t *u8p;
     int hdr_alignment;
-    int chunk_sz;
+    int trailer_alignment = 0;
+    int chunk_sz = 0;
     int rc;
     uint16_t hdr_len;
+    uint16_t trailer_len;
 
     hdr_len = log_hdr_len(hdr);
+    trailer_len = log_trailer_len(hdr);
 
-    rc = log_fcb2_start_append(log, hdr_len + body_len, &loc);
+    rc = log_fcb2_start_append(log, hdr_len + body_len + trailer_len, &loc);
     if (rc != 0) {
         return rc;
     }
@@ -271,11 +274,67 @@ log_fcb2_append_body(struct log *log, const struct log_entry_hdr *hdr,
 
     u8p += hdr_alignment;
     body_len -= hdr_alignment;
+    if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
+        memset(buf, 0, sizeof(buf));
+        /* Calculate trailer alignment */
+        trailer_alignment = log_fcb2_hdr_body_bytes(loc.fe_range->fsr_align, chunk_sz + body_len);
+        if (trailer_alignment > trailer_len) {
+            chunk_sz += trailer_len;
+        } else {
+            chunk_sz += trailer_alignment;
+        }
 
-    if (body_len > 0) {
-        rc = fcb2_write(&loc, chunk_sz, u8p, body_len);
-        if (rc != 0) {
-            return rc;
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+        struct log_tlv tlv;
+        uint16_t offset = 0;
+        uint16_t padding = 0;
+
+        if (body_len > 0) {
+            padding = trailer_alignment ? loc.fe_range->fsr_align - trailer_alignment : 0;
+            rc = fcb2_write(&loc, chunk_sz, u8p, body_len - padding);
+            if (rc != 0) {
+                return rc;
+            }
+
+            chunk_sz += body_len - padding;
+
+            u8p = u8p + body_len - padding;
+            memcpy(buf, u8p, padding);
+            offset = padding;
+            u8p = (void *)&tlv;
+            tlv.tag = LOG_TLV_NUM_ENTRIES;
+            tlv.len = LOG_NUM_ENTRIES_SIZE;
+            memcpy(buf + offset, u8p, sizeof(struct log_tlv));
+            offset += sizeof(struct log_tlv);
+
+            memcpy(buf + offset, &log->l_num_entries, LOG_NUM_ENTRIES_SIZE);
+            offset += LOG_NUM_ENTRIES_SIZE;
+
+            rc = fcb2_write(&loc, chunk_sz, buf, offset);
+            if (rc != 0) {
+                return rc;
+            }
+
+            log->l_num_entries++;
+
+            chunk_sz += offset;
+        }
+#else
+        if (body_len > 0) {
+            rc = fcb2_write(&loc, chunk_sz, u8p, body_len);
+            if (rc != 0) {
+                return rc;
+            }
+            chunk_sz += body_len;
+        }
+#endif
+    } else {
+        if (body_len > 0) {
+            rc = fcb2_write(&loc, chunk_sz, u8p, body_len);
+            if (rc != 0) {
+                return rc;
+            }
+            chunk_sz += body_len;
         }
     }
 
@@ -313,7 +372,7 @@ log_fcb2_write_mbuf(struct fcb2_entry *loc, struct os_mbuf *om, int off)
         om = SLIST_NEXT(om, om_next);
     }
 
-    return 0;
+    return off;
 }
 
 static int
@@ -336,7 +395,7 @@ log_fcb2_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
     }
 #endif
 
-    len = log_hdr_len(hdr) + os_mbuf_len(om);
+    len = log_hdr_len(hdr) + os_mbuf_len(om) + log_trailer_len(hdr);
     rc = log_fcb2_start_append(log, len, &loc);
     if (rc != 0) {
         return rc;
@@ -356,9 +415,33 @@ log_fcb2_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         }
         len += LOG_IMG_HASHLEN;
     }
-    rc = log_fcb2_write_mbuf(&loc, om, len);
-    if (rc != 0) {
-        return rc;
+
+    len = log_fcb2_write_mbuf(&loc, om, len);
+    if (len < 0) {
+        return len;
+    }
+
+    if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+        struct log_tlv tlv;
+        tlv.tag = LOG_TLV_NUM_ENTRIES;
+        tlv.len = LOG_NUM_ENTRIES_SIZE;
+        /* Write TLV */
+        rc = fcb2_write(&loc, len, &tlv, sizeof(struct log_tlv));
+        if (rc != 0) {
+            return rc;
+        }
+        len += sizeof(struct log_tlv);
+        /* Write LOG_NUM_ENTRIES_SIZE bytes */
+        rc = fcb2_write(&loc, len,
+                        &hdr->ue_num_entries, LOG_NUM_ENTRIES_SIZE);
+        if (rc != 0) {
+            return rc;
+        }
+        len += LOG_NUM_ENTRIES_SIZE;
+        loc.fe_data_off += len;
+        log->l_num_entries++;
+#endif
     }
 
     rc = fcb2_append_finish(&loc);
@@ -409,6 +492,20 @@ log_fcb2_append_mbuf(struct log *log, struct os_mbuf *om)
     memcpy(om->om_data, &hdr, hdr_len);
 
     return rc;
+}
+
+static uint16_t
+log_fcb2_read_entry_len(struct log *log, const void *dptr)
+{
+    struct fcb2_entry *loc;
+
+    loc = (struct fcb2_entry *)dptr;
+
+    if (!log || !dptr) {
+        return 0;
+    }
+
+    return loc->fe_data_len;
 }
 
 static int
@@ -895,6 +992,7 @@ const struct log_handler log_fcb_handler = {
     .log_append_mbuf_body = log_fcb2_append_mbuf_body,
     .log_walk = log_fcb2_walk,
     .log_flush = log_fcb2_flush,
+    .log_read_entry_len = log_fcb2_read_entry_len,
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     .log_storage_info = log_fcb2_storage_info,
 #endif

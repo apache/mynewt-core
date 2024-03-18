@@ -38,6 +38,18 @@ syscfg.defs:
             1 - enable.
         value: 0
 
+    LOG_FLAGS_TLV_SUPPORT:
+        description: >
+            Enable logging TLV with custom data types in every log entry
+            0 - disable; 1 - enable.
+        value: 0
+
+    LOG_TLV_NUM_ENTRIES:
+        description: >
+            Enable logging number entries using TLV in every log entry, max number is 2^32
+            0 - disable; 1 - enable.
+        value: 0
+
     LOG_FCB:
         description: 'Support logging to FCB.'
         value: 0
