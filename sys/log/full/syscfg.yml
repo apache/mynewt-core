@@ -63,6 +63,12 @@ syscfg.defs:
             1 - enable.
         value: 0
 
+    LOG_FLAGS_TRAILER_SUPPORT:
+        description: >
+            Enable logging trailer with custom data types in every log entry
+            0 - disable; 1 - enable.
+        value: 0
+
     LOG_FCB:
         description: 'Support logging to FCB.'
         value: 0
@@ -196,6 +202,10 @@ syscfg.defs:
         restrictions:
             - LOG_FCB_BOOKMARKS
             - LOG_FCB
+    LOG_MAX_TRAILER_LEN:
+        description: >
+            Maximum length of trailer that can be appended to a log entry
+        value: "LF_MAX_ALIGN * 3"
 
 syscfg.vals.CONSOLE_TICKS:
     LOG_CONSOLE_PRETTY_WITH_TIMESTAMP: 0

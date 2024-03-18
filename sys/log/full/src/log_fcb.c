@@ -27,9 +27,6 @@
 #include "fcb/fcb.h"
 #include "log/log.h"
 
-/* Assume the flash alignment requirement is no stricter than 32. */
-#define LOG_FCB_MAX_ALIGN   32
-
 static int log_fcb_rtr_erase(struct log *log);
 
 static int
@@ -324,20 +321,33 @@ err:
     return (rc);
 }
 
-/**
- * Calculates the number of message body bytes that should be included after
- * the entry header in the first write.  Inclusion of body bytes is necessary
- * to satisfy the flash hardware's write alignment restrictions.
- */
 static int
-log_fcb_hdr_body_bytes(uint8_t align, uint8_t hdr_len)
+log_fcb_write_mbuf(struct fcb_entry *loc, struct os_mbuf *om)
 {
-    uint8_t mod;
+    int rc;
+
+    while (om) {
+        rc = flash_area_write(loc->fe_area, loc->fe_data_off, om->om_data,
+                              om->om_len);
+        if (rc != 0) {
+            return SYS_EIO;
+        }
+        loc->fe_data_off += om->om_len;
+        om = SLIST_NEXT(om, om_next);
+    }
+
+    return 0;
+}
+
+static int
+log_fcb_hdr_trailer_bytes(uint16_t align, uint16_t len)
+{
+    uint16_t mod;
 
     /* Assume power-of-two alignment for faster modulo calculation. */
     assert((align & (align - 1)) == 0);
 
-    mod = hdr_len & (align - 1);
+    mod = len & (align - 1);
     if (mod == 0) {
         return 0;
     }
@@ -349,19 +359,28 @@ static int
 log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
                     const void *body, int body_len)
 {
-    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN +
-                LOG_FCB_MAX_ALIGN - 1];
+    uint8_t buf[LOG_FCB_FLAT_BUF_SIZE] = {0};
     struct fcb *fcb;
     struct fcb_entry loc = {};
     struct fcb_log *fcb_log;
     const uint8_t *u8p;
     int hdr_alignment;
-    int chunk_sz;
+    int chunk_sz = 0;
     int rc;
     uint16_t hdr_len;
+    uint16_t trailer_len = 0;
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    int trailer_alignment = 0;
+#endif
+    uint16_t padding = 0;
+    uint16_t offset = 0;
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
+
+    (void)offset;
+    (void)padding;
+    (void)trailer_len;
 
     if (fcb->f_align > LOG_FCB_MAX_ALIGN) {
         return SYS_ENOTSUP;
@@ -369,7 +388,11 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
 
     hdr_len = log_hdr_len(hdr);
 
-    rc = log_fcb_start_append(log, hdr_len + body_len, &loc);
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    trailer_len = log_trailer_len(log, hdr);
+#endif
+
+    rc = log_fcb_start_append(log, hdr_len + body_len + trailer_len, &loc);
     if (rc != 0) {
         return rc;
     }
@@ -379,7 +402,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
      * the flash alignment). If the hash flag is set, we have to account for
      * appending the hash right after the header.
      */
-    hdr_alignment = log_fcb_hdr_body_bytes(fcb->f_align, hdr_len);
+    hdr_alignment = log_fcb_hdr_trailer_bytes(fcb->f_align, hdr_len);
     if (hdr_alignment > body_len) {
         chunk_sz = hdr_len + body_len;
     } else {
@@ -397,6 +420,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         memcpy(buf + LOG_BASE_ENTRY_HDR_SIZE, hdr->ue_imghash, LOG_IMG_HASHLEN);
     }
+
     memcpy(buf + hdr_len, u8p, hdr_alignment);
 
     rc = fcb_write(fcb, &loc, buf, chunk_sz);
@@ -409,10 +433,52 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     u8p += hdr_alignment;
     body_len -= hdr_alignment;
 
-    if (body_len > 0) {
-        rc = fcb_write(fcb, &loc, u8p, body_len);
-        if (rc != 0) {
-            return rc;
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    if (hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
+        /* This writes padding + trailer_alignment */
+
+        /* Calculate trailer alignment */
+        trailer_alignment = log_fcb_hdr_trailer_bytes(fcb->f_align, chunk_sz + body_len);
+
+        if (body_len > 0) {
+            padding = trailer_alignment ? fcb->f_align - trailer_alignment : 0;
+            /* Writes body - padding bytes */
+            rc = fcb_write(fcb, &loc, u8p, body_len - padding);
+            if (rc != 0) {
+                return rc;
+            }
+
+            u8p = u8p + body_len - padding;
+            memset(buf, 0, sizeof(buf));
+            memcpy(buf, u8p, padding);
+            offset = padding;
+            offset += trailer_alignment;
+            /* Writes the following:
+             * -----------------------------------------------------------------
+             * | body: body_len - padding from end of body | trailer_alignment |
+             * -----------------------------------------------------------------
+             */
+            rc = fcb_write(fcb, &loc, buf, offset);
+            if (rc != 0) {
+                return rc;
+            }
+
+            /* The first trailer gets appended after the padding + trailer_alignment
+             * Trailers start from updated loc.fe_data_off. Hence the offset is NULL.
+             */
+            rc = log_trailer_append(log, buf, &trailer_len, &loc, NULL);
+            if (rc && rc != SYS_ENOTSUP) {
+                return rc;
+            }
+        }
+    } else
+#endif
+    {
+        if (body_len > 0) {
+            rc = fcb_write(fcb, &loc, u8p, body_len);
+            if (rc != 0) {
+                return rc;
+            }
         }
     }
 
@@ -436,25 +502,6 @@ log_fcb_append(struct log *log, void *buf, int len)
 }
 
 static int
-log_fcb_write_mbuf(struct fcb_entry *loc, struct os_mbuf *om)
-{
-    int rc;
-
-    while (om) {
-        rc = flash_area_write(loc->fe_area, loc->fe_data_off, om->om_data,
-                              om->om_len);
-        if (rc != 0) {
-            return SYS_EIO;
-        }
-
-        loc->fe_data_off += om->om_len;
-        om = SLIST_NEXT(om, om_next);
-    }
-
-    return 0;
-}
-
-static int
 log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
                          struct os_mbuf *om)
 {
@@ -474,7 +521,11 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         return SYS_ENOTSUP;
     }
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    len = log_hdr_len(hdr) + os_mbuf_len(om) + log_trailer_len(log, hdr);
+#else
     len = log_hdr_len(hdr) + os_mbuf_len(om);
+#endif
     rc = log_fcb_start_append(log, len, &loc);
     if (rc != 0) {
         return rc;
@@ -496,9 +547,24 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         }
         loc.fe_data_off += LOG_IMG_HASHLEN;
     }
-    rc = log_fcb_write_mbuf(&loc, om);
-    if (rc != 0) {
-        return rc;
+
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    if (hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
+        /* The trailer gets appended after the padding + trailer_alignment
+         * Trailers start from updated loc.fe_data_off. Write everything
+         * together
+         */
+        rc = log_mbuf_trailer_append(log, om, &loc, 0);
+        if (rc && rc != SYS_ENOTSUP) {
+            return rc;
+        }
+    } else
+#endif
+    {
+        rc = log_fcb_write_mbuf(&loc, om);
+        if (rc != 0) {
+            return rc;
+        }
     }
 
     rc = fcb_append_finish(fcb, &loc);
@@ -549,6 +615,20 @@ log_fcb_append_mbuf(struct log *log, struct os_mbuf *om)
     memcpy(om->om_data, &hdr, hdr_len);
 
     return rc;
+}
+
+static uint16_t
+log_fcb_read_entry_len(struct log *log, const void *dptr)
+{
+    struct fcb_entry *loc;
+
+    loc = (struct fcb_entry *)dptr;
+
+    if (!log || !dptr) {
+        return 0;
+    }
+
+    return loc->fe_data_len;
 }
 
 static int
@@ -863,6 +943,18 @@ log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset,
 }
 
 static int
+log_fcb_len_in_medium(struct log *log, uint16_t len)
+{
+    struct fcb_log *fl;
+    struct fcb *fcb;
+
+    fl = (struct fcb_log *)log->l_arg;
+    fcb = &fl->fl_fcb;
+
+    return fcb_len_in_flash(fcb, len);
+}
+
+static int
 log_fcb_set_watermark(struct log *log, uint32_t index)
 {
     int rc;
@@ -909,8 +1001,8 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
                    struct fcb *dst_fcb)
 {
     struct log_entry_hdr ueh;
-    char data[MYNEWT_VAL(LOG_FCB_COPY_MAX_ENTRY_LEN) + LOG_BASE_ENTRY_HDR_SIZE +
-              LOG_IMG_HASHLEN];
+    char data[MYNEWT_VAL(LOG_FCB_COPY_MAX_ENTRY_LEN) +
+              LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN];
     uint16_t hdr_len;
     int dlen;
     int rc;
@@ -924,7 +1016,6 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     }
 
     hdr_len = log_hdr_len(&ueh);
-
     dlen = min(entry->fe_data_len, MYNEWT_VAL(LOG_FCB_COPY_MAX_ENTRY_LEN) +
                hdr_len);
 
@@ -1057,23 +1148,25 @@ err:
 }
 
 const struct log_handler log_fcb_handler = {
-    .log_type             = LOG_TYPE_STORAGE,
-    .log_read             = log_fcb_read,
-    .log_read_mbuf        = log_fcb_read_mbuf,
-    .log_append           = log_fcb_append,
-    .log_append_body      = log_fcb_append_body,
-    .log_append_mbuf      = log_fcb_append_mbuf,
+    .log_type = LOG_TYPE_STORAGE,
+    .log_read = log_fcb_read,
+    .log_read_mbuf = log_fcb_read_mbuf,
+    .log_append = log_fcb_append,
+    .log_append_body = log_fcb_append_body,
+    .log_append_mbuf = log_fcb_append_mbuf,
     .log_append_mbuf_body = log_fcb_append_mbuf_body,
-    .log_walk             = log_fcb_walk,
-    .log_walk_sector      = log_fcb_walk_area,
-    .log_flush            = log_fcb_flush,
+    .log_walk = log_fcb_walk,
+    .log_walk_sector = log_fcb_walk_area,
+    .log_flush = log_fcb_flush,
+    .log_read_entry_len = log_fcb_read_entry_len,
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
-    .log_storage_info     = log_fcb_storage_info,
+    .log_storage_info = log_fcb_storage_info,
 #endif
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
-    .log_set_watermark    = log_fcb_set_watermark,
+    .log_set_watermark = log_fcb_set_watermark,
+    .log_len_in_medium = log_fcb_len_in_medium,
 #endif
-    .log_registered       = log_fcb_registered,
+    .log_registered = log_fcb_registered,
 };
 
 #endif
