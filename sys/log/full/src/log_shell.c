@@ -54,6 +54,9 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     int blksz;
     bool read_data = ueh->ue_etype != LOG_ETYPE_CBOR;
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    bool read_num_entries = ueh->ue_flags & LOG_FLAGS_NUM_ENTRIES;
+#endif
 
     dlen = min(len, 128);
 
@@ -69,6 +72,11 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         console_printf("[ih=0x%x%x%x%x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
                        ueh->ue_imghash[2], ueh->ue_imghash[3]);
     }
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    if (read_num_entries) {
+        console_printf("[ne=%lu]", ueh->ue_num_entries);
+    }
+#endif
     console_printf(" [%llu] ", ueh->ue_ts);
 #if MYNEWT_VAL(LOG_SHELL_SHOW_INDEX)
     console_printf(" [ix=%lu] ", ueh->ue_index);
@@ -113,6 +121,8 @@ shell_log_dump_cmd(int argc, char **argv)
     bool stream;
     bool partial_match = false;
     bool clear_log;
+    bool num_entries = false;
+    uint32_t entries;
     int i;
     int rc;
 
@@ -126,6 +136,16 @@ shell_log_dump_cmd(int argc, char **argv)
         /* the -c option is to clear a log (or logs). */
         if (!strcmp(argv[i], "-c")) {
             clear_log = true;
+        } else if (argc == 3 && !strcmp(argv[i], "-ne")) {
+            num_entries = true;
+            log_name = argv[i+1];
+            break;
+        } else if (argc == 5 && !strcmp(argv[i], "-ne") &&
+                   !strcmp(argv[i+2], "-i")) {
+            num_entries = true;
+            log_name = argv[i+1];
+            log_limit = parse_ll_bounds(argv[i+3], 1, 1000000, &rc);
+            break;
         } else if (isdigit((unsigned char)argv[i][0])) {
             log_limit = parse_ll_bounds(argv[i], 1, 1000000, &rc);
             if (clear_log) {
@@ -166,6 +186,15 @@ shell_log_dump_cmd(int argc, char **argv)
             rc = log_flush(log);
             if (rc != 0) {
                 goto err;
+            }
+        } else if (num_entries) {
+            rc = log_get_entries(log, log_limit, &entries);
+            if (!rc) {
+                console_printf("entries: %lu\n", entries);
+            } else if (rc == SYS_ENOTSUP) {
+                console_printf("Number of entries not supported!\n");
+            } else {
+                console_printf("Invalid or empty log, rc=%d!\n", rc);
             }
         } else {
             console_printf("Dumping log %s\n", log->l_name);

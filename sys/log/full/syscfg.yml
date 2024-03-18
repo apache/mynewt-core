@@ -38,6 +38,12 @@ syscfg.defs:
             1 - enable.
         value: 0
 
+    LOG_FLAGS_NUM_ENTRIES:
+        description: >
+            Enable logging number of entries in log in one fcb - max: 2^32
+            entries. 0 - disable; 1 - enable.
+        value: 0
+
     LOG_FCB:
         description: 'Support logging to FCB.'
         value: 0

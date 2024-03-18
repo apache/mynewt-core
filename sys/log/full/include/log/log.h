@@ -131,6 +131,7 @@ struct log_handler {
 
 /* Flags used to indicate type of data in reserved payload*/
 #define LOG_FLAGS_IMG_HASH (1 << 0)
+#define LOG_FLAGS_NUM_ENTRIES (1 << 1)
 
 #if MYNEWT_VAL(LOG_VERSION) == 3
 struct log_entry_hdr {
@@ -142,11 +143,26 @@ struct log_entry_hdr {
     uint8_t ue_flags:4;
     uint8_t ue_imghash[4];
 }__attribute__((__packed__));
+#elif MYNEWT_VAL(LOG_VERSION) == 4
+struct log_entry_hdr {
+    int64_t ue_ts;
+    uint32_t ue_index;
+    uint8_t ue_module;
+    uint8_t ue_level;
+    uint8_t ue_etype:4;
+    uint8_t ue_flags:4;
+    uint8_t ue_imghash[4];
+    uint32_t ue_num_entries;
+}__attribute__((__packed__));
 #else
 #error "Unsupported log version"
 #endif
 
 #define LOG_BASE_ENTRY_HDR_SIZE (15)
+
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+#define LOG_NUM_ENTRIES_SIZE (sizeof(((struct log *)0)->l_num_entries))
+#endif
 
 #define LOG_MODULE_STR(module)      log_module_get_name(module)
 
@@ -212,6 +228,9 @@ struct log {
     uint16_t l_max_entry_len;   /* Log body length; if 0 disables check. */
 #if !MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t l_idx;
+#endif
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    uint32_t l_num_entries;
 #endif
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
@@ -726,6 +745,19 @@ int log_set_watermark(struct log *log, uint32_t index);
 #endif
 
 /**
+ * Fill number of entries
+ *
+ * @param log Ptr to log structure
+ * @param dptr Ptr to data to be read
+ * @param hdr Ptr to the header
+ * @param offset Offset of the num of entries in the log entry
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int log_fill_num_entries(struct log *log, const void *dptr,
+                         struct log_entry_hdr *hdr, uint16_t offset);
+
+/**
  * Fill log current image hash
  *
  * @param hdr Ptr to the header
@@ -734,6 +766,31 @@ int log_set_watermark(struct log *log, uint32_t index);
  */
 int
 log_fill_current_img_hash(struct log_entry_hdr *hdr);
+
+/**
+ * Reads the log entry's header from the specified log and log index
+ *
+ * @param log                   The log to read from.
+ * @param idx                   Index of the log entry to read header from
+ * @param out_hdr               On success, the last entry header gets written
+ *                                  here.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+log_read_hdr_by_idx(struct log *log, uint32_t idx, struct log_entry_hdr *out_hdr);
+
+/**
+ * Get number of entries in log
+ *
+ * @param log The log to get number of entries for
+ * @param idx The log index to read number of entries from
+ * @param num_entries Ptr to fill up number of entries in log
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+log_get_entries(struct log *log, uint32_t idx, uint32_t *entries);
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)

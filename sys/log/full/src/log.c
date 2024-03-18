@@ -312,12 +312,14 @@ struct log_read_hdr_arg {
 };
 
 static int
-log_read_hdr_walk(struct log *log, struct log_offset *log_offset, const void *dptr,
-                  uint16_t len)
+log_read_hdr_walk(struct log *log, struct log_offset *log_offset,
+                  const void *dptr, uint16_t len)
 {
     struct log_read_hdr_arg *arg;
     int rc;
+    uint16_t offset = 0;
 
+    (void)offset;
     arg = log_offset->lo_arg;
 
     rc = log_read(log, dptr, arg->hdr, 0, LOG_BASE_ENTRY_HDR_SIZE);
@@ -330,7 +332,21 @@ log_read_hdr_walk(struct log *log, struct log_offset *log_offset, const void *dp
         if (!rc || rc == SYS_ENOTSUP) {
             arg->read_success = 1;
         }
+        if (!rc) {
+            offset = LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN;
+        }
     }
+
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    if (arg->hdr->ue_flags & LOG_FLAGS_NUM_ENTRIES) {
+        rc = log_fill_num_entries(log, dptr, arg->hdr, offset);
+        if (!rc || rc == SYS_ENOTSUP) {
+            arg->read_success = 1;
+        } else {
+            arg->read_success = 0;
+        }
+    }
+#endif
 
     /* Abort the walk; only one header needed. */
     return 1;
@@ -365,6 +381,71 @@ log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
     }
 
     return 0;
+}
+
+/**
+ * Get number of entries in log
+ *
+ * @param log The log to get number of entries for
+ * @param idx The log index to read number of entries from
+ * @param num_entries Ptr to fill up number of entries in log
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+log_get_entries(struct log *log, uint32_t idx, uint32_t *entries)
+{
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    int rc = 0;
+    struct log_entry_hdr hdr;
+
+    rc = log_read_hdr_by_idx(log, idx, &hdr);
+    if (!rc) {
+        if (hdr.ue_flags & LOG_FLAGS_NUM_ENTRIES) {
+            *entries = log->l_num_entries - hdr.ue_num_entries;
+            return SYS_EOK;
+        } else {
+            return SYS_ENOTSUP;
+        }
+    } else {
+        return rc;
+    }
+#else
+    return SYS_ENOTSUP;
+#endif
+}
+
+/**
+ * Reads the log entry's header from the specified log and log index
+ *
+ * @param log                   The log to read from.
+ * @param idx                   Index of the log entry to read header from
+ * @param out_hdr               On success, the last entry header gets written
+ *                                  here.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+log_read_hdr_by_idx(struct log *log, uint32_t idx, struct log_entry_hdr *out_hdr)
+{
+    struct log_read_hdr_arg arg;
+    struct log_offset log_offset;
+    int rc;
+
+    arg.hdr = out_hdr;
+    arg.read_success = 0;
+
+    log_offset.lo_arg = &arg;
+    log_offset.lo_ts = 0;
+    log_offset.lo_index = idx;
+    log_offset.lo_data_len = 0;
+
+    rc = log_walk(log, log_read_hdr_walk, &log_offset);
+    if (!arg.read_success) {
+        return -1;
+    }
+
+    return rc;
 }
 
 /*
@@ -413,13 +494,13 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
         }
     }
 
-    /* If this is a persisted log, read the index from its most recent entry.
-     * We need to ensure the index of all subseqently written entries is
-     * monotonically increasing.
-     */
     if (log->l_log->log_type == LOG_TYPE_STORAGE) {
         rc = log_read_last_hdr(log, &hdr);
         if (rc == 0) {
+            /* If this is a persisted log, read the index from its most
+             * recent entry. We need to ensure the index of all subsequently
+             * written entries is monotonically increasing.
+             */
             OS_ENTER_CRITICAL(sr);
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
             if (hdr.ue_index >= g_log_info.li_next_index) {
@@ -428,6 +509,16 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
 #else
             if (hdr.ue_index >= log->l_idx) {
                 log->l_idx = hdr.ue_index + 1;
+            }
+#endif
+
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+            /* If this is a persisted log, read the num_entries from its most
+             * recent entry. We need to ensure the number of entries are
+             * monotonically increasing.
+             */
+            if (hdr.ue_num_entries >= log->l_num_entries) {
+                log->l_num_entries = hdr.ue_num_entries + 1;
             }
 #endif
             OS_EXIT_CRITICAL(sr);
@@ -446,11 +537,20 @@ log_set_append_cb(struct log *log, log_append_cb *cb)
 uint16_t
 log_hdr_len(const struct log_entry_hdr *hdr)
 {
+    uint16_t len;
+
+    len = LOG_BASE_ENTRY_HDR_SIZE;
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
-        return LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN;
+        len += LOG_IMG_HASHLEN;
     }
 
-    return LOG_BASE_ENTRY_HDR_SIZE;
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    if (hdr->ue_flags & LOG_FLAGS_NUM_ENTRIES) {
+        len += LOG_NUM_ENTRIES_SIZE;
+    }
+#endif
+
+    return len;
 }
 
 void
@@ -576,6 +676,11 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     if (rc == SYS_ENOTSUP) {
         rc = 0;
     }
+#endif
+
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    ue->ue_flags |= LOG_FLAGS_NUM_ENTRIES;
+    ue->ue_num_entries = log->l_num_entries;
 #endif
 
 err:
@@ -964,7 +1069,7 @@ log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
 int
 log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
 {
-    int bytes_read;
+    int bytes_read = 0;
 
     bytes_read = log_read(log, dptr, hdr, 0, LOG_BASE_ENTRY_HDR_SIZE);
     if (bytes_read != LOG_BASE_ENTRY_HDR_SIZE) {
@@ -978,6 +1083,17 @@ log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
             return SYS_EIO;
         }
     }
+
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    if (hdr->ue_flags & LOG_FLAGS_NUM_ENTRIES) {
+        bytes_read = log_read(log, dptr, &hdr->ue_num_entries,
+                              LOG_BASE_ENTRY_HDR_SIZE + bytes_read,
+                              LOG_NUM_ENTRIES_SIZE);
+        if (bytes_read != LOG_NUM_ENTRIES_SIZE) {
+            return SYS_EIO;
+        }
+    }
+#endif
 
     return 0;
 }
@@ -1032,6 +1148,9 @@ log_flush(struct log *log)
 {
     int rc;
 
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    log->l_num_entries = 0;
+#endif
     rc = log->l_log->log_flush(log);
     if (rc != 0) {
         goto err;
@@ -1118,6 +1237,25 @@ log_set_max_entry_len(struct log *log, uint16_t max_entry_len)
 {
     assert(log);
     log->l_max_entry_len = max_entry_len;
+}
+
+int
+log_fill_num_entries(struct log *log, const void *dptr,
+                     struct log_entry_hdr *hdr, uint16_t offset)
+{
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    int rc = 0;
+
+    rc = log_read(log, dptr, &hdr->ue_num_entries, offset,
+                  LOG_NUM_ENTRIES_SIZE);
+    if (rc >= LOG_NUM_ENTRIES_SIZE) {
+        return SYS_EOK;
+    } else {
+        return rc;
+    }
+#else
+    return SYS_ENOTSUP;
+#endif
 }
 
 int

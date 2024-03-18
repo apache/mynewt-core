@@ -298,8 +298,13 @@ static int
 log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
                     const void *body, int body_len)
 {
+#if MYNEWT_VAL(LOG_NUM_ENTRIES_SIZE)
+    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_NUM_ENTRIES_SIZE +
+                LOG_IMG_HASHLEN + LOG_FCB_MAX_ALIGN - 1];
+#else
     uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN +
                 LOG_FCB_MAX_ALIGN - 1];
+#endif
     struct fcb *fcb;
     struct fcb_entry loc;
     struct fcb_log *fcb_log;
@@ -308,7 +313,9 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     int chunk_sz;
     int rc;
     uint16_t hdr_len;
+    uint8_t offset = 0;
 
+    (void)offset;
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
@@ -345,7 +352,16 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     memcpy(buf, hdr, LOG_BASE_ENTRY_HDR_SIZE);
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         memcpy(buf + LOG_BASE_ENTRY_HDR_SIZE, hdr->ue_imghash, LOG_IMG_HASHLEN);
+        offset = LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN;
     }
+
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    if (hdr->ue_flags & LOG_FLAGS_NUM_ENTRIES) {
+        memcpy(buf + offset, &log->l_num_entries, LOG_NUM_ENTRIES_SIZE);
+        log->l_num_entries++;
+    }
+#endif
+
     memcpy(buf + hdr_len, u8p, hdr_alignment);
 
     rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, chunk_sz);
@@ -446,6 +462,20 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         }
         loc.fe_data_off += LOG_IMG_HASHLEN;
     }
+
+#if MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
+    if (hdr->ue_flags & LOG_FLAGS_NUM_ENTRIES) {
+        /* Write LOG_NUM_ENTRIES_SIZE bytes */
+        rc = flash_area_write(loc.fe_area, loc.fe_data_off, &log->l_num_entries,
+                              LOG_NUM_ENTRIES_SIZE);
+        if (rc != 0) {
+            return rc;
+        }
+        loc.fe_data_off += LOG_NUM_ENTRIES_SIZE;
+        log->l_num_entries++;
+    }
+#endif
+
     rc = log_fcb_write_mbuf(&loc, om);
     if (rc != 0) {
         return rc;
