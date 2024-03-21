@@ -4,8 +4,9 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <limits.h>
 
 int vsprintf(char *buffer, const char *format, va_list ap)
 {
-	return vsnprintf(buffer, SIZE_MAX/2, format, ap);
+	return vsnprintf(buffer, INT_MAX/2, format, ap);
 }

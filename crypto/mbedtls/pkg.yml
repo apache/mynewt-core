@@ -29,6 +29,7 @@ pkg.type: sdk
 pkg.cflags:
     - '-DMBEDTLS_USER_CONFIG_FILE=<mbedtls/config_mynewt.h>'
     - -Wno-maybe-uninitialized
+    - -Wno-unknown-warning-option
 pkg.cflags.TEST: -DTEST
 
 pkg.include_dirs:

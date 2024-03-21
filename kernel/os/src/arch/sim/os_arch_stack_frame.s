@@ -30,8 +30,14 @@
 #error "unsupported platform"
 #endif
 
-    .text
+#if __SIZEOF_POINTER__ == 8
+    .code64
+#elif __SIZEOF_POINTER__ == 4
     .code32
+#else
+    #error "Void pointer should be either 4 or 8 bytes."
+#endif
+    .text
     .p2align 4, 0x90    /* align on 16-byte boundary and fill with NOPs */
 
     .globl CNAME(os_arch_frame_init)
@@ -40,6 +46,51 @@
      * void os_arch_frame_init(struct stack_frame *sf)
      */
 CNAME(os_arch_frame_init):
+#if __SIZEOF_POINTER__ == 8
+    pushq   %rbp                    /* function prologue for backtrace */
+    movq    %rsp,%rbp
+
+    movq    %rsp,(%rdi) /* sf->mainsp = %rsp */
+
+    /*
+     * Switch the stack so the stack pointer stored in 'sf->sf_jb' points
+     * to the task stack. This is slightly complicated because OS X wants
+     * the incoming stack pointer to be 16-byte aligned.
+     *
+     * ----------------
+     * sf (other fields)
+     * ----------------
+     * sf (sf_jb)           0x8(%rdi)
+     * ----------------
+     * sf (sf_mainsp)       0x0(%rdi)
+     * ----------------
+     * alignment padding    variable (0 to 12 bytes)
+     * ----------------
+     */
+    movq    %rdi,%rsp
+    andq    $0xfffffffffffffff0,%rsp  /* align %rsp on 16-byte boundary */
+    leaq    0x8(%rdi),%rax            /* %rax = &sf->sf_jb */
+    pushq   %rdi
+    movq    %rax, %rdi
+    movq    $0, %rsi
+    call    CNAME(sigsetjmp)          /* sigsetjmp(sf->sf_jb, 0) */
+    popq    %rdi
+    testq   %rax,%rax
+    jne     1f
+    movq    0x0(%rdi),%rsp            /* switch back to the main() stack */
+    popq    %rbp
+    ret                               /* return to os_arch_task_stack_init() */
+1:
+    leaq    2f(%rip),%rcx
+    pushq   %rcx                      /* retaddr */
+    pushq   $0                        /* frame pointer */
+    movq    %rsp,%rbp                 /* handcrafted prologue for backtrace */
+    pushq   %rax                      /* rc */
+    pushq   %rsi                      /* sf */
+    call    CNAME(os_arch_task_start) /* os_arch */
+2:
+    nop
+#elif __SIZEOF_POINTER__ == 4
     push    %ebp                    /* function prologue for backtrace */
     mov     %esp,%ebp
     push    %esi                    /* save %esi before using it as a tmpreg */
@@ -102,3 +153,4 @@ CNAME(os_arch_frame_init):
     /* never returns */
 2:
     nop
+#endif

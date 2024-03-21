@@ -22,11 +22,7 @@
 #include "testutil/testutil.h"
 #include "os_test_priv.h"
 
-/*
- * NOTE: currently, the buffer size cannot be changed as some tests are
- * hard-coded for this size.
- */
-#define MBUF_TEST_POOL_BUF_SIZE     (256)
+#define MBUF_TEST_POOL_BUF_SIZE     (320)
 #define MBUF_TEST_POOL_BUF_COUNT    (10)
 
 #define MBUF_TEST_DATA_LEN          (1024)

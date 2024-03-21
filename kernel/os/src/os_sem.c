@@ -35,7 +35,7 @@ os_sem_init(struct os_sem *sem, uint16_t tokens)
 {
     os_error_t ret;
 
-    os_trace_api_u32x2(OS_TRACE_ID_SEM_INIT, (uint32_t)sem, (uint32_t)tokens);
+    os_trace_api_u32x2(OS_TRACE_ID_SEM_INIT, (uint32_t)(uintptr_t)sem, (uint32_t)tokens);
 
     if (!sem) {
         ret = OS_INVALID_PARM;
@@ -61,7 +61,7 @@ os_sem_release(struct os_sem *sem)
     struct os_task *rdy;
     os_error_t ret;
 
-    os_trace_api_u32(OS_TRACE_ID_SEM_RELEASE, (uint32_t)sem);
+    os_trace_api_u32(OS_TRACE_ID_SEM_RELEASE, (uint32_t)(uintptr_t)sem);
 
     /* OS must be started to release semaphores */
     if (!g_os_started) {
@@ -129,7 +129,7 @@ os_sem_pend(struct os_sem *sem, os_time_t timeout)
     struct os_task *last;
     os_error_t ret;
 
-    os_trace_api_u32x2(OS_TRACE_ID_SEM_PEND, (uint32_t)sem, (uint32_t)timeout);
+    os_trace_api_u32x2(OS_TRACE_ID_SEM_PEND, (uint32_t)(uintptr_t)sem, (uint32_t)timeout);
 
     /* Check if OS is started */
     if (!g_os_started) {

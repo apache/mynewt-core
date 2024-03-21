@@ -137,7 +137,7 @@ os_mempool_init_internal(struct os_mempool *mp, uint16_t blocks,
         /* Blocks need to be sized properly and memory buffer should be
          * aligned
          */
-        if (((uint32_t)membuf & (OS_ALIGNMENT - 1)) != 0) {
+        if (((uintptr_t)membuf & (OS_ALIGNMENT - 1)) != 0) {
             return OS_MEM_NOT_ALIGNED;
         }
     }
@@ -148,7 +148,7 @@ os_mempool_init_internal(struct os_mempool *mp, uint16_t blocks,
     mp->mp_min_free = blocks;
     mp->mp_flags = flags;
     mp->mp_num_blocks = blocks;
-    mp->mp_membuf_addr = (uint32_t)membuf;
+    mp->mp_membuf_addr = (uintptr_t)membuf;
     mp->name = name;
     SLIST_FIRST(mp) = membuf;
 
@@ -302,23 +302,20 @@ int
 os_memblock_from(const struct os_mempool *mp, const void *block_addr)
 {
     uint32_t true_block_size;
-    uint32_t baddr32;
-    uint32_t end;
+    uintptr_t baddr;
+    uintptr_t end;
 
-    static_assert(sizeof block_addr == sizeof baddr32,
-                  "Pointer to void must be 32-bits.");
-
-    baddr32 = (uint32_t)block_addr;
+    baddr = (uintptr_t)block_addr;
     true_block_size = OS_MEMPOOL_TRUE_BLOCK_SIZE(mp);
     end = mp->mp_membuf_addr + (mp->mp_num_blocks * true_block_size);
 
     /* Check that the block is in the memory buffer range. */
-    if ((baddr32 < mp->mp_membuf_addr) || (baddr32 >= end)) {
+    if ((baddr < mp->mp_membuf_addr) || (baddr >= end)) {
         return 0;
     }
 
     /* All freed blocks should be on true block size boundaries! */
-    if (((baddr32 - mp->mp_membuf_addr) % true_block_size) != 0) {
+    if (((baddr - mp->mp_membuf_addr) % true_block_size) != 0) {
         return 0;
     }
 
@@ -331,7 +328,7 @@ os_memblock_get(struct os_mempool *mp)
     os_sr_t sr;
     struct os_memblock *block;
 
-    os_trace_api_u32(OS_TRACE_ID_MEMBLOCK_GET, (uint32_t)mp);
+    os_trace_api_u32(OS_TRACE_ID_MEMBLOCK_GET, (uintptr_t)mp);
 
     /* Check to make sure they passed in a memory pool (or something) */
     block = NULL;
@@ -359,7 +356,7 @@ os_memblock_get(struct os_mempool *mp)
         }
     }
 
-    os_trace_api_ret_u32(OS_TRACE_ID_MEMBLOCK_GET, (uint32_t)block);
+    os_trace_api_ret_u32(OS_TRACE_ID_MEMBLOCK_GET, (uintptr_t)block);
 
     return (void *)block;
 }
@@ -370,8 +367,8 @@ os_memblock_put_from_cb(struct os_mempool *mp, void *block_addr)
     os_sr_t sr;
     struct os_memblock *block;
 
-    os_trace_api_u32x2(OS_TRACE_ID_MEMBLOCK_PUT_FROM_CB, (uint32_t)mp,
-                       (uint32_t)block_addr);
+    os_trace_api_u32x2(OS_TRACE_ID_MEMBLOCK_PUT_FROM_CB, (uintptr_t)mp,
+                       (uintptr_t)block_addr);
 
     os_mempool_guard_check(mp, block_addr);
     os_mempool_poison(mp, block_addr);
@@ -404,8 +401,8 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
     int sr;
 #endif
 
-    os_trace_api_u32x2(OS_TRACE_ID_MEMBLOCK_PUT, (uint32_t)mp,
-                       (uint32_t)block_addr);
+    os_trace_api_u32x2(OS_TRACE_ID_MEMBLOCK_PUT, (uintptr_t)mp,
+                       (uintptr_t)block_addr);
 
     /* Make sure parameters are valid */
     if ((mp == NULL) || (block_addr == NULL)) {

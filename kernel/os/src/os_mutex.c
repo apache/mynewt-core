@@ -34,7 +34,7 @@ os_mutex_init(struct os_mutex *mu)
         goto done;
     }
 
-    os_trace_api_u32(OS_TRACE_ID_MUTEX_INIT, (uint32_t)mu);
+    os_trace_api_u32(OS_TRACE_ID_MUTEX_INIT, (uintptr_t)mu);
 
     /* Initialize to 0 */
     mu->mu_prio = 0;
@@ -58,7 +58,7 @@ os_mutex_release(struct os_mutex *mu)
     struct os_task *rdy;
     os_error_t ret;
 
-    os_trace_api_u32(OS_TRACE_ID_MUTEX_RELEASE, (uint32_t)mu);
+    os_trace_api_u32(OS_TRACE_ID_MUTEX_RELEASE, (uintptr_t)mu);
 
     /* Check if OS is started */
     if (!g_os_started) {
@@ -145,7 +145,7 @@ os_mutex_pend(struct os_mutex *mu, os_time_t timeout)
     struct os_task *entry;
     struct os_task *last;
 
-    os_trace_api_u32x2(OS_TRACE_ID_MUTEX_PEND, (uint32_t)mu, (uint32_t)timeout);
+    os_trace_api_u32x2(OS_TRACE_ID_MUTEX_PEND, (uintptr_t)mu, (uint32_t)timeout);
 
     /* OS must be started when calling this function */
     if (!g_os_started) {

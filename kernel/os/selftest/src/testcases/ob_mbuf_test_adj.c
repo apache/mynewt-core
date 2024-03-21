@@ -21,6 +21,9 @@
 TEST_CASE_SELF(os_mbuf_test_adj)
 {
     struct os_mbuf *om;
+    int initial_om_len;
+    int om_len_check;
+    int pkthdr_len_check;
     int rc;
 
     os_mbuf_test_setup();
@@ -31,30 +34,37 @@ TEST_CASE_SELF(os_mbuf_test_adj)
     rc = os_mbuf_append(om, os_mbuf_test_data, sizeof os_mbuf_test_data);
     TEST_ASSERT_FATAL(rc == 0);
 
-    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data, 222,
-                                  sizeof os_mbuf_test_data, 18);
+    initial_om_len = MBUF_TEST_POOL_BUF_SIZE - sizeof(struct os_mbuf) -
+                     sizeof(struct os_mbuf_pkthdr) - 10;
+    pkthdr_len_check = 10 + sizeof(struct os_mbuf_pkthdr);
+    om_len_check = initial_om_len;
+
+    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data, om_len_check,
+                                  sizeof os_mbuf_test_data, pkthdr_len_check);
 
     /* Remove from the front. */
     os_mbuf_adj(om, 10);
-    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data + 10, 212,
-                                  sizeof os_mbuf_test_data - 10, 18);
+    om_len_check -= 10;
+    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data + 10, om_len_check,
+                                  sizeof os_mbuf_test_data - 10, pkthdr_len_check);
 
     /* Remove from the back. */
     os_mbuf_adj(om, -10);
-    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data + 10, 212,
-                                  sizeof os_mbuf_test_data - 20, 18);
+    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data + 10, om_len_check,
+                                  sizeof os_mbuf_test_data - 20, pkthdr_len_check);
 
     /* Remove entire first buffer. */
-    os_mbuf_adj(om, 212);
-    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data + 222, 0,
-                                  sizeof os_mbuf_test_data - 232, 18);
+    os_mbuf_adj(om, om_len_check);
+    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data + initial_om_len, 0,
+                                  sizeof os_mbuf_test_data - initial_om_len - 10,
+                                  pkthdr_len_check);
 
     /* Remove next buffer. */
-    os_mbuf_adj(om, 256);
-    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data + 478, 0,
-                                  sizeof os_mbuf_test_data - 488, 18);
+    os_mbuf_adj(om, MBUF_TEST_POOL_BUF_SIZE);
+    os_mbuf_test_misc_assert_sane(om, os_mbuf_test_data + initial_om_len + MBUF_TEST_POOL_BUF_SIZE, 0,
+                                  sizeof os_mbuf_test_data - (initial_om_len + MBUF_TEST_POOL_BUF_SIZE + 10), pkthdr_len_check);
 
     /* Remove more data than is present. */
     os_mbuf_adj(om, 1000);
-    os_mbuf_test_misc_assert_sane(om, NULL, 0, 0, 18);
+    os_mbuf_test_misc_assert_sane(om, NULL, 0, 0, pkthdr_len_check);
 }

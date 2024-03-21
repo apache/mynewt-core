@@ -368,12 +368,12 @@ print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
         if (db.ndb_inode_id != NFFS_ID_NONE) {
             nb.nb_inode_entry = nffs_hash_find_inode(db.ndb_inode_id);
         } else {
-            nb.nb_inode_entry = (void*)db.ndb_inode_id;
+            nb.nb_inode_entry = (void *)(uintptr_t)db.ndb_inode_id;
         }
         if (db.ndb_prev_id != NFFS_ID_NONE) {
             nb.nb_prev = nffs_hash_find_block(db.ndb_prev_id);
         } else {
-            nb.nb_prev = (void*)db.ndb_prev_id;
+            nb.nb_prev = (void *)(uintptr_t)db.ndb_prev_id;
         }
         nb.nb_data_len = db.ndb_data_len;
     }

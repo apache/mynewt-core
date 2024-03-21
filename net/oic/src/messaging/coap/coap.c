@@ -353,7 +353,7 @@ coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m)
     /* Initialize */
     pkt->version = 1;
 
-    OC_LOG_DEBUG("coap_tx: 0x%x\n", (unsigned)m);
+    OC_LOG_DEBUG("coap_tx: 0x%x\n", (uintptr_t)m);
 
     tcp_hdr = oc_endpoint_use_tcp(OC_MBUF_ENDPOINT(m));
 
