@@ -422,12 +422,12 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
         if (rc == 0) {
             OS_ENTER_CRITICAL(sr);
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
-            if (hdr.ue_index >= g_log_info.li_next_index) {
-                g_log_info.li_next_index = hdr.ue_index + 1;
+            if (hdr.ue_index > g_log_info.li_next_index) {
+                g_log_info.li_next_index = hdr.ue_index;
             }
 #else
-            if (hdr.ue_index >= log->l_idx) {
-                log->l_idx = hdr.ue_index + 1;
+            if (hdr.ue_index > log->l_idx) {
+                log->l_idx = hdr.ue_index;
             }
 #endif
             OS_EXIT_CRITICAL(sr);
