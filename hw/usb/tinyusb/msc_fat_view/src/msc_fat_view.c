@@ -219,12 +219,14 @@ static uint8_t root_dir_entry_count;
 
 static scsi_cmd_type_t last_scsi_command;
 
-static enum {
+typedef enum {
     MEDIUM_NOT_PRESENT,
     REPORT_MEDIUM_CHANGE,
     MEDIUM_RELOAD,
     MEDIUM_PRESENT,
-} medium_state;
+} medium_state_t;
+
+static medium_state_t medium_state;
 
 struct unallocated_write {
     uint32_t first_sector;
@@ -915,10 +917,17 @@ void
 msc_fat_view_add_dir_entry(const file_entry_t *file)
 {
     int entry_ix = root_dir_entry_count++;
+    medium_state_t state = medium_state;
 
+    if (state != MEDIUM_NOT_PRESENT) {
+        medium_state = MEDIUM_NOT_PRESENT;
+    }
     root_dir[entry_ix].file = file;
     root_dir[entry_ix].dir_slots = fat_dir_entry_slots(file->name);
     MSC_FAT_VIEW_LOG_DEBUG("Added root entry %s\n", file->name);
+    if (state != MEDIUM_NOT_PRESENT) {
+        medium_state = MEDIUM_RELOAD;
+    }
 }
 
 void
@@ -1822,9 +1831,23 @@ tud_msc_scsi_cb(uint8_t lun, uint8_t const scsi_cmd[16], void *buffer, uint16_t 
 }
 
 void
-msc_fat_view_pkg_init(void)
+msc_fat_view_media_eject(void)
+{
+    medium_state = MEDIUM_NOT_PRESENT;
+}
+
+void
+msc_fat_view_media_insert(void)
 {
     medium_state = MEDIUM_RELOAD;
+}
+
+void
+msc_fat_view_pkg_init(void)
+{
+    if (MYNEWT_VAL(MSC_FAT_VIEW_AUTO_INSERT)) {
+        msc_fat_view_media_insert();
+    }
     init_disk_data();
 }
 
