@@ -48,8 +48,27 @@ typedef struct file_entry {
 /**
  * Add file handler to root folder.
  *
+ * If medium was inserted this function will first eject media
+ * to make system aware that disk content has changed and reload
+ * is needed.
+ *
  * @param file - File entry that will popup in root folder.
  */
 void msc_fat_view_add_dir_entry(const file_entry_t *file);
+
+/**
+ * Eject media
+ *
+ * This function can be called before new root dir entries are added
+ * in application.
+ * Several entries can be added without generating too many disk ejected
+ * notification in host system.
+ */
+void msc_fat_view_media_eject(void);
+
+/**
+ * Insert media after all root entries are added.
+ */
+void msc_fat_view_media_insert(void);
 
 #endif /* __MSC_FAT_VIEW_H__ */
