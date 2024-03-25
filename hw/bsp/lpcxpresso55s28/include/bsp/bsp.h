@@ -16,30 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef H_BSP_H
+#define H_BSP_H
 
-#ifndef __KINETIS_COMMON_H_
-#define __KINETIS_COMMON_H_
+#include <stdint.h>
+#include <mcu/mcu.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <fsl_device_registers.h>
+extern uint8_t __DATA_ROM;
+#define RAM_SIZE            (304 * 1024)
+extern uint8_t _ram_start[];
 
-#if MYNEWT_VAL(BSP_MK64F12)
-#include "MK64F12.h"
-#elif MYNEWT_VAL(BSP_MK80F)
-#include "MK80F25615.h"
-#elif MYNEWT_VAL(BSP_MK81F)
-#include "MK81F25615.h"
-#elif MYNEWT_VAL(BSP_MK82F)
-#include "MK82F25615.h"
-#else
-#error "Unsupported MCU"
-#endif
+/* LED pins */
+#define LED_1               MCU_GPIO_PORT1(6)
+#define LED_2               MCU_GPIO_PORT1(7)
+#define LED_3               MCU_GPIO_PORT1(4)
+#define LED_RED             LED_1
+#define LED_GREEN           LED_2
+#define LED_BLUE            LED_3
+#define LED_BLINK_PIN       LED_BLUE
+
+/* Button pin */
+#define BUTTON_1            MCU_GPIO_PORT0(5)
+#define BUTTON_2            MCU_GPIO_PORT1(9)
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __KINETIS_COMMON_H_ */
-
+#endif  /* H_BSP_H */

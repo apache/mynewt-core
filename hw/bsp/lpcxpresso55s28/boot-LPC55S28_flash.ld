@@ -17,29 +17,10 @@
  * under the License.
  */
 
-#ifndef __KINETIS_COMMON_H_
-#define __KINETIS_COMMON_H_
+STACK_SIZE = 768;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <fsl_device_registers.h>
-
-#if MYNEWT_VAL(BSP_MK64F12)
-#include "MK64F12.h"
-#elif MYNEWT_VAL(BSP_MK80F)
-#include "MK80F25615.h"
-#elif MYNEWT_VAL(BSP_MK81F)
-#include "MK81F25615.h"
-#elif MYNEWT_VAL(BSP_MK82F)
-#include "MK82F25615.h"
-#else
-#error "Unsupported MCU"
-#endif
-#ifdef __cplusplus
+MEMORY
+{
+    FLASH (rx!w) : ORIGIN = 0x00000000, LENGTH = 40960
+    RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x30000
 }
-#endif
-
-#endif /* __KINETIS_COMMON_H_ */
-
