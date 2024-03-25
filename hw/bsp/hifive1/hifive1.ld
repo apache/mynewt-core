@@ -57,6 +57,7 @@ SECTIONS
   .rodata         :
   {
     *(.rdata)
+INCLUDE "link_tables.ld.h"
     *(.rodata .rodata.*)
     *(.gnu.linkonce.r.*)
   } >flash

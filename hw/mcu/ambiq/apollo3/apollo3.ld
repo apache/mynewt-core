@@ -43,6 +43,7 @@ SECTIONS
 
     /* .rodata */
     . = ALIGN(4);
+INCLUDE "link_tables.ld.h"
     *(.rodata)
     *(.rodata*)
 

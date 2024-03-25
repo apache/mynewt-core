@@ -95,6 +95,7 @@ SECTIONS
         *(SORT(.dtors.*))
         *(.dtors)
 
+INCLUDE "link_tables.ld.h"
         *(.rodata*)
 
         *(.eh_frame*)
