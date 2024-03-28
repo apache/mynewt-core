@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "BLE400"
+bsp.url: https://www.waveshare.com/ble400.htm
+bsp.maker: "Waveshare Electronics CO.,Ltd."
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:

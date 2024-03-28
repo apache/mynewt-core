@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "BMD-200"
+bsp.url: https://content.u-blox.com/sites/default/files/BMD-200_ProductSummary_%28UBX-19033633%29.pdf
+bsp.maker: "u-blox AG"
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:

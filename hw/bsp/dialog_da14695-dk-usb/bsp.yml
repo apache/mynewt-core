@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "DA14695 DK USB"
+bsp.url: https://www.renesas.com/us/en/products/wireless-connectivity/bluetooth-low-energy/da14695-multi-core-bluetooth-52-soc-system-power-management-unit
+bsp.maker: "Renesas Electronics Corporation"
 bsp.arch: cortex_m33
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m33"
 bsp.downloadscript:

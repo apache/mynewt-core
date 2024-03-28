@@ -17,7 +17,7 @@
 # under the License.
 #
 
-bsp.name: "nucleo-l073rz"
+bsp.name: "NUCLEO-L073RZ"
 bsp.url: https://www.st.com/en/evaluation-tools/nucleo-l073rz.html
 bsp.maker: "STMicroelectronics"
 bsp.arch: cortex_m0

@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "USB-KW41Z"
+bsp.url: https://www.nxp.com/design/design-center/designs/bluetooth-low-energy-ieee-802-15-4-packet-sniffer-usb-dongle:USB-KW41Z
+bsp.maker: "NXP B.V."
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:

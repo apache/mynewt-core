@@ -17,8 +17,8 @@
 # under the License.
 #
 
-bsp.name: "nRF5340 PDK"
-bsp.url: https://www.nordicsemi.com/Software-and-tools/Development-Kits/nRF5340-PDK
+bsp.name: "nRF5340 DK"
+bsp.url: https://www.nordicsemi.com/Software-and-tools/Development-Kits/nRF5340-DK
 bsp.maker: "Nordic Semiconductor"
 bsp.arch: cortex_m33
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m33"
