@@ -61,6 +61,7 @@ syscfg.vals:
     QSPI_PIN_DIO1: 21
     QSPI_PIN_DIO2: 22
     QSPI_PIN_DIO3: 23
+    GPIO_AS_PIN_RESET: 1
 
 syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
