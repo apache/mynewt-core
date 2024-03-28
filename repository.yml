@@ -20,7 +20,6 @@
 repo.name: apache-mynewt-core
 repo.versions:
     "0.0.0": "master"
-    "0.0.1": "master"
     "0.7.9": "mynewt_0_8_0_b2_tag"
     "0.8.0": "mynewt_0_8_0_tag"
     "0.9.0": "mynewt_0_9_0_tag"
@@ -68,8 +67,6 @@ repo.newt_compatibility:
     # present.
     0.0.0:
         0.0.0: good
-    0.0.1:
-        0.0.1: good
 
     # Core 1.1.0+ requires newt 1.1.0+ (feature: self-overrides).
     # Core 1.4.0+ requires newt 1.4.0+ (feature: sync repo deps).
