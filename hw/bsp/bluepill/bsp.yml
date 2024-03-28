@@ -19,6 +19,9 @@
 
 ### Entries containing `XXX` need to be replaced with actual values.
 
+bsp.name: "Blue Pill"
+bsp.url: https://stm32-base.org/boards/STM32F103C8T6-Blue-Pill.html
+bsp.maker: "Unknown"
 bsp.arch: cortex_m3
 bsp.compiler: '@apache-mynewt-core/compiler/arm-none-eabi-m3'
 

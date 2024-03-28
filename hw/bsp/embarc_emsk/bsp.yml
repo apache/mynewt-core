@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "EM Starter Kit (EMSK)"
+bsp.url: https://embarc.org/project/arc-em-starter-kit-emsk/
+bsp.maker: "Synopsys, Inc."
 bsp.arch: arc
 bsp.compiler: compiler/arc
 bsp.linkerscript:

@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "VBLUno52"
+bsp.url: https://vngiotlab.github.io/vbluno/
+bsp.maker: "VNG Corporation"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

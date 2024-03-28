@@ -17,7 +17,11 @@
 # under the License.
 #
 
+bsp.name: "DA1469x CMAC"
+bsp.url: https://www.renesas.com/us/en/products/wireless-connectivity/bluetooth-low-energy/da14695-multi-core-bluetooth-52-soc-system-power-management-unit
+bsp.maker: "Renesas Electronics Corporation"
 bsp.arch: cortex_m0_cmac
+bsp.exclude_site: 1
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m0"
 bsp.debugscript: "@apache-mynewt-core/hw/bsp/dialog_cmac/dialog_cmac_debug.sh"
 

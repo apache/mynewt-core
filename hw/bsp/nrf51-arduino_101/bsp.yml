@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "Arduino 101"
+bsp.url: https://docs.arduino.cc/retired/boards/arduino-101-619/
+bsp.maker: "Arduino S.r.l."
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:

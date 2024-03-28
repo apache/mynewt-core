@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "BLENano"
+bsp.url: https://github.com/RedBearLab/BLENano
+bsp.maker: "RedBearLab"
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:

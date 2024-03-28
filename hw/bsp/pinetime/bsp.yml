@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "PineTime"
+bsp.url: https://wiki.pine64.org/wiki/PineTime
+bsp.maker: "PINE64"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

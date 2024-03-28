@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "Arduino Zero"
+bsp.url: https://store.arduino.cc/products/arduino-zero
+bsp.maker: "Arduino S.r.l."
 bsp.arch: cortex_m0
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m0"
 bsp.linkerscript:

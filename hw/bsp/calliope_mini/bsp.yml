@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "Calliope mini"
+bsp.url: https://calliope.cc
+bsp.maker: "Calliope gGmbH"
 bsp.arch: cortex_m0
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m0"
 bsp.linkerscript:

@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "EV-BT840"
+bsp.url: https://www.fanstel.com/buy/ev-bt840f-evaluation-board-for-bt840f-3re88
+bsp.maker: "Fanstel Corp."
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

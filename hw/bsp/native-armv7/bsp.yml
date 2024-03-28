@@ -18,6 +18,7 @@
 #
 
 bsp.arch: sim-armv7
+bsp.exclude_site: 1
 bsp.compiler: compiler/sim-armv7
 bsp.debugscript: "hw/bsp/native-armv7/native_debug.sh"
 
