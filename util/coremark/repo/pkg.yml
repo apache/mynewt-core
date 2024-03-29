@@ -17,12 +17,13 @@
 # under the License.
 #
 
-pkg.name: apps/coremark
-pkg.type: app
+pkg.name: util/coremark/repo
+pkg.type: sdk
 pkg.description: Industry-standard benchmark to measures the MCU performance.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.author: "EEMBC"
+pkg.homepage: "https://github.com/eembc/coremark"
 pkg.keywords:
+    - benchmark
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
@@ -30,4 +31,27 @@ pkg.deps:
     - "@apache-mynewt-core/sys/stats"
     - "@apache-mynewt-core/sys/log"
     - "@apache-mynewt-core/sys/console"
-    - "@apache-mynewt-core/util/coremark"
+
+pkg.include_dirs:
+    - "@eembc-coremark/."
+
+pkg.source_files:
+    - "@eembc-coremark/core_list_join.c"
+    - "@eembc-coremark/core_main.c"
+    - "@eembc-coremark/core_matrix.c"
+    - "@eembc-coremark/core_state.c"
+    - "@eembc-coremark/core_util.c"
+
+pkg.cflags:
+    - -DFLAGS_STR=""
+    - -Wno-format
+    - -Wno-maybe-uninitialized
+
+pkg.build_profile: speed
+
+repository.eembc-coremark:
+    type: github
+    vers: v1.01-commit
+    branch: main
+    user: eembc
+    repo: coremark

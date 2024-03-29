@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,11 +17,27 @@
 # under the License.
 #
 
-syscfg.vals:
-    CONSOLE_IMPLEMENTATION: full
-    LOG_IMPLEMENTATION: stub
-    STATS_IMPLEMENTATION: stub
-    COREMARK_SHELL: 0
+pkg.name: util/coremark
+pkg.description: Industry-standard benchmark to measures the MCU performance.
+pkg.author: "EEMBC"
+pkg.homepage: "https://github.com/eembc/coremark"
+pkg.keywords:
+    - benchmark
 
-syscfg.vals.HARDFLOAT:
-    FLOAT_USER: 1
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/sys/console"
+    - "@apache-mynewt-core/util/parse"
+    - "@apache-mynewt-core/util/coremark/repo"
+
+pkg.cflags:
+
+pkg.source_files:
+    - src/core_portme.c
+
+pkg.source_files.COREMARK_SHELL:
+    - src/coremark_shell.c
+
+pkg.init.COREMARK_SHELL:
+    coremark_shell_init_pkg: $after:shell_init

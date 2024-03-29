@@ -16,11 +16,12 @@
 # under the License.
 #
 
-syscfg.vals:
-    CONSOLE_IMPLEMENTATION: full
-    LOG_IMPLEMENTATION: stub
-    STATS_IMPLEMENTATION: stub
-    COREMARK_SHELL: 0
+syscfg.defs:
+    COREMARK_ITERATIONS:
+        description: Number of iterations to run
+        value: 0
 
-syscfg.vals.HARDFLOAT:
-    FLOAT_USER: 1
+    COREMARK_SHELL:
+        description:
+            If set to 1 adds coremark command to shell.
+        value: 1
