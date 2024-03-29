@@ -46,3 +46,60 @@ stlink_load () {
     fi
     return 0
 }
+
+#
+# NO_GDB should be set if gdb should not be started
+# FILE_NAME should point to elf-file being debugged
+#
+stlink_debug () {
+    windows_detect
+    gdb_detect
+    set -x
+
+    PORT=3333
+
+    parse_extra_jtag_cmd $EXTRA_JTAG_CMD
+
+    if [ -z "$NO_GDB" ]; then
+        if [ -z $FILE_NAME ]; then
+            echo "Missing filename"
+            exit 1
+        fi
+        if [ ! -f "$FILE_NAME" ]; then
+            echo "Cannot find file" $FILE_NAME
+            exit 1
+        fi
+
+        #
+        # Block Ctrl-C from getting passed to gdb server.
+        #
+        set -m
+        ST-LINK_gdbserver -d -p $PORT -cp ${CUBEPROGRAMMER_PATH} -g >stlink.log 2>&1 &
+        stpid=$!
+        set +m
+
+        GDB_CMD_FILE=.gdb_cmds
+
+        echo "target remote localhost:$PORT" > $GDB_CMD_FILE
+        if [ ! -z "$RESET" ]; then
+            echo "mon reset halt" >> $GDB_CMD_FILE
+        fi
+
+        echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
+
+        set -m
+        $GDB -x $GDB_CMD_FILE $FILE_NAME
+        set +m
+        rm $GDB_CMD_FILE
+        sleep 1
+        if [ -d /proc/$stpid ] ; then
+            kill -9 $stpid
+        fi
+    else
+        # No GDB, wait for ST-LINK_gdbserver to exit
+        ST-LINK_gdbserver -d -p $PORT -cp ${CUBEPROGRAMMER_PATH} -g
+        return $?
+    fi
+
+    return 0
+}
