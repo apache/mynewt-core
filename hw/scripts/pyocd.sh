@@ -92,22 +92,13 @@ pyocd_debug () {
             exit 1
         fi
 
-        if [ $WINDOWS -eq 1 ]; then
-            #
-            # Launch openocd in a separate command interpreter, to make sure
-            # it doesn't get killed by Ctrl-C signal from bash.
-            #
-
-            $COMSPEC /C "start $COMSPEC /C pyocd gdbserver -M $CONNECTION_MODE -t $TARGET -p $PORT"
-        else
-            #
-            # Block Ctrl-C from getting passed to openocd.
-            #
-            set -m
-            pyocd gdbserver -M $CONNECTION_MODE -t $TARGET -p $PORT >pyocd.log 2>&1 &
-            stpid=$!
-            set +m
-        fi
+        #
+        # Block Ctrl-C from getting passed to pyocd.
+        #
+        set -m
+        pyocd gdbserver -M $CONNECTION_MODE -t $TARGET -p $PORT >pyocd.log 2>&1 &
+        stpid=$!
+        set +m
 
         GDB_CMD_FILE=.gdb_cmds
 
@@ -118,18 +109,13 @@ pyocd_debug () {
 
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
-        if [ $WINDOWS -eq 1 ]; then
-            FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
-            $COMSPEC /C "start $COMSPEC /C $GDB -x $GDB_CMD_FILE $FILE_NAME"
-        else
-            set -m
-            $GDB -x $GDB_CMD_FILE $FILE_NAME
-            set +m
-            rm $GDB_CMD_FILE
-            sleep 1
-            if [ -d /proc/$stpid ] ; then
-                kill -9 $stpid
-            fi
+        set -m
+        $GDB -x $GDB_CMD_FILE $FILE_NAME
+        set +m
+        rm $GDB_CMD_FILE
+        sleep 1
+        if [ -d /proc/$stpid ] ; then
+            kill -9 $stpid
         fi
     else
         # No GDB, wait for pyocd to exit

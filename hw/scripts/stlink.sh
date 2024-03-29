@@ -72,22 +72,13 @@ stlink_debug () {
             exit 1
         fi
 
-        if [ $WINDOWS -eq 1 ]; then
-            #
-            # Launch openocd in a separate command interpreter, to make sure
-            # it doesn't get killed by Ctrl-C signal from bash.
-            #
-
-            $COMSPEC /C "start $COMSPEC /C st-util --no-reset -p $PORT"
-        else
-            #
-            # Block Ctrl-C from getting passed to openocd.
-            #
-            set -m
-            st-util --no-reset -p $PORT >stlink.log 2>&1 &
-            stpid=$!
-            set +m
-        fi
+        #
+        # Block Ctrl-C from getting passed to st-util.
+        #
+        set -m
+        st-util --no-reset -p $PORT >stlink.log 2>&1 &
+        stpid=$!
+        set +m
 
         GDB_CMD_FILE=.gdb_cmds
 
@@ -98,18 +89,13 @@ stlink_debug () {
 
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
-        if [ $WINDOWS -eq 1 ]; then
-            FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
-            $COMSPEC /C "start $COMSPEC /C $GDB -x $GDB_CMD_FILE $FILE_NAME"
-        else
-            set -m
-            $GDB -x $GDB_CMD_FILE $FILE_NAME
-            set +m
-            rm $GDB_CMD_FILE
-            sleep 1
-            if [ -d /proc/$stpid ] ; then
-                kill -9 $stpid
-            fi
+        set -m
+        $GDB -x $GDB_CMD_FILE $FILE_NAME
+        set +m
+        rm $GDB_CMD_FILE
+        sleep 1
+        if [ -d /proc/$stpid ] ; then
+            kill -9 $stpid
         fi
     else
         # No GDB, wait for st-util to exit
