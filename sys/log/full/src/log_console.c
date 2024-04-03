@@ -57,7 +57,7 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
                    hdr->ue_ts, hdr->ue_module, hdr->ue_level);
 
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
-        console_printf("ih=0x%x%x%x%x", hdr->ue_imghash[0], hdr->ue_imghash[1],
+        console_printf("ih=0x%02x%02x%02x%02x", hdr->ue_imghash[0], hdr->ue_imghash[1],
                        hdr->ue_imghash[2], hdr->ue_imghash[3]);
     }
     console_printf("]");
