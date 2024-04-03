@@ -50,6 +50,90 @@ log_console_get(void)
     return &log_console;
 }
 
+#if MYNEWT_VAL(LOG_CONSOLE_PRETTY)
+#define CSI                     "\x1b["
+#define COLOR_BLUE              "36m"
+#define COLOR_YELLOW            "33m"
+#define COLOR_RED               "31m"
+#define COLOR_RED_BG            "41m"
+
+#if MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_COLORS)
+#define COLOR_DBG               CSI COLOR_BLUE
+#define COLOR_INF               ""
+#define COLOR_WRN               CSI COLOR_YELLOW
+#define COLOR_ERR               CSI COLOR_RED
+#define COLOR_CRI               CSI COLOR_RED_BG
+#define COLOR_RESET             CSI "0m"
+#else
+#define COLOR_DBG               ""
+#define COLOR_INF               ""
+#define COLOR_WRN               ""
+#define COLOR_ERR               ""
+#define COLOR_CRI               ""
+#define COLOR_RESET             ""
+#endif
+
+static const char * const log_level_color[] = {
+    COLOR_DBG,
+    COLOR_INF,
+    COLOR_WRN,
+    COLOR_ERR,
+    COLOR_CRI,
+};
+
+static const char * const log_level_str[] = {
+    "[DBG]",
+    "[INF]",
+    "[WRN]",
+    "[ERR]",
+    "[CRI]",
+};
+
+static void
+log_console_print_hdr(const struct log_entry_hdr *hdr)
+{
+    char module_num[10];
+    char image_hash_str[17];
+    char level_str_buf[13];
+    const char *level_str = "";
+    const char *module_name = NULL;
+    const char *color = "";
+    const char *color_off = "";
+
+    /* Find module defined in syscfg.logcfg sections */
+    module_name = log_module_get_name(hdr->ue_module);
+
+    if (module_name == NULL) {
+        module_name = module_num;
+        sprintf(module_num, "mod=%u", hdr->ue_module);
+    }
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        sprintf(image_hash_str, "[ih=0x%02x%02x%02x%02x]", hdr->ue_imghash[0], hdr->ue_imghash[1],
+                hdr->ue_imghash[2], hdr->ue_imghash[3]);
+    } else {
+        image_hash_str[0] = 0;
+    }
+    if (hdr->ue_level <= LOG_LEVEL_CRITICAL) {
+        if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_COLORS)) {
+            color = log_level_color[hdr->ue_level];
+            color_off = COLOR_RESET;
+        } else {
+            level_str = log_level_str[hdr->ue_level];
+        }
+    } else {
+        sprintf(level_str_buf, "[level=%u]", hdr->ue_level);
+    }
+
+    if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_TIMESTAMP)) {
+        unsigned int us = (unsigned int)hdr->ue_ts % 1000000;
+        unsigned int s = (unsigned int)(hdr->ue_ts / 1000000);
+        console_printf("[%u.%06u][%s%7s%s]%s%s ", s, us, color, module_name, color_off, level_str, image_hash_str);
+    } else {
+        console_printf("[%s%7s%s]%s%s ", color, module_name, color_off, level_str, image_hash_str);
+    }
+}
+
+#else
 static void
 log_console_print_hdr(const struct log_entry_hdr *hdr)
 {
@@ -62,6 +146,7 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
     }
     console_printf("]");
 }
+#endif
 
 static int
 log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
