@@ -230,48 +230,20 @@ const char *
 log_module_get_name(uint8_t module)
 {
     int idx;
+    const char *name;
 
-    switch (module) {
-#ifdef MYNEWT_VAL_DFLT_LOG_MOD
-    case MYNEWT_VAL(DFLT_LOG_MOD):
-        return "DEFAULT";
-#endif
-#ifdef MYNEWT_VAL_OS_LOG_MOD
-    case MYNEWT_VAL(OS_LOG_MOD):
-        return "OS";
-#endif
-#ifdef MYNEWT_VAL_BLE_LL_LOG_MOD
-    case MYNEWT_VAL(BLE_LL_LOG_MOD):
-        return "NIMBLE_CTLR";
-#endif
-#ifdef MYNEWT_VAL_BLE_HS_LOG_MOD
-    case MYNEWT_VAL(BLE_HS_LOG_MOD):
-        return "NIMBLE_HOST";
-#endif
-#ifdef MYNEWT_VAL_NFFS_LOG_MOD
-    case MYNEWT_VAL(NFFS_LOG_MOD):
-        return "NFFS";
-#endif
-#ifdef MYNEWT_VAL_REBOOT_LOG_MOD
-    case MYNEWT_VAL(REBOOT_LOG_MOD):
-        return "REBOOT";
-#endif
-#ifdef MYNEWT_VAL_OC_LOG_MOD
-    case MYNEWT_VAL(OC_LOG_MOD):
-        return "IOTIVITY";
-#endif
-#ifdef MYNEWT_VAL_TEST_LOG_MOD
-    case MYNEWT_VAL(TEST_LOG_MOD):
-        return "TEST";
-#endif
-    default:
+    /* Find module defined in syscfg.logcfg sections */
+    name = logcfg_log_module_name(module);
+
+    if (name == NULL) {
+        /* not in syscfg.logcfg, find module registered with log_module_register() */
         idx = log_module_find_idx(module);
         if (idx != -1) {
-            return g_log_module_list[idx].name;
+            name = g_log_module_list[idx].name;
         }
     }
 
-    return NULL;
+    return name;
 }
 
 /**
