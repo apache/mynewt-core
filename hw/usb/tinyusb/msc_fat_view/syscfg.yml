@@ -141,3 +141,4 @@ syscfg.logs:
     MSC_FAT_VIEW_LOG:
         module: MYNEWT_VAL(MSC_FAT_VIEW_LOG_MOD)
         level: MYNEWT_VAL(MSC_FAT_VIEW_LOG_LVL)
+        name: '"FATVIEW"'

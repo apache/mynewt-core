@@ -111,6 +111,7 @@ syscfg.logs:
     USBD_DFU_LOG:
         module: MYNEWT_VAL(USBD_DFU_LOG_MODULE)
         level: MYNEWT_VAL(USBD_DFU_LOG_LVL)
+        name: '"DFU"'
 
 
 syscfg.vals.BOOT_LOADER:
