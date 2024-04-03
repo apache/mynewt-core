@@ -34,4 +34,5 @@ syscfg.logs:
     DFLT_LOG:
         module: MYNEWT_VAL(DFLT_LOG_MOD)
         level: MYNEWT_VAL(DFLT_LOG_LVL)
+        name: '"DEFAULT"'
 
