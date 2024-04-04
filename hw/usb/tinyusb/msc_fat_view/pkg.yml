@@ -30,8 +30,16 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/usb/tinyusb"
     - "@apache-mynewt-core/mgmt/imgmgr"
-    - "@apache-mynewt-core/sys/coredump"
     - "@mcuboot/boot/bootutil"
+
+pkg.deps.MSC_FAT_VIEW_COREDUMP_FILES:
+    - "@apache-mynewt-core/sys/coredump"
+
+pkg.source_files:
+    - src/msc_fat_view.c
+
+pkg.source_files.MSC_FAT_VIEW_COREDUMP_FILES:
+    - src/coredump_files.c
 
 pkg.init.'(!BOOT_LOADER && TINYUSB_AUTO_START!=0)':
     msc_fat_view_pkg_init: $before:tinyusb_start
