@@ -356,7 +356,7 @@ readme_create_content(struct MemFile *file)
 
     fwrite(readme_text, 1, sizeof(readme_text) - 1, &file->file);
 
-    if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
+    if (MYNEWT_VAL(MSC_FAT_VIEW_DEFAULT_README_VERSION) && 0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
         flash_area_read(fa, 0, &image_header, sizeof(image_header));
         if (image_header.ih_magic == IMAGE_MAGIC) {
             fprintf(&file->file, "\n\nApp version: %u.%u.%u.%u\n", image_header.ih_ver.iv_major,
