@@ -81,10 +81,14 @@ syscfg.defs:
         description: >
             If set to 1, adds default 'README.TXT' file with some basic information about firmware.
         value: 1
+    MSC_FAT_VIEW_DEFAULT_README_VERSION:
+        description: >
+            If set to 1, README.TXT will have application version number.
+        value: 1
     MSC_FAT_VIEW_DEFAULT_README_APP_NAME:
         description: >
             Application name that will be put in default README.TXT.
-        value: '"Mynewt+TinyUSB"'
+        value: MYNEWT_VAL(APP_NAME)
     MSC_FAT_VIEW_DEFAULT_README_INCLUDE_HASHES:
         description: >
             Add git hashes into README.TXT.
