@@ -334,8 +334,10 @@ flash_area_id_from_image_slot(int slot)
     switch (slot) {
     case 0:
         return FLASH_AREA_IMAGE_0;
+#ifdef FLASH_AREA_IMAGE_1
     case 1:
         return FLASH_AREA_IMAGE_1;
+#endif
     default:
         assert(0);
         return FLASH_AREA_IMAGE_0;
@@ -352,8 +354,10 @@ flash_area_id_to_image_slot(int area_id)
     switch (area_id) {
     case FLASH_AREA_IMAGE_0:
         return 0;
+#ifdef FLASH_AREA_IMAGE_1
     case FLASH_AREA_IMAGE_1:
         return 1;
+#endif
     default:
         return -1;
     }
