@@ -38,8 +38,13 @@
 
 #if MYNEWT_VAL(BOOT_LOADER)
 #define BOOT_LOADER     1
+#define FLASH_AREA_IMAGE FLASH_AREA_IMAGE_0
 #else
 #define BOOT_LOADER     0
+#define FLASH_AREA_IMAGE FLASH_AREA_IMAGE_1
+#ifndef FLASH_AREA_IMAGE_1
+#error No FLASH_AREA_IMAGE_1 in bsp.yml
+#endif
 #endif
 
 #define FAT_TYPE_FAT12              12
@@ -1488,7 +1493,7 @@ msc_fat_view_write_unallocated_sector(uint32_t sector, const uint8_t *buffer)
     if (unallocated_write.write_status < 0) {
         return 512;
     }
-    flash_area_open(BOOT_LOADER ? FLASH_AREA_IMAGE_0 : FLASH_AREA_IMAGE_1, &fa);
+    flash_area_open(FLASH_AREA_IMAGE, &fa);
     if (unallocated_write.write_status == NOT_TOUCHED_YET) {
         if (BOOT_LOADER) {
             if (((struct image_header *)buffer)->ih_magic == IMAGE_MAGIC) {
