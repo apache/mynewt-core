@@ -35,4 +35,4 @@ pkg.cflags:
     - -fno-builtin-malloc
 
 pkg.lflags:
-    - -specs=nosys.specs:
+    - -umain
