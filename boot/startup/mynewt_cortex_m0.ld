@@ -30,8 +30,12 @@ EXTERN(g_pfnVectors)
 /* Specify the memory areas */
 MEMORY
 {
+#ifdef FLASH_AREA_BOOTLOADER_OFFSET
     BOOT (rx!w) : ORIGIN = FLASH_AREA_BOOTLOADER_OFFSET, LENGTH = FLASH_AREA_BOOTLOADER_SIZE
+#endif
+#ifdef FLASH_AREA_IMAGE_0_OFFSET
     SLOT0 (rx!w) : ORIGIN = FLASH_AREA_IMAGE_0_OFFSET, LENGTH = FLASH_AREA_IMAGE_0_SIZE
+#endif
     RAM (rwx) : ORIGIN = RAM_START, LENGTH = RAM_SIZE
 #include <memory_regions.ld.h>
 }
