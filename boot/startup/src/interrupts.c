@@ -124,7 +124,7 @@ Default_SysTick_Handler(void) {
 #define INT_VECTOR_PENDSV_HANDLER(handler) handler,
 #define INT_VECTOR_SYSTICK_HANDLER(handler) handler,
 #define INT_VECTOR(isr) isr,
-#define INT_VECTOR_UNUSED(a) 0,
+#define INT_VECTOR_UNUSED(a) (void (*)(void))a,
 void (*g_pfnVectors[])(void) __attribute__((section(".isr_vector"))) = {
 #include "mcu/mcu_vectors.h"
 };
