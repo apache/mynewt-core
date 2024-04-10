@@ -100,8 +100,8 @@
   * @{
   */
 
+#include "stm32u5xx.h"
 #include <math.h>
-#include <mcu/cmsis_nvic.h>
 
 /**
   * @}
@@ -166,8 +166,8 @@
 
   const uint8_t  AHBPrescTable[16] = {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 1U, 2U, 3U, 4U, 6U, 7U, 8U, 9U};
   const uint8_t  APBPrescTable[8] =  {0U, 0U, 0U, 0U, 1U, 2U, 3U, 4U};
-  const uint32_t MSIRangeTable[16] = {48000000U,24000000U,16000000U,12000000U, 4000000U, 2000000U, 1500000U,\
-                                      1000000U, 3072000U, 1536000U,1024000U, 768000U, 400000U, 200000U, 150000U, 100000U};
+  const uint32_t MSIRangeTable[16] = {48000000U,24000000U,16000000U,12000000U, 4000000U, 2000000U, 1330000U,\
+                                      1000000U, 3072000U, 1536000U,1024000U, 768000U, 400000U, 200000U, 133000U, 100000U};
 /**
   * @}
   */
@@ -183,11 +183,6 @@
 /** @addtogroup STM32U5xx_System_Private_Functions
   * @{
   */
-
-/*
- * XXX BSP specific
- */
-void SystemClock_Config(void);
 
 /**
   * @brief  Setup the microcontroller system.
@@ -223,14 +218,12 @@ void SystemInit(void)
   /* Disable all interrupts */
   RCC->CIER = 0U;
 
-  /* Configure System Clock */
-  SystemClock_Config();
-
-  /* Update SystemCoreClock global variable */
-  SystemCoreClockUpdate();
-
-  /* Relocate the vector table */
-  NVIC_Relocate();
+  /* Configure the Vector Table location add offset address ------------------*/
+  #ifdef VECT_TAB_SRAM
+    SCB->VTOR = SRAM1_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
+  #else
+    SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
+  #endif
 }
 
 /**
