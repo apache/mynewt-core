@@ -270,7 +270,6 @@ system_stm32u5xx.c
 clock_stm32u5xx.c
 
 # NUCLEO-U575ZI-Q BSP - BSD License
-startup_stm32u575xx.s
 stm32u5xx_hal_conf.h
 
 # NUCLEO-F767 BSP - BSD License
