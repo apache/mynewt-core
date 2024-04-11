@@ -403,7 +403,6 @@ This product bundles parts of STM32CubeU5, which is available under the
     * hw/mcu/stm/stm32u5xx/src/clock_stm32u5xx.c
     * hw/mcu/stm/stm32u5xx/src/system_stm32u5xx.c
     * hw/bsp/nucleo-u575zi-q/include/bsp/stm32u5xx_hal_conf.h
-    * hw/bsp/nucleo-u575zi-q/src/arch/cortex_m33/startup_stm32u575xx.s
 
 This product bundles parts of nrfx, which is available under the
 "3-clause BSD" license.  For detalils see:
