@@ -21,12 +21,16 @@ syscfg.defs:
     STM32_FLASH_SIZE_KB:
         description: 'Total flash size in KB.'
         value: 1024
+    MCU_PATH:
+        value: '"repos/apache-mynewt-core/hw/mcu/stm/stm32l4xx"'
 
     LPS22HB_ONB:
         description: 'Enable onboard LPS22HB pressure sensor'
         value:  0
 
 syscfg.vals:
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 96K
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
@@ -68,3 +72,8 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM2'
     TIMER_1_TIM: 'TIM3'
     TIMER_2_TIM: 'TIM4'
+
+    # Flasher parameters
+    MYNEWT_DOWNLOADER: stflash
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
+    JLINK_TARGET: STM32L475VG

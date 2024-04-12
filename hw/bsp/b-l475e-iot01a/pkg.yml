@@ -36,6 +36,8 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32l4xx"
     - "@apache-mynewt-core/libc"
+    - "@apache-mynewt-core/hw/scripts"
+    - "@apache-mynewt-core/boot/startup"
 
 pkg.deps.LPS22HB_ONB:
     - "@apache-mynewt-core/hw/drivers/sensors/lps33hw"
