@@ -21,8 +21,12 @@ syscfg.defs:
     STM32_FLASH_SIZE_KB:
         description: 'Total flash size in KB.'
         value: 1024
+    MCU_PATH:
+        value: '"repos/apache-mynewt-core/hw/mcu/stm/stm32l4xx"'
 
 syscfg.vals:
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 96K
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
