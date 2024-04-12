@@ -9,7 +9,11 @@
 
 #include <stdint.h>
 
-#define NVIC_NUM_VECTORS      (16 + 82)   // CORE + MCU Peripherals
+extern uint32_t __isr_vector_start[];
+extern uint32_t __isr_vector_end[];
+
+/* Extract number of vectors from .interrupt section size */
+#define NVIC_NUM_VECTORS      (__isr_vector_end - __isr_vector_start)
 #define NVIC_USER_IRQ_OFFSET  16
 
 #include "stm32l4xx.h"
