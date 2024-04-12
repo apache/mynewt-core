@@ -84,6 +84,9 @@ tinyusb_hardware_init(void)
      * Enable USB OTG clock, force device mode
      */
     USB_OTG_CLK_ENABLE();
+#ifdef __HAL_RCC_PWR_CLK_ENABLE
+    __HAL_RCC_PWR_CLK_ENABLE();
+#endif
 
 #if MYNEWT_VAL(USB_ID_PIN_ENABLE)
     hal_gpio_init_af(MCU_GPIO_PORTA(10), GPIO_AF_USB, GPIO_PULLUP, GPIO_MODE_AF_OD);
@@ -117,7 +120,7 @@ tinyusb_hardware_init(void)
 #endif
 #endif
 
-#if MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32L4)
     /* Enable USB power */
     HAL_PWREx_EnableVddUSB();
 #endif
