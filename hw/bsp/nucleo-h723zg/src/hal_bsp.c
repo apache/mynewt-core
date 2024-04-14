@@ -58,22 +58,6 @@ struct stm32_pwm_conf os_bsp_pwm2_cfg = {
 };
 #endif
 
-const uint32_t stm32_flash_sectors[] = {
-    0x08000000,     /* 128kB */
-    0x08020000,     /* 128kB */
-    0x08040000,     /* 128kB */
-    0x08060000,     /* 128kB */
-    0x08080000,     /* 128kB */
-    0x080a0000,     /* 128kB */
-    0x080c0000,     /* 128kB */
-    0x080e0000,     /* 128kB */
-    0x08100000,     /* End of flash */
-};
-
-#define SZ (sizeof(stm32_flash_sectors) / sizeof(stm32_flash_sectors[0]))
-static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) + 1 == SZ,
-        "STM32_FLASH_NUM_AREAS does not match flash sectors");
-
 #if MYNEWT_VAL(UART_0)
 const struct stm32_uart_cfg os_bsp_uart0_cfg = {
     .suc_uart = USART3,
