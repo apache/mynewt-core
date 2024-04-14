@@ -100,7 +100,6 @@ struct stm32_hal_spi_cfg {
                 FLASH_CCR_CLR_PGSERR   |             \
                 FLASH_CCR_CLR_STRBERR  |             \
                 FLASH_CCR_CLR_INCERR   |             \
-                FLASH_CCR_CLR_OPERR    |             \
                 FLASH_CCR_CLR_RDPERR   |             \
                 FLASH_CCR_CLR_RDSERR   |             \
                 FLASH_CCR_CLR_SNECCERR |             \
