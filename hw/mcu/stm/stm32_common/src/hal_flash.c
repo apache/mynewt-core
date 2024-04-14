@@ -35,6 +35,9 @@
 #else
 #define FLASH_SECTOR_SIZE  FLASH_PAGE_SIZE
 #endif
+#elif defined(FLASH_SECTOR_SIZE)
+#undef FLASH_IS_LINEAR
+#define FLASH_IS_LINEAR 1
 #endif
 
 static int stm32_flash_read(const struct hal_flash *dev, uint32_t address,
@@ -80,11 +83,13 @@ stm32_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
 }
 
 #if FLASH_IS_LINEAR
+#define VAL_SIZE (((MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) - 1) / 8) + 1)
+
 static int
 stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
         const void *src, uint32_t num_bytes)
 {
-    uint64_t val;
+    uint64_t val[VAL_SIZE];
     uint32_t i;
     int rc;
     uint8_t align;
@@ -102,6 +107,8 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
     num_words = ((num_bytes - 1) >> 3) + 1;
 #elif MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 16
     num_words = ((num_bytes - 1) >> 4) + 1;
+#elif MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 32
+    num_words = ((num_bytes - 1) >> 5) + 1;
 #else
     #error "Unsupported MCU_FLASH_MIN_WRITE_SIZE"
 #endif
@@ -121,10 +128,10 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
         /* FIXME: L1 was previously unlocking flash before erasing/programming,
          * and locking again afterwards. Maybe all MCUs should do the same?
          */
-#if MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) > 8
         rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, (uint32_t)&val);
 #else
-        rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, val);
+        rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, val[0]);
 #endif
         if (rc != HAL_OK) {
             return rc;
@@ -165,11 +172,7 @@ stm32_flash_write_non_linear(const struct hal_flash *dev, uint32_t address,
     STM32_HAL_FLASH_CLEAR_ERRORS();
 
     for (i = 0; i < num_bytes; i += inc) {
-#if MYNEWT_VAL(MCU_STM32H7)
-        rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, (uint32_t)(sptr + i));
-#else
         rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, sptr[i]);
-#endif
         if (rc != 0) {
             return rc;
         }
