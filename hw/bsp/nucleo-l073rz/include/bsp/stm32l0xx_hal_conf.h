@@ -158,8 +158,8 @@
 #define  TICK_INT_PRIORITY            (((uint32_t)1U<<__NVIC_PRIO_BITS) - 1U)    /*!< tick interrupt priority */
 #define  USE_RTOS                     0U
 #define  PREFETCH_ENABLE              MYNEWT_VAL(STM32_FLASH_PREFETCH_ENABLE)
-#define  INSTRUCTION_CACHE_ENABLE     MYNEWT_VAL(STM32_INSTRUCTION_CACHE_ENABLE)
-#define  DATA_CACHE_ENABLE            MYNEWT_VAL(STM32_DATA_CACHE_ENABLE)
+#define  PREREAD_ENABLE               MYNEWT_VAL(STM32_FLASH_PREREAD_ENABLE)
+#define  BUFFER_CACHE_DISABLE         (MYNEWT_VAL(STM32_FLASH_CACHE_ENABLE) == 0)
 
 /* ########################## Assert Selection ############################## */
 /**
