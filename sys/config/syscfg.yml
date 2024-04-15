@@ -93,6 +93,15 @@ syscfg.defs:
         description: >
             Max length of a value stored in the config FCB.
         value: 256
+    CONFIG_FLOAT_SUPPORT:
+        description: >
+            Enable float support in config.
+            For MCU without hardware support for enabling this if no other
+            function use floating point may increase image size 20kB or more.
+        value: 0
+
+syscfg.vals.HARDFLOAT:
+    value: 1
 
 syscfg.defs.(CONFIG_FCB || CONFIG_FCB2):
     CONFIG_FCB_FLASH_AREA:
