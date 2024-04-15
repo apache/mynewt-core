@@ -156,7 +156,9 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
 {
     int64_t val;
     uint64_t uval;
+#if MYNEWT_VAL(CONFIG_FLOAT_SUPPORT)
     float fval;
+#endif
     char *eptr;
 
     if (!val_str) {
@@ -223,6 +225,7 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
             *(uint64_t *)vp = uval;
         }
         break;
+#if MYNEWT_VAL(CONFIG_FLOAT_SUPPORT)
     case CONF_FLOAT:
         fval = strtof(val_str, &eptr);
         if (*eptr != '\0') {
@@ -230,6 +233,7 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
         }
         *(float *)vp = fval;
         break;
+#endif
     case CONF_STRING:
         val = strlen(val_str);
         if (val + 1 > maxlen) {
