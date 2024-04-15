@@ -107,6 +107,14 @@ syscfg.defs:
         description: Enable pre-fetch of instructions (when latency > 0)
         value: 0
 
+    STM32_FLASH_PREREAD_ENABLE:
+        description: Enable the FLASH preread buffer.
+        value: 0
+
+    STM32_FLASH_CACHE_ENABLE:
+        description: Enable the FLASH Buffer cache.
+        value: 1
+
     STM32_HAL_SPI_HAS_FIFO:
         description: This MCU has a SPI without FIFO
         value: 0

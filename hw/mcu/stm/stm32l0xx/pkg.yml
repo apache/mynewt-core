@@ -45,6 +45,7 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/mcu/stm/stm32_common"
     - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/boot/startup"
 
 pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/spi_stm32"

@@ -69,15 +69,6 @@ SystemInit(void)
 
     /* Disable all interrupts */
     RCC->CIER = 0x00000000U;
-
-    /* Configure System Clock */
-    SystemClock_Config();
-
-    /* Update SystemCoreClock global variable */
-    SystemCoreClockUpdate();
-
-    /* Relocate the vector table */
-    NVIC_Relocate();
 }
 
 /**
