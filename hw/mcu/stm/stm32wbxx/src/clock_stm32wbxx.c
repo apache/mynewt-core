@@ -315,17 +315,5 @@ SystemClock_Config(void)
         assert(0);
     }
 #endif
-
-#if PREFETCH_ENABLE
-    __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-#endif
-
-#if INSTRUCTION_CACHE_ENABLE
-    __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
-#endif
-
-#if DATA_CACHE_ENABLE
-    __HAL_FLASH_DATA_CACHE_ENABLE();
-#endif
 }
 #endif
