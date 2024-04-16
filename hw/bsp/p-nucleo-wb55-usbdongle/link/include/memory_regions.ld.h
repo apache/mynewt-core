@@ -17,13 +17,4 @@
  * under the License.
  */
 
-/* Linker script to configure memory regions. */
-MEMORY
-{
-  FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 216K /* First image slot. */
-  RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 192K
-  RAM_SHARED (rwx) : ORIGIN = 0x20030000, LENGTH = 10K
-}
-
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+    RAM_SHARED (rwx) : ORIGIN = 0x20030000, LENGTH = 10K
