@@ -29,7 +29,7 @@
 #include "config/config_fcb.h"
 #include "config/config_generic_kv.h"
 #include "config_priv.h"
-
+#include "hal/hal_watchdog.h"
 #define CONF_FCB_VERS		1
 
 struct conf_fcb_load_cb_arg {
@@ -195,6 +195,7 @@ conf_fcb_compress_internal(struct fcb *fcb,
         loc2 = loc1;
         copy = 1;
         while (fcb_getnext(fcb, &loc2) == 0) {
+            hal_watchdog_tickle();
             rc = conf_fcb_var_read(&loc2, buf2, &name2, &val2);
             if (rc) {
                 continue;
