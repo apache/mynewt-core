@@ -380,7 +380,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
 #if MYNEWT_VAL(FLOAT_USER)
             case 'f':
                 p.base = 10;
-                d = va_arg(va, double);
+                d = va_arg(va_to_pass, double);
                 /* Convert to an int to get the integer part of the number. */
                 n = d;
                 /* Convert to ascii */
