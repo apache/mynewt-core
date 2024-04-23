@@ -44,9 +44,6 @@
 #ifndef BSSNZ_RAM
 #define BSSNZ_RAM RAM
 #endif
-#ifndef STACK_RAM
-#define STACK_RAM RAM
-#endif
 
 #ifndef MYNEWT_VAL_RESET_HANDLER
 #define RESET_HANDLER Reset_Handler
@@ -60,8 +57,12 @@
 #define STACK_SIZE MYNEWT_VAL_MAIN_STACK_SIZE
 #endif
 
+#ifndef RAM_START
 #define RAM_START MYNEWT_VAL_MCU_RAM_START
+#endif
+#ifndef RAM_SIZE
 #define RAM_SIZE MYNEWT_VAL_MCU_RAM_SIZE
+#endif
 
 #ifndef MYNEWT_CODE
 #if MYNEWT_VAL_RAM_RESIDENT
