@@ -9,20 +9,12 @@
 
 #include <stdint.h>
 
-#if defined(STM32F401xE) || defined(STM32F401xC) || defined(STM32F407xx) || defined(STM32F405xx)
- #define MCU_NUM_PERIPH_VECTORS 82
-#elif defined(STM32F411xE)
- #define MCU_NUM_PERIPH_VECTORS 86
-#elif defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F439xx)
- #define MCU_NUM_PERIPH_VECTORS 91
-#elif defined(STM32F413xx)
- #define MCU_NUM_PERIPH_VECTORS 102
-#else
- #error "Number of peripheral vectors not defined for this MCU."
-#endif
+extern uint32_t __isr_vector_start[];
+extern uint32_t __isr_vector_end[];
 
+/* Extract number of vectors from .interrupt section size */
+#define NVIC_NUM_VECTORS      (__isr_vector_end - __isr_vector_start)
 #define NVIC_USER_IRQ_OFFSET  16
-#define NVIC_NUM_VECTORS      (16 + MCU_NUM_PERIPH_VECTORS)
 
 #include "stm32f4xx.h"
 
