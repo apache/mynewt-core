@@ -136,17 +136,9 @@ SystemInit(void)
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
 
-    /* Configure System Clock */
-    SystemClock_Config();
-
-    /* Update SystemCoreClock global variable */
-    SystemCoreClockUpdate();
-
 #if defined (DATA_IN_ExtSRAM) || defined (DATA_IN_ExtSDRAM)
     SystemInit_ExtMemCtl();
 #endif
-
-    NVIC_Relocate();
 }
 
 /**
