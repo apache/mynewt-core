@@ -36,3 +36,4 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32f4xx"
     - "@apache-mynewt-core/libc"
+    - "@apache-mynewt-core/boot/startup"
