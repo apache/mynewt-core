@@ -27,6 +27,8 @@ syscfg.defs:
         value: 24
 
 syscfg.vals:
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 256K
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
@@ -52,3 +54,13 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM9'
     TIMER_1_TIM: 'TIM10'
     TIMER_2_TIM: 'TIM11'
+
+# Disable UART for bootloader, otherwise may not fit on flash
+# with default build
+syscfg.vals.BOOT_LOADER:
+    UART_0: 0
+    STM32_CLOCK_HSI: 1
+    STM32_CLOCK_HSE: 0
+    STM32_FLASH_PREFETCH_ENABLE: 0
+    STM32_INSTRUCTION_CACHE_ENABLE: 0
+    STM32_DATA_CACHE_ENABLE: 0
