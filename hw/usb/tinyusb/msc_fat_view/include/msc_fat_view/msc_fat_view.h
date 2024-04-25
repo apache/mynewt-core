@@ -71,4 +71,20 @@ void msc_fat_view_media_eject(void);
  */
 void msc_fat_view_media_insert(void);
 
+/* Section name for root entries */
+#define ROOT_DIR_SECTION __attribute__((section(".msc_fat_view_root_entry"), used))
+
+/**
+ * Macro to add static root entries
+ */
+#define ROOT_DIR_ENTRY(entry, file_name, attr, size_fun, read_fun, write_fun, delete_fun) \
+const file_entry_t entry ROOT_DIR_SECTION = {  \
+    .name = file_name,                         \
+    .attributes = attr,                        \
+    .size = size_fun,                          \
+    .read_sector = read_fun,                   \
+    .write_sector = write_fun,                 \
+    .delete_entry = delete_fun,                \
+}
+
 #endif /* __MSC_FAT_VIEW_H__ */

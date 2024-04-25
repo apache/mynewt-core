@@ -38,8 +38,28 @@ pkg.deps.MSC_FAT_VIEW_COREDUMP_FILES:
 pkg.source_files:
     - src/msc_fat_view.c
 
+pkg.whole_archive: true
+
 pkg.source_files.MSC_FAT_VIEW_COREDUMP_FILES:
     - src/coredump_files.c
+
+pkg.source_files.MSC_FAT_VIEW_DEFAULT_README:
+    - src/entry_readme.c
+
+pkg.source_files.MSC_FAT_VIEW_HUGE_FILE:
+    - src/entry_huge_file.c
+
+pkg.source_files.MSC_FAT_VIEW_SLOT0_IMAGE:
+    - src/entry_slot0.c
+
+pkg.source_files.MSC_FAT_VIEW_SLOT0_HEX:
+    - src/entry_slot0_hex.c
+
+pkg.source_files.MSC_FAT_VIEW_MYNEWT_SHORTCUT:
+    - src/entry_mynewt_htm.c
+
+pkg.link_tables:
+    - msc_fat_view_root_entry
 
 pkg.init.'(!BOOT_LOADER && TINYUSB_AUTO_START!=0)':
     msc_fat_view_pkg_init: $before:tinyusb_start
