@@ -410,6 +410,18 @@ conf_export_cb(struct conf_handler *ch, conf_export_func_t export_func,
     return 0;
 }
 
+void
+conf_export(conf_export_func_t export_func, enum conf_export_tgt tgt)
+{
+    struct conf_handler *ch;
+
+    conf_lock();
+    SLIST_FOREACH(ch, &conf_handlers, ch_list) {
+        conf_export_cb(ch, export_func, tgt);
+    }
+    conf_unlock();
+}
+
 int
 conf_set_value(char *name, char *val_str)
 {
