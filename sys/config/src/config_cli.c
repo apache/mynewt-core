@@ -47,13 +47,7 @@ conf_running_one(char *name, char *val)
 static void
 conf_dump_running(void)
 {
-    struct conf_handler *ch;
-
-    conf_lock();
-    SLIST_FOREACH(ch, &conf_handlers, ch_list) {
-        conf_export_cb(ch, conf_running_one, CONF_EXPORT_SHOW);
-    }
-    conf_unlock();
+    conf_export(conf_running_one, CONF_EXPORT_SHOW);
 }
 #endif
 
