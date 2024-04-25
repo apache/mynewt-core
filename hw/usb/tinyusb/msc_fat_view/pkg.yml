@@ -30,7 +30,11 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/usb/tinyusb"
     - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-core/util/stream"
     - "@mcuboot/boot/bootutil"
+
+pkg.deps.MSC_FAT_VIEW_CONFIG:
+    - "@apache-mynewt-core/sys/config"
 
 pkg.deps.MSC_FAT_VIEW_COREDUMP_FILES:
     - "@apache-mynewt-core/sys/coredump"
@@ -57,6 +61,9 @@ pkg.source_files.MSC_FAT_VIEW_SLOT0_HEX:
 
 pkg.source_files.MSC_FAT_VIEW_MYNEWT_SHORTCUT:
     - src/entry_mynewt_htm.c
+
+pkg.source_files.MSC_FAT_VIEW_CONFIG:
+    - src/entry_config.c
 
 pkg.link_tables:
     - msc_fat_view_root_entry
