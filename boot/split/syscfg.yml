@@ -28,5 +28,5 @@ syscfg.defs:
             Sysinit stage for split image functionality.
         value: 500
 
-syscfg.defs.'(CONFIG_NFFS==1||CONFIG_LITTLEFS==1||CONFIG_FCB==1||CONFIG_FCB2==1)':
+syscfg.vals.'(CONFIG_NFFS==1||CONFIG_LITTLEFS==1||CONFIG_FCB==1||CONFIG_FCB2==1)':
     SPLIT_CONFIG_SUPPORT: 1
