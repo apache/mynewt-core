@@ -247,6 +247,14 @@ int conf_load_one(char *name);
 int conf_ensure_loaded(void);
 
 /**
+ * Export configuration via user defined function.
+ *
+ * @param export_func function to receive configuration entry
+ * @param tgt - export target declaration
+ */
+void conf_export(conf_export_func_t export_func, enum conf_export_tgt tgt);
+
+/**
  * Config setting comes as a result of conf_load().
  *
  * @return 1 if yes, 0 if not.
