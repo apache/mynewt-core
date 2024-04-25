@@ -41,9 +41,8 @@
 #define FLASH_AREA_IMAGE FLASH_AREA_IMAGE_0
 #else
 #define BOOT_LOADER     0
+#ifdef FLASH_AREA_IMAGE_1
 #define FLASH_AREA_IMAGE FLASH_AREA_IMAGE_1
-#ifndef FLASH_AREA_IMAGE_1
-#error No FLASH_AREA_IMAGE_1 in bsp.yml
 #endif
 #endif
 
@@ -265,275 +264,6 @@ static const file_entry_t volume_label = {
     .read_sector = empty_read,
 };
 
-static const char mynewt_htm_text[] =
-    "<!-- mynewt Website and Authentication Shortcut -->\n"
-    "<html>\n"
-    "<head>\n"
-    "<meta http-equiv=\"refresh\" content=\"0; url=https://mynewt.apache.org/\"/>\n"
-    "<title>mynewt Website Shortcut</title>\n"
-    "</head>\n"
-    "<body></body>\n"
-    "</html>";
-
-static uint32_t
-mynewt_htm_size(const file_entry_t *file)
-{
-    (void)file;
-
-    return strlen(mynewt_htm_text);
-}
-
-static void
-mynewt_htm_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
-{
-    (void)entry;
-
-    if (file_sector == 0) {
-        strcpy((char *)buffer, mynewt_htm_text);
-        memset(buffer + 512 - sizeof(mynewt_htm_text), 0, sizeof(mynewt_htm_text));
-    } else {
-        memset(buffer, 0, 512);
-    }
-}
-
-static const file_entry_t mynew_htm = {
-    .name = "MYNEWT.HTM",
-    .attributes = FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY,
-    .size = mynewt_htm_size,
-    .read_sector = mynewt_htm_read,
-};
-
-static const char readme_text[] = "This device runs "
-                                  MYNEWT_VAL(MSC_FAT_VIEW_DEFAULT_README_APP_NAME)  " on "
-                                  MYNEWT_VAL(BSP_NAME);
-
-#if defined MYNEWT_VAL_REPO_VERSION_APACHE_MYNEWT_CORE
-#define REPO_VERSION_APACHE_MYNEWT_CORE     MYNEWT_VAL(REPO_VERSION_APACHE_MYNEWT_CORE)
-#else
-#define REPO_VERSION_APACHE_MYNEWT_CORE     "unknown"
-#endif
-
-#if defined MYNEWT_VAL_REPO_HASH_APACHE_MYNEWT_CORE
-#define REPO_HASH_APACHE_MYNEWT_CORE        MYNEWT_VAL(REPO_HASH_APACHE_MYNEWT_CORE)
-#else
-#define REPO_HASH_APACHE_MYNEWT_CORE        ""
-#endif
-
-#if defined MYNEWT_VAL_REPO_VERSION_APACHE_MYNEWT_NIMBLE
-#define REPO_VERSION_APACHE_MYNEWT_NIMBLE   MYNEWT_VAL(REPO_VERSION_APACHE_MYNEWT_NIMBLE)
-#else
-#define REPO_VERSION_APACHE_MYNEWT_NIMBLE   "unknown"
-#endif
-
-#if defined MYNEWT_VAL_REPO_HASH_APACHE_MYNEWT_NIMBLE
-#define REPO_HASH_APACHE_MYNEWT_NIMBLE      MYNEWT_VAL(REPO_HASH_APACHE_MYNEWT_NIMBLE)
-#else
-#define REPO_HASH_APACHE_MYNEWT_NIMBLE      ""
-#endif
-
-#if defined MYNEWT_VAL_REPO_VERSION_APACHE_MYNEWT_MCUMGR
-#define REPO_VERSION_APACHE_MYNEWT_MCUMGR   MYNEWT_VAL(REPO_VERSION_APACHE_MYNEWT_MCUMGR)
-#else
-#define REPO_VERSION_APACHE_MYNEWT_MCUMGR   "unknown"
-#endif
-
-#if defined MYNEWT_VAL_REPO_HASH_APACHE_MYNEWT_MCUMGR
-#define REPO_HASH_APACHE_MYNEWT_MCUMGR      MYNEWT_VAL(REPO_HASH_APACHE_MYNEWT_MCUMGR)
-#else
-#define REPO_HASH_APACHE_MYNEWT_MCUMGR      ""
-#endif
-
-#if defined MYNEWT_VAL_REPO_VERSION_TINYUSB
-#define REPO_VERSION_TINYUSB                MYNEWT_VAL(REPO_VERSION_TINYUSB)
-#else
-#define REPO_VERSION_TINYUSB                "unknown"
-#endif
-
-#if defined MYNEWT_VAL_REPO_HASH_TINYUSB
-#define REPO_HASH_TINYUSB                   MYNEWT_VAL(REPO_HASH_TINYUSB)
-#else
-#define REPO_HASH_TINYUSB                   ""
-#endif
-
-static int
-readme_create_content(struct MemFile *file)
-{
-    struct image_header image_header;
-    const struct flash_area *fa;
-
-    fwrite(readme_text, 1, sizeof(readme_text) - 1, &file->file);
-
-    if (MYNEWT_VAL(MSC_FAT_VIEW_DEFAULT_README_VERSION) && 0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
-        flash_area_read(fa, 0, &image_header, sizeof(image_header));
-        if (image_header.ih_magic == IMAGE_MAGIC) {
-            fprintf(&file->file, "\n\nApp version: %u.%u.%u.%u\n", image_header.ih_ver.iv_major,
-                    image_header.ih_ver.iv_minor,
-                    image_header.ih_ver.iv_revision,
-                    (unsigned)image_header.ih_ver.iv_build_num);
-        }
-        flash_area_close(fa);
-    }
-
-    if (MYNEWT_VAL(MSC_FAT_VIEW_DEFAULT_README_INCLUDE_HASHES)) {
-        fprintf(&file->file, "\n\nmynewt: " REPO_VERSION_APACHE_MYNEWT_CORE " " REPO_HASH_APACHE_MYNEWT_CORE);
-        fprintf(&file->file, "\nnimble: " REPO_VERSION_APACHE_MYNEWT_NIMBLE " " REPO_HASH_APACHE_MYNEWT_NIMBLE);
-        fprintf(&file->file, "\nmcumgr: " REPO_VERSION_APACHE_MYNEWT_MCUMGR " " REPO_HASH_APACHE_MYNEWT_MCUMGR);
-        fprintf(&file->file, "\ntinyusb: " REPO_VERSION_TINYUSB " " REPO_HASH_TINYUSB);
-    }
-    if (MYNEWT_VAL(MSC_FAT_VIEW_HUGE_FILE)) {
-        fprintf(&file->file, "\n\n'Huge file' can be used to verify USB performance.\n");
-    }
-
-    fprintf(&file->file, "\n\nNew firmware can be copied to this drive (drag-drop .img file to upgrade device).\n");
-
-    return file->bytes_written;
-}
-
-static uint32_t
-readme_size(const file_entry_t *file_entry)
-{
-    (void)file_entry;
-    struct MemFile empty_mem_file;
-    uint32_t len;
-
-    fmemopen_w(&empty_mem_file, (char *)NULL, 0);
-    len = readme_create_content(&empty_mem_file);
-
-    return len;
-}
-
-static void
-readme_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
-{
-    struct MemFile sector_file;
-    int written = 0;
-    (void)entry;
-
-    MSC_FAT_VIEW_LOG_DEBUG("Readme read %d\n", file_sector);
-    if (file_sector == 0) {
-        fmemopen_w(&sector_file, (char *)buffer, 512);
-        readme_create_content(&sector_file);
-        written = sector_file.bytes_written;
-    }
-
-    memset(buffer + written, 0, 512 - written);
-}
-
-static const file_entry_t readme = {
-    .name = "README.TXT",
-    .attributes = FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY,
-    .size = readme_size,
-    .read_sector = readme_read,
-};
-
-static uint32_t
-slot0_img_size(const file_entry_t *file)
-{
-    struct image_header image_header;
-    struct image_tlv_info tlv_info;
-    uint32_t size = 0;
-    const struct flash_area *fa;
-    (void)file;
-
-    if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
-        flash_area_read(fa, 0, &image_header, sizeof(image_header));
-        size = image_header.ih_img_size + image_header.ih_hdr_size;
-        flash_area_read(fa, size, &tlv_info, sizeof(tlv_info));
-        if (tlv_info.it_magic == IMAGE_TLV_INFO_MAGIC) {
-            size += tlv_info.it_tlv_tot;
-        }
-        flash_area_close(fa);
-    }
-
-    return size;
-}
-
-static void
-slot0_img_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
-{
-    const struct flash_area *fa;
-    uint32_t addr;
-    (void)entry;
-
-    if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
-        addr = file_sector * 512;
-        flash_area_read(fa, addr, buffer, 512);
-        flash_area_close(fa);
-    }
-}
-
-static const file_entry_t slot0 = {
-    .name = "FIRMWARE.IMG",
-    .attributes = FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY,
-    .size = slot0_img_size,
-    .read_sector = slot0_img_read,
-};
-
-static uint32_t
-slot0_hex_size(const file_entry_t *file)
-{
-    uint32_t size = 0;
-    const struct flash_area *fa;
-    (void)file;
-
-    if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
-        size = fa->fa_size * 4;
-        flash_area_close(fa);
-    }
-
-    return size;
-}
-
-static uint8_t
-hex_digit(int v)
-{
-    v &= 0xF;
-
-    return (v < 10) ? (v + '0') : (v + 'A' - 10);
-}
-
-static void
-slot0_hex_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
-{
-    const struct flash_area *fa;
-    int i;
-    int j;
-    int k;
-    uint32_t addr = (file_sector * 512) / 4;
-    uint32_t addr_buf;
-    (void)entry;
-
-    if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
-        flash_area_read(fa, addr, buffer, 512 / 4);
-        flash_area_close(fa);
-        for (i = 512, j = 128; i > 0;) {
-            buffer[--i] = '\n';
-            buffer[--i] = '\r';
-            for (k = 0; k < 16; ++k) {
-                buffer[--i] = hex_digit(buffer[--j]);
-                buffer[--i] = hex_digit(buffer[j] >> 4);
-                buffer[--i] = ' ';
-            }
-            for (k = 0; k < 5; ++k) {
-                buffer[--i] = ' ';
-            }
-            buffer[--i] = ':';
-            addr_buf = addr + j;
-            for (k = 0; k < 8; ++k) {
-                buffer[--i] = hex_digit(addr_buf);
-                addr_buf >>= 4;
-            }
-        }
-    }
-}
-
-static const file_entry_t slot0_hex = {
-    .name = "SLOT0.HEX",
-    .attributes = FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY,
-    .size = slot0_hex_size,
-    .read_sector = slot0_hex_read,
-};
-
 static const file_entry_t system_volume_information = {
     .name = "System Volume Information",
     .attributes = FAT_FILE_ENTRY_ATTRIBUTE_ARCHIVE |
@@ -548,29 +278,6 @@ static const file_entry_t drop_image_here = {
     .attributes = FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY,
     .size = return0,
     .read_sector = empty_read,
-};
-
-static uint32_t
-huge_file_size(const file_entry_t *file)
-{
-    (void)file;
-
-    return HUGE_FILE_SIZE;
-}
-
-static void
-huge_file_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
-{
-    (void)entry;
-
-    memset(buffer, (uint8_t)file_sector, 512);
-}
-
-static const file_entry_t huge_file = {
-    .name = "Huge file",
-    .attributes = FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY,
-    .size = huge_file_size,
-    .read_sector = huge_file_read,
 };
 
 static int write_status;
@@ -1495,6 +1202,7 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
 static int
 msc_fat_view_write_unallocated_sector(uint32_t sector, const uint8_t *buffer)
 {
+#ifdef FLASH_AREA_IMAGE
     const struct flash_area *fa;
     uint32_t write_offset;
     int rc;
@@ -1549,6 +1257,7 @@ msc_fat_view_write_unallocated_sector(uint32_t sector, const uint8_t *buffer)
     if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
         unallocated_write.last_sector = sector;
     }
+#endif
 
     return 512;
 }
@@ -1596,23 +1305,14 @@ init_disk_data(void)
         msc_fat_view_add_dir_entry(&system_volume_information);
     }
 
-    if (MYNEWT_VAL(MSC_FAT_VIEW_MYNEWT_SHORTCUT)) {
-        msc_fat_view_add_dir_entry(&mynew_htm);
-    }
-    if (MYNEWT_VAL(MSC_FAT_VIEW_DEFAULT_README)) {
-        msc_fat_view_add_dir_entry(&readme);
-    }
     if (MYNEWT_VAL(MSC_FAT_VIEW_DROP_IMAGE_HERE)) {
         msc_fat_view_add_dir_entry(&drop_image_here);
     }
-    if (MYNEWT_VAL(MSC_FAT_VIEW_SLOT0_IMAGE)) {
-        msc_fat_view_add_dir_entry(&slot0);
-    }
-    if (MYNEWT_VAL(MSC_FAT_VIEW_SLOT0_HEX)) {
-        msc_fat_view_add_dir_entry(&slot0_hex);
-    }
-    if (MYNEWT_VAL(MSC_FAT_VIEW_HUGE_FILE)) {
-        msc_fat_view_add_dir_entry(&huge_file);
+    extern const file_entry_t __msc_fat_view_root_entry_start__[];
+    extern const file_entry_t __msc_fat_view_root_entry_end__[];
+    const file_entry_t *entry;
+    for (entry = __msc_fat_view_root_entry_start__; entry != __msc_fat_view_root_entry_end__; ++entry) {
+        msc_fat_view_add_dir_entry(entry);
     }
     if (MYNEWT_VAL(MSC_FAT_VIEW_COREDUMP_FILES)) {
         msc_fat_view_add_coredumps();
