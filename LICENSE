@@ -302,6 +302,7 @@ This product bundles parts of STM32CubeF4 1.5, which is available under the
     * hw/bsp/nucleo-f439zi/include/bsp/stm32f4xx_hal_conf.h
     * hw/bsp/stm32f411discovery/include/bsp/stm32f4xx_hal_conf.h
     * hw/bsp/stm32f429discovery/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/weact_g431cb/include/bsp/stm32g4xx_hal_conf.h
 
 This product bundles parts of STM32CubeF7, which is available under the
 "3-clause BSD" license.  Bundled files are:
