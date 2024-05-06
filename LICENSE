@@ -293,25 +293,15 @@ This product bundles parts of STM32CubeF4 1.5, which is available under the
     * hw/mcu/stm/stm32f4xx/src/clock_stm32f4xx.c
     * hw/mcu/stm/stm32f4xx/src/system_stm32f4xx.c
     * hw/bsp/ada_feather_stm32f405/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/ada_feather_stm32f405/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/black_vet6/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/black_vet6/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/nucleo-f401re/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/nucleo-f401re/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/olimex_stm32-e407_devboard/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/olimex_stm32-e407_devboard/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/stm32f4discovery/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/stm32f4discovery/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/nucleo-f411re/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/nucleo-f411re/src/arch/cortex_m4/startup_STM32F411.s
     * hw/bsp/nucleo-f413zh/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/nucleo-f413zh/src/arch/cortex_m4/startup_stm32f413xx.s
     * hw/bsp/nucleo-f439zi/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/nucleo-f439zi/src/arch/cortex_m4/startup_stm32f439xx.s
     * hw/bsp/stm32f411discovery/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/stm32f411discovery/src/arch/cortex_m4/startup_STM32F411.s
     * hw/bsp/stm32f429discovery/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/stm32f429discovery/src/arch/cortex_m4/startup_STM32F429x.s
 
 This product bundles parts of STM32CubeF7, which is available under the
 "3-clause BSD" license.  Bundled files are:
@@ -362,10 +352,8 @@ This product bundles parts of stm32f0xx, which is available under the
     * hw/mcu/stm/stm32f0xx/src/clock_stm32f0xx.c
     * hw/mcu/stm/stm32f0xx/src/system_stm32f0xx.c
     * hw/bsp/nucleo-f030r8/include/bsp/stm32f0xx_hal_conf.h
-    * hw/bsp/nucleo-f030r8/src/arch/cortex_m0/startup_stm32f030x8.s
     * hw/bsp/nucleo-f072rb/include/bsp/stm32f0xx_hal_conf.h
-    * hw/bsp/nucleo-f072rb/src/arch/cortex_m0/startup_stm32f072xb.s
-    
+
 This product bundles parts of stm32l0xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c
