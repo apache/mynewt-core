@@ -19,7 +19,7 @@
 
 bsp.name: "6LoWPAN Clicker"
 bsp.url: https://www.mikroe.com/clicker-6lowpan
-bsp.maker: "Mikrow"
+bsp.maker: "Mikroe"
 
 bsp.arch: pic32
 bsp.compiler: compiler/xc32

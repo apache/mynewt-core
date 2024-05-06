@@ -19,7 +19,7 @@
 
 bsp.name: "Adafruit Feather STM32F405"
 bsp.url: https://www.adafruit.com/product/4382
-bsp.maker: "Adafruit"
+bsp.maker: "Adafruit Industries"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

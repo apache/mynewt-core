@@ -18,7 +18,7 @@
 #
 
 bsp.name: "Creator Ci40 IoT Kit"
-bsp.url: https://creatordev.io/ci40-iot-dev-kit.html
+bsp.url: https://docs.rs-online.com/822b/0900766b815516a4.pdf
 bsp.maker: "Imagination Technologies"
 
 bsp.arch: mips

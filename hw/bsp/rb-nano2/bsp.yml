@@ -18,7 +18,7 @@
 #
 
 bsp.name: "Nano 2"
-bsp.url: https://redbear.cc/product/ble/ble-nano-2-soldered.html
+bsp.url: https://github.com/redbear/nRF5x/tree/master/nRF52832#ble-nano-2
 bsp.maker: "RedBear"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
