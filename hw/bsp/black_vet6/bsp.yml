@@ -18,8 +18,8 @@
 #
 
 bsp.name: "Black VET6"
-bsp.url: "http://wiki.stm32duino.com/index.php?title=STM32F4xx_boards#Black_VET6_-_STM32F407VET6_.28512KB_Flash.2C_192K_RAM.2C_100_pin.29"
-bsp.maker: "STM32Duino"
+bsp.url: "https://stm32-base.org/boards/STM32F407VET6-STM32-F4VE-V2.0.html"
+bsp.maker: "Unknown"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

@@ -18,7 +18,7 @@
 #
 
 bsp.name: "micro:bit"
-bsp.url: https://microbit.org/guide/hardware/
+bsp.url: https://tech.microbit.org/hardware/1-5-revision/
 bsp.maker: "BBC (with Nordic nRF51822)"
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0

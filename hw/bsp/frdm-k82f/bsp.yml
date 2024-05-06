@@ -18,7 +18,7 @@
 #
 
 bsp.name: "FRDM-K82F: Freedom Development Platform"
-bsp.url:
+bsp.url: https://www.nxp.com/design/design-center/development-boards-and-designs/general-purpose-mcus/freedom-development-platform-for-kinetis-k82-k81-and-k80-mcus:FRDM-K82F
 bsp.maker: "NXP"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4

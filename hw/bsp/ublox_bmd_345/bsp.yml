@@ -17,7 +17,7 @@
 # under the License.
 #
 
-bsp.name: "Ublox BMD-345-Eval"
+bsp.name: "BMD-345-Eval"
 bsp.url: https://www.u-blox.com/en/product/evk-bmd-3438
 bsp.maker: "Ublox"
 bsp.arch: cortex_m4
