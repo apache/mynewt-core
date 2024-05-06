@@ -121,7 +121,6 @@ stm32_driver_mod_timer.c
 # STM32CubeF4  - BSD License.
 stm32f4xx_hal_conf.h
 system_stm32f4xx.c
-startup_STM32F40x.s
 
 # STM32F4x MCU/BSP clock customization
 clock_stm32f4xx.c
@@ -253,9 +252,6 @@ startup_stm32f746xx.s
 # STM32F3 Discovery BSP - BSD License
 startup_stm32f303xc.s
 
-# STM32F429 BSP - BSD License
-startup_STM32F429x.s
-
 # STM32L152C BSP - BSD License
 stm32l1xx_hal_conf.h
 startup_stm32l152xc.s
@@ -275,12 +271,6 @@ stm32u5xx_hal_conf.h
 # NUCLEO-F767 BSP - BSD License
 startup_stm32f767xx.s
 
-# NUCLEO-F439 BSP - BSD License
-startup_stm32f439xx.s
-
-# NUCLEO-F413ZH BSP - BSD License
-startup_stm32f413xx.s
-
 # NUCLEO-L467rg BSP - BSD License
 stm32l4xx_hal_conf.h
 
@@ -293,9 +283,6 @@ nucleo-f030r8
 # NUCLEO-F103RB BSP - BSD License
 stm32f1xx_hal_conf.h
 system_stm32f1xx.c
-
-# NUCLEO-F411RE BSP - BSD License
-startup_STM32F411.s
 
 # NUCLEO-G0B1RE BSP - BSD License
 stm32g0xx_hal_conf.h
