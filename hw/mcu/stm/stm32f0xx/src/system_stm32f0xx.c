@@ -119,22 +119,6 @@ void SystemInit(void)
 
     /* Disable all interrupts */
     RCC->CIR = 0x00000000U;
-
-    /* Configure System Clock */
-    SystemClock_Config();
-
-    /* Update SystemCoreClock global variable */
-    SystemCoreClockUpdate();
-
-    /*
-     * TODO: Currently the supported BSPs don't use a bootloader, so
-     * the flash remapping is done here. This should be updated to allow
-     * for bootloader use.
-     */
-    STM32_HAL_FLASH_REMAP();
-
-    /* Relocate the vector table */
-    NVIC_Relocate();
 }
 
 /**
