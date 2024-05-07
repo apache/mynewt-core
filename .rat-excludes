@@ -20,7 +20,8 @@ README.md
 bin
 
 # CRC16 - BSD License.
-crc16.*
+crc16.h
+crc16.c
 
 
 # Nordic nRF5 SDK - BSD License.

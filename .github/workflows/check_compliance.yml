@@ -37,7 +37,7 @@ jobs:
         run: |
              .github/check_style.py
 
-  style_license:
+  license_check:
     name: Licensing
     runs-on: ubuntu-latest
     steps:
