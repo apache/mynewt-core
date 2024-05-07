@@ -270,7 +270,9 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
 {
     int64_t val;
     uint64_t uval;
+#if MYNEWT_VAL(CONFIG_FLOAT_SUPPORT)
     float fval;
+#endif
 
     if (type == CONF_STRING) {
         return vp;
@@ -309,10 +311,12 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
         }
         snprintf(buf, buf_len, "%" PRIu64, uval);
         return buf;
+#if MYNEWT_VAL(CONFIG_FLOAT_SUPPORT)
     case CONF_FLOAT:
         fval = *(float *)vp;
         snprintf(buf, buf_len, "%f", fval);
         return buf;
+#endif
     default:
         return NULL;
     }
