@@ -66,11 +66,5 @@ hw/mcu/nordic/nrf91xx/include/nrfx_config_nrf91.h
 hw/mcu/nordic/nrf5340/include/nrfx_config_nrf5340_application.h
 hw/mcu/nordic/nrf5340_net/include/nrfx_config_nrf5340_network.h
 
-# Skip upstream LittleFS code but check Mynewt glue
-fs/littlefs/include/littlefs/lfs.h
-fs/littlefs/include/littlefs/lfs_util.h
-fs/littlefs/src/lfs.c
-fs/littlefs/src/lfs_util.c
-
 # LVGL formated file
 hw/drivers/display/lvgl/default/lv_conf.h
