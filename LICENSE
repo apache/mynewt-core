@@ -366,7 +366,7 @@ This product bundles parts of stm32f0xx, which is available under the
     * hw/mcu/stm/stm32f0xx/src/clock_stm32f0xx.c
     * hw/mcu/stm/stm32f0xx/src/system_stm32f0xx.c
     * hw/bsp/nucleo-f030r8/include/bsp/stm32f0xx_hal_conf.h
-  . * hw/bsp/nucleo-f030r8/src/arch/cortex_m0/startup_stm32f030x8.s
+    * hw/bsp/nucleo-f030r8/src/arch/cortex_m0/startup_stm32f030x8.s
     * hw/bsp/nucleo-f072rb/include/bsp/stm32f0xx_hal_conf.h
     * hw/bsp/nucleo-f072rb/src/arch/cortex_m0/startup_stm32f072xb.s
     
