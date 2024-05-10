@@ -236,7 +236,6 @@ which are available under a BSD style license.  Relevant files are:
     * hw/mcu/nordic/nrf5340_net/include/nrfx_config_nrf5340_network.h
     * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0.s
     * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0_split.s
-    * hw/mcu/nordic/nrf52xxx/src/arch/cortex_m4/gcc_startup_cm4.s
     * hw/mcu/nordic/nrf52xxx/src/arch/cortex_m4/gcc_startup_cm4_split.s
     * hw/mcu/nordic/nrf91xx/src/arch/cortex_m33/gcc_startup_cm33_split.s
     * hw/mcu/nordic/nrf91xx/src/arch/cortex_m33/gcc_startup_cm33.s
@@ -355,11 +354,8 @@ This product bundles parts of stm32f1xx, which is available under the
     * hw/mcu/stm/stm32f1xx/src/clock_stm32f1xx.c
     * hw/mcu/stm/stm32f1xx/src/system_stm32f1xx.c
     * hw/bsp/bluepill/include/bsp/stm32f1xx_hal_conf.h
-    * hw/bsp/bluepill/src/arch/cortex_m3/startup_stm32f103xb.s
     * hw/bsp/nucleo-f103rb/include/bsp/stm32f1xx_hal_conf.h
-    * hw/bsp/nucleo-f103rb/src/arch/cortex_m3/startup_stm32f103xb.s
     * hw/bsp/olimex-p103/include/bsp/stm32f1xx_hal_conf.h
-    * hw/bsp/olimex-p103/src/arch/cortex_m3/startup_stm32f103xb.s
     
 This product bundles parts of stm32f0xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
@@ -375,28 +371,21 @@ This product bundles parts of stm32l0xx, which is available under the
     * hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c
     * hw/mcu/stm/stm32l0xx/src/system_stm32l0xx.c
     * hw/bsp/b-l072z-lrwan1/include/bsp/stm32l0xx_hal_conf.h
-    * hw/bsp/b-l072z-lrwan1/src/arch/cortex_m0/startup_stm32l072xx.s
     * hw/bsp/nucleo-l073rz/include/bsp/stm32l0xx_hal_conf.h
-    * hw/bsp/nucleo-l073rz/src/arch/cortex_m0/startup_stm32l073xx.s
-    
+
 This product bundles parts of stm32l4xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/stm/stm32l4xx/src/clock_stm32l4xx.c
     * hw/mcu/stm/stm32l4xx/src/system_stm32l4xx.c
     * hw/bsp/b-l475e-iot01a/include/bsp/stm32l4xx_hal_conf.h
-    * hw/bsp/b-l475e-iot01a/src/arch/cortex_m4/startup_stm32l475xx.s
     * hw/bsp/nucleo-l476rg/include/bsp/stm32l4xx_hal_conf.h
-    * hw/bsp/nucleo-l476rg/src/arch/cortex_m4/startup_stm32l476xx.s
 
 This product bundles parts of stm32wbxx, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/mcu/stm/stm32wbxx/stm32wb55.ld
     * hw/mcu/stm/stm32wbxx/src/clock_stm32wbxx.c
     * hw/mcu/stm/stm32wbxx/src/system_stm32wbxx.c
     * hw/bsp/p-nucleo-wb55/include/bsp/stm32wbxx_hal_conf.h
-    * hw/bsp/p-nucleo-wb55/src/arch/cortex_m4/startup_stm32wb55xx_cm4.s
     * hw/bsp/p-nucleo-wb55-usbdongle/include/bsp/stm32wbxx_hal_conf.h
-    * hw/bsp/p-nucleo-wb55-usbdongle/src/arch/cortex_m4/startup_stm32wb55xx_cm4.s
 
 This product bundles parts of STM32CubeU5, which is available under the
 "3-clause BSD" license.  Bundled files are:
