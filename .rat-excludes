@@ -225,7 +225,7 @@ clock_stm32f7xx.c
 system_stm32f7xx.c
 
 # CMSIS Cortex-H7, STM32h7 - BSD License.
-stm32h7xx
+clock_stm32h7xx.c
 
 # LORA - BSD License
 lora
@@ -237,13 +237,19 @@ loraping
 sysview
 
 # SEGGER RTT - BSD License
-rtt
+SEGGER_RTT.h
+SEGGER_RTT.c
+SEGGER_RTT_printf.c
 
 # Adafruit TSL2561 Sensor - BSD License
-tsl2561
+tsl2561.h
+tsl2561.c
+tsl2561_priv.h
+tsl2561_shell.c
 
 # pic32mx470f512h - BSD License
-pic32mx470f512h
+p32mx470f512h.h
+ppic32mx.h
 
 # STM32F7 Discovery BSP - BSD License
 stm32f7xx_hal_conf.h
@@ -275,10 +281,7 @@ startup_stm32f767xx.s
 stm32l4xx_hal_conf.h
 
 # NUCLEO-F072RB BSP - BSD License
-nucleo-f072rb
-
-# NUCLEO-F030R8 BSP - BSD License
-nucleo-f030r8
+stm32f0xx_hal_conf.h
 
 # NUCLEO-F103RB BSP - BSD License
 stm32f1xx_hal_conf.h
@@ -349,14 +352,14 @@ clock_stm32l1xx.c
 system_stm32l1xx.c
 
 # stm32f1xx - BSD License
-stm32f1xx
+clock_stm32f1xx.c
 
 # ARC - BSD License
 arc
 embarc_emsk
 
 # olimex-p103 - BSD and APL 2.0 License
-olimex-p103
+stm32f1xx_hal_conf.h
 
 # STM32L0xx SDK - BSD License
 system_stm32l0xx.c
@@ -371,30 +374,35 @@ clock_stm32wbxx.c
 system_stm32wbxx.c
 
 # B-L072Z-LRWAN1 BSP - BSD License
-b-l072z-lrwan1
+stm32l0xx_hal_conf.h
 
 # B-L475E-IOT01A BSP - BSD License
-b-l475e-iot01a
+stm32l4xx_hal_conf.h
 
 # bluepill BSP - BSD License
 bluepill
 
 # Ruuvitag BSP - BSD License
-ruuvitag_rev_b
+ruuvitag_rev_b_no_boot.ld
+split-ruuvitag_rev_b.ld
 
 # reel_board BSP - BSD License
-reel_board
+reel_board_no_boot.ld
+split-reel_board.ld
 
 # Dialog DA1469x BSP - BSD and APL2 license
-dialog_da1469x-dk-pro
-da1469x
+da1469x.ld
+da1469x_ram_resident.ld
 DA1469xAB.h
 cmac.ld
 CMAC.h
 system_CMAC.h
 
 # Bosch BMP388 driver - BSD License
-bmp388
+bmp388.h
+bmp388.c
+bmp388_priv.h
+bmp388_shell.c
 
 # Nordic NRF5340 SDK - APL2 license
 system_nrf5340.c
