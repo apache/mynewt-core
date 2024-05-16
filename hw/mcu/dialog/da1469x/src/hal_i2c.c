@@ -186,14 +186,19 @@ i2c_config(const struct da1469x_hal_i2c *i2c, uint32_t frequency)
     /* Configure I2C_CON_REG */
     i2c_con_reg = i2c->data->I2C_CON_REG;
 
-    /* Clear speed register */
-    i2c_con_reg &= ~I2C_I2C_CON_REG_I2C_SPEED_Msk;
+    /* Clear speed and restart enable bits */
+    i2c_con_reg &= ~(I2C_I2C_CON_REG_I2C_SPEED_Msk |
+                     I2C_I2C_CON_REG_I2C_RESTART_EN_Msk);
     switch (frequency) {
     case 100:
         i2c_con_reg |= (1 << I2C_I2C_CON_REG_I2C_SPEED_Pos);
         break;
     case 400:
         i2c_con_reg |= (2 << I2C_I2C_CON_REG_I2C_SPEED_Pos);
+        break;
+    case 1000:
+        i2c_con_reg |= ((3 << I2C_I2C_CON_REG_I2C_SPEED_Pos) |
+                        I2C_I2C_CON_REG_I2C_RESTART_EN_Msk);
         break;
     default:
         return HAL_I2C_ERR_INVAL;
