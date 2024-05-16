@@ -33,6 +33,7 @@ struct da1469x_sleep_cb {
 };
 
 void da1469x_sleep_cb_register(struct da1469x_sleep_cb *cb);
+uint32_t da1469x_sleep_wakeup_ticks_get(void);
 
 #ifdef __cplusplus
 }

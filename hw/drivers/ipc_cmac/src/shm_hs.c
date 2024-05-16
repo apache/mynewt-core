@@ -36,6 +36,7 @@
 #include <ipc_cmac/rand.h>
 #include "trng/trng.h"
 #include "console/console.h"
+#include "mcu/da1469x_sleep.h"
 
 extern char _binary_cmac_img_bin_start[];
 extern char _binary_cmac_img_bin_end;
@@ -196,20 +197,10 @@ cmac_host_rand_chk_fill(void)
     }
 }
 
-static void
-cmac_host_lpclk_cb(uint32_t freq)
+static bool
+shm_synced(void)
 {
-    /* No need to wakeup CMAC if LP clock frequency did not change */
-    if (g_cmac_shm_ctrl->lp_clock_freq == freq) {
-        return;
-    }
-
-    cmac_shm_lock();
-    g_cmac_shm_ctrl->lp_clock_freq = freq;
-    g_cmac_shm_ctrl->pending_ops |= CMAC_SHM_CB_PENDING_OP_LP_CLK;
-    cmac_shm_unlock();
-
-    cmac_host_signal2cmac();
+    return g_cmac_shm_ctrl && (g_cmac_shm_ctrl->magic == CMAC_SHM_CB_MAGIC);
 }
 
 static void
@@ -234,8 +225,8 @@ shm_configure(void)
     struct cmac_shm_trim *trim;
     uint32_t *trim_data;
 
-    g_cmac_shm_ctrl->xtal32m_settle_us =
-        MYNEWT_VAL(MCU_CLOCK_XTAL32M_SETTLE_TIME_US);
+    g_cmac_shm_ctrl->lp_clock_freq = 0;
+    g_cmac_shm_ctrl->wakeup_lpclk_ticks = 0;
 
     trim = (struct cmac_shm_trim *)g_cmac_shm_trim;
     trim_data = trim->data;
@@ -415,7 +406,7 @@ cmac_start(void)
     /* Release CMAC from reset and sync */
     CRG_TOP->CLK_RADIO_REG &= ~CRG_TOP_CLK_RADIO_REG_CMAC_SYNCH_RESET_Msk;
 
-    while (g_cmac_shm_ctrl->magic != CMAC_SHM_CB_MAGIC) {
+    while (!shm_synced()) {
         /* Wait for CMAC to initialize */
     }
     NVIC_EnableIRQ(CMAC2SYS_IRQn);
@@ -443,7 +434,7 @@ cmac_host_init(void)
 
     cmac_start();
 
-    da1469x_lpclk_register_cmac_cb(cmac_host_lpclk_cb);
+    cmac_host_req_sleep_update();
 
 #if MYNEWT_VAL(CMAC_DEBUG_HOST_PRINT_ENABLE) && MYNEWT_VAL(CMAC_DEBUG_DATA_ENABLE)
     /* Trim values are calculated on RF init, so are valid after synced with CMAC */
@@ -463,8 +454,39 @@ cmac_host_signal2cmac(void)
 }
 
 void
+cmac_host_req_sleep_update(void)
+{
+    uint16_t lpclk_freq;
+    uint32_t wakeup_lpclk_ticks;
+
+    if (!shm_synced()) {
+        return;
+    }
+
+    lpclk_freq = da1469x_lpclk_freq_get();
+    wakeup_lpclk_ticks = da1469x_sleep_wakeup_ticks_get();
+
+    if ((g_cmac_shm_ctrl->lp_clock_freq == lpclk_freq) &&
+        (g_cmac_shm_ctrl->wakeup_lpclk_ticks == wakeup_lpclk_ticks)) {
+        return;
+    }
+
+    cmac_shm_lock();
+    g_cmac_shm_ctrl->lp_clock_freq = lpclk_freq;
+    g_cmac_shm_ctrl->wakeup_lpclk_ticks = wakeup_lpclk_ticks;
+    g_cmac_shm_ctrl->pending_ops |= CMAC_SHM_CB_PENDING_OP_SLEEP_UPDATE;
+    cmac_shm_unlock();
+
+    cmac_host_signal2cmac();
+}
+
+void
 cmac_host_rf_calibrate(void)
 {
+    if (!shm_synced()) {
+        return;
+    }
+
     cmac_shm_lock();
     g_cmac_shm_ctrl->pending_ops |= CMAC_SHM_CB_PENDING_OP_RF_CAL;
     cmac_shm_unlock();
