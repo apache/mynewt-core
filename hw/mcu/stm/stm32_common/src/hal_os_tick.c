@@ -324,6 +324,8 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
 
 #ifdef __HAL_RCC_RTCAPB_CLK_ENABLE
     __HAL_RCC_RTCAPB_CLK_ENABLE();
+#elif defined(__HAL_RCC_RTC_CLK_ENABLE)
+    __HAL_RCC_RTC_CLK_ENABLE();
 #endif
 #ifdef __HAL_RCC_RTCAPB_CLKAM_ENABLE
     __HAL_RCC_RTCAPB_CLKAM_ENABLE();
