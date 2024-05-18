@@ -206,7 +206,7 @@ ina219_read_bus_voltage(struct ina219_dev *ina219, uint16_t *voltage, bool *conv
 
     rc = ina219_read_bus_voltage_reg(ina219, &v);
     if (rc == SYS_EOK) {
-        if (ina219->config_reg & INA219_CONF_REG_PG_Msk) {
+        if (ina219->config_reg & INA219_CONF_REG_BRNG_Msk) {
             *voltage = (v >> 3) * INA219_BUS_VOLTAGE_32V_LSB;
         } else {
             *voltage = (v >> 3) * INA219_BUS_VOLTAGE_16V_LSB;
