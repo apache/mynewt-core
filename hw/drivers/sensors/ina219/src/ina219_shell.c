@@ -79,7 +79,7 @@ static int
 ina219_shell_cmd_fs(int argc, char **argv)
 {
     int rc = -1;
-    long long val;
+    long long val = 0;
 
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 0, 1, &rc);
@@ -96,7 +96,7 @@ static int
 ina219_shell_cmd_soft_avg(int argc, char **argv)
 {
     int rc = -1;
-    long long val;
+    long long val = 0;
 
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 1, 100, &rc);
@@ -113,7 +113,7 @@ static int
 ina219_shell_cmd_smod(int argc, char **argv)
 {
     int rc = -1;
-    long long val;
+    long long val = 0;
 
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 0, 7, &rc);
@@ -130,7 +130,7 @@ static int
 ina219_shell_cmd_vmod(int argc, char **argv)
 {
     int rc = -1;
-    long long val;
+    long long val = 0;
 
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 0, 15, &rc);

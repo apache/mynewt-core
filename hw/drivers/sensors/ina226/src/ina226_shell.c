@@ -82,7 +82,7 @@ static int
 ina226_shell_cmd_avg(int argc, char **argv)
 {
     int rc = -1;
-    long long val;
+    long long val = 0;
 
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 0, 7, &rc);
@@ -99,7 +99,7 @@ static int
 ina226_shell_cmd_soft_avg(int argc, char **argv)
 {
     int rc = -1;
-    long long val;
+    long long val = 0;
 
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 1, 100, &rc);
@@ -116,7 +116,7 @@ static int
 ina226_shell_cmd_sct(int argc, char **argv)
 {
     int rc = -1;
-    long long val;
+    long long val = 0;
 
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 0, 7, &rc);
@@ -133,7 +133,7 @@ static int
 ina226_shell_cmd_vct(int argc, char **argv)
 {
     int rc = -1;
-    long long val;
+    long long val = 0;
 
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 0, 7, &rc);
