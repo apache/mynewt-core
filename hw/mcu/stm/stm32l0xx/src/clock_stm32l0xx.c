@@ -59,7 +59,9 @@ SystemClock_Config(void)
      * voltage scaling value regarding system frequency refer to product
      * datasheet.
      */
+    __HAL_RCC_PWR_CLK_ENABLE();
     __HAL_PWR_VOLTAGESCALING_CONFIG(MYNEWT_VAL(STM32_CLOCK_VOLTAGESCALING_CONFIG));
+    __HAL_RCC_PWR_CLK_DISABLE();
 
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_NONE;
 
