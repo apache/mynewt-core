@@ -29,7 +29,8 @@ hal_watchdog_init(uint32_t expire_msecs)
     uint32_t reload;
 
     /* Max prescaler is 256 */
-    reload = 32768 / 256;
+    /* LSI is not very precise, assume 10% inaccuracy when calculating reload value */
+    reload = LSI_VALUE * 11 / 2560;
     reload = (reload * expire_msecs) / 1000;
 
     /* Check to make sure we are not trying a reload value that is too large */
