@@ -91,7 +91,7 @@ da1469x_pwm_configure_channel(struct pwm_dev *dev, uint8_t channel,
 
     pwm = da1469x_pwm_resolve(dev->pwm_instance_id);
     if (!pwm || !pwm->in_use) {
-       return SYS_EINVAL;
+        return SYS_EINVAL;
     }
 
     mcu_gpio_set_pin_function(cfg->pin, MCU_GPIO_MODE_OUTPUT, pwm->gpio_func);
@@ -220,6 +220,7 @@ da1469x_pwm_set_freq(struct pwm_dev *dev, uint32_t freq)
     int tim_pwm_freq;
     uint32_t sys_clk_en;
     uint32_t actual_freq;
+    uint32_t clk_reg;
 
     pwm = da1469x_pwm_resolve(dev->pwm_instance_id);
     if (!pwm || !pwm->in_use) {
@@ -232,7 +233,8 @@ da1469x_pwm_set_freq(struct pwm_dev *dev, uint32_t freq)
     }
 
     pwm->timer_regs->TIMER_PRESCALER_REG = 0;
-    pwm->timer_regs->TIMER_CTRL_REG = sys_clk_en;
+    clk_reg = pwm->timer_regs->TIMER_CTRL_REG & ~TIMER_TIMER_CTRL_REG_TIM_SYS_CLK_EN_Msk;
+    pwm->timer_regs->TIMER_CTRL_REG = (sys_clk_en | clk_reg);
     pwm->timer_regs->TIMER_PWM_FREQ_REG = tim_pwm_freq;
 
     pwm->freq = actual_freq;
