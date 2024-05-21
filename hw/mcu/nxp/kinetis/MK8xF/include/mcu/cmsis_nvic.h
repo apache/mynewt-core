@@ -31,7 +31,7 @@
  * include board definition file which includes: cmsis-core/core_cm4.h
  * this fixes missing CORTEX_M* definition in cmsis_nvic.c
  */
-#include "mcu/kinetis_common.h"
+#include <fsl_device_registers.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

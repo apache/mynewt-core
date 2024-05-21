@@ -178,6 +178,7 @@ system_MK82F25615.h
 system_MK82F25615.c
 fsl_clock.h
 fsl_ftfx_controller.c
+startup_LPC55S28.S
 
 # LWIP - BSD License.
 lwip_base

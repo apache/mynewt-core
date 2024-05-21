@@ -17,21 +17,25 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nxp/kinetis
-pkg.description: Kinetis common MCU definitions and files
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
-    - "@apache-mynewt-core/hw/mcu/nxp"
-
-pkg.ign_files.!MCUX_DRIVERS_LPUART:
-  - "hal_lpuart.c"
-
-pkg.ign_files.!MCUX_DRIVERS_UART:
-  - "hal_uart.c"
+pkg.name: "hw/bsp/lpcxpresso55s28"
+pkg.type: bsp
+pkg.description: BSP definition for NXP LPCXpresso55S28.
+pkg.keywords:
+    - LPCXpresso55S28
+    - nxp
 
 pkg.cflags:
-    - -Wno-incompatible-pointer-types
+    - -DCPU_LPC55S28JBD100
+    - -D__STARTUP_CLEAR_BSS
+pkg.lflags:
+    - -Wl,--defsym=__stack_size=1000
+    - -Wl,--defsym=__heap_size__=2000
+    - -ufunc_a
+pkg.cflags.HARDFLOAT:
+    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
+pkg.deps:
+    - "@apache-mynewt-core/hw/mcu/nxp/lpc55xx"
+    - "@apache-mynewt-core/hw/scripts"
+    - "@apache-mynewt-core/libc/baselibc"
+

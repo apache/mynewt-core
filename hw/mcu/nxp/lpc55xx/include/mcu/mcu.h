@@ -16,37 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "hal/hal_system.h"
-#include "syscfg/syscfg.h"
+
+#ifndef __MCU_MCU_H_
+#define __MCU_MCU_H_
+
 #include <fsl_device_registers.h>
-#include "fsl_rcm.h"
 
-enum hal_reset_reason
-hal_reset_cause(void)
-{
-    static enum hal_reset_reason reason;
-    uint32_t reg;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    if (reason) {
-        return reason;
-    }
-    reg = (uint32_t) RCM;
+#define SVC_IRQ_NUMBER SVC_IRQn
 
-    if (reg & (kRCM_SourceWdog | kRCM_SourceLockup)) {
-        reason = HAL_RESET_WATCHDOG;
-    } else if (reg & kRCM_SourceSw) {
-        reason = HAL_RESET_SOFT;
-    } else if (reg & kRCM_SourcePin) {
-        reason = HAL_RESET_PIN;
-    } else if (reg & kRCM_SourcePor) {
-        reason = HAL_RESET_POR;
-    } else if (reg & kRCM_SourceWakeup) {
-        reason = HAL_RESET_SYS_OFF_INT;
-    } else if (reg & kRCM_SourceLvd) {
-        reason = HAL_RESET_BROWNOUT;
-    } else {
-        reason = HAL_RESET_OTHER;
-    }
+/*
+ * Defines for naming GPIOs.
+ */
+#define MCU_GPIO_PORT0(pin)	((0 * 32) + (pin))
+#define MCU_GPIO_PORT1(pin)	((1 * 32) + (pin))
 
-    return reason;
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* __MCU_MCU_H_ */
