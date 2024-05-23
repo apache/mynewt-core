@@ -1,0 +1,48 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/drivers/audio/cirruslogic-mcu-drivers
+pkg.description: MCU Driver Software Development Kit (SDK)
+pkg.keywords:
+    - audio
+
+pkg.type: sdk
+
+pkg.include_dirs:
+    - "@cirruslogic-mcu-drivers/."
+    - "@cirruslogic-mcu-drivers/common/platform_bsp"
+    - "@cirruslogic-mcu-drivers/common"
+
+pkg.source_files.MCU_DRIVERS_CS47L63:
+    - "@cirruslogic-mcu-drivers/cs47l63/cs47l63.c"
+    - "@cirruslogic-mcu-drivers/common/regmap.c"
+
+pkg.include_dirs.MCU_DRIVERS_CS47L63:
+    - "@cirruslogic-mcu-drivers/cs47l63"
+    - "@cirruslogic-mcu-drivers/cs47l63/config"
+    - "@cirruslogic-mcu-drivers/cs47l63/bsp"
+
+pkg.cflags:
+
+repository.cirruslogic-mcu-drivers:
+    type: github
+    vers: 39956e6302595f790494d5b7dff46f1a56b63124-commit
+    branch: master
+    user: CirrusLogic
+    repo: mcu-drivers
