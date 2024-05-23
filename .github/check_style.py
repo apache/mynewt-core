@@ -61,6 +61,7 @@ def check_file(fname: str, commit: str, upstream: str) -> list[str]:
         in_chunk = False
 
         for s in run_cmd(f"uncrustify -q -c uncrustify.cfg -f {tmpf.name} | "
+                         f"awk -f uncrustify.awk | "
                          f"diff -u0 -p {tmpf.name} - || true"):
             m = re.match(r"^@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@", s)
             if not m:
