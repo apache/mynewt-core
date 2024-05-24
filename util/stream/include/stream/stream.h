@@ -61,6 +61,17 @@ struct in_stream_vft {
      *         negative error code
      */
     int (*available)(struct in_stream *istream);
+
+    /**
+     * Pump data from this in_stream to other out_stream
+     *
+     * @param istream - this input stream to get data from
+     * @param ostream - output stream to put data to
+     * @param count - number of bytes to pump
+     * @return non-negative number of bytes written
+     *         negative error code
+     */
+    int (*pump_to)(struct in_stream *istream, struct out_stream *ostream, uint32_t count);
 };
 
 /* Output stream functions */
@@ -83,6 +94,17 @@ struct out_stream_vft {
      *         negative error code
      */
     int (*flush)(struct out_stream *ostream);
+
+    /**
+     * Pump data from in_stream to this out_stream
+     *
+     * @param ostream - this output stream to write data to
+     * @param istream - other input stream to get data from
+     * @param count - number for bytes to pump
+     * @return non-negative number of bytes written
+     *         negative error code
+     */
+    int (*pump_from)(struct out_stream *ostream, struct in_stream *istream, uint32_t count);
 };
 
 /* Plain input stream */
@@ -102,15 +124,39 @@ struct mem_in_stream {
     uint32_t read_ptr;
 };
 
+#define OSTREAM_DEF(type) \
+    static int type ## _write(struct out_stream *ostream, const uint8_t *buf, uint32_t count); \
+    static int type ## _flush(struct out_stream *ostream); \
+    static int type ## _pump_from(struct out_stream *ostream, struct in_stream *istream, uint32_t count); \
+    const struct out_stream_vft type ## _vft = { \
+        .write = type ## _write, \
+        .flush = type ## _flush, \
+        .pump_from = type ## _pump_from, \
+    }
+
+#define OSTREAM_VFT(type, _write, _flush, _pump) \
+    static int _write(struct out_stream *ostream, const uint8_t *buf, uint32_t count); \
+    static int _flush(struct out_stream *ostream); \
+    static int _pump_from(struct out_stream *ostream, struct in_stream *istream, uint32_t count); \
+    const struct out_stream_vft type ## _vft = { \
+        .write = _write, \
+        .flush = _flush, \
+        .pump_from = _pump_from, \
+    }
+
 #define OSTREAM(type, name)     \
     struct type name = {        \
         .vft = &type ## _vft    \
     }
 
+#define OSTREAM_INIT(type, field)     \
+    .field.vft = &type ## _vft
+
 #define ISTREAM_DEF(type)                       \
     const struct in_stream_vft type ## _vft = { \
         .available = type ## _available,        \
         .read = type ## _read,                  \
+        .pump_to = type ## _pump_to,            \
     }
 
 #define ISTREAM(type, name)     \
@@ -118,8 +164,8 @@ struct mem_in_stream {
         .vft = &type ## _vft    \
     }
 
-#define ISTREAM_INIT(type)     \
-    .type.vft = &type ## _vft  \
+#define ISTREAM_INIT(type, field)     \
+    .field.vft = &type ## _vft  \
 
 /**
  * Check how many bytes can be read out of stream.
@@ -174,6 +220,8 @@ int ostream_flush(struct out_stream *ostream);
  * @return number of bytes written
  */
 int ostream_write(struct out_stream *ostream, const uint8_t *buf, uint32_t count, bool flush);
+
+int stream_pump(struct in_stream *istream, struct out_stream *ostream, uint32_t count);
 
 /**
  * Initialize memory input stream
