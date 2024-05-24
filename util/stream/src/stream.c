@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include <stream/stream.h>
+#include "os/os.h"
 
 int
 istream_flush(struct in_stream *istream)
@@ -107,3 +108,31 @@ istream_read(struct in_stream *istream, uint8_t *buf, uint32_t count)
     return istream->vft->read(istream, buf, count);
 }
 
+int
+stream_pump(struct in_stream *istream, struct out_stream *ostream, uint32_t count)
+{
+    int pumped;
+
+    /* If output stream has pump_from function used it */
+    if (ostream->vft->pump_from) {
+        pumped = ostream->vft->pump_from(ostream, istream, count);
+    } else if (istream->vft->pump_to) {
+        /* When input stream has pump_to used it */
+        pumped = istream->vft->pump_to(istream, ostream, count);
+    } else {
+        /* Both stream don't provide pump functions, use local buffer for pumping data */
+        uint8_t buf[16];
+        pumped = 0;
+        while (count) {
+            uint32_t n = min(count, sizeof(buf));
+            uint32_t r = istream_read(istream, buf, n);
+            pumped += r;
+            count -= r;
+            ostream_write(ostream, buf, r, false);
+            if (r == 0) {
+                break;
+            }
+        }
+    }
+    return pumped;
+}
