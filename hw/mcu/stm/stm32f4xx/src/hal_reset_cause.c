@@ -32,7 +32,9 @@ hal_reset_cause(void)
 
     reg = RCC->CSR;
 
-    if (reg & (RCC_CSR_WDGRSTF | RCC_CSR_WWDGRSTF)) {
+    if (reg & RCC_CSR_PORRSTF) {
+        reason = HAL_RESET_POR;
+    } else if (reg & (RCC_CSR_WDGRSTF | RCC_CSR_WWDGRSTF)) {
         reason = HAL_RESET_WATCHDOG;
     } else if (reg & RCC_CSR_SFTRSTF) {
         reason = HAL_RESET_SOFT;
@@ -43,7 +45,7 @@ hal_reset_cause(void)
         reason = HAL_RESET_BROWNOUT;
 #endif
     } else {
-        reason = HAL_RESET_POR;
+        reason = HAL_RESET_OTHER;
     }
     RCC->CSR |= RCC_CSR_RMVF;
     return reason;
