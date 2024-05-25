@@ -23,6 +23,11 @@
 
 IWDG_HandleTypeDef g_wdt_cfg;
 
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
+_Static_assert(4095 * 2560 / 11 / (LSI_VALUE / 1000) >= MYNEWT_VAL(WATCHDOG_INTERVAL),
+    "Watchdog interval out of range, decrease value WATCHDOG_INTERVAL in syscfg.yml");
+#endif
+
 int
 hal_watchdog_init(uint32_t expire_msecs)
 {

@@ -82,6 +82,7 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM2'
     TIMER_1_TIM: 'TIM16'
     TIMER_2_TIM: 'TIM17'
+    WATCHDOG_INTERVAL: 28000
 
     # Flasher parameters
     MYNEWT_DOWNLOADER: stflash
