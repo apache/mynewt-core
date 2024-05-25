@@ -32,17 +32,16 @@ hal_reset_cause(void)
 
     reg = RCC->CSR;
 
-    if (reg & RCC_CSR_WWDGRSTF) {
+    if (reg & (RCC_CSR_BORRSTF)) {
+        reason = HAL_RESET_BROWNOUT;
+    } else if (reg & (RCC_CSR_WWDGRSTF | RCC_CSR_IWDGRSTF)) {
         reason = HAL_RESET_WATCHDOG;
     } else if (reg & RCC_CSR_SFTRSTF) {
         reason = HAL_RESET_SOFT;
     } else if (reg & RCC_CSR_PINRSTF) {
         reason = HAL_RESET_PIN;
-    } else if (reg & RCC_CSR_LPWRRSTF) {
-        /* For L1xx this is low-power reset */
-        reason = HAL_RESET_BROWNOUT;
     } else {
-        reason = HAL_RESET_POR;
+        reason = HAL_RESET_OTHER;
     }
     RCC->CSR |= RCC_CSR_RMVF;
     return reason;
