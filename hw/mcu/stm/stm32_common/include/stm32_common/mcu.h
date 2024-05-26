@@ -108,6 +108,13 @@ extern "C" {
 
 void stm32_start_bootloader(void);
 
+#if MYNEWT_VAL_STM32_WFI_FROM_RAM
+extern void stm32_wfi_from_ram(void);
+#define STM32_WFI stm32_wfi_from_ram
+#else
+#define STM32_WFI __WFI
+#endif
+
 #ifdef __cplusplus
 }
 #endif

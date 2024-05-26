@@ -466,5 +466,11 @@ syscfg.defs:
             When enabled, OS_TICKS_PER_SEC should be one of 128, 256, 512, 1024.
         value: 0
 
+    STM32_WFI_FROM_RAM:
+        description: >
+            Place WFI instruction in RAM instead of flash.
+            This may be needed for several MCU's including STM32F40x.
+        value:
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 1000
