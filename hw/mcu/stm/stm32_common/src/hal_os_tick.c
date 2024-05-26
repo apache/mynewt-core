@@ -18,12 +18,22 @@
  */
 
 #include <assert.h>
-#include "os/mynewt.h"
+#include <os/mynewt.h>
+#include <stm32_common/mcu.h>
 #include <hal/hal_os_tick.h>
 
 #if MYNEWT_VAL(OS_TICKS_USE_RTC)
 #include <stm32_common/stm32_hal.h>
 #include <datetime/datetime.h>
+#endif
+
+#if MYNEWT_VAL(STM32_WFI_FROM_RAM)
+__attribute__((section(".text_ram"))) void
+stm32_wfi_from_ram(void)
+{
+    __ASM volatile ("wfi\n"
+                    "bx lr");
+}
 #endif
 
 /*
@@ -32,27 +42,8 @@
  * is defined __WFI will become a loop waiting for pending interrupts.
  */
 #if MYNEWT_VAL(OS_SYSVIEW)
-#undef __WFI
-#define __WFI() do { } while ((SCB->ICSR & (SCB_ICSR_ISRPENDING_Msk | SCB_ICSR_PENDSTSET_Msk)) == 0)
-#else
-/*
- * Errata for STM32F405, STM32F407, STM32F415, STM32F417.
- * When WFI instruction is placed at address like 0x080xxxx4
- * (also seen for addresses ending with xxx2). System may
- * crash.
- * __WFI function places WFI instruction at address ending with x0 or x8
- * for affected MCUs.
- */
-#if defined(STM32F405xx) || defined(STM32F407xx) || \
-    defined(STM32F415xx) || defined(STM32F417xx)
-#undef __WFI
-__attribute__((aligned(8), naked)) void static
-__WFI(void)
-{
-     __ASM volatile("wfi\n"
-                    "bx lr");
-}
-#endif
+#undef STM32_WFI
+#define STM32_WFI() do { } while ((SCB->ICSR & (SCB_ICSR_ISRPENDING_Msk | SCB_ICSR_PENDSTSET_Msk)) == 0)
 #endif
 
 #if MYNEWT_VAL(OS_TICKS_USE_RTC)
@@ -219,7 +210,7 @@ os_tick_idle(os_time_t ticks)
     }
 
     __DSB();
-    __WFI();
+    STM32_WFI();
 
     if (ticks > 0) {
         rtc_update_time();
@@ -389,7 +380,7 @@ os_tick_idle(os_time_t ticks)
 {
     OS_ASSERT_CRITICAL();
     __DSB();
-    __WFI();
+    STM32_WFI();
 }
 
 void

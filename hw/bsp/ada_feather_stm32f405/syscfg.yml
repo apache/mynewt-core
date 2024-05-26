@@ -48,6 +48,7 @@ syscfg.vals:
     STM32_FLASH_PREFETCH_ENABLE: 1
     STM32_INSTRUCTION_CACHE_ENABLE: 1
     STM32_DATA_CACHE_ENABLE: 1
+    STM32_WFI_FROM_RAM: 1
     WATCHDOG_INTERVAL: 28000
     # UART0 is on the large breakout connector, pins TX and RX.
     UART_0_PIN_TX: 'MCU_GPIO_PORTB(10)'
