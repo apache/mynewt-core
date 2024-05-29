@@ -51,4 +51,4 @@ mynewt_htm_read(const struct file_entry *entry, uint32_t file_sector, uint8_t bu
     }
 }
 
-ROOT_DIR_ENTRY(mynew_htm, "MYNEWT.HTM", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, mynewt_htm_size, mynewt_htm_read, NULL, NULL);
+ROOT_DIR_ENTRY(mynew_htm, "MYNEWT.HTM", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, mynewt_htm_size, mynewt_htm_read, NULL, NULL, NULL);

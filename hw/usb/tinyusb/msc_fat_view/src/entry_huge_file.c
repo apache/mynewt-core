@@ -49,4 +49,4 @@ huge_file_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buf
     memset(buffer, (uint8_t)file_sector, 512);
 }
 
-ROOT_DIR_ENTRY(huge_file, "Huge file", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, huge_file_size, huge_file_read, NULL, NULL);
+ROOT_DIR_ENTRY(huge_file, "Huge file", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, huge_file_size, huge_file_read, NULL, NULL, NULL);

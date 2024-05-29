@@ -67,6 +67,8 @@ pkg.source_files.MSC_FAT_VIEW_CONFIG:
 
 pkg.link_tables:
     - msc_fat_view_root_entry
+    - msc_fat_view_write_handlers
+    - msc_fat_view_media_insert_handlers
 
 pkg.init.'(!BOOT_LOADER && TINYUSB_AUTO_START!=0)':
     msc_fat_view_pkg_init: $before:tinyusb_start
