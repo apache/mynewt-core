@@ -80,4 +80,4 @@ slot0_hex_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buf
     }
 }
 
-ROOT_DIR_ENTRY(slot0_hex, "SLOT0.HEX", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, slot0_hex_size, slot0_hex_read, NULL, NULL);
+ROOT_DIR_ENTRY(slot0_hex, "SLOT0.HEX", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, slot0_hex_size, slot0_hex_read, NULL, NULL, NULL);

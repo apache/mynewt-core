@@ -53,7 +53,6 @@
 #define FAT_COUNT                   1
 #define SECTOR_COUNT                (MYNEWT_VAL(MSC_FAT_VIEW_DISK_SIZE) * 2)
 
-#define SECTOR_SIZE                 512
 #define SECTORS_PER_CLUSTER         (MYNEWT_VAL(MSC_FAT_VIEW_SECTORS_PER_CLUSTER))
 #define CLUSTER_SIZE                ((SECTOR_SIZE) * (SECTORS_PER_CLUSTER))
 
@@ -204,9 +203,6 @@ typedef struct dir_entry {
     cluster_t first_cluster;
 } dir_entry_t;
 
-/* If true, test image will be confirmed on root directory read */
-static bool auto_confirm;
-
 struct fat_chain fat_chains[32];
 /* Number of chains in fat_chains array */
 uint8_t fat_chain_count;
@@ -226,20 +222,6 @@ typedef enum {
 } medium_state_t;
 
 static medium_state_t medium_state;
-
-struct unallocated_write {
-    uint32_t first_sector;
-    uint32_t last_sector;
-    enum {
-        NOT_TOUCHED_YET = 0,
-        WRITE_IN_PROGRESS = 1,
-        NOT_AN_IMAGE = -1,
-        CURRENT_IMAGE_NOT_CONFIRMED = -2,
-        WRITE_EXCEEDED_SPACE = -3,
-        WRITE_NOT_IN_SEQUENCE = -4,
-    } write_status;
-} unallocated_write;
-
 
 static uint32_t
 return0(const file_entry_t *file)
@@ -328,7 +310,7 @@ flash_result_read(const struct file_entry *entry, uint32_t file_sector, uint8_t 
     memset(buffer + written, 0, 512 - written);
 }
 
-static const file_entry_t flash_result = {
+const file_entry_t flash_result = {
     .name = "Write error.txt",
     .attributes = FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY,
     .size = flash_result_size,
@@ -1005,10 +987,6 @@ msc_fat_view_read_root_sector(uint16_t dir_sector, uint8_t buffer[512])
         dst++;
     }
     memset(dst, 0xE5, buffer + 512 - (uint8_t *)dst);
-    if (auto_confirm) {
-        img_mgmt_state_confirm();
-        auto_confirm = false;
-    }
 }
 
 static void
@@ -1067,46 +1045,28 @@ msc_fat_view_write_fat_sector(uint32_t fat_sector, const uint8_t *buffer)
     return 512;
 }
 
+msc_fat_view_write_handler_t *current_write_handler;
+
 static void
 msc_fat_view_handle_new_file(const fat_dir_entry_t *entry, const char *name)
 {
     cluster_t cluster;
     uint32_t sector;
     fat_chain_t *chain;
-    struct image_version version;
-    uint32_t flags;
+    int rc;
 
-    MSC_FAT_VIEW_LOG_INFO("Handle new file (%d) %s %d %d\n", (int)unallocated_write.write_status, name,
+    MSC_FAT_VIEW_LOG_INFO("Handle new file %s %d %d\n", name,
                           (int)entry->cluster_lo, (int)entry->size);
     /* new entry with start cluster and file size */
     if (entry->cluster_lo != 0 && entry->size > 0) {
         cluster = le16toh(entry->cluster_lo);
         sector = cluster_to_sector(cluster);
         chain = fat_chain_find(cluster);
-        if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
-            if (unallocated_write.first_sector == sector && chain && chain->first == cluster) {
-                MSC_FAT_VIEW_LOG_INFO("New file detected\n");
-                if (BOOT_LOADER) {
-                    img_mgmt_state_confirm();
-                    hal_system_reset();
-                } else {
-                    if (img_mgmt_read_info(1, &version, NULL, &flags) == 0) {
-                        MSC_FAT_VIEW_LOG_INFO("New image OK, resetting\n");
-                        img_mgmt_state_set_pending(1, 0);
-                        hal_system_reset();
-                    } else {
-                        MSC_FAT_VIEW_LOG_ERROR("New file not an valid image\n");
-                    }
-                }
-            } else {
-                MSC_FAT_VIEW_LOG_ERROR(
-                    "New file not ready to flash new sectors (%d-%d), file start cluster %d (sector %d) %d\n",
-                    unallocated_write.first_sector, unallocated_write.last_sector, cluster, sector, fat_chain_count);
-            }
-        } else {
-            if ((int)unallocated_write.write_status < 0) {
-                MSC_FAT_VIEW_LOG_ERROR("Write failed, reloading medium\n");
-                medium_state = MEDIUM_RELOAD;
+        if (current_write_handler) {
+            rc = current_write_handler->file_written(current_write_handler, entry->size,
+                                                     sector, chain && chain->first == cluster);
+            if (rc) {
+                current_write_handler = NULL;
             }
         }
     }
@@ -1200,70 +1160,36 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
 }
 
 static int
-msc_fat_view_write_unallocated_sector(uint32_t sector, const uint8_t *buffer)
+msc_fat_view_write_unallocated_sector(uint32_t sector, uint8_t *buffer)
 {
-#ifdef FLASH_AREA_IMAGE
-    const struct flash_area *fa;
-    uint32_t write_offset;
-    int rc;
+    int res;
 
-    if (unallocated_write.write_status < 0) {
-        return 512;
-    }
-    flash_area_open(FLASH_AREA_IMAGE, &fa);
-    if (unallocated_write.write_status == NOT_TOUCHED_YET) {
-        if (BOOT_LOADER) {
-            if (((struct image_header *)buffer)->ih_magic == IMAGE_MAGIC) {
-                unallocated_write.write_status = WRITE_IN_PROGRESS;
-                /* TODO: unmount and add error file */
+    msc_fat_view_write_handler_t *write_handler = current_write_handler;
 
-            }
-        } else if ((img_mgmt_state_flags(0) & IMG_MGMT_STATE_F_CONFIRMED) == 0) {
-            MSC_FAT_VIEW_LOG_ERROR("Image not confirmed, write rejected\n");
-
-            /* Image in slot 0 not confirmed, do not write */
-            unallocated_write.write_status = CURRENT_IMAGE_NOT_CONFIRMED;
-        } else if (((struct image_header *)buffer)->ih_magic == IMAGE_MAGIC) {
-            unallocated_write.write_status = WRITE_IN_PROGRESS;
-        }
-        if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
-            MSC_FAT_VIEW_LOG_INFO("Image writing detected\n");
-            unallocated_write.first_sector = sector;
-            unallocated_write.last_sector = sector;
-        }
-    } else if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
-        if (sector != unallocated_write.last_sector + 1) {
-            /*
-             * Unallocated space written without order, code will not be able to used
-             * it sensible.
-             */
-            unallocated_write.write_status = WRITE_NOT_IN_SEQUENCE;
-            MSC_FAT_VIEW_LOG_ERROR("Not continuous writes to unallocated space rejected\n");
+    if (write_handler) {
+        res = write_handler->write_sector(write_handler, sector, buffer);
+        if (res == 512) {
+            return 512;
         }
     }
-    if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
-        write_offset = (sector - unallocated_write.first_sector) * SECTOR_SIZE;
-        if (!hal_flash_isempty_no_buf(fa->fa_device_id, fa->fa_off + write_offset, SECTOR_SIZE)) {
-            flash_area_erase(fa, write_offset, SECTOR_SIZE);
+    FOR_TABLE(msc_fat_view_write_handler_t *, p, msc_fat_view_write_handlers) {
+        if (*p == current_write_handler) {
+            continue;
         }
-
-        if ((rc = flash_area_write(fa, write_offset, buffer, SECTOR_SIZE)) < 0) {
-            MSC_FAT_VIEW_LOG_ERROR("Flash write error, following writes will be rejected %d 0x%08x\n",
-                                   rc, fa->fa_off + write_offset);
-            unallocated_write.write_status = WRITE_EXCEEDED_SPACE;
+        write_handler = *p;
+        res = write_handler->write_sector(write_handler, sector, buffer);
+        if (res == 512) {
+            current_write_handler = write_handler;
+            return 512;
         }
     }
-    flash_area_close(fa);
-    if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
-        unallocated_write.last_sector = sector;
-    }
-#endif
+    current_write_handler = NULL;
 
     return 512;
 }
 
 static int
-msc_fat_view_write_file_sector(dir_entry_t *dir_entry, uint32_t file_sector, const uint8_t *buffer)
+msc_fat_view_write_file_sector(dir_entry_t *dir_entry, uint32_t file_sector, uint8_t *buffer)
 {
     if (dir_entry->file->write_sector) {
         dir_entry->file->write_sector(dir_entry->file, file_sector, buffer);
@@ -1272,7 +1198,7 @@ msc_fat_view_write_file_sector(dir_entry_t *dir_entry, uint32_t file_sector, con
 }
 
 static int
-msc_fat_view_write_normal_sector(uint32_t sector, const uint8_t *buffer)
+msc_fat_view_write_normal_sector(uint32_t sector, uint8_t *buffer)
 {
     cluster_t cluster;
     cluster_t cluster_in_chain;
@@ -1293,13 +1219,18 @@ msc_fat_view_write_normal_sector(uint32_t sector, const uint8_t *buffer)
 }
 
 static void
+add_dir_entry(file_entry_t **entry)
+{
+    if ((*entry)->valid == NULL || (*entry)->valid(*entry) == MSC_FAT_VIEW_FILE_ENTRY_VALID) {
+        msc_fat_view_add_dir_entry(*entry);
+    }
+}
+
+static void
 init_disk_data(void)
 {
     root_dir_entry_count = 0;
 
-    if (MYNEWT_VAL(MSC_FAT_VIEW_AUTOCONFIRM)) {
-        auto_confirm = ((img_mgmt_state_flags(0) & IMG_MGMT_STATE_F_CONFIRMED) == 0);
-    }
     msc_fat_view_add_dir_entry(&volume_label);
     if (MYNEWT_VAL(MSC_FAT_VIEW_SYSTEM_VOLUME_INFORMATION)) {
         msc_fat_view_add_dir_entry(&system_volume_information);
@@ -1308,12 +1239,8 @@ init_disk_data(void)
     if (MYNEWT_VAL(MSC_FAT_VIEW_DROP_IMAGE_HERE)) {
         msc_fat_view_add_dir_entry(&drop_image_here);
     }
-    extern const file_entry_t __msc_fat_view_root_entry_start__[];
-    extern const file_entry_t __msc_fat_view_root_entry_end__[];
-    const file_entry_t *entry;
-    for (entry = __msc_fat_view_root_entry_start__; entry != __msc_fat_view_root_entry_end__; ++entry) {
-        msc_fat_view_add_dir_entry(entry);
-    }
+    FOR_EACH_ENTRY(file_entry_t *, msc_fat_view_root_entry, add_dir_entry);
+
     if (MYNEWT_VAL(MSC_FAT_VIEW_COREDUMP_FILES)) {
         msc_fat_view_add_coredumps();
     }
@@ -1326,12 +1253,6 @@ update_disk_data(void)
 
     free_clusters = (cluster_t)((SECTOR_COUNT - FAT_CLUSTER2_FIRST_SECTOR) / SECTORS_PER_CLUSTER);
     fat_chain_count = 0;
-
-    if (unallocated_write.write_status < 0) {
-        write_status = unallocated_write.write_status;
-        msc_fat_view_add_dir_entry(&flash_result);
-    }
-    unallocated_write.write_status = NOT_TOUCHED_YET;
 
     for (i = 0; i < root_dir_entry_count; ++i) {
         msc_fat_view_update_dir_entry(i);

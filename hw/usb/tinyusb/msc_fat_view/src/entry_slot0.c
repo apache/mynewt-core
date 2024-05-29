@@ -58,4 +58,4 @@ slot0_img_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buf
     }
 }
 
-ROOT_DIR_ENTRY(slot0, "FIRMWARE.IMG", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, slot0_img_size, slot0_img_read, NULL, NULL);
+ROOT_DIR_ENTRY(slot0, "FIRMWARE.IMG", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, slot0_img_size, slot0_img_read, NULL, NULL, NULL);

@@ -164,5 +164,5 @@ readme_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer
     memset(buffer + written, 0, 512 - written);
 }
 
-ROOT_DIR_ENTRY(readme, "README.TXT", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, readme_size, readme_read, NULL, NULL);
+ROOT_DIR_ENTRY(readme, "README.TXT", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, readme_size, readme_read, NULL, NULL, NULL);
 
