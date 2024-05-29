@@ -65,6 +65,9 @@ pkg.source_files.MSC_FAT_VIEW_MYNEWT_SHORTCUT:
 pkg.source_files.MSC_FAT_VIEW_CONFIG:
     - src/entry_config.c
 
+pkg.source_files.MSC_FAT_VIEW_UPDATE_HANDLER:
+    - src/update_handler.c
+
 pkg.link_tables:
     - msc_fat_view_root_entry
     - msc_fat_view_write_handlers
