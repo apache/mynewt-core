@@ -472,5 +472,17 @@ syscfg.defs:
             This may be needed for several MCU's including STM32F40x.
         value:
 
+    STM32_TIMER_AUTO_OFF_COUNT:
+        description: >
+            Turn off hal timer if it is not used for a specific number of overflows.
+            HAL timers are used for high frequency time measurement or delays.
+            Due to high frequency nature of the timer, counter overflows interrupts
+            would interrupt sleep event if timer is not in use.
+            This value when set to value graters then 0 will all to turn off timer
+            after number of overflow events without user code asking for timer value
+            or scheduling event.
+        range: 0..255
+        value: 0
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 1000
