@@ -40,6 +40,9 @@ struct stm32_hal_tmr {
     TIM_TypeDef *sht_regs;   /* Pointer to timer registers */
     uint32_t sht_oflow;      /* 16 bits of overflow to make timer 32bits */
     TAILQ_HEAD(hal_timer_qhead, hal_timer) sht_timers;
+#if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
+    uint8_t sht_empty_run;
+#endif
 };
 
 #if MYNEWT_VAL(TIMER_0)
@@ -94,6 +97,9 @@ stm32_tmr_cbs(struct stm32_hal_tmr *tmr)
     }
     ht = TAILQ_FIRST(&tmr->sht_timers);
     if (ht) {
+#if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
+        tmr->sht_empty_run = 0;
+#endif
         tmr->sht_regs->CCR1 = ht->expiry & 0xFFFFU;
     } else {
         tmr->sht_regs->DIER &= ~TIM_DIER_CC1IE;
@@ -120,6 +126,9 @@ stm32_tmr_irq(struct stm32_hal_tmr *tmr)
          */
         tmr->sht_oflow += STM32_OFLOW_VALUE;
         clr |= TIM_SR_UIF;
+#if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
+        tmr->sht_empty_run++;
+#endif
     }
     if (sr & TIM_SR_CC1IF) {
         /*
@@ -130,6 +139,13 @@ stm32_tmr_irq(struct stm32_hal_tmr *tmr)
     }
 
     tmr->sht_regs->SR = ~clr;
+
+#if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
+    if (tmr->sht_empty_run >= MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)) {
+        /* Timer oveflowed few times without any usage, disable it till it used again */
+        tmr->sht_regs->CR1 &= ~TIM_CR1_CEN;
+    }
+#endif
 }
 #endif
 
@@ -579,6 +595,10 @@ hal_timer_cnt(struct stm32_hal_tmr *tmr)
     uint32_t cnt;
     int sr;
 
+#if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
+    tmr->sht_empty_run = 0;
+#endif
+
     __HAL_DISABLE_INTERRUPTS(sr);
     if (tmr->sht_regs->SR & TIM_SR_UIF) {
         /*
@@ -589,6 +609,11 @@ hal_timer_cnt(struct stm32_hal_tmr *tmr)
     }
     cnt = tmr->sht_oflow + tmr->sht_regs->CNT;
     __HAL_ENABLE_INTERRUPTS(sr);
+
+#if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
+    /* Timer could be turned off, so turn it on */
+    tmr->sht_regs->CR1 |= TIM_CR1_CEN;
+#endif
 
     return cnt;
 }
