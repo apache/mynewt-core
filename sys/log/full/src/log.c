@@ -604,12 +604,11 @@ log_trailer_len(const struct log_entry_hdr *hdr)
     uint16_t len = 0;
 
     if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
-        len += sizeof(struct log_tlv);
-    }
-
 #if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-    len += LOG_NUM_ENTRIES_SIZE;
+        len += sizeof(struct log_tlv);
+        len += LOG_NUM_ENTRIES_SIZE;
 #endif
+    }
 
     return len;
 }

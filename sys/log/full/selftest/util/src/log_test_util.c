@@ -190,6 +190,7 @@ ltu_walk_verify(struct log *log, struct log_offset *log_offset,
     char data[128];
     int dlen;
     uint16_t hdr_len;
+    uint16_t trailer_len;
 
     TEST_ASSERT(ltu_str_idx < ltu_str_max_idx);
 
@@ -199,7 +200,8 @@ ltu_walk_verify(struct log *log, struct log_offset *log_offset,
     TEST_ASSERT(rc == LOG_BASE_ENTRY_HDR_SIZE);
 
     hdr_len = log_hdr_len(&ueh);
-    dlen = len - hdr_len;
+    trailer_len = log_trailer_len(&ueh);
+    dlen = len - hdr_len - trailer_len;
     TEST_ASSERT(dlen < sizeof(data));
 
     rc = log_read(log, dptr, data, hdr_len, dlen);
@@ -217,6 +219,12 @@ ltu_walk_verify(struct log *log, struct log_offset *log_offset,
 
     rc = log_read_body(log, dptr, data, 0, dlen);
     TEST_ASSERT(rc == dlen);
+
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+    uint32_t num_entries;;
+    rc = log_read_trailer(log, dptr, LOG_TLV_NUM_ENTRIES, &num_entries);
+    TEST_ASSERT(rc == 0);
+#endif
 
     TEST_ASSERT(strlen(ltu_str_logs[ltu_str_idx]) == dlen);
     TEST_ASSERT(!memcmp(ltu_str_logs[ltu_str_idx], data, dlen));
@@ -262,6 +270,8 @@ ltu_walk_body_verify(struct log *log, struct log_offset *log_offset,
     /*** Verify contents using single read. */
 
     TEST_ASSERT(len < sizeof(data));
+
+    len -= log_trailer_len(euh);
 
     rc = log_read_body(log, dptr, data, 0, len);
     TEST_ASSERT(rc == len);
