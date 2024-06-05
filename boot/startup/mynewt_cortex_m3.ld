@@ -89,7 +89,7 @@ SECTIONS
     {
         . = ALIGN(4);
         *(.text)                 /* .text sections (code) */
-        *(.text*)                /* .text* sections (code) */
+        *(.text.*)               /* .text* sections (code) */
 
         KEEP(*(.init))
         KEEP(*(.fini))
