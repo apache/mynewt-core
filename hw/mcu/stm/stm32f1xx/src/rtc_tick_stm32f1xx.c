@@ -108,6 +108,8 @@ os_tick_idle(os_time_t ticks)
          */
         stm32_os_tick_update_rtc();
     }
+    /* Disable alarm, enable tick interrupt. */
+    RTC->CRH = RTC_CRH_SECIE_Msk;
 }
 
 void
