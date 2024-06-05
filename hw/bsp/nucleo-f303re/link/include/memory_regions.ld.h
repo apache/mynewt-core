@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,17 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-ENTRY(Reset_Handler)
 
-/*
- * Memory map
- */
-MEMORY {
-	FLASH (rx):	ORIGIN = 0x08008000, LENGTH = 192K
-	CCRAM (rw):	ORIGIN = 0x10000000, LENGTH =  16K
-	SRAM  (rw):	ORIGIN = 0x20000000, LENGTH =  64K
-}
-/*
- * Image header size - no bootloader support, no header.
- */
-_imghdr_size = 0x20;
+#ifdef STACK_REGION
+    CCM (rwx) : ORIGIN = 0x10000000, LENGTH = (16K - STACK_SIZE)
+    STACK_RAM (rw) : ORIGIN = 0x10004000 - STACK_SIZE, LENGTH = STACK_SIZE
+#else
+    CCM (rwx) : ORIGIN = 0x10000000, LENGTH = 16K
+#endif
