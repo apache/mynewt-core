@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,18 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-ENTRY(Reset_Handler)
 
-/*
- * Memory map
- */
-MEMORY {
-	FLASH (rx): ORIGIN = 0x08000000, LENGTH = 64K
-	CCRAM (rw): ORIGIN = 0x10000000, LENGTH =  4K
-	SRAM  (rw): ORIGIN = 0x20000000, LENGTH = 12K
+#include "os/mynewt.h"
+#include "mcu/stm32_hal.h"
+#include <hal/hal_system.h>
+
+extern char __vector_tbl_reloc__[];
+
+void SystemClock_Config(void);
+
+void
+hal_system_init(void)
+{
+    SCB->VTOR = (uint32_t)&__vector_tbl_reloc__;
+
+    /* Configure System Clock */
+    SystemClock_Config();
+
+    /* Update SystemCoreClock global variable */
+    SystemCoreClockUpdate();
+
+    if (PREFETCH_ENABLE) {
+        __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
+    }
+
+    /* Relocate the vector table */
+    NVIC_Relocate();
 }
 
-/*
- * Image header size - no bootloader support, no header.
- */
-_imghdr_size = 0x00;
