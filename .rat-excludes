@@ -255,9 +255,6 @@ ppic32mx.h
 stm32f7xx_hal_conf.h
 startup_stm32f746xx.s
 
-# STM32F3 Discovery BSP - BSD License
-startup_stm32f303xc.s
-
 # STM32L152C BSP - BSD License
 stm32l1xx_hal_conf.h
 startup_stm32l152xc.s
@@ -334,9 +331,7 @@ system_apollo3.h
 clock_stm32f3xx.c
 system_stm32f3xx.c
 
-# Nucleo-F303K8, Nucleo-F303RE - BSD License.
-startup_stm32f303x8.s
-startup_stm32f303xe.s
+# Nucleo-F303K8, Nucleo-F303RE, STM32F3 Discovery - BSD License.
 stm32f3xx_hal_conf.h
 
 # Ignore documentation folder
