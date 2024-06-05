@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,16 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-ENTRY(Reset_Handler)
 
 /*
- * Memory map
+ * Memory regions placed in CCM
+ * If stack or core data or other section should be place in RAM
+ * <target_name>/link/include/target_config.ld.h should just do:
+ *  #undef BSSNZ_RAM
+ *  #undef COREBSS_RAM
+ *  #undef COREDATA_RAM
+ *  #undef STACK_REGION
  */
-MEMORY {
-	FLASH (rx):	ORIGIN = 0x08000000, LENGTH = 36K
-	CCRAM (rw):	ORIGIN = 0x10000000, LENGTH = 16K
-	SRAM  (rw):	ORIGIN = 0x20000000, LENGTH = 64K
-}
 
-/* The bootloader does not contain an image header */
-_imghdr_size = 0x0;
+#define BSSNZ_RAM CCM
+#define COREBSS_RAM CCM
+#define COREDATA_RAM CCM
+#define STACK_REGION CCM

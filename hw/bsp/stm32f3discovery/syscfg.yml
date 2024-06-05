@@ -32,6 +32,8 @@ syscfg.defs:
         value: 400
 
 syscfg.vals:
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 48K
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     CONFIG_FCB_NUM_AREAS: 16
@@ -66,6 +68,12 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM15'
     TIMER_1_TIM: 'TIM16'
     TIMER_2_TIM: 'TIM17'
+
+    # Flasher parameters
+    MYNEWT_DOWNLOADER: openocd
+    MYNEWT_DOWNLOADER_OPENOCD_BOARD: board/stm32f3discovery.cfg
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
+    JLINK_TARGET: STM32F303VC
 
 syscfg.restrictions:
     - "!LSM303DLHC_ONB || I2C_0"
