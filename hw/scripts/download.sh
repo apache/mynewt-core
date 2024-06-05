@@ -28,6 +28,11 @@
 #  - MFG_IMAGE is "1" if this is a manufacturing image
 #  - FLASH_OFFSET contains the flash offset to download to
 #  - BOOT_LOADER is set if downloading a bootloader
+if [ "$OS" = "Windows_NT" ]; then
+    JLINKEXE=JLink.exe
+else
+    JLINKEXE=JLinkExe
+fi
 
 check_downloader() {
   if ! command -v $1 &> /dev/null; then
@@ -52,7 +57,7 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     ezflashcli_load
     ;;
   "jlink")
-    check_downloader JLinkExe
+    check_downloader $JLINKEXE
     . $CORE_PATH/hw/scripts/jlink.sh
     if [ -z "${MYNEWT_VAL_JLINK_TARGET}" ] ; then
       >&2 echo -e "\n\nSyscfg value MYNEWT_DOWNLOADER set to 'jlink' but JLINK_TARGET not set in syscfg."
