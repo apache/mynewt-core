@@ -320,11 +320,8 @@ This product bundles parts of STM32CubeF3, which is available under the
     * hw/mcu/stm/stm32f3xx/src/clock_stm32f3xx.c
     * hw/mcu/stm/stm32f3xx/src/system_stm32f3xx.c
     * hw/bsp/stm32f3discovery/include/bsp/stm32f3xx_hal_conf.h
-    * hw/bsp/stm32f3discovery/src/arch/cortex_m4/startup_stm32f303xc.s
     * hw/bsp/nucleo-f303k8/include/bsp/stm32f3xx_hal_conf.h
-    * hw/bsp/nucleo-f303k8/src/arch/cortex_m4/startup_stm32f303x8.s
     * hw/bsp/nucleo-f303re/include/bsp/stm32f3xx_hal_conf.h
-    * hw/bsp/nucleo-f303re/src/arch/cortex_m4/startup_stm32f303xe.s
 
 This product bundles parts of STM32CubeH7, which is available under the
 "3-clause BSD" license.  Bundled files are:
