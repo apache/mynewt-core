@@ -22,6 +22,7 @@ EXIT_CODE=0
 BSPS=$(ls repos/apache-mynewt-core/hw/bsp)
 IGNORED_BSPS="ci40 dialog_cmac embarc_emsk hifive1 native native-armv7\
               native-mips nucleo-f030r8 nucleo-f072rb\
+              nucleo-f303k8\
               olimex-p103 olimex-pic32-emz64 olimex-pic32-hmz144\
               pic32mx470_6lp_clicker pic32mz2048_wi-fire usbmkw41z\
               weact_g431cb"
