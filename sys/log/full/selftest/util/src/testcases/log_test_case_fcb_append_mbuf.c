@@ -24,26 +24,28 @@ TEST_CASE_SELF(log_test_case_fcb_append_mbuf)
     struct fcb_log fcb_log;
     struct os_mbuf *om;
     struct log log;
-    char *str;
     int rc;
     int i;
+    int num_strs = ltu_num_strs();
+    struct log_entry_hdr *hdr;
+    uint16_t *off_arr;
+    uint16_t len;
 
     ltu_setup_fcb(&fcb_log, &log);
+    len = ltu_init_arr();
+    TEST_ASSERT_FATAL(len != 0);
 
-    for (i = 0; ; i++) {
-        str = ltu_str_logs[i];
-        if (!str) {
-            break;
-        }
+    off_arr = ltu_get_ltu_off_arr();
+    TEST_ASSERT_FATAL(off_arr != NULL);
 
+    for (i = 0; i < num_strs; i++) {
+        hdr = (struct log_entry_hdr *)(dummy_log_arr + off_arr[i]);
+        len = off_arr[i+1] - off_arr[i] - log_trailer_len(hdr);
         /* Split chain into several mbufs. */
-        om = ltu_flat_to_fragged_mbuf(str, strlen(str), 2);
+        om = ltu_flat_to_fragged_mbuf(dummy_log_arr + off_arr[i],
+                                      len, 2);
 
-        /* Prepend space for the entry header. */
-        om = os_mbuf_prepend(om, LOG_HDR_SIZE);
-        TEST_ASSERT(om != NULL);
-
-        rc = log_append_mbuf_typed(&log, 0, 0, LOG_ETYPE_STRING, om);
+        rc = log_append_mbuf_typed(&log, 2, 3, LOG_ETYPE_STRING, om);
         TEST_ASSERT_FATAL(rc == 0);
     }
 

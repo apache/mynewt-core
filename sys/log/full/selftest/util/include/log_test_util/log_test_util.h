@@ -41,6 +41,7 @@ extern struct fcb2 log_fcb;
 #endif
 extern struct log my_log;
 extern char *ltu_str_logs[];
+extern uint8_t dummy_log_arr[];
 
 struct os_mbuf *ltu_flat_to_fragged_mbuf(const void *flat, int len,
                                          int frag_sz);
@@ -49,6 +50,9 @@ void ltu_setup_2fcbs(struct fcb_log *fcb_log1, struct log *log1,
                      struct fcb_log *fcb_log2, struct log *log2);
 void ltu_setup_cbmem(struct cbmem *cbmem, struct log *log);
 void ltu_verify_contents(struct log *log);
+uint16_t *ltu_get_ltu_off_arr(void);
+uint16_t ltu_init_arr(void);
+int ltu_num_strs(void);
 
 TEST_SUITE_DECL(log_test_suite_cbmem_flat);
 TEST_CASE_DECL(log_test_case_cbmem_append);

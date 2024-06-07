@@ -772,7 +772,7 @@ int
 log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
                  void *data, uint16_t len)
 {
-    struct log_entry_hdr *hdr;
+    struct log_entry_hdr hdr;
     int rc;
 
     LOG_STATS_INC(log, writes);
@@ -782,20 +782,20 @@ log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
         goto err;
     }
 
-    hdr = (struct log_entry_hdr *)data;
-    rc = log_append_prepare(log, module, level, etype, hdr);
+    hdr = *(struct log_entry_hdr *)data;
+    rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
         LOG_STATS_INC(log, drops);
         goto err;
     }
 
-    rc = log->l_log->log_append(log, data, len + log_hdr_len(hdr));
+    rc = log->l_log->log_append(log, data, len + log_hdr_len(&hdr));
     if (rc != 0) {
         LOG_STATS_INC(log, errs);
         goto err;
     }
 
-    log_call_append_cb(log, hdr->ue_index);
+    log_call_append_cb(log, hdr.ue_index);
 
     return (0);
 err:
