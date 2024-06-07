@@ -20,8 +20,7 @@
 #include <os/mynewt.h>
 
 #include <shell/shell.h>
-#include <parse/parse.h>
-#include <stdio.h>
+#include <hal/hal_watchdog.h>
 #include <coremark/coremark_api.h>
 
 extern uint32_t SystemCoreClock;
@@ -32,7 +31,13 @@ coremark_shell_cmd(int argc, char **argv)
     printf("Coremark running on %s at %lu MHz\n\n",
            MYNEWT_VAL(BSP_NAME), SystemCoreClock / 1000000L);
 
+    if(MYNEWT_VAL(WATCHDOG_INTERVAL) > 0) {
+        hal_watchdog_tickle();
+    }
     coremark_run();
+    if(MYNEWT_VAL(WATCHDOG_INTERVAL) > 0) {
+        hal_watchdog_tickle();
+    }
 
     return 0;
 }
