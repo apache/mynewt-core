@@ -39,9 +39,15 @@ hal_nvreg_write(unsigned int reg, uint32_t val)
 #if PWR_ENABLED
     RTC_HandleTypeDef hrtc = { .Instance = RTC };
     if (reg < HAL_NVREG_MAX) {
+#if defined(__HAL_RCC_BKP_CLK_ENABLE)
+        __HAL_RCC_BKP_CLK_ENABLE();
+#endif
         HAL_PWR_EnableBkUpAccess();
         HAL_RTCEx_BKUPWrite(&hrtc, reg, val);
         HAL_PWR_DisableBkUpAccess();
+#if defined(__HAL_RCC_BKP_CLK_DISABLE)
+        __HAL_RCC_BKP_CLK_DISABLE();
+#endif
     }
 #endif
 }
