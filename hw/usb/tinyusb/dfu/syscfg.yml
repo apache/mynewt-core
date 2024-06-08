@@ -68,7 +68,7 @@ syscfg.defs:
             Some messages are not propagated to DFU user code (they are internally processed by
             TinyUSB stack) and rebooting just after download is finished while does not make
             any harm to DFU process, confuses DFU utilities.
-        value: 1000
+        value: 2000
     USBD_DFU_DETACH_TIMEOUT:
         description: >
             Time, in milliseconds, that the device will wait after receipt of the

@@ -146,6 +146,7 @@ tud_dfu_manifest_cb(uint8_t alt)
     tud_dfu_finish_flashing(DFU_STATUS_OK);
 
 #if MYNEWT_VAL(USBD_DFU_RESET_AFTER_DOWNLOAD)
+#if MYNEWT_VAL(OS_SCHEDULING)
     /*
      * Device should reboot after download is complete.
      * It should be done after final DFU_GETSTATUS. But this event is not
@@ -155,6 +156,11 @@ tud_dfu_manifest_cb(uint8_t alt)
      */
     os_callout_init(&delayed_reset_callout, os_eventq_dflt_get(), delayed_reset_cb, NULL);
     os_callout_reset(&delayed_reset_callout, os_time_ms_to_ticks32(MYNEWT_VAL(USBD_DFU_RESET_TIMEOUT)));
+#else
+    static struct hal_timer reboot_timer;
+    os_cputime_timer_init(&reboot_timer, (hal_timer_cb)delayed_reset_cb, NULL);
+    os_cputime_timer_relative(&reboot_timer, MYNEWT_VAL(USBD_DFU_RESET_TIMEOUT) * 1000);
+#endif
 #endif
 }
 
