@@ -19,9 +19,12 @@
 syscfg.vals:
     LOG_FCB2: 1
     MCU_FLASH_MIN_WRITE_SIZE: 1
-    LOG_FLAGS_IMAGE_HASH: 1
-    LOG_FLAGS_TLV_SUPPORT: 1
-    LOG_TLV_NUM_ENTRIES: 1
 
     # The mbuf append tests allocate lots of mbufs; ensure no exhaustion.
     MSYS_1_BLOCK_COUNT: 1000
+    LOG_FLAGS_IMAGE_HASH: 1
+    LOG_FLAGS_TLV_SUPPORT: 1
+    LOG_TLV_NUM_ENTRIES: 1
+    IMGMGR_DUMMY_HDR: 1
+    LOG_MGMT: 0
+    IMG_MGMT: 0

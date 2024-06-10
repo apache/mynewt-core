@@ -60,10 +60,10 @@ struct dummy_log dummy_log = {
         .ue_etype = 3,
         .ue_flags = 0
 #if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
-            | LOG_FLAGS_IMG_HASH
+                    | LOG_FLAGS_IMG_HASH
 #endif
 #if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
-            | LOG_FLAGS_TLV_SUPPORT
+                    | LOG_FLAGS_TLV_SUPPORT
 #endif
         ,
         .ue_etype = 0,
@@ -72,8 +72,8 @@ struct dummy_log dummy_log = {
         .ue_num_entries = 5
     },
     .tlv = {
-       .tag = LOG_TLV_NUM_ENTRIES,
-       .len = LOG_NUM_ENTRIES_SIZE
+        .tag = LOG_TLV_NUM_ENTRIES,
+        .len = LOG_NUM_ENTRIES_SIZE
     },
     .num_entries = 0,
 };

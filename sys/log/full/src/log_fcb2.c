@@ -439,7 +439,6 @@ log_fcb2_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
             return rc;
         }
         len += LOG_NUM_ENTRIES_SIZE;
-        loc.fe_data_off += len;
         log->l_num_entries++;
 #endif
     }
