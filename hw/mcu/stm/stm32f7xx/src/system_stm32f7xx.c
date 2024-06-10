@@ -115,15 +115,6 @@ void SystemInit(void)
 
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
-
-    /* Configure System Clock */
-    SystemClock_Config();
-
-    /* Update SystemCoreClock global variable */
-    SystemCoreClockUpdate();
-
-    /* Relocate the vector table */
-    NVIC_Relocate();
 }
 
 /**

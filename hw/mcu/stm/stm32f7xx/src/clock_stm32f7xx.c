@@ -253,13 +253,5 @@ SystemClock_Config(void)
         assert(0);
     }
 #endif
-
-#if ART_ACCLERATOR_ENABLE
-   __HAL_FLASH_ART_ENABLE();
-#endif
-
-#if PREFETCH_ENABLE
-    __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-#endif
 }
 #endif
