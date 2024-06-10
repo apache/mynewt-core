@@ -17,14 +17,22 @@
  * under the License.
  */
 
-/* Linker script to configure memory regions. */
-MEMORY
-{
-  FLASH (rx) :  ORIGIN = 0x08000000, LENGTH = 32K
-  ITCM (rx)  :  ORIGIN = 0x00000000, LENGTH = 16K
-  DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = 128K
-  RAM (rwx)  :  ORIGIN = 0x20020000, LENGTH = 384K
-}
+/* Fragment that goes to MEMORY section */
+#ifndef SECTIONS_REGIONS
 
-/* The bootloader does not contain an image header */
-_imghdr_size = 0x0;
+#ifdef STACK_REGION
+    DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = (64K - STACK_SIZE)
+    STACK_RAM (rw) : ORIGIN = 0x20020000 - STACK_SIZE, LENGTH = STACK_SIZE
+#else
+    DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = 64K
+#endif
+    ITCM (rx)  :  ORIGIN = 0x00000000, LENGTH = 16K
+
+#else
+/* Fragment that goes into SECTIONS, can provide definition and sections if needed */
+    _itcm_start = ORIGIN(ITCM);
+    _itcm_end = ORIGIN(ITCM) + LENGTH(ITCM);
+    _dtcm_start = ORIGIN(DTCM);
+    _dtcm_end = ORIGIN(DTCM) + LENGTH(DTCM);
+
+#endif

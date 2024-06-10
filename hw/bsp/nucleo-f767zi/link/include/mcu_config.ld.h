@@ -17,16 +17,22 @@
  * under the License.
  */
 
-/* Linker script for STM32F746 when running from flash and using the bootloader */
+/*
+ * Memory regions placed in DTCM
+ * If stack or core data or other section should be place in RAM
+ * <target_name>/link/include/target_config.ld.h should just do:
+ *  #undef BSSNZ_RAM
+ *  #undef COREBSS_RAM
+ *  #undef COREDATA_RAM
+ *  #undef STACK_REGION
+ *  #undef VECTOR_RELOCATION_RAM DTCM
+ */
 
-/* Linker script to configure memory regions. */
-MEMORY
-{
-  FLASH (rx) :  ORIGIN = 0x08020000, LENGTH = 384K /* Image slot 1: FLASHAXI_BASE + 128KiB */
-  ITCM (rx)  :  ORIGIN = 0x00000000, LENGTH = 16K  /* RAMITCM_BASE */
-  DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = 64K  /* RAMDTCM_BASE */
-  RAM (rwx)  :  ORIGIN = 0x20010000, LENGTH = 256K /* SRAM1_BASE */
-}
+#define BSSNZ_RAM DTCM
+#define COREBSS_RAM DTCM
+#define COREDATA_RAM DTCM
+#define STACK_REGION DTCM
+#define VECTOR_RELOCATION_RAM DTCM
 
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+#define TEXT_RAM ITCM
+

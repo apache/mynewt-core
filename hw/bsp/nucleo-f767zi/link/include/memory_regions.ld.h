@@ -17,16 +17,22 @@
  * under the License.
  */
 
-/* Linker script for STM32F746 when running the bootloader */
+/* Fragment that goes to MEMORY section */
+#ifndef SECTIONS_REGIONS
 
-/* Linker script to configure memory regions. */
-MEMORY
-{
-  FLASH (rx) :  ORIGIN = 0x08000000, LENGTH = 32K  /* FLASHAXI_BASE */
-  ITCM (rx)  :  ORIGIN = 0x00000000, LENGTH = 16K  /* RAMITCM_BASE */
-  DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = 64K  /* RAMDTCM_BASE */
-  RAM (rwx)  :  ORIGIN = 0x20010000, LENGTH = 256K /* SRAM1_BASE */
-}
+#ifdef STACK_REGION
+    DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = (128K - STACK_SIZE)
+    STACK_RAM (rw) : ORIGIN = 0x20020000 - STACK_SIZE, LENGTH = STACK_SIZE
+#else
+    DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = 128K
+#endif
+    ITCM (rx)  :  ORIGIN = 0x00000000, LENGTH = 16K
 
-/* The bootloader does not contain an image header */
-_imghdr_size = 0x0;
+#else
+/* Fragment that goes into SECTIONS, can provide definition and sections if needed */
+    _itcm_start = ORIGIN(ITCM);
+    _itcm_end = ORIGIN(ITCM) + LENGTH(ITCM);
+    _dtcm_start = ORIGIN(DTCM);
+    _dtcm_end = ORIGIN(DTCM) + LENGTH(DTCM);
+
+#endif
