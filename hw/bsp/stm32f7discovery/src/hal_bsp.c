@@ -68,8 +68,9 @@ const uint32_t stm32_flash_sectors[] = {
     0x08100000,     /* End of flash */
 };
 
-const uint32_t STM32_FLASH_NUM_AREAS = (sizeof(stm32_flash_sectors) /
-                                        sizeof(stm32_flash_sectors[0]) - 1);
+#define SZ (sizeof(stm32_flash_sectors) / sizeof(stm32_flash_sectors[0]))
+static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) + 1 == SZ,
+        "STM32_FLASH_NUM_AREAS does not match flash sectors");
 
 #if MYNEWT_VAL(UART_0)
 const struct stm32_uart_cfg os_bsp_uart0_cfg = {
@@ -120,16 +121,16 @@ const struct stm32_eth_cfg os_bsp_eth0_cfg = {
 /* FIXME */
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
-        .hbmd_start = &_ram_start,
+        .hbmd_start = _ram_start,
         .hbmd_size = RAM_SIZE,
     },
     [1] = {
-        .hbmd_start = &_dtcmram_start,
-        .hbmd_size = DTCMRAM_SIZE,
+        .hbmd_start = _dtcm_start,
+        .hbmd_size = DTCM_SIZE,
     },
     [2] = {
-        .hbmd_start = &_itcmram_start,
-        .hbmd_size = ITCMRAM_SIZE,
+        .hbmd_start = _itcm_start,
+        .hbmd_size = ITCM_SIZE,
     },
 };
 

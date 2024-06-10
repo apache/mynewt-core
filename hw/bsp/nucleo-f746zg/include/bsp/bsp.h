@@ -34,15 +34,15 @@ extern "C" {
 /* More convenient section placement macros. */
 #define bssnz_t         sec_bss_nz_core
 
-extern uint8_t _ram_start;
-extern uint8_t _dtcmram_start;
-extern uint8_t _itcmram_start;
-extern uint8_t _ram2_start;
+extern uint8_t _ram_start[];
+extern uint8_t _dtcm_start[];
+extern uint8_t _itcm_start[];
+extern uint8_t _ram2_start[];
 
 #define RAM_SIZE        (240 * 1024)
 #define RAM2_SIZE       (16 * 1024)
-#define DTCMRAM_SIZE    (64 * 1024)
-#define ITCMRAM_SIZE    (16 * 1024)
+#define DTCM_SIZE       (64 * 1024)
+#define ITCM_SIZE       (16 * 1024)
 
 /* LED pins */
 #define LED_1           MCU_GPIO_PORTB(0)

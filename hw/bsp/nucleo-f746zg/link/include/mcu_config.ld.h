@@ -17,14 +17,22 @@
  * under the License.
  */
 
-/* Linker script to configure memory regions. */
-MEMORY
-{
-  FLASH (rx) :  ORIGIN = 0x08000000, LENGTH = 32K
-  ITCM (rx)  :  ORIGIN = 0x00000000, LENGTH = 16K
-  DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = 64K
-  RAM (rwx)  :  ORIGIN = 0x20010000, LENGTH = 256K
-}
+/*
+ * Memory regions placed in DTCM
+ * If stack or core data or other section should be place in RAM
+ * <target_name>/link/include/target_config.ld.h should just do:
+ *  #undef BSSNZ_RAM
+ *  #undef COREBSS_RAM
+ *  #undef COREDATA_RAM
+ *  #undef STACK_REGION
+ *  #undef VECTOR_RELOCATION_RAM DTCM
+ */
 
-/* The bootloader does not contain an image header */
-_imghdr_size = 0x0;
+#define BSSNZ_RAM DTCM
+#define COREBSS_RAM DTCM
+#define COREDATA_RAM DTCM
+#define STACK_REGION DTCM
+#define VECTOR_RELOCATION_RAM DTCM
+
+#define TEXT_RAM ITCM
+

@@ -24,9 +24,11 @@ syscfg.defs:
 
     STM32_FLASH_NUM_AREAS:
         description: 'Number of flash sectors for a non-linear STM32 MCU.'
-        value: 12
+        value: 8
 
 syscfg.vals:
+    MCU_RAM_START: 0x20020000
+    MCU_RAM_SIZE: 240K
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
@@ -52,3 +54,8 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM1'
     TIMER_1_TIM: 'TIM8'
     TIMER_2_TIM: 'TIM9'
+    MYNEWT_DOWNLOADER: openocd
+    MYNEWT_DOWNLOADER_OPENOCD_CFG: stm32f7discovery.cfg
+    MYNEWT_DOWNLOADER_OPENOCD_INTERFACE: interface/stlink-v2-1.cfg
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
+    JLINK_TARGET: STM32F746NG
