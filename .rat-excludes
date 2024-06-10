@@ -251,9 +251,8 @@ tsl2561_shell.c
 p32mx470f512h.h
 ppic32mx.h
 
-# STM32F7 Discovery BSP - BSD License
+# STM32F7 Discovery BSP, NUCLEO-F767 BSP, NUCLEO-F746 - BSD License
 stm32f7xx_hal_conf.h
-startup_stm32f746xx.s
 
 # STM32L152C BSP - BSD License
 stm32l1xx_hal_conf.h
@@ -269,9 +268,6 @@ clock_stm32u5xx.c
 
 # NUCLEO-U575ZI-Q BSP - BSD License
 stm32u5xx_hal_conf.h
-
-# NUCLEO-F767 BSP - BSD License
-startup_stm32f767xx.s
 
 # NUCLEO-L467rg BSP - BSD License
 stm32l4xx_hal_conf.h
