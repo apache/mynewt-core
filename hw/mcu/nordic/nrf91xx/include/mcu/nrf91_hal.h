@@ -24,19 +24,7 @@
 extern "C" {
 #endif
 
-/* Helper functions to enable/disable interrupts. */
-#define __HAL_DISABLE_INTERRUPTS(x)                     \
-    do {                                                \
-        x = __get_PRIMASK();                            \
-        __disable_irq();                                \
-    } while(0);
-
-#define __HAL_ENABLE_INTERRUPTS(x)                      \
-    do {                                                \
-        if (!x) {                                       \
-            __enable_irq();                             \
-        }                                               \
-    } while(0);
+#include "nrf_hal.h"
 
 struct nrf91_uart_cfg {
     int8_t suc_pin_tx;                          /* pins for IO */

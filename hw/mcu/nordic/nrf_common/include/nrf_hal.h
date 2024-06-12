@@ -17,43 +17,30 @@
  * under the License.
  */
 
-#ifndef H_NRF51_HAL_
-#define H_NRF51_HAL_
+#ifndef H_NRF_HAL_
+#define H_NRF_HAL_
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
-#include "nrf_hal.h"
+/* Helper functions to enable/disable interrupts. */
+#define __HAL_DISABLE_INTERRUPTS(x)                     \
+    do {                                                \
+        x = __get_PRIMASK();                            \
+        __disable_irq();                                \
+    } while(0);
 
-struct nrf51_uart_cfg {
-    int8_t suc_pin_tx;                          /* pins for IO */
-    int8_t suc_pin_rx;
-    int8_t suc_pin_rts;
-    int8_t suc_pin_cts;
-};
-const struct nrf51_uart_cfg *bsp_uart_config(void);
-
-struct nrf51_hal_i2c_cfg {
-    int scl_pin;
-    int sda_pin;
-    uint32_t i2c_frequency;
-};
-
-/* SPI configuration (used for both master and slave) */
-struct nrf51_hal_spi_cfg {
-    uint8_t sck_pin;
-    uint8_t mosi_pin;
-    uint8_t miso_pin;
-    uint8_t ss_pin;
-};
-
-struct hal_flash;
-extern const struct hal_flash nrf51_flash_dev;
+#define __HAL_ENABLE_INTERRUPTS(x)                      \
+    do {                                                \
+        if (!x) {                                       \
+            __enable_irq();                             \
+        }                                               \
+    } while(0);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* H_NRF51_HAL_ */
+#endif  /* H_NRF_HAL_ */
 

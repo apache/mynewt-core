@@ -17,22 +17,17 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic/nrf51xxx
-pkg.description: MCU definition for Nordic nRF51 ARM Cortex-M0 chips.
+pkg.name: hw/mcu/nordic/nrf_common
+pkg.description: NRF5x and NRF91 series chips shared drivers
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - nrf51
-    - nrfx
+  - nrf53
+  - nrf52
+  - nrf51
+  - nrf91
+  - hal
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/nordic"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf_common"
-
-pkg.ign_files.'!MCU_COMMON_STARTUP || SPLIT_LOADER':
-    - gcc_startup_cm0.s
-pkg.ign_files.'!MCU_COMMON_STARTUP || !SPLIT_LOADER':
-    - gcc_startup_cm0_split.s
-
-pkg.deps.BLE_CONTROLLER:
-    - "@apache-mynewt-nimble/nimble/drivers/nrf51"
+  - "@apache-mynewt-core/hw/hal"
+  - "@apache-mynewt-core/hw/cmsis-core"
