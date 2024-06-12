@@ -120,6 +120,7 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
         .PeriphClockSelection = RCC_PERIPHCLK_RTC,
         .RTCClockSelection = RCC_RTCCLKSOURCE_LSE,
     };
+    SysTick->CTRL = 0;
 
     HAL_RCCEx_PeriphCLKConfig(&clock_init);
     __HAL_RCC_RTC_ENABLE();
