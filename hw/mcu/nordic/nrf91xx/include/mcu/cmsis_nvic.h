@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include "nrf.h"
 
-#define NVIC_NUM_VECTORS      (NVIC_USER_IRQ_OFFSET + 240)   /* CORE + MCU Peripherals */
+#define NVIC_NUM_VECTORS      (NVIC_USER_IRQ_OFFSET + 64)   /* CORE + MCU Peripherals */
 
 #ifdef __cplusplus
 extern "C" {
