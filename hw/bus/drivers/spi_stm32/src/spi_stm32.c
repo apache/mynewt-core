@@ -147,7 +147,7 @@ struct spi_pin_def {
 #define SPI_PIN_DEF(_spi_num, _pin, _func, _alt) { _spi_num, _pin, _func, _alt }
 
 /* STMF0 and STML0 have distinct alternate pin functions */
-#if MYNEWT_VAL(MCU_STM32L0) || MYNEWT_VAL(MCU_STM32F0)
+#if MYNEWT_VAL(MCU_STM32L0) || MYNEWT_VAL(MCU_STM32F0)|| MYNEWT_VAL(MCU_STM32G0)
 static const struct spi_pin_def spi_pin[] = {
 #if MYNEWT_VAL(SPI_0_MASTER)
     SPI_PIN_DEF(0, MCU_GPIO_PORTA(5), SPI_SCK, SPI_AF_0),
@@ -293,7 +293,7 @@ static const struct stm32_spi_hw stm32_spi1_hw = {
     .irqn = SPI1_IRQn,
     .irq_handler = spi1_irq_handler,
     .enable_clock = spi1_clock_enable,
-#if MYNEWT_VAL(MCU_STM32F0)
+#if MYNEWT_VAL(MCU_STM32F0) || MYNEWT_VAL(MCU_STM32G0)
     .get_pclk = HAL_RCC_GetPCLK1Freq,
 #else
     .get_pclk = HAL_RCC_GetPCLK2Freq,
