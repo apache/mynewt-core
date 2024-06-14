@@ -74,16 +74,28 @@
 
 #if MYNEWT_VAL(SPI_STM32_STAT)
 STATS_SECT_START(spi_stm32_stats_section)
+    STATS_SECT_ENTRY(read_count)
+    STATS_SECT_ENTRY(write_count)
+    STATS_SECT_ENTRY(transaction_error_count)
     STATS_SECT_ENTRY(read_bytes)
     STATS_SECT_ENTRY(written_bytes)
     STATS_SECT_ENTRY(dma_transferred_bytes)
 STATS_SECT_END
 
 STATS_NAME_START(spi_stm32_stats_section)
+    STATS_NAME(spi_stm32_stats_section, read_count)
+    STATS_NAME(spi_stm32_stats_section, write_count)
+    STATS_NAME(spi_stm32_stats_section, transaction_error_count)
     STATS_NAME(spi_stm32_stats_section, read_bytes)
     STATS_NAME(spi_stm32_stats_section, written_bytes)
     STATS_NAME(spi_stm32_stats_section, dma_transferred_bytes)
 STATS_NAME_END(spi_stm32_stats_section)
+
+#define SPI_STATS_INC STATS_INC
+#define SPI_STATS_INCN STATS_INCN
+#else
+#define SPI_STATS_INC(__sectvarname, __var)  do {} while (0)
+#define SPI_STATS_INCN(__sectvarname, __var, __n)  do {} while (0)
 #endif
 
 /* Driver specific data needed for SPI transfer */
@@ -695,6 +707,8 @@ spi_stm32_read(struct bus_dev *bdev, struct bus_node *bnode,
         hal_gpio_write(node->pin_cs, 0);
     }
 
+    SPI_STATS_INC(dd->stats, read_count);
+
     if (MYNEWT_VAL(OS_SCHEDULING)) {
         assert(os_sem_get_count(&dd->sem) == 0);
 
@@ -708,6 +722,9 @@ spi_stm32_read(struct bus_dev *bdev, struct bus_node *bnode,
 
         if (rc) {
             HAL_SPI_Abort(&dd->hspi);
+            SPI_STATS_INC(dd->stats, transaction_error_count);
+        } else {
+            SPI_STATS_INCN(dd->stats, read_bytes, length);
         }
 
         rc = os_error_to_sys(rc);
@@ -740,6 +757,8 @@ spi_stm32_write(struct bus_dev *bdev, struct bus_node *bnode,
 
     dd = driver_data(dev);
 
+    SPI_STATS_INC(dd->stats, write_count);
+
     /* Activate CS */
     if (node->pin_cs >= 0) {
         hal_gpio_write(node->pin_cs, 0);
@@ -758,6 +777,9 @@ spi_stm32_write(struct bus_dev *bdev, struct bus_node *bnode,
 
         if (rc) {
             HAL_SPI_Abort(&dd->hspi);
+            SPI_STATS_INC(dd->stats, transaction_error_count);
+        } else {
+            SPI_STATS_INCN(dd->stats, written_bytes, length);
         }
 
         rc = os_error_to_sys(rc);
@@ -795,6 +817,8 @@ spi_stm32_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
         hal_gpio_write(node->pin_cs, 0);
     }
 
+    SPI_STATS_INC(dd->stats, write_count);
+
     if (MYNEWT_VAL(OS_SCHEDULING)) {
         assert(os_sem_get_count(&dd->sem) == 0);
 
@@ -808,6 +832,13 @@ spi_stm32_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
 
         if (rc) {
             HAL_SPI_Abort(&dd->hspi);
+            SPI_STATS_INC(dd->stats, transaction_error_count);
+        } else {
+            if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
+                SPI_STATS_INCN(dd->stats, dma_transferred_bytes, length);
+            }
+            SPI_STATS_INCN(dd->stats, read_bytes, length);
+            SPI_STATS_INCN(dd->stats, written_bytes, length);
         }
 
         rc = os_error_to_sys(rc);
