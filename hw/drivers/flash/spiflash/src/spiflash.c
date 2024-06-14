@@ -33,6 +33,17 @@
 
 #if MYNEWT_VAL(SPIFLASH)
 
+#if MYNEWT_VAL(SPIFLASH_STAT)
+STATS_NAME_START(spiflash_stats_section)
+    STATS_NAME(spiflash_stats_section, read_count)
+    STATS_NAME(spiflash_stats_section, write_count)
+    STATS_NAME(spiflash_stats_section, erase_count)
+    STATS_NAME(spiflash_stats_section, error_count)
+    STATS_NAME(spiflash_stats_section, read_bytes)
+    STATS_NAME(spiflash_stats_section, written_bytes)
+STATS_NAME_END(spiflash_stats_section)
+#endif
+
 #if MYNEWT_VAL(SPIFLASH_SPI_CS_PIN) < 0
 #error SPIFLASH_SPI_CS_PIN must be set to the correct value in bsp syscfg.yml
 #endif
@@ -1022,6 +1033,8 @@ hal_spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *bu
 
     spiflash_lock(dev);
 
+    SPIFLASH_STATS_INC(dev->stats, read_count);
+
     err = spiflash_wait_ready(dev, 100);
     if (!err) {
 #if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
@@ -1086,6 +1099,7 @@ hal_spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *bu
                        MYNEWT_VAL(SPIFLASH_CACHE_SIZE));
             }
 #endif
+            SPIFLASH_STATS_INCN(dev->stats, read_bytes, len);
         }
     }
 
@@ -1126,6 +1140,8 @@ hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         pp_time_maximum = pp_time_typical;
     }
 
+    SPIFLASH_STATS_INC(dev->stats, write_count);
+
     while (len) {
         spiflash_write_enable(dev);
 
@@ -1160,9 +1176,12 @@ hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         addr += to_write;
         u8buf += to_write;
         len -= to_write;
-
+        SPIFLASH_STATS_INCN(dev->stats, written_bytes, to_write);
     }
 err:
+    if (rc) {
+        SPIFLASH_STATS_INC(dev->stats, error_count);
+    }
     spiflash_unlock(dev);
 
     return rc;
@@ -1301,10 +1320,12 @@ spiflash_erase(struct spiflash_dev *dev, uint32_t address, uint32_t size)
     int rc = 0;
 
     if (address == 0 && size == dev->hal.hf_size) {
+        SPIFLASH_STATS_INC(dev->stats, erase_count);
         return spiflash_chip_erase(dev);
     }
     address &= ~0xFFFU;
     while (size) {
+        SPIFLASH_STATS_INC(dev->stats, erase_count);
 #if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_64BK)
         if ((address & 0xFFFFU) == 0 && (size >= 0x10000)) {
             /* 64 KB erase if possible */
@@ -1455,6 +1476,14 @@ hal_spiflash_init(const struct hal_flash *hal_flash_dev)
     struct spiflash_dev *dev;
 
     dev = (struct spiflash_dev *)hal_flash_dev;
+
+#if MYNEWT_VAL(SPIFLASH_STAT)
+    rc = stats_init_and_reg(STATS_HDR(dev->stats),
+                            STATS_SIZE_INIT_PARMS(dev->stats, STATS_SIZE_32),
+                            STATS_NAME_INIT_PARMS(spiflash_stats_section),
+                            "spiflash");
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
     os_mutex_init(&dev->lock);

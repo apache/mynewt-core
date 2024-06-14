@@ -29,6 +29,10 @@
 #include <bus/drivers/spi_common.h>
 #endif
 
+#if MYNEWT_VAL(SPIFLASH_STAT)
+#include "stats/stats.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,6 +54,25 @@ struct spiflash_characteristics {
     struct spiflash_time_spec tpp;  /* Page program time */
     struct spiflash_time_spec tbp1; /* Byte program time */
 };
+
+#if MYNEWT_VAL(SPIFLASH_STAT)
+STATS_SECT_START(spiflash_stats_section)
+    STATS_SECT_ENTRY(read_count)
+    STATS_SECT_ENTRY(write_count)
+    STATS_SECT_ENTRY(erase_count)
+    STATS_SECT_ENTRY(error_count)
+    STATS_SECT_ENTRY(read_bytes)
+    STATS_SECT_ENTRY(written_bytes)
+STATS_SECT_END
+
+#define SPIFLASH_STATS_INC STATS_INC
+#define SPIFLASH_STATS_INCN STATS_INCN
+
+#else
+
+#define SPIFLASH_STATS_INC(__sectvarname, __var)  do {} while (0)
+#define SPIFLASH_STATS_INCN(__sectvarname, __var, __n)  do {} while (0)
+#endif
 
 struct spiflash_dev {
     struct hal_flash hal;
@@ -82,6 +105,9 @@ struct spiflash_dev {
 #if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
     uint32_t cached_addr;
     uint8_t cache[MYNEWT_VAL(SPIFLASH_CACHE_SIZE)];
+#endif
+#if MYNEWT_VAL(SPIFLASH_STAT)
+    STATS_SECT_DECL(spiflash_stats_section) stats;
 #endif
 };
 
