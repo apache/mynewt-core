@@ -81,19 +81,19 @@ os_mqueue_get(struct os_mqueue *mq)
 }
 
 int
-os_mqueue_put(struct os_mqueue *mq, struct os_eventq *evq, struct os_mbuf *m)
+os_mqueue_put(struct os_mqueue *mq, struct os_eventq *evq, struct os_mbuf *om)
 {
     struct os_mbuf_pkthdr *mp;
     os_sr_t sr;
     int rc;
 
     /* Can only place the head of a chained mbuf on the queue. */
-    if (!OS_MBUF_IS_PKTHDR(m)) {
+    if (!OS_MBUF_IS_PKTHDR(om)) {
         rc = OS_EINVAL;
         goto err;
     }
 
-    mp = OS_MBUF_PKTHDR(m);
+    mp = OS_MBUF_PKTHDR(om);
 
     OS_ENTER_CRITICAL(sr);
     STAILQ_INSERT_TAIL(&mq->mq_head, mp, omp_next);
@@ -437,7 +437,7 @@ os_mbuf_off(const struct os_mbuf *om, int off, uint16_t *out_off)
 }
 
 int
-os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
+os_mbuf_copydata(const struct os_mbuf *om, int off, int len, void *dst)
 {
     unsigned int count;
     uint8_t *udst;
@@ -449,36 +449,38 @@ os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
     udst = dst;
 
     while (off > 0) {
-        if (!m) {
+        if (!om) {
             return (-1);
         }
 
-        if (off < m->om_len)
+        if (off < om->om_len) {
             break;
-        off -= m->om_len;
-        m = SLIST_NEXT(m, om_next);
+        }
+        off -= om->om_len;
+        om = SLIST_NEXT(om, om_next);
     }
-    while (len > 0 && m != NULL) {
-        count = min(m->om_len - off, len);
-        memcpy(udst, m->om_data + off, count);
+    while (len > 0 && om != NULL) {
+        count = min(om->om_len - off, len);
+        memcpy(udst, om->om_data + off, count);
         len -= count;
         udst += count;
         off = 0;
-        m = SLIST_NEXT(m, om_next);
+        om = SLIST_NEXT(om, om_next);
     }
 
     return (len > 0 ? -1 : 0);
 }
 
 void
-os_mbuf_adj(struct os_mbuf *mp, int req_len)
+os_mbuf_adj(struct os_mbuf *om, int req_len)
 {
     int len = req_len;
     struct os_mbuf *m;
     int count;
 
-    if ((m = mp) == NULL)
+    if ((m = om) == NULL) {
         return;
+    }
     if (len >= 0) {
         /*
          * Trim from head.
@@ -494,8 +496,9 @@ os_mbuf_adj(struct os_mbuf *mp, int req_len)
                 len = 0;
             }
         }
-        if (OS_MBUF_IS_PKTHDR(mp))
-            OS_MBUF_PKTHDR(mp)->omp_len -= (req_len - len);
+        if (OS_MBUF_IS_PKTHDR(om)) {
+            OS_MBUF_PKTHDR(om)->omp_len -= (req_len - len);
+        }
     } else {
         /*
          * Trim from tail.  Scan the mbuf chain,
@@ -514,8 +517,9 @@ os_mbuf_adj(struct os_mbuf *mp, int req_len)
         }
         if (m->om_len >= len) {
             m->om_len -= len;
-            if (OS_MBUF_IS_PKTHDR(mp))
-                OS_MBUF_PKTHDR(mp)->omp_len -= len;
+            if (OS_MBUF_IS_PKTHDR(om)) {
+                OS_MBUF_PKTHDR(om)->omp_len -= len;
+            }
             return;
         }
         count -= len;
@@ -526,7 +530,7 @@ os_mbuf_adj(struct os_mbuf *mp, int req_len)
          * Find the mbuf with last data, adjust its length,
          * and toss data from remaining mbufs on chain.
          */
-        m = mp;
+        m = om;
         if (OS_MBUF_IS_PKTHDR(m))
             OS_MBUF_PKTHDR(m)->omp_len = count;
         for (; m; m = SLIST_NEXT(m, om_next)) {
