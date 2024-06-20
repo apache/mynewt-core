@@ -272,7 +272,7 @@ int os_mqueue_init(struct os_mqueue *mq, os_event_fn *ev_cb, void *arg);
  *
  * @return The next mbuf in the queue, or NULL if queue has no mbufs.
  */
-struct os_mbuf *os_mqueue_get(struct os_mqueue *);
+struct os_mbuf *os_mqueue_get(struct os_mqueue *mq);
 
 /**
  * Adds a packet (i.e. packet header mbuf) to an mqueue. The event associated
@@ -284,7 +284,7 @@ struct os_mbuf *os_mqueue_get(struct os_mqueue *);
  *
  * @return 0 on success, non-zero on failure.
  */
-int os_mqueue_put(struct os_mqueue *, struct os_eventq *, struct os_mbuf *);
+int os_mqueue_put(struct os_mqueue *mq, struct os_eventq *evq, struct os_mbuf *om);
 
 /**
  * MSYS is a system level mbuf registry.  Allows the system to share
@@ -302,7 +302,7 @@ int os_mqueue_put(struct os_mqueue *, struct os_eventq *, struct os_mbuf *);
  *
  * @return 0 on success, non-zero on failure
  */
-int os_msys_register(struct os_mbuf_pool *);
+int os_msys_register(struct os_mbuf_pool *new_pool);
 
 /**
  * Allocate a mbuf from msys.  Based upon the data size requested,
@@ -355,9 +355,8 @@ int os_msys_num_free(void);
  *
  * @return 0 on success, error code on failure.
  */
-int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp,
-        uint16_t, uint16_t);
-
+int os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp,
+                      uint16_t buf_len, uint16_t nbufs);
 /**
  * Get an mbuf from the mbuf pool.  The mbuf is allocated, and initialized
  * prior to being returned.
@@ -368,7 +367,7 @@ int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp,
  *
  * @return An initialized mbuf on success, and NULL on failure.
  */
-struct os_mbuf *os_mbuf_get(struct os_mbuf_pool *omp, uint16_t);
+struct os_mbuf *os_mbuf_get(struct os_mbuf_pool *omp, uint16_t leadingspace);
 
 /**
  * Allocate a new packet header mbuf out of the os_mbuf_pool.
@@ -379,7 +378,7 @@ struct os_mbuf *os_mbuf_get(struct os_mbuf_pool *omp, uint16_t);
  * @return A freshly allocated mbuf on success, NULL on failure.
  */
 struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp,
-        uint8_t pkthdr_len);
+        uint8_t user_pkthdr_len);
 
 /**
  * Duplicate a chain of mbufs.  Return the start of the duplicated chain.
@@ -388,7 +387,7 @@ struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp,
  *
  * @return A pointer to the new chain of mbufs
  */
-struct os_mbuf *os_mbuf_dup(struct os_mbuf *m);
+struct os_mbuf *os_mbuf_dup(struct os_mbuf *om);
 
 /**
  * Locates the specified absolute offset within an mbuf chain.  The offset
@@ -419,7 +418,7 @@ struct os_mbuf *os_mbuf_off(const struct os_mbuf *om, int off,
  * @return                      0 on success;
  *                              -1 if the mbuf does not contain enough data.
  */
-int os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst);
+int os_mbuf_copydata(const struct os_mbuf *om, int off, int len, void *dst);
 
 /**
  * @brief Calculates the length of an mbuf chain.
@@ -444,7 +443,7 @@ uint16_t os_mbuf_len(const struct os_mbuf *om);
  *
  * @return 0 on success, and an error code on failure
  */
-int os_mbuf_append(struct os_mbuf *m, const void *, uint16_t);
+int os_mbuf_append(struct os_mbuf *om, const void *data, uint16_t len);
 
 /**
  * Reads data from one mbuf and appends it to another.  On error, the specified
@@ -471,7 +470,7 @@ int os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
  *
  * @return 0 on success, -1 on failure
  */
-int os_mbuf_free(struct os_mbuf *mb);
+int os_mbuf_free(struct os_mbuf *om);
 
 /**
  * Free a chain of mbufs
@@ -486,12 +485,12 @@ int os_mbuf_free_chain(struct os_mbuf *om);
  * Adjust the length of a mbuf, trimming either from the head or the tail
  * of the mbuf.
  *
- * @param mp The mbuf chain to adjust
+ * @param om The mbuf chain to adjust
  * @param req_len The length to trim from the mbuf.  If positive, trims
  *                from the head of the mbuf, if negative, trims from the
  *                tail of the mbuf.
  */
-void os_mbuf_adj(struct os_mbuf *mp, int req_len);
+void os_mbuf_adj(struct os_mbuf *om, int req_len);
 
 
 /**
