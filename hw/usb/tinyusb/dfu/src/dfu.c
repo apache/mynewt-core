@@ -19,12 +19,15 @@
 
 #include <os/mynewt.h>
 
+#include <sysflash/sysflash.h>
 #include <class/dfu/dfu_device.h>
 
 #include <bsp/bsp.h>
 #include <img_mgmt/img_mgmt.h>
 #include <tinyusb/tinyusb.h>
 #include <hal/hal_gpio.h>
+#include <hal/hal_nvreg.h>
+#include <tusb.h>
 
 /*
  * If DFU is activated from bootloader it writes to SLOT0.
@@ -169,14 +172,45 @@ tud_dfu_detach_cb(void)
 void
 boot_preboot(void)
 {
-#if MYNEWT_VAL(USBD_DFU_BOOT_PIN) >= 0
-    hal_gpio_init_in(MYNEWT_VAL(USBD_DFU_BOOT_PIN), MYNEWT_VAL(USBD_DFU_BOOT_PIN_PULL));
-    if (hal_gpio_read(MYNEWT_VAL(USBD_DFU_BOOT_PIN)) == MYNEWT_VAL(USBD_DFU_BOOT_PIN_VALUE)) {
+    bool start_dfu = false;
+    if (MYNEWT_VAL_USBD_DFU_BOOT_PIN >= 0) {
+        hal_gpio_init_in(MYNEWT_VAL(USBD_DFU_BOOT_PIN),
+                         MYNEWT_VAL(USBD_DFU_BOOT_PIN_PULL));
+        if (hal_gpio_read(MYNEWT_VAL(USBD_DFU_BOOT_PIN)) ==
+            MYNEWT_VAL(USBD_DFU_BOOT_PIN_VALUE)) {
+            hal_gpio_deinit(MYNEWT_VAL(USBD_DFU_BOOT_PIN));
+            start_dfu = true;
+        }
         hal_gpio_deinit(MYNEWT_VAL(USBD_DFU_BOOT_PIN));
+    } else if (MYNEWT_VAL_USBD_DFU_RESET_COUNT_NVREG >= 0) {
+        uint32_t counter = hal_nvreg_read(MYNEWT_VAL_USBD_DFU_RESET_COUNT_NVREG);
+        uint32_t new_counter = 0;
+
+        if (counter == MYNEWT_VAL_USBD_DFU_RESET_COUNT) {
+            new_counter = counter;
+        } else if (hal_reset_cause() == HAL_RESET_PIN) {
+            /* Reset pin count increment */
+            new_counter = counter + 1;
+        }
+        if (new_counter == MYNEWT_VAL_USBD_DFU_RESET_COUNT) {
+            start_dfu = true;
+            new_counter = 0;
+        }
+        if (new_counter != counter) {
+            /* Write if value changed */
+            hal_nvreg_write(MYNEWT_VAL_USBD_DFU_RESET_COUNT_NVREG, new_counter);
+        }
+    } else if (MYNEWT_VAL_USBD_DFU_MAGIC_NVREG >= 0 &&
+               (hal_nvreg_read(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG) ==
+                MYNEWT_VAL_USBD_DFU_MAGIC_VALUE)) {
+        /* Reset flag in NVReg */
+        hal_nvreg_write(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG, 0);
+        start_dfu = true;
+    }
+
+    if (start_dfu) {
         tinyusb_start();
     }
-    hal_gpio_deinit(MYNEWT_VAL(USBD_DFU_BOOT_PIN));
-#endif
 }
 
 void

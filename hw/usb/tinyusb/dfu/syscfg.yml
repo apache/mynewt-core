@@ -93,6 +93,29 @@ syscfg.defs:
             Set to 2 if boto pin needs internal pull-down resistor.
         value: 0
 
+    USBD_DFU_RESET_COUNT_NVREG:
+        description: >
+            NVReg number to use for reset counting.
+        value: -1
+    USBD_DFU_RESET_COUNT:
+        description: >
+            Number of time bootloader must detects reset cause by reset pin before
+            starting dfu bootloader.
+            This can be usefull if board does not have dedicated button that can
+            be used to switch to DFU mode during boot.
+            Pressing Reset button this number of times will start DFU in bootloader.
+        value: 0
+    USBD_DFU_MAGIC_NVREG:
+        description: >
+            NVReg register number to use in bootloader to start DFU.
+        value: -1
+    USBD_DFU_MAGIC_VALUE:
+        description: >
+            Value stored in NVReg (indexed by USBD_DFU_MAGIC_NVREG)
+            to start DFU. This can be used by application that does not have
+            DFU support to request DFU in bootloader.
+        value: 0xDF00DF00
+
     USBD_DFU_SYSINIT_STAGE:
         description: >
             Sysinit stage for DFU functionality.
