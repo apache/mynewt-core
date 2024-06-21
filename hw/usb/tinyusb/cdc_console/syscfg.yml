@@ -22,14 +22,13 @@ syscfg.defs:
         description: String for CDC/Console interface
         value: '"Mynewt console"'
 
-syscfg.vals:
-    USBD_CDC_CONSOLE: 1
-
-syscfg.defs:
     CONSOLE_USB_CDC_SYSINIT_STAGE:
         description: >
           Initialize USB CDC Console at the specified sysinit level
         value: 502
+
+syscfg.vals:
+    USBD_CDC_CONSOLE: 1
 
 syscfg.restrictions:
     - "USBD_CDC_CONSOLE"
