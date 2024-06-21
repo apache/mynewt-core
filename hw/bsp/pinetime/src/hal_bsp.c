@@ -71,7 +71,7 @@ struct bus_spi_node_cfg flash_spi_cfg = {
 
 static const struct hal_flash *flash_devs[] = {
     /* MCU internal flash. */
-    [0] = &nrf52k_flash_dev,
+    [0] = &nrf_flash_dev,
 #if MYNEWT_VAL(SPIFLASH)
     /* External SPI Flash. */
     [1] = &spiflash_dev.hal,

@@ -44,7 +44,7 @@ const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
     if (id == 0) {
-        return &nrf52k_flash_dev;
+        return &nrf_flash_dev;
     }
 
     return NULL;

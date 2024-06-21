@@ -35,8 +35,6 @@ struct nrf5340_uart_cfg {
 };
 const struct nrf5340_uart_cfg *bsp_uart_config(void);
 
-struct hal_flash;
-extern const struct hal_flash nrf5340_flash_dev;
 extern const struct hal_flash nrf5340_qspi_dev;
 extern const struct hal_flash *ipc_flash(void);
 
