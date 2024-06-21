@@ -32,6 +32,7 @@ struct nrf51_uart_cfg {
     int8_t suc_pin_rts;
     int8_t suc_pin_cts;
 };
+
 const struct nrf51_uart_cfg *bsp_uart_config(void);
 
 struct nrf51_hal_i2c_cfg {
@@ -47,9 +48,6 @@ struct nrf51_hal_spi_cfg {
     uint8_t miso_pin;
     uint8_t ss_pin;
 };
-
-struct hal_flash;
-extern const struct hal_flash nrf51_flash_dev;
 
 #ifdef __cplusplus
 }

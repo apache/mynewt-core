@@ -439,7 +439,7 @@ nrf5340_ipc_flash_std_resp(struct ipc_msg *req, int rc, void *data, uint32_t dat
 static int
 nrf5340_ipc_flash_info_resp(struct ipc_msg *req)
 {
-    return nrf5340_ipc_flash_std_resp(req, 0, (void *)&nrf5340_flash_dev, sizeof(nrf5340_flash_dev));
+    return nrf5340_ipc_flash_std_resp(req, 0, (void *)&nrf_flash_dev, sizeof(nrf_flash_dev));
 }
 
 static int

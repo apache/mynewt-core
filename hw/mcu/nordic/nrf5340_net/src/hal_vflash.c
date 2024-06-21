@@ -204,7 +204,7 @@ nrf5340_net_vflash_sector_info(const struct hal_flash *dev, int idx,
 {
     (void)dev;
 
-    assert(idx < nrf5340_flash_dev.hf_sector_cnt);
+    assert(idx < nrf_flash_dev.hf_sector_cnt);
     *address = idx * NRF5340_NET_VFLASH_SECTOR_SZ;
     *sz = NRF5340_NET_VFLASH_SECTOR_SZ;
 
