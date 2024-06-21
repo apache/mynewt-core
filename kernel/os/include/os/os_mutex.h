@@ -38,7 +38,9 @@ extern "C" {
  * OS mutex structure
  */
 struct os_mutex {
+    /** Mutex head */
     SLIST_HEAD(, os_task) mu_head;
+    /** Padding for alignment */
     uint8_t     _pad;
     /** Mutex owner's default priority */
     uint8_t     mu_prio;
