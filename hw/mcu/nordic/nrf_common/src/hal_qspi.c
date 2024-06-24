@@ -24,9 +24,8 @@
 #if MYNEWT_VAL(QSPI_ENABLE)
 #include <mcu/cmsis_nvic.h>
 #include <hal/hal_flash_int.h>
-#include "mcu/nrf91_hal.h"
 #include "nrf.h"
-#include <hal/nrf_qspi.h>
+#include <nrfx_qspi.h>
 
 #if MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) < 1
 #error QSPI_FLASH_SECTOR_SIZE must be set to the correct value in bsp syscfg.yml
@@ -64,31 +63,29 @@
 #error QSPI_PIN_DIO3 must be set to the correct value in bsp syscfg.yml
 #endif
 
-static int
-nrf91k_qspi_read(const struct hal_flash *dev, uint32_t address,
-                 void *dst, uint32_t num_bytes);
-static int
-nrf91k_qspi_write(const struct hal_flash *dev, uint32_t address,
-                  const void *src, uint32_t num_bytes);
-static int
-nrf91k_qspi_erase_sector(const struct hal_flash *dev,
-                         uint32_t sector_address);
-static int
-nrf91k_qspi_sector_info(const struct hal_flash *dev, int idx,
-                        uint32_t *address, uint32_t *sz);
-static int
-nrf91k_qspi_init(const struct hal_flash *dev);
+static int nrf_qspi_read(const struct hal_flash *dev, uint32_t address,
+                         void *dst, uint32_t num_bytes);
+static int nrf_qspi_write(const struct hal_flash *dev, uint32_t address,
+                          const void *src, uint32_t num_bytes);
+static int nrf_qspi_erase_sector(const struct hal_flash *dev,
+                                 uint32_t sector_address);
+static int nrf_qspi_sector_info(const struct hal_flash *dev, int idx,
+                                uint32_t *address, uint32_t *sz);
+static int nrf_qspi_init(const struct hal_flash *dev);
+static int nrf_qspi_erase(const struct hal_flash *dev, uint32_t address,
+                          uint32_t size);
 
-static const struct hal_flash_funcs nrf91k_qspi_funcs = {
-    .hff_read = nrf91k_qspi_read,
-    .hff_write = nrf91k_qspi_write,
-    .hff_erase_sector = nrf91k_qspi_erase_sector,
-    .hff_sector_info = nrf91k_qspi_sector_info,
-    .hff_init = nrf91k_qspi_init
+static const struct hal_flash_funcs nrf_qspi_funcs = {
+    .hff_read = nrf_qspi_read,
+    .hff_write = nrf_qspi_write,
+    .hff_erase_sector = nrf_qspi_erase_sector,
+    .hff_sector_info = nrf_qspi_sector_info,
+    .hff_init = nrf_qspi_init,
+    .hff_erase = nrf_qspi_erase
 };
 
-const struct hal_flash nrf91k_qspi_dev = {
-    .hf_itf = &nrf91k_qspi_funcs,
+const struct hal_flash nrf_qspi_dev = {
+    .hf_itf = &nrf_qspi_funcs,
     .hf_base_addr = 0x00000000,
     .hf_size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
     .hf_sector_cnt = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT),
@@ -97,15 +94,12 @@ const struct hal_flash nrf91k_qspi_dev = {
 };
 
 static int
-nrf91k_qspi_read(const struct hal_flash *dev, uint32_t address,
-                 void *dst, uint32_t num_bytes)
+nrf_qspi_read(const struct hal_flash *dev, uint32_t address,
+              void *dst, uint32_t num_bytes)
 {
     uint32_t ram_buffer[4];
     uint8_t *ram_ptr = NULL;
     uint32_t read_bytes;
-
-    while ((NRF_QSPI->STATUS & QSPI_STATUS_READY_Msk) == 0)
-        ;
 
     while (num_bytes != 0) {
         /*
@@ -124,19 +118,11 @@ nrf91k_qspi_read(const struct hal_flash *dev, uint32_t address,
             if (read_bytes > num_bytes) {
                 read_bytes = num_bytes;
             }
-            NRF_QSPI->READ.DST = (uint32_t) ram_buffer;
-            NRF_QSPI->READ.SRC = address & ~3;
-            NRF_QSPI->READ.CNT = to_read;
+            nrfx_qspi_read(ram_buffer, to_read, address & ~3);
         } else {
             read_bytes = num_bytes & ~3;
-            NRF_QSPI->READ.DST = (uint32_t) dst;
-            NRF_QSPI->READ.SRC = address;
-            NRF_QSPI->READ.CNT = read_bytes;
+            nrfx_qspi_read(dst, read_bytes, address);
         }
-        NRF_QSPI->EVENTS_READY = 0;
-        NRF_QSPI->TASKS_READSTART = 1;
-        while (NRF_QSPI->EVENTS_READY == 0)
-            ;
         if (ram_ptr != NULL) {
             memcpy(dst, ram_ptr, read_bytes);
             ram_ptr = NULL;
@@ -149,20 +135,14 @@ nrf91k_qspi_read(const struct hal_flash *dev, uint32_t address,
 }
 
 static int
-nrf91k_qspi_write(const struct hal_flash *dev, uint32_t address,
-                  const void *src, uint32_t num_bytes)
+nrf_qspi_write(const struct hal_flash *dev, uint32_t address,
+               const void *src, uint32_t num_bytes)
 {
     uint32_t ram_buffer[4];
     uint8_t *ram_ptr = NULL;
     uint32_t written_bytes;
-    const char src_not_in_ram = (((uint32_t) src) & 0xE0000000) != 0x20000000;
-    uint32_t page_limit;
-
-    while ((NRF_QSPI->STATUS & QSPI_STATUS_READY_Msk) == 0);
 
     while (num_bytes != 0) {
-        page_limit = (address & ~(MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE) - 1)) +
-                MYNEWT_VAL(QSPI_FLASH_PAGE_SIZE);
         /*
          * Use RAM buffer if src or address is not 4 bytes aligned,
          * or number of bytes to write is less then 4
@@ -171,13 +151,10 @@ nrf91k_qspi_write(const struct hal_flash *dev, uint32_t address,
         if (((address & 3) != 0) ||
             ((((uint32_t) src) & 3) != 0) ||
             num_bytes < 4 ||
-            src_not_in_ram) {
+            !nrfx_is_in_ram(src)) {
             uint32_t to_write;
-            if (address + num_bytes > page_limit) {
-                to_write = ((page_limit - address) + 3) & ~3;
-            } else {
-                to_write = (num_bytes + (address & 3) + 3) & ~3;
-            }
+
+            to_write = (num_bytes + (address & 3) + 3) & ~3;
             if (to_write > sizeof(ram_buffer)) {
                 to_write = sizeof(ram_buffer);
             }
@@ -189,27 +166,11 @@ nrf91k_qspi_write(const struct hal_flash *dev, uint32_t address,
                 written_bytes = num_bytes;
             }
             memcpy(ram_ptr, src, written_bytes);
-
-            NRF_QSPI->WRITE.SRC = (uint32_t) ram_buffer;
-            NRF_QSPI->WRITE.DST = address & ~3;
-            NRF_QSPI->WRITE.CNT = to_write;
+            nrfx_qspi_write(ram_buffer, to_write, address & ~3);
         } else {
-            NRF_QSPI->WRITE.SRC = (uint32_t) src;
-            NRF_QSPI->WRITE.DST = address;
-            /*
-             * Limit write to single page.
-             */
-            if (address + num_bytes > page_limit) {
-                written_bytes = page_limit - address;
-            } else {
-                written_bytes = num_bytes & ~3;
-            }
-            NRF_QSPI->WRITE.CNT = written_bytes;
+            written_bytes = num_bytes & ~3;
+            nrfx_qspi_write(src, written_bytes, address);
         }
-        NRF_QSPI->EVENTS_READY = 0;
-        NRF_QSPI->TASKS_WRITESTART = 1;
-        while (NRF_QSPI->EVENTS_READY == 0)
-            ;
 
         address += written_bytes;
         src = (void *) ((uint32_t) src + written_bytes);
@@ -219,27 +180,59 @@ nrf91k_qspi_write(const struct hal_flash *dev, uint32_t address,
 }
 
 static int
-nrf91k_qspi_erase_sector(const struct hal_flash *dev,
-                         uint32_t sector_address)
+nrf_qspi_erase_sector(const struct hal_flash *dev,
+                      uint32_t sector_address)
 {
     int8_t erases;
 
     erases = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) / 4096;
     while (erases-- > 0) {
-        while ((NRF_QSPI->STATUS & QSPI_STATUS_READY_Msk) == 0);
-        NRF_QSPI->EVENTS_READY = 0;
-        NRF_QSPI->ERASE.PTR = sector_address;
-        NRF_QSPI->ERASE.LEN = NRF_QSPI_ERASE_LEN_4KB;
-        NRF_QSPI->TASKS_ERASESTART = 1;
-        while (NRF_QSPI->EVENTS_READY == 0);
+        nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_4KB, sector_address);
         sector_address += 4096;
     }
+
     return 0;
 }
 
 static int
-nrf91k_qspi_sector_info(const struct hal_flash *dev, int idx,
-                        uint32_t *address, uint32_t *sz)
+nrf_qspi_erase(const struct hal_flash *dev, uint32_t address,
+               uint32_t size)
+{
+    uint32_t end;
+
+    address &= ~0xFFFU;
+    end = address + size;
+
+    if (end == MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) *
+        MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE)) {
+        nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_ALL, 0);
+        return 0;
+    }
+
+    while (size) {
+        if ((address & 0xFFFFU) == 0 && (size >= 0x10000)) {
+            /* 64 KB erase if possible */
+            nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_64KB, address);
+            address += 0x10000;
+            size -= 0x10000;
+            continue;
+        }
+
+        nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_4KB, address);
+        address += 0x1000;
+        if (size > 0x1000) {
+            size -= 0x1000;
+        } else {
+            size = 0;
+        }
+    }
+
+    return 0;
+}
+
+static int
+nrf_qspi_sector_info(const struct hal_flash *dev, int idx,
+                     uint32_t *address, uint32_t *sz)
 {
     *address = idx * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
     *sz = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
@@ -248,43 +241,51 @@ nrf91k_qspi_sector_info(const struct hal_flash *dev, int idx,
 }
 
 static int
-nrf91k_qspi_init(const struct hal_flash *dev)
+nrf_qspi_init(const struct hal_flash *dev)
 {
-    const nrf_qspi_prot_conf_t config0 = {
-        .readoc = MYNEWT_VAL(QSPI_READOC),
-        .writeoc = MYNEWT_VAL(QSPI_WRITEOC),
-        .addrmode = MYNEWT_VAL(QSPI_ADDRMODE),
-        .dpmconfig = MYNEWT_VAL(QSPI_DPMCONFIG)
-    };
-    const nrf_qspi_phy_conf_t config1 = {
-        .sck_delay = MYNEWT_VAL(QSPI_SCK_DELAY),
-        .dpmen = 0,
-        .spi_mode = MYNEWT_VAL(QSPI_SPI_MODE),
-        .sck_freq = MYNEWT_VAL(QSPI_SCK_FREQ),
-    };
-    /*
-     * Configure pins
-     */
-    NRF_QSPI->PSEL.CSN = MYNEWT_VAL(QSPI_PIN_CS);
-    NRF_QSPI->PSEL.SCK = MYNEWT_VAL(QSPI_PIN_SCK);
-    NRF_QSPI->PSEL.IO0 = MYNEWT_VAL(QSPI_PIN_DIO0);
-    NRF_QSPI->PSEL.IO1 = MYNEWT_VAL(QSPI_PIN_DIO1);
-    /*
-     * Setup only known fields of IFCONFIG0. Other bits may be set by erratas code.
-     */
-    nrf_qspi_ifconfig0_set(NRF_QSPI, &config0);
-    nrf_qspi_ifconfig1_set(NRF_QSPI, &config1);
+    int rc;
 
-    NRF_QSPI->XIPOFFSET = 0x12000000;
-
-    NRF_QSPI->ENABLE = 1;
-    NRF_QSPI->TASKS_ACTIVATE = 1;
-    while (NRF_QSPI->EVENTS_READY == 0);
-
+    nrfx_qspi_config_t config = {
+        .pins = {
+            .csn_pin = MYNEWT_VAL(QSPI_PIN_CS),
+            .sck_pin = MYNEWT_VAL(QSPI_PIN_SCK),
+            .io0_pin = MYNEWT_VAL(QSPI_PIN_DIO0),
+            .io1_pin = MYNEWT_VAL(QSPI_PIN_DIO1),
 #if (MYNEWT_VAL(QSPI_READOC) > 2) || (MYNEWT_VAL(QSPI_WRITEOC) > 1)
-    NRF_QSPI->PSEL.IO2 = MYNEWT_VAL(QSPI_PIN_DIO2);
-    NRF_QSPI->PSEL.IO3 = MYNEWT_VAL(QSPI_PIN_DIO3);
+            .io2_pin = MYNEWT_VAL(QSPI_PIN_DIO2),
+            .io3_pin = MYNEWT_VAL(QSPI_PIN_DIO3),
+#else
+            .io2_pin = NRF_QSPI_PIN_NOT_CONNECTED,
+            .io3_pin = NRF_QSPI_PIN_NOT_CONNECTED,
 #endif
+        },
+        .prot_if = {
+            .readoc = MYNEWT_VAL(QSPI_READOC),
+            .writeoc = MYNEWT_VAL(QSPI_WRITEOC),
+            .addrmode = MYNEWT_VAL(QSPI_ADDRMODE),
+            .dpmconfig = MYNEWT_VAL(QSPI_DPMCONFIG)
+        },
+        .phy_if = {
+            .sck_delay = MYNEWT_VAL(QSPI_SCK_DELAY),
+            .dpmen = 0,
+            .spi_mode = MYNEWT_VAL(QSPI_SPI_MODE),
+            .sck_freq = MYNEWT_VAL(QSPI_SCK_FREQ),
+        },
+        .xip_offset = MYNEWT_VAL(QSPI_XIP_OFFSET),
+        .timeout = 0,
+        .skip_gpio_cfg = true,
+        .skip_psel_cfg = false,
+    };
+
+    rc = nrfx_qspi_init(&config, NULL, NULL);
+    if (rc != NRFX_SUCCESS) {
+        return -1;
+    }
+
+    rc = nrfx_qspi_activate(true);
+    if (rc != NRFX_SUCCESS) {
+        return -1;
+    }
 
     return 0;
 }

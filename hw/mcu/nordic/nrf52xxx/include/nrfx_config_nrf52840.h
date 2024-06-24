@@ -782,7 +782,11 @@
  * Boolean. Accepted values: 0 and 1.
  */
 #ifndef NRFX_QSPI_ENABLED
+#if MYNEWT_VAL(QSPI_ENABLE)
+#define NRFX_QSPI_ENABLED 1
+#else
 #define NRFX_QSPI_ENABLED 0
+#endif
 #endif
 
 /**
