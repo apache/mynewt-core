@@ -52,3 +52,20 @@ jobs:
       - name: check licensing
         run: |
              .github/check_license.py
+
+  doxygen_check:
+    name: Doxygen Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen
+      - name: Check Doxygen
+        shell: bash
+        run: |
+          .github/check_doxygen.py
