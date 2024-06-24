@@ -19,9 +19,9 @@
 
 #include <string.h>
 #include <assert.h>
+#include <hal/hal_flash_int.h>
 #include "nrf.h"
 #include "nrf_hal.h"
-#include <hal/hal_flash_int.h>
 #include "nrfx_nvmc.h"
 
 #ifdef NRF51
@@ -33,13 +33,13 @@
 #define NRF_FLASH_SECTOR_CNT (NRF_MEMORY_FLASH_SIZE / NRF_FLASH_SECTOR_SZ)
 
 static int nrf_flash_read(const struct hal_flash *dev, uint32_t address,
-                             void *dst, uint32_t num_bytes);
+                          void *dst, uint32_t num_bytes);
 static int nrf_flash_write(const struct hal_flash *dev, uint32_t address,
-                              const void *src, uint32_t num_bytes);
+                           const void *src, uint32_t num_bytes);
 static int nrf_flash_erase_sector(const struct hal_flash *dev,
-                                     uint32_t sector_address);
+                                  uint32_t sector_address);
 static int nrf_flash_sector_info(const struct hal_flash *dev, int idx,
-                                    uint32_t *address, uint32_t *sz);
+                                 uint32_t *address, uint32_t *sz);
 static int nrf_flash_init(const struct hal_flash *dev);
 
 static const struct hal_flash_funcs nrf_flash_funcs = {

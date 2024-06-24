@@ -51,7 +51,7 @@ hal_bsp_flash_dev(uint8_t id)
     }
 #if MYNEWT_VAL(QSPI_ENABLE)
     if (id == 1) {
-        return &nrf52k_qspi_dev;
+        return &nrf_qspi_dev;
     }
 #endif
     return NULL;

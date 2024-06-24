@@ -40,6 +40,7 @@
 
 struct hal_flash;
 extern const struct hal_flash nrf_flash_dev;
+extern const struct hal_flash nrf_qspi_dev;
 
 #ifdef __cplusplus
 }
