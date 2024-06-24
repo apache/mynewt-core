@@ -430,6 +430,9 @@ syscfg.defs:
     QSPI_PIN_DIO3:
         description: 'DIO3 pin for QSPI'
         value: -1
+    QSPI_XIP_OFFSET:
+        description: 'Base address flash memory for MCU memory access'
+        value: 0x10000000
 
     NFC_PINS_AS_GPIO:
         description: 'Use NFC pins as GPIOs instead of NFC functionality'

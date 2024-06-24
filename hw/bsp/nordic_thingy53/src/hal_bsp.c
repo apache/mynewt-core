@@ -57,7 +57,7 @@ hal_bsp_flash_dev(uint8_t id)
     }
 #if MYNEWT_VAL(QSPI_ENABLE)
     if (id == 1) {
-        return &nrf5340_qspi_dev;
+        return &nrf_qspi_dev;
     }
 #endif
 #if MYNEWT_VAL(IPC_NRF5340_FLASH_CLIENT)
