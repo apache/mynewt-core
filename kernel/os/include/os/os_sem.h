@@ -37,7 +37,9 @@ extern "C" {
  * Structure representing an OS semaphore.
  */
 struct os_sem {
+    /** Semaphore head */
     SLIST_HEAD(, os_task) sem_head;
+    /** Padding for alignment */
     uint16_t    _pad;
     /** Number of tokens */
     uint16_t    sem_tokens;
@@ -57,8 +59,8 @@ struct os_sem {
 /**
  * Initialize a semaphore
  *
- * @param sem Pointer to semaphore
- *        tokens: # of tokens the semaphore should contain initially.
+ * @param sem               Pointer to semaphore
+ * @param tokens            # of tokens the semaphore should contain initially.
  *
  * @return os_error_t
  *      OS_INVALID_PARM     Semaphore passed in was NULL.
@@ -69,7 +71,7 @@ os_error_t os_sem_init(struct os_sem *sem, uint16_t tokens);
 /**
  * Release a semaphore.
  *
- * @param sem Pointer to the semaphore to be released
+ * @param sem               Pointer to the semaphore to be released
  *
  * @return os_error_t
  *      OS_INVALID_PARM Semaphore passed in was NULL.
@@ -78,14 +80,12 @@ os_error_t os_sem_init(struct os_sem *sem, uint16_t tokens);
 os_error_t os_sem_release(struct os_sem *sem);
 
 /**
- * os sem pend
- *
  * Pend (wait) for a semaphore.
  *
- * @param mu Pointer to semaphore.
- * @param timeout Timeout, in os ticks.
- *                A timeout of 0 means do not wait if not available.
- *                A timeout of OS_TIMEOUT_NEVER means wait forever.
+ * @param sem               Pointer to semaphore.
+ * @param timeout           Timeout, in os ticks.
+ *                          A timeout of 0 means do not wait if not available.
+ *                          A timeout of OS_TIMEOUT_NEVER means wait forever.
  *
  *
  * @return os_error_t
