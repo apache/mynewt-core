@@ -26,6 +26,8 @@ import tempfile
 import sys
 
 INFO_URL = "https://github.com/apache/mynewt-core/blob/master/CODING_STANDARDS.md"
+# uncrustify.awk is one directory level above current script
+uncrustify_awk = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "uncrustify.awk")
 
 def get_lines_range(m: re.Match) -> range:
     first = int(m.group(1))
@@ -61,7 +63,7 @@ def check_file(fname: str, commit: str, upstream: str) -> list[str]:
         in_chunk = False
 
         for s in run_cmd(f"uncrustify -q -c uncrustify.cfg -f {tmpf.name} | "
-                         f"awk -f uncrustify.awk | "
+                         f"awk -f {uncrustify_awk} | "
                          f"diff -u0 -p {tmpf.name} - || true"):
             m = re.match(r"^@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@", s)
             if not m:
