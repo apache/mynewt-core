@@ -61,7 +61,7 @@ fcb_append_to_scratch(struct fcb *fcb)
         return rc;
     }
     fcb->f_active.fe_area = fa;
-    fcb->f_active.fe_elem_off = sizeof(struct fcb_disk_area);
+    fcb->f_active.fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
     fcb->f_active_id++;
     return FCB_OK;
 }
@@ -99,7 +99,7 @@ fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
             goto err;
         }
         fcb->f_active.fe_area = fa;
-        fcb->f_active.fe_elem_off = sizeof(struct fcb_disk_area);
+        fcb->f_active.fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
         fcb->f_active_id++;
     }
 

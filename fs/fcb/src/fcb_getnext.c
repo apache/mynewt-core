@@ -66,7 +66,7 @@ fcb_getnext_nolock(struct fcb *fcb, struct fcb_entry *loc)
         /*
          * If offset is zero, we serve the first entry from the area.
          */
-        loc->fe_elem_off = sizeof(struct fcb_disk_area);
+        loc->fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
         rc = fcb_elem_info(fcb, loc);
     } else {
         rc = fcb_getnext_in_area(fcb, loc);
@@ -94,7 +94,7 @@ next_sector:
                 return FCB_ERR_NOVAR;
             }
             loc->fe_area = fcb_getnext_area(fcb, loc->fe_area);
-            loc->fe_elem_off = sizeof(struct fcb_disk_area);
+            loc->fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
             rc = fcb_elem_info(fcb, loc);
             switch (rc) {
             case 0:
