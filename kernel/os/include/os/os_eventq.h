@@ -38,6 +38,8 @@ extern "C" {
 #endif
 
 struct os_event;
+
+/** Callback function type for handling events. */
 typedef void os_event_fn(struct os_event *ev);
 
 /**
@@ -56,6 +58,7 @@ struct os_event {
     /** Argument to pass to the event queue callback. */
     void *ev_arg;
 
+    /** Next event in the queue. */
     STAILQ_ENTRY(os_event) ev_next;
 };
 
@@ -78,6 +81,7 @@ struct os_eventq_mon {
 };
 #endif
 
+/** Structure representing an event queue. */
 struct os_eventq {
     /** Pointer to task that "owns" this event queue. */
     struct os_task *evq_owner;
@@ -87,6 +91,7 @@ struct os_eventq {
      */
     struct os_task *evq_task;
 
+    /** Event queue list. */
     STAILQ_HEAD(, os_event) evq_list;
 
 #if MYNEWT_VAL(OS_EVENTQ_DEBUG)
@@ -102,30 +107,36 @@ struct os_eventq {
 /**
  * Initialize the event queue
  *
- * @param evq The event queue to initialize
+ * @param evq                   The event queue to initialize
  */
-void os_eventq_init(struct os_eventq *);
+void os_eventq_init(struct os_eventq *evq);
 
 /**
  * Check whether the event queue is initialized.
  *
- * @param evq The event queue to check
+ * @param evq                   The event queue to check
+ *
+ * @return                      Non-zero if the event queue is initialized;
+ *                              zero otherwise.
  */
 int os_eventq_inited(const struct os_eventq *evq);
 
 /**
  * Put an event on the event queue.
  *
- * @param evq The event queue to put an event on
- * @param ev The event to put on the queue
+ * @param evq                   The event queue to put an event on
+ * @param ev                    The event to put on the queue
  */
-void os_eventq_put(struct os_eventq *, struct os_event *);
+void os_eventq_put(struct os_eventq *evq, struct os_event *ev);
 
 /**
  * Poll an event from the event queue and return it immediately.
  * If no event is available, don't block, just return NULL.
  *
- * @return Event from the queue, or NULL if none available.
+ * @param evq                   The event queue to pull an event from
+ *
+ * @return                      The event from the queue;
+ *                              NULL if none available.
  */
 struct os_event *os_eventq_get_no_wait(struct os_eventq *evq);
 
@@ -133,17 +144,17 @@ struct os_event *os_eventq_get_no_wait(struct os_eventq *evq);
  * Pull a single item from an event queue.  This function blocks until there
  * is an item on the event queue to read.
  *
- * @param evq The event queue to pull an event from
+ * @param evq                   The event queue to pull an event from
  *
- * @return The event from the queue
+ * @return                      The event from the queue
  */
-struct os_event *os_eventq_get(struct os_eventq *);
+struct os_event *os_eventq_get(struct os_eventq *evq);
 
 /**
  * Pull a single item off the event queue and call it's event
  * callback.
  *
- * @param evq The event queue to pull the item off.
+ * @param evq                   The event queue to pull the item off.
  */
 void os_eventq_run(struct os_eventq *evq);
 
@@ -154,21 +165,23 @@ void os_eventq_run(struct os_eventq *evq);
  * the queues.  Event queues are searched in the order that they
  * are passed in the array.
  *
- * @param evq Array of event queues
- * @param nevqs Number of event queues in evq
- * @param timo Timeout, forever if OS_WAIT_FOREVER is passed to poll.
+ * @param evq                   Array of event queues
+ * @param nevqs                 Number of event queues in evq
+ * @param timo                  Timeout, forever if OS_WAIT_FOREVER is passed to
+ *                                  poll.
  *
- * @return An event, or NULL if no events available
+ * @return                      The first available event;
+ *                              NULL if no events available
  */
-struct os_event *os_eventq_poll(struct os_eventq **, int, os_time_t);
+struct os_event *os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo);
 
 /**
  * Remove an event from the queue.
  *
- * @param evq The event queue to remove the event from
- * @param ev  The event to remove from the queue
+ * @param evq                   The event queue to remove the event from
+ * @param ev                    The event to remove from the queue
  */
-void os_eventq_remove(struct os_eventq *, struct os_event *);
+void os_eventq_remove(struct os_eventq *evq, struct os_event *ev);
 
 /**
  * Retrieves the default event queue processed by OS main task.
