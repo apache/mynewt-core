@@ -80,7 +80,7 @@ fcb_init(struct fcb *fcb)
     fcb->f_align = max_align;
     fcb->f_oldest = oldest_fap;
     fcb->f_active.fe_area = newest_fap;
-    fcb->f_active.fe_elem_off = sizeof(struct fcb_disk_area);
+    fcb->f_active.fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
     fcb->f_active_id = newest;
 
     /* Require alignment to be a power of two.  Some code depends on this
