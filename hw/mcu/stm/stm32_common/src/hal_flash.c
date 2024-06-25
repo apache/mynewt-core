@@ -120,7 +120,7 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
     for (i = 0; i < num_words; i++) {
         if (num_bytes < align) {
             memcpy(&val, &((uint8_t *)src)[i * align], num_bytes);
-            memset((uint32_t *)&val + num_bytes, dev->hf_erased_val, align - num_bytes);
+            memset((uint8_t *)&val + num_bytes, dev->hf_erased_val, align - num_bytes);
         } else {
             memcpy(&val, &((uint8_t *)src)[i * align], align);
         }
