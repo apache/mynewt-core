@@ -108,7 +108,7 @@ void msc_fat_view_media_insert(void);
         .delete_entry = delete_fun,                \
         .valid = valid_fun,                        \
     };                                             \
-    const file_entry_t *entry ## _ptr ROOT_DIR_SECTION = &entry;
+    file_entry_t *const entry ## _ptr ROOT_DIR_SECTION = &entry;
 
 /**
  * Macro to add static write handlers
@@ -118,7 +118,7 @@ void msc_fat_view_media_insert(void);
         .write_sector = _write_sector,                          \
         .file_written = _file_written,                          \
     };                                                          \
-    const msc_fat_view_write_handler_t *entry ## _ptr WRITE_HANDLER_SECTION = &entry;
+    msc_fat_view_write_handler_t *const entry ## _ptr WRITE_HANDLER_SECTION = &entry;
 
 #define TABLE_START(table) __ ## table ## _start__
 #define TABLE_END(table) __ ## table ## _end__
