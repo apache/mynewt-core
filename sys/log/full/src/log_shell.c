@@ -39,6 +39,16 @@
 #include "tinycbor/compilersupport_p.h"
 #include "log_cbor_reader/log_cbor_reader.h"
 
+static uint32_t shell_log_count;
+
+static int
+shell_log_count_entry(struct log *log, struct log_offset *log_offset,
+                      const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
+{
+    shell_log_count++;
+    return 0;
+}
+
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
                      const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
@@ -113,6 +123,7 @@ shell_log_dump_cmd(int argc, char **argv)
     bool stream;
     bool partial_match = false;
     bool clear_log;
+    bool dump_logs = true;
     int i;
     int rc;
 
@@ -121,6 +132,10 @@ shell_log_dump_cmd(int argc, char **argv)
         if (0 == strcmp(argv[i], "-l")) {
             list_only = true;
             break;
+        }
+        if (0 == strcmp(argv[i], "-t")) {
+            dump_logs = false;
+            continue;
         }
 
         /* the -c option is to clear a log (or logs). */
@@ -168,7 +183,9 @@ shell_log_dump_cmd(int argc, char **argv)
                 goto err;
             }
         } else {
-            console_printf("Dumping log %s\n", log->l_name);
+            if (dump_logs) {
+                console_printf("Dumping log %s\n", log->l_name);
+            }
 
             log_offset.lo_arg = NULL;
             log_offset.lo_ts = 0;
@@ -180,7 +197,17 @@ shell_log_dump_cmd(int argc, char **argv)
             }
             log_offset.lo_data_len = 0;
 
-            rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
+            if (dump_logs) {
+                rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
+            } else {
+                /* Measure time for log_walk */
+                shell_log_count = 0;
+                os_time_t start = os_time_get();
+                rc = log_walk_body(log, shell_log_count_entry, &log_offset);
+                os_time_t end = os_time_get();
+                console_printf("Log %s %d entries walked in %d ms\n", log->l_name,
+                               (int)shell_log_count, (int)os_time_ticks_to_ms32(end - start));
+            }
             if (rc != 0) {
                 goto err;
             }
