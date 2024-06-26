@@ -36,7 +36,8 @@ fcb2_getnext_in_area(struct fcb2 *fcb, struct fcb2_entry *loc)
                                                  fcb2_len_in_flash(loc->fe_range, 2);
         /* Possible entry offset for next data */
         next_entry_offset = fcb->f_active.fe_range->fsr_sector_size -
-                            (FCB2_ENTRY_SIZE * (loc->fe_entry_num + 1));
+                            (fcb2_len_in_flash(fcb->f_active.fe_range, FCB2_ENTRY_SIZE) *
+                             (loc->fe_entry_num + 1));
         loc->fe_data_len = 0;
         loc->fe_entry_num++;
         /* If there is no space for next entry just finish search */
