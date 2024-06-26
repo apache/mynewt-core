@@ -26,6 +26,7 @@
 #include <shell/shell.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 static int flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
                          struct streamer *streamer);
@@ -48,7 +49,6 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
     int sec_cnt;
     int i;
     int devid;
-    int soff;
     char *eptr;
     char tmp_buf[32];
     char pr_str[80];
@@ -157,21 +157,20 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
                         (long unsigned int) off);
                 break;
             }
-            for (i = 0, soff = 0; i < sec_cnt; i++) {
-                soff += snprintf(pr_str + soff, sizeof(pr_str) - soff,
-                  "0x%02x ", tmp_buf[i] & 0xff);
-                if (i % 8 == 7) {
-                    streamer_printf(streamer, "  0x%lx: %s\n",
-                                   (long unsigned int) off, pr_str);
-                    soff = 0;
-                    off += 8;
+            for (i = 0; i < sec_cnt; i++) {
+                int n = i & 7;
+                if (n == 0) {
+                    streamer_printf(streamer, "  0x%lx: ", (long unsigned int)off + i);
+                }
+                snprintf(pr_str + n * 5, 6, "0x%02x ", tmp_buf[i] & 0xff);
+                pr_str[41 + n] = isprint((uint8_t)tmp_buf[i]) ? tmp_buf[i] : '.';
+                if (n == 7 || i + 1 == sec_cnt) {
+                    pr_str[41 + n + 1] = '\0';
+                    memset(pr_str + (5 * n + 5), ' ', 5 * (7 - n) + 1);
+                    streamer_printf(streamer, "%s\n", pr_str);
                 }
             }
-            if (i % 8) {
-                streamer_printf(streamer, "  0x%lx: %s\n",
-                               (long unsigned int) off, pr_str);
-                off += i;
-            }
+            off += sec_cnt;
         }
     } else if (!strcmp(argv[2], "write")) {
         streamer_printf(streamer, "Write 0x%lx + %lx\n",
