@@ -80,13 +80,13 @@ struct os_dev;
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*os_dev_init_func_t)(struct os_dev *, void *);
+typedef int (*os_dev_init_func_t)(struct os_dev *dev, void *arg);
 
-typedef int (*os_dev_open_func_t)(struct os_dev *, uint32_t,
-        void *);
-typedef int (*os_dev_suspend_func_t)(struct os_dev *, os_time_t, int);
-typedef int (*os_dev_resume_func_t)(struct os_dev *);
-typedef int (*os_dev_close_func_t)(struct os_dev *);
+typedef int (*os_dev_open_func_t)(struct os_dev *dev, uint32_t timo, void *arg);
+typedef int (*os_dev_suspend_func_t)(struct os_dev *dev, os_time_t suspend_t,
+                                     int force);
+typedef int (*os_dev_resume_func_t)(struct os_dev *dev);
+typedef int (*os_dev_close_func_t)(struct os_dev *dev);
 
 /**
  * Device handlers, implementers of device drivers should fill these
@@ -204,7 +204,7 @@ struct os_dev *os_dev_lookup(const char *name);
  *
  * @return 0 on success, non-zero on failure.
  */
-int os_dev_initialize_all(uint8_t);
+int os_dev_initialize_all(uint8_t stage);
 
 
 /**
@@ -216,7 +216,7 @@ int os_dev_initialize_all(uint8_t);
  * @return 0 on success, or a non-zero error code if one of the devices
  *                       returned it.
  */
-int os_dev_suspend_all(os_time_t, uint8_t);
+int os_dev_suspend_all(os_time_t suspend_t, uint8_t force);
 
 /**
  * Resume all the devices that were suspended.
@@ -259,7 +259,8 @@ void os_dev_reset(void);
  * @param walk_func Function to call
  * @aparm arg       Argument to pass to walk_func
  */
-void os_dev_walk(int (*walk_func)(struct os_dev *, void *), void *arg);
+void os_dev_walk(int (*walk_func)(struct os_dev *walk_func_dev,
+                 void *walk_func_arg), void *arg);
 
 #ifdef __cplusplus
 }
