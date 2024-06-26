@@ -332,7 +332,8 @@ os_dev_reset(void)
 }
 
 void
-os_dev_walk(int (*walk_func)(struct os_dev *, void *), void *arg)
+os_dev_walk(int (*walk_func)(struct os_dev *walk_func_dev, void *walk_func_arg),
+            void *arg)
 {
     struct os_dev *dev;
 
