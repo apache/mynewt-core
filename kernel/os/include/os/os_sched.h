@@ -51,10 +51,29 @@ void os_sched_ctx_sw_hook(struct os_task *next_t);
  * Returns the currently running task. Note that this task may or may not be
  * the highest priority task ready to run.
  *
- * @return The currently running task.
+ * @return                      The currently running task.
  */
 struct os_task *os_sched_get_current_task(void);
+
+/**
+ * Sets the currently running task to 't'. Note that this function simply sets
+ * the global variable holding the currently running task. It does not perform
+ * a context switch or change the os run or sleep list.
+ *
+ * @param t                     Pointer to currently running task.
+ */
 void os_sched_set_current_task(struct os_task *t);
+
+/**
+ * Returns the task that we should be running. This is the task at the head
+ * of the run list.
+ *
+ * @note                        If you want to guarantee that the os run list
+ *                                  does not change after calling this function,
+ *                                  you have to call it with interrupts disabled.
+ *
+ * @return                      The task at the head of the list
+ */
 struct os_task *os_sched_next_task(void);
 
 /**
@@ -73,9 +92,9 @@ void os_sched_suspend(void);
  * Resume task scheduling
  *
  * Resumes the scheduler after it was suspended with os_sched_suspend().
- * @returns 0 when scheduling resumed
- * @returns non-0 when scheduling is still locked and more calls
- *          to os_sched_resume() are needed
+ * @return                      0 when scheduling resumed;
+ *                              non-0 when scheduling is still locked and more
+ *                                  calls to os_sched_resume() are needed
  */
 int os_sched_resume(void);
 
@@ -87,11 +106,9 @@ int os_sched_resume(void);
  *
  * This function will call the architecture specific routine to swap in the new task.
  *
- * @param next_t Pointer to task which must run next (optional)
+ * @param next_t                Pointer to task which must run next (optional)
  *
- * @return n/a
- *
- * @note Interrupts must be disabled when calling this.
+ * @note                        Interrupts must be disabled when calling this.
  *
  * @code{.c}
  * // example
@@ -114,12 +131,81 @@ int os_sched_resume(void);
 void os_sched(struct os_task *next_t);
 
 /** @cond INTERNAL_HIDDEN */
+
+/**
+ * Called when the OS tick timer expires. Search the sleep list for any tasks
+ * that need waking up. This occurs when the current OS time exceeds the next
+ * wakeup time stored in the task. Any tasks that need waking up will be
+ * removed from the sleep list and added to the run list.
+ */
 void os_sched_os_timer_exp(void);
+
+/**
+ * Insert a task into the scheduler list. This causes the task to be evaluated
+ * for running when os_sched is called.
+ *
+ * @param t                     Pointer to task to insert in run list
+ *
+ * @return                      OS_OK: task was inserted into run list;
+ *                              OS_EINVAL: Task was not in ready state.
+ */
 os_error_t os_sched_insert(struct os_task *t);
+
+/**
+ * Removes the task from the run list and puts it on the sleep list.
+ *
+ * @param t                     Task to put to sleep
+ * @param nticks                Number of ticks to put task to sleep
+ *
+ * @return                      Zero on success
+ *
+ * @note                        Must be called with interrupts disabled! This
+ *                                  function does not call the scheduler.
+ */
 int os_sched_sleep(struct os_task *t, os_time_t nticks);
+
+/**
+ * Called to wake up a task. Waking up a task consists of setting the task state
+ * to READY and moving it from the sleep list to the run list.
+ *
+ * @param t                     Pointer to task to wake up.
+ *
+ * @return                      Zero on success
+ *
+ * @note                        This function must be called with interrupts
+ *                                  disabled.
+ */
 int os_sched_wakeup(struct os_task *t);
+
+/**
+ * @note This routine is currently experimental and not ready for common use
+ *
+ * Stops a task and removes it from the task list.
+ *
+ * @return int
+ *
+ * @note                        Must be called with interrupts disabled!
+ *                                  This function does not call the scheduler.
+ */
 int os_sched_remove(struct os_task *t);
+
+/**
+ * Resort a task that is in the ready list as its priority has
+ * changed. If the task is not in the ready state, there is
+ * nothing to do.
+ *
+ * @param t                     Pointer to task to insert back into ready to run
+ *                                  list.
+ *
+ * @note                        This function expects interrupts to be disabled,
+ *                                  so they are not disabled here.
+ */
 void os_sched_resort(struct os_task *t);
+
+/**
+ * Return the number of ticks until the first sleep timer expires. If there are
+ * no such tasks then return OS_TIMEOUT_NEVER instead.
+ */
 os_time_t os_sched_wakeup_ticks(os_time_t now);
 
 /** @endcond */

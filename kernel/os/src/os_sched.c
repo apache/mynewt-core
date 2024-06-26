@@ -30,17 +30,6 @@ extern os_time_t g_os_time;
 os_time_t g_os_last_ctx_sw_time;
 static uint8_t os_sched_lock_count;
 
-/**
- * os sched insert
- *
- * Insert a task into the scheduler list. This causes the task to be evaluated
- * for running when os_sched is called.
- *
- * @param t     Pointer to task to insert in run list
- *
- * @return int  OS_OK: task was inserted into run list
- *              OS_EINVAL: Task was not in ready state.
- */
 os_error_t
 os_sched_insert(struct os_task *t)
 {
@@ -102,15 +91,6 @@ os_sched_get_current_task(void)
     return (g_current_task);
 }
 
-/**
- * os sched set current task
- *
- * Sets the currently running task to 't'. Note that this function simply sets
- * the global variable holding the currently running task. It does not perform
- * a context switch or change the os run or sleep list.
- *
- * @param t Pointer to currently running task.
- */
 void
 os_sched_set_current_task(struct os_task *t)
 {
@@ -162,19 +142,6 @@ os_sched_resume(void)
     return ret;
 }
 
-/**
- * os sched sleep
- *
- * Removes the task from the run list and puts it on the sleep list.
- *
- * @param t Task to put to sleep
- * @param nticks Number of ticks to put task to sleep
- *
- * @return int
- *
- * NOTE: must be called with interrupts disabled! This function does not call
- * the scheduler
- */
 int
 os_sched_sleep(struct os_task *t, os_time_t nticks)
 {
@@ -209,19 +176,6 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
     return (0);
 }
 
-/**
- * os sched remove
- *
- * XXX
- * NOTE - This routine is currently experimental and not ready for common use
- *
- * Stops a task and removes it from the task list.
- *
- * @return int
- *
- * NOTE: must be called with interrupts disabled! This function does not call
- * the scheduler
- */
 int
 os_sched_remove(struct os_task *t)
 {
@@ -240,18 +194,6 @@ os_sched_remove(struct os_task *t)
     return OS_OK;
 }
 
-/**
- * os sched wakeup
- *
- * Called to wake up a task. Waking up a task consists of setting the task state
- * to READY and moving it from the sleep list to the run list.
- *
- * @param t     Pointer to task to wake up.
- *
- * @return int
- *
- * NOTE: This function must be called with interrupts disabled.
- */
 int
 os_sched_wakeup(struct os_task *t)
 {
@@ -280,15 +222,6 @@ os_sched_wakeup(struct os_task *t)
     return (0);
 }
 
-/**
- * os sched os timer exp
- *
- * Called when the OS tick timer expires. Search the sleep list for any tasks
- * that need waking up. This occurs when the current OS time exceeds the next
- * wakeup time stored in the task. Any tasks that need waking up will be
- * removed from the sleep list and added to the run list.
- *
- */
 void
 os_sched_os_timer_exp(void)
 {
@@ -322,10 +255,6 @@ os_sched_os_timer_exp(void)
     OS_EXIT_CRITICAL(sr);
 }
 
-/*
- * Return the number of ticks until the first sleep timer expires.If there are
- * no such tasks then return OS_TIMEOUT_NEVER instead.
- */
 os_time_t
 os_sched_wakeup_ticks(os_time_t now)
 {
@@ -345,36 +274,12 @@ os_sched_wakeup_ticks(os_time_t now)
     return (rt);
 }
 
-/**
- * os sched next task
- *
- * Returns the task that we should be running. This is the task at the head
- * of the run list.
- *
- * NOTE: if you want to guarantee that the os run list does not change after
- * calling this function you have to call it with interrupts disabled.
- *
- * @return struct os_task*
- */
 struct os_task *
 os_sched_next_task(void)
 {
     return (TAILQ_FIRST(&g_os_run_list));
 }
 
-/**
- * os sched resort
- *
- * Resort a task that is in the ready list as its priority has
- * changed. If the task is not in the ready state, there is
- * nothing to do.
- *
- * @param t Pointer to task to insert back into ready to run
- *          list.
- *
- * NOTE: this function expects interrupts to be disabled so they
- * are not disabled here.
- */
 void
 os_sched_resort(struct os_task *t)
 {
