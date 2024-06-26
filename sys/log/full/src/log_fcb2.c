@@ -27,8 +27,8 @@
 #include "log/log.h"
 #include "fcb/fcb2.h"
 
-/* Assume the flash alignment requirement is no stricter than 8. */
-#define LOG_FCB2_MAX_ALIGN   8
+/* Assume the flash alignment requirement is no stricter than 32. */
+#define LOG_FCB2_MAX_ALIGN   32
 
 static int log_fcb2_rtr_erase(struct log *log);
 
