@@ -77,7 +77,7 @@ TAILQ_HEAD(os_callout_list, os_callout);
  * @param ev_arg The argument to provide to the event when posting the
  *               timer.
  */
-void os_callout_init(struct os_callout *cf, struct os_eventq *evq,
+void os_callout_init(struct os_callout *c, struct os_eventq *evq,
                      os_event_fn *ev_cb, void *ev_arg);
 
 
@@ -86,7 +86,7 @@ void os_callout_init(struct os_callout *cf, struct os_eventq *evq,
  *
  * @param c The callout to stop
  */
-void os_callout_stop(struct os_callout *);
+void os_callout_stop(struct os_callout *c);
 
 
 /**
@@ -97,7 +97,7 @@ void os_callout_stop(struct os_callout *);
  *
  * @return 0 on success, non-zero on failure
  */
-int os_callout_reset(struct os_callout *, os_time_t);
+int os_callout_reset(struct os_callout *c, os_time_t ticks);
 
 /**
  * Returns the number of ticks which remains to callout.
@@ -107,7 +107,7 @@ int os_callout_reset(struct os_callout *, os_time_t);
  *
  * @return Number of ticks to first pending callout
  */
-os_time_t os_callout_remaining_ticks(struct os_callout *, os_time_t);
+os_time_t os_callout_remaining_ticks(struct os_callout *c, os_time_t now);
 
 /**
  * Returns whether the callout is pending or not.
