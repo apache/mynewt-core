@@ -39,11 +39,6 @@ os_cputime_init(uint32_t clock_freq)
     return rc;
 }
 
-/**
- * Wait until the number of ticks has elapsed. This is a blocking delay.
- *
- * @param ticks The number of ticks to wait.
- */
 void
 os_cputime_delay_ticks(uint32_t ticks)
 {
