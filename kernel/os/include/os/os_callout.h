@@ -46,7 +46,7 @@ struct os_callout {
     /** Number of ticks in the future to expire the callout */
     os_time_t c_ticks;
 
-
+    /** Next callout in the list */
     TAILQ_ENTRY(os_callout) c_next;
 };
 
@@ -69,13 +69,13 @@ TAILQ_HEAD(os_callout_list, os_callout);
  * queue specified in os_callout_init().  The event argument given here
  * is posted in the ev_arg field of that event.
  *
- * @param c The callout to initialize
- * @param evq The event queue to post an OS_EVENT_T_TIMER event to
- * @param timo_func The function to call on this callout for the host task
- *                  used to provide multiple timer events to a task
- *                  (this can be NULL.)
- * @param ev_arg The argument to provide to the event when posting the
- *               timer.
+ * @param c                 The callout to initialize
+ * @param evq               The event queue to post an OS_EVENT_T_TIMER event to
+ * @param ev_cb             The function to call on this callout for the host
+ *                              task used to provide multiple timer events to
+ *                              a task (this can be NULL).
+ * @param ev_arg            The argument to provide to the event when posting
+ *                              the timer.
  */
 void os_callout_init(struct os_callout *c, struct os_eventq *evq,
                      os_event_fn *ev_cb, void *ev_arg);
@@ -84,7 +84,7 @@ void os_callout_init(struct os_callout *c, struct os_eventq *evq,
 /**
  * Stop the callout from firing off, any pending events will be cleared.
  *
- * @param c The callout to stop
+ * @param c                 The callout to stop
  */
 void os_callout_stop(struct os_callout *c);
 
@@ -92,29 +92,31 @@ void os_callout_stop(struct os_callout *c);
 /**
  * Reset the callout to fire off in 'ticks' ticks.
  *
- * @param c The callout to reset
- * @param ticks The number of ticks to wait before posting an event
+ * @param c                 The callout to reset
+ * @param ticks             The number of ticks to wait before posting an event
  *
- * @return 0 on success, non-zero on failure
+ * @return                  0 on success;
+ *                          non-zero on failure
  */
 int os_callout_reset(struct os_callout *c, os_time_t ticks);
 
 /**
  * Returns the number of ticks which remains to callout.
  *
- * @param c The callout to check
- * @param now The current time in OS ticks
+ * @param c                 The callout to check
+ * @param now               The current time in OS ticks
  *
- * @return Number of ticks to first pending callout
+ * @return                  Number of ticks to first pending callout
  */
 os_time_t os_callout_remaining_ticks(struct os_callout *c, os_time_t now);
 
 /**
  * Returns whether the callout is pending or not.
  *
- * @param c The callout to check
+ * @param c                 The callout to check
  *
- * @return 1 if queued, 0 if not queued.
+ * @return                  1 if queued;
+ *                          0 if not queued.
  */
 static inline int
 os_callout_queued(struct os_callout *c)
