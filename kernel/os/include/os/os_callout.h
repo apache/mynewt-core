@@ -128,7 +128,22 @@ os_callout_queued(struct os_callout *c)
  * @cond INTERNAL_HIDDEN
  */
 
+/**
+ * This function is called by the OS in the time tick. It searches the list
+ * of callouts, and sees if any of them are ready to run. If they are ready
+ * to run, it posts an event for each callout that's ready to run,
+ * to the event queue provided to os_callout_init().
+ */
 void os_callout_tick(void);
+
+/**
+ * Returns the number of ticks to the first pending callout. If there are no
+ * pending callouts then return OS_TIMEOUT_NEVER instead.
+ *
+ * @param now               The time now
+ *
+ * @return                  Number of ticks to first pending callout
+ */
 os_time_t os_callout_wakeup_ticks(os_time_t now);
 
 /**
