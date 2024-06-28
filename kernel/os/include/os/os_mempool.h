@@ -139,8 +139,8 @@ struct os_mempool_info {
  * @return The next memory pool in the list to get information about, or NULL
  *         when at the last memory pool.
  */
-struct os_mempool *os_mempool_info_get_next(struct os_mempool *,
-        struct os_mempool_info *);
+struct os_mempool *os_mempool_info_get_next(struct os_mempool *mp,
+        struct os_mempool_info *omi);
 
 /**
  * Get information system memory pool by name.
