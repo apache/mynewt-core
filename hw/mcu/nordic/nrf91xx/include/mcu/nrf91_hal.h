@@ -39,8 +39,7 @@ struct nrf91_hal_i2c_cfg {
     int sda_pin;
     uint32_t i2c_frequency;
 };
-struct hal_flash;
-extern const struct hal_flash nrf91k_flash_dev;
+
 extern const struct hal_flash nrf91k_qspi_dev;
 
 /* SPI configuration (used for both master and slave) */

@@ -63,7 +63,7 @@ hal_bsp_flash_dev(uint8_t id)
      * Internal flash mapped to id 0.
      */
     if (id == 0) {
-        return &nrf52k_flash_dev;
+        return &nrf_flash_dev;
     }
 #if MYNEWT_VAL(ENC_FLASH_DEV)
     if (id == 1) {

@@ -38,6 +38,9 @@
         }                                               \
     } while(0);
 
+struct hal_flash;
+extern const struct hal_flash nrf_flash_dev;
+
 #ifdef __cplusplus
 }
 #endif
