@@ -77,6 +77,21 @@ hal_flash_erased_val(uint8_t flash_id)
     return hf->hf_erased_val;
 }
 
+int
+hal_flash_sector_info(uint8_t flash_id, int sector_index,
+                      uint32_t *start_address, uint32_t *size)
+{
+    const struct hal_flash *hf;
+
+    hf = hal_bsp_flash_dev(flash_id);
+    if (!hf) {
+        return SYS_EINVAL;
+    }
+
+    return hf->hf_itf->hff_sector_info(hf, sector_index, start_address, size);
+}
+
+
 uint32_t
 hal_flash_sector_size(const struct hal_flash *hf, int sec_idx)
 {
