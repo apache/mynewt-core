@@ -24,6 +24,7 @@
 #include <hal/hal_flash.h>
 #include <hal/hal_flash_int.h>
 #include <shell/shell.h>
+#include <parse/parse.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -39,6 +40,19 @@ static struct shell_cmd flash_cmd_struct =
 static struct shell_cmd flash_speed_cli_struct =
     SHELL_CMD_EXT("flash_speed", flash_speed_test_cli, NULL);
 
+static void
+dump_sector_range_info(struct streamer *streamer, int start_sector, uint32_t start_address,
+                       int sector_count, uint32_t sector_size)
+{
+    if (sector_count == 1) {
+        streamer_printf(streamer, "  %d: 0x%lx\n", start_sector,
+                        (long unsigned int)sector_size);
+    } else {
+        streamer_printf(streamer, "  %d-%d: 0x%lx (total 0x%x)\n", start_sector, start_sector + sector_count - 1,
+                        (long unsigned int)sector_size, sector_size * sector_count);
+    }
+}
+
 static int
 flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
               struct streamer *streamer)
@@ -46,43 +60,70 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
     const struct hal_flash *hf;
     uint32_t off = 0;
     uint32_t sz = 1;
+    uint32_t fa_off = 0;
     int sec_cnt;
     int i;
-    int devid;
+    int devid = 0;
+    int rc;
     char *eptr;
     char tmp_buf[32];
     char pr_str[80];
+    /* arg_idx points to first argument after 'flash' */
+    int arg_idx = 1;
 
     if (argc > 1 && (!strcmp(argv[1], "?") || !strcmp(argv[1], "help"))) {
         streamer_printf(streamer, "Commands Available\n");
-        streamer_printf(streamer, "flash [flash-id] -- dumps sector map \n");
-        streamer_printf(streamer, "flash <flash-id> read <offset> <size> -- reads bytes from flash \n");
-        streamer_printf(streamer, "flash <flash-id> write <offset>  <size>  -- writes incrementing data pattern 0-8 to flash \n");
-        streamer_printf(streamer, "flash <flash-id> erase <offset> <size> -- erases flash \n");
-        streamer_printf(streamer, "flash area -- shows flash areas \n");
+        streamer_printf(streamer, "flash [<id>] -- dumps sector map\n");
+        streamer_printf(streamer, "flash [area] <id> read <offset> <size> -- reads bytes from flash\n");
+        streamer_printf(streamer,
+                        "flash [area] <id> write <offset> <size> -- writes incrementing data pattern 0-8 to flash\n");
+        streamer_printf(streamer, "flash [area] <id> erase <offset> <size> -- erases flash\n");
+        streamer_printf(streamer, "flash area -- shows flash areas\n");
         return 0;
     }
 
-    if (argc > 1 && strcmp(argv[1], "area") == 0) {
-        streamer_printf(streamer, "AreaID FlashId     Offset     Size\n");
-        for (i = 0; i < ARRAY_SIZE(sysflash_map_dflt); ++i) {
-            streamer_printf(streamer, "%6u %7u 0x%08x 0x%06x\n", sysflash_map_dflt[i].fa_id,
-                            sysflash_map_dflt[i].fa_device_id,
-                            (unsigned)sysflash_map_dflt[i].fa_off,
-                            (unsigned)sysflash_map_dflt[i].fa_size);
-        }
-        return 0;
-    }
-
-    devid = 0;
-    if (argc < 3) {
+    arg_idx += (argc > 1 && strcmp(argv[1], "area") == 0) ? 1 : 0;
+    /* If first argument was in fact 'area' */
+    if (arg_idx == 2) {
+        /* There was no more arguments, dump flash areas */
         if (argc == 2) {
-            devid = strtoul(argv[1], &eptr, 0);
-            if (*eptr != 0) {
+            streamer_printf(streamer, "AreaID FlashId     Offset     Size\n");
+            for (i = 0; i < ARRAY_SIZE(sysflash_map_dflt); ++i) {
+                streamer_printf(streamer, "%6u %7u 0x%08x 0x%06x\n", sysflash_map_dflt[i].fa_id,
+                                sysflash_map_dflt[i].fa_device_id,
+                                (unsigned)sysflash_map_dflt[i].fa_off,
+                                (unsigned)sysflash_map_dflt[i].fa_size);
+            }
+            return 0;
+        } else {
+            /* Try to parese flash area id */
+            int id = (int)parse_ull_bounds(argv[arg_idx], 0, 255, &rc);
+            const struct flash_area *fa;
+
+            if (rc == 0) {
+                rc = flash_area_open(id, &fa);
+            }
+            if (rc) {
+                streamer_printf(streamer, "Invalid flash area id %s\n", argv[arg_idx]);
+                return 0;
+            }
+            /* Keep information about flash area which will modify flash access place */
+            fa_off = fa->fa_off;
+            devid = fa->fa_device_id;
+        }
+    } else {
+        /* Try parse flash id if any, if not set 0 will be used */
+        if (argc == 2) {
+            devid = (int)parse_ull_bounds(argv[1], 0, 255, &rc);
+            if (rc != 0) {
                 streamer_printf(streamer, "Invalid flash id %s\n", argv[1]);
                 return 0;
             }
         }
+    }
+    arg_idx++;
+
+    if (arg_idx >= argc) {
         do {
             hf = hal_bsp_flash_dev(devid);
             if (!hf) {
@@ -91,7 +132,7 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
                 }
                 return 0;
             }
-            streamer_printf(streamer, "Flash %d at 0x%lx size 0x%lx with %d "
+            streamer_printf(streamer, "Flash %d start address %#lx size %#lx with %d "
                                       "sectors, alignment req %d bytes\n",
                     devid,
                     (long unsigned int) hf->hf_base_addr,
@@ -99,68 +140,74 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
                     hf->hf_sector_cnt,
                     hf->hf_align);
             sec_cnt = hf->hf_sector_cnt;
-            if (sec_cnt > 32) {
-                sec_cnt = 32;
-            }
-            for (i = 0; i < sec_cnt; i++) {
-                streamer_printf(streamer, "  %d: %lx\n", i,
-                        (long unsigned int) hal_flash_sector_size(hf, i));
-            }
-            if (sec_cnt != hf->hf_sector_cnt) {
-                streamer_printf(streamer, "...  %d: %lx\n",
-                  hf->hf_sector_cnt - 1,
-                  (long unsigned int) hal_flash_sector_size(hf, hf->hf_sector_cnt - 1));
+            uint32_t range_start;
+            uint32_t range_sector_size = 0;
+            int range_first_sector = -1;
+            uint32_t sector_start_address;
+            uint32_t sector_size;
+
+            for (i = 0; i <= sec_cnt; ++i) {
+                if (i < sec_cnt) {
+                    hal_flash_sector_info(devid, i, &sector_start_address, &sector_size);
+                    if (range_first_sector < 0) {
+                        range_first_sector = i;
+                        range_sector_size = sector_size;
+                        range_start = sector_start_address;
+                    }
+                } else {
+                    sector_start_address = 0;
+                    sector_size = 0;
+                }
+                if (sector_size != range_sector_size && range_sector_size > 0) {
+                    dump_sector_range_info(streamer, range_first_sector, range_start,
+                                           i - range_first_sector, range_sector_size);
+                    range_first_sector = i;
+                    range_sector_size = sector_size;
+                }
             }
             ++devid;
-        } while(argc == 1);
+        } while (argc == 1);
 
         return 0;
     }
 
-    if (argc > 1) {
-        devid = strtoul(argv[1], &eptr, 0);
-        if (*eptr != 0) {
-            streamer_printf(streamer, "Invalid flash id %s\n", argv[1]);
-            goto err;
-        }
-    }
-    if (argc > 3) {
-        off = strtoul(argv[3], &eptr, 0);
+    if (arg_idx + 1 < argc) {
+        off = strtoul(argv[arg_idx + 1], &eptr, 0);
         if (*eptr != '\0') {
             streamer_printf(streamer, "Invalid offset %s\n", argv[2]);
             goto err;
         }
     }
-    if (argc > 4) {
-        sz = strtoul(argv[4], &eptr, 0);
+    if (arg_idx + 2 < argc) {
+        sz = strtoul(argv[arg_idx + 2], &eptr, 0);
         if (*eptr != '\0') {
             streamer_printf(streamer, "Invalid size %s\n", argv[3]);
             goto err;
         }
     }
-    if (!strcmp(argv[2], "erase")) {
-        streamer_printf(streamer, "Erase 0x%lx + %lx\n",
+    if (!strcmp(argv[arg_idx], "erase")) {
+        streamer_printf(streamer, "Erase %#lx + %#lx\n",
                 (long unsigned int) off, (long unsigned int) sz);
 
-        if (hal_flash_erase(devid, off, sz)) {
+        if (hal_flash_erase(devid, fa_off + off, sz)) {
             streamer_printf(streamer, "Flash erase failed\n");
         }
         streamer_printf(streamer, "Done!\n");
-    } else if (!strcmp(argv[2], "read")) {
-        streamer_printf(streamer, "Read 0x%lx + %lx\n",
+    } else if (!strcmp(argv[arg_idx], "read")) {
+        streamer_printf(streamer, "Read %#lx + %#lx\n",
                 (long unsigned int) off, (long unsigned int) sz);
         sz += off;
         while (off < sz) {
             sec_cnt = min(sizeof(tmp_buf), sz - off);
-            if (hal_flash_read(devid, off, tmp_buf, sec_cnt)) {
-                streamer_printf(streamer, "flash read failure at %lx\n",
+            if (hal_flash_read(devid, fa_off + off, tmp_buf, sec_cnt)) {
+                streamer_printf(streamer, "flash read failure at %#lx\n",
                         (long unsigned int) off);
                 break;
             }
             for (i = 0; i < sec_cnt; i++) {
                 int n = i & 7;
                 if (n == 0) {
-                    streamer_printf(streamer, "  0x%lx: ", (long unsigned int)off + i);
+                    streamer_printf(streamer, "  %#lx: ", (long unsigned int)off + i);
                 }
                 snprintf(pr_str + n * 5, 6, "0x%02x ", tmp_buf[i] & 0xff);
                 pr_str[41 + n] = isprint((uint8_t)tmp_buf[i]) ? tmp_buf[i] : '.';
@@ -172,8 +219,8 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
             }
             off += sec_cnt;
         }
-    } else if (!strcmp(argv[2], "write")) {
-        streamer_printf(streamer, "Write 0x%lx + %lx\n",
+    } else if (!strcmp(argv[arg_idx], "write")) {
+        streamer_printf(streamer, "Write %#lx + %#lx\n",
                 (long unsigned int) off, (long unsigned int) sz);
 
         sz += off;
@@ -183,8 +230,8 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
 
         while (off < sz) {
             sec_cnt = min(sizeof(tmp_buf), sz - off);
-            if (hal_flash_write(devid, off, tmp_buf, sec_cnt)) {
-                streamer_printf(streamer, "flash write failure at %lx\n",
+            if (hal_flash_write(devid, fa_off + off, tmp_buf, sec_cnt)) {
+                streamer_printf(streamer, "flash write failure at %#lx\n",
                         (long unsigned int) off);
             }
             off += sec_cnt;
