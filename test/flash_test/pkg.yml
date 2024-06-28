@@ -26,6 +26,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/util/parse"
 pkg.req_apis:
     - console
 
