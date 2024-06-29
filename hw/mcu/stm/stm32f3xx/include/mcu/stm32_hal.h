@@ -83,7 +83,10 @@ struct stm32_hal_spi_cfg {
 #include "stm32f3xx_hal_def.h"
 #include "stm32f3xx_hal_flash.h"
 #include "stm32f3xx_hal_flash_ex.h"
-#define STM32_HAL_FLASH_INIT()
+#define STM32_HAL_FLASH_INIT()        \
+    do {                              \
+        HAL_FLASH_Unlock();           \
+    } while (0)
 #define FLASH_PROGRAM_TYPE FLASH_TYPEPROGRAM_HALFWORD
 #define STM32_HAL_FLASH_CLEAR_ERRORS()            \
     do {                                          \

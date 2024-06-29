@@ -32,11 +32,9 @@ stm32_mcu_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_addres
     erase.PageAddress = sector_address;
     erase.NbPages = 1;
 
-    HAL_FLASH_Unlock();
     if (HAL_OK == HAL_FLASHEx_Erase(&erase, &errorPage)) {
       rc = 0;
     }
-    HAL_FLASH_Lock();
 
     return rc;
 }
