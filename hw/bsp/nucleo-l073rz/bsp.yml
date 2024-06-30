@@ -43,15 +43,15 @@ bsp.flash_map:
             size: 72kB
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
-            offset: 0x08005C00
-            size: 1kB
+            offset: 0x0802f000
+            size: 4kB
 
         # User areas.
         FLASH_AREA_REBOOT_LOG:
             user_id: 0
             device: 0
-            offset: 0x0802c000
-            size: 8kB
+            offset: 0x0802E800
+            size: 2kB
         FLASH_AREA_NFFS:
             user_id: 1
             device: 0
