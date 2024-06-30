@@ -23,6 +23,7 @@
 #if MYNEWT_VAL(OS_SCHEDULING)
 #include <os/os_mutex.h>
 #endif
+#include <stdbool.h>
 #include <hal/hal_flash_int.h>
 #include <hal/hal_spi.h>
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
