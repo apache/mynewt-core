@@ -26,10 +26,12 @@
  */
 
 #include <inttypes.h>
+#include <syscfg/syscfg.h>
 #include "crc/crc16.h"
 
-/* CRC16 implementation acording to CCITT standards */
+/* CRC16 implementation according to CCITT standards */
 
+#if MYNEWT_VAL(UTIL_CRC_CRC16_CCITT_USE_TABLE)
 static const uint16_t crc16tab[256]= {
     0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,
     0x8108,0x9129,0xa14a,0xb16b,0xc18c,0xd1ad,0xe1ce,0xf1ef,
@@ -81,3 +83,23 @@ crc16_ccitt(uint16_t initial_crc, const void *buf, int len)
 
     return crc;
 }
+
+#else
+
+uint16_t
+crc16_ccitt(uint16_t initial_crc, const void *buf, int len)
+{
+    uint8_t x;
+    uint16_t crc = initial_crc;
+    const uint8_t *ptr = buf;
+    int i;
+
+    for (i = 0; i < len; ++i) {
+        x = (crc >> 8) ^ ptr[i];
+        x ^= x >> 4;
+        crc = (crc << 8) ^ ((uint16_t)(x << 12)) ^ ((uint16_t)(x << 5)) ^ ((uint16_t)x);
+    }
+    return crc;
+}
+
+#endif
