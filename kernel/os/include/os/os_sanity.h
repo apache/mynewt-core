@@ -75,6 +75,13 @@ struct os_sanity_check {
 
 /** @cond INTERNAL_HIDDEN */
 int os_sanity_init(void);
+
+/**
+ * Called from the IDLE task context, every MYNEWT_VAL(SANITY_INTERVAL) msecs.
+ *
+ * Goes through the sanity check list, and performs sanity checks.  If any of
+ * these checks failed, or tasks have not checked in, it resets the processor.
+ */
 void os_sanity_run(void);
 /** @endcond */
 
