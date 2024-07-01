@@ -70,10 +70,12 @@ extern "C" {
 #endif
 
 #ifndef UINT32_MAX
+/** Maximum value of 32-bit unsigned integer. */
 #define UINT32_MAX  0xFFFFFFFFU
 #endif
 
 #ifndef INT32_MAX
+/** Maximum value of 32-bit signed integer. */
 #define INT32_MAX   0x7FFFFFFF
 #endif
 
@@ -87,26 +89,33 @@ extern "C" {
 #endif
 #endif
 
-typedef uint32_t os_time_t;
+/** Signed 32-bit system time type definition. */
 typedef int32_t os_stime_t;
+
+/** Unsigned 32-bit system time type definition. */
+typedef uint32_t os_time_t;
+
+/** Maximum value for os_time_t. */
 #define OS_TIME_MAX UINT32_MAX
+
+/** Maximum value for os_stime_t. */
 #define OS_STIME_MAX INT32_MAX
 
-/* Used to wait forever for events and mutexs */
+/** Used to wait forever for events and mutexs */
 #define OS_TIMEOUT_NEVER    (OS_TIME_MAX)
 
 
 /**
  * Get the current OS time in ticks
  *
- * @return OS time in ticks
+ * @return                      OS time in ticks
  */
 os_time_t os_time_get(void);
 
 /**
  * Move OS time forward ticks.
  *
- * @param ticks The number of ticks to move time forward.
+ * @param ticks                 The number of ticks to move time forward.
  */
 void os_time_advance(int ticks);
 
@@ -114,35 +123,111 @@ void os_time_advance(int ticks);
  * Puts the current task to sleep for the specified number of os ticks. There
  * is no delay if ticks is 0.
  *
- * @param osticks Number of ticks to delay (0 means no delay).
+ * @param osticks               Number of ticks to delay (0 means no delay).
  */
 void os_time_delay(os_time_t osticks);
 
+/**
+ * @defgroup OSTime_cmp_macros Helper macros for time comparisons
+ * @{
+ */
+
+/**
+ * Checks if time tick __t1 is less than time tick __t2.
+ *
+ * @param __t1                  The first time tick to compare.
+ * @param __t2                  The second time tick to compare.
+ *
+ * @return                      True if __t1 is less than __t2;
+ *                              false otherwise.
+ */
 #define OS_TIME_TICK_LT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) < 0)
+
+/**
+ * Checks if time tick __t1 is greater than time tick __t2.
+ *
+ * @param __t1                  The first time tick to compare.
+ * @param __t2                  The second time tick to compare.
+ *
+ * @return                      True if __t1 is greater than __t2;
+ *                              false otherwise.
+ */
 #define OS_TIME_TICK_GT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) > 0)
+
+/**
+ * Checks if time tick __t1 is greater than or equal to time tick __t2.
+ *
+ * @param __t1                  The first time tick to compare.
+ * @param __t2                  The second time tick to compare.
+ *
+ * @return                      True if __t1 is greater than or equal to __t2;
+ *                              false otherwise.
+ */
 #define OS_TIME_TICK_GEQ(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) >= 0)
 
+/**
+ * Checks if timeval __t1 is less than timeval __t2.
+ *
+ * @param __t1                  The first timeval to compare.
+ * @param __t2                  The second timeval to compare.
+ *
+ * @return                      True if __t1 is less than __t2;
+ *                              false otherwise.
+ */
 #define OS_TIMEVAL_LT(__t1, __t2) \
     (((__t1).tv_sec < (__t2).tv_sec) || \
      (((__t1).tv_sec == (__t2).tv_sec) && ((__t1).tv_usec < (__t2).tv_usec)))
+
+/**
+ * Checks if timeval __t1 is less than or equal to timeval __t2.
+ *
+ * @param __t1                  The first timeval to compare.
+ * @param __t2                  The second timeval to compare.
+ *
+ * @return                      True if __t1 is less than or equal to __t2;
+ *                              false otherwise.
+ */
 #define OS_TIMEVAL_LEQ(__t1, __t2) \
     (((__t1).tv_sec < (__t2).tv_sec) || \
      (((__t1).tv_sec == (__t2).tv_sec) && ((__t1).tv_usec <= (__t2).tv_usec)))
+
+/**
+ * Checks if timeval __t1 is greater than timeval __t2.
+ *
+ * @param __t1                  The first timeval to compare.
+ * @param __t2                  The second timeval to compare.
+ *
+ * @return                      True if __t1 is greater than __t2;
+ *                              false otherwise.
+ */
 #define OS_TIMEVAL_GT(__t1, __t2) \
     (((__t1).tv_sec > (__t2).tv_sec) || \
      (((__t1).tv_sec == (__t2).tv_sec) && ((__t1).tv_usec > (__t2).tv_usec)))
+
+/**
+ * Checks if timeval __t1 is greater than or equal to timeval __t2.
+ *
+ * @param __t1                  The first timeval to compare.
+ * @param __t2                  The second timeval to compare.
+ *
+ * @return                      True if __t1 is greater than or equal to __t2;
+ *                              false otherwise.
+ */
 #define OS_TIMEVAL_GEQ(__t1, __t2) \
     (((__t1).tv_sec > (__t2).tv_sec) || \
      (((__t1).tv_sec == (__t2).tv_sec) && ((__t1).tv_usec >= (__t2).tv_usec)))
+
+
+/** @} */
 
 /**
  * Structure representing time since Jan 1 1970 with microsecond
  * granularity
  */
 struct os_timeval {
-    /* Seconds */
+    /** Seconds */
     int64_t tv_sec;
-    /* Microseconds within the second */
+    /** Microseconds within the second */
     int32_t tv_usec;
 };
 
@@ -180,15 +265,14 @@ struct os_time_change_info {
 typedef void os_time_change_fn(const struct os_time_change_info *info,
                                void *arg);
 
-/**
- * Time change listener.  Notified when the time-of-day is set.
- */
+/** Time change listener.  Notified when the time-of-day is set. */
 struct os_time_change_listener {
-    /*** Public. */
+    /** Callback invoked when the time-of-day is set. */
     os_time_change_fn *tcl_fn;
+    /** Argument to be passed to the callback function. */
     void *tcl_arg;
 
-    /*** Internal. */
+    /** Next listener in the list. */
     STAILQ_ENTRY(os_time_change_listener) tcl_next;
 };
 
@@ -227,10 +311,13 @@ struct os_time_change_listener {
  * the offset by which we are tracking real time against os time.  This
  * function notifies all registered time change listeners.
  *
- * @param utctime A timeval representing the UTC time we are setting
- * @param tz The time-zone to apply against the utctime being set.
+ * @param utctime               A timeval representing the UTC time we are
+ *                                  setting
+ * @param tz                    The time-zone to apply against the utctime being
+ *                                  set.
  *
- * @return 0 on success, non-zero on failure.
+ * @return                      0 on success;
+ *                              non-zero on failure.
  */
 int os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz);
 
@@ -239,8 +326,9 @@ int os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz);
  * into the utctime argument, and returns the timezone (if set) into
  * tz.
  *
- * @param utctime The structure to put the UTC time of day into
- * @param tz The structure to put the timezone information into
+ * @param utctime               The structure to put the UTC time of day into
+ * @param tz                    The structure to put the timezone information
+ *                                  into
  *
  * @return 0 on success, non-zero on failure
  */
@@ -249,21 +337,22 @@ int os_gettimeofday(struct os_timeval *utctime, struct os_timezone *tz);
 /**
  * Indicates whether the time has been set.
  *
- * @return                      true if time is set; false otherwise.
+ * @return                      True if time is set;
+ *                              false otherwise.
  */
 bool os_time_is_set(void);
 
 /**
  * Get time since boot in microseconds.
  *
- * @return time since boot in microseconds
+ * @return                      Time since boot in microseconds
  */
 int64_t os_get_uptime_usec(void);
 
 /**
  * Get time since boot as os_timeval.
  *
- * @param tv Structure to put the time since boot.
+ * @param tvp                   Structure to put the time since boot.
  */
 void os_get_uptime(struct os_timeval *tvp);
 
@@ -273,8 +362,9 @@ void os_get_uptime(struct os_timeval *tvp);
  * @param ms                    The milliseconds input.
  * @param out_ticks             The OS ticks output.
  *
- * @return                      0 on success; OS_EINVAL if the result is too
- *                                  large to fit in a uint32_t.
+ * @return                      0 on success;
+ *                              OS_EINVAL if the result is too large to fit in
+ *                                  a uint32_t.
  */
 int os_time_ms_to_ticks(uint32_t ms, os_time_t *out_ticks);
 
@@ -284,8 +374,9 @@ int os_time_ms_to_ticks(uint32_t ms, os_time_t *out_ticks);
  * @param ticks                 The OS ticks input.
  * @param out_ms                The milliseconds output.
  *
- * @return                      0 on success; OS_EINVAL if the result is too
- *                                  large to fit in a uint32_t.
+ * @return                      0 on success;
+ *                              OS_EINVAL if the result is too large to fit in
+ *                                  a uint32_t.
  */
 int os_time_ticks_to_ms(os_time_t ticks, uint32_t *out_ms);
 
@@ -298,7 +389,7 @@ int os_time_ticks_to_ms(os_time_t ticks, uint32_t *out_ms);
  *
  * @param ms                    The milliseconds input.
  *
- * @return                      result on success
+ * @return                      The number of OS ticks.
  */
 static inline os_time_t
 os_time_ms_to_ticks32(uint32_t ms)
@@ -318,7 +409,7 @@ os_time_ms_to_ticks32(uint32_t ms)
  *
  * @param ticks                 The OS ticks input.
  *
- * @return                      result on success
+ * @return                      The number of milliseconds.
  */
 static inline uint32_t
 os_time_ticks_to_ms32(os_time_t ticks)
@@ -336,7 +427,7 @@ os_time_ticks_to_ms32(os_time_t ticks)
  * so the listener's lifetime must extend indefinitely (or until the listener
  * is removed).
  *
- * NOTE: This function is not thread safe.  The following operations must be
+ * @note This function is not thread safe.  The following operations must be
  * kept exclusive:
  *     o Addition of listener
  *     o Removal of listener
@@ -349,13 +440,16 @@ void os_time_change_listen(struct os_time_change_listener *listener);
 /**
  * Unregisters a time change listener.
  *
- * NOTE: This function is not thread safe.  The following operations must be
+ * @note This function is not thread safe.  The following operations must be
  * kept exclusive:
  *     o Addition of listener
  *     o Removal of listener
  *     o Setting time
  *
  * @param listener              The listener to unregister.
+ *
+ * @return                      0 on success;
+ *                              non-zero error code on failure
  */
 int os_time_change_remove(const struct os_time_change_listener *listener);
 
