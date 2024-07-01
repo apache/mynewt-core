@@ -36,6 +36,21 @@ extern "C" {
 int hal_flash_ioctl(uint8_t flash_id, uint32_t cmd, void *args);
 
 /**
+ * @brief Return information about flash sector
+ *
+ * @param flash_id              The ID of the flash device to read from.
+ * @param sector_index          The sector number to get information about.
+ * @param start_address         A buffer to fill with start address of the sector.
+ * @param size                  A buffer for sector size.
+ *
+ * @return                      0 on success;
+ *                              SYS_EINVAL on bad argument error;
+ *                              SYS_EIO on flash driver error.
+ */
+int hal_flash_sector_info(uint8_t flash_id, int sector_index,
+                          uint32_t *start_address, uint32_t *size);
+
+/**
  * @brief Reads a block of data from flash.
  *
  * @param flash_id              The ID of the flash device to read from.
