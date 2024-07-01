@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 struct os_sanity_check;
-typedef int (*os_sanity_check_func_t)(struct os_sanity_check *, void *);
+typedef int (*os_sanity_check_func_t)(struct os_sanity_check *osc, void *arg);
 
 struct os_sanity_check {
     /** Time this check last ran successfully. */
@@ -73,7 +73,7 @@ struct os_task;
  *
  * @return 0 on success, error code on failure
  */
-int os_sanity_task_checkin(struct os_task *);
+int os_sanity_task_checkin(struct os_task *t);
 
 /**
  * Initialize a sanity check
@@ -82,7 +82,7 @@ int os_sanity_task_checkin(struct os_task *);
  *
  * @return 0 on success, error code on failure.
  */
-int os_sanity_check_init(struct os_sanity_check *);
+int os_sanity_check_init(struct os_sanity_check *sc);
 
 /**
  * Register a sanity check
@@ -91,7 +91,7 @@ int os_sanity_check_init(struct os_sanity_check *);
  *
  * @return 0 on success, error code on failure
  */
-int os_sanity_check_register(struct os_sanity_check *);
+int os_sanity_check_register(struct os_sanity_check *sc);
 
 /**
  * Reset the os sanity check, so that it doesn't trip up the
@@ -101,7 +101,7 @@ int os_sanity_check_register(struct os_sanity_check *);
  *
  * @return 0 on success, error code on failure
  */
-int os_sanity_check_reset(struct os_sanity_check *);
+int os_sanity_check_reset(struct os_sanity_check *sc);
 
 #ifdef __cplusplus
 }
