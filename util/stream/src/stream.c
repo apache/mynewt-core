@@ -136,3 +136,10 @@ stream_pump(struct in_stream *istream, struct out_stream *ostream, uint32_t coun
     }
     return pumped;
 }
+
+int
+ostream_write_str(struct out_stream *ostream, const char *str)
+{
+    int len = strlen(str);
+    return ostream_write(ostream, (const uint8_t *)str, len, false);
+}
