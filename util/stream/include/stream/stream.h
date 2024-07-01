@@ -249,4 +249,14 @@ ostream_write_uint32(struct out_stream *ostream, uint32_t data)
     return ostream_write(ostream, (uint8_t *)&data, 4, false);
 }
 
+/**
+ * Write null terminated string to output stream
+ *
+ * @param ostream - stream to write to
+ * @param str     - string to write to stream
+ *
+ * @return number of bytes written, negative on error
+ */
+int ostream_write_str(struct out_stream *ostream, const char *str);
+
 #endif /* H_STREAM_ */
