@@ -17,34 +17,17 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
 #include "log_test_util/log_test_util.h"
 
-TEST_CASE_SELF(log_test_case_cbmem_append)
+int
+main(int argc, char **argv)
 {
-    struct cbmem cbmem;
-    struct log log;
-    uint16_t len = 0;
-    uint16_t *off_arr;
-    int i;
-    int rc;
-    int num_strs = ltu_num_strs();
-    struct log_entry_hdr *hdr;
+    log_test_suite_cbmem_flat();
+    log_test_suite_cbmem_mbuf();
+    log_test_suite_fcb_flat();
+    log_test_suite_fcb_mbuf();
+    log_test_suite_misc();
 
-    ltu_setup_cbmem(&cbmem, &log);
-    len = ltu_init_arr();
-    TEST_ASSERT_FATAL(len != 0);
-
-    off_arr = ltu_get_ltu_off_arr();
-    TEST_ASSERT_FATAL(off_arr != NULL);
-
-    for (i = 0; i < num_strs; i++) {
-	hdr = (struct log_entry_hdr *)(dummy_log_arr + off_arr[i]);
-        len = off_arr[i+1] - off_arr[i] - log_hdr_len(hdr) - log_trailer_len(hdr);
-        rc = log_append_typed(&log, 2, 3, LOG_ETYPE_STRING,
-                              dummy_log_arr + off_arr[i],
-                              len);
-        TEST_ASSERT_FATAL(rc == 0);
-    }
-
-    ltu_verify_contents(&log);
+    return tu_any_failed;
 }

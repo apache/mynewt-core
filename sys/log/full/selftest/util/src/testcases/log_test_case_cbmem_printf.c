@@ -23,18 +23,27 @@ TEST_CASE_SELF(log_test_case_cbmem_printf)
 {
     struct cbmem cbmem;
     struct log log;
-    char *str;
     int i;
+    uint16_t len = 0;
+    int num_strs = ltu_num_strs();
+    uint16_t *off_arr;
+    struct log_entry_hdr *hdr;
+    char data[256];
 
     ltu_setup_cbmem(&cbmem, &log);
+    len = ltu_init_arr();
+    TEST_ASSERT_FATAL(len != 0);
 
-    for (i = 0; ; i++) {
-        str = ltu_str_logs[i];
-        if (!str) {
-            break;
-        }
+    off_arr = ltu_get_ltu_off_arr();
+    TEST_ASSERT_FATAL(off_arr != NULL);
 
-        log_printf(&log, 0, 0, str, strlen(str));
+    for (i = 0; i < num_strs; i++) {
+	hdr = (struct log_entry_hdr *)(dummy_log_arr + off_arr[i]);
+        len = off_arr[i+1] - off_arr[i] - log_hdr_len(hdr) - log_trailer_len(hdr);
+	memcpy(data, dummy_log_arr + off_arr[i] + log_hdr_len(hdr),
+	       len);
+	data[len] = '\0';
+        log_printf(&log, 0, 0, data, len);
     }
 
     ltu_verify_contents(&log);

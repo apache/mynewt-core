@@ -23,22 +23,27 @@ TEST_CASE_SELF(log_test_case_fcb_append)
 {
     struct fcb_log fcb_log;
     struct log log;
-    uint8_t buf[256];
-    char *str;
-    int body_len;
+    uint16_t len = 0;
+    uint16_t *off_arr;
     int i;
+    int rc;
+    int num_strs = ltu_num_strs();
+    struct log_entry_hdr *hdr;
 
     ltu_setup_fcb(&fcb_log, &log);
+    len = ltu_init_arr();
+    TEST_ASSERT_FATAL(len != 0);
 
-    for (i = 0; ; i++) {
-        str = ltu_str_logs[i];
-        if (!str) {
-            break;
-        }
+    off_arr = ltu_get_ltu_off_arr();
+    TEST_ASSERT_FATAL(off_arr != NULL);
 
-        body_len = strlen(str);
-        memcpy(buf + LOG_HDR_SIZE, str, body_len);
-        log_append_typed(&log, 0, 0, LOG_ETYPE_STRING, buf, body_len);
+    for (i = 0;i < num_strs; i++) {
+	hdr = (struct log_entry_hdr *)(dummy_log_arr + off_arr[i]);
+        len = off_arr[i+1] - off_arr[i] - log_hdr_len(hdr) - log_trailer_len(hdr);
+        rc = log_append_typed(&log, 2, 3, LOG_ETYPE_STRING,
+                              dummy_log_arr + off_arr[i],
+                              len);
+        TEST_ASSERT_FATAL(rc == 0);
     }
 
     ltu_verify_contents(&log);
