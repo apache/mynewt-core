@@ -15,6 +15,7 @@ uncrustify.cfg
 README.md
 .mailmap
 .style_ignored_dirs
+Doxyfile
 
 # unit tests executables
 bin
