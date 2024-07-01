@@ -40,6 +40,18 @@ extern "C" {
 struct os_sanity_check;
 typedef int (*os_sanity_check_func_t)(struct os_sanity_check *osc, void *arg);
 
+/**
+ * Sanity check callback function.
+ *
+ * @param osc                   Pointer to the sanity check structure.
+ * @param arg                   Argument passed to the callback.
+ *
+ * @return                      0 on success;
+ *                              non-zero error code on failure
+ */
+typedef int (*os_sanity_check_func_t)(struct os_sanity_check *osc, void *arg);
+
+/** Structure representing a sanity check. */
 struct os_sanity_check {
     /** Time this check last ran successfully. */
     os_time_t sc_checkin_last;
@@ -50,10 +62,12 @@ struct os_sanity_check {
     /** Argument to pass to sanity check */
     void *sc_arg;
 
+    /** Next sanity check in the list. */
     SLIST_ENTRY(os_sanity_check) sc_next;
 
 };
 
+/** Set the function, argument, and checkin interval for a sanity check. */
 #define OS_SANITY_CHECK_SETFUNC(__sc, __f, __arg, __itvl)  \
     (__sc)->sc_func = (__f);                               \
     (__sc)->sc_arg = (__arg);                              \
@@ -69,37 +83,40 @@ struct os_task;
 /**
  * Provide a "task checkin" for the sanity task.
  *
- * @param t The task to check in
+ * @param t                     The task to check in
  *
- * @return 0 on success, error code on failure
+ * @return                      0 on success;
+ *                              non-zero error code on failure
  */
 int os_sanity_task_checkin(struct os_task *t);
 
 /**
- * Initialize a sanity check
+ * Initialize a sanity check.
  *
- * @param sc The sanity check to initialize
+ * @param sc                    The sanity check to initialize
  *
- * @return 0 on success, error code on failure.
+ * @return                      0 on success;
+ *                              non-zero error code on failure
  */
 int os_sanity_check_init(struct os_sanity_check *sc);
 
 /**
- * Register a sanity check
+ * Register a sanity check.
  *
- * @param sc The sanity check to register
+ * @param sc                    The sanity check to register
  *
- * @return 0 on success, error code on failure
+ * @return                      0 on success;
+ *                              non-zero error code on failure
  */
 int os_sanity_check_register(struct os_sanity_check *sc);
 
 /**
- * Reset the os sanity check, so that it doesn't trip up the
- * sanity timer.
+ * Reset the os sanity check, so that it doesn't trip up the sanity timer.
  *
- * @param sc The sanity check to reset
+ * @param sc                    The sanity check to reset
  *
- * @return 0 on success, error code on failure
+ * @return                      0 on success;
+ *                              non-zero error code on failure
  */
 int os_sanity_check_reset(struct os_sanity_check *sc);
 
