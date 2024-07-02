@@ -127,11 +127,10 @@ struct mem_in_stream {
 #define OSTREAM_DEF(type) \
     static int type ## _write(struct out_stream *ostream, const uint8_t *buf, uint32_t count); \
     static int type ## _flush(struct out_stream *ostream); \
-    static int type ## _pump_from(struct out_stream *ostream, struct in_stream *istream, uint32_t count); \
     const struct out_stream_vft type ## _vft = { \
         .write = type ## _write, \
         .flush = type ## _flush, \
-        .pump_from = type ## _pump_from, \
+        .pump_from = NULL, \
     }
 
 #define OSTREAM_VFT(type, _write, _flush, _pump) \
@@ -156,7 +155,7 @@ struct mem_in_stream {
     const struct in_stream_vft type ## _vft = { \
         .available = type ## _available,        \
         .read = type ## _read,                  \
-        .pump_to = type ## _pump_to,            \
+        .pump_to = NULL,                        \
     }
 
 #define ISTREAM(type, name)     \
