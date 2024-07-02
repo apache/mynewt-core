@@ -76,7 +76,7 @@ typedef enum os_task_state {
 /** Task waiting on a event queue */
 #define OS_TASK_FLAG_EVQ_WAIT       (0x08U)
 
-typedef void (*os_task_func_t)(void *);
+typedef void (*os_task_func_t)(void *arg);
 
 #define OS_TASK_MAX_NAME_LEN (32)
 
@@ -165,8 +165,9 @@ extern struct os_task_stailq g_os_task_list;
  *
  * @return 0 on success, non-zero on failure.
  */
-int os_task_init(struct os_task *, const char *, os_task_func_t, void *,
-        uint8_t, os_time_t, os_stack_t *, uint16_t);
+int os_task_init(struct os_task *t, const char *name, os_task_func_t func,
+                 void *arg, uint8_t prio, os_time_t sanity_itvl,
+                 os_stack_t *stack_bottom, uint16_t stack_size);
 
 /**
  * Removes specified task
@@ -247,8 +248,8 @@ struct os_task_info {
  * @return A pointer to the OS task that has been read, or NULL when finished
  *         iterating through all tasks.
  */
-struct os_task *os_task_info_get_next(const struct os_task *,
-        struct os_task_info *);
+struct os_task *os_task_info_get_next(const struct os_task *prev,
+                                      struct os_task_info *oti);
 
 /**
  * Get following info about specified task
