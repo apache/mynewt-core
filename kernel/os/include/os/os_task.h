@@ -37,10 +37,23 @@
 extern "C" {
 #endif
 
+/**
+ * Defines a non-static task stack.
+ *
+ * @param __name                 The name of the stack.
+ * @param __size                 The size of the stack in bytes.
+ */
 #define OS_TASK_STACK_DEFINE_NOSTATIC(__name, __size) \
     os_stack_t __name [OS_STACK_ALIGN(__size)] \
     __attribute__((aligned(OS_STACK_ALIGNMENT)))
 
+
+/**
+ * Defines a static task stack.
+ *
+ * @param __name                The name of the stack.
+ * @param __size                The size of the stack in bytes.
+ */
 #define OS_TASK_STACK_DEFINE(__name, __size) \
     static OS_TASK_STACK_DEFINE_NOSTATIC(__name, __size);
 
@@ -49,14 +62,15 @@ extern "C" {
 /** Lowest priority task */
 #define OS_TASK_PRI_LOWEST  (0xff)
 
-/*
+/**
  * Generic "object" structure. All objects that a task can wait on must
  * have a SLIST_HEAD(, os_task) head_name as the first element in the object
  * structure. The element 'head_name' can be any name. See os_mutex.h or
  * os_sem.h for an example.
  */
 struct os_task_obj {
-    SLIST_HEAD(, os_task) obj_head;     /* chain of waiting tasks */
+    /** Head of the list of waiting tasks. */
+    SLIST_HEAD(, os_task) obj_head;
 };
 
 /** Task states */
@@ -67,7 +81,10 @@ typedef enum os_task_state {
     OS_TASK_SLEEP = 2,
 } os_task_state_t;
 
-/* Task flags */
+/**
+ * @defgroup OSTask_flags Task flags
+ */
+/** Task waiting forever */
 #define OS_TASK_FLAG_NO_TIMEOUT     (0x01U)
 /** Task waiting on a semaphore */
 #define OS_TASK_FLAG_SEM_WAIT       (0x02U)
@@ -76,8 +93,15 @@ typedef enum os_task_state {
 /** Task waiting on a event queue */
 #define OS_TASK_FLAG_EVQ_WAIT       (0x08U)
 
+/**
+ * Type definition for a task callback function.
+ *
+ * @param arg                   Argument passed to the task function.
+ */
 typedef void (*os_task_func_t)(void *arg);
 
+
+/** Maximum length of a task name */
 #define OS_TASK_MAX_NAME_LEN (32)
 
 /**
@@ -99,11 +123,13 @@ struct os_task {
     uint8_t t_taskid;
     /** Task Priority */
     uint8_t t_prio;
-    /* Task state, either READY or SLEEP */
+    /** Task state, either READY or SLEEP */
     uint8_t t_state;
     /** Task flags, bitmask */
     uint8_t t_flags;
+    /** Task lock count */
     uint8_t t_lockcnt;
+    /** Padding for alignment */
     uint8_t t_pad;
 
     /** Task name */
@@ -133,8 +159,11 @@ struct os_task {
      */
     uint32_t t_ctx_sw_cnt;
 
+    /** Entry for a singly-linked task list. */
     STAILQ_ENTRY(os_task) t_os_task_list;
+    /** Entry for a doubly-linked list of tasks managed by the scheduler. */
     TAILQ_ENTRY(os_task) t_os_list;
+    /** Entry for a singly-linked object list. */
     SLIST_ENTRY(os_task) t_obj_list;
 };
 
@@ -152,18 +181,19 @@ extern struct os_task_stailq g_os_task_list;
  * and sets the task as ready to run, and inserts it into the operating
  * system scheduler.
  *
- * @param t The task to initialize
- * @param name The name of the task to initialize
- * @param func The task function to call
- * @param arg The argument to pass to this task function
- * @param prio The priority at which to run this task
- * @param sanity_itvl The time at which this task should check in with the
- *                    sanity task.  OS_WAIT_FOREVER means never check in
- *                    here.
- * @param stack_bottom A pointer to the bottom of a task's stack
- * @param stack_size The overall size of the task's stack.
+ * @param t                     The task to initialize
+ * @param name                  The name of the task to initialize
+ * @param func                  The task function to call
+ * @param arg                   The argument to pass to this task function
+ * @param prio                  The priority at which to run this task
+ * @param sanity_itvl           The time at which this task should check in with
+ *                                  the sanity task.  OS_WAIT_FOREVER means
+ *                                  never check in here.
+ * @param stack_bottom          A pointer to the bottom of a task's stack
+ * @param stack_size            The overall size of the task's stack.
  *
- * @return 0 on success, non-zero on failure.
+ * @return                      0 on success;
+ *                              non-zero on failure.
  */
 int os_task_init(struct os_task *t, const char *name, os_task_func_t func,
                  void *arg, uint8_t prio, os_time_t sanity_itvl,
@@ -171,24 +201,29 @@ int os_task_init(struct os_task *t, const char *name, os_task_func_t func,
 
 /**
  * Removes specified task
- * XXX
- * NOTE: This interface is currently experimental and not ready for common use
+ *
+ * @param t                     The task to remove
+ *
+ * @return                      0 on success;
+ *                              non-zero on failure
+ *
+ * @note This interface is currently experimental and not ready for common use
  */
 int os_task_remove(struct os_task *t);
 
 /**
- * Return pointer to top of stack for given task
+ * Return a pointer to the top of the stack for a given task
  *
- * @param t The task
+ * @param t                     The task to get the top of the stack from
  *
- * @return pointer to top of stack
+ * @return                      A pointer to the top of the stack
  */
 os_stack_t *os_task_stacktop_get(struct os_task *t);
 
 /**
  * Return the number of tasks initialized.
  *
- * @return number of tasks initialized
+ * @return                      The number of tasks initialized
  */
 uint8_t os_task_count(void);
 
@@ -241,12 +276,13 @@ struct os_task_info {
  * will fill out the task structure pointed to by oti again, and return
  * the next task in the list.
  *
- * @param prev The previous task returned by os_task_info_get_next(), or NULL
- *             to begin iteration.
- * @param oti  The OS task info structure to fill out.
+ * @param prev                  The previous task returned by
+ *                                  os_task_info_get_next(), or NULL to begin
+ *                                  iteration.
+ * @param oti                   The OS task info structure to fill out.
  *
- * @return A pointer to the OS task that has been read, or NULL when finished
- *         iterating through all tasks.
+ * @return                      A pointer to the OS task that has been read;
+ *                              NULL when finished iterating through all tasks.
  */
 struct os_task *os_task_info_get_next(const struct os_task *prev,
                                       struct os_task_info *oti);
@@ -263,8 +299,8 @@ struct os_task *os_task_info_get_next(const struct os_task *prev,
  * - Last & Next Sanity checkin
  * - Task Name
  *
- *  @param task The task to get info about
- *  @param oti  The OS task info structure to fill out.
+ *  @param task                 The task to get info about
+ *  @param oti                  The OS task info structure to fill out.
  */
 void os_task_info_get(const struct os_task *task, struct os_task_info *oti);
 
