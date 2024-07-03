@@ -121,7 +121,6 @@ void os_system_reset(void);
 
 #include "os/endian.h"
 #include "os/os_callout.h"
-#include "os/os_cfg.h"
 #include "os/os_cputime.h"
 #include "os/os_dev.h"
 #include "os/os_error.h"
