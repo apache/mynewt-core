@@ -58,6 +58,10 @@ syscfg.defs:
         description: 0 for xtal; 1 for input clock
         value: 0
 
+    STM32_CLOCK_HSE_VALUE:
+        description: High-speed external clock speed in Hz
+        value:
+
     STM32_CLOCK_HSI:
         description: Enable high-speed internal clock source
         value: 1
