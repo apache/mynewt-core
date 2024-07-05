@@ -108,7 +108,9 @@
   *        This value is used by the RCC HAL module to compute the system frequency
   *        (when HSE is used as system clock source, directly or through the PLL).
   */
-#if !defined  (HSE_VALUE)
+#if defined (MYNEWT_VAL_STM32_CLOCK_HSE_VALUE)
+#define HSE_VALUE    MYNEWT_VAL(STM32_CLOCK_HSE_VALUE)
+#elif !defined  (HSE_VALUE)
 #if defined(USE_STM3210C_EVAL)
   #define HSE_VALUE    25000000U /*!< Value of the External oscillator in Hz */
 #else
