@@ -56,6 +56,8 @@ pkg.deps.MCU_STM32U5:
     - "@apache-mynewt-core/hw/usb/tinyusb/synopsys"
 pkg.deps.MCU_STM32F1:
     - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev"
+pkg.deps.MCU_STM32F3:
+    - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev/stm32f3"
 pkg.deps.MCU_STM32L0:
     - "@apache-mynewt-core/hw/usb/tinyusb/stm32_fsdev/stm32l0"
 pkg.deps.MCU_STM32WB:
