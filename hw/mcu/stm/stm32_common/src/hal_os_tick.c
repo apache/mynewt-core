@@ -307,6 +307,12 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
         .PeriphClockSelection = RCC_PERIPHCLK_RTC,
         .RTCClockSelection = RCC_RTCCLKSOURCE_LSE,
     };
+    /*
+     * Disable SysTick so only one interrupt advances time.
+     * this is needed when bootloader enabled SysTick
+     */
+    SysTick->CTRL = 0;
+
     HAL_RCCEx_PeriphCLKConfig(&clock_init);
 
     /* Set the system tick priority. */
