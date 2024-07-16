@@ -17,29 +17,40 @@
  * under the License.
  */
 
-#ifndef __KINETIS_COMMON_H_
-#define __KINETIS_COMMON_H_
+#include <hal/hal_watchdog.h>
 
-#ifdef __cplusplus
-extern "C" {
+#include <fsl_wwdt.h>
+
+#ifndef WATCHDOG_STUB
 #endif
 
-#include <fsl_device_registers.h>
+int hal_watchdog_init(uint32_t expire_msecs)
+{
+#ifndef WATCHDOG_STUB
+    wwdt_config_t config;
 
-#if MYNEWT_VAL(BSP_MK64F12)
-#include "MK64F12.h"
-#elif MYNEWT_VAL(BSP_MK80F)
-#include "MK80F25615.h"
-#elif MYNEWT_VAL(BSP_MK81F)
-#include "MK81F25615.h"
-#elif MYNEWT_VAL(BSP_MK82F)
-#include "MK82F25615.h"
-#else
-#error "Unsupported MCU"
+    SYSCON->CLOCK_CTRL |= SYSCON_CLOCK_CTRL_FRO1MHZ_CLK_ENA_MASK;
+    SYSCON->WDTCLKDIV &= ~SYSCON_WDTCLKDIV_HALT_MASK;
+
+    WWDT_GetDefaultConfig(&config);
+    config.clockFreq_Hz = 1000000;
+    config.timeoutValue = expire_msecs * 1000;
+    WWDT_Init(WWDT, &config);
 #endif
-#ifdef __cplusplus
+
+    return 0;
 }
+
+void hal_watchdog_enable(void)
+{
+#ifndef WATCHDOG_STUB
+    WWDT_Enable(WWDT);
 #endif
+}
 
-#endif /* __KINETIS_COMMON_H_ */
-
+void hal_watchdog_tickle(void)
+{
+#ifndef WATCHDOG_STUB
+    WWDT_Refresh(WWDT);
+#endif
+}

@@ -17,29 +17,39 @@
  * under the License.
  */
 
-#ifndef __KINETIS_COMMON_H_
-#define __KINETIS_COMMON_H_
+#include <stddef.h>
+#include <inttypes.h>
+#include <mcu/cortex_m33.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/**
+ * Boots the image described by the supplied image header.
+ *
+ * @param hdr                   The header for the image to boot.
+ */
+void
+hal_system_start(void *img_start)
+{
+    /* Turn off interrupts. */
+    __disable_irq();
 
-#include <fsl_device_registers.h>
+    /* Set the VTOR to default. */
+    SCB->VTOR = 0;
 
-#if MYNEWT_VAL(BSP_MK64F12)
-#include "MK64F12.h"
-#elif MYNEWT_VAL(BSP_MK80F)
-#include "MK80F25615.h"
-#elif MYNEWT_VAL(BSP_MK81F)
-#include "MK81F25615.h"
-#elif MYNEWT_VAL(BSP_MK82F)
-#include "MK82F25615.h"
-#else
-#error "Unsupported MCU"
-#endif
-#ifdef __cplusplus
+    // Memory barriers for good measure.
+    __ISB();
+    __DSB();
+
+    /* First word contains initial MSP value. */
+    __set_MSP(*(uint32_t *)img_start);
+    __set_PSP(*(uint32_t *)img_start);
+
+    /* Second word contains address of entry point (Reset_Handler). */
+    void (*entry)(void) = (void (*)(void))*(uint32_t *)(img_start + 4);
+
+    /* Jump to image. */
+    entry();
+
+    /* Should never reach this point */
+    while (1)
+        ;
 }
-#endif
-
-#endif /* __KINETIS_COMMON_H_ */
-

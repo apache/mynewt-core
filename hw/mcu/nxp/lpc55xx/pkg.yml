@@ -17,21 +17,46 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nxp/kinetis
-pkg.description: Kinetis common MCU definitions and files
+pkg.name: hw/mcu/nxp/lpc55xx
+pkg.description: LPC55xx common MCU definitions and files
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+
+pkg.type: sdk
+
+pkg.include_dirs:
+    - "@nxp-mcux-sdk/CMSIS/Include"
+    - "@nxp-mcux-sdk/drivers/common"
+
+pkg.include_dirs.MCU_LPC55S69:
+    - "@nxp-mcux-sdk/utilities/debug_console_lite"
+pkg.source_files.MCU_LPC55S69:
+    - "@nxp-mcux-sdk/devices/LPC55S69/system_LPC55S69_cm33_core0.c"
+
+pkg.src_dirs:
+    - "src"
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/cmsis-core"
-    - "@apache-mynewt-core/hw/mcu/nxp"
+    - "@apache-mynewt-core/hw/mcu/nxp/mcux-sdk"
 
-pkg.ign_files.!MCUX_DRIVERS_LPUART:
-  - "hal_lpuart.c"
+pkg.deps.UART_0:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
-pkg.ign_files.!MCUX_DRIVERS_UART:
-  - "hal_uart.c"
+pkg.deps.UART_1:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
-pkg.cflags:
-    - -Wno-incompatible-pointer-types
+pkg.deps.UART_2:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_3:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_4:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_5:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+

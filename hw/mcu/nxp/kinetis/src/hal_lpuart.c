@@ -27,7 +27,7 @@
 #include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
 #include "syscfg/syscfg.h"
-#include "mcu/kinetis_common.h"
+#include <fsl_device_registers.h>
 
 #include "fsl_clock.h"
 #include "fsl_port.h"
