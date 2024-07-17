@@ -141,7 +141,11 @@ hal_gpio_write(int pin, int val)
 int
 hal_gpio_read(int pin)
 {
-    return nrf_gpio_pin_read(pin);
+    if (nrf_gpio_pin_dir_get(pin) == NRF_GPIO_PIN_DIR_OUTPUT) {
+        return nrf_gpio_pin_out_read(pin);
+    } else {
+        return nrf_gpio_pin_read(pin);
+    }
 }
 
 /**
@@ -157,7 +161,7 @@ int
 hal_gpio_toggle(int pin)
 {
     nrf_gpio_pin_toggle(pin);
-    return nrf_gpio_pin_read(pin);
+    return hal_gpio_read(pin);
 }
 
 /*
