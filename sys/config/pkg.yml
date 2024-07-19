@@ -36,6 +36,8 @@ pkg.deps.CONFIG_FCB2:
     - "@apache-mynewt-core/fs/fcb2"
 pkg.deps.CONFIG_NFFS:
     - "@apache-mynewt-core/fs/nffs"
+pkg.deps.CONFIG_LITTLEFS:
+    - "@apache-mynewt-core/fs/littlefs"
 
 pkg.init:
     config_pkg_init: 'MYNEWT_VAL(CONFIG_SYSINIT_STAGE_1)'
