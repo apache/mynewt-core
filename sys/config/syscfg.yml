@@ -128,6 +128,14 @@ syscfg.defs.CONFIG_NFFS:
         description: 'Limit how many items stored in file before compressing'
         value: 32
 
+syscfg.defs.CONFIG_LITTLEFS:
+    CONFIG_LITTLEFS_FILE:
+        description: 'Name for the default config file'
+        value: '"cfg"'
+    CONFIG_LITTLEFS_MAX_LINES:
+        description: 'Limit how many items stored in file before compressing'
+        value: 32
+
 syscfg.vals.CONFIG_FCB2:
     CONFIG_FCB_MAGIC: 0xd0b1d0b1
 

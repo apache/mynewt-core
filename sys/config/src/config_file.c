@@ -19,7 +19,7 @@
 
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(CONFIG_NFFS)
+#if MYNEWT_VAL(CONFIG_NFFS) || MYNEWT_VAL(CONFIG_LITTLEFS)
 
 #include <string.h>
 #include <assert.h>
