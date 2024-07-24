@@ -26,6 +26,7 @@
 #include "flash_map/flash_map.h"
 #include "fcb/fcb.h"
 #include "log/log.h"
+#include <console/console.h>
 
 /* Assume the flash alignment requirement is no stricter than 8. */
 #define LOG_FCB_MAX_ALIGN   8
@@ -275,8 +276,9 @@ err:
 
 /**
  * Calculates the number of bytes that should be included after
- * the entry header or trailer in the first write. Inclusion of bytes
- * is necessary to satisfy the flash hardware's write alignment restrictions.
+ * the entry header for the first write or before the trailer in the second
+ * write. Inclusion of bytes is necessary to satisfy the flash hardware's
+ * write alignment restrictions.
  */
 static int
 log_fcb_hdr_trailer_bytes(uint16_t align, uint16_t len)
@@ -295,12 +297,227 @@ log_fcb_hdr_trailer_bytes(uint16_t align, uint16_t len)
 }
 
 static int
+log_fcb_write_mbuf(struct fcb_entry *loc, struct os_mbuf *om)
+{
+    int rc;
+
+    while (om) {
+        rc = flash_area_write(loc->fe_area, loc->fe_data_off, om->om_data,
+                              om->om_len);
+        if (rc != 0) {
+            return SYS_EIO;
+        }
+        loc->fe_data_off += om->om_len;
+        om = SLIST_NEXT(om, om_next);
+    }
+
+    return 0;
+}
+
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+static int
+log_fcb_mbuf_single_tlv_write(struct os_mbuf *om, struct log_tlv *tlv,
+                              void *val, uint8_t f_align,
+                              struct fcb_entry *loc)
+{
+    uint16_t offset = 0;
+    int alignment = 0;
+    int rc = 0;
+    uint8_t buf[LOG_FCB_MAX_ALIGN] = {0};
+
+    /* Writes the following reverse TLVs, value first then length and
+     * then tag:
+     *
+     * Reverse TLV:
+     * ---------------------------------------------------------
+     * | Value  |  Value alignment | <len:tag> | TLV alignment |
+     * ---------------------------------------------------------
+     * TLV alignment is necessary here to aid in writing the next TLV
+     * from updated loc->fe_data_off.
+     *
+     * - Value is at alignment boundary
+     * - struct tlv is at alignment boundary <len:tag>
+     *
+     * Both can be read independently.
+     */
+    rc = os_mbuf_append(om, val, tlv->len);
+    if (rc) {
+        return rc;
+    }
+    offset += tlv->len;
+
+    /* Calculate value alignment */
+    alignment = log_fcb_hdr_trailer_bytes(f_align, tlv->len);
+    rc = os_mbuf_append(om, buf, alignment);
+    if (rc) {
+        return rc;
+    }
+    offset += alignment;
+
+    rc = os_mbuf_append(om, tlv, sizeof(*tlv));
+    if (rc) {
+        return rc;
+    }
+    offset += sizeof(*tlv);
+
+    /* Calculate tlv alignment */
+    alignment = log_fcb_hdr_trailer_bytes(f_align, offset);
+    offset += alignment;
+
+    rc = os_mbuf_append(om, buf, alignment);
+    if (rc) {
+        return rc;
+    }
+
+    rc = log_fcb_write_mbuf(loc, om);
+    if (rc) {
+        return rc;
+    }
+
+    return rc;
+}
+
+static int
+log_fcb_single_tlv_write(uint8_t *buf, uint16_t buflen, struct log_tlv *tlv,
+                         void *val, uint8_t f_align, struct fcb_entry *loc)
+{
+    uint16_t offset = 0;
+    int alignment = 0;
+    int rc = 0;
+
+    memset(buf, 0, buflen);
+
+    /* Writes the following reverse TLVs, value first then length and
+     * then tag:
+     *
+     * Reverse TLV:
+     * ---------------------------------------------------------
+     * | Value  |  Value alignment | <len:tag> | TLV alignment |
+     * ---------------------------------------------------------
+     * TLV alignment is necessary here to aid in writing the next TLV
+     * from updated loc->fe_data_off.
+     *
+     * - Value is at alignment boundary
+     * - struct tlv is at alignment boundary <len:tag>
+     *
+     * Both can be read independently.
+     */
+    memcpy(buf, val, tlv->len);
+    offset += tlv->len;
+
+    /* Calculate value alignment */
+    alignment = log_fcb_hdr_trailer_bytes(f_align, offset);
+    offset += alignment;
+
+    memcpy(buf + offset, tlv, sizeof(*tlv));
+    offset += sizeof(*tlv);
+
+    /* Calculate tlv alignment */
+    alignment = log_fcb_hdr_trailer_bytes(f_align, offset);
+    offset += alignment;
+
+    rc = flash_area_write(loc->fe_area, loc->fe_data_off, buf, offset);
+    if (rc != 0) {
+        return rc;
+    }
+
+    loc->fe_data_off += offset;
+
+    return rc;
+}
+
+static int
+log_fcb_mbuf_tlvs_write(struct log *log, struct os_mbuf *om,
+                        struct fcb_entry *loc)
+{
+    int rc = 0;
+    struct fcb *fcb;
+    struct fcb_log *fcb_log;
+    struct log_tlv tlv;
+    uint8_t num_tlvs = 0;
+
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+    (void)fcb;
+    (void)fcb_log;
+    (void)tlv;
+    (void)num_tlvs;
+
+#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+    tlv.tag = LOG_TLV_NUM_ENTRIES;
+    tlv.len = LOG_NUM_ENTRIES_SIZE;
+    rc = log_fcb_mbuf_single_tlv_write(om, &tlv, &log->l_num_entries,
+                                       fcb->f_align, loc);
+    log->l_num_entries++;
+#endif
+
+    /* Always write the number of TLVS TLV at the end
+     * if num_tlvs > 1
+     */
+#if MYNEWT_VAL(LOG_TLV_NUM_TLVS)
+    if (num_tlvs > 1) {
+        tlv.tag = LOG_TLV_NUM_TLVS;
+        tlv.len = LOG_NUM_TLVS_SIZE;
+        rc = log_fcb_mbuf_single_tlv_write(om, &tlv, &num_tlvs,
+                                           fcb->f_align, loc);
+    }
+#endif
+
+    return rc;
+}
+
+static int
+log_fcb_tlvs_write(struct log *log, uint8_t *buf, uint16_t buflen,
+                   struct fcb_entry *loc)
+{
+    int rc = 0;
+    struct fcb *fcb;
+    struct fcb_log *fcb_log;
+    struct log_tlv tlv;
+    uint8_t num_tlvs = 0;
+
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+    (void)fcb;
+    (void)fcb_log;
+    (void)tlv;
+    (void)num_tlvs;
+
+#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+    tlv.tag = LOG_TLV_NUM_ENTRIES;
+    tlv.len = LOG_NUM_ENTRIES_SIZE;
+    rc = log_fcb_single_tlv_write(buf, buflen, &tlv, &log->l_num_entries,
+                                  fcb->f_align, loc);
+    if (rc) {
+        return rc;
+    }
+    log->l_num_entries++;
+    num_tlvs++;
+#endif
+
+    /* Always write the number of TLVS TLV at the end
+     * if num_tlvs > 1
+     */
+#if MYNEWT_VAL(LOG_TLV_NUM_TLVS)
+    if (num_tlvs > 1) {
+        tlv.tag = LOG_TLV_NUM_TLVS;
+        tlv.len = LOG_NUM_TLVS_SIZE;
+        rc = log_fcb_single_tlv_write(buf, buflen, &tlv, &num_tlvs,
+                                      fcb->f_align, loc);
+    }
+#endif
+
+    return rc;
+}
+#endif
+
+static int
 log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
                     const void *body, int body_len)
 {
-    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE +
-                LOG_IMG_HASHLEN + sizeof(struct log_tlv) + LOG_NUM_ENTRIES_SIZE +
-                LOG_FCB_MAX_ALIGN * 2 - 1];
+    uint8_t buf[LOG_FCB_FLAT_BUF_SIZE] = {0};
     struct fcb *fcb;
     struct fcb_entry loc;
     struct fcb_log *fcb_log;
@@ -311,16 +528,22 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     int rc;
     uint16_t hdr_len;
     uint16_t trailer_len;
+    uint16_t padding = 0;
+    uint16_t offset = 0;
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
+
+    (void)offset;
+    (void)padding;
+    (void)trailer_alignment;
 
     if (fcb->f_align > LOG_FCB_MAX_ALIGN) {
         return SYS_ENOTSUP;
     }
 
     hdr_len = log_hdr_len(hdr);
-    trailer_len = log_trailer_len(hdr);
+    trailer_len = log_trailer_len(log, hdr);
 
     rc = log_fcb_start_append(log, hdr_len + body_len + trailer_len, &loc);
     if (rc != 0) {
@@ -366,22 +589,15 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     body_len -= hdr_alignment;
 
     if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
-        memset(buf, 0, sizeof(buf));
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+        /* This writes padding + trailer_alignment */
+
         /* Calculate trailer alignment */
         trailer_alignment = log_fcb_hdr_trailer_bytes(fcb->f_align, chunk_sz + body_len);
-        if (trailer_alignment > trailer_len) {
-            chunk_sz = trailer_len;
-        } else {
-            chunk_sz = trailer_alignment;
-        }
-
-#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-        struct log_tlv tlv;
-        uint16_t offset = 0;
-        uint16_t padding = 0;
 
         if (body_len > 0) {
             padding = trailer_alignment ? fcb->f_align - trailer_alignment : 0;
+            /* Writes body - padding bytes */
             rc = flash_area_write(loc.fe_area, loc.fe_data_off, u8p,
                                   body_len - padding);
             if (rc != 0) {
@@ -391,24 +607,29 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
             loc.fe_data_off += body_len - padding;
 
             u8p = u8p + body_len - padding;
+            memset(buf, 0, sizeof(buf));
             memcpy(buf, u8p, padding);
             offset = padding;
-            u8p = (void *)&tlv;
-            tlv.tag = LOG_TLV_NUM_ENTRIES;
-            tlv.len = LOG_NUM_ENTRIES_SIZE;
-            memcpy(buf + offset, u8p, sizeof(struct log_tlv));
-            offset += sizeof(struct log_tlv);
-
-            memcpy(buf + offset, &log->l_num_entries, LOG_NUM_ENTRIES_SIZE);
-            log->l_num_entries++;
-            offset += LOG_NUM_ENTRIES_SIZE;
-
+            offset += trailer_alignment;
+            /* Writes the following:
+             * -----------------------------------------------------------------
+             * | body: body_len - padding from end of body | trailer_alignment |
+             * -----------------------------------------------------------------
+             */
             rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, offset);
             if (rc != 0) {
                 return rc;
             }
 
             loc.fe_data_off += offset;
+
+            /* The first TLV gets appended after the padding + trailer_alignment
+             * Trailers start from updated loc.fe_data_off.
+             */
+            rc = log_fcb_tlvs_write(log, buf, sizeof(buf), &loc);
+            if (rc) {
+                return rc;
+            }
         }
 #else
         if (body_len > 0) {
@@ -447,25 +668,6 @@ log_fcb_append(struct log *log, void *buf, int len)
 }
 
 static int
-log_fcb_write_mbuf(struct fcb_entry *loc, struct os_mbuf *om)
-{
-    int rc;
-
-    while (om) {
-        rc = flash_area_write(loc->fe_area, loc->fe_data_off, om->om_data,
-                              om->om_len);
-        if (rc != 0) {
-            return SYS_EIO;
-        }
-
-        loc->fe_data_off += om->om_len;
-        om = SLIST_NEXT(om, om_next);
-    }
-
-    return 0;
-}
-
-static int
 log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
                          struct os_mbuf *om)
 {
@@ -485,7 +687,7 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         return SYS_ENOTSUP;
     }
 
-    len = log_hdr_len(hdr) + os_mbuf_len(om) + log_trailer_len(hdr);
+    len = log_hdr_len(hdr) + os_mbuf_len(om) + log_trailer_len(log, hdr);
     rc = log_fcb_start_append(log, len, &loc);
     if (rc != 0) {
         return rc;
@@ -508,32 +710,22 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         loc.fe_data_off += LOG_IMG_HASHLEN;
     }
 
-    rc = log_fcb_write_mbuf(&loc, om);
-    if (rc != 0) {
-        return rc;
-    }
-
     if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
-#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-        struct log_tlv tlv;
-        tlv.tag = LOG_TLV_NUM_ENTRIES;
-        tlv.len = LOG_NUM_ENTRIES_SIZE;
-        /* Write TLV */
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, &tlv,
-                              sizeof(struct log_tlv));
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+        /* The first TLV gets appended after the padding + trailer_alignment
+         * Trailers start from updated loc.fe_data_off. Write everything
+         * together
+         */
+        rc = log_fcb_mbuf_tlvs_write(log, om, &loc);
         if (rc != 0) {
             return rc;
         }
-        loc.fe_data_off += sizeof(struct log_tlv);;
-        /* Write LOG_NUM_ENTRIES_SIZE bytes */
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off,
-                              &hdr->ue_num_entries, LOG_NUM_ENTRIES_SIZE);
-        if (rc != 0) {
-            return rc;
-        }
-        loc.fe_data_off += LOG_NUM_ENTRIES_SIZE;
-        log->l_num_entries++;
 #endif
+    } else {
+        rc = log_fcb_write_mbuf(&loc, om);
+        if (rc != 0) {
+            return rc;
+        }
     }
 
     rc = fcb_append_finish(fcb, &loc);
@@ -885,6 +1077,18 @@ log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset,
 }
 
 static int
+log_fcb_len_in_medium(struct log *log, uint16_t len)
+{
+    struct fcb_log *fl;
+    struct fcb *fcb;
+
+    fl = (struct fcb_log *)log->l_arg;
+    fcb = &fl->fl_fcb;
+
+    return fcb_len_in_flash(fcb, len);
+}
+
+static int
 log_fcb_set_watermark(struct log *log, uint32_t index)
 {
     int rc;
@@ -1086,6 +1290,7 @@ const struct log_handler log_fcb_handler = {
 #endif
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     .log_set_watermark = log_fcb_set_watermark,
+    .log_len_in_medium = log_fcb_len_in_medium,
 #endif
     .log_registered = log_fcb_registered,
 };

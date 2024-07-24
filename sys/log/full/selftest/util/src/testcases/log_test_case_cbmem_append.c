@@ -39,7 +39,7 @@ TEST_CASE_SELF(log_test_case_cbmem_append)
 
     for (i = 0; i < num_strs; i++) {
 	hdr = (struct log_entry_hdr *)(dummy_log_arr + off_arr[i]);
-        len = off_arr[i+1] - off_arr[i] - log_hdr_len(hdr) - log_trailer_len(hdr);
+        len = off_arr[i+1] - off_arr[i] - log_hdr_len(hdr) - log_trailer_len(&log, hdr);
         rc = log_append_typed(&log, 2, 3, LOG_ETYPE_STRING,
                               dummy_log_arr + off_arr[i],
                               len);

@@ -333,14 +333,57 @@ log_update_num_entries_hdr_walk(struct log *log, struct log_offset *log_offset,
 }
 
 static int
+log_process_tlvs(struct log *log, const void *dptr, uint8_t num_tlvs,
+                 uint16_t tlv_tag, void *buf, uint16_t len)
+{
+    struct log_tlv *tlv;
+    uint8_t tmpbuf[sizeof(*tlv) + 8] = {0};
+    uint16_t offset;
+    int tlv_len;
+    int rc = SYS_ENOENT;
+
+    offset = len;
+    tlv_len = log_len_in_medium(log, sizeof(*tlv));
+    do {
+        offset -= tlv_len;
+        rc = log_read(log, dptr, tmpbuf, offset, tlv_len);
+        if (rc < tlv_len) {
+            return SYS_EINVAL;
+        }
+        tlv = (struct log_tlv *)tmpbuf;
+
+        offset -= log_len_in_medium(log, tlv->len);
+        if (tlv->tag != tlv_tag) {
+            continue;
+        }
+
+        switch (tlv_tag) {
+        case LOG_TLV_NUM_ENTRIES:
+            rc = log_fill_num_entries(log, dptr, buf, offset);
+            break;
+        case LOG_TLV_NUM_TLVS:
+            rc = log_fill_num_tlvs(log, dptr, buf, offset);
+            break;
+        default:
+            return SYS_ENOTSUP;
+        }
+
+        if (!rc) {
+            return SYS_EOK;
+        }
+    } while (offset && num_tlvs);
+
+    return SYS_EOK;
+}
+
+static int
 log_read_hdr_walk(struct log *log, struct log_offset *log_offset,
                   const void *dptr, uint16_t len)
 {
     struct log_read_hdr_arg *arg;
     int rc;
-    uint16_t offset = 0;
+    uint8_t num_tlvs = 0;
 
-    (void)offset;
     arg = log_offset->lo_arg;
 
     rc = log_read(log, dptr, arg->hdr, 0, LOG_BASE_ENTRY_HDR_SIZE);
@@ -353,18 +396,29 @@ log_read_hdr_walk(struct log *log, struct log_offset *log_offset,
         if (!rc || rc == SYS_ENOTSUP) {
             arg->read_success = 1;
         }
-        if (!rc) {
-            offset = LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN;
-        }
     }
 
     if (arg->hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
-        rc = log_fill_num_entries(log, dptr, arg->hdr,
-                                  len - log_trailer_len(arg->hdr));
+        /* Read number of TLVs, if it does not exist
+         * num_tlvs = 0, so only one TLV will get read
+         * from the end of the entry
+         */
+        rc = log_process_tlvs(log, dptr, 0, LOG_TLV_NUM_TLVS,
+                              &num_tlvs, len);
         if (!rc || rc == SYS_ENOTSUP) {
             arg->read_success = 1;
         } else {
             arg->read_success = 0;
+        }
+
+        if (!rc || rc == SYS_ENOTSUP) {
+            rc = log_process_tlvs(log, dptr, num_tlvs, LOG_TLV_NUM_ENTRIES,
+                                  &arg->hdr->ue_num_entries, len);
+            if (!rc || rc == SYS_ENOTSUP) {
+                arg->read_success = 1;
+            } else {
+                arg->read_success = 0;
+            }
         }
     }
 
@@ -539,13 +593,13 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
     }
 
     if (log->l_log->log_type == LOG_TYPE_STORAGE) {
+        memset(&hdr, 0, sizeof(hdr));
         rc = log_read_last_hdr(log, &hdr);
         if (rc == 0) {
             /* If the number of entries are not set in the last header,
              * it was probably not supported when the entry was logged.
              * Count number of entries in this specific case
              */
-            hdr.ue_num_entries = 0;
             if (!hdr.ue_num_entries) {
                 log_update_num_entries(log, &num_entries);
             }
@@ -598,15 +652,39 @@ log_hdr_len(const struct log_entry_hdr *hdr)
     return len;
 }
 
+int
+log_len_in_medium(struct log *log, uint16_t len)
+{
+    if (log->l_log->log_len_in_medium) {
+        return log->l_log->log_len_in_medium(log, len);
+    }
+
+    return len;
+}
+
 uint16_t
-log_trailer_len(const struct log_entry_hdr *hdr)
+log_trailer_len(struct log *log, const struct log_entry_hdr *hdr)
 {
     uint16_t len = 0;
+    uint8_t num_tlvs = 0;
 
+    (void)num_tlvs;
     if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
-#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-        len += sizeof(struct log_tlv);
-        len += LOG_NUM_ENTRIES_SIZE;
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+        len += log_len_in_medium(log, sizeof(struct log_tlv)) +
+               log_len_in_medium(log, LOG_NUM_ENTRIES_SIZE);
+        num_tlvs++;
+#endif
+        /* Number of TLVs TLV is only written if there are more than
+         * one TLVS, else its just one TLV at the end
+         */
+#if MYNEWT_VAL(LOG_TLV_NUM_TLVS)
+        if (num_tlvs > 1) {
+            len += log_len_in_medium(log, sizeof(struct log_tlv)) +
+                   log_len_in_medium(log, LOG_NUM_TLVS_SIZE);
+        }
+#endif
 #endif
     }
 
@@ -843,7 +921,7 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
     uint16_t hdr_len;
     int rc;
 
-    /* Remove a loyer of indirection for convenience. */
+    /* Remove a layer of indirection for convenience. */
     om = *om_ptr;
 
     LOG_STATS_INC(log, writes);
@@ -1151,8 +1229,8 @@ log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
     }
 
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
-        bytes_read = log_read(log, dptr, hdr->ue_imghash, LOG_BASE_ENTRY_HDR_SIZE,
-                              LOG_IMG_HASHLEN);
+        bytes_read = log_read(log, dptr, hdr->ue_imghash,
+                              LOG_BASE_ENTRY_HDR_SIZE, LOG_IMG_HASHLEN);
         if (bytes_read != LOG_IMG_HASHLEN) {
             return SYS_EIO;
         }
@@ -1161,6 +1239,26 @@ log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
     return 0;
 }
 
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+static int
+log_tlv_exists(uint16_t tlv)
+{
+    switch (tlv) {
+#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+    case LOG_TLV_NUM_ENTRIES:
+        return 0;
+#endif
+
+#if MYNEWT_VAL(LOG_TLV_NUM_TLVS)
+    case LOG_TLV_NUM_TLVS:
+        return 0;
+#endif
+    default:
+        return SYS_ENOTSUP;
+    }
+}
+#endif
+
 int
 log_read_trailer(struct log *log, const void *dptr, uint16_t tlv, void *buf)
 {
@@ -1168,9 +1266,15 @@ log_read_trailer(struct log *log, const void *dptr, uint16_t tlv, void *buf)
     int rc;
     struct log_entry_hdr hdr;
     uint16_t entry_len;
+    uint8_t num_tlvs = 0;
 
     if (!buf) {
         return SYS_EINVAL;
+    }
+
+    rc = log_tlv_exists(tlv);
+    if (rc) {
+        return rc;
     }
 
     rc = log_read_hdr(log, dptr, &hdr);
@@ -1179,10 +1283,20 @@ log_read_trailer(struct log *log, const void *dptr, uint16_t tlv, void *buf)
     }
 
     if (hdr.ue_flags & LOG_FLAGS_TLV_SUPPORT) {
+        entry_len = log_read_entry_len(log, dptr);
+        if (tlv == LOG_TLV_NUM_TLVS) {
+            rc = log_process_tlvs(log, dptr, 0, LOG_TLV_NUM_TLVS, &num_tlvs,
+                                  entry_len);
+            if (rc) {
+                return rc;
+            }
+
+            memcpy(buf, &num_tlvs, LOG_NUM_TLVS_SIZE);
+        }
+
         if (tlv == LOG_TLV_NUM_ENTRIES) {
-            entry_len = log_read_entry_len(log, dptr);
-            rc = log_fill_num_entries(log, dptr, &hdr, entry_len
-                                      - log_trailer_len(&hdr));
+            rc = log_process_tlvs(log, dptr, num_tlvs, LOG_TLV_NUM_ENTRIES,
+                                  &hdr.ue_num_entries, entry_len);
             if (rc) {
                 return rc;
             }
@@ -1338,30 +1452,43 @@ log_set_max_entry_len(struct log *log, uint16_t max_entry_len)
 }
 
 int
-log_fill_num_entries(struct log *log, const void *dptr,
-                     struct log_entry_hdr *hdr, uint16_t offset)
+log_fill_num_entries(struct log *log, const void *dptr, uint32_t *num_entries,
+                     uint16_t offset)
 {
 #if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
     int rc = 0;
-    struct log_tlv tlv = {0};
+    uint32_t tmpdata;
 
-    rc = log_read(log, dptr, &tlv, offset, sizeof(struct log_tlv));
-    if (rc < sizeof(struct log_tlv)) {
+    rc = log_read(log, dptr, &tmpdata, offset, LOG_NUM_ENTRIES_SIZE);
+    if (rc < LOG_NUM_ENTRIES_SIZE) {
         return rc;
     }
 
-    offset += sizeof(struct log_tlv);
+    *num_entries = tmpdata;
 
-    rc = log_read(log, dptr, &hdr->ue_num_entries, offset,
-                  LOG_NUM_ENTRIES_SIZE);
-    if (rc >= LOG_NUM_ENTRIES_SIZE) {
-        return SYS_EOK;
-    } else {
-        return rc;
-    }
+    return SYS_EOK;
 #else
-    hdr->ue_num_entries = 0;
+    return SYS_ENOTSUP;
+#endif
+}
 
+int
+log_fill_num_tlvs(struct log *log, const void *dptr, uint8_t *num_tlvs,
+                  uint16_t offset)
+{
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_TLVS)
+    int rc = 0;
+    uint32_t tmpdata;
+
+    rc = log_read(log, dptr, &tmpdata, offset, LOG_NUM_TLVS_SIZE);
+    if (rc < LOG_NUM_TLVS_SIZE) {
+        return rc;
+    }
+
+    *num_tlvs = tmpdata;
+
+    return SYS_EOK;
+#else
     return SYS_ENOTSUP;
 #endif
 }

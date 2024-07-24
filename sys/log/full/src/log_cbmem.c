@@ -27,6 +27,7 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     int rc = 0;
     struct cbmem *cbmem;
+    uint16_t num_tlvs = 0;
     struct cbmem_scat_gath sg = {
         .entries = (struct cbmem_scat_gath_entry[]) {
             {
@@ -42,15 +43,26 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
                 .flat_len = body_len,
             },
             {
-                .flat_buf = NULL,
-                .flat_len = 0,
-            },
-            {
                 .flat_buf = &log->l_num_entries,
                 .flat_len = 0
             },
+            {
+                .flat_buf = NULL,
+                .flat_len = 0,
+            },
+            /*
+             * Number of tlvs will always get written at the end
+             */
+            {
+                .flat_buf = &num_tlvs,
+                .flat_len = 0
+            },
+            {
+                .flat_buf = NULL,
+                .flat_len = 0,
+            },
         },
-        .count = 5,
+        .count = 7,
     };
 
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
@@ -58,10 +70,21 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
     }
 
     if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
-#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-        sg.entries[3].flat_buf = &(struct log_tlv) {LOG_TLV_NUM_ENTRIES, LOG_NUM_ENTRIES_SIZE};
-        sg.entries[3].flat_len = sizeof(struct log_tlv);
-        sg.entries[4].flat_len = LOG_NUM_ENTRIES_SIZE;
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+        sg.entries[4].flat_buf = &(struct log_tlv) {LOG_NUM_ENTRIES_SIZE, LOG_TLV_NUM_ENTRIES};
+        sg.entries[4].flat_len = sizeof(struct log_tlv);
+        sg.entries[3].flat_len = LOG_NUM_ENTRIES_SIZE;
+        num_tlvs++;
+#endif
+#if MYNEWT_VAL(LOG_TLV_NUM_TLVS)
+        /* Number of TLVs is only written if there are more than one TLVs */
+        if (num_tlvs > 0) {
+            sg.entries[6].flat_buf = &(struct log_tlv) {LOG_NUM_TLVS_SIZE, LOG_TLV_NUM_TLVS};
+            sg.entries[6].flat_len = sizeof(struct log_tlv);
+            sg.entries[5].flat_len = LOG_NUM_TLVS_SIZE;
+        }
+#endif
 #endif
     }
 
@@ -92,6 +115,7 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     int rc = 0;
     struct cbmem *cbmem;
+    uint16_t num_tlvs = 0;
     struct cbmem_scat_gath sg = {
         .entries = (struct cbmem_scat_gath_entry[]) {
             {
@@ -106,15 +130,26 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
                 .om = om,
             },
             {
-                .flat_buf = NULL,
-                .flat_len = 0,
-            },
-            {
                 .flat_buf = &log->l_num_entries,
                 .flat_len = 0
             },
+            {
+                .flat_buf = NULL,
+                .flat_len = 0,
+            },
+            /*
+             * Number of tlvs will always get written at the end
+             */
+            {
+                .flat_buf = &num_tlvs,
+                .flat_len = 0
+            },
+            {
+                .flat_buf = NULL,
+                .flat_len = 0,
+            },
         },
-        .count = 5,
+        .count = 7,
     };
 
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
@@ -122,11 +157,21 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
     }
 
     if (hdr->ue_flags & LOG_FLAGS_TLV_SUPPORT) {
-#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_FLAGS_NUM_ENTRIES)
-        sg.entries[3].flat_buf = &{LOG_TLV_NUM_ENTRIES, LOG_NUM_ENTRIES_SIZE};
-        sg.entries[3].flat_len = sizeof(struct log_tlv);
-        sg.entries[4].flat_len = LOG_NUM_ENTRIES_SIZE;
-        log->l_num_entries++;
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+        sg.entries[4].flat_buf = &(struct log_tlv) {LOG_NUM_ENTRIES_SIZE, LOG_TLV_NUM_ENTRIES};
+        sg.entries[4].flat_len = sizeof(struct log_tlv);
+        sg.entries[3].flat_len = LOG_NUM_ENTRIES_SIZE;
+        num_tlvs++;
+#endif
+#if MYNEWT_VAL(LOG_TLV_NUM_TLVS)
+        /* Number of TLVs is only written if there are more than one TLVs */
+        if (num_tlvs > 0) {
+            sg.entries[6].flat_buf = &(struct log_tlv) {LOG_NUM_TLVS_SIZE, LOG_TLV_NUM_TLVS};
+            sg.entries[6].flat_len = sizeof(struct log_tlv);
+            sg.entries[5].flat_len = LOG_NUM_TLVS_SIZE;
+        }
+#endif
 #endif
     }
 

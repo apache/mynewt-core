@@ -40,15 +40,6 @@ struct fcb2_sector_info {
     uint16_t si_sector_in_range;          /* Sector number relative to si_range */
 };
 
-static inline int
-fcb2_len_in_flash(const struct flash_sector_range *range, uint16_t len)
-{
-    if (range->fsr_align <= 1) {
-        return len;
-    }
-    return (len + (range->fsr_align - 1)) & ~(range->fsr_align - 1);
-}
-
 int fcb2_getnext_in_area(struct fcb2 *fcb, struct fcb2_entry *loc);
 
 static inline int

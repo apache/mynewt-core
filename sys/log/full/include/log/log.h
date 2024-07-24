@@ -75,18 +75,18 @@ struct log_storage_info {
 };
 #endif
 
-typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
+typedef int (*log_walk_func_t)(struct log *log, struct log_offset *log_offset,
         const void *dptr, uint16_t len);
 
 typedef int (*log_walk_body_func_t)(struct log *log,
         struct log_offset *log_offset, const struct log_entry_hdr *hdr,
         const void *dptr, uint16_t len);
 
-typedef int (*lh_read_func_t)(struct log *, const void *dptr, void *buf,
+typedef int (*lh_read_func_t)(struct log *log, const void *dptr, void *buf,
         uint16_t offset, uint16_t len);
-typedef int (*lh_read_mbuf_func_t)(struct log *, const void *dptr, struct os_mbuf *om,
+typedef int (*lh_read_mbuf_func_t)(struct log *log, const void *dptr, struct os_mbuf *om,
                                    uint16_t offset, uint16_t len);
-typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
+typedef int (*lh_append_func_t)(struct log *log, void *buf, int len);
 typedef int (*lh_append_body_func_t)(struct log *log,
                                      const struct log_entry_hdr *hdr,
                                      const void *body, int body_len);
@@ -94,17 +94,19 @@ typedef int (*lh_append_mbuf_func_t)(struct log *, struct os_mbuf *om);
 typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
                                           const struct log_entry_hdr *hdr,
                                           struct os_mbuf *om);
-typedef int (*lh_walk_func_t)(struct log *,
+typedef int (*lh_walk_func_t)(struct log *log,
         log_walk_func_t walk_func, struct log_offset *log_offset);
-typedef int (*lh_flush_func_t)(struct log *);
-typedef uint16_t (*lh_read_entry_len_func_t)(struct log *, const void *dptr);
+typedef int (*lh_flush_func_t)(struct log *log);
+typedef uint16_t (*lh_read_entry_len_func_t)(struct log *log, const void *dptr);
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
-typedef int (*lh_storage_info_func_t)(struct log *, struct log_storage_info *);
+typedef int (*lh_storage_info_func_t)(struct log *log, struct log_storage_info *);
 #endif
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
-typedef int (*lh_set_watermark_func_t)(struct log *, uint32_t);
+typedef int (*lh_set_watermark_func_t)(struct log *log, uint32_t);
 #endif
-typedef int (*lh_registered_func_t)(struct log *);
+typedef int (*lh_registered_func_t)(struct log *log);
+/* This calculates length based on alignment of underlying medium */
+typedef int (*lh_len_in_medium_func_t)(struct log *log, uint16_t len);
 
 struct log_handler {
     int log_type;
@@ -118,6 +120,7 @@ struct log_handler {
     lh_walk_func_t log_walk_sector;
     lh_flush_func_t log_flush;
     lh_read_entry_len_func_t log_read_entry_len;
+    lh_len_in_medium_func_t log_len_in_medium;
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     lh_storage_info_func_t log_storage_info;
 #endif
@@ -136,6 +139,7 @@ struct log_handler {
 #define LOG_FLAGS_TLV_SUPPORT (1 << 1)
 
 #define LOG_TLV_NUM_ENTRIES   (1 << 0)
+#define LOG_TLV_NUM_TLVS      (1 << 1)
 
 #if MYNEWT_VAL(LOG_VERSION) == 3
 struct log_entry_hdr {
@@ -146,12 +150,16 @@ struct log_entry_hdr {
     uint8_t ue_etype : 4;
     uint8_t ue_flags : 4;
     uint8_t ue_imghash[4];
+    /* Number of entries field which helps in calculating number of
+     * entries per log, these go on incrementing similar to an index
+     * but per log.
+     */
     uint32_t ue_num_entries;
 } __attribute__((__packed__));
 
 struct log_tlv {
-    uint8_t tag;
     uint8_t len;
+    uint8_t tag;
     /* Value is of variable size appended based on len,
      * val is logged after the tag and len are logged
      */
@@ -164,6 +172,30 @@ struct log_tlv {
 #define LOG_BASE_ENTRY_HDR_SIZE (15)
 
 #define LOG_NUM_ENTRIES_SIZE (sizeof(((struct log *)0)->l_num_entries))
+#define LOG_NUM_TLVS_SIZE    (1)
+
+#if MYNEWT_VAL(LOG_FCB2)
+#define LF_MAX_ALIGN LOG_FCB2_MAX_ALIGN
+#else
+#define LF_MAX_ALIGN LOG_FCB_MAX_ALIGN
+#endif
+
+#define LOG_FCB_MAX_TLV_SIZE(__tlv_name__) \
+    /* sizeof(struct log_tlv)) + alignment */ \
+    (LF_MAX_ALIGN + \
+     /* Max size per value of TLV including alignment */ \
+     (LOG_ ## __tlv_name__ ## _SIZE/LF_MAX_ALIGN) ? \
+     (LOG_ ## __tlv_name__ ## _SIZE + LF_MAX_ALIGN) : \
+     LF_MAX_ALIGN)
+
+#define LOG_FCB_MAX_TLVS_SIZE LOG_FCB_MAX_TLV_SIZE(NUM_ENTRIES) + \
+    LOG_FCB_MAX_TLV_SIZE(NUM_TLVS)
+
+#define LOG_FCB_EXT_HDR_SIZE LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN + \
+    LF_MAX_ALIGN
+
+#define LOG_FCB_FLAT_BUF_SIZE (LOG_FCB_EXT_HDR_SIZE > LOG_FCB_MAX_TLVS_SIZE) ? \
+    LOG_FCB_EXT_HDR_SIZE : LOG_FCB_MAX_TLVS_SIZE
 
 #define LOG_MODULE_STR(module)      log_module_get_name(module)
 
@@ -532,6 +564,10 @@ int log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
 /**
  * Reads entry length from the specified log.
  *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
  * @return                      The number of bytes of entry length; 0 on failure.
  */
 uint16_t
@@ -580,7 +616,7 @@ uint16_t log_hdr_len(const struct log_entry_hdr *hdr);
  *
  * @return Length of the trailer
  */
-uint16_t log_trailer_len(const struct log_entry_hdr *hdr);
+uint16_t log_trailer_len(struct log *log, const struct log_entry_hdr *hdr);
 
 /**
  * @brief Reads data from the body of a log entry into a flat buffer.
@@ -778,13 +814,27 @@ int log_set_watermark(struct log *log, uint32_t index);
  *
  * @param log Ptr to log structure
  * @param dptr Ptr to data to be read
- * @param hdr Ptr to the header
- * @param offset Offset of the num of entries in the log entry
+ * @param num_entries Ptr to number of entries
+ * @param offset Offset of the num of entries field in the log entry
  *
  * @return 0 on success, non-zero on failure
  */
 int log_fill_num_entries(struct log *log, const void *dptr,
-                         struct log_entry_hdr *hdr, uint16_t offset);
+                         uint32_t *num_entries,
+                         uint16_t offset);
+/**
+ * Fill number of tlvs
+ *
+ * @param log Ptr to log structure
+ * @param dptr Ptr to data to be read
+ * @param num_entries Ptr to number of entries
+ * @param offset Offset of the num of entries field in the log entry
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+log_fill_num_tlvs(struct log *log, const void *dptr, uint8_t *num_tlvs,
+                  uint16_t offset);
 
 /**
  * Fill log current image hash
@@ -818,6 +868,14 @@ log_read_hdr_by_idx(struct log *log, uint32_t idx, struct log_entry_hdr *out_hdr
  */
 int
 log_get_entries(struct log *log, uint32_t idx, uint32_t *entries);
+
+/* Get the length of data in medium - storage (fcb/fcb2), memory or stream
+ *
+ * @param log The log to get number of entries for
+ * @param len Length in medium with padding if any
+ */
+int
+log_len_in_medium(struct log *log, uint16_t len);
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)

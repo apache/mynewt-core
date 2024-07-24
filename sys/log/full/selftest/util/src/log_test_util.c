@@ -279,7 +279,7 @@ ltu_walk_verify(struct log *log, struct log_offset *log_offset,
     }
 
     hdr_len = log_hdr_len(&ueh);
-    trailer_len = log_trailer_len(&ueh);
+    trailer_len = log_trailer_len(log, &ueh);
     dlen = len - hdr_len - trailer_len;
     TEST_ASSERT(dlen < sizeof(data));
 
@@ -350,7 +350,7 @@ ltu_walk_body_verify(struct log *log, struct log_offset *log_offset,
 
     TEST_ASSERT(len < sizeof(data));
 
-    len -= log_trailer_len(euh);
+    len -= log_trailer_len(log, euh);
 
     rc = log_read_body(log, dptr, data, 0, len);
     TEST_ASSERT(rc == len);

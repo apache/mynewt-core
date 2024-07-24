@@ -56,16 +56,23 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
 #if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
     bool read_num_entries = ueh->ue_flags & LOG_FLAGS_TLV_SUPPORT;
-    uint32_t entries = 0;
 #else
     bool read_num_entries = false;
 #endif
+    uint32_t entries = 0;
 
     dlen = min(len, 128);
 
     if (read_data) {
-#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-        dlen -= sizeof(struct log_tlv) + LOG_NUM_ENTRIES_SIZE;
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+        dlen -= log_len_in_medium(log, sizeof(struct log_tlv));
+
+        rc = log_read_trailer(log, dptr, LOG_TLV_NUM_ENTRIES, &entries);
+        if (!rc) {
+            dlen -= log_len_in_medium(log, LOG_NUM_ENTRIES_SIZE);
+        } else {
+            console_printf("failed to read trailer\n");
+        }
 #endif
         rc = log_read_body(log, dptr, data, 0, dlen);
         if (rc < 0) {
@@ -81,13 +88,13 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
 
     if (read_num_entries) {
 #if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+        dlen -= log_len_in_medium(log, sizeof(struct log_tlv));
         rc = log_read_trailer(log, dptr, LOG_TLV_NUM_ENTRIES, &entries);
         if (!rc) {
-#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-            console_printf("[ne=%lu]", entries);
-#endif
+            dlen -= log_len_in_medium(log, LOG_NUM_ENTRIES_SIZE);
         }
 #endif
+        console_printf("[ne=%u]", (unsigned int)entries);
     }
     console_printf(" [%llu] ", ueh->ue_ts);
 #if MYNEWT_VAL(LOG_SHELL_SHOW_INDEX)
