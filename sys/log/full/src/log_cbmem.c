@@ -27,7 +27,7 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     int rc = 0;
     struct cbmem *cbmem;
-    uint16_t num_tlvs = 0;
+    uint8_t num_tlvs = 0;
     struct cbmem_scat_gath sg = {
         .entries = (struct cbmem_scat_gath_entry[]) {
             {
@@ -79,7 +79,7 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
 #endif
 #if MYNEWT_VAL(LOG_TLV_NUM_TLVS)
         /* Number of TLVs is only written if there are more than one TLVs */
-        if (num_tlvs > 0) {
+        if (num_tlvs > 1) {
             sg.entries[6].flat_buf = &(struct log_tlv) {LOG_NUM_TLVS_SIZE, LOG_TLV_NUM_TLVS};
             sg.entries[6].flat_len = sizeof(struct log_tlv);
             sg.entries[5].flat_len = LOG_NUM_TLVS_SIZE;
@@ -115,7 +115,7 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     int rc = 0;
     struct cbmem *cbmem;
-    uint16_t num_tlvs = 0;
+    uint8_t num_tlvs = 0;
     struct cbmem_scat_gath sg = {
         .entries = (struct cbmem_scat_gath_entry[]) {
             {
@@ -166,7 +166,7 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 #endif
 #if MYNEWT_VAL(LOG_TLV_NUM_TLVS)
         /* Number of TLVs is only written if there are more than one TLVs */
-        if (num_tlvs > 0) {
+        if (num_tlvs > 1) {
             sg.entries[6].flat_buf = &(struct log_tlv) {LOG_NUM_TLVS_SIZE, LOG_TLV_NUM_TLVS};
             sg.entries[6].flat_len = sizeof(struct log_tlv);
             sg.entries[5].flat_len = LOG_NUM_TLVS_SIZE;
@@ -204,7 +204,7 @@ log_cbmem_append_mbuf(struct log *log, struct os_mbuf *om)
      * time is so that we account for the image hash as well.
      */
 
-    os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
+    om = os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
 
     /*
      * We can just pass the om->om_data ptr as the log_entry_hdr
@@ -213,10 +213,9 @@ log_cbmem_append_mbuf(struct log *log, struct os_mbuf *om)
      */
     hdr_len = log_hdr_len((struct log_entry_hdr *)om->om_data);
 
-    os_mbuf_pullup(om, hdr_len);
+    om = os_mbuf_pullup(om, hdr_len);
 
     memcpy(&hdr, om->om_data, hdr_len);
-
     os_mbuf_adj(om, hdr_len);
 
     rc = log_cbmem_append_mbuf_body(log, &hdr, om);

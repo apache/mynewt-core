@@ -49,8 +49,8 @@ static int ltu_str_max_idx = 0;
 
 struct dummy_log {
     struct log_entry_hdr hdr;
-    struct log_tlv tlv;
     uint32_t num_entries;
+    struct log_tlv tlv;
 };
 
 struct dummy_log dummy_log = {
@@ -71,11 +71,11 @@ struct dummy_log dummy_log = {
         .ue_level = 3,
         .ue_num_entries = 5
     },
+    .num_entries = 0,
     .tlv = {
         .tag = LOG_TLV_NUM_ENTRIES,
         .len = LOG_NUM_ENTRIES_SIZE
     },
-    .num_entries = 0,
 };
 
 char *ltu_str_logs[] = {
@@ -126,11 +126,13 @@ ltu_init_arr(void)
 #endif
         memcpy(dummy_log_arr + offset, ltu_str_logs[i], strlen(ltu_str_logs[i]));
         offset += strlen(ltu_str_logs[i]);
-#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-        memcpy(dummy_log_arr + offset, &dummy_log.tlv, sizeof(struct log_tlv));
-        offset += sizeof(struct log_tlv);
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
         memcpy(dummy_log_arr + offset, &dummy_log.num_entries, LOG_NUM_ENTRIES_SIZE);
         offset += LOG_NUM_ENTRIES_SIZE;
+        memcpy(dummy_log_arr + offset, &dummy_log.tlv, sizeof(struct log_tlv));
+        offset += sizeof(struct log_tlv);
+#endif
 #endif
     }
     ltu_off_arr[i] = offset;
@@ -300,7 +302,7 @@ ltu_walk_verify(struct log *log, struct log_offset *log_offset,
     TEST_ASSERT(rc == dlen);
 
 #if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
-    uint32_t num_entries;;
+    uint32_t num_entries;
     rc = log_read_trailer(log, dptr, LOG_TLV_NUM_ENTRIES, &num_entries);
     TEST_ASSERT(rc == 0);
 #endif

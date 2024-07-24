@@ -28,6 +28,7 @@ TEST_CASE_SELF(log_test_case_cbmem_append_mbuf)
     uint16_t *off_arr;
     int i;
     int rc;
+    struct log_entry_hdr *hdr;
     int num_strs = ltu_num_strs();
 
     ltu_setup_cbmem(&cbmem, &log);
@@ -38,7 +39,8 @@ TEST_CASE_SELF(log_test_case_cbmem_append_mbuf)
     TEST_ASSERT_FATAL(off_arr != NULL);
 
     for (i = 0; i < num_strs; i++) {
-        len = off_arr[i+1] - off_arr[i];
+        hdr = (struct log_entry_hdr *)(dummy_log_arr + off_arr[i]);
+        len = off_arr[i+1] - off_arr[i] - log_trailer_len(&log, hdr);
         /* Split chain into several mbufs. */
         om = ltu_flat_to_fragged_mbuf(dummy_log_arr + off_arr[i],
                                       len, 2);
