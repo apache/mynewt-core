@@ -25,18 +25,27 @@ fcb_rotate(struct fcb *fcb)
 {
     struct flash_area *fap;
     int rc = 0;
+    int entry_count;
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
     if (rc && rc != OS_NOT_STARTED) {
         return FCB_ERR_ARGS;
     }
 
+    /* Sector is being erased. Decrease number of entries in FCB accordingly */
+    entry_count = fcb_get_entry_count(fcb, fcb->f_oldest);
+    if (fcb->f_entry_count > entry_count) {
+        fcb->f_entry_count -= entry_count;
+    } else {
+        fcb->f_entry_count = 0;
+    }
     rc = flash_area_erase(fcb->f_oldest, 0, fcb->f_oldest->fa_size);
     if (rc) {
         rc = FCB_ERR_FLASH;
         goto out;
     }
     if (fcb->f_oldest == fcb->f_active.fe_area) {
+        fcb->f_active_sector_entry_count = 0;
         /*
          * Need to create a new active area, as we're wiping the current.
          */

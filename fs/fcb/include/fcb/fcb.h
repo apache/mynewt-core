@@ -55,6 +55,8 @@ struct fcb {
     uint8_t f_version;  	/* Current version number of the data */
     uint16_t f_sector_cnt;	/* Number of elements in sector array */
     uint16_t f_scratch_cnt;	/* How many sectors should be kept empty */
+    uint32_t f_entry_count; /* Number of elements in FCB */
+    uint16_t f_active_sector_entry_count;
     struct flash_area *f_sectors; /* Array of sectors, must be contiguous */
 
     /* Flash circular buffer internal state */
@@ -80,6 +82,18 @@ struct fcb {
 #define FCB_ERR_NEXT_SECT -9
 
 int fcb_init(struct fcb *fcb);
+
+/**
+ * Return number of entries in whole FCB or single sector (fa).
+ *
+ * Number of entries for whole FCB is computed during fcb_init.
+ *
+ * @param fcb - fcb to get number of entries from
+ * @param fa - single sector to count entries (optional can be NULL)
+ *
+ * @return number of entries in FCB or one sector of FCB
+ */
+int fcb_get_entry_count(struct fcb *fcb, struct flash_area *fa);
 
 /**
  * fcb_append() appends an entry to circular buffer. When writing the
