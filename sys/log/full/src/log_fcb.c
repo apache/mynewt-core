@@ -656,6 +656,20 @@ log_fcb_flush(struct log *log)
 }
 
 static int
+log_fcb_get_entry_count(struct log *log, uint32_t *entry_count)
+{
+    struct fcb_log *fcb_log;
+    struct fcb *fcb;
+
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+    *entry_count = fcb_get_entry_count(fcb, NULL);
+
+    return 0;
+}
+
+static int
 log_fcb_registered(struct log *log)
 {
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
@@ -972,23 +986,24 @@ err:
 }
 
 const struct log_handler log_fcb_handler = {
-    .log_type             = LOG_TYPE_STORAGE,
-    .log_read             = log_fcb_read,
-    .log_read_mbuf        = log_fcb_read_mbuf,
-    .log_append           = log_fcb_append,
-    .log_append_body      = log_fcb_append_body,
-    .log_append_mbuf      = log_fcb_append_mbuf,
+    .log_type = LOG_TYPE_STORAGE,
+    .log_read = log_fcb_read,
+    .log_read_mbuf = log_fcb_read_mbuf,
+    .log_append = log_fcb_append,
+    .log_append_body = log_fcb_append_body,
+    .log_append_mbuf = log_fcb_append_mbuf,
     .log_append_mbuf_body = log_fcb_append_mbuf_body,
-    .log_walk             = log_fcb_walk,
-    .log_walk_sector      = log_fcb_walk_area,
-    .log_flush            = log_fcb_flush,
+    .log_walk = log_fcb_walk,
+    .log_walk_sector = log_fcb_walk_area,
+    .log_flush = log_fcb_flush,
+    .log_get_entry_count = log_fcb_get_entry_count,
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
-    .log_storage_info     = log_fcb_storage_info,
+    .log_storage_info = log_fcb_storage_info,
 #endif
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
-    .log_set_watermark    = log_fcb_set_watermark,
+    .log_set_watermark = log_fcb_set_watermark,
 #endif
-    .log_registered       = log_fcb_registered,
+    .log_registered = log_fcb_registered,
 };
 
 #endif

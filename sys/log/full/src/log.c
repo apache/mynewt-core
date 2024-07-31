@@ -1014,6 +1014,22 @@ err:
     return (rc);
 }
 
+int
+log_get_entry_count(struct log *log, uint32_t *entry_count)
+{
+    int rc;
+
+    if (entry_count == NULL) {
+        rc = SYS_EINVAL;
+    } else if (log->l_log->log_get_entry_count == NULL) {
+        rc = SYS_ENOTSUP;
+    } else {
+        rc = log->l_log->log_get_entry_count(log, entry_count);
+    }
+
+    return rc;
+}
+
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 int
 log_storage_info(struct log *log, struct log_storage_info *info)
