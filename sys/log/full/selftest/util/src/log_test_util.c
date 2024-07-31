@@ -18,6 +18,7 @@
  */
 
 #include "log_test_util/log_test_util.h"
+#include "log/log.h"
 
 #if MYNEWT_VAL(LOG_FCB)
 static struct flash_area fcb_areas[] = {
@@ -46,6 +47,37 @@ static struct flash_sector_range fcb_range = {
 static int ltu_str_idx = 0;
 static int ltu_str_max_idx = 0;
 
+struct dummy_log {
+    struct log_entry_hdr hdr;
+    uint32_t num_entries;
+    struct log_tlv tlv;
+};
+
+struct dummy_log dummy_log = {
+    .hdr = {
+        .ue_ts = 1,
+        .ue_module = 2,
+        .ue_etype = 3,
+        .ue_flags = 0
+#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
+                    | LOG_FLAGS_IMG_HASH
+#endif
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+                    | LOG_FLAGS_TLV_SUPPORT
+#endif
+        ,
+        .ue_etype = 0,
+        .ue_imghash = {1, 2, 3, 4},
+        .ue_level = 3,
+        .ue_num_entries = 5
+    },
+    .num_entries = 0,
+    .tlv = {
+        .tag = LOG_TLV_NUM_ENTRIES,
+        .len = LOG_NUM_ENTRIES_SIZE
+    },
+};
+
 char *ltu_str_logs[] = {
     "testdata",
     "1testdata2",
@@ -53,6 +85,10 @@ char *ltu_str_logs[] = {
     "alkjfadkjsfajsd;kfjadls;hg;lasdhgl;aksdhfl;asdkh;afbabababaaacsds",
     NULL
 };
+
+uint16_t ltu_off_arr[5];
+
+uint8_t dummy_log_arr[2048];
 
 static uint8_t ltu_cbmem_buf[2048];
 
@@ -64,6 +100,43 @@ ltu_num_strs(void)
     for (i = 0; ltu_str_logs[i] != NULL; i++) { }
 
     return i;
+}
+
+uint16_t *
+ltu_get_ltu_off_arr(void)
+{
+    return ltu_off_arr;
+}
+
+uint16_t
+ltu_init_arr(void)
+{
+    int i;
+    uint16_t offset = 0;
+
+    for (i = 0; i < ltu_num_strs(); i++) {
+        TEST_ASSERT_FATAL(offset <= 2048);
+        ltu_off_arr[i] = offset;
+        memcpy(dummy_log_arr + offset, &dummy_log.hdr, LOG_BASE_ENTRY_HDR_SIZE);
+        offset += LOG_BASE_ENTRY_HDR_SIZE;
+#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
+        memcpy(dummy_log_arr + offset,
+               dummy_log.hdr.ue_imghash, LOG_IMG_HASHLEN);
+        offset += LOG_IMG_HASHLEN;
+#endif
+        memcpy(dummy_log_arr + offset, ltu_str_logs[i], strlen(ltu_str_logs[i]));
+        offset += strlen(ltu_str_logs[i]);
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+#if MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+        memcpy(dummy_log_arr + offset, &dummy_log.num_entries, LOG_NUM_ENTRIES_SIZE);
+        offset += LOG_NUM_ENTRIES_SIZE;
+        memcpy(dummy_log_arr + offset, &dummy_log.tlv, sizeof(struct log_tlv));
+        offset += sizeof(struct log_tlv);
+#endif
+#endif
+    }
+    ltu_off_arr[i] = offset;
+    return offset;
 }
 
 struct os_mbuf *
@@ -190,6 +263,8 @@ ltu_walk_verify(struct log *log, struct log_offset *log_offset,
     char data[128];
     int dlen;
     uint16_t hdr_len;
+    uint16_t trailer_len;
+    uint16_t offset = 0;
 
     TEST_ASSERT(ltu_str_idx < ltu_str_max_idx);
 
@@ -197,9 +272,17 @@ ltu_walk_verify(struct log *log, struct log_offset *log_offset,
 
     rc = log_read(log, dptr, &ueh, 0, LOG_BASE_ENTRY_HDR_SIZE);
     TEST_ASSERT(rc == LOG_BASE_ENTRY_HDR_SIZE);
+    offset = LOG_BASE_ENTRY_HDR_SIZE;
+
+    if (ueh.ue_flags & LOG_FLAGS_IMG_HASH) {
+        rc = log_read(log, dptr, data, offset, LOG_IMG_HASHLEN);
+        TEST_ASSERT(rc == LOG_IMG_HASHLEN);
+        offset += LOG_IMG_HASHLEN;
+    }
 
     hdr_len = log_hdr_len(&ueh);
-    dlen = len - hdr_len;
+    trailer_len = log_trailer_len(log, &ueh);
+    dlen = len - hdr_len - trailer_len;
     TEST_ASSERT(dlen < sizeof(data));
 
     rc = log_read(log, dptr, data, hdr_len, dlen);
@@ -217,6 +300,12 @@ ltu_walk_verify(struct log *log, struct log_offset *log_offset,
 
     rc = log_read_body(log, dptr, data, 0, dlen);
     TEST_ASSERT(rc == dlen);
+
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT) && MYNEWT_VAL(LOG_TLV_NUM_ENTRIES)
+    uint32_t num_entries;
+    rc = log_read_trailer(log, dptr, LOG_TLV_NUM_ENTRIES, &num_entries);
+    TEST_ASSERT(rc == 0);
+#endif
 
     TEST_ASSERT(strlen(ltu_str_logs[ltu_str_idx]) == dlen);
     TEST_ASSERT(!memcmp(ltu_str_logs[ltu_str_idx], data, dlen));
@@ -262,6 +351,8 @@ ltu_walk_body_verify(struct log *log, struct log_offset *log_offset,
     /*** Verify contents using single read. */
 
     TEST_ASSERT(len < sizeof(data));
+
+    len -= log_trailer_len(log, euh);
 
     rc = log_read_body(log, dptr, data, 0, len);
     TEST_ASSERT(rc == len);
