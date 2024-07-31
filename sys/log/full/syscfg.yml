@@ -85,6 +85,10 @@ syscfg.defs:
         restrictions:
             - SHELL_TASK
 
+    LOG_CLI_FILL_CMD:
+        description: 'Add "log-fill" command for filling up log'
+        value: 0
+
     LOG_SHELL_SHOW_INDEX:
         description: '"log" command shows log index when dumping entries'
         value: 0
