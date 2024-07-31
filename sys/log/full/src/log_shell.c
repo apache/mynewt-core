@@ -254,4 +254,45 @@ shell_log_storage_cmd(int argc, char **argv)
 }
 #endif
 
+static int
+log_fill_command(int argc, char **argv)
+{
+    const char *log_name;
+    struct log *log;
+    int num = 1;
+
+    if (argc > 2) {
+        log_name = argv[2];
+        log = log_find(log_name);
+    } else {
+        log = log_list_get_next(NULL);
+    }
+    if (log == NULL) {
+        console_printf("No log to fill\n");
+        return -1;
+    }
+    if (argc > 1) {
+        num = atoi(argv[1]);
+        if (num <= 0 || num > 10000) {
+            num = 1;
+        }
+    }
+
+    for (int i = 0; i < num; ++i) {
+        log_printf(log, MODLOG_MODULE_DFLT, LOG_LEVEL_INFO, "Log os_time %d", (int)os_time_get());
+    }
+
+    return 0;
+}
+
+static struct shell_cmd log_fill_cmd = {
+    .sc_cmd = "log-fill",
+    .sc_cmd_func = log_fill_command
+};
+
+void
+shell_log_fill_register(void)
+{
+    shell_cmd_register(&log_fill_cmd);
+}
 #endif
