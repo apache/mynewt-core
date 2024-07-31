@@ -1,0 +1,88 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    CS47L63_0:
+        description: >
+            Include CS47L63 driver in build
+        value: 1
+
+    CS47L63_0_NAME:
+        description: >
+            Device name for CS47L63_0.
+        value: '"cs47l63_0"'
+
+    CS47L63_0_BUS:
+        description: >
+            SPI bus name for CS47L63_0
+        value:
+    CS47L63_0_SPI_CS_PIN:
+        description: >
+            CS pin for CS47L63_0 instance.
+        value:
+
+    CS47L63_0_SPI_CLK_KHZ:
+        description: >
+            SPI clock for CS47L63_0.
+        value:
+
+    CS47L63_0_RESET_PIN:
+        description: >
+            CS47L63_0 reset pin GPIO.
+        value:
+
+    CS47L63_0_INT_PIN:
+        description: >
+            CS47L63_0 INT pin GPIO.
+        value:
+
+    CS47L63_0_SHELL:
+        description: >
+            Enable shell.
+        value: 1
+
+    CS47L63_0_ASP1_SAMPLE_RATE:
+        description: >
+            Sample rate on digital interface ASP1.
+        value: 48000
+
+    CS47L63_0_ASPI1_SAMPLE_SIZE:
+        description: >
+            Single sample size in bits.
+        value: 16
+
+    CS47L63_0_VOLUME:
+        description: >
+            Volume in DB (-64..31)
+        value: -20
+
+    CS47L63_LOG_MOD:
+        description: 'Numeric module ID to use for hw codec view log messages.'
+        value: 67
+    CS47L63_LOG_LVL:
+        description: 'Minimum level for the hw codec view log.'
+        value: 1
+
+syscfg.logs:
+    CS47L63_LOG:
+        module: MYNEWT_VAL(CS47L63_LOG_MOD)
+        level: MYNEWT_VAL(CS47L63_LOG_LVL)
+        name: '"CS47L63"'
+
+syscfg.vals:
+    MCU_DRIVERS_CS47L63: 1
