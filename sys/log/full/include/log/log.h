@@ -60,6 +60,8 @@ struct log_offset {
 
     /* Specific to walk / read function. */
     void *lo_arg;
+
+    bool lo_walk_backward;
 };
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
