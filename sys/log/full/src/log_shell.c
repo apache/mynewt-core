@@ -41,11 +41,26 @@
 
 static uint32_t shell_log_count;
 
+
+struct walk_arg {
+    uint32_t count_limit;
+    uint32_t count;
+};
+
 static int
 shell_log_count_entry(struct log *log, struct log_offset *log_offset,
                       const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
 {
+    struct walk_arg *arg = (struct walk_arg *)log_offset->lo_arg;
+
     shell_log_count++;
+    if (arg) {
+        arg->count++;
+        if (arg->count >= arg->count_limit) {
+            return 1;
+        }
+    }
+
     return 0;
 }
 
@@ -59,6 +74,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     struct CborParser cbor_parser;
     struct CborValue cbor_value;
     struct log_cbor_reader cbor_reader;
+    struct walk_arg *arg = (struct walk_arg *)log_offset->lo_arg;
     char tmp[32 + 1];
     int off;
     int blksz;
@@ -108,6 +124,12 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     }
 
     console_write("\n", 1);
+    if (arg) {
+        arg->count++;
+        if (arg->count >= arg->count_limit) {
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -124,6 +146,7 @@ shell_log_dump_cmd(int argc, char **argv)
     bool partial_match = false;
     bool clear_log;
     bool dump_logs = true;
+    struct walk_arg arg = {};
     int i;
     int rc;
 
@@ -132,6 +155,17 @@ shell_log_dump_cmd(int argc, char **argv)
         if (0 == strcmp(argv[i], "-l")) {
             list_only = true;
             break;
+        }
+        if (0 == strcmp(argv[i], "-n")) {
+            if (i + 1 < argc) {
+                arg.count_limit = parse_ll_bounds(argv[i + 1], 1, 1000000, &rc);
+                if (rc) {
+                    arg.count_limit = 1;
+                }
+                log_offset.lo_arg = &arg;
+            }
+            ++i;
+            continue;
         }
         if (0 == strcmp(argv[i], "-t")) {
             dump_logs = false;
@@ -241,8 +275,10 @@ shell_log_storage_cmd(int argc, char **argv)
         if (log_storage_info(log, &info)) {
             console_printf("Storage info not supported for %s\n", log->l_name);
         } else {
-            console_printf("%s: %d of %d used\n", log->l_name,
-                           (unsigned)info.used, (unsigned)info.size);
+            uint32_t entry_count = 0;
+            log_get_entry_count(log, &entry_count);
+            console_printf("%s: %d of %d used; %d entries\n", log->l_name,
+                           (unsigned)info.used, (unsigned)info.size, (int)entry_count);
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
             console_printf("%s: %d of %d used by unread entries\n", log->l_name,
                            (unsigned)info.used_unread, (unsigned)info.size);
