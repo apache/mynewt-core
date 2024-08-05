@@ -43,7 +43,11 @@ static uint32_t shell_log_count;
 
 
 struct walk_arg {
+    /* Number of entries to skip */
+    uint32_t skip;
+    /* Number of entries to process */
     uint32_t count_limit;
+    /* Entry number */
     uint32_t count;
 };
 
@@ -56,7 +60,7 @@ shell_log_count_entry(struct log *log, struct log_offset *log_offset,
     shell_log_count++;
     if (arg) {
         arg->count++;
-        if (arg->count >= arg->count_limit) {
+        if ((arg->count_limit > 0) && (arg->count >= arg->count_limit)) {
             return 1;
         }
     }
@@ -80,6 +84,14 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     int blksz;
     bool read_data = ueh->ue_etype != LOG_ETYPE_CBOR;
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
+
+    if (arg) {
+        arg->count++;
+        /* Continue walk if number of entries to skip not reached yet */
+        if (arg->count <= arg->skip) {
+            return 0;
+        }
+    }
 
     dlen = min(len, 128);
 
@@ -125,8 +137,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
 
     console_write("\n", 1);
     if (arg) {
-        arg->count++;
-        if (arg->count >= arg->count_limit) {
+        if ((arg->count_limit > 0) && (arg->count - arg->skip >= arg->count_limit)) {
             return 1;
         }
     }
@@ -137,7 +148,7 @@ int
 shell_log_dump_cmd(int argc, char **argv)
 {
     struct log *log;
-    struct log_offset log_offset;
+    struct log_offset log_offset = {};
     bool list_only = false;
     char *log_name = NULL;
     uint32_t log_last_index = 0;
@@ -161,6 +172,17 @@ shell_log_dump_cmd(int argc, char **argv)
                 arg.count_limit = parse_ll_bounds(argv[i + 1], 1, 1000000, &rc);
                 if (rc) {
                     arg.count_limit = 1;
+                }
+                log_offset.lo_arg = &arg;
+            }
+            ++i;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "-s")) {
+            if (i + 1 < argc) {
+                arg.skip = parse_ll_bounds(argv[i + 1], 0, 1000000, &rc);
+                if (rc) {
+                    arg.skip = 0;
                 }
                 log_offset.lo_arg = &arg;
             }
@@ -221,7 +243,6 @@ shell_log_dump_cmd(int argc, char **argv)
                 console_printf("Dumping log %s\n", log->l_name);
             }
 
-            log_offset.lo_arg = NULL;
             log_offset.lo_ts = 0;
             log_last_index = log_get_last_index(log);
             if (log_limit == 0 || log_last_index < log_limit) {
@@ -232,6 +253,7 @@ shell_log_dump_cmd(int argc, char **argv)
             log_offset.lo_data_len = 0;
 
             if (dump_logs) {
+                arg.count = 0;
                 rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
             } else {
                 /* Measure time for log_walk */
