@@ -131,6 +131,7 @@ fcb_append_finish(struct fcb *fcb, struct fcb_entry *loc)
     uint8_t crc8;
     uint32_t off;
 
+    fcb->f_active_sector_entry_count++;
     rc = fcb_elem_crc8(fcb, loc, &crc8);
     if (rc) {
         return rc;
