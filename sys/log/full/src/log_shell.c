@@ -156,6 +156,7 @@ shell_log_dump_cmd(int argc, char **argv)
     bool stream;
     bool partial_match = false;
     bool clear_log;
+    bool reverse = false;
     bool dump_logs = true;
     struct walk_arg arg = {};
     int i;
@@ -191,6 +192,10 @@ shell_log_dump_cmd(int argc, char **argv)
         }
         if (0 == strcmp(argv[i], "-t")) {
             dump_logs = false;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "-r")) {
+            reverse = true;
             continue;
         }
 
@@ -243,7 +248,12 @@ shell_log_dump_cmd(int argc, char **argv)
                 console_printf("Dumping log %s\n", log->l_name);
             }
 
-            log_offset.lo_ts = 0;
+            if (reverse) {
+                log_offset.lo_ts = -1;
+                log_offset.lo_walk_backward = true;
+            } else {
+                log_offset.lo_ts = 0;
+            }
             log_last_index = log_get_last_index(log);
             if (log_limit == 0 || log_last_index < log_limit) {
                 log_offset.lo_index = 0;
