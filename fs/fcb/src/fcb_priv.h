@@ -58,6 +58,19 @@ int fcb_sector_hdr_init(struct fcb *, struct flash_area *fap, uint16_t id);
 int fcb_sector_hdr_read(struct fcb *, struct flash_area *fap,
   struct fcb_disk_area *fdap);
 
+/**
+ * Compute total bytes needed to store entry of given length in flash.
+ *
+ * Returned value includes size of header (just length) size of entry
+ * and size of CRC8. Each of those filed can take more space when flash
+ * alignment is greater then 1.
+ *
+ * @param fcb - fcb with alignment restriction field.
+ * @param len - entry user data length.
+ * @return number of bytes that entry will occupy in flash.
+ */
+int fcb_entry_total_len(struct fcb *fcb, int len);
+
 #ifdef __cplusplus
 }
 #endif

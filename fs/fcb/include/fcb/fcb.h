@@ -38,6 +38,17 @@ extern "C" {
 
 #define FCB_MAX_LEN	(CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
 
+struct fcb_entry_cache {
+    /* Sector number in FCB */
+    uint16_t sector_ix;
+    /* Number of entries that cache can keep */
+    uint16_t cache_size;
+    /* Number of entries in cache */
+    uint16_t cache_count;
+    /* Cached data */
+    uint16_t *cache_data;
+};
+
 /**
  * Entry location is pointer to area (within fcb->f_sectors), and offset
  * within that area.
@@ -47,6 +58,9 @@ struct fcb_entry {
     uint32_t fe_elem_off;	/* start of entry */
     uint32_t fe_data_off;	/* start of data */
     uint16_t fe_data_len;	/* size of data area */
+    uint16_t fe_elem_ix;    /* Element index in current sector */
+    struct fcb_entry_cache *fe_cache;
+    bool fe_step_back; /* walk backwards */
 };
 
 struct fcb {
@@ -55,6 +69,8 @@ struct fcb {
     uint8_t f_version;  	/* Current version number of the data */
     uint16_t f_sector_cnt;	/* Number of elements in sector array */
     uint16_t f_scratch_cnt;	/* How many sectors should be kept empty */
+    /** Number of element in active sector (f_active) */
+    uint16_t f_active_sector_entry_count;
     struct flash_area *f_sectors; /* Array of sectors, must be contiguous */
 
     /* Flash circular buffer internal state */
@@ -64,6 +80,41 @@ struct fcb {
     uint16_t f_active_id;
     uint8_t f_align;		/* writes to flash have to aligned to this */
 };
+
+/**
+ * Init FCB cache that can be used for walking back optimization.
+ *
+ * Note: Cache can be used to speed up walk back functionality.
+ * Cache uses memory allocated by os_malloc/os_realloc and must
+ * be freed after use with fcb_cache_free().
+ *
+ * To setup cache:
+ * struct fcb_entry_cache cache;
+ * struct fcb_entry loc = {};
+ *
+ * loc.fe_cache = &cache;
+ * fcb_cache_init(fcb, &cache, 100);
+ * loc.fe_step_back = true;
+ *
+ * fcb_getnext(fcb, &loc);
+ *
+ * fcb_cache_free(fcb, cache);
+ *
+ * @param fcb - fcb to init cache for
+ * @param cache - cache to init
+ * @param initial_entry_count - initial number of entries in the cache
+ * @return 0 - on success
+ *         SYS_ENOMEM - when cache memory can't be allocated.
+ */
+int fcb_cache_init(struct fcb *fcb, struct fcb_entry_cache *cache, int initial_entry_count);
+
+/**
+ * Free memory allocate by fcb cache.
+ *
+ * @param fcb - fcb associated with cache
+ * @param cache - cache to free
+ */
+void fcb_cache_free(struct fcb *fcb, struct fcb_entry_cache *cache);
 
 /**
  * Error codes.
@@ -101,6 +152,20 @@ int fcb_append_finish(struct fcb *, struct fcb_entry *append_loc);
 typedef int (*fcb_walk_cb)(struct fcb_entry *loc, void *arg);
 int fcb_walk(struct fcb *, struct flash_area *, fcb_walk_cb cb, void *cb_arg);
 int fcb_getnext(struct fcb *, struct fcb_entry *loc);
+
+#if MYNEWT_VAL_FCB_BIDIRECTIONAL
+/**
+ * Call 'cb' for every element in flash circular buffer moving
+ * from the newest to oldest entries.
+ *
+ * @param fcb - fcb to walk through
+ * @param cb - function to call for each entry
+ * @param cb_arg - argument to pass to cb
+ * @return 0 after whole buffer was traversed
+ *         non zero value if cb requested termination of the walk
+ */
+int fcb_walk_back(struct fcb *fcb, fcb_walk_cb cb, void *cb_arg);
+#endif
 
 /**
  * Erases the data from oldest sector.

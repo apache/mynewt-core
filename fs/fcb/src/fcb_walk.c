@@ -51,3 +51,31 @@ fcb_walk(struct fcb *fcb, struct flash_area *fap, fcb_walk_cb cb, void *cb_arg)
     os_mutex_release(&fcb->f_mtx);
     return 0;
 }
+
+#if MYNEWT_VAL_FCB_BIDIRECTIONAL
+int
+fcb_walk_back(struct fcb *fcb, fcb_walk_cb cb, void *cb_arg)
+{
+    struct fcb_entry loc = {
+        .fe_step_back = true,
+    };
+    int rc;
+
+    rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
+    if (rc && rc != OS_NOT_STARTED) {
+        return FCB_ERR_ARGS;
+    }
+    while ((rc = fcb_getnext_nolock(fcb, &loc)) != FCB_ERR_NOVAR) {
+        os_mutex_release(&fcb->f_mtx);
+        rc = cb(&loc, cb_arg);
+        if (rc) {
+            return rc;
+        }
+        os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
+    }
+    os_mutex_release(&fcb->f_mtx);
+
+    return 0;
+}
+
+#endif

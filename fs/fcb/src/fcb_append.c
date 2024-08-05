@@ -101,6 +101,7 @@ fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
         fcb->f_active.fe_area = fa;
         fcb->f_active.fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
         fcb->f_active_id++;
+        fcb->f_active_sector_entry_count = 0;
     }
 
     rc = flash_area_write(active->fe_area, active->fe_elem_off, tmp_str, cnt);
@@ -131,6 +132,7 @@ fcb_append_finish(struct fcb *fcb, struct fcb_entry *loc)
     uint8_t crc8;
     uint32_t off;
 
+    fcb->f_active_sector_entry_count++;
     rc = fcb_elem_crc8(fcb, loc, &crc8);
     if (rc) {
         return rc;
