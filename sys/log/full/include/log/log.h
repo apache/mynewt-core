@@ -96,6 +96,7 @@ typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
                                           struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
+typedef int (*lh_get_entry_count_func_t)(struct log *log, uint32_t *entry_count);
 typedef int (*lh_flush_func_t)(struct log *);
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 typedef int (*lh_storage_info_func_t)(struct log *, struct log_storage_info *);
@@ -116,6 +117,7 @@ struct log_handler {
     lh_walk_func_t log_walk;
     lh_walk_func_t log_walk_sector;
     lh_flush_func_t log_flush;
+    lh_get_entry_count_func_t log_get_entry_count;
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     lh_storage_info_func_t log_storage_info;
 #endif
@@ -591,6 +593,16 @@ int log_walk(struct log *log, log_walk_func_t walk_func,
 int log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
         struct log_offset *log_offset);
 int log_flush(struct log *log);
+
+/**
+ * Returns number of entries in log.
+ *
+ * @param log - The log to return number of entries from
+ * @param entry_count - The pointer to variable to store number of entries.
+ *
+ * @return 0 on success, error code otherwise
+ */
+int log_get_entry_count(struct log *log, uint32_t *entry_count);
 
 /**
  * @brief      Walking a section of FCB.

@@ -24,6 +24,46 @@
 #include "string.h"
 
 int
+fcb_get_entry_count(struct fcb *fcb, struct flash_area *fa)
+{
+    int rc;
+    uint8_t buf[2];
+    /* First entry starts just after FCB header */
+    int offset;
+    uint16_t len;
+    /* Number of bytes needed for entry len encoding */
+    uint16_t len_bytes;
+    /* Sector size limit needed in case data is corrupted */
+    uint32_t limit;
+    int count;
+
+    if (fa == NULL) {
+        return fcb->f_entry_count;
+    } else if (fcb->f_active.fe_area == fa) {
+        return fcb->f_active_sector_entry_count;
+    }
+
+    count = 0;
+    limit = fa->fa_size - 3;
+    offset = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
+
+    while (offset < limit) {
+        rc = flash_area_read_is_empty(fa, offset, buf, 2);
+        if (rc == 0) {
+            len_bytes = fcb_get_len(buf, &len);
+            count++;
+            offset += fcb_len_in_flash(fcb, len_bytes) +
+                      fcb_len_in_flash(fcb, len) +
+                      fcb_len_in_flash(fcb, sizeof(uint8_t)); /* CRC8 */
+        } else {
+            break;
+        }
+    }
+
+    return count;
+}
+
+int
 fcb_init(struct fcb *fcb)
 {
     struct flash_area *fap;
@@ -34,10 +74,13 @@ fcb_init(struct fcb *fcb)
     int oldest = -1, newest = -1;
     struct flash_area *oldest_fap = NULL, *newest_fap = NULL;
     struct fcb_disk_area fda;
+    int sector_entry_count;
 
     if (!fcb->f_sectors || fcb->f_sector_cnt - fcb->f_scratch_cnt < 1) {
         return FCB_ERR_ARGS;
     }
+
+    fcb->f_entry_count = 0;
 
     /* Fill last used, first used */
     for (i = 0; i < fcb->f_sector_cnt; i++) {
@@ -53,14 +96,18 @@ fcb_init(struct fcb *fcb)
         if (rc == 0) {
             continue;
         }
+        sector_entry_count = fcb_get_entry_count(fcb, fap);
+        fcb->f_entry_count += sector_entry_count;
         if (oldest < 0) {
             oldest = newest = fda.fd_id;
             oldest_fap = newest_fap = fap;
+            fcb->f_active_sector_entry_count = sector_entry_count;
             continue;
         }
         if (FCB_ID_GT(fda.fd_id, newest)) {
             newest = fda.fd_id;
             newest_fap = fap;
+            fcb->f_active_sector_entry_count = sector_entry_count;
         } else if (FCB_ID_GT(oldest, fda.fd_id)) {
             oldest = fda.fd_id;
             oldest_fap = fap;
