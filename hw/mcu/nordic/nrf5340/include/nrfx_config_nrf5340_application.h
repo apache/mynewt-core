@@ -704,7 +704,7 @@
  * Boolean. Accepted values: 0 and 1.
  */
 #ifndef NRFX_NVMC_ENABLED
-#define NRFX_NVMC_ENABLED 0
+#define NRFX_NVMC_ENABLED 1
 #endif
 
 /**
@@ -989,7 +989,11 @@
  * Boolean. Accepted values: 0 and 1.
  */
 #ifndef NRFX_QSPI_ENABLED
+#if MYNEWT_VAL(QSPI_ENABLE)
+#define NRFX_QSPI_ENABLED 1
+#else
 #define NRFX_QSPI_ENABLED 0
+#endif
 #endif
 
 /**
