@@ -142,6 +142,21 @@ int fcb_append(struct fcb *, uint16_t len, struct fcb_entry *loc);
 int fcb_append_finish(struct fcb *, struct fcb_entry *append_loc);
 
 /**
+ * Write to flash user data.
+ *
+ * Function should be called after fcb_append is called and before fcb_finish
+ * This is wrapper for flash_area_write() function and uses loc for starting
+ * location. loc is modified and can be used for subsequent writes.
+ *
+ * @param fcb - fcb to write entry to
+ * @param loc - location of the entry
+ * @param buf - data to write
+ * @param len - number of bytes to write to fcb
+ * @return 0 on success, non-zero on failure
+ */
+int fcb_write(struct fcb *fcb, struct fcb_entry *loc, const uint8_t *buf, size_t len);
+
+/**
  * Walk over all entries in FCB.
  * cb gets called for every entry. If cb wants to stop the walk, it should
  * return non-zero value.
