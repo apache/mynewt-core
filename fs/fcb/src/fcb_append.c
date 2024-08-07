@@ -86,24 +86,26 @@ fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
     struct flash_area *fa;
     uint8_t tmp_str[2];
     int cnt;
+    int len_bytes_in_flash;
+    int entry_len_in_flash;
     int rc;
 
     cnt = fcb_put_len(tmp_str, len);
     if (cnt < 0) {
         return cnt;
     }
-    cnt = fcb_len_in_flash(fcb, cnt);
-    len = fcb_len_in_flash(fcb, len) + fcb_len_in_flash(fcb, FCB_CRC_SZ);
+    len_bytes_in_flash = fcb_len_in_flash(fcb, cnt);
+    entry_len_in_flash = fcb_entry_total_len(fcb, len);
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
     if (rc && rc != OS_NOT_STARTED) {
         return FCB_ERR_ARGS;
     }
     active = &fcb->f_active;
-    if (active->fe_elem_off + len + cnt > active->fe_area->fa_size) {
+    if (active->fe_elem_off + entry_len_in_flash > active->fe_area->fa_size) {
         fa = fcb_new_area(fcb, fcb->f_scratch_cnt);
         if (!fa || (fa->fa_size <
-            sizeof(struct fcb_disk_area) + len + cnt)) {
+                    fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area)) + entry_len_in_flash)) {
             rc = FCB_ERR_NOSPACE;
             goto err;
         }
@@ -124,9 +126,10 @@ fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
     }
     append_loc->fe_area = active->fe_area;
     append_loc->fe_elem_off = active->fe_elem_off;
-    append_loc->fe_data_off = active->fe_elem_off + cnt;
+    append_loc->fe_data_off = active->fe_elem_off + len_bytes_in_flash;
+    append_loc->fe_data_len = len;
 
-    active->fe_elem_off = append_loc->fe_data_off + len;
+    active->fe_elem_off = append_loc->fe_elem_off + entry_len_in_flash;
     active->fe_data_off = append_loc->fe_data_off;
     active->fe_data_len = len;
 
