@@ -67,6 +67,19 @@ fcb_append_to_scratch(struct fcb *fcb)
 }
 
 int
+fcb_write(struct fcb *fcb, struct fcb_entry *loc, const uint8_t *buf, size_t len)
+{
+    int rc;
+
+    rc = flash_area_write(loc->fe_area, loc->fe_data_off, buf, len);
+    if (rc == 0) {
+        loc->fe_data_off += len;
+    }
+
+    return rc;
+}
+
+int
 fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
 {
     struct fcb_entry *active;
