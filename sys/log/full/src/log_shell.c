@@ -39,6 +39,31 @@
 #include "tinycbor/compilersupport_p.h"
 #include "log_cbor_reader/log_cbor_reader.h"
 
+static uint32_t shell_log_count;
+
+
+struct walk_arg {
+    uint32_t count_limit;
+    uint32_t count;
+};
+
+static int
+shell_log_count_entry(struct log *log, struct log_offset *log_offset,
+                      const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
+{
+    struct walk_arg *arg = (struct walk_arg *)log_offset->lo_arg;
+
+    shell_log_count++;
+    if (arg) {
+        arg->count++;
+        if (arg->count >= arg->count_limit) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
                      const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
@@ -49,6 +74,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     struct CborParser cbor_parser;
     struct CborValue cbor_value;
     struct log_cbor_reader cbor_reader;
+    struct walk_arg *arg = (struct walk_arg *)log_offset->lo_arg;
     char tmp[32 + 1];
     int off;
     int blksz;
@@ -98,6 +124,12 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     }
 
     console_write("\n", 1);
+    if (arg) {
+        arg->count++;
+        if (arg->count >= arg->count_limit) {
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -113,6 +145,8 @@ shell_log_dump_cmd(int argc, char **argv)
     bool stream;
     bool partial_match = false;
     bool clear_log;
+    bool dump_logs = true;
+    struct walk_arg arg = {};
     int i;
     int rc;
 
@@ -121,6 +155,21 @@ shell_log_dump_cmd(int argc, char **argv)
         if (0 == strcmp(argv[i], "-l")) {
             list_only = true;
             break;
+        }
+        if (0 == strcmp(argv[i], "-n")) {
+            if (i + 1 < argc) {
+                arg.count_limit = parse_ll_bounds(argv[i + 1], 1, 1000000, &rc);
+                if (rc) {
+                    arg.count_limit = 1;
+                }
+                log_offset.lo_arg = &arg;
+            }
+            ++i;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "-t")) {
+            dump_logs = false;
+            continue;
         }
 
         /* the -c option is to clear a log (or logs). */
@@ -168,7 +217,9 @@ shell_log_dump_cmd(int argc, char **argv)
                 goto err;
             }
         } else {
-            console_printf("Dumping log %s\n", log->l_name);
+            if (dump_logs) {
+                console_printf("Dumping log %s\n", log->l_name);
+            }
 
             log_offset.lo_arg = NULL;
             log_offset.lo_ts = 0;
@@ -180,7 +231,17 @@ shell_log_dump_cmd(int argc, char **argv)
             }
             log_offset.lo_data_len = 0;
 
-            rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
+            if (dump_logs) {
+                rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
+            } else {
+                /* Measure time for log_walk */
+                shell_log_count = 0;
+                os_time_t start = os_time_get();
+                rc = log_walk_body(log, shell_log_count_entry, &log_offset);
+                os_time_t end = os_time_get();
+                console_printf("Log %s %d entries walked in %d ms\n", log->l_name,
+                               (int)shell_log_count, (int)os_time_ticks_to_ms32(end - start));
+            }
             if (rc != 0) {
                 goto err;
             }
@@ -214,8 +275,10 @@ shell_log_storage_cmd(int argc, char **argv)
         if (log_storage_info(log, &info)) {
             console_printf("Storage info not supported for %s\n", log->l_name);
         } else {
-            console_printf("%s: %d of %d used\n", log->l_name,
-                           (unsigned)info.used, (unsigned)info.size);
+            uint32_t entry_count = 0;
+            log_get_entry_count(log, &entry_count);
+            console_printf("%s: %d of %d used; %d entries\n", log->l_name,
+                           (unsigned)info.used, (unsigned)info.size, (int)entry_count);
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
             console_printf("%s: %d of %d used by unread entries\n", log->l_name,
                            (unsigned)info.used_unread, (unsigned)info.size);
@@ -227,4 +290,45 @@ shell_log_storage_cmd(int argc, char **argv)
 }
 #endif
 
+static int
+log_fill_command(int argc, char **argv)
+{
+    const char *log_name;
+    struct log *log;
+    int num = 1;
+
+    if (argc > 2) {
+        log_name = argv[2];
+        log = log_find(log_name);
+    } else {
+        log = log_list_get_next(NULL);
+    }
+    if (log == NULL) {
+        console_printf("No log to fill\n");
+        return -1;
+    }
+    if (argc > 1) {
+        num = atoi(argv[1]);
+        if (num <= 0 || num > 10000) {
+            num = 1;
+        }
+    }
+
+    for (int i = 0; i < num; ++i) {
+        log_printf(log, MODLOG_MODULE_DFLT, LOG_LEVEL_INFO, "Log os_time %d", (int)os_time_get());
+    }
+
+    return 0;
+}
+
+static struct shell_cmd log_fill_cmd = {
+    .sc_cmd = "log-fill",
+    .sc_cmd_func = log_fill_command
+};
+
+void
+shell_log_fill_register(void)
+{
+    shell_cmd_register(&log_fill_cmd);
+}
 #endif
