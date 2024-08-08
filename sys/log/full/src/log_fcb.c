@@ -135,6 +135,9 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
 
     /* Attempt to read the first entry.  If this fails, the FCB is empty. */
     memset(out_entry, 0, sizeof *out_entry);
+    if (log_offset->lo_ts < 0) {
+        out_entry->fe_step_back = true;
+    }
     rc = fcb_getnext(fcb, out_entry);
     if (rc == FCB_ERR_NOVAR) {
         return SYS_ENOENT;
@@ -146,7 +149,7 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
      * if timestamp for request is < 0, return last log entry
      */
     if (log_offset->lo_ts < 0) {
-        *out_entry = fcb->f_active;
+        out_entry->fe_step_back = false;
         return 0;
     }
 
@@ -348,7 +351,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     }
     memcpy(buf + hdr_len, u8p, hdr_alignment);
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, chunk_sz);
+    rc = fcb_write(fcb, &loc, buf, chunk_sz);
     if (rc != 0) {
         return rc;
     }
@@ -359,8 +362,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     body_len -= hdr_alignment;
 
     if (body_len > 0) {
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off + chunk_sz, u8p,
-                              body_len);
+        rc = fcb_write(fcb, &loc, u8p, body_len);
         if (rc != 0) {
             return rc;
         }
@@ -578,6 +580,7 @@ log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
     struct fcb_entry loc;
     struct flash_area *fap;
     int rc;
+    struct fcb_entry_cache cache;
 
     fcb_log = log->l_arg;
     fcb = &fcb_log->fl_fcb;
@@ -596,6 +599,14 @@ log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
     }
     fap = loc.fe_area;
 
+    if (log_offset->lo_walk_backward) {
+        loc.fe_step_back = true;
+        if (MYNEWT_VAL(FCB_BIDIRECTIONAL_CACHE)) {
+            fcb_cache_init(fcb, &cache, 50);
+            loc.fe_cache = &cache;
+        }
+    }
+
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     /* If a minimum index was specified (i.e., we are not just retrieving the
      * last entry), add a bookmark pointing to this walk's start location.
@@ -605,24 +616,28 @@ log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
     }
 #endif
 
+    rc = 0;
     do {
         if (area) {
             if (fap != loc.fe_area) {
-                return 0;
+                break;
             }
         }
 
         rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
         if (rc != 0) {
-            if (rc < 0) {
-                return rc;
-            } else {
-                return 0;
+            if (rc > 0) {
+                rc = 0;
             }
+            break;
         }
     } while (fcb_getnext(fcb, &loc) == 0);
 
-    return 0;
+    if (log_offset->lo_walk_backward && MYNEWT_VAL(FCB_BIDIRECTIONAL_CACHE)) {
+        fcb_cache_free(fcb, &cache);
+    }
+
+    return rc;
 }
 
 static int

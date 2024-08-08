@@ -27,11 +27,10 @@
 int
 fcb_walk(struct fcb *fcb, struct flash_area *fap, fcb_walk_cb cb, void *cb_arg)
 {
-    struct fcb_entry loc;
+    struct fcb_entry loc = {0};
     int rc;
 
     loc.fe_area = fap;
-    loc.fe_elem_off = 0;
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
     if (rc && rc != OS_NOT_STARTED) {

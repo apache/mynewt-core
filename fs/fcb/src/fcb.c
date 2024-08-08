@@ -82,6 +82,7 @@ fcb_init(struct fcb *fcb)
     fcb->f_active.fe_area = newest_fap;
     fcb->f_active.fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
     fcb->f_active_id = newest;
+    fcb->f_active.fe_elem_ix = 0;
 
     /* Require alignment to be a power of two.  Some code depends on this
      * assumption.
@@ -98,6 +99,8 @@ fcb_init(struct fcb *fcb)
             break;
         }
     }
+    fcb->f_active_sector_entry_count = fcb->f_active.fe_elem_ix;
+
     os_mutex_init(&fcb->f_mtx);
     return rc;
 }

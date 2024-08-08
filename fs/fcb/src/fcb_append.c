@@ -67,6 +67,19 @@ fcb_append_to_scratch(struct fcb *fcb)
 }
 
 int
+fcb_write(struct fcb *fcb, struct fcb_entry *loc, const uint8_t *buf, size_t len)
+{
+    int rc;
+
+    rc = flash_area_write(loc->fe_area, loc->fe_data_off, buf, len);
+    if (rc == 0) {
+        loc->fe_data_off += len;
+    }
+
+    return rc;
+}
+
+int
 fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
 {
     struct fcb_entry *active;
@@ -131,6 +144,7 @@ fcb_append_finish(struct fcb *fcb, struct fcb_entry *loc)
     uint8_t crc8;
     uint32_t off;
 
+    fcb->f_active_sector_entry_count++;
     rc = fcb_elem_crc8(fcb, loc, &crc8);
     if (rc) {
         return rc;

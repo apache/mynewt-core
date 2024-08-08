@@ -65,3 +65,6 @@ pkg.req_apis.LOG_STATS:
 
 pkg.init:
     log_init: 'MYNEWT_VAL(LOG_SYSINIT_STAGE_MAIN)'
+
+pkg.init.LOG_CLI_FILL_CMD:
+    shell_log_fill_register: $after:shell_init
