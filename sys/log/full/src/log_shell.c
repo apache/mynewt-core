@@ -39,6 +39,8 @@
 #include "tinycbor/compilersupport_p.h"
 #include "log_cbor_reader/log_cbor_reader.h"
 
+void log_console_print_hdr(const struct log_entry_hdr *hdr);
+
 static uint32_t shell_log_count;
 
 
@@ -84,6 +86,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     int blksz;
     bool read_data = ueh->ue_etype != LOG_ETYPE_CBOR;
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
+    bool add_lf = true;
 
     if (arg) {
         arg->count++;
@@ -103,18 +106,27 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         data[rc] = 0;
     }
 
-    if (read_hash) {
-        console_printf("[ih=0x%x%x%x%x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
-                       ueh->ue_imghash[2], ueh->ue_imghash[3]);
+    /* When LOG_CONSOLE_PRETTY is set use same function to dump log header that
+     * is used when logs are printed in real time */
+    if (MYNEWT_VAL(LOG_CONSOLE_PRETTY)) {
+        log_console_print_hdr(ueh);
+    } else {
+        if (read_hash) {
+            console_printf("[ih=0x%02x%02x%02x%02x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
+                           ueh->ue_imghash[2], ueh->ue_imghash[3]);
+        }
+        console_printf(" [%llu] ", ueh->ue_ts);
     }
-    console_printf(" [%llu] ", ueh->ue_ts);
+
 #if MYNEWT_VAL(LOG_SHELL_SHOW_INDEX)
     console_printf(" [ix=%lu] ", ueh->ue_index);
 #endif
 
     switch (ueh->ue_etype) {
     case LOG_ETYPE_STRING:
-        console_write(data, strlen(data));
+        dlen = strlen(data);
+        console_write(data, dlen);
+        add_lf = dlen < 1 || data[dlen - 1] != '\n';
         break;
     case LOG_ETYPE_CBOR:
         log_cbor_reader_init(&cbor_reader, log, dptr, len);
@@ -135,7 +147,9 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         }
     }
 
-    console_write("\n", 1);
+    if (add_lf) {
+        console_write("\n", 1);
+    }
     if (arg) {
         if ((arg->count_limit > 0) && (arg->count - arg->skip >= arg->count_limit)) {
             return 1;
