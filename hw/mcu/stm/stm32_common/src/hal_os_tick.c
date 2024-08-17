@@ -28,11 +28,10 @@
 #endif
 
 #if MYNEWT_VAL(STM32_WFI_FROM_RAM)
-__attribute__((section(".text_ram"))) void
+__attribute__((section(".text_ram"),noinline)) void
 stm32_wfi_from_ram(void)
 {
-    __ASM volatile ("wfi\n"
-                    "bx lr");
+    __ASM volatile ("wfi");
 }
 #endif
 
