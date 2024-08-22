@@ -519,7 +519,10 @@ syscfg.defs:
         description: MCU MKW41Z4 is used.
         value:
     MCU_LPCXXXX:
-        description: LPC_XXXXX MCU
+        description: LPCXXX MCU
+        value:
+    MCU_LPC55XX:
+        description: LPC55XX MCU
         value:
 
     MCUX_DRIVERS_ACMP:
@@ -1221,3 +1224,6 @@ syscfg.defs:
     MCUX_DRIVERS_XRDC2:
         description: Add drivers/xrdc2 to the build
         value:
+
+syscfg.vals.MCU_LPC55S28:
+    MCU_LPC55XX: 1
