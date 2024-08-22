@@ -19,6 +19,7 @@
 
 #include <syscfg/syscfg.h>
 #include <sysflash/sysflash.h>
+#include <mcu_config.ld.h>
 #include <bsp_config.ld.h>
 #include <target_config.ld.h>
 #include <mynewt_config.ld.h>
@@ -36,7 +37,18 @@ MEMORY
 #ifdef FLASH_AREA_IMAGE_0_OFFSET
     SLOT0 (rx!w) : ORIGIN = FLASH_AREA_IMAGE_0_OFFSET, LENGTH = FLASH_AREA_IMAGE_0_SIZE
 #endif
+    /*
+     * If STACK_REGION is defined it means that MCU stack is place in other region then RAM
+     * int that case RAM region size is exactly RAM_SIZE
+     * If STACK_REGION is NOT defined STACK_RAM region is place at the end of RAM
+     * and RAM region size is shortened.
+     */
+#ifdef STACK_REGION
     RAM (rwx) : ORIGIN = RAM_START, LENGTH = RAM_SIZE
+#else
+    RAM (rwx) : ORIGIN = RAM_START, LENGTH = (RAM_SIZE - STACK_SIZE)
+    STACK_RAM (rw) : ORIGIN = RAM_START + RAM_SIZE - STACK_SIZE, LENGTH = STACK_SIZE
+#endif
 #include <memory_regions.ld.h>
 }
 
@@ -247,7 +259,7 @@ SECTIONS
     __data_image__ = LOADADDR(.data);
     _sidata = LOADADDR(.data);
 
-    .bssnz :
+    .bssnz (NOLOAD) :
     {
         . = ALIGN(4);
         __bssnz_start__ = .;
@@ -269,14 +281,8 @@ SECTIONS
         __ecorebss = .;
     } > COREBSS_RAM
 #endif
-    .bssnz (NOLOAD):
-    {
-        . = ALIGN(4);
-        *(.bss.core.nz)
-        . = ALIGN(4);
-    } > RAM
 
-    .bss :
+    .bss (NOLOAD) :
     {
         . = ALIGN(4);
         _sbss = .;
@@ -291,27 +297,19 @@ SECTIONS
     /* Heap starts after BSS */
     . = ALIGN(8);
     __HeapBase = .;
+    /* Top of head is the bottom of the stack */
+    __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
 
-    /* Dummy section to calculate whether we need to move stack out of MTB
-     * buffer or not. */
-    .mtb (NOLOAD) :
-    {
-        KEEP(*(.mtb));
-    }
+    /* Check if data + heap + stack exceeds RAM limit */
+    ASSERT(__HeapBase <= __HeapLimit, "No space for MCU heap")
 
     _ram_start = ORIGIN(RAM);
 
     /* Set stack top to end of RAM, and stack limit move down by
      * size of stack_dummy section */
-    __StackTop = ORIGIN(RAM) + LENGTH(RAM) - SIZEOF(.mtb);
+    __StackTop = ORIGIN(STACK_RAM) + LENGTH(STACK_RAM);
+    __StackLimit = ORIGIN(STACK_RAM);
     _estack = __StackTop;
-    __StackLimit = __StackTop - STACK_SIZE;
     PROVIDE(__stack = __StackTop);
-
-    /* Top of head is the bottom of the stack */
-    __HeapLimit = __StackLimit;
-
-    /* Check if data + heap + stack exceeds RAM limit */
-    ASSERT(__HeapBase <= __HeapLimit, "region RAM overflowed with stack")
 }
 
