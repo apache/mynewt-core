@@ -35,6 +35,9 @@ syscfg.defs:
             - PLL1_150M
         value: FRO12M
 
+    MCU_PATH:
+        value: '"repos/apache-mynewt-core/hw/mcu/nxp/lpc55xx"'
+
     UART_0:
         description: 'Whether to enable UART0 (Flexcomm0)'
         value:  0
