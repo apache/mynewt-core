@@ -53,3 +53,10 @@ syscfg.defs:
         description: >
             Enable USB high speed if device supports it.
         value: 0
+    USBD_RHPORT:
+        description:
+            Selects which peripheral is used for USBD
+        value: USB0
+        choices:
+            - USB0
+            - USB1
