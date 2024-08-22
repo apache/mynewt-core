@@ -44,6 +44,8 @@ MEMORY
 /* Define output sections */
 SECTIONS
 {
+#include <user_sections.ld.h>
+
     /*
      * Image header is added by newt tool during execution newt image-create.
      * This section allows to have complete elf with predefined image header that

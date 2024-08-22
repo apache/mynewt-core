@@ -25,6 +25,7 @@ touch ${MYNEWT_BUILD_GENERATED_DIR}/link/include/target_config.ld.h
 touch ${MYNEWT_BUILD_GENERATED_DIR}/link/include/memory_regions.ld.h
 touch ${MYNEWT_BUILD_GENERATED_DIR}/link/include/bsp_config.ld.h
 touch ${MYNEWT_BUILD_GENERATED_DIR}/link/include/mcu_config.ld.h
+touch ${MYNEWT_BUILD_GENERATED_DIR}/link/include/user_sections.ld.h
 
 set >env.txt
 ${MYNEWT_CC_PATH} -xc -DMYNEWT_SYSFLASH_ONLY_CONST -P -E \
