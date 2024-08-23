@@ -86,30 +86,32 @@ os_msys_reset(void)
     STAILQ_INIT(&g_msys_pool_list);
 }
 
+static struct os_mbuf_pool *os_msys_find_pool(uint16_t dsize);
+
 static struct os_mbuf_pool *
 os_msys_find_biggest_pool(void)
 {
-    /* Mempools are sorted by the blocksize, so just return last one */
-    return STAILQ_LAST(&g_msys_pool_list, os_mbuf_pool, omp_next);
+    return os_msys_find_pool(0xFFFF);
 }
 
 static struct os_mbuf_pool *
 os_msys_find_pool(uint16_t dsize)
 {
     struct os_mbuf_pool *pool;
+    struct os_mbuf_pool *pool_with_free_blocks = NULL;
+    uint16_t pool_free_blocks;
 
-    pool = NULL;
     STAILQ_FOREACH(pool, &g_msys_pool_list, omp_next) {
-        if (dsize <= pool->omp_databuf_len) {
-            break;
+        pool_free_blocks = pool->omp_pool->mp_num_free;
+        if (pool_free_blocks != 0) {
+            pool_with_free_blocks = pool;
+            if (dsize <= pool->omp_databuf_len) {
+                break;
+            }
         }
     }
 
-    if (!pool) {
-        pool = STAILQ_LAST(&g_msys_pool_list, os_mbuf_pool, omp_next);
-    }
-
-    return (pool);
+    return pool_with_free_blocks;
 }
 
 
