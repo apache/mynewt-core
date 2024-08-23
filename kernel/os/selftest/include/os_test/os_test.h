@@ -31,6 +31,7 @@ TEST_SUITE_DECL(os_sem_test_suite);
 TEST_SUITE_DECL(os_mempool_test_suite);
 TEST_SUITE_DECL(os_time_test_suite);
 TEST_SUITE_DECL(os_mbuf_test_suite);
+TEST_SUITE_DECL(os_msys_test_suite);
 TEST_SUITE_DECL(os_eventq_test_suite);
 TEST_SUITE_DECL(os_callout_test_suite);
 
