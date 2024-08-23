@@ -67,6 +67,7 @@ os_test_all(void)
     os_mutex_test_suite();
     os_sem_test_suite();
     os_mbuf_test_suite();
+    os_msys_test_suite();
     os_eventq_test_suite();
     os_callout_test_suite();
     os_time_test_suite();

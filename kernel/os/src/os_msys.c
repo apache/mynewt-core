@@ -22,7 +22,7 @@
 #include "mem/mem.h"
 #include "os_priv.h"
 
-static STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list =
+static STAILQ_HEAD(os_mbuf_list, os_mbuf_pool) g_msys_pool_list =
     STAILQ_HEAD_INITIALIZER(g_msys_pool_list);
 
 #if MYNEWT_VAL(MSYS_1_BLOCK_COUNT) > 0
@@ -293,3 +293,11 @@ os_msys_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
+
+#if MYNEWT_VAL(SELFTEST)
+struct os_mbuf_list *
+get_msys_pool_list(void)
+{
+    return &g_msys_pool_list;
+}
+#endif
