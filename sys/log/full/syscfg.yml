@@ -41,6 +41,10 @@ syscfg.defs:
         description: >
             Use color for mod log levels.
         value: 0
+    LOG_CONSOLE_PRETTY_COLOR_MODULES:
+        description: >
+            Use color for module names.
+        value: 0
 
     LOG_CONSOLE_PRETTY_WITH_TIMESTAMP:
         description: >

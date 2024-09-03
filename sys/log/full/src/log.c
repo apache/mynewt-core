@@ -226,11 +226,26 @@ log_module_register(uint8_t id, const char *name)
     return id;
 }
 
+static const char *const default_modules[] = {
+    "DEFAULT",
+    "OS",
+    "NEWTMGR",
+    "NIMBLE_CTLR",
+    "NIMBLE_HOST",
+    "NFFS",
+    "REBOOT",
+    "IOTIVITY",
+};
+
 const char *
 log_module_get_name(uint8_t module)
 {
     int idx;
     const char *name;
+
+    if (module < LOG_MODULE_TEST) {
+        return default_modules[module];
+    }
 
     /* Find module defined in syscfg.logcfg sections */
     name = logcfg_log_module_name(module);
