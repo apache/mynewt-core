@@ -31,7 +31,7 @@ Here are steps to flash mynewt application:
 
 1. Flash map of the application must be changed to match what Nordic bootloader expects.
 Here is example target file with flash map suitable for Nordic bootloader.
-target file: *targets/nordic_pca10059-blehci_nrf52dfu*
+target file: *targets/nordic_pca10059-blehci_nrf52dfu/target.yml*
 ```yml
 target.app: "@apache-mynewt-nimble/apps/blehci"
 target.bsp: "@apache-mynewt-core/hw/bsp/nordic_pca10059"
@@ -52,7 +52,7 @@ bsp.flash_map:
             offset: 0x000E0000
             size: 128kB
         # mynewt image
-            FLASH_AREA_IMAGE_0:
+        FLASH_AREA_IMAGE_0:
             device: 0
             offset: 0x00001000
             size: 396kB
@@ -69,6 +69,37 @@ bsp.flash_map:
             offset: 0x000CC000
             size: 16kB
 ```
+Example configuration file *targets/nordic_pca10059-blehci_nrf52dfu/syscfg.yml*:
+```yml
+syscfg.vals:
+    # Skip includsion of image header in the build
+    INCLUDE_IMAGE_HEADER: 0
+
+    # Configuration for dongle to show up as bluetooth device in host system 
+    BLE_TRANSPORT_HS: usb
+    USBD_PID: 0xC01A
+    USBD_VID: 0xC0CA
+    USBD_BTH: 1
+    # Optional name of
+    USBD_PRODUCT_STRING: '"NimBLE"'
+    USBD_BTH_DESCRIPTOR_STRING: '"NimBLE"'
+
+    # Set to 1 if testing on Windows
+    BLE_LL_HBD_FAKE_DUAL_MODE: 0
+
+syscfg.vals.BLE_LL_HBD_FAKE_DUAL_MODE:
+    USBD_PRODUCT_STRING: '"NimBLE (For Windows)"'
+    USBD_BTH_DESCRIPTOR_STRING: '"NimBLE (For Windows)"'
+    # Public address is required, it should be provisioned not set this way 
+    BLE_LL_PUBLIC_DEV_ADDR: 0x010101010102
+    BLE_TRANSPORT_EVT_SIZE: 257
+```
+Example target package file *targets/nordic_pca10059-blehci_nrf52dfu/pkg.yml*:
+```yml
+pkg.name: "targets/nordic_pca10059-blehci_nrf52dfu"
+pkg.type: target
+```
+
 **FLASH_AREA_MBR** and **FLASH_AREA_NRF52_BOOTLOADER** are here to denote flash area not available to mynewt.
 
 **FLASH_AREA_IMAGE_0** must start from **<span style="color:blue">0x1000</span>**
