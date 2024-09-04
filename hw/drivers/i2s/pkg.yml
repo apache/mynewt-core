@@ -22,6 +22,9 @@ pkg.description: I2S device insterace
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-pkg.deps:
+
 pkg.req_apis:
     - I2S_HW_IMPL
+
+pkg.deps:
+    - "@apache-mynewt-core/util/stream"
