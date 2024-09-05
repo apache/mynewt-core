@@ -59,7 +59,7 @@ def check_file(fname: str, commit: str, upstream: str) -> list[str]:
         lines = subprocess.check_output(f"git show {commit}:{fname}",
                                         shell=True)
         tmpf.write(lines)
-
+        tmpf.seek(0)
         in_chunk = False
 
         for s in run_cmd(f"uncrustify -q -c uncrustify.cfg -f {tmpf.name} | "
