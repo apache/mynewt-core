@@ -75,6 +75,14 @@ static const struct sensor_driver g_bme280_sensor_driver = {
     bme280_sensor_get_config
 };
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static bool
+bme280_uses_spi(struct sensor_itf *itf)
+{
+    return ((struct bme280 *)(itf->si_dev))->node_is_spi;
+}
+#endif
+
 static int
 bme280_default_cfg(struct bme280_cfg *cfg)
 {
@@ -894,6 +902,12 @@ bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     int rc;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    uint8_t buf[4];
+
+    if (len > 3) {
+        return SYS_EINVAL;
+    }
+
     struct os_dev *dev = itf->si_dev;
 
     rc = bus_node_lock(dev, OS_TIMEOUT_NEVER);
@@ -901,16 +915,15 @@ bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         return SYS_EINVAL;
     }
 
-    addr &= ~BME280_SPI_READ_CMD_BIT;
-
-    rc = bus_node_write(dev, &addr, 1, OS_TIMEOUT_NEVER, BUS_F_NOSTOP);
-    if (rc) {
-        goto done;
+    if (bme280_uses_spi(itf)) {
+        addr &= ~BME280_SPI_READ_CMD_BIT;
     }
 
-    rc = bus_node_simple_write(dev, payload, len);
+    buf[0] = addr;
+    memcpy(buf + 1, payload, len);
 
-done:
+    rc = bus_node_simple_write(dev, buf, len + 1);
+
     (void)bus_node_unlock(dev);
 #else
     int i;
