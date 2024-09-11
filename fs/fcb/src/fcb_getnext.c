@@ -347,15 +347,13 @@ fcb_step(struct fcb *fcb, struct fcb_entry *loc, int previous_error)
             loc1.fe_data_len = 0;
 
             /* Begin of sector ? */
-            if (loc->fe_elem_off == first_entry_offset) {
+            if (loc->fe_elem_off == first_entry_offset || target_ix < 0) {
                 /* Oldest sector, nowhere to go */
                 if (fcb->f_oldest == loc->fe_area) {
                     rc = FCB_ERR_NOVAR;
                 } else {
                     /* Switch to previous sector and find last entry */
                     loc1.fe_area = fcb_get_prev_area(fcb, loc->fe_area);
-                    loc1.fe_elem_off = 0;
-                    loc1.fe_elem_ix = 0;
                 }
             }
             if (rc != FCB_ERR_NOVAR) {
@@ -418,14 +416,14 @@ fcb_step(struct fcb *fcb, struct fcb_entry *loc, int previous_error)
     } else {
         if (loc->fe_area == NULL) {
             loc->fe_area = fcb->f_oldest;
-            loc->fe_elem_off = fcb_start_offset(fcb);
+            loc->fe_elem_off = first_entry_offset;
             loc->fe_elem_ix = 0;
             loc->fe_data_len = 0;
         } else if (previous_error == FCB_ERR_NOVAR) {
             /* If there are more sectors, move to next one */
             if (loc->fe_area != fcb->f_active.fe_area) {
                 loc->fe_area = fcb_getnext_area(fcb, loc->fe_area);
-                loc->fe_elem_off = fcb_start_offset(fcb);
+                loc->fe_elem_off = first_entry_offset;
                 loc->fe_elem_ix = 0;
                 loc->fe_data_len = 0;
             } else {
@@ -433,7 +431,7 @@ fcb_step(struct fcb *fcb, struct fcb_entry *loc, int previous_error)
                 rc = FCB_ERR_NOVAR;
             }
         } else if (loc->fe_elem_off == 0) {
-            loc->fe_elem_off = fcb_start_offset(fcb);
+            loc->fe_elem_off = first_entry_offset;
             loc->fe_elem_ix = 0;
             loc->fe_data_len = 0;
         } else {
