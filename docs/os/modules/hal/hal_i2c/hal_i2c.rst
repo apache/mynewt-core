@@ -13,8 +13,7 @@ board and often peripherals devices located off the circuit board.
 I2C is often though of as a 2-wire protocol because it uses two wires
 (SDA, SCL) to send data between devices.
 
-For a detailed description of I2C, see the `I²C wikipedia
-page <https://en.wikipedia.org/wiki/I²C>`__
+For a detailed description of I²C, see the `wikipedia page <https://en.wikipedia.org/wiki/I2C>`_
 
 HAL\_I2C Theory Of Operation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

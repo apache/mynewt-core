@@ -47,7 +47,7 @@ List of Functions
 
 Documentation for libc functions is available from multiple places. One
 example are the on-line manual pages at
-`https://www.freebsd.org/cgi/man.cgi <#https://www.freebsd.org/cgi/man.cgi>`__.
+`FreeBSD website <https://www.freebsd.org/cgi/man.cgi>`_.
 
 baselibc supports most libc functionality; malloc(), printf-family,
 string handling, and conversion routines.
