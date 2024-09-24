@@ -10,15 +10,3 @@ Registers the image manager commands with the ``mgmt`` package.
 ``sysinit()`` automatically calls this function during system
 initialization.
 
-Arguments
-^^^^^^^^^
-
-N/A
-
-Returned values
-^^^^^^^^^^^^^^^
-
-N/A
-
-Notes
-^^^^^

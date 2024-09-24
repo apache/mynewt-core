@@ -35,38 +35,34 @@ Note that commands accessing filesystems (next boot target, file
 upload/download) will not be available unless project includes
 filesystem implementation.
 
-Data structures
-~~~~~~~~~~~~~~~
-
-N/A.
 
 List of Functions
 ~~~~~~~~~~~~~~~~~
 
 The functions available in imgmgr are:
 
-+-------------+----------------+
-| Function    | Description    |
-+=============+================+
-| `imgr\_ver  | Parses         |
-| \_parse`    | character      |
-|             | string         |
-|             | containing     |
-|             | specified      |
-|             | image version  |
-|             | number and     |
-|             | writes that to |
-|             | given          |
-|             | image\_version |
-|             | struct.        |
-+-------------+----------------+
-| `imgr\_ver  | Takes version  |
-| \_str`      | string from    |
-|             | specified      |
-|             | image\_version |
-|             | struct and     |
-|             | formats it     |
-|             | into a         |
-|             | printable      |
-|             | string.        |
-+-------------+----------------+
++------------------------------+----------------+
+| Function                     | Description    |
++==============================+================+
+| :c:func:`imgr_ver_parse`     | Parses         |
+|                              | character      |
+|                              | string         |
+|                              | containing     |
+|                              | specified      |
+|                              | image version  |
+|                              | number and     |
+|                              | writes that to |
+|                              | given          |
+|                              | image\_version |
+|                              | struct.        |
++------------------------------+----------------+
+| :c:func:`imgr_ver_str`       | Takes version  |
+|                              | string from    |
+|                              | specified      |
+|                              | image\_version |
+|                              | struct and     |
+|                              | formats it     |
+|                              | into a         |
+|                              | printable      |
+|                              | string.        |
++------------------------------+----------------+
