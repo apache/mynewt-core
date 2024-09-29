@@ -17,8 +17,10 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
 #include <CMAC.h>
 #include <mcu/cmac_pdc.h>
+#include <mcu/cmac_timer.h>
 #include <ipc_cmac/shm.h>
 #include <ipc_cmac/mbox.h>
 #include <ipc_cmac/rand.h>
@@ -40,8 +42,9 @@ SYS2CMAC_IRQHandler(void)
         cmac_mbox_read();
         cmac_rand_read();
 
-        if (pending_ops & CMAC_SHM_CB_PENDING_OP_LP_CLK) {
-            cmac_sleep_recalculate();
+        if (pending_ops & CMAC_SHM_CB_PENDING_OP_SLEEP_UPDATE) {
+            cmac_timer_slp_update(g_cmac_shm_ctrl.lp_clock_freq);
+            cmac_sleep_wakeup_time_update(g_cmac_shm_ctrl.wakeup_lpclk_ticks);
         }
 
         if (pending_ops & CMAC_SHM_CB_PENDING_OP_RF_CAL) {
