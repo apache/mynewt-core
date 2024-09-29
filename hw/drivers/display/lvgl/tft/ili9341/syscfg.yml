@@ -17,6 +17,12 @@
 #
 
 syscfg.defs:
+    ILI9341_IPS:
+        description: >
+            Use configuration for IPS display.
+            IPS displays require different register values to show
+            correct colors.
+        value: 0
 
 syscfg.vals:
     LVGL_DISPLAY_HORIZONTAL_RESOLUTION: 240
