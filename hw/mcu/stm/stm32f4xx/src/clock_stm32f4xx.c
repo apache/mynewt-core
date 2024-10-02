@@ -49,10 +49,11 @@ config_i2s_pll(void)
     RCC_PeriphCLKInitTypeDef i2s_clock_init = {0};
 
     i2s_clock_init.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S;
+#if defined(STM32F411xE)
     i2s_clock_init.PLLI2S.PLLI2SM = MYNEWT_VAL(STM32_CLOCK_PLLI2S_PLLM);
+#endif
     i2s_clock_init.PLLI2S.PLLI2SN = MYNEWT_VAL(STM32_CLOCK_PLLI2S_PLLN);
     i2s_clock_init.PLLI2S.PLLI2SR = MYNEWT_VAL(STM32_CLOCK_PLLI2S_PLLR);
-    i2s_clock_init.TIMPresSelection = 0;
     i2s_clock_init.RTCClockSelection = 0;
 
     HAL_RCCEx_PeriphCLKConfig(&i2s_clock_init);
