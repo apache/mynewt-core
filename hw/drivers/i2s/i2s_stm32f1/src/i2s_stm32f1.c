@@ -324,8 +324,6 @@ i2s_driver_start(struct i2s *i2s)
     case HAL_I2S_STATE_BUSY:
     case HAL_I2S_STATE_BUSY_RX:
     case HAL_I2S_STATE_BUSY_TX:
-    case HAL_I2S_STATE_BUSY_TX_RX:
-        break;
     default:
         rc = I2S_ERR_INTERNAL;
     }
