@@ -29,3 +29,5 @@ pkg.lflags:
     - -u_close
     - -u_sbrk
 
+pkg.lflags.FLOAT_USER:
+    - -u_printf_float
