@@ -54,7 +54,7 @@ static int log_fcb2_rtr_erase(struct log *log);
  */
 static int
 log_fcb2_find_gte(struct log *log, struct log_offset *log_offset,
-                  struct fcb2_entry *out_entry)
+                  struct fcb2_entry *out_entry, int *min_diff)
 {
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     const struct log_fcb_bmark *bmark;
@@ -67,6 +67,7 @@ log_fcb2_find_gte(struct log *log, struct log_offset *log_offset,
     fcb_log = log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
+    (void)min_diff;
     /* Attempt to read the last entry.  If this fails, the FCB is empty. */
     memset(out_entry, 0, sizeof(*out_entry));
     rc = fcb2_getprev(fcb, out_entry);
@@ -103,7 +104,7 @@ log_fcb2_find_gte(struct log *log, struct log_offset *log_offset,
         return SYS_EUNKNOWN;
     }
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    bmark = log_fcb_closest_bmark(fcb_log, log_offset->lo_index);
+    bmark = log_fcb_closest_bmark(fcb_log, log_offset->lo_index, min_diff);
     if (bmark != NULL) {
         *out_entry = bmark->lfb_entry;
     }
@@ -169,7 +170,7 @@ log_fcb2_start_append(struct log *log, int len, struct fcb2_entry *loc)
         }
 #endif
 
-#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS) && !MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
         /* The FCB needs to be rotated. */
         log_fcb_rotate_bmarks(fcb_log);
 #endif
@@ -178,6 +179,14 @@ log_fcb2_start_append(struct log *log, int len, struct fcb2_entry *loc)
         if (rc) {
             goto err;
         }
+
+#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
+        /* The FCB needs to be rotated, reinit previously allocated
+         * bookmarks
+         */
+        log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
+                            fcb_log->fl_bset.lfs_cap);
+#endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
         /*
@@ -476,12 +485,13 @@ log_fcb2_walk(struct log *log, log_walk_func_t walk_func,
     struct fcb_log *fcb_log;
     struct fcb2_entry loc;
     int rc;
+    int min_diff = -1;
 
     fcb_log = log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
     /* Locate the starting point of the walk. */
-    rc = log_fcb2_find_gte(log, log_off, &loc);
+    rc = log_fcb2_find_gte(log, log_off, &loc, &min_diff);
     switch (rc) {
     case 0:
         /* Found a starting point. */
@@ -497,8 +507,8 @@ log_fcb2_walk(struct log *log, log_walk_func_t walk_func,
     /* If a minimum index was specified (i.e., we are not just retrieving the
      * last entry), add a bookmark pointing to this walk's start location.
      */
-    if (log_off->lo_ts >= 0) {
-        log_fcb_add_bmark(fcb_log, &loc, log_off->lo_index);
+    if ((log_off->lo_ts >= 0 && log_off->lo_index > 0) && min_diff != 0) {
+        log_fcb_add_bmark(fcb_log, &loc, log_off->lo_index, false);
     }
 #endif
 
