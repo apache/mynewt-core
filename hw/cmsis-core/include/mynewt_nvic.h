@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,28 +17,14 @@
  * under the License.
  */
 
-/* mbed Microcontroller Library - cmsis_nvic
- * Copyright (c) 2009-2011 ARM Limited. All rights reserved.
- *
- * CMSIS-style functionality to support dynamic vectors
- */
+#ifndef MYNEWT_NVIC_H
+#define MYNEWT_NVIC_H
 
-#ifndef __CMSIS_NVIC_H__
-#define __CMSIS_NVIC_H__
+#include <mcu/cmsis_nvic.h>
+#include <os/util.h>
 
-#include <stdint.h>
-
-#define NVIC_NUM_VECTORS      (16 + 29)   // CORE + MCU Peripherals
-#define NVIC_USER_IRQ_OFFSET  16
-
-#include <mcu/cortex_m0.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
-#endif
+void NVIC_Relocate(void);
+void NVIC_SetVector(IRQn_Type IRQn, uint32_t vector);
+uint32_t NVIC_GetVector(IRQn_Type IRQn);
 
 #endif
