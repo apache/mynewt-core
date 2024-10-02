@@ -17,25 +17,18 @@
  * under the License.
  */
 
-#ifndef MYNEWT_NVIC_H
-#define MYNEWT_NVIC_H
+#ifndef MYNEWT_CM_H
+#define MYNEWT_CM_H
 
-#include <mcu/cmsis_nvic.h>
-#include <os/util.h>
-
-void NVIC_Relocate(void);
-void NVIC_SetVector(IRQn_Type IRQn, uint32_t vector);
-uint32_t NVIC_GetVector(IRQn_Type IRQn);
+#include <mynewt_nvic.h>
 
 static inline void
-NVIC_DisableAll(void)
+Cortex_DisableAll(void)
 {
-    int i;
-
-    for (i = 0; i < ARRAY_SIZE(NVIC->ICER); ++i) {
-        NVIC->ICER[i] = 0xffffffff;
-        NVIC->ICPR[i] = 0xffffffff;
-    }
+    /* Disable SysTick interrupt */
+    SysTick->CTRL = 0;
+    /* Disable all NVIC interrupts */
+    NVIC_DisableAll();
 }
 
 #endif
