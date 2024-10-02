@@ -90,7 +90,7 @@ fcb_init(struct fcb *fcb)
     assert((fcb->f_align & (fcb->f_align - 1)) == 0);
 
     while (1) {
-        rc = fcb_getnext_in_area(fcb, &fcb->f_active);
+        rc = fcb_getnext_in_area(fcb, NULL, &fcb->f_active);
         if (rc == FCB_ERR_NOVAR) {
             rc = FCB_OK;
             break;

@@ -47,7 +47,6 @@ fcb_len_in_flash(struct fcb *fcb, uint16_t len)
     return (len + (fcb->f_align - 1)) & ~(fcb->f_align - 1);
 }
 
-int fcb_getnext_in_area(struct fcb *fcb, struct fcb_entry *loc);
 struct flash_area *fcb_getnext_area(struct fcb *fcb, struct flash_area *fap);
 int fcb_getnext_nolock(struct fcb *fcb, struct fcb_entry *loc);
 

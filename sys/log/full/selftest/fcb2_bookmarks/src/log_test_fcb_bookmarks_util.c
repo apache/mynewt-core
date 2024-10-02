@@ -220,7 +220,7 @@ ltfbu_init(const struct ltfbu_cfg *cfg)
     TEST_ASSERT_FATAL(rc == 0);
 
     if (cfg->bmark_count > 0) {
-        log_fcb_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count);
+        log_fcb_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count, false);
     }
 
     log_register("log", &ltfbu_log, &log_fcb_handler, &ltfbu_fcb_log,
