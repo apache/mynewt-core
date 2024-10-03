@@ -591,6 +591,17 @@ syscfg.defs:
             Adds default MPU configuration package
         value: 0
 
+    IPC_NRF5340_PRE_TRUSTZONE_NETCORE_BOOT:
+        description: >
+            Set this to one only in case of the bootloader predates TrustZone
+            changes. With ARM TrusZone support added NRF_IPC_NS block is used
+            for both secure and non-secure application. Pre-TrustZone code
+            was always running in secure mode and network core code always
+            accessed NRF_IP_S (including code that is running in bootloader).
+            NRF_IP_S->GPMEM[] was used to pass address of net core application
+            image to net bootloader.
+        value: 0
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 128
 

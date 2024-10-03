@@ -7,17 +7,14 @@
 #ifndef ZEPHYR_INCLUDE_IPC_PBUF_H_
 #define ZEPHYR_INCLUDE_IPC_PBUF_H_
 
-#include <zephyr/cache.h>
-#include <zephyr/devicetree.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @brief Packed buffer API
+ * @brief    Packed buffer API
  * @defgroup pbuf Packed Buffer API
- * @ingroup ipc
+ * @ingroup  ipc
  * @{
  */
 
@@ -40,20 +37,22 @@ extern "C" {
  * The structure contains configuration data.
  */
 struct pbuf_cfg {
-	volatile uint32_t *rd_idx_loc;	/* Address of the variable holding
-					 * index value of the first valid byte
-					 * in data[].
-					 */
-	volatile uint32_t *wr_idx_loc;	/* Address of the variable holding
-					 * index value of the first free byte
-					 * in data[].
-					 */
-	uint32_t dcache_alignment;	/* CPU data cache line size in bytes.
-					 * Used for validation - TODO: To be
-					 * replaced by flags.
-					 */
-	uint32_t len;			/* Length of data[] in bytes. */
-	uint8_t *data_loc;		/* Location of the data[]. */
+    /* Address of the variable holding index value of
+     * the first valid byte in data[].
+     */
+    volatile uint32_t *rd_idx_loc;
+    /* Address of the variable holding index value of
+     * the first free byte in data[].
+     */
+    volatile uint32_t *wr_idx_loc;
+    /* CPU data cache line size in bytes. Used for validation
+     * TODO: To be replaced by flags.
+     */
+    uint32_t dcache_alignment;
+    /* Length of data[] in bytes. */
+    uint32_t len;
+    /* Location of the data[]. */
+    uint8_t *data_loc;
 };
 
 /**
@@ -63,16 +62,15 @@ struct pbuf_cfg {
  * reader respectively.
  */
 struct pbuf_data {
-	volatile uint32_t wr_idx;	/* Index of the first holding first
-					 * free byte in data[]. Used for
-					 * writing.
-					 */
-	volatile uint32_t rd_idx;	/* Index of the first holding first
-					 * valid byte in data[]. Used for
-					 * reading.
-					 */
+    /* Index of the first holding first free byte in data[].
+     * Used for writing.
+     */
+    volatile uint32_t wr_idx;
+    /* Index of the first holding first valid byte in data[].
+     * Used for reading.
+     */
+    volatile uint32_t rd_idx;
 };
-
 
 /**
  * @brief Scure packed buffer.
@@ -87,12 +85,10 @@ struct pbuf_data {
  * written in a way to protect the data from being corrupted.
  */
 struct pbuf {
-	const struct pbuf_cfg *const cfg;	/* Configuration of the
-						 * buffer.
-						 */
-	struct pbuf_data data;			/* Data used to read and write
-						 * to the buffer
-						 */
+    /* Configuration of the buffer. */
+    struct pbuf_cfg cfg;
+    /* Data used to read and write to the buffer */
+    struct pbuf_data data;
 };
 
 /**
@@ -101,55 +97,31 @@ struct pbuf {
  * It is recommended to use this macro to initialize packed buffer
  * configuration.
  *
- * @param mem_addr	Memory address for pbuf.
- * @param size		Size of the memory.
- * @param dcache_align	Data cache alignment.
+ * @param mem_addr        Memory address for pbuf.
+ * @param size            Size of the memory.
+ * @param dcache_align    Data cache alignment.
  */
-#define PBUF_CFG_INIT(mem_addr, size, dcache_align)					\
-{											\
-	.rd_idx_loc = (uint32_t *)(mem_addr),						\
-	.wr_idx_loc = (uint32_t *)((uint8_t *)(mem_addr) +				\
-				MAX(dcache_align, _PBUF_IDX_SIZE)),			\
-	.data_loc = (uint8_t *)((uint8_t *)(mem_addr) +					\
-				MAX(dcache_align, _PBUF_IDX_SIZE) + _PBUF_IDX_SIZE),	\
-	.len = (uint32_t)((uint32_t)(size) - MAX(dcache_align, _PBUF_IDX_SIZE) -	\
-				_PBUF_IDX_SIZE),					\
-	.dcache_alignment = (dcache_align),						\
-}
+#define PBUF_CFG_INIT(mem_addr, size, dcache_align)                                  \
+    {                                                                                \
+        .rd_idx_loc = (uint32_t *)(mem_addr),                                        \
+        .wr_idx_loc = (uint32_t *)((uint8_t *)(mem_addr) +                           \
+                                   MAX(dcache_align, _PBUF_IDX_SIZE)),               \
+        .data_loc = (uint8_t *)((uint8_t *)(mem_addr) +                              \
+                                MAX(dcache_align, _PBUF_IDX_SIZE) + _PBUF_IDX_SIZE), \
+        .len = (uint32_t)((uint32_t)(size) - MAX(dcache_align, _PBUF_IDX_SIZE) -     \
+                          _PBUF_IDX_SIZE),                                           \
+        .dcache_alignment = (dcache_align),                                          \
+    }
 
 /**
  * @brief Macro calculates memory overhead taken by the header in shared memory.
  *
  * It contains the read index, write index and padding.
  *
- * @param dcache_align	Data cache alignment.
+ * @param dcache_align    Data cache alignment.
  */
 #define PBUF_HEADER_OVERHEAD(dcache_align) \
-	(MAX(dcache_align, _PBUF_IDX_SIZE) + _PBUF_IDX_SIZE)
-
-/**
- * @brief Statically define and initialize pbuf.
- *
- * @param name			Name of the pbuf.
- * @param mem_addr		Memory address for pbuf.
- * @param size			Size of the memory.
- * @param dcache_align	Data cache line size.
- */
-#define PBUF_DEFINE(name, mem_addr, size, dcache_align)					\
-	BUILD_ASSERT(dcache_align >= 0,							\
-			"Cache line size must be non negative.");			\
-	BUILD_ASSERT((size) > 0 && IS_PTR_ALIGNED_BYTES(size, _PBUF_IDX_SIZE),		\
-			"Incorrect size.");						\
-	BUILD_ASSERT(IS_PTR_ALIGNED_BYTES(mem_addr, MAX(dcache_align, _PBUF_IDX_SIZE)),	\
-			"Misaligned memory.");						\
-	BUILD_ASSERT(size >= (MAX(dcache_align, _PBUF_IDX_SIZE) + _PBUF_IDX_SIZE +	\
-			_PBUF_MIN_DATA_LEN), "Insufficient size.");			\
-											\
-	static const struct pbuf_cfg cfg_##name =					\
-			PBUF_CFG_INIT(mem_addr, size, dcache_align);			\
-	static struct pbuf name = {							\
-		.cfg = &cfg_##name,							\
-	}
+    (MAX(dcache_align, _PBUF_IDX_SIZE) + _PBUF_IDX_SIZE)
 
 /**
  * @brief Initialize the packet buffer.
@@ -157,11 +129,9 @@ struct pbuf {
  * This function initializes the packet buffer based on provided configuration.
  * If the configuration is incorrect, the function will return error.
  *
- * It is recommended to use PBUF_DEFINE macro for build time initialization.
- *
- * @param pb	Pointer to the packed buffer containing
- *		configuration and data. Configuration has to be
- *		fixed before the initialization.
+ * @param pb    Pointer to the packed buffer containing
+ *              configuration and data. Configuration has to be
+ *              fixed before the initialization.
  * @retval 0 on success.
  * @retval -EINVAL when the input parameter is incorrect.
  */
@@ -173,12 +143,12 @@ int pbuf_init(struct pbuf *pb);
  * This function call writes specified amount of data to the packet buffer if
  * the buffer will fit the data.
  *
- * @param pb	A buffer to which to write.
- * @param buf	Pointer to the data to be written to the buffer.
- * @param len	Number of bytes to be written to the buffer. Must be positive.
- * @retval int	Number of bytes written, negative error code on fail.
- *		-EINVAL, if any of input parameter is incorrect.
- *		-ENOMEM, if len is bigger than the buffer can fit.
+ * @param pb      A buffer to which to write.
+ * @param buf     Pointer to the data to be written to the buffer.
+ * @param len     Number of bytes to be written to the buffer. Must be positive.
+ * @retval int    Number of bytes written, negative error code on fail.
+ *        -EINVAL, if any of input parameter is incorrect.
+ *        -ENOMEM, if len is bigger than the buffer can fit.
  */
 
 int pbuf_write(struct pbuf *pb, const char *buf, uint16_t len);
@@ -189,15 +159,15 @@ int pbuf_write(struct pbuf *pb, const char *buf, uint16_t len);
  * Single read allows to read the message send by the single write.
  * The provided %p buf must be big enough to store the whole message.
  *
- * @param pb	A buffer from which data will be read.
- * @param buf	Data pointer to which read data will be written.
- *		If NULL, len of stored message is returned.
- * @param len	Number of bytes to be read from the buffer.
- * @retval int	Bytes read, negative error code on fail.
- *		Bytes to be read, if buf == NULL.
- *		-EINVAL, if any of input parameter is incorrect.
- *		-ENOMEM, if message can not fit in provided buf.
- *		-EAGAIN, if not whole message is ready yet.
+ * @param pb      A buffer from which data will be read.
+ * @param buf     Data pointer to which read data will be written.
+ *                If NULL, len of stored message is returned.
+ * @param len     Number of bytes to be read from the buffer.
+ * @retval int    Bytes read, negative error code on fail.
+ *        Bytes to be read, if buf == NULL.
+ *        -EINVAL, if any of input parameter is incorrect.
+ *        -ENOMEM, if message can not fit in provided buf.
+ *        -EAGAIN, if not whole message is ready yet.
  */
 int pbuf_read(struct pbuf *pb, char *buf, uint16_t len);
 
