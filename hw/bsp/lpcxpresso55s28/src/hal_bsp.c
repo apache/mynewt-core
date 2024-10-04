@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <os/mynewt.h>
+#include "mynewt_cm.h"
 #include <bsp/bsp.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash_int.h>
@@ -182,4 +183,5 @@ hal_bsp_hw_id(uint8_t *id, int max_len)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }

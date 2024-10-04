@@ -26,6 +26,7 @@
 #include "sysinit/sysinit.h"
 #include "mcu/samd21.h"
 #include "bsp/bsp.h"
+#include "mynewt_cm.h"
 
 /*
  * hw/mcu/atmel/samd21xx/src/sam0/drivers/tc/tc.h
@@ -213,5 +214,5 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
-
+    Cortex_DisableAll();
 }
