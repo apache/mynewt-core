@@ -18,16 +18,13 @@
  */
 
 #include "os/mynewt.h"
+#include "mynewt_cm.h"
 #include "mcu/stm32_hal.h"
 #include <hal/hal_system.h>
-
-extern char __vector_tbl_reloc__[];
 
 void
 hal_system_init(void)
 {
-    SCB->VTOR = (uint32_t)&__vector_tbl_reloc__;
-
     if (PREFETCH_ENABLE) {
         __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
     }
@@ -39,5 +36,7 @@ hal_system_init(void)
     if (MYNEWT_VAL(STM32_ENABLE_DCACHE)) {
         __HAL_FLASH_DATA_CACHE_ENABLE();
     }
+
+    NVIC_Relocate();
 }
 

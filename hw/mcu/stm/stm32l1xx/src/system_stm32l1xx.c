@@ -98,9 +98,6 @@ SystemInit(void)
 
     /* Update SystemCoreClock global variable */
     SystemCoreClockUpdate();
-
-    /* Relocate the vector table */
-    NVIC_Relocate();
 }
 
 /**
