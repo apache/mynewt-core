@@ -28,6 +28,7 @@ am_hal_mcuctrl_device_t adevinfo;
 void
 hal_system_init(void)
 {
+    NVIC_Relocate();
 }
 
 void

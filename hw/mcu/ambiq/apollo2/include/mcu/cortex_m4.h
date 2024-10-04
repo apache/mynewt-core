@@ -21,6 +21,7 @@
 #define __MCU_CORTEX_M4_H__
 
 #include "mcu/apollo2.h"
+#include "mynewt_cm.h"
 
 #ifdef __cplusplus
 extern "C" {
