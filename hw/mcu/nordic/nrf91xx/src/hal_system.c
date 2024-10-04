@@ -21,6 +21,7 @@
 #include "mcu/cortex_m33.h"
 #include "hal/hal_system.h"
 #include "hal/hal_debug.h"
+#include "mynewt_cm.h"
 #include "nrf.h"
 #include "nrfx_config.h"
 
@@ -37,6 +38,8 @@
 void
 hal_system_init(void)
 {
+    NVIC_Relocate();
+
 #if MYNEWT_VAL(MCU_DCDC_ENABLED)
     NRF_REGULATORS->DCDCEN = 1;
 #endif

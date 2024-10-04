@@ -254,8 +254,6 @@ void SystemInit(void)
 
     SystemCoreClockUpdate();
 
-    NVIC_Relocate();
-
     /* Setup Cortex-M33 stack limiter to detect stack overflow in interrupts and bootloader code */
     __set_MSPLIM((uint32_t)__StackLimit);
 }

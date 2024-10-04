@@ -22,6 +22,7 @@
 #include <mcu/nrf5340_net_clock.h>
 #include <hal/hal_system.h>
 #include <hal/hal_debug.h>
+#include <mynewt_cm.h>
 #include <nrf.h>
 
 /**
@@ -37,6 +38,8 @@
 void
 hal_system_init(void)
 {
+    NVIC_Relocate();
+
 #if MYNEWT_VAL(MCU_ICACHE_ENABLED)
     NRF_NVMC_NS->ICACHECNF = 1;
 #endif

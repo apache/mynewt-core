@@ -22,6 +22,7 @@
 #include <mcu/nrf5340_clock.h>
 #include <hal/hal_system.h>
 #include <hal/hal_debug.h>
+#include "mynewt_cm.h"
 #include <nrf.h>
 #include <nrfx_config.h>
 #include <hal/nrf_oscillators.h>
@@ -40,6 +41,8 @@
 void
 hal_system_init(void)
 {
+    NVIC_Relocate();
+
 #if MYNEWT_VAL(MCU_CACHE_ENABLED)
 #if MYNEWT_VAL(MCU_APP_SECURE) || MYNEWT_VAL(BOOT_LOADER)
     NRF_CACHE_S->ENABLE = 1;
