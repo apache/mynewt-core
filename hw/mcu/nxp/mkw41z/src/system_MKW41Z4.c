@@ -67,7 +67,6 @@
 
 #include <stdint.h>
 #include "mcu/fsl_device_registers.h"
-#include "mcu/cmsis_nvic.h"
 
 /* ----------------------------------------------------------------------------
    -- Core clock
@@ -86,7 +85,6 @@ void SystemInit (void) {
   SIM->COPC = (uint32_t)0x00u;
 #endif /* (DISABLE_WDOG) */
 
-  NVIC_Relocate();
 }
 
 /* ----------------------------------------------------------------------------

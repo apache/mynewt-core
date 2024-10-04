@@ -79,8 +79,6 @@ void SystemInit(void)
     {
         NRF_MPU->DISABLEINDEBUG = MPU_DISABLEINDEBUG_DISABLEINDEBUG_Disabled << MPU_DISABLEINDEBUG_DISABLEINDEBUG_Pos;
     }
-
-    NVIC_Relocate();
 }
 
 

@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include "os/mynewt.h"
+#include "mynewt_cm.h"
 #include "nrfx.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
@@ -116,6 +117,7 @@ void tp_val(uint8_t v)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }
 
 #if MYNEWT_VAL(BSP_USE_HAL_SPI)

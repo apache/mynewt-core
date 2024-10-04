@@ -22,6 +22,7 @@
 #include <assert.h>
 
 #include "os/mynewt.h"
+#include "mynewt_cm.h"
 
 #include "flash_map/flash_map.h"
 
@@ -70,6 +71,7 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }
 
 int

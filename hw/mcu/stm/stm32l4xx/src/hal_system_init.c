@@ -18,18 +18,15 @@
  */
 
 #include "os/mynewt.h"
+#include "mynewt_cm.h"
 #include "mcu/stm32_hal.h"
 #include <hal/hal_system.h>
-
-extern char __vector_tbl_reloc__[];
 
 void SystemClock_Config(void);
 
 void
 hal_system_init(void)
 {
-    SCB->VTOR = (uint32_t)&__vector_tbl_reloc__;
-
     /* Configure System Clock */
     SystemClock_Config();
 
@@ -39,5 +36,8 @@ hal_system_init(void)
     if (PREFETCH_ENABLE) {
         __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
     }
+
+    /* Relocate the vector table */
+    NVIC_Relocate();
 }
 
