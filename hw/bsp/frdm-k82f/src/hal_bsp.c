@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include "os/mynewt.h"
+#include "mynewt_cm.h"
 #include "bsp/bsp.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash_int.h"
@@ -191,38 +192,6 @@ hal_bsp_power_state(int state)
     return (0);
 }
 
-/*!
- * @brief Function to override ARMGCC default function _sbrk
- *
- * _sbrk is called by malloc. ARMGCC default _sbrk compares "SP" register and
- * heap end, if heap end is larger than "SP", then _sbrk returns error and
- * memory allocation failed. This function changes to compare __HeapLimit with
- * heap end.
- */
-void *
-_sbrk(int incr)
-{
-    extern char end __asm("end");
-    extern char heap_limit __asm("__HeapLimit");
-    static char *heap_end;
-    char *prev_heap_end;
-
-    if (heap_end == NULL)
-        heap_end = &end;
-
-    prev_heap_end = heap_end;
-
-    if (heap_end + incr > &heap_limit)
-    {
-        errno = ENOMEM;
-        return (void *)-1;
-    }
-
-    heap_end += incr;
-
-    return (void *)prev_heap_end;
-}
-
 /**
  * Returns the configured priority for the given interrupt. If no priority
  * configured, return the priority passed in
@@ -352,4 +321,5 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }
