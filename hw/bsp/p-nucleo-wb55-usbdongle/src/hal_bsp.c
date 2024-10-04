@@ -20,6 +20,7 @@
 
 #include "bsp/bsp.h"
 #include "os/mynewt.h"
+#include "mynewt_cm.h"
 
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash_int.h>
@@ -120,6 +121,8 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
+
     RCC->AHB1ENR = 0;
     RCC->AHB2ENR = 0;
     RCC->AHB3ENR = RCC_AHB3ENR_FLASHEN | RCC_AHB3ENR_HSEMEN;

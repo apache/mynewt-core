@@ -27,6 +27,7 @@
 #include "hal/hal_bsp.h"
 #include "os/os.h"
 #include "bsp/bsp.h"
+#include "mynewt_cm.h"
 #include "mcu/nrf52_hal.h"
 #include "mcu/nrf52_periph.h"
 #if MYNEWT_VAL(BSP_CHARGER)
@@ -240,4 +241,5 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }
