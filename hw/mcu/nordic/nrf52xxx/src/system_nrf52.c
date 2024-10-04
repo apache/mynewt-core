@@ -532,8 +532,6 @@ void SystemInit(void)
     nrf52_handle_approtect();
 
     SystemCoreClockUpdate();
-
-    NVIC_Relocate();
 }
 
 #ifdef NRF52

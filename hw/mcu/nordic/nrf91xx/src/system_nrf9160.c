@@ -237,8 +237,6 @@ void SystemInit(void)
     #endif
     
     SystemCoreClockUpdate();
-
-    NVIC_Relocate();
 }
 
 
