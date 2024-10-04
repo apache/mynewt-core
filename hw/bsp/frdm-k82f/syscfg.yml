@@ -23,6 +23,8 @@ syscfg.defs:
         value: 1
 
 syscfg.vals:
+    MCU_RAM_SIZE: 0x40000
+    MCU_RAM_START: 0x20000000
     # Enabled by default, connected to CMSIS-DAP Interface
     UART_4: 1
     UART_4_PORT: PORTC
@@ -93,6 +95,3 @@ syscfg.vals:
     CRYPTO_HW_AES_CTR: 1
 
     BOOTUTIL_SWAP_USING_MOVE: 1
-
-    # BSP uses private version of _sbrk
-    HAL_SBRK: 0

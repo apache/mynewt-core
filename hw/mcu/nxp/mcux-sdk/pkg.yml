@@ -80,6 +80,7 @@ pkg.include_dirs.MCU_MK82F25615:
     - "@nxp-mcux-sdk/devices/MK82F25615/drivers"
 pkg.src_dirs.MCU_MK82F25615:
     - "@nxp-mcux-sdk/devices/MK82F25615/drivers"
+    - "@nxp-mcux-sdk/devices/MK82F25615"
 pkg.ign_files.MCU_MK82F25615:
     # Modified mynewt version exists
     - "drivers/flash/fsl_ftfx_controller.c"
