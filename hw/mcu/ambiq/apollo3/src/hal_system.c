@@ -26,6 +26,7 @@
 void
 hal_system_init(void)
 {
+    NVIC_Relocate();
 }
 
 void

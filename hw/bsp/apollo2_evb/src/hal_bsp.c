@@ -24,6 +24,7 @@
 #include <bsp/bsp.h>
 #include <hal/hal_spi.h>
 #include <mcu/hal_apollo2.h>
+#include "mynewt_cm.h"
 
 #if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
@@ -184,6 +185,7 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }
 
 int
