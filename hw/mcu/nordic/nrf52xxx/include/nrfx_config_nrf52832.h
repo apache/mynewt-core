@@ -526,7 +526,7 @@
  * Boolean. Accepted values: 0 and 1.
  */
 #ifndef NRFX_NVMC_ENABLED
-#define NRFX_NVMC_ENABLED 0
+#define NRFX_NVMC_ENABLED 1
 #endif
 
 /**
