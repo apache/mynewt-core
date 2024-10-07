@@ -307,10 +307,8 @@ shell_log_storage_cmd(int argc, char **argv)
         if (log_storage_info(log, &info)) {
             console_printf("Storage info not supported for %s\n", log->l_name);
         } else {
-            uint32_t entry_count = 0;
-            log_get_entry_count(log, &entry_count);
-            console_printf("%s: %d of %d used; %d entries\n", log->l_name,
-                           (unsigned)info.used, (unsigned)info.size, (int)entry_count);
+            console_printf("%s: %d of %d used\n", log->l_name,
+                           (unsigned)info.used, (unsigned)info.size);
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
             console_printf("%s: %d of %d used by unread entries\n", log->l_name,
                            (unsigned)info.used_unread, (unsigned)info.size);
