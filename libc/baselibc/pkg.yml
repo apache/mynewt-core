@@ -34,5 +34,8 @@ pkg.init.BASELIBC_THREAD_SAFE_HEAP_ALLOCATION:
 pkg.cflags:
     - -fno-builtin-malloc
 
+pkg.cflags.BASELIBC_DEBUG_MALLOC:
+    - -DDEBUG_MALLOC
+
 pkg.lflags:
     - -umain

@@ -41,3 +41,9 @@ syscfg.defs:
         description: >
             Set to 1 if project requires malloc/calloc/free to be thread safe.
         value: 0
+
+    BASELIBC_DEBUG_MALLOC:
+        description: >
+            Set to 1 to enable extra debugging for malloc/free calls.
+            This will e.g. assert on double-free.
+        value: 0
