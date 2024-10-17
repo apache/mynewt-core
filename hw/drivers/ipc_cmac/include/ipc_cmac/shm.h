@@ -38,7 +38,7 @@ extern "C" {
 
 #define CMAC_SHM_CB_MAGIC                   0xc3ac
 
-#define CMAC_SHM_CB_PENDING_OP_LP_CLK       0x0001
+#define CMAC_SHM_CB_PENDING_OP_SLEEP_UPDATE 0x0001
 #define CMAC_SHM_CB_PENDING_OP_RF_CAL       0x0002
 
 #define CMAC_SHM_VECT_MAGIC                 0xc3ac0001
@@ -59,7 +59,7 @@ struct cmac_shm_ctrl {
     uint16_t magic;
     uint16_t pending_ops;
     uint16_t lp_clock_freq;
-    uint16_t xtal32m_settle_us;
+    uint16_t wakeup_lpclk_ticks;
 };
 
 struct cmac_shm_mbox {
