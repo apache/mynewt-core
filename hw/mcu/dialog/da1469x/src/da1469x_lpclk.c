@@ -38,6 +38,7 @@ static void
 da1469x_lpclk_settle_tmr_cb(void *arg)
 {
     da1469x_clock_lp_xtal32k_switch();
+    da1469x_clock_lp_xtal32k_calibrate();
     da1469x_lpclk_enabled();
 }
 #endif
