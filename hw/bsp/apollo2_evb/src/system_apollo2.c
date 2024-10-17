@@ -109,7 +109,5 @@ SystemInit(void)
     CLKGEN->CLKKEY = 0;                 // Disable write to CCTRL
 
     SystemCoreClockUpdate();
-
-    NVIC_Relocate();
 }
 

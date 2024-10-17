@@ -43,7 +43,6 @@ void hal_system_reset(void)
 void
 SystemInitHook(void)
 {
-    NVIC_Relocate();
     if (MYNEWT_VAL_CHOICE(LPC55XX_BOOT_CLOCK, FRO12M)) {
         BOARD_BootClockFRO12M();
     } else if (MYNEWT_VAL_CHOICE(LPC55XX_BOOT_CLOCK, FROHF96M)) {

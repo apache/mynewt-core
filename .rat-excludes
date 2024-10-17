@@ -171,7 +171,6 @@ startup_MK64F12.S
 MK82FN256xxx15_flash.ld
 boot-MK82FN256xxx15_flash.ld
 startup_MK82F25615.S
-system_MK82F25615.c
 fsl_ftfx_controller.c
 
 # LWIP - BSD License.

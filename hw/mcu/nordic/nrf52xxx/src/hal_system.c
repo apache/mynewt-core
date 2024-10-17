@@ -19,6 +19,7 @@
 
 #include "syscfg/syscfg.h"
 #include "mcu/cortex_m4.h"
+#include "mynewt_cm.h"
 #include "hal/hal_system.h"
 #include "hal/hal_debug.h"
 #include "nrf.h"
@@ -37,6 +38,7 @@
 void
 hal_system_init(void)
 {
+    NVIC_Relocate();
 
 #if MYNEWT_VAL(MCU_ICACHE_ENABLED)
     NRF_NVMC->ICACHECNF = 1;

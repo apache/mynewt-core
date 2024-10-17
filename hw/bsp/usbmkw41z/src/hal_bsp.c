@@ -24,6 +24,7 @@
 #include "bsp/bsp.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
+#include "mynewt_cm.h"
 
 /*
  * What memory to include in coredump.
@@ -90,4 +91,5 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }

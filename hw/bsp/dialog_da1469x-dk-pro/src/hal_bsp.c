@@ -24,6 +24,7 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_system.h"
 #include "mcu/mcu.h"
+#include "mynewt_cm.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_periph.h"
 #include "bsp/bsp.h"
@@ -110,4 +111,5 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }
