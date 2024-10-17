@@ -49,6 +49,12 @@ void os_tick_init(uint32_t os_ticks_per_sec, int prio);
  */
 void os_tick_idle(os_time_t n);
 
+/**
+ * Calculate the OS tick parameters.
+ *
+ * @param os_ticks_per_sec The number of OS ticks per second
+ */
+void hal_os_tick_calc_params(uint32_t os_ticks_per_sec);
 
 #ifdef __cplusplus
 }
