@@ -194,6 +194,22 @@ uint32_t da1469x_clock_lp_rc32k_freq_get(void);
 uint32_t da1469x_clock_lp_rcx_freq_get(void);
 
 /**
+ * Get seleted LP clock's frequency
+ */
+uint32_t da1469x_clock_lp_freq_get(void);
+
+/**
+ * Calibrate selected LP clock
+ */
+void da1469x_clock_lp_calibrate(void);
+
+/**
+ * Initialize selected LP RC clock
+ */
+void
+da1469x_lpclk_rc_init();
+
+/**
  * Enable AMBA clock(s)
  *
  * @param mask

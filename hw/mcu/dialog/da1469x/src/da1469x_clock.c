@@ -534,3 +534,27 @@ da1469x_clock_lp_rcx_freq_get(void)
 
     return g_mcu_clock_rcx_freq;
 }
+
+uint32_t
+da1469x_clock_lp_freq_get(void)
+{
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    return da1469x_clock_lp_rcx_freq_get();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RC32K)
+    return da1469x_clock_lp_rc32k_freq_get();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
+    return da1469x_clock_lp_xtal32k_freq_get();
+#endif
+}
+
+void
+da1469x_clock_lp_calibrate(void)
+{
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    da1469x_clock_lp_rcx_calibrate();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RC32K)
+    da1469x_clock_lp_rc32k_calibrate();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
+    da1469x_clock_lp_xtal32k_calibrate();
+#endif
+}
