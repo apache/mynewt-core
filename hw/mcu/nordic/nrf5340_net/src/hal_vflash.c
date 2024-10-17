@@ -27,7 +27,9 @@
 #include <nrfx_ipc.h>
 #include <bootutil/bootutil.h>
 #include <bootutil/image.h>
+#if !MYNEWT_VAL(IPC_ICBMSG)
 #include <ipc_nrf5340/ipc_nrf5340.h>
+#endif
 
 #define NRF5340_NET_VFLASH_SECTOR_SZ 2048
 
@@ -218,7 +220,12 @@ nrf5340_net_vflash_init(const struct hal_flash *dev)
     const void *img_addr;
     uint32_t image_size;
 
+#if MYNEWT_VAL(IPC_ICBMSG)
+    img_addr = 0;
+    image_size = 0;
+#else
     img_addr = ipc_nrf5340_net_image_get(&image_size);
+#endif
 
     /*
      * Application side IPC will set ipc_share data
