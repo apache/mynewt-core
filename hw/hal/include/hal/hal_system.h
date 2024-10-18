@@ -96,6 +96,16 @@ const char *hal_reset_cause_str(void);
 void hal_system_clock_start(void);
 
 /**
+ * Calibrate selected LP clock
+ */
+void hal_system_lpclk_calibrate(void);
+
+/**
+ * Notify about LP clock update
+ */
+void hal_system_lpclk_updated(void);
+
+/**
  * Reset callback to be called before an reset happens inside hal_system_reset()
  */
 void hal_system_reset_cb(void);
