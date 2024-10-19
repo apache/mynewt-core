@@ -24,6 +24,10 @@
 #include <xc.h>
 #include "mcu/pic32.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* CPU status register */
 typedef uint32_t os_sr_t;
 
@@ -49,6 +53,10 @@ os_arch_in_isr(void)
     /* CPU handles interrupt when EXL is set or IPL > 0 */
     return (_CP0_GET_STATUS() & (_CP0_STATUS_EXL_MASK | _CP0_STATUS_IPL_MASK)) ? 1 : 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 /* Include common arch definitions and APIs */
 #include "os/arch/common.h"

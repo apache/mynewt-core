@@ -20,11 +20,11 @@
 #ifndef __COREDUMP_H__
 #define __COREDUMP_H__
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <inttypes.h>
 
 #define COREDUMP_MAGIC              0x690c47c3
 
