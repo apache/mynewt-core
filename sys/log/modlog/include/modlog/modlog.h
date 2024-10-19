@@ -50,6 +50,10 @@
 #include "os/mynewt.h"
 #include "log/log.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MODLOG_MODULE_DFLT      255
 
 /**
@@ -545,6 +549,10 @@ modlog_hexdump(uint8_t module, uint8_t level,
 #undef LOG_CRITICAL
 #define LOG_CRITICAL    MODLOG_CRITICAL
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

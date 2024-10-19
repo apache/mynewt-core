@@ -19,6 +19,12 @@
 #ifndef __SYS_CONSOLE_FULL_HISTORY_H__
 #define __SYS_CONSOLE_FULL_HISTORY_H__
 
+#include <stddef.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * History search types for console_history_find()
  */
@@ -84,5 +90,9 @@ history_handle_t console_history_find(history_handle_t start,
  */
 int console_history_get(history_handle_t handle, size_t offset, char *buf,
                         size_t buf_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SYS_CONSOLE_FULL_HISTORY_H__ */

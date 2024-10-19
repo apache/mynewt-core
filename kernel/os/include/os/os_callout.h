@@ -27,12 +27,12 @@
  */
 
 
+#include "os/os_eventq.h"
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "os/os_eventq.h"
-#include <stddef.h>
 
 /**
  * Structure containing the definition of a callout, initialized

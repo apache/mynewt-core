@@ -25,6 +25,10 @@
 #include <mips/m32c0.h>
 #include "mcu/mips.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* CPU status register */
 typedef uint32_t os_sr_t;
 
@@ -52,6 +56,10 @@ os_arch_in_isr(void)
     /* check the EXL bit */
     return (mips_getsr() & (1 << 1)) ? 1 : 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 /* Include common arch definitions and APIs */
 #include "os/arch/common.h"

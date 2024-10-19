@@ -20,6 +20,12 @@
 #ifndef H_MFG_
 #define H_MFG_
 
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MFG_HASH_SZ                     32
 
 #define MFG_META_TLV_TYPE_HASH          0x01
@@ -145,5 +151,9 @@ int mfg_read_tlv_mmr_ref(const struct mfg_reader *reader,
  * Initializes the mfg package.
  */
 void mfg_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

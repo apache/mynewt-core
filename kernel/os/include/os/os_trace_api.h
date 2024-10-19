@@ -36,6 +36,10 @@
 #endif
 #include "os/os.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OS_TRACE_ID_EVENTQ_PUT                  (40)
 #define OS_TRACE_ID_EVENTQ_GET_NO_WAIT          (41)
 #define OS_TRACE_ID_EVENTQ_GET                  (42)
@@ -317,6 +321,10 @@ os_trace_api_ret_u32(unsigned id, uint32_t return_value)
 }
 
 #endif /* !MYNEWT_VAL(OS_SYSVIEW) || defined(OS_TRACE_DISABLE_FILE_API) */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ASSEMBLER__ */
 

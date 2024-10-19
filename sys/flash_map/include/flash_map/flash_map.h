@@ -20,10 +20,6 @@
 #ifndef H_UTIL_FLASH_MAP_
 #define H_UTIL_FLASH_MAP_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  *
  * Provides abstraction of flash regions for type of use.
@@ -45,6 +41,10 @@ extern "C" {
 #include <inttypes.h>
 
 #include "syscfg/syscfg.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct flash_area {
     uint8_t fa_id;

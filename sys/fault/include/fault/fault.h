@@ -65,7 +65,13 @@
  *     fatal failure always triggers a transition to the error state.
  */
 
+#include <stdbool.h>
+#include <stdint.h>
 #include "debounce/debounce.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define FAULT_STATE_GOOD        0
 #define FAULT_STATE_WARN        1
@@ -284,5 +290,9 @@ fault_register_domain(int domain_id, uint8_t success_delta,
     return fault_register_domain_priv(domain_id, success_delta, failure_delta,
                                       name);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
