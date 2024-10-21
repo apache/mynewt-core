@@ -85,21 +85,17 @@
 #include "utils.h"
 #include "pbuf.h"
 
-#if MYNEWT_VAL(MCU_APP_CORE)
-__attribute__((section(".ipc0_tx"))) static uint8_t ipc0_tx_start[0x4000];
-__attribute__((section(".ipc0_rx"))) static uint8_t ipc0_rx_start[0x4000];
-#define TX_BLOCKS_NUM (16)
-#define RX_BLOCKS_NUM (24)
-#else
-__attribute__((section(".ipc0_tx"))) static uint8_t ipc0_rx_start[0x4000];
-__attribute__((section(".ipc0_rx"))) static uint8_t ipc0_tx_start[0x4000];
-#define TX_BLOCKS_NUM (24)
-#define RX_BLOCKS_NUM (16)
-#endif
-
+#define TX_REGION MYNEWT_VAL(IPC_ICBMSG_TX_REGION_NAME)
+#define RX_REGION MYNEWT_VAL(IPC_ICBMSG_RX_REGION_NAME)
+#define TX_REGION_SIZE MYNEWT_VAL(IPC_ICBMSG_TX_REGION_SIZE)
+#define RX_REGION_SIZE MYNEWT_VAL(IPC_ICBMSG_RX_REGION_SIZE)
+__attribute__((section(TX_REGION))) static uint8_t ipc0_tx_start[TX_REGION_SIZE];
+__attribute__((section(RX_REGION))) static uint8_t ipc0_rx_start[RX_REGION_SIZE];
 #define ipc0_tx_end (ipc0_tx_start + sizeof(ipc0_tx_start))
 #define ipc0_rx_end (ipc0_rx_start + sizeof(ipc0_rx_start))
 
+#define TX_BLOCKS_NUM MYNEWT_VAL(IPC_ICBMSG_NUM_TX_BLOCKS)
+#define RX_BLOCKS_NUM MYNEWT_VAL(IPC_ICBMSG_NUM_RX_BLOCKS)
 #define tx_BLOCKS_NUM TX_BLOCKS_NUM
 #define rx_BLOCKS_NUM RX_BLOCKS_NUM
 
@@ -651,23 +647,11 @@ control_received(struct ipc_instance *ipc, const struct control_message *message
     }
 }
 
-void
-ipc_process_signal(uint8_t ipc_id)
+static void
+process_ipc_data(uint8_t ipc_id)
 {
-    int icmsg_len;
     struct ipc_instance *ipc = &ipc_instances[ipc_id];
-
-    icmsg_len = pbuf_read(&ipc->rx_pb, NULL, 0);
-    if (icmsg_len <= 0) {
-        /* Unlikely, no data in buffer. */
-        return;
-    }
-
-    if (sizeof(icmsg_rx_buffer) < icmsg_len) {
-        return;
-    }
-
-    icmsg_len = pbuf_read(&ipc->rx_pb, (char *)icmsg_rx_buffer, sizeof(icmsg_rx_buffer));
+    int icmsg_len = pbuf_read(&ipc->rx_pb, (char *)icmsg_rx_buffer, sizeof(icmsg_rx_buffer));
 
     if (ipc->state == ICMSG_STATE_READY) {
         if (icmsg_len < sizeof(struct control_message)) {
@@ -691,6 +675,27 @@ ipc_process_signal(uint8_t ipc_id)
         ipc->flags |= CONTROL_BOUNDED;
         ipc->state = ICMSG_STATE_READY;
     }
+}
+
+void
+ipc_process_signal(uint8_t ipc_id)
+{
+    int icmsg_len;
+    struct ipc_instance *ipc = &ipc_instances[ipc_id];
+
+    do {
+        icmsg_len = pbuf_read(&ipc->rx_pb, NULL, 0);
+        if (icmsg_len <= 0) {
+            /* Unlikely, no data in buffer. */
+            return;
+        }
+
+        if (sizeof(icmsg_rx_buffer) < icmsg_len) {
+            return;
+        }
+
+        process_ipc_data(ipc_id);
+    } while(true);
 }
 
 /**

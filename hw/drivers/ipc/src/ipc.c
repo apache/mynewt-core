@@ -27,34 +27,19 @@
 #define IPC_SYNC_ID 0
 
 /* IPC channels used for startup sync */
-#if MYNEWT_VAL(MCU_APP_CORE)
-#define IPC_TX_SYNC_CHANNEL 0
-#define IPC_RX_SYNC_CHANNEL 1
-#else
-#define IPC_TX_SYNC_CHANNEL 1
-#define IPC_RX_SYNC_CHANNEL 0
-#endif
+#define IPC_SYNC_TX_CHANNEL MYNEWT_VAL(IPC_SYNC_TX_CHANNEL)
+#define IPC_SYNC_RX_CHANNEL MYNEWT_VAL(IPC_SYNC_RX_CHANNEL)
 
 static void
 ipc_cb(uint8_t channel)
 {
-    assert(channel == IPC_RX_SYNC_CHANNEL);
+    assert(channel == IPC_SYNC_RX_CHANNEL);
 
     os_trace_isr_enter();
 
     ipc_process_signal(IPC_SYNC_ID);
 
     os_trace_isr_exit();
-}
-
-static void
-ipc_common_init(void)
-{
-    hal_ipc_init();
-    hal_ipc_register_callback(IPC_RX_SYNC_CHANNEL, ipc_cb);
-    ipc_open(IPC_SYNC_ID);
-    hal_ipc_enable_irq(IPC_RX_SYNC_CHANNEL, 1);
-    hal_ipc_start();
 }
 
 int
@@ -66,11 +51,17 @@ ipc_signal(uint8_t channel)
 void
 ipc_init(void)
 {
-    ipc_common_init();
+    hal_ipc_init();
+
+    hal_ipc_register_callback(IPC_SYNC_RX_CHANNEL, ipc_cb);
+
+    ipc_open(IPC_SYNC_ID);
+
+    hal_ipc_enable_irq(IPC_SYNC_RX_CHANNEL, 1);
+
+    hal_ipc_start();
 
     while (!ipc_ready(IPC_SYNC_ID)) {
-#if MYNEWT_VAL(MCU_APP_CORE)
-        ipc_signal(IPC_TX_SYNC_CHANNEL);
-#endif
+        ipc_signal(IPC_SYNC_TX_CHANNEL);
     }
 }

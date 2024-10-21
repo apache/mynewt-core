@@ -21,3 +21,27 @@ syscfg.defs:
         description: >
             Allowed number of endpoints within an IPC instance.
         value: 2
+    IPC_ICBMSG_TX_REGION_SIZE:
+        description: >
+            Size of IPC TX region.
+        value: 0x800
+    IPC_ICBMSG_RX_REGION_SIZE:
+        description: >
+            Size of IPC RX region.
+        value: 0x800
+    IPC_ICBMSG_TX_REGION_NAME:
+        description: >
+            Name of IPC TX region.
+        value: "\".ipc0_tx\""
+    IPC_ICBMSG_RX_REGION_NAME:
+        description: >
+            Size of IPC RX region.
+        value: "\".ipc0_rx\""
+    IPC_ICBMSG_NUM_TX_BLOCKS:
+        description: >
+            Number of blocks within IPC TX region.
+        value: 24
+    IPC_ICBMSG_NUM_RX_BLOCKS:
+        description: >
+            Number of blocks within IPC RX region.
+        value: 24

@@ -17,23 +17,13 @@
 #
 
 syscfg.defs:
-    IPC_CHANNELS:
+    MAIN_STACK_SIZE:
         description: >
-            Number of enabled IPC channels
-        value: 5
-        range: 1..16
+            Stack size (in bytes) to use in startup code.
+            For bootloader it's main stack, for application this stack is used by interrupts
+            and exceptions.
+        value: 768
 
-    IPC_SYNC_TX_CHANNEL:
-        description: >
-            Select IPC TX channel to be used for sync.
-        range: 0..31
-        value: 1
-
-    IPC_SYNC_RX_CHANNEL:
-        description: >
-            Select IPC RX channel to be used for sync.
-        range: 0..31
-        value: 0
-
-syscfg.vals.'BSP_NRF5340_NET || BSP_NRF54_RAD':
-    IPC_CHANNELS: 16
+syscfg.vals.BOOT_LOADER:
+    # MCUboot code uses a lot of stack
+    MAIN_STACK_SIZE: 1024

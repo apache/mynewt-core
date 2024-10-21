@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,24 +17,9 @@
 # under the License.
 #
 
-syscfg.defs:
-    IPC_CHANNELS:
-        description: >
-            Number of enabled IPC channels
-        value: 5
-        range: 1..16
-
-    IPC_SYNC_TX_CHANNEL:
-        description: >
-            Select IPC TX channel to be used for sync.
-        range: 0..31
-        value: 1
-
-    IPC_SYNC_RX_CHANNEL:
-        description: >
-            Select IPC RX channel to be used for sync.
-        range: 0..31
-        value: 0
-
-syscfg.vals.'BSP_NRF5340_NET || BSP_NRF54_RAD':
-    IPC_CHANNELS: 16
+pkg.name: hw/mcu/nordic/nrf54h20_rad/startup
+pkg.description: MCU default startup code
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - nrf54h20

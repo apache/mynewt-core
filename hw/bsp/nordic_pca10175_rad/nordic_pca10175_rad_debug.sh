@@ -1,3 +1,4 @@
+#!/bin/sh
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -6,7 +7,7 @@
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
 #
-#  http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
@@ -16,24 +17,24 @@
 # under the License.
 #
 
-syscfg.defs:
-    IPC_CHANNELS:
-        description: >
-            Number of enabled IPC channels
-        value: 5
-        range: 1..16
+# Called with following variables set:
+#  - CORE_PATH is absolute path to @apache-mynewt-core
+#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+#  - BIN_BASENAME is the path to prefix to target binary,
+#    .elf appended to name is the ELF file
+#  - FEATURES holds the target features string
+#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
+#  - RESET set if target should be reset when attaching
+#  - NO_GDB set if we should not start gdb to debug
+#
 
-    IPC_SYNC_TX_CHANNEL:
-        description: >
-            Select IPC TX channel to be used for sync.
-        range: 0..31
-        value: 1
+#Use custom ports for debuging so that newt debug works on both cores
+EXTRA_JTAG_CMD="-port 3334"
 
-    IPC_SYNC_RX_CHANNEL:
-        description: >
-            Select IPC RX channel to be used for sync.
-        range: 0..31
-        value: 0
+. $CORE_PATH/hw/scripts/jlink.sh
 
-syscfg.vals.'BSP_NRF5340_NET || BSP_NRF54_RAD':
-    IPC_CHANNELS: 16
+FILE_NAME=$BIN_BASENAME.elf
+JLINK_DEV="nrf54h20_xxaa_rad"
+
+jlink_debug
+

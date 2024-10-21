@@ -47,6 +47,7 @@ pkg.include_dirs:
 
 pkg.src_dirs:
     - "@nordic-nrfx/drivers/src"
+    - "@nordic-nrfx/helpers"
 
 pkg.cflags:
     - -std=gnu99
@@ -58,7 +59,7 @@ pkg.deps:
 
 repository.nordic-nrfx:
     type: github
-    vers: v3.3.0-commit
+    vers: v3.7.0-commit
     branch: master
     user: NordicSemiconductor
     repo: nrfx
