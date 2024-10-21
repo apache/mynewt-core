@@ -1,0 +1,72 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+bsp.name: "nRF54H20 DK (Net Core)"
+bsp.url: https://www.nordicsemi.com/Software-and-tools/Development-Kits/nRF54H20-DK
+bsp.maker: "Nordic Semiconductor"
+bsp.arch: cortex_m33
+bsp.exclude_site: 1
+bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m33"
+bsp.linkerscript:
+    - "hw/bsp/nordic_pca10175_rad/nrf54h20_rad.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf54h20_rad/nrf54h20_rad.ld"
+bsp.linkerscript.BOOT_LOADER.OVERWRITE:
+    - "hw/bsp/nordic_pca10175_rad/boot-nrf54h20_rad.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf54h20_rad/nrf54h20_rad.ld"
+bsp.part2linkerscript: "hw/bsp/nordic_pca10175_rad/split-nordic_pca10175_rad.ld"
+bsp.downloadscript: "hw/scripts/download.sh"
+bsp.debugscript: "hw/bsp/nordic_pca10175_rad/nordic_pca10175_rad_debug.sh"
+
+bsp.flash_map:
+    areas:
+        # System areas.
+        FLASH_AREA_BOOTLOADER:
+            device: 0
+            offset: 0x01000000
+            size: 16kB
+        FLASH_AREA_IMAGE_0:
+            device: 0
+            offset: 0x01008000
+            size: 128kB
+        FLASH_AREA_COREDUMP:
+            user_id: 2
+            device: 0
+            offset: 0x01028000
+            size: 68kB
+        # This maps to app flash and uses vflash
+        FLASH_AREA_IMAGE_1:
+            device: 1
+            offset: 0x00000000
+            size: 128kB
+        FLASH_AREA_IMAGE_SCRATCH:
+            device: 0
+            offset: 0x0103a000
+            size: 8kB
+
+        # User areas.
+        FLASH_AREA_REBOOT_LOG:
+            user_id: 0
+            device: 0
+            offset: 0x01004000
+            size: 16kB
+        FLASH_AREA_NFFS:
+            user_id: 1
+            device: 0
+            offset: 0x010fc000
+            size: 16kB

@@ -39,6 +39,10 @@
 #define GPIOTE_IRQn GPIOTE0_IRQn
 #endif
 
+#if defined(NRF54H20_XXAA)
+#define GPIOTE_IRQn GPIOTE_0_IRQn
+#endif
+
 /* Storage for GPIO callbacks. */
 struct hal_gpio_irq {
     hal_gpio_irq_handler_t func;

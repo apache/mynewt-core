@@ -17,50 +17,28 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic
-pkg.description: Common MCU definitions for Nordic NRF5x and NRF91 series chips.
+pkg.name: hw/bsp/nordic_pca10175_rad
+pkg.type: bsp
+pkg.description: BSP definition for the Nordic PCA10175 (nRF54h20 DK) - Net Core
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - nrf53
-    - nrf52
-    - nrf51
-    - nrfx
-    - nrf91
+    - nrf54h20
+    - nordic
+    - pca10175
 
-pkg.type: sdk
-
-pkg.ign_dirs:
-    - "soc"
-    - "templates"
-    - "mdk"
-
-pkg.include_dirs:
-    - "@nordic-nrfx/drivers/include"
-    - "@nordic-nrfx/drivers"
-    - "@nordic-nrfx/drivers/src"
-    - "@nordic-nrfx/hal"
-    - "@nordic-nrfx/helpers"
-    - "@nordic-nrfx/mdk"
-    - "@nordic-nrfx/."
-    - "include"
-
-pkg.src_dirs:
-    - "@nordic-nrfx/drivers/src"
-    - "@nordic-nrfx/helpers"
+pkg.init:
+    hal_bsp_init_trng: 2
 
 pkg.cflags:
-    - -std=gnu99
-    - -Wno-unused-variable
+    - '-DNRF54H20_XXAA'
+    - '-DNRF_RADIOCORE'
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/hw/scripts"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf54h20_rad"
+    - "@apache-mynewt-core/libc"
 
-repository.nordic-nrfx:
-    type: github
-    vers: v3.7.0-commit
-    branch: master
-    user: NordicSemiconductor
-    repo: nrfx
-
+# pkg.deps.'BLE_TRANSPORT_HS != "ipc"':
+#      - "@apache-mynewt-core/sys/flash_map"
+#      - "@apache-mynewt-core/hw/drivers/flash/ipc_nrf54h20_flash"

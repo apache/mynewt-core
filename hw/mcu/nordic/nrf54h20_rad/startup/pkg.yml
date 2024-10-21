@@ -17,50 +17,9 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic
-pkg.description: Common MCU definitions for Nordic NRF5x and NRF91 series chips.
+pkg.name: hw/mcu/nordic/nrf54h20_rad/startup
+pkg.description: MCU default startup code
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - nrf53
-    - nrf52
-    - nrf51
-    - nrfx
-    - nrf91
-
-pkg.type: sdk
-
-pkg.ign_dirs:
-    - "soc"
-    - "templates"
-    - "mdk"
-
-pkg.include_dirs:
-    - "@nordic-nrfx/drivers/include"
-    - "@nordic-nrfx/drivers"
-    - "@nordic-nrfx/drivers/src"
-    - "@nordic-nrfx/hal"
-    - "@nordic-nrfx/helpers"
-    - "@nordic-nrfx/mdk"
-    - "@nordic-nrfx/."
-    - "include"
-
-pkg.src_dirs:
-    - "@nordic-nrfx/drivers/src"
-    - "@nordic-nrfx/helpers"
-
-pkg.cflags:
-    - -std=gnu99
-    - -Wno-unused-variable
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
-
-repository.nordic-nrfx:
-    type: github
-    vers: v3.7.0-commit
-    branch: master
-    user: NordicSemiconductor
-    repo: nrfx
-
+    - nrf54h20
