@@ -57,6 +57,41 @@ void da1469x_clock_sys_xtal32m_switch(void);
 void da1469x_clock_sys_xtal32m_switch_safe(void);
 
 /**
+ * Disable PLL96
+ *
+ * If PLL was used as SYS_CLOCK switches to XTAL32M.
+ */
+void da1469x_clock_sys_pll_disable(void);
+
+/**
+ * Enable PLL96
+ */
+void da1469x_clock_sys_pll_enable(void);
+
+/**
+ * Check whether PLL96 is locked and can be use as system clock or USB clock
+ *
+ * @return 0 if PLL is off, non-0 it its running
+ */
+static inline int
+da1469x_clock_is_pll_locked(void)
+{
+    return 0 != (CRG_XTAL->PLL_SYS_STATUS_REG & CRG_XTAL_PLL_SYS_STATUS_REG_PLL_LOCK_FINE_Msk);
+}
+
+/**
+ * Wait for PLL96 to lock.
+ */
+void da1469x_clock_pll_wait_to_lock(void);
+
+/**
+ * Switch system clock to PLL96
+ *
+ * Caller shall ensure that PLL is already locked.
+ */
+void da1469x_clock_sys_pll_switch(void);
+
+/**
  * Disable RC32M
  */
 void da1469x_clock_sys_rc32m_disable(void);
@@ -74,26 +109,19 @@ void da1469x_clock_lp_xtal32k_enable(void);
 void da1469x_clock_lp_xtal32k_switch(void);
 
 /**
+ * Disable RCX
+ */
+void da1469x_clock_lp_rcx_disable(void);
+
+/**
  * Enable RCX
  */
 void da1469x_clock_lp_rcx_enable(void);
 
 /**
  * Switch lp_clk to RCX
- *
- * Caller shall ensure RCX is already settled.
  */
 void da1469x_clock_lp_rcx_switch(void);
-
-/**
- * Calibrate RCX
- */
-void da1469x_clock_lp_rcx_calibrate(void);
-
-/**
- * Calibrate RC32K
- */
-void da1469x_clock_lp_rc32k_calibrate(void);
 
 /**
  * Calibrate RC32M
@@ -101,14 +129,14 @@ void da1469x_clock_lp_rc32k_calibrate(void);
 void da1469x_clock_lp_rc32m_calibrate(void);
 
 /**
- * Get calibrated (measured) RCX frequency
+ * Calibrate RC32K
  */
-uint32_t da1469x_clock_lp_rcx_freq_get(void);
+void da1469x_clock_lp_rc32k_calibrate(void);
 
 /**
- * Get calibrated (measured) RC32K frequency
+ * Calibrate RCX
  */
-uint32_t da1469x_clock_lp_rc32k_freq_get(void);
+void da1469x_clock_lp_rcx_calibrate(void);
 
 /**
  * Get calibrated (measured) RC32M frequency
@@ -116,9 +144,14 @@ uint32_t da1469x_clock_lp_rc32k_freq_get(void);
 uint32_t da1469x_clock_lp_rc32m_freq_get(void);
 
 /**
- * Disable RCX
+ * Get calibrated (measured) RC32K frequency
  */
-void da1469x_clock_lp_rcx_disable(void);
+uint32_t da1469x_clock_lp_rc32k_freq_get(void);
+
+/**
+ * Get calibrated (measured) RCX frequency
+ */
+uint32_t da1469x_clock_lp_rcx_freq_get(void);
 
 /**
  * Enable AMBA clock(s)
@@ -149,41 +182,6 @@ da1469x_clock_amba_disable(uint32_t mask)
     CRG_TOP->CLK_AMBA_REG &= ~mask;
     __HAL_ENABLE_INTERRUPTS(primask);
 }
-
-/**
- * Enable PLL96
- */
-void da1469x_clock_sys_pll_enable(void);
-
-/**
- * Disable PLL96
- *
- * If PLL was used as SYS_CLOCK switches to XTAL32M.
- */
-void da1469x_clock_sys_pll_disable(void);
-
-/**
- * Checks whether PLL96 is locked and can be use as system clock or USB clock
- *
- * @return 0 if PLL is off, non-0 it its running
- */
-static inline int
-da1469x_clock_is_pll_locked(void)
-{
-    return 0 != (CRG_XTAL->PLL_SYS_STATUS_REG & CRG_XTAL_PLL_SYS_STATUS_REG_PLL_LOCK_FINE_Msk);
-}
-
-/**
- * Waits for PLL96 to lock.
- */
-void da1469x_clock_pll_wait_to_lock(void);
-
-/**
- * Switches system clock to PLL96
- *
- * Caller shall ensure that PLL is already locked.
- */
-void da1469x_clock_sys_pll_switch(void);
 
 #ifdef __cplusplus
 }
