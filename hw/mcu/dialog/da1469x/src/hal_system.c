@@ -125,23 +125,8 @@ hal_system_clock_start(void)
 #endif
     da1469x_clock_sys_rc32m_disable();
 
-#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
-    /* Switch to RCX and calibrate it */
-    da1469x_clock_lp_rcx_enable();
-    da1469x_clock_lp_rcx_switch();
-    da1469x_clock_lp_rcx_calibrate();
-    da1469x_lpclk_enabled();
-#else
-    /*
-     * We cannot switch lp_clk to XTAL32K here since it needs some time to
-     * settle, so we just disable RCX (we don't need it) and then we'll handle
-     * switch to XTAL32K from sysinit since we need os_cputime for this.
-     */
-    da1469x_clock_lp_rcx_disable();
-#endif
-
-    /* TODO: we should calibrate this periodically */
-    da1469x_clock_lp_rc32k_calibrate();
+    /* Initialize the selected RC LP clock */
+    da1469x_lpclk_rc_init();
 }
 
 enum hal_reset_reason

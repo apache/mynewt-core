@@ -38,6 +38,7 @@ static void
 da1469x_lpclk_settle_tmr_cb(void *arg)
 {
     da1469x_clock_lp_xtal32k_switch();
+    da1469x_clock_lp_xtal32k_calibrate();
     da1469x_lpclk_enabled();
 }
 #endif
@@ -49,11 +50,7 @@ da1469x_lpclk_notify(void)
         return;
     }
 
-#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
-    g_da1469x_lpclk_cmac_cb(32768);
-#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
-    g_da1469x_lpclk_cmac_cb(da1469x_clock_lp_rcx_freq_get());
-#endif
+    g_da1469x_lpclk_cmac_cb(da1469x_clock_lp_freq_get());
 }
 
 void
@@ -74,6 +71,31 @@ void
 da1469x_lpclk_updated(void)
 {
     da1469x_lpclk_notify();
+}
+
+void
+da1469x_lpclk_rc_init(void)
+{
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    da1469x_clock_lp_rc32k_disable();
+    da1469x_clock_lp_rcx_enable();
+    da1469x_clock_lp_rcx_switch();
+    da1469x_clock_lp_calibrate();
+    da1469x_lpclk_enabled();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RC32K)
+    da1469x_clock_lp_rcx_disable();
+    da1469x_clock_lp_rc32k_enable();
+    da1469x_clock_lp_rc32k_switch();
+    da1469x_clock_lp_calibrate();
+    da1469x_lpclk_enabled();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
+    /*
+     * We cannot switch lp_clk to XTAL32K here since it needs some time to
+     * settle, so we just disable RCX (we don't need it) and then we'll handle
+     * switch to XTAL32K from sysinit since we need os_cputime for this.
+     */
+    da1469x_clock_lp_rcx_disable();
+#endif
 }
 
 void
