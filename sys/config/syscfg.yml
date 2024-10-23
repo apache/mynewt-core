@@ -101,7 +101,7 @@ syscfg.defs:
         value: 0
 
 syscfg.vals.HARDFLOAT:
-    value: 1
+    CONFIG_FLOAT_SUPPORT: 1
 
 syscfg.defs.(CONFIG_FCB || CONFIG_FCB2):
     CONFIG_FCB_FLASH_AREA:
