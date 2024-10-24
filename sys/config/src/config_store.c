@@ -186,6 +186,7 @@ conf_get_stored_value(char *name, char *buf, int buf_len)
     return 0;
 }
 
+#if !MYNEWT_VAL(CONFIG_NO_DUP_CHECK)
 static void
 conf_dup_check_cb(char *name, char *val, void *cb_arg)
 {
@@ -208,6 +209,7 @@ conf_dup_check_cb(char *name, char *val, void *cb_arg)
         }
     }
 }
+#endif
 
 /*
  * Append a single value to persisted config. Don't store duplicate value.
@@ -216,7 +218,9 @@ int
 conf_save_one(const char *name, char *value)
 {
     struct conf_store *cs;
+#if !MYNEWT_VAL(CONFIG_NO_DUP_CHECK)
     struct conf_dup_check_arg cdca;
+#endif
     int rc;
 
     conf_lock();
@@ -225,6 +229,7 @@ conf_save_one(const char *name, char *value)
         goto out;
     }
 
+#if !MYNEWT_VAL(CONFIG_NO_DUP_CHECK)
     /*
      * Check if we're writing the same value again.
      */
@@ -238,6 +243,7 @@ conf_save_one(const char *name, char *value)
         rc = 0;
         goto out;
     }
+#endif
     cs = conf_save_dst;
     rc = cs->cs_itf->csi_save(cs, name, value);
 out:
@@ -309,6 +315,7 @@ conf_save(void)
     }
 out:
     conf_unlock();
+
     return rc;
 }
 
