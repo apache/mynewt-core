@@ -53,11 +53,11 @@ hal_bsp_flash_dev(uint8_t id)
      * Internal flash mapped to id 0.
      */
     if (id == 0) {
-        return &nrf5340_flash_dev;
+        return &nrf_flash_dev;
     }
 #if MYNEWT_VAL(QSPI_ENABLE)
     if (id == 1) {
-        return &nrf5340_qspi_dev;
+        return &nrf_qspi_dev;
     }
 #endif
 #if MYNEWT_VAL(IPC_NRF5340_FLASH_CLIENT)
