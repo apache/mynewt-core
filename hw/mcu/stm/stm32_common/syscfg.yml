@@ -16,6 +16,8 @@
 # under the License.
 
 syscfg.defs:
+    MCU_FAMILY_STM32: 1
+
     TIMER_0:
         description: 'Timer 0'
         value:  1
