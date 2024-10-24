@@ -17,24 +17,13 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/nordic_pca10095_net
-pkg.type: bsp
-pkg.description: BSP definition for the Nordic PCA10095 (nRF5340 DK) - Net Core
+pkg.name: hw/drivers/ipc/icbmsg
+pkg.description: IPC driver with icbmsg backend
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - nrf5340
-    - nordic
-    - pca10095
-
-pkg.cflags:
-    - '-DNRF5340_XXAA_NETWORK'
+    - ipc
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/scripts"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net"
-    - "@apache-mynewt-core/libc"
-
-pkg.deps.'BLE_TRANSPORT_HS != "ipc"':
-    - "@apache-mynewt-core/sys/flash_map"
-    - "@apache-mynewt-core/hw/drivers/flash/ipc_nrf5340_flash"
+    - "@apache-mynewt-core/hw/mcu/nordic"
+    - "@apache-mynewt-core/kernel/os"

@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,24 +16,8 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/nordic_pca10095_net
-pkg.type: bsp
-pkg.description: BSP definition for the Nordic PCA10095 (nRF5340 DK) - Net Core
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - nrf5340
-    - nordic
-    - pca10095
-
-pkg.cflags:
-    - '-DNRF5340_XXAA_NETWORK'
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/scripts"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net"
-    - "@apache-mynewt-core/libc"
-
-pkg.deps.'BLE_TRANSPORT_HS != "ipc"':
-    - "@apache-mynewt-core/sys/flash_map"
-    - "@apache-mynewt-core/hw/drivers/flash/ipc_nrf5340_flash"
+syscfg.defs:
+    IPC_ICBMSG_NUM_EP:
+        description: >
+            Allowed number of endpoints within an IPC instance.
+        value: 2

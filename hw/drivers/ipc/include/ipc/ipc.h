@@ -16,14 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-MEMORY
-{
-  FLASH (rx) : ORIGIN = 0x01008000, LENGTH = 0x30000
-  RAM (rwx) : ORIGIN = 0x21000000, LENGTH = 0x10000
-  IPC (rw)  : ORIGIN = 0x20000400, LENGTH = 0x400
-  sram_ipc0_tx (rw)  : ORIGIN = 0x20070000, LENGTH = 0x4000
-  sram_ipc0_rx (rw)  : ORIGIN = 0x20074000, LENGTH = 0x4000
-}
 
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+#ifndef _HW_DRIVERS_IPC_H
+#define _HW_DRIVERS_IPC_H
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <os/os.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void ipc_init(void);
+int ipc_open(uint8_t ipc_id);
+int ipc_signal(uint8_t ipc_id);
+void ipc_process_signal(uint8_t ipc_id);
+uint8_t ipc_ready(uint8_t ipc_id);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _HW_DRIVERS_IPC_H */

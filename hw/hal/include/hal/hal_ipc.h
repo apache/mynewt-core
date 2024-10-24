@@ -16,14 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-MEMORY
-{
-  FLASH (rx) : ORIGIN = 0x01008000, LENGTH = 0x30000
-  RAM (rwx) : ORIGIN = 0x21000000, LENGTH = 0x10000
-  IPC (rw)  : ORIGIN = 0x20000400, LENGTH = 0x400
-  sram_ipc0_tx (rw)  : ORIGIN = 0x20070000, LENGTH = 0x4000
-  sram_ipc0_rx (rw)  : ORIGIN = 0x20074000, LENGTH = 0x4000
-}
 
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+/**
+ * @addtogroup HAL
+ * @{
+ *   @defgroup HALIPC HAL IPC
+ *   @{
+ */
+
+#ifndef H_HAL_IPC_
+#define H_HAL_IPC_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void (*hal_ipc_cb)(uint8_t channel);
+
+void hal_ipc_init(void);
+void hal_ipc_start(void);
+void hal_ipc_register_callback(uint8_t channel, hal_ipc_cb cb);
+void hal_ipc_enable_irq(uint8_t channel, bool enable);
+int hal_ipc_signal(uint8_t channel);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* H_HAL_IPC_ */
+
+/**
+ *   @} HALIPC
+ * @} HAL
+ */
