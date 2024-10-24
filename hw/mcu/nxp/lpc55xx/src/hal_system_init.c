@@ -20,6 +20,7 @@
 #include "os/mynewt.h"
 #include <hal/hal_system.h>
 #include <mpu_armv8.h>
+#include <mynewt_cm.h>
 
 static int
 mpu_add_region(uint32_t rnr, uint32_t start, size_t size, uint8_t attr_ix, uint8_t ro, uint8_t xn)

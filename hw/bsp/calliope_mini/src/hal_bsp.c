@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include "os/mynewt.h"
+#include "mynewt_cm.h"
 #include "nrfx.h"
 #include "hal/hal_system.h"
 #include "bsp/bsp.h"
@@ -228,4 +229,5 @@ hal_bsp_init(void)
 void
 hal_bsp_deinit(void)
 {
+    Cortex_DisableAll();
 }

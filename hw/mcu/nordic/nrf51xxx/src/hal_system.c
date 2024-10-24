@@ -19,6 +19,7 @@
 
 #include "os/mynewt.h"
 #include <mcu/cortex_m0.h>
+#include "mynewt_cm.h"
 #include "hal/hal_system.h"
 #include <nrf51.h>
 #include <nrf51_bitfields.h>
@@ -36,6 +37,8 @@
 void
 hal_system_init(void)
 {
+    NVIC_Relocate();
+
 #if MYNEWT_VAL(MCU_DCDC_ENABLED)
     NRF_POWER->DCDCEN = 1;
 #endif

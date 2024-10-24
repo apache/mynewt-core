@@ -20,6 +20,7 @@
 #include "os/mynewt.h"
 #include "mcu/stm32_hal.h"
 #include <hal/hal_system.h>
+#include "mynewt_cm.h"
 
 void SystemClock_Config(void);
 

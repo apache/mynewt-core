@@ -44,6 +44,7 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nxp/kinetis/MK8xF/MK82F"
     - "@apache-mynewt-core/libc"
+    - "@apache-mynewt-core/boot/startup"
 
 pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
