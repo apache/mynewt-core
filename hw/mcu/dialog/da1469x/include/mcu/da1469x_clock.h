@@ -171,6 +171,11 @@ uint32_t da1469x_clock_sys_rc32m_freq_get(void);
 void da1469x_clock_lp_rcx_disable(void);
 
 /**
+ * Set the RTC dividers
+ */
+void da1469x_clock_lp_set_rtc_divs(void);
+
+/**
  * Enable AMBA clock(s)
  *
  * @param mask

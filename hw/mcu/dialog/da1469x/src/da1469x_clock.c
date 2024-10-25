@@ -40,6 +40,9 @@
 #define XTALRDY_IRQ_DIV         (RC32M_FREQ / XTALRDY_IRQ_FREQ)
 #define XTALRDY_IRQ_FREQ_MAX    (RC32M_FREQ_MAX / XTALRDY_IRQ_DIV)
 
+#define RTC_IN_FREQ_HZ       100
+#define RTC_DIV_FRAC_ADJ      10    /* For CLK_RTCDIV_REG::RTC_DIV_DENOM = 0 (1000) */
+
 enum da1469x_sys_clk_sel {
     DA1469X_SYS_XTAL32M = 0,
     DA1469X_SYS_RC32M,
@@ -76,6 +79,12 @@ enum da1469x_calib_sel {
     DA1469X_CALIB_RCX,
     DA1469X_CALIB_RCOSC,
 };
+
+enum da1469x_rtc_div_denom_sel {
+    DA1469X_RTC_DIV_DENOM_1000 = 0,
+    DA1469X_RTC_DIV_DENOM_1024,
+};
+#define DA1469X_RTC_DIV_DENOM_SEL   DA1469X_RTC_DIV_DENOM_1000
 
 static uint32_t g_mcu_clock_rcx_freq;
 static uint32_t g_mcu_clock_rc32k_freq;
@@ -464,6 +473,21 @@ void
 da1469x_clock_lp_rcx_disable(void)
 {
     CRG_TOP->CLK_RCX_REG &= ~CRG_TOP_CLK_RCX_REG_RCX_ENABLE_Msk;
+}
+
+void
+da1469x_clock_lp_set_rtc_divs(void)
+{
+    /* Please see the DA1469x desig doc section 2.20.4 for details */
+    uint32_t reg;
+
+    reg = ((da1469x_clock_lp_freq_get() % RTC_IN_FREQ_HZ) * RTC_DIV_FRAC_ADJ) <<
+          CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_FRAC_Pos;
+    reg |= ((da1469x_clock_lp_freq_get() / RTC_IN_FREQ_HZ)) <<
+           CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_INT_Pos;
+    reg |= DA1469X_RTC_DIV_DENOM_SEL << CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_DENOM_Pos;
+    reg |= CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_ENABLE_Msk;
+    CRG_TOP->CLK_RTCDIV_REG = reg;
 }
 
 static void

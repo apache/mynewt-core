@@ -56,6 +56,8 @@ da1469x_lpclk_notify(void)
         if (g_da1469x_lpclk_cmac_cb && g_mcu_lpclk_available) {
             g_da1469x_lpclk_cmac_cb(lp_curr_freq);
         }
+
+        da1469x_clock_lp_set_rtc_divs();
     }
 }
 
