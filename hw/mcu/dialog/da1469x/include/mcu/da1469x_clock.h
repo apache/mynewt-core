@@ -62,6 +62,21 @@ void da1469x_clock_sys_xtal32m_switch_safe(void);
 void da1469x_clock_sys_rc32m_disable(void);
 
 /**
+ * Enable RC32M
+ */
+void da1469x_clock_sys_rc32m_enable(void);
+
+/**
+ * Switch sys_clk to RC32M
+ */
+void da1469x_clock_sys_rc32m_switch(void);
+
+/**
+ * Disable XTAL32K
+ */
+void da1469x_clock_lp_xtal32k_disable(void);
+
+/**
  * Enable XTAL32K
  */
 void da1469x_clock_lp_xtal32k_enable(void);
@@ -72,6 +87,21 @@ void da1469x_clock_lp_xtal32k_enable(void);
  * Caller shall ensure XTAL32K is already settled.
  */
 void da1469x_clock_lp_xtal32k_switch(void);
+
+/**
+ * Disable RC32K
+ */
+void da1469x_clock_lp_rc32k_disable(void);
+
+/**
+ * Enable RC32K
+ */
+void da1469x_clock_lp_rc32k_enable(void);
+
+/**
+ * Switch lp_clk to RC32K
+ */
+void da1469x_clock_lp_rc32k_switch(void);
 
 /**
  * Enable RCX
@@ -96,6 +126,11 @@ void da1469x_clock_lp_rcx_calibrate(void);
 void da1469x_clock_lp_rc32k_calibrate(void);
 
 /**
+ * Calibrate XTAL32K
+ */
+void da1469x_clock_lp_xtal32k_calibrate(void);
+
+/**
  * Calibrate RC32M
  */
 void da1469x_clock_lp_rc32m_calibrate(void);
@@ -109,6 +144,11 @@ uint32_t da1469x_clock_lp_rcx_freq_get(void);
  * Get calibrated (measured) RC32K frequency
  */
 uint32_t da1469x_clock_lp_rc32k_freq_get(void);
+
+/**
+ * Get calibrated XTAL32K frequency
+ */
+uint32_t da1469x_clock_lp_xtal32k_freq_get(void);
 
 /**
  * Get calibrated (measured) RC32M frequency
