@@ -57,7 +57,8 @@ da1469x_lpclk_notify(void)
             g_da1469x_lpclk_cmac_cb(lp_curr_freq);
         }
 
-        da1469x_clock_lp_set_rtc_divs();
+        da1469x_clock_lp_set_rtc_divs(lp_curr_freq);
+        hal_os_tick_calc_params(lp_curr_freq);
     }
 }
 

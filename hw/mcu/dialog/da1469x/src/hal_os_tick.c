@@ -28,7 +28,10 @@
 #include "mcu/mcu.h"
 
 struct hal_os_tick {
-    int ticks_per_ostick;
+    uint32_t os_ticks_per_sec;          /* Configured upon init */
+    uint32_t cycles_per_ostick;         /* For generating the OS ticks */
+    uint32_t cycles_per_256_osticks;    /* For more precise OS Time calculation */
+    uint32_t os_tick_residual;
     os_time_t max_idle_ticks;
     uint32_t last_trigger_val;
 };
@@ -88,7 +91,7 @@ hal_os_tick_set_timer_trigger_val(uint32_t trigger_val)
             break;
         }
 
-        trigger_val += g_hal_os_tick.ticks_per_ostick;
+        trigger_val += g_hal_os_tick.cycles_per_ostick;
     }
 }
 
@@ -97,28 +100,28 @@ hal_os_tick_handler(void)
 {
     uint32_t primask;
     uint32_t timer_val;
-    int delta;
-    int ticks;
+    uint32_t delta_x256;
+    uint32_t ticks;
 
     __HAL_DISABLE_INTERRUPTS(primask);
 
-    /* Calculate elapsed ticks and advance OS time. */
+    /* Calculate elapsed cycles of timer & record its current value */
     timer_val = hal_os_tick_get_timer_val();
-    delta = sub24(timer_val, g_hal_os_tick.last_trigger_val);
-    ticks = delta / g_hal_os_tick.ticks_per_ostick;
-    os_time_advance(ticks);
+    delta_x256 = ((timer_val - g_hal_os_tick.last_trigger_val) & 0xffffff) << 8;
+    g_hal_os_tick.last_trigger_val = timer_val;
 
     /* Clear timer interrupt */
     TIMER2->TIMER2_CLEAR_IRQ_REG = 1;
 
-    /* Update the time associated with the most recent tick */
-    g_hal_os_tick.last_trigger_val = (g_hal_os_tick.last_trigger_val +
-                                      (ticks * g_hal_os_tick.ticks_per_ostick)) &
-                                     0xffffff;
+    /* Re-arm timer for the next OS tick */
+    hal_os_tick_set_timer_trigger_val(timer_val + g_hal_os_tick.cycles_per_ostick);
 
-    /* Update timer trigger value for interrupt at the next tick */
-    hal_os_tick_set_timer_trigger_val(g_hal_os_tick.last_trigger_val +
-                                      g_hal_os_tick.ticks_per_ostick);
+    /* Update OS Time */
+    ticks = delta_x256 / g_hal_os_tick.cycles_per_256_osticks;
+    g_hal_os_tick.os_tick_residual += delta_x256 % g_hal_os_tick.cycles_per_256_osticks;
+    ticks += g_hal_os_tick.os_tick_residual / g_hal_os_tick.cycles_per_256_osticks;
+    g_hal_os_tick.os_tick_residual %= g_hal_os_tick.cycles_per_256_osticks;
+    os_time_advance(ticks);
 
     __HAL_ENABLE_INTERRUPTS(primask);
 }
@@ -134,6 +137,19 @@ hal_os_tick_timer2_isr(void)
 }
 
 void
+hal_os_tick_calc_params(uint32_t cycles_per_sec)
+{
+    /* Upon imit, `os_ticks_per_sec` becomes available only after clock setup - skip for now */
+    if (g_hal_os_tick.os_ticks_per_sec == 0) {
+        return;
+    }
+
+    g_hal_os_tick.cycles_per_256_osticks = (cycles_per_sec << 8) / g_hal_os_tick.os_ticks_per_sec;
+    g_hal_os_tick.cycles_per_ostick = g_hal_os_tick.cycles_per_256_osticks >> 8;
+    g_hal_os_tick.max_idle_ticks = (1UL << 22) / g_hal_os_tick.cycles_per_ostick;
+}
+
+void
 os_tick_idle(os_time_t ticks)
 {
     uint32_t new_trigger_val;
@@ -146,7 +162,7 @@ os_tick_idle(os_time_t ticks)
         }
 
         new_trigger_val = g_hal_os_tick.last_trigger_val +
-                          (ticks * g_hal_os_tick.ticks_per_ostick);
+                          (ticks * g_hal_os_tick.cycles_per_ostick);
 
         hal_os_tick_set_timer_trigger_val(new_trigger_val);
     }
@@ -163,13 +179,10 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
 {
     uint32_t primask;
 
+    g_hal_os_tick.os_ticks_per_sec = os_ticks_per_sec;
     g_hal_os_tick.last_trigger_val = 0;
-#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
-    g_hal_os_tick.ticks_per_ostick = da1469x_clock_lp_rcx_freq_get() / os_ticks_per_sec;
-#else
-    g_hal_os_tick.ticks_per_ostick = 32768 / os_ticks_per_sec;
-#endif
-    g_hal_os_tick.max_idle_ticks = (1UL << 22) / g_hal_os_tick.ticks_per_ostick;
+    g_hal_os_tick.os_tick_residual = 0;
+    hal_os_tick_calc_params(da1469x_clock_lp_freq_get());
 
     TIMER2->TIMER2_CTRL_REG = 0;
     TIMER2->TIMER2_PRESCALER_REG = 0;

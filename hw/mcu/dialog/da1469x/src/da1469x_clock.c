@@ -476,14 +476,14 @@ da1469x_clock_lp_rcx_disable(void)
 }
 
 void
-da1469x_clock_lp_set_rtc_divs(void)
+da1469x_clock_lp_set_rtc_divs(uint32_t rtc_clock_freq)
 {
-    /* Please see the DA1469x desig doc section 2.20.4 for details */
+    /* Please see the DA1469x Datasheet section 34.3 for details */
     uint32_t reg;
 
-    reg = ((da1469x_clock_lp_freq_get() % RTC_IN_FREQ_HZ) * RTC_DIV_FRAC_ADJ) <<
+    reg = ((rtc_clock_freq % RTC_IN_FREQ_HZ) * RTC_DIV_FRAC_ADJ) <<
           CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_FRAC_Pos;
-    reg |= ((da1469x_clock_lp_freq_get() / RTC_IN_FREQ_HZ)) <<
+    reg |= ((rtc_clock_freq / RTC_IN_FREQ_HZ)) <<
            CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_INT_Pos;
     reg |= DA1469X_RTC_DIV_DENOM_SEL << CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_DENOM_Pos;
     reg |= CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_ENABLE_Msk;

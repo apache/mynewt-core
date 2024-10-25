@@ -173,7 +173,7 @@ void da1469x_clock_lp_rcx_disable(void);
 /**
  * Set the RTC dividers
  */
-void da1469x_clock_lp_set_rtc_divs(void);
+void da1469x_clock_lp_set_rtc_divs(uint32_t rtc_clock_freq);
 
 /**
  * Enable AMBA clock(s)
