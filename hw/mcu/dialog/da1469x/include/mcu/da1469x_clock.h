@@ -133,7 +133,7 @@ void da1469x_clock_lp_xtal32k_calibrate(void);
 /**
  * Calibrate RC32M
  */
-void da1469x_clock_lp_rc32m_calibrate(void);
+void da1469x_clock_sys_rc32m_calibrate(void);
 
 /**
  * Get calibrated (measured) RCX frequency
@@ -153,7 +153,7 @@ uint32_t da1469x_clock_lp_xtal32k_freq_get(void);
 /**
  * Get calibrated (measured) RC32M frequency
  */
-uint32_t da1469x_clock_lp_rc32m_freq_get(void);
+uint32_t da1469x_clock_sys_rc32m_freq_get(void);
 
 /**
  * Disable RCX
