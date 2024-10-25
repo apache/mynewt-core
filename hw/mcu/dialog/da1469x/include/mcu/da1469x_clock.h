@@ -131,6 +131,11 @@ void da1469x_clock_lp_rc32k_calibrate(void);
 void da1469x_clock_lp_xtal32k_calibrate(void);
 
 /**
+ * Calibrate selected LP clock
+ */
+void da1469x_clock_lp_calibrate(void);
+
+/**
  * Calibrate RC32M
  */
 void da1469x_clock_sys_rc32m_calibrate(void);
@@ -149,6 +154,11 @@ uint32_t da1469x_clock_lp_rc32k_freq_get(void);
  * Get calibrated XTAL32K frequency
  */
 uint32_t da1469x_clock_lp_xtal32k_freq_get(void);
+
+/**
+ * Get seleted LP clock's frequency
+ */
+uint32_t da1469x_clock_lp_freq_get(void);
 
 /**
  * Get calibrated (measured) RC32M frequency

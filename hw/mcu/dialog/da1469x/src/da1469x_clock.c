@@ -398,6 +398,18 @@ da1469x_clock_lp_xtal32k_calibrate(void)
 }
 
 void
+da1469x_clock_lp_calibrate(void)
+{
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    da1469x_clock_lp_rcx_calibrate();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RC32K)
+    da1469x_clock_lp_rc32k_calibrate();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
+    da1469x_clock_lp_xtal32k_calibrate();
+#endif
+}
+
+void
 da1469x_clock_sys_rc32m_calibrate(void)
 {
     g_mcu_clock_rc32m_freq = da1469x_clock_calibrate(DA1469X_CALIB_RC32M,
@@ -426,6 +438,18 @@ da1469x_clock_lp_xtal32k_freq_get(void)
     assert(g_mcu_clock_xtal32k_freq);
 
     return g_mcu_clock_xtal32k_freq;
+}
+
+uint32_t
+da1469x_clock_lp_freq_get(void)
+{
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    return da1469x_clock_lp_rcx_freq_get();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RC32K)
+    return da1469x_clock_lp_rc32k_freq_get();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
+    return da1469x_clock_lp_xtal32k_freq_get();
+#endif
 }
 
 uint32_t
