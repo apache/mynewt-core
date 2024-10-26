@@ -111,7 +111,8 @@ da1469x_clock_sys_xtal32m_init(void)
      */
     xtalrdy_cnt = MYNEWT_VAL(MCU_CLOCK_XTAL32M_SETTLE_TIME_US) * XTALRDY_IRQ_FREQ_MAX / 1000000;
 
-    CRG_XTAL->XTALRDY_CTRL_REG = (xtalrdy_cnt << CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Pos) |
+    CRG_XTAL->XTALRDY_CTRL_REG = ((xtalrdy_cnt << CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Pos) &
+                                  CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Msk) |
                                  (DA1469X_XTALRDY_CLK_SEL << CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CLK_SEL_Pos);
 }
 
@@ -294,7 +295,8 @@ da1469x_clock_calibrate(uint8_t clock_sel, uint16_t ref_cnt)
     /* Select reference clock & calibrated clock */
     ANAMISC_BIF->CLK_REF_SEL_REG =
         (DA1469X_REF_SEL << ANAMISC_BIF_CLK_REF_SEL_REG_CAL_CLK_SEL_Pos) |
-        (clock_sel << ANAMISC_BIF_CLK_REF_SEL_REG_REF_CLK_SEL_Pos);
+        ((clock_sel << ANAMISC_BIF_CLK_REF_SEL_REG_REF_CLK_SEL_Pos) &
+         ANAMISC_BIF_CLK_REF_SEL_REG_REF_CLK_SEL_Msk);
 
     /* Start measurement */
     ANAMISC_BIF->CLK_REF_SEL_REG |= ANAMISC_BIF_CLK_REF_SEL_REG_REF_CAL_START_Msk;
@@ -332,7 +334,7 @@ rc32k_trim_set(uint32_t trim)
 {
     CRG_TOP->CLK_RC32K_REG =
         (CRG_TOP->CLK_RC32K_REG & ~CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Msk) |
-        (trim << CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Pos);
+        ((trim << CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Pos) & CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Msk);
 }
 
 void
