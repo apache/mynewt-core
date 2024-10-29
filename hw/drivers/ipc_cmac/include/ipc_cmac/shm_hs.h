@@ -38,6 +38,8 @@ extern volatile struct cmac_shm_debugdata *g_cmac_shm_debugdata;
 
 void cmac_host_init(void);
 void cmac_host_signal2cmac(void);
+
+void cmac_host_req_sleep_update(void);
 void cmac_host_rf_calibrate(void);
 
 #ifdef __cplusplus

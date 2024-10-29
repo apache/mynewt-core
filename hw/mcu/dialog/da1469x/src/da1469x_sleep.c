@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include "mcu/da1469x_clock.h"
+#include "mcu/da1469x_lpclk.h"
 #include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
@@ -167,3 +168,40 @@ da1469x_sleep_cb_register(struct da1469x_sleep_cb *cb)
 {
 }
 #endif
+
+#define FAST_WAKEUP_TICKS   12
+
+uint32_t
+da1469x_sleep_wakeup_ticks_get(void)
+{
+    uint16_t rc32k_freq;
+    uint16_t lpclk_freq;
+    uint32_t wakeup_lpclk_ticks;
+    uint32_t xtal32m_settle_us;
+
+    rc32k_freq = da1469x_clock_lp_rc32k_freq_get();
+    lpclk_freq = da1469x_lpclk_freq_get();
+
+    if (lpclk_freq == 0) {
+        wakeup_lpclk_ticks = 0;
+    } else if (CRG_TOP->PMU_SLEEP_REG & CRG_TOP_PMU_SLEEP_REG_FAST_WAKEUP_Msk) {
+        /* Calculate worst case XTAL32M settling time, i.e. at the lowest
+         * frequency of RC32M (30.6 MHz)
+         *
+         * Min frequency of 256kHz clock: 30.6 MHz / 125 = 244.8 kHz -> 4.085 us
+         */
+        xtal32m_settle_us =
+            (CRG_XTAL->XTALRDY_CTRL_REG & CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Msk) * 4085 / 1000;
+
+        wakeup_lpclk_ticks =
+            /* Wakeup ticks converted from RC32K ticks to lpclk ticks */
+            (FAST_WAKEUP_TICKS * lpclk_freq + rc32k_freq - 1) / rc32k_freq +
+            /* XTAL32M settling time converted to lpclk ticks */
+            (xtal32m_settle_us * lpclk_freq + 999999) / 1000000;
+    } else {
+        /* TODO add calculations for other wakeup modes */
+        wakeup_lpclk_ticks = 0;
+    }
+
+    return wakeup_lpclk_ticks;
+}

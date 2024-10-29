@@ -334,15 +334,11 @@ cmac_timer_slp_disable(uint32_t exp_ticks)
     assert(CMAC->CM_LL_INT_STAT_REG == 0);
 }
 
-bool
-cmac_timer_slp_update(void)
+void
+cmac_timer_slp_update(uint16_t lp_clock_freq)
 {
-    uint32_t lp_clock_freq;
-
-    lp_clock_freq = g_cmac_shm_ctrl.lp_clock_freq;
-
     if (lp_clock_freq == g_cmac_timer_slp.freq) {
-        return false;
+        return;
     }
 
     g_cmac_timer_slp.freq = lp_clock_freq;
@@ -353,8 +349,6 @@ cmac_timer_slp_update(void)
         g_cmac_timer_slp.tick_ns = 1000000000 / g_cmac_timer_slp.freq;
     }
 #endif
-
-    return true;
 }
 
 bool
@@ -363,7 +357,7 @@ cmac_timer_slp_is_ready(void)
 #if MYNEWT_VAL(MCU_SLP_TIMER_32K_ONLY)
     return g_cmac_timer_slp.freq == 32768;
 #else
-    return g_cmac_timer_slp.freq;
+    return g_cmac_timer_slp.freq != 0;
 #endif
 }
 

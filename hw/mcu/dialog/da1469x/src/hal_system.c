@@ -130,7 +130,6 @@ hal_system_clock_start(void)
     da1469x_clock_lp_rcx_enable();
     da1469x_clock_lp_rcx_switch();
     da1469x_clock_lp_rcx_calibrate();
-    da1469x_lpclk_enabled();
 #else
     /*
      * We cannot switch lp_clk to XTAL32K here since it needs some time to

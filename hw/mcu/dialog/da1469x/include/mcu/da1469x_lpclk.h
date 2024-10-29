@@ -26,9 +26,8 @@
 extern "C" {
 #endif
 
-typedef void (da1469x_lpclk_cb)(uint32_t freq);
+uint16_t da1469x_lpclk_freq_get(void);
 
-void da1469x_lpclk_register_cmac_cb(da1469x_lpclk_cb *cb);
 /* Stable lp clock enabled (e.g. switched to XTAL after settling) */
 void da1469x_lpclk_enabled(void);
 /* Frequency of lp clock changed (e.g. after RCX recalibration) */

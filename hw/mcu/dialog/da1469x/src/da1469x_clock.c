@@ -51,11 +51,14 @@ da1469x_clock_sys_xtal32m_init(void)
     uint32_t reg;
     int xtalrdy_cnt;
 
-    /*
-     * Number of 256kHz clock cycles (~4.085us) assuming worst case when actual frequency is 244800.
-     * RC32M is in range <30.6, 32.6> so 256Khz can ba as low as 30.6MHz / 125 = 244.8kHz.
+    /* Number of 256kHz clock cycles for XTAL32M to settle.
+     * To make sure we wait no less than configured settle time, we need to
+     * calculate using the shortest possible clock cycle, i.e. the max possible
+     * frequency of RC32M (32.6 MHz).
+     *
+     * Max frequency of 256kHz clock: 32.6 MHz / 125 = 260.8 kHz -> 3.834 us
      */
-    xtalrdy_cnt = MYNEWT_VAL(MCU_CLOCK_XTAL32M_SETTLE_TIME_US) * 1000 / 4085;
+    xtalrdy_cnt = MYNEWT_VAL(MCU_CLOCK_XTAL32M_SETTLE_TIME_US) * 1000 / 3834;
 
     reg = CRG_XTAL->XTALRDY_CTRL_REG;
     reg &= ~(CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Msk);
