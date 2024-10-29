@@ -50,9 +50,9 @@ shell_os_tasks_display_cmd(const struct shell_cmd *cmd, int argc, char **argv,
 
     streamer_printf(streamer, "Tasks: \n");
     prev_task = NULL;
-    streamer_printf(streamer, "%8s %3s %3s %8s %8s %8s %8s %8s %8s %3s\n",
-      "task", "pri", "tid", "runtime", "csw", "stksz", "stkuse",
-      "lcheck", "ncheck", "flg");
+    streamer_printf(streamer, "%8s %3s %3s %8s %8s %8s %8s %8s %8s\n",
+                    "task", "pri", "tid", "runtime", "csw", "stksz", "stkuse",
+                    "lcheck", "ncheck");
     while (1) {
         prev_task = os_task_info_get_next(prev_task, &oti);
         if (prev_task == NULL) {
