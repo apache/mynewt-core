@@ -44,7 +44,7 @@ pkg.src_dirs:
 
 repository.mbedtls:
     type: github
-    vers: v2.28.8-commit
+    vers: v2.28.9-commit
     branch: master
     user: Mbed-TLS
     repo: mbedtls
