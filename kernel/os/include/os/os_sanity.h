@@ -38,7 +38,6 @@ extern "C" {
 #endif
 
 struct os_sanity_check;
-typedef int (*os_sanity_check_func_t)(struct os_sanity_check *osc, void *arg);
 
 /**
  * Sanity check callback function.
