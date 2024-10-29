@@ -87,6 +87,13 @@ extern const int qspi_flash_config_array_size;
 
 const struct qspi_flash_config *da1469x_qspi_get_config(void);
 
+/**
+ * Calculate the OS tick parameters.
+ *
+ * @param cycles_per_sec Input frequency of timer generating OS ticks
+ */
+void hal_os_tick_calc_params(uint32_t cycles_per_sec);
+
 #ifdef __cplusplus
 }
 #endif

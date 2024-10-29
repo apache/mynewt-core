@@ -33,6 +33,9 @@ void da1469x_lpclk_register_cmac_cb(da1469x_lpclk_cb *cb);
 void da1469x_lpclk_enabled(void);
 /* Frequency of lp clock changed (e.g. after RCX recalibration) */
 void da1469x_lpclk_updated(void);
+/* Initialize selected LP RC clock */
+void da1469x_lpclk_rc_init();
+
 
 #ifdef __cplusplus
 }

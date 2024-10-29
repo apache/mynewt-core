@@ -29,39 +29,91 @@
 
 #define XTAL32M_FREQ    32000000
 #define RC32M_FREQ      32000000
+#define RC32M_FREQ_MIN  30600000
+#define RC32M_FREQ_MAX  32600000
+#define DIVN_FREQ       32000000    /* For CLK_CTRL_REG::SYS_CLK_SEL != 2 (LP clock) */
+#define CAL_REF_FREQ    DIVN_FREQ   /* For CLK_REF_SEL_REG::CAL_CLK_SEL = 0 (DivN) */
 #define PLL_FREQ        96000000
 #define XTAL32K_FREQ       32768
+#define XTALRDY_IRQ_FREQ  256000    /* For XTALRDY_CTRL_REG::XTALRDY_CLK_SEL = 1 (256 kHz) */
+
+#define XTALRDY_IRQ_DIV         (RC32M_FREQ / XTALRDY_IRQ_FREQ)
+#define XTALRDY_IRQ_FREQ_MAX    (RC32M_FREQ_MAX / XTALRDY_IRQ_DIV)
+
+#define RTC_IN_FREQ_HZ       100
+#define RTC_DIV_FRAC_ADJ      10    /* For CLK_RTCDIV_REG::RTC_DIV_DENOM = 0 (1000) */
+
+enum da1469x_sys_clk_sel {
+    DA1469X_SYS_XTAL32M = 0,
+    DA1469X_SYS_RC32M,
+    DA1469X_SYS_LP_CLK,
+    DA1469X_SYS_PLL96M,
+};
+
+enum da1469x_xtalrdy_clk_sel {
+    DA1469X_XTALRDY_CLK_32K = 0,
+    DA1469X_XTALRDY_CLK_256K,
+};
+#define DA1469X_XTALRDY_CLK_SEL DA1469X_XTALRDY_CLK_256K
+
+enum da1469x_lp_clk_sel {
+    DA1469X_LP_RC32K = 0,
+    DA1469X_LP_RCX,
+    DA1469X_LP_XTAL32K,
+    DA1469X_LP_EXT,
+};
+
+enum da1469x_ref_sel {
+    DA1469X_REF_DIVN = 0,
+    DA1469X_REF_RC32M,
+    DA1469X_REF_RC32K,
+    DA1469X_REF_XTAL32K,
+    DA1469X_REF_RCOSC,
+};
+#define DA1469X_REF_SEL DA1469X_REF_DIVN
+
+enum da1469x_calib_sel {
+    DA1469X_CALIB_RC32K = 0,
+    DA1469X_CALIB_RC32M,
+    DA1469X_CALIB_XTAL32K,
+    DA1469X_CALIB_RCX,
+    DA1469X_CALIB_RCOSC,
+};
+
+enum da1469x_rtc_div_denom_sel {
+    DA1469X_RTC_DIV_DENOM_1000 = 0,
+    DA1469X_RTC_DIV_DENOM_1024,
+};
+#define DA1469X_RTC_DIV_DENOM_SEL   DA1469X_RTC_DIV_DENOM_1000
 
 static uint32_t g_mcu_clock_rcx_freq;
 static uint32_t g_mcu_clock_rc32k_freq;
-static uint32_t g_mcu_clock_rc32m_freq;
+static uint32_t g_mcu_clock_rc32m_freq = RC32M_FREQ;
+static uint32_t g_mcu_clock_xtal32k_freq;
 
 uint32_t SystemCoreClock = RC32M_FREQ;
 
 static inline bool
 da1469x_clock_is_xtal32m_settled(void)
 {
-    return ((*(uint32_t *)0x5001001c & 0xff00) == 0) &&
-           ((*(uint32_t *)0x50010054 & 0x000f) != 0xb);
+    return ((CRG_XTAL->XTALRDY_STAT_REG & CRG_XTAL_XTALRDY_STAT_REG_XTALRDY_COUNT_Msk) == 0) &&
+           ((CRG_XTAL->XTAL32M_STAT1_REG & CRG_XTAL_XTAL32M_STAT1_REG_XTAL32M_STATE_Msk) != 0xb);
 }
 
 void
 da1469x_clock_sys_xtal32m_init(void)
 {
-    uint32_t reg;
     int xtalrdy_cnt;
 
     /*
-     * Number of 256kHz clock cycles (~4.085us) assuming worst case when actual frequency is 244800.
-     * RC32M is in range <30.6, 32.6> so 256Khz can ba as low as 30.6MHz / 125 = 244.8kHz.
+     * Number of XTALRDY IRQ timer clock cycles making up the desired xtal settling time,
+     * sufficient even at maximum RC32M frequency.
      */
-    xtalrdy_cnt = MYNEWT_VAL(MCU_CLOCK_XTAL32M_SETTLE_TIME_US) * 1000 / 4085;
+    xtalrdy_cnt = MYNEWT_VAL(MCU_CLOCK_XTAL32M_SETTLE_TIME_US) * XTALRDY_IRQ_FREQ_MAX / 1000000;
 
-    reg = CRG_XTAL->XTALRDY_CTRL_REG;
-    reg &= ~(CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Msk);
-    reg |= CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CLK_SEL_Msk;
-    reg |= xtalrdy_cnt;
-    CRG_XTAL->XTALRDY_CTRL_REG = reg;
+    CRG_XTAL->XTALRDY_CTRL_REG = ((xtalrdy_cnt << CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Pos) &
+                                  CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Msk) |
+                                 (DA1469X_XTALRDY_CLK_SEL << CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CLK_SEL_Pos);
 }
 
 void
@@ -87,7 +139,9 @@ da1469x_clock_sys_xtal32m_switch(void)
     if (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_RC32M_Msk) {
         CRG_TOP->CLK_SWITCH2XTAL_REG = CRG_TOP_CLK_SWITCH2XTAL_REG_SWITCH2XTAL_Msk;
     } else {
-        CRG_TOP->CLK_CTRL_REG &= ~CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Msk;
+        CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
+                                 ~CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Msk) |
+                                (DA1469X_SYS_XTAL32M << CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Pos);
     }
 
     while (!(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_XTAL32M_Msk));
@@ -130,6 +184,30 @@ da1469x_clock_sys_rc32m_disable(void)
 }
 
 void
+da1469x_clock_sys_rc32m_enable(void)
+{
+    CRG_TOP->CLK_RC32M_REG |= CRG_TOP_CLK_RC32M_REG_RC32M_ENABLE_Msk;
+}
+
+void
+da1469x_clock_sys_rc32m_switch(void)
+{
+    CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
+                             ~CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Msk) |
+                            (DA1469X_SYS_RC32M << CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Pos);
+
+    while (!(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_RC32M_Msk));
+
+    SystemCoreClock = g_mcu_clock_rc32m_freq;
+}
+
+void
+da1469x_clock_lp_xtal32k_disable(void)
+{
+    CRG_TOP->CLK_XTAL32K_REG &= ~CRG_TOP_CLK_XTAL32K_REG_XTAL32K_ENABLE_Msk;
+}
+
+void
 da1469x_clock_lp_xtal32k_enable(void)
 {
     CRG_TOP->CLK_XTAL32K_REG |= CRG_TOP_CLK_XTAL32K_REG_XTAL32K_ENABLE_Msk;
@@ -140,10 +218,35 @@ da1469x_clock_lp_xtal32k_switch(void)
 {
     CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
                              ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
-                            (2 << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
+                            (DA1469X_LP_XTAL32K << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
     /* If system is running on LP clock update SystemCoreClock */
     if (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_LP_CLK_Msk) {
         SystemCoreClock = XTAL32K_FREQ;
+    }
+}
+
+void
+da1469x_clock_lp_rc32k_disable(void)
+{
+    CRG_TOP->CLK_RC32K_REG &= ~CRG_TOP_CLK_RC32K_REG_RC32K_ENABLE_Msk;
+}
+
+void
+da1469x_clock_lp_rc32k_enable(void)
+{
+    CRG_TOP->CLK_RC32K_REG |= CRG_TOP_CLK_RC32K_REG_RC32K_ENABLE_Msk;
+}
+
+void
+da1469x_clock_lp_rc32k_switch(void)
+{
+    CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
+                             ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
+                            (DA1469X_LP_RC32K << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
+
+    /* If system is running on LP clock update SystemCoreClock */
+    if (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_LP_CLK_Msk) {
+        SystemCoreClock = g_mcu_clock_rc32k_freq;
     }
 }
 
@@ -158,7 +261,7 @@ da1469x_clock_lp_rcx_switch(void)
 {
     CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
                              ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
-                            (1 << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
+                            (DA1469X_LP_RCX << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
 
     /* If system is running on LP clock update SystemCoreClock */
     if (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_LP_CLK_Msk) {
@@ -188,23 +291,31 @@ da1469x_clock_calibrate(uint8_t clock_sel, uint16_t ref_cnt)
     assert(!(ANAMISC_BIF->CLK_REF_SEL_REG & ANAMISC_BIF_CLK_REF_SEL_REG_REF_CAL_START_Msk));
 
     ANAMISC_BIF->CLK_REF_CNT_REG = ref_cnt;
-    ANAMISC_BIF->CLK_REF_SEL_REG = (clock_sel << ANAMISC_BIF_CLK_REF_SEL_REG_REF_CLK_SEL_Pos) |
-                                   ANAMISC_BIF_CLK_REF_SEL_REG_REF_CAL_START_Msk;
 
+    /* Select reference clock & calibrated clock */
+    ANAMISC_BIF->CLK_REF_SEL_REG =
+        (DA1469X_REF_SEL << ANAMISC_BIF_CLK_REF_SEL_REG_CAL_CLK_SEL_Pos) |
+        ((clock_sel << ANAMISC_BIF_CLK_REF_SEL_REG_REF_CLK_SEL_Pos) &
+         ANAMISC_BIF_CLK_REF_SEL_REG_REF_CLK_SEL_Msk);
+
+    /* Start measurement */
+    ANAMISC_BIF->CLK_REF_SEL_REG |= ANAMISC_BIF_CLK_REF_SEL_REG_REF_CAL_START_Msk;
+
+    /* Wait for meaurement to complete */
     while (ANAMISC_BIF->CLK_REF_SEL_REG & ANAMISC_BIF_CLK_REF_SEL_REG_REF_CAL_START_Msk);
 
     ref_val = ANAMISC_BIF->CLK_REF_VAL_REG;
 
     da1469x_pd_release(MCU_PD_DOMAIN_PER);
 
-    return 32000000 * ref_cnt / ref_val;
+    return CAL_REF_FREQ * ref_cnt / ref_val;
 }
 
 void
 da1469x_clock_lp_rcx_calibrate(void)
 {
     g_mcu_clock_rcx_freq =
-        da1469x_clock_calibrate(3, MYNEWT_VAL(MCU_CLOCK_RCX_CAL_REF_CNT));
+        da1469x_clock_calibrate(DA1469X_CALIB_RCX, MYNEWT_VAL(MCU_CLOCK_RCX_CAL_REF_CNT));
 }
 
 #define RC32K_TARGET_FREQ   32000
@@ -223,7 +334,7 @@ rc32k_trim_set(uint32_t trim)
 {
     CRG_TOP->CLK_RC32K_REG =
         (CRG_TOP->CLK_RC32K_REG & ~CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Msk) |
-        (trim << CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Pos);
+        ((trim << CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Pos) & CRG_TOP_CLK_RC32K_REG_RC32K_TRIM_Msk);
 }
 
 void
@@ -252,7 +363,7 @@ da1469x_clock_lp_rc32k_calibrate(void)
         freq_prev = freq;
         freq_delta_prev = freq_delta;
 
-        freq = da1469x_clock_calibrate(0, MYNEWT_VAL(MCU_CLOCK_RC32K_CAL_REF_CNT));
+        freq = da1469x_clock_calibrate(DA1469X_CALIB_RC32K, MYNEWT_VAL(MCU_CLOCK_RC32K_CAL_REF_CNT));
 
         freq_delta = freq - RC32K_TARGET_FREQ;
         freq_delta = (int32_t)freq_delta < 0 ? -freq_delta : freq_delta;
@@ -287,9 +398,33 @@ da1469x_clock_lp_rc32k_calibrate(void)
 }
 
 void
-da1469x_clock_lp_rc32m_calibrate(void)
+da1469x_clock_lp_xtal32k_calibrate(void)
 {
-    g_mcu_clock_rc32m_freq = da1469x_clock_calibrate(1, 100);
+#if MYNEWT_VAL(MCU_CLOCK_XTAL32K_ALLOW_CALIB)
+    g_mcu_clock_xtal32k_freq =
+        da1469x_clock_calibrate(DA1469X_CALIB_XTAL32K, MYNEWT_VAL(MCU_CLOCK_XTAL32K_CAL_REF_CNT));
+#else
+    g_mcu_clock_xtal32k_freq = XTAL32K_FREQ;
+#endif
+}
+
+void
+da1469x_clock_lp_calibrate(void)
+{
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    da1469x_clock_lp_rcx_calibrate();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RC32K)
+    da1469x_clock_lp_rc32k_calibrate();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
+    da1469x_clock_lp_xtal32k_calibrate();
+#endif
+}
+
+void
+da1469x_clock_sys_rc32m_calibrate(void)
+{
+    g_mcu_clock_rc32m_freq = da1469x_clock_calibrate(DA1469X_CALIB_RC32M,
+                                                     MYNEWT_VAL(MCU_CLOCK_RC32M_CAL_REF_CNT));
 }
 
 uint32_t
@@ -309,7 +444,27 @@ da1469x_clock_lp_rc32k_freq_get(void)
 }
 
 uint32_t
-da1469x_clock_lp_rc32m_freq_get(void)
+da1469x_clock_lp_xtal32k_freq_get(void)
+{
+    assert(g_mcu_clock_xtal32k_freq);
+
+    return g_mcu_clock_xtal32k_freq;
+}
+
+uint32_t
+da1469x_clock_lp_freq_get(void)
+{
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    return da1469x_clock_lp_rcx_freq_get();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RC32K)
+    return da1469x_clock_lp_rc32k_freq_get();
+#elif MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
+    return da1469x_clock_lp_xtal32k_freq_get();
+#endif
+}
+
+uint32_t
+da1469x_clock_sys_rc32m_freq_get(void)
 {
     assert(g_mcu_clock_rc32m_freq);
 
@@ -322,14 +477,26 @@ da1469x_clock_lp_rcx_disable(void)
     CRG_TOP->CLK_RCX_REG &= ~CRG_TOP_CLK_RCX_REG_RCX_ENABLE_Msk;
 }
 
+void
+da1469x_clock_lp_set_rtc_divs(uint32_t rtc_clock_freq)
+{
+    /* Please see the DA1469x Datasheet section 34.3 for details */
+    uint32_t reg;
+
+    reg = ((rtc_clock_freq % RTC_IN_FREQ_HZ) * RTC_DIV_FRAC_ADJ) <<
+          CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_FRAC_Pos;
+    reg |= ((rtc_clock_freq / RTC_IN_FREQ_HZ)) <<
+           CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_INT_Pos;
+    reg |= DA1469X_RTC_DIV_DENOM_SEL << CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_DENOM_Pos;
+    reg |= CRG_TOP_CLK_RTCDIV_REG_RTC_DIV_ENABLE_Msk;
+    CRG_TOP->CLK_RTCDIV_REG = reg;
+}
+
 static void
 da1469x_delay_us(uint32_t delay_us)
 {
-    /*
-     * SysTick runs on ~32 MHz clock while PLL is not started.
-     * so multiplying by 32 to convert from us to SysTicks.
-     */
-    SysTick->LOAD = delay_us * 32;
+    /* Convert from us to SysTicks (PLL is not started yet) */
+    SysTick->LOAD = delay_us * XTAL32M_FREQ / 1000000;
     SysTick->VAL = 0UL;
     SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
     while (0 == (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
@@ -414,8 +581,9 @@ da1469x_clock_pll_wait_to_lock(void)
 void
 da1469x_clock_sys_pll_switch(void)
 {
-    /* CLK_SEL_Msk == 3 means PLL */
-    CRG_TOP->CLK_CTRL_REG |= CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Msk;
+    CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
+                             ~CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Msk) |
+                            (DA1469X_SYS_PLL96M << CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Pos);
 
     while (!(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_PLL96M_Msk));
 
