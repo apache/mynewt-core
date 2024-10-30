@@ -34,6 +34,8 @@
 #ifndef _SYS_QUEUE_H_
 #define	_SYS_QUEUE_H_
 
+#include <os/util.h>
+
 /*
  * This file defines four types of data structures: singly-linked lists,
  * singly-linked tail queues, lists and tail queues.
@@ -114,6 +116,11 @@
  * _SWAP			+	+	+	+
  *
  */
+
+#ifndef __containerof
+#define __containerof CONTAINER_OF
+#endif
+
 #ifdef QUEUE_MACRO_DEBUG
 #warn Use QUEUE_MACRO_DEBUG_TRACE and/or QUEUE_MACRO_DEBUG_TRASH
 #define	QUEUE_MACRO_DEBUG_TRACE
