@@ -24,6 +24,11 @@ syscfg.defs:
             If set to 1 secure function will be exported and can be used by
             non secure code.
         value:
+    TFM_IMPORT_NSC:
+        description: >
+            Application is non-secure and needs to import library generated
+            from secure code.
+        value:
     TFM_MCU_SEL_GPIO0:
         description: >
             Bit mask of GPIO0 pins that can be assigned between cores by non secure code.
@@ -40,3 +45,9 @@ syscfg.defs:
         description: >
             Maximum address of UICR OTP that can be accessed by non-secure core.
         value: 191
+
+    TFM_SECURE_BOOT_TARGET:
+        description: >
+            Mynewt target that holds TFM secure code that will be used to import
+            veneers from.
+        value:

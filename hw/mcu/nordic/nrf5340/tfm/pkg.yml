@@ -29,12 +29,19 @@ pkg.cflags.(BOOT_LOADER && TFM_EXPORT_NSC):
 pkg.cflags.(!BOOT_LOADER && MCU_APP_SECURE && TFM_EXPORT_NSC):
     - -mcmse
 
-pkg.cflags.(!BOOT_LOADER && !MCU_APP_SECURE):
+app.cflags.(!BOOT_LOADER && !MCU_APP_SECURE):
     - -mcmse
 
-pkg.lflags.(MCU_APP_SECURE && TFM_EXPORT_NSC):
+pkg.lflags.TFM_EXPORT_NSC:
     - -utfm_uicr_otp_read
     - -utfm_uicr_otp_write
     - -utfm_gpio_pin_mcu_select
     - -utfm_uicr_protect_device
     - -utfm_ficr_xosc32mtrim_read
+    - -Wl,--out-implib=bin/tfm_s_CMSE_lib.o -Wl,--cmse-implib
+
+pkg.post_link_cmds.TFM_EXPORT_NSC:
+    scripts/create_tfmlib.sh: 100
+
+pkg.pre_link_cmds.TFM_IMPORT_NSC:
+    scripts/import_tfmlib.sh: 100
