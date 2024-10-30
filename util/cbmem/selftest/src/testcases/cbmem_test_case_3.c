@@ -26,10 +26,8 @@ TEST_CASE_SELF(cbmem_test_case_3)
     uint16_t off;
     uint16_t len;
     uint8_t buf[128];
-    int i;
     int rc;
 
-    i = 0;
     cbmem_iter_start(&cbmem1, &iter);
     while (1) {
         hdr = cbmem_iter_next(&cbmem1, &iter);
@@ -54,7 +52,6 @@ TEST_CASE_SELF(cbmem_test_case_3)
         TEST_ASSERT_FATAL(len == CBMEM1_ENTRY_SIZE,
                 "Couldn't read full entry, expected %d got %d",
                 CBMEM1_ENTRY_SIZE, len);
-        i++;
 
         /* go apesh*t, and read data out of bounds, see what we get. */
         rc = cbmem_read(&cbmem1, hdr, buf, CBMEM1_ENTRY_SIZE * 2, sizeof(buf));
