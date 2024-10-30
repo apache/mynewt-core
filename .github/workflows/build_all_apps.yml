@@ -52,7 +52,7 @@ jobs:
         shell: bash
         run: |
              newt new build
-             cp -f .github/project.yml build/project.yml
+             cp -f .github/project_build_all_apps.yml build/project.yml
              cd build
              newt upgrade --shallow=1
              git -C repos/apache-mynewt-core fetch origin $GITHUB_SHA
