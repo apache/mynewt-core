@@ -21,6 +21,8 @@
 #include <nrf_gpio.h>
 #include <tfm/tfm.h>
 
+#if MYNEWT_VAL(TFM_EXPORT_NSC) || MYNEWT_VAL(MCU_APP_SECURE) || MYNEWT_VAL(BOOT_LOADER)
+
 int SECURE_CALL
 tfm_uicr_otp_read(uint8_t n, uint32_t *ret)
 {
@@ -110,3 +112,5 @@ tfm_ficr_xosc32mtrim_read(uint32_t *xosc32mtrim)
 
     return 0;
 }
+
+#endif
