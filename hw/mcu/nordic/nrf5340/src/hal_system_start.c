@@ -66,6 +66,26 @@ static const unsigned int periph_gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(MCU_
 #endif
 
 extern uint8_t __StackTop[];
+extern uint8_t _start_sg[];
+extern uint8_t _end_sg[];
+
+static void
+init_nsc(void)
+{
+    int region = (uintptr_t)_start_sg / 0x4000;
+    uintptr_t region_start = region * 0x4000;
+    uintptr_t region_limit = region_start + 0x4000;
+    int nsc_region_size = 32;
+    int m = 1;
+    /* Calculate NSC region size by checking _start_sg offset in last 16K region */
+    while ((uintptr_t)_start_sg < region_limit - nsc_region_size) {
+        m++;
+        nsc_region_size <<= 1;
+    }
+    assert(m <= 8);
+    NRF_SPU_S->FLASHNSC[0].REGION = region;
+    NRF_SPU_S->FLASHNSC[0].SIZE = m;
+}
 
 void
 hal_system_start(void *img_start)
@@ -104,6 +124,10 @@ hal_system_start(void *img_start)
 
     for (i = bootloader_flash_regions; i < 64; ++i) {
         NRF_SPU->FLASHREGION[i].PERM &= ~SPU_FLASHREGION_PERM_SECATTR_Msk;
+    }
+
+    if ((uint32_t)_start_sg < (uint32_t)_end_sg) {
+        init_nsc();
     }
 
     /* Mark RAM as non-secure */
