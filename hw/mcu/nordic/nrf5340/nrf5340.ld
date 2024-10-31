@@ -46,6 +46,8 @@ OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
  */
 ENTRY(Reset_Handler)
 
+NSC_REGION_SIZE = 0x200;
+
 SECTIONS
 {
     .imghdr (NOLOAD):
@@ -107,7 +109,6 @@ INCLUDE "link_tables.ld.h"
         . = ALIGN(4);
     } > FLASH
 
-
     .net_core_img :
     {
         PROVIDE(net_core_img_start = .);
@@ -127,6 +128,15 @@ INCLUDE "link_tables.ld.h"
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
         . = ALIGN(4);
     } > FLASH
+
+    .gnu.sgstubs :
+    {
+        FILL(0xffff);
+        . = (ALIGN(16384) >= . + NSC_REGION_SIZE) ? (ALIGN(16384) - NSC_REGION_SIZE) : (ALIGN(16384) - NSC_REGION_SIZE + 16384);
+        _start_sg = .;
+    } > FLASH
+    PROVIDE(_end_sg = .);
+
     __exidx_end = .;
 
     __etext = .;
