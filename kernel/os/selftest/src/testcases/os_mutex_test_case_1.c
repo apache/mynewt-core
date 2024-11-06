@@ -42,5 +42,5 @@ TEST_CASE_TASK(os_mutex_test_case_1)
     taskpool_alloc_assert(mutex_task3_handler,
                           MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 4);
 
-    taskpool_wait_assert(200);
+    taskpool_wait_assert(OS_TICKS_PER_SEC * 4);
 }
