@@ -99,6 +99,13 @@ syscfg.defs:
             For MCU without hardware support for enabling this if no other
             function use floating point may increase image size 20kB or more.
         value: 0
+    CONFIG_NO_DUP_CHECK:
+        description: >
+            This disables check for duplicate values when saving new value.
+            Depending on number of values stored in config this may speed up
+            the config save process considerably at the expense of more writes
+            to config storage.
+        value: 0
 
 syscfg.vals.HARDFLOAT:
     CONFIG_FLOAT_SUPPORT: 1
