@@ -94,6 +94,23 @@ const struct qspi_flash_config *da1469x_qspi_get_config(void);
  */
 void hal_os_tick_calc_params(uint32_t cycles_per_sec);
 
+/**
+ * Configure GPIO using a single value.
+ *
+ * @param pin GPIO ID
+ * @param raw_mode Combined mode / I/O properties value
+ */
+void mcu_gpio_set_pin_function_raw(int pin, uint32_t raw_mode);
+
+/**
+ * Query GPIO mode as a single value.
+ *
+ * @param pin GPIO ID
+ *
+ * @return Combined mode / I/O properties value
+ */
+uint32_t mcu_gpio_get_pin_function_raw(int pin);
+
 #ifdef __cplusplus
 }
 #endif
