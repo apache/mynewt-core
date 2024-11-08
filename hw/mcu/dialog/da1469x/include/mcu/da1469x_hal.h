@@ -99,6 +99,8 @@ void hal_os_tick_calc_params(uint32_t cycles_per_sec);
  *
  * @param pin GPIO ID
  * @param raw_mode Combined mode / I/O properties value
+ *                 Mode: Selected feed in the GPIO matrix (see MCU_GPIO_FUNC_*)
+ *                 I/O propeties: Input [bare/PU/PD] or output [PP/OD] (see MCU_GPIO_MODE_*)
  */
 void mcu_gpio_set_pin_function_raw(int pin, uint32_t raw_mode);
 
