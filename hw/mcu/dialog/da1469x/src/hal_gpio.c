@@ -496,7 +496,8 @@ void
 mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func)
 {
     mcu_gpio_set_pin_function_raw(pin, (func & GPIO_P0_00_MODE_REG_PID_Msk) |
-                      (mode & (GPIO_P0_00_MODE_REG_PUPD_Msk | GPIO_P0_00_MODE_REG_PPOD_Msk)));
+                                        (mode &
+                                         (GPIO_P0_00_MODE_REG_PUPD_Msk | GPIO_P0_00_MODE_REG_PPOD_Msk)));
 }
 
 void
