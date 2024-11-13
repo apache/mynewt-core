@@ -475,20 +475,29 @@ hal_gpio_irq_disable(int pin)
 }
 
 void
-mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func)
+mcu_gpio_set_pin_function_raw(int pin, uint32_t raw_mode)
 {
     uint32_t primask;
 
     __HAL_DISABLE_INTERRUPTS(primask);
-
     mcu_gpio_unlatch_prepare(pin);
-
-    GPIO_PIN_MODE_REG(pin) = (func & GPIO_P0_00_MODE_REG_PID_Msk) |
-        (mode & (GPIO_P0_00_MODE_REG_PUPD_Msk | GPIO_P0_00_MODE_REG_PPOD_Msk));
-
+    GPIO_PIN_MODE_REG(pin) = raw_mode;
     mcu_gpio_unlatch(pin);
-
     __HAL_ENABLE_INTERRUPTS(primask);
+}
+
+uint32_t
+mcu_gpio_get_pin_function_raw(int pin)
+{
+    return GPIO_PIN_MODE_REG(pin);
+}
+
+void
+mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func)
+{
+    mcu_gpio_set_pin_function_raw(pin, (func & GPIO_P0_00_MODE_REG_PID_Msk) |
+                                        (mode &
+                                         (GPIO_P0_00_MODE_REG_PUPD_Msk | GPIO_P0_00_MODE_REG_PPOD_Msk)));
 }
 
 void
