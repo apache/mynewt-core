@@ -46,6 +46,12 @@ void _start(void)
     os_init(mynewt_main);
     os_start();
 #endif
+
+#if !MYNEWT_VAL(SELFTEST)
+    /* _start is noreturn so make sure it never returns except for unittests */
+    while (1) {
+    }
+#endif
 }
 
 __attribute__((weak)) void
