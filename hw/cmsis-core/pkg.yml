@@ -32,7 +32,7 @@ pkg.include_dirs:
 
 repository.arm-CMSIS_5:
     type: github
-    vers: 5.4.0-commit
+    vers: 5.9.0-commit
     branch: master
     user: ARM-software
     repo: CMSIS_5
