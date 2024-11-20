@@ -35,8 +35,18 @@
 #define HAL_GPIO_SENSE_TRIG_LOW     0x03 /* GPIO_PIN_CNF_SENSE_Low */
 #endif
 
-#if defined(NRF5340_XXAA_APPLICATION) || defined(NRF9160_XXAA)
+#if defined(NRF9160_XXAA)
 #define GPIOTE_IRQn GPIOTE0_IRQn
+#define GPIOTE NRF_GPIOTE0_S
+#define NRF_GPIOTE NRF_GPIOTE0_S
+#elif defined(NRF5340_XXAA_APPLICATION)
+#if MYNEWT_VAL(MCU_APP_SECURE)
+#define GPIOTE_IRQn GPIOTE0_IRQn
+#define GPIOTE GPIOTE0
+#else
+#define GPIOTE_IRQn GPIOTE1_IRQn
+#define GPIOTE GPIOTE1
+#endif
 #endif
 
 /* Storage for GPIO callbacks. */
@@ -181,7 +191,7 @@ hal_gpio_irq_handler(void)
     os_trace_isr_enter();
 
 #if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
-    nrf_gpiote_event_clear(NRF_GPIOTE0, NRF_GPIOTE_EVENT_PORT);
+    nrf_gpiote_event_clear(NRF_GPIOTE, NRF_GPIOTE_EVENT_PORT);
 #endif
 
     for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
@@ -226,9 +236,9 @@ hal_gpio_irq_handler(void)
             hal_gpio_irqs[i].func(hal_gpio_irqs[i].arg);
         }
 #else
-        if (nrf_gpiote_event_check(NRF_GPIOTE0, nrf_gpiote_in_event_get(i)) &&
-            nrf_gpiote_int_enable_check(NRF_GPIOTE0, 1 << i)) {
-            nrf_gpiote_event_clear(NRF_GPIOTE0, nrf_gpiote_in_event_get(i));
+        if (nrf_gpiote_event_check(NRF_GPIOTE, nrf_gpiote_in_event_get(i)) &&
+            nrf_gpiote_int_enable_check(NRF_GPIOTE, 1 << i)) {
+            nrf_gpiote_event_clear(NRF_GPIOTE, nrf_gpiote_in_event_get(i));
             if (hal_gpio_irqs[i].func) {
                 hal_gpio_irqs[i].func(hal_gpio_irqs[i].arg);
             }
@@ -254,8 +264,8 @@ hal_gpio_irq_setup(void)
         irq_setup = 1;
 
 #if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
-        nrf_gpiote_int_disable(NRF_GPIOTE0, GPIOTE_INTENCLR_PORT_Msk);
-        nrf_gpiote_event_clear(NRF_GPIOTE0, NRF_GPIOTE_EVENT_PORT);
+        nrf_gpiote_int_disable(NRF_GPIOTE, GPIOTE_INTENCLR_PORT_Msk);
+        nrf_gpiote_event_clear(NRF_GPIOTE, NRF_GPIOTE_EVENT_PORT);
 #endif
     }
 }
@@ -293,7 +303,7 @@ hal_gpio_get_gpiote_num(int pin)
 #else
     for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
         if (hal_gpio_irqs[i].func &&
-           (nrf_gpiote_event_pin_get(NRF_GPIOTE0, i) == pin)) {
+            (nrf_gpiote_event_pin_get(NRF_GPIOTE, i) == pin)) {
             return i;
         }
     }
@@ -352,20 +362,20 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
 #else
     switch (trig) {
     case HAL_GPIO_TRIG_RISING:
-        nrf_gpiote_event_configure(NRF_GPIOTE0, i, pin, GPIOTE_CONFIG_POLARITY_LoToHi);
+        nrf_gpiote_event_configure(NRF_GPIOTE, i, pin, GPIOTE_CONFIG_POLARITY_LoToHi);
         break;
     case HAL_GPIO_TRIG_FALLING:
-        nrf_gpiote_event_configure(NRF_GPIOTE0, i, pin, GPIOTE_CONFIG_POLARITY_HiToLo);
+        nrf_gpiote_event_configure(NRF_GPIOTE, i, pin, GPIOTE_CONFIG_POLARITY_HiToLo);
         break;
     case HAL_GPIO_TRIG_BOTH:
-        nrf_gpiote_event_configure(NRF_GPIOTE0, i, pin, GPIOTE_CONFIG_POLARITY_Toggle);
+        nrf_gpiote_event_configure(NRF_GPIOTE, i, pin, GPIOTE_CONFIG_POLARITY_Toggle);
         break;
     default:
         __HAL_ENABLE_INTERRUPTS(sr);
         return -1;
     }
 
-    nrf_gpiote_event_enable(NRF_GPIOTE0, i);
+    nrf_gpiote_event_enable(NRF_GPIOTE, i);
 #endif
 
     hal_gpio_irqs[i].func = handler;
@@ -402,8 +412,8 @@ hal_gpio_irq_release(int pin)
 #if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
     hal_gpio_irqs[i].sense_trig = NRF_GPIO_PIN_NOSENSE;
 #else
-    nrf_gpiote_te_default(NRF_GPIOTE0, i);
-    nrf_gpiote_event_clear(NRF_GPIOTE0, nrf_gpiote_in_event_get(i));
+    nrf_gpiote_te_default(NRF_GPIOTE, i);
+    nrf_gpiote_event_clear(NRF_GPIOTE, nrf_gpiote_in_event_get(i));
 #endif
 
     hal_gpio_irqs[i].arg = NULL;
@@ -443,10 +453,10 @@ hal_gpio_irq_enable(int pin)
         nrf_gpio_cfg_sense_set(pin, GPIO_PIN_CNF_SENSE_High);
     }
 
-    nrf_gpiote_int_enable(NRF_GPIOTE0, GPIOTE_INTENSET_PORT_Msk);
+    nrf_gpiote_int_enable(NRF_GPIOTE, GPIOTE_INTENSET_PORT_Msk);
 #else
-    nrf_gpiote_event_clear(NRF_GPIOTE0, nrf_gpiote_in_event_get(i));
-    nrf_gpiote_int_enable(NRF_GPIOTE0, 1 << i);
+    nrf_gpiote_event_clear(NRF_GPIOTE, nrf_gpiote_in_event_get(i));
+    nrf_gpiote_int_enable(NRF_GPIOTE, 1 << i);
 #endif
 
     __HAL_ENABLE_INTERRUPTS(sr);
@@ -483,10 +493,10 @@ hal_gpio_irq_disable(int pin)
     }
 
     if (!sense_enabled) {
-        nrf_gpiote_int_disable(NRF_GPIOTE0, GPIOTE_INTENSET_PORT_Msk);
+        nrf_gpiote_int_disable(NRF_GPIOTE, GPIOTE_INTENSET_PORT_Msk);
     }
 #else
-    nrf_gpiote_int_disable(NRF_GPIOTE0, 1 << i);
+    nrf_gpiote_int_disable(NRF_GPIOTE, 1 << i);
 #endif
     __HAL_ENABLE_INTERRUPTS(sr);
 }
