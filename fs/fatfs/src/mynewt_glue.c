@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "os/mynewt.h"
+#include <modlog/modlog.h>
 #include <hal/hal_flash.h>
 #include <disk/disk.h>
 #include <flash_map/flash_map.h>
@@ -261,6 +262,8 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
     char *fatfs_path = NULL;
     int rc;
 
+    FATFS_LOG_DEBUG("Open file %s", path);
+
     file = malloc(sizeof(struct fatfs_file));
     if (!file) {
         rc = FS_ENOMEM;
@@ -307,8 +310,12 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
 out:
     free(fatfs_path);
     if (rc != FS_EOK) {
+        FATFS_LOG_ERROR("File %s open failed %d", path, rc);
+
         if (file) free(file);
         if (out_file) free(out_file);
+    } else {
+        FATFS_LOG_DEBUG("File %s opened %p", path, *out_fs_file);
     }
     return rc;
 }
@@ -318,6 +325,8 @@ fatfs_close(struct fs_file *fs_file)
 {
     FRESULT res = FR_OK;
     FIL *file = ((struct fatfs_file *) fs_file)->file;
+
+    FATFS_LOG_DEBUG("Open file %p", fs_file);
 
     if (file != NULL) {
         res = f_close(file);
@@ -333,6 +342,8 @@ fatfs_seek(struct fs_file *fs_file, uint32_t offset)
 {
     FRESULT res;
     FIL *file = ((struct fatfs_file *) fs_file)->file;
+
+    FATFS_LOG_DEBUG("File %p seek %u", fs_file, offset);
 
     res = f_lseek(file, offset);
     return fatfs_to_vfs_error(res);
@@ -355,6 +366,8 @@ fatfs_file_len(const struct fs_file *fs_file, uint32_t *out_len)
 
     *out_len = (uint32_t) f_size(file);
 
+    FATFS_LOG_DEBUG("File %p len %u", fs_file, *out_len);
+
     return FS_EOK;
 }
 
@@ -365,6 +378,8 @@ fatfs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
     FRESULT res;
     FIL *file = ((struct fatfs_file *) fs_file)->file;
     UINT uint_len;
+
+    FATFS_LOG_DEBUG("File %p read %u", fs_file, len);
 
     res = f_read(file, out_data, len, &uint_len);
     *out_len = uint_len;
@@ -377,6 +392,8 @@ fatfs_write(struct fs_file *fs_file, const void *data, int len)
     FRESULT res;
     UINT out_len;
     FIL *file = ((struct fatfs_file *) fs_file)->file;
+
+    FATFS_LOG_DEBUG("File %p write %u", fs_file, len);
 
     res = f_write(file, data, len, &out_len);
     if (len != out_len) {
@@ -391,6 +408,8 @@ fatfs_flush(struct fs_file *fs_file)
     FRESULT res;
     FIL *file = ((struct fatfs_file *)fs_file)->file;
 
+    FATFS_LOG_DEBUG("Flush %p", fs_file);
+
     res = f_sync(file);
 
     return fatfs_to_vfs_error(res);
@@ -401,6 +420,8 @@ fatfs_unlink(const char *path)
 {
     FRESULT res;
     char *fatfs_path;
+
+    FATFS_LOG_INFO("Unlink %s", path);
 
     fatfs_path = fatfs_path_from_fs_path(path);
 
@@ -419,6 +440,8 @@ fatfs_rename(const char *from, const char *to)
     FRESULT res;
     char *fatfs_src_path;
     char *fatfs_dst_path;
+
+    FATFS_LOG_INFO("Rename %s to %s", from, to);
 
     fatfs_src_path = fatfs_path_from_fs_path(from);
     fatfs_dst_path = fatfs_path_from_fs_path(to);
@@ -441,6 +464,8 @@ fatfs_mkdir(const char *path)
 {
     FRESULT res;
     char *fatfs_path;
+
+    FATFS_LOG_INFO("Mkdir %s", path);
 
     fatfs_path = fatfs_path_from_fs_path(path);
 
@@ -486,9 +511,13 @@ fatfs_opendir(const char *path, struct fs_dir **out_fs_dir)
     *out_fs_dir = (struct fs_dir *)dir;
     rc = FS_EOK;
 
+    FATFS_LOG_INFO("Open dir %s -> %p", path, *out_fs_dir);
+
 out:
     free(fatfs_path);
     if (rc != FS_EOK) {
+        FATFS_LOG_ERROR("Open dir %s failed %d", path, rc);
+
         if (dir) free(dir);
         if (out_dir) free(out_dir);
     }
@@ -500,6 +529,8 @@ fatfs_readdir(struct fs_dir *fs_dir, struct fs_dirent **out_fs_dirent)
 {
     FRESULT res;
     FATFS_DIR *dir = ((struct fatfs_dir *) fs_dir)->dir;
+
+    FATFS_LOG_DEBUG("Read dir %p", fs_dir);
 
     dirent.fops = &fatfs_ops;
     res = f_readdir(dir, &dirent.filinfo);
@@ -519,6 +550,8 @@ fatfs_closedir(struct fs_dir *fs_dir)
 {
     FRESULT res;
     FATFS_DIR *dir = ((struct fatfs_dir *) fs_dir)->dir;
+
+    FATFS_LOG_INFO("Close dir %p", fs_dir);
 
     res = f_closedir(dir);
     free(dir);
