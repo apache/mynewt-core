@@ -620,13 +620,13 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         irq_handler = nrf5340_spi0_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_0_MASTER)
-            spi->nhs_spi.spim = NRF_SPIM0_S;
+            spi->nhs_spi.spim = NRF_SPIM0;
 #else
             assert(0);
 #endif
         } else {
 #if MYNEWT_VAL(SPI_0_SLAVE)
-            spi->nhs_spi.spis = NRF_SPIS0_S;
+            spi->nhs_spi.spis = NRF_SPIS0;
 #else
             assert(0);
 #endif
@@ -640,13 +640,13 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         irq_handler = nrf5340_spi1_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_1_MASTER)
-            spi->nhs_spi.spim = NRF_SPIM1_S;
+            spi->nhs_spi.spim = NRF_SPIM1;
 #else
             assert(0);
 #endif
         } else {
 #if MYNEWT_VAL(SPI_1_SLAVE)
-            spi->nhs_spi.spis = NRF_SPIS1_S;
+            spi->nhs_spi.spis = NRF_SPIS1;
 #else
             assert(0);
 #endif
@@ -660,13 +660,13 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         irq_handler = nrf5340_spi2_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_2_MASTER)
-            spi->nhs_spi.spim = NRF_SPIM2_S;
+            spi->nhs_spi.spim = NRF_SPIM2;
 #else
             assert(0);
 #endif
         } else {
 #if MYNEWT_VAL(SPI_2_SLAVE)
-            spi->nhs_spi.spis = NRF_SPIS2_S;
+            spi->nhs_spi.spis = NRF_SPIS2;
 #else
             assert(0);
 #endif
@@ -680,13 +680,13 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         irq_handler = nrf5340_spi3_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_3_MASTER)
-            spi->nhs_spi.spim = NRF_SPIM2_S;
+            spi->nhs_spi.spim = NRF_SPIM3;
 #else
             assert(0);
 #endif
         } else {
 #if MYNEWT_VAL(SPI_3_SLAVE)
-            spi->nhs_spi.spis = NRF_SPIS2_S;
+            spi->nhs_spi.spis = NRF_SPIS3;
 #else
             assert(0);
 #endif
@@ -699,7 +699,7 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         spi->irq_num = SPIM4_IRQn;
         irq_handler = nrf5340_spi4_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
-            spi->nhs_spi.spim = NRF_SPIM4_S;
+            spi->nhs_spi.spim = NRF_SPIM4;
         } else {
             assert(0);
         }
