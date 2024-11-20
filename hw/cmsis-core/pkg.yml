@@ -29,6 +29,7 @@ pkg.type: sdk
 
 pkg.include_dirs:
     - "@arm-CMSIS_5/CMSIS/Core/Include"
+    - "@arm-CMSIS_5/CMSIS/DSP/Include"
 
 repository.arm-CMSIS_5:
     type: github
