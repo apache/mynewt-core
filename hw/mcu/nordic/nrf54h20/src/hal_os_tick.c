@@ -67,13 +67,13 @@ sub24(uint32_t x, uint32_t y)
 }
 
 static inline uint32_t
-nrf54h20_rad_os_tick_counter(void)
+nrf54h20_os_tick_counter(void)
 {
     return os_cputime_get32() & 0x00ffffff;
 }
 
 static inline void
-nrf54h20_rad_os_tick_set_ocmp(uint32_t ocmp)
+nrf54h20_os_tick_set_ocmp(uint32_t ocmp)
 {
 //    int delta;
 //    uint32_t counter;
@@ -83,7 +83,7 @@ nrf54h20_rad_os_tick_set_ocmp(uint32_t ocmp)
     os_cputime_timer_start(&os_tick_timer, ocmp);
 //    while (1) {
 //        ocmp &= 0xffffff;
-//        counter = nrf54h20_rad_os_tick_counter();
+//        counter = nrf54h20_os_tick_counter();
 //        /*
 //         * From nRF5340 Product specification
 //         *
@@ -102,7 +102,7 @@ nrf54h20_rad_os_tick_set_ocmp(uint32_t ocmp)
 }
 
 static void
-nrf54h20_rad_timer_handler(void *arg)
+nrf54h20_timer_handler(void *arg)
 {
     int delta;
     int ticks;
@@ -114,7 +114,7 @@ nrf54h20_rad_timer_handler(void *arg)
 
     /* Calculate elapsed ticks and advance OS time. */
 
-    counter = nrf54h20_rad_os_tick_counter();
+    counter = nrf54h20_os_tick_counter();
     delta = sub24(counter, g_hal_os_tick.lastocmp);
     ticks = delta / g_hal_os_tick.ticks_per_ostick;
     os_time_advance(ticks);
@@ -124,7 +124,7 @@ nrf54h20_rad_timer_handler(void *arg)
                               (ticks * g_hal_os_tick.ticks_per_ostick)) & 0xffffff;
 
     /* Update the output compare to interrupt at the next tick */
-    nrf54h20_rad_os_tick_set_ocmp(g_hal_os_tick.lastocmp + g_hal_os_tick.ticks_per_ostick);
+    nrf54h20_os_tick_set_ocmp(g_hal_os_tick.lastocmp + g_hal_os_tick.ticks_per_ostick);
 
     OS_EXIT_CRITICAL(sr);
     os_trace_isr_exit();
@@ -145,7 +145,7 @@ os_tick_idle(os_time_t ticks)
             ticks = g_hal_os_tick.max_idle_ticks;
         }
         ocmp = g_hal_os_tick.lastocmp + (ticks*g_hal_os_tick.ticks_per_ostick);
-        nrf54h20_rad_os_tick_set_ocmp(ocmp);
+        nrf54h20_os_tick_set_ocmp(ocmp);
     }
 
     __DSB();
@@ -156,7 +156,7 @@ os_tick_idle(os_time_t ticks)
          * Update OS time before anything else when coming out of
          * the tickless regime.
          */
-        nrf54h20_rad_timer_handler(NULL);
+        nrf54h20_timer_handler(NULL);
     }
 }
 
@@ -177,6 +177,6 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
      */
     g_hal_os_tick.max_idle_ticks = (1UL << 22) / g_hal_os_tick.ticks_per_ostick;
 
-    os_cputime_timer_init(&os_tick_timer, nrf54h20_rad_timer_handler, NULL);
+    os_cputime_timer_init(&os_tick_timer, nrf54h20_timer_handler, NULL);
     os_cputime_timer_start(&os_tick_timer, g_hal_os_tick.ticks_per_ostick);
 }

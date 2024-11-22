@@ -42,12 +42,18 @@ pkg.include_dirs:
     - "@nordic-nrfx/hal"
     - "@nordic-nrfx/helpers"
     - "@nordic-nrfx/mdk"
+    - "@nordic-nrfx/soc/interconnect/apb"
+    - "@nordic-nrfx/soc/interconnect/dppic_ppib"
+    - "@nordic-nrfx/soc/interconnect/ipct"
     - "@nordic-nrfx/."
     - "include"
 
 pkg.src_dirs:
     - "@nordic-nrfx/drivers/src"
     - "@nordic-nrfx/helpers"
+    - "@nordic-nrfx/soc/interconnect/apb"
+    - "@nordic-nrfx/soc/interconnect/dppic_ppib"
+    - "@nordic-nrfx/soc/interconnect/ipct"
 
 pkg.cflags:
     - -std=gnu99

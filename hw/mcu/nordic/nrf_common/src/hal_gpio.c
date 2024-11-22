@@ -40,7 +40,13 @@
 #endif
 
 #if defined(NRF54H20_XXAA)
+#if defined(NRF_RADIOCORE)
 #define GPIOTE_IRQn GPIOTE_0_IRQn
+#endif
+#if defined(NRF_APPLICATION)
+#define GPIOTE_IRQn GPIOTE130_0_IRQn
+#define NRF_GPIOTE0 NRF_GPIOTE130
+#endif
 #endif
 
 /* Storage for GPIO callbacks. */

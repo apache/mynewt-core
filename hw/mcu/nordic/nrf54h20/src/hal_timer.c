@@ -25,7 +25,7 @@
 #include <mcu/cmsis_nvic.h>
 #include <hal/hal_timer.h>
 #include <nrf.h>
-#include <mcu/nrf54h20_rad_hal.h>
+#include <mcu/nrf54h20_hal.h>
 
 /* IRQ prototype */
 typedef void (*hal_timer_irq_handler_t)(void);
@@ -453,37 +453,37 @@ hal_timer_init(int timer_num, void *cfg)
     switch (timer_num) {
 #if MYNEWT_VAL(TIMER_0)
     case 0:
-        irq_num = TIMER020_IRQn;
-        hwtimer = NRF_RADIOCORE_TIMER020_S;
+        irq_num = TIMER120_IRQn;
+        hwtimer = NRF_TIMER120_S;
         irq_isr = nrf54h20_timer0_irq_handler;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_1)
     case 1:
-        irq_num = TIMER021_IRQn;
-        hwtimer = NRF_RADIOCORE_TIMER021_S;
+        irq_num = TIMER121_IRQn;
+        hwtimer = NRF_TIMER121_S;
         irq_isr = nrf54h20_timer1_irq_handler;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_2)
     case 2:
-        irq_num = TIMER022_IRQn;
-        hwtimer = NRF_RADIOCORE_TIMER022_S;
+        irq_num = TIMER130_IRQn;
+        hwtimer = NRF_TIMER130_S;
         irq_isr = nrf54h20_timer2_irq_handler;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_3)
     case 3:
-        irq_num = RTC_IRQn;
-        hwtimer = NRF_RADIOCORE_RTC_S;
+        irq_num = RTC131_IRQn;
+        hwtimer = NRF_RTC131_S;
         irq_isr = nrf54h20_timer3_irq_handler;
         bsptimer->tmr_rtc = 1;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_4)
     case 4:
-        irq_num = TIMER120_IRQn;
-        hwtimer = NRF_TIMER120_S;
+        irq_num = TIMER131_IRQn;
+        hwtimer = NRF_TIMER131_S;
         irq_isr = nrf54h20_timer4_irq_handler;
 //        bsptimer->tmr_rtc = 1;
         break;

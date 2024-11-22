@@ -26,6 +26,7 @@ compiler.path.objsize: arm-none-eabi-size
 compiler.path.objcopy: arm-none-eabi-objcopy
 
 compiler.flags.base: -mcpu=cortex-m33+nodsp -mthumb-interwork -mthumb -Wall -Werror -fno-exceptions -ffunction-sections -fdata-sections -fno-common
+  #-E -P
 compiler.flags.default: [compiler.flags.base, -O1, -ggdb]
 compiler.flags.optimized: [compiler.flags.base, -Os, -ggdb]
 compiler.flags.speed: [compiler.flags.base, -O3, -ggdb]

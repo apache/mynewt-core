@@ -101,6 +101,12 @@ void
 hal_ipc_init(void)
 {
     uint8_t i;
+//#if MYNEWT_VAL(IPC_NRF5340_NET_GPIO)
+#if MYNEWT_VAL(MCU_APP_CORE)
+//    unsigned int gpios[] = { UNMANGLE_MYNEWT_VAL(MYNEWT_VAL(IPC_NRF5340_NET_GPIO)) };
+    unsigned int gpios[] = { 29, 30, 31 };
+    NRF_GPIO_Type *nrf_gpio;
+#endif
 
     /* Make sure network core if off when we set up IPC */
     nrf_reset_network_force_off(NRF_RESET, true);
@@ -114,6 +120,16 @@ hal_ipc_init(void)
          */
         NRF_SPU->PERIPHID[42].PERM &= ~SPU_PERIPHID_PERM_SECATTR_Msk;
     }
+
+#if MYNEWT_VAL(MCU_APP_CORE)
+    /* Configure GPIOs for Networking Core */
+    for (i = 0; i < ARRAY_SIZE(gpios); i++) {
+        nrf_gpio = NRF_P0; //HAL_GPIO_PORT(gpios[i]);
+//        nrf_gpio->PIN_CNF[HAL_GPIO_INDEX(gpios[i])] =
+        nrf_gpio->PIN_CNF[gpios[i] & 0x1F] =
+            ((uint32_t)GPIO_PIN_CNF_MCUSEL_NetworkMCU << GPIO_PIN_CNF_MCUSEL_Pos);
+    }
+#endif
 
     /* Enable IPC channels */
     for (i = 0; i < IPC_MAX_CHANS; ++i) {

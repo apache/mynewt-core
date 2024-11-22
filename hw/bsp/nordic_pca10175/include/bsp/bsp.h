@@ -42,7 +42,7 @@ extern uint8_t _ram_start;
 #define LED_2           (289)
 #define LED_3           (290)
 #define LED_4           (291)
-#define LED_BLINK_PIN   (LED_2)
+#define LED_BLINK_PIN   (LED_3)
 
 /* Buttons */
 #define BUTTON_1        (8)
