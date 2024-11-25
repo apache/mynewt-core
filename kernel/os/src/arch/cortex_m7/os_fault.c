@@ -130,7 +130,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     OS_PRINT_ASSERT(file, line, func, e);
 
 #if MYNEWT_VAL(OS_ASSERT_CB)
-    os_assert_cb();
+    os_assert_cb(file, line, func, e);
 #endif
 
     SCB->ICSR = SCB_ICSR_NMIPENDSET_Msk;
