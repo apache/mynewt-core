@@ -336,7 +336,7 @@ static int
 log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
 {
     struct log_read_hdr_arg arg;
-    struct log_offset log_offset;
+    struct log_offset log_offset = {};
 
     arg.hdr = out_hdr;
     arg.read_success = 0;

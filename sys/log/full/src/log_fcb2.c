@@ -693,7 +693,7 @@ static int
 log_fcb2_set_watermark(struct log *log, uint32_t index)
 {
     int rc;
-    struct log_offset log_offset;
+    struct log_offset log_offset = {};
     struct fcb_log *fl;
     struct fcb2 *fcb;
 
