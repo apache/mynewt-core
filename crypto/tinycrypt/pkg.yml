@@ -24,7 +24,9 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.cflags:
-    - "-std=c99"
+    - -std=c99
+    - -Wno-maybe-uninitialized
+    - -Wno-unknown-warning-option
 
 pkg.deps.TINYCRYPT_UECC_RNG_USE_TRNG:
     - "@apache-mynewt-core/hw/drivers/trng"
