@@ -34,6 +34,8 @@ syscfg.defs:
             - pyocd
             # Nordic Semiconductor tool for NRF5x devices
             - nrfjprog
+            # Nordic Semiconductor tool for NRF5x devices
+            - nrfutil
             # Renesas ezFlashCLI for DA146x devices
             - ezflashcli
         value:
@@ -81,4 +83,10 @@ syscfg.defs:
         description: >
             Some NRF have more then one core. This can specify non-default core
             (i.e. CP_NETWORK for NRF5340).
+        value:
+    NRFUTIL_TRAITS:
+        description: >
+            Traits passed to nrfutil command. If not set `jlink` is the default.
+            It can be 'nordicDfu' to upload binary using Nordic SDK DFU
+            bootloader protocol.
         value:
