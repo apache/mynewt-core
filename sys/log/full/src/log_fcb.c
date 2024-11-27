@@ -149,7 +149,8 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
      * if timestamp for request is < 0, return last log entry
      */
     if (log_offset->lo_ts < 0) {
-        out_entry->fe_step_back = false;
+        *out_entry = fcb->f_active;
+        out_entry->fe_step_back = true;
         return 0;
     }
 
