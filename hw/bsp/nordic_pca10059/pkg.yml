@@ -38,6 +38,7 @@ pkg.deps:
     - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/boot/startup"
+    - "@apache-mynewt-core/hw/scripts"
 
 pkg.deps.SOFT_PWM:
     - "@apache-mynewt-core/hw/drivers/pwm/soft_pwm"

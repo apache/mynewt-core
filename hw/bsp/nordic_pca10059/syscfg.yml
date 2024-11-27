@@ -23,9 +23,25 @@ syscfg.defs:
     SOFT_PWM:
         description: 'Enable soft PWM'
         value: 0
+    BSP_NRF_SDK_FLASH_LAYOUT:
+        description: >
+            Set this to 1 when device has Nordic SDK bootloader.
+            When this is used device can be flashed with nrfutil
+            tool without debugger.
+        value: 0
+
+syscfg.BSP_NRF_SDK_FLASH_LAYOUT:
+    # Change to use Nordic DFU bootloader which is likely to be used
+    # when device still has original bootloader
+    NRFUTIL_TRAITS: nordicDfu
 
 syscfg.vals:
-    # Enable nRF52840 MCU and common startup code
+    MYNEWT_DOWNLOADER: nrfutil
+    JLINK_TARGET: nRF52840_xxAA
+    PYOCD_TARGET: nrf52840
+    NRFUTIL_TRAITS: jlink
+
+# Enable nRF52840 MCU and common startup code
     MCU_TARGET: nRF52840
     MCU_COMMON_STARTUP: 1
 
