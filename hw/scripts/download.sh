@@ -73,6 +73,12 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     common_file_to_load
     nrfjprog_load
     ;;
+  "nrfutil")
+    check_downloader nrfutil
+    . $CORE_PATH/hw/scripts/nrfutil.sh
+    common_file_to_load
+    nrfutil_load
+    ;;
   "openocd")
     check_downloader openocd
     . $CORE_PATH/hw/scripts/openocd.sh
