@@ -44,7 +44,7 @@ nrfjprog_load () {
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    nrfjprog ${NRFJPROG_ARG} --program ${BIN_BASENAME}.hex --sectorerase
+    nrfjprog ${NRFJPROG_ARG} --program ${BIN_BASENAME}.hex --sectorerase --verify
 
     if [ $? -ne 0 ]; then
         exit 1
