@@ -29,10 +29,8 @@ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nordic_pca10028/boot-nrf51xxac.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.part2linkerscript: "hw/bsp/nordic_pca10028/split-nordic_pca10028.ld"
-bsp.downloadscript: "hw/bsp/nordic_pca10028/nordic_pca10028_download.sh"
+bsp.downloadscript: "hw/scripts/download.sh"
 bsp.debugscript: "hw/bsp/nordic_pca10028/nordic_pca10028_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10028/nordic_pca10028_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10028/nordic_pca10028_debug.cmd"
 
 bsp.flash_map:
     areas:

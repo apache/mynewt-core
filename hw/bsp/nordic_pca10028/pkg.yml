@@ -35,6 +35,7 @@ pkg.cflags:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx"
     - "@apache-mynewt-core/libc"
+    - "@apache-mynewt-core/hw/scripts"
 
 pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
