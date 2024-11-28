@@ -37,6 +37,7 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx"
     - "@apache-mynewt-core/libc"
+    - "@apache-mynewt-core/hw/scripts"
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/boot/startup"
 
