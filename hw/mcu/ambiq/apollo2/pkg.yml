@@ -19,7 +19,7 @@
 
 pkg.name: hw/mcu/ambiq/apollo2
 pkg.description: MCU definition for Ambiq Apollo MCUs
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - ambiq

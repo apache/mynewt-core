@@ -10,7 +10,7 @@ functions in the interface typically include the virtual device\_id of
 the device you are controlling.
 
 For example, in
-```hal_gpio.h`` <https://github.com/apache/incubator-mynewt-core/blob/master/hw/hal/include/hal/hal_gpio.h>`__
+```hal_gpio.h`` <https://github.com/apache/mynewt-core/blob/master/hw/hal/include/hal/hal_gpio.h>`__
 the device enumeration is the first argument to most methods and called
 ``pin``.
 

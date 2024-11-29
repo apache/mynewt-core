@@ -32,7 +32,7 @@ compiler/gdbmacros/flash_loader.gdb. Or you can write your own.
 
 Here's a target for nrf52dk, app is built as RAM resident.
 ```
-[marko@IsMyLaptop:~/src/incubator-mynewt-blinky]$ newt target show fl_nrf52dk
+[marko@IsMyLaptop:~/src/mynewt-blinky]$ newt target show fl_nrf52dk
 targets/fl_nrf52dk
     app=@apache-mynewt-core/apps/flash_loader
     bsp=@apache-mynewt-core/hw/bsp/nordic_pca10040
@@ -41,7 +41,7 @@ targets/fl_nrf52dk
 ```
 And then have this as the gdb script file
 ```
-[marko@IsMyLaptop:~/src/incubator-mynewt-blinky]$ cat loader_nrf52.gdb
+[marko@IsMyLaptop:~/src/mynewt-blinky]$ cat loader_nrf52.gdb
 set pagination off
 
 shell sh -c "trap '' 2; JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun > logfile.txt 2>&1 &"
