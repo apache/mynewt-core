@@ -159,7 +159,7 @@ int hal_flash_isempty_no_buf(uint8_t id, uint32_t address, uint32_t num_bytes);
  *
  * @return                      The flash device's minimum write alignment.
  */
-uint8_t hal_flash_align(uint8_t flash_id);
+uint32_t hal_flash_align(uint8_t flash_id);
 
 /**
  * @brief Determines the value of an erased byte for a particular flash device.

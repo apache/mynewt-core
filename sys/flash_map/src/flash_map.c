@@ -275,7 +275,7 @@ flash_area_erase(const struct flash_area *fa, uint32_t off, uint32_t len)
     return hal_flash_erase(fa->fa_device_id, fa->fa_off + off, len);
 }
 
-uint8_t
+uint32_t
 flash_area_align(const struct flash_area *fa)
 {
     return hal_flash_align(fa->fa_device_id);
