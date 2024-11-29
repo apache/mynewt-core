@@ -53,7 +53,7 @@ hal_flash_init(void)
     return rc;
 }
 
-uint8_t
+uint32_t
 hal_flash_align(uint8_t flash_id)
 {
     const struct hal_flash *hf;

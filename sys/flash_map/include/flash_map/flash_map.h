@@ -60,7 +60,7 @@ struct flash_sector_range {
     uint16_t fsr_first_sector;
     uint16_t fsr_sector_count;
     uint32_t fsr_sector_size;
-    uint8_t fsr_align;
+    uint32_t fsr_align;
 };
 
 extern const struct flash_area *flash_map;
@@ -106,7 +106,7 @@ int flash_area_read_is_empty(const struct flash_area *, uint32_t off, void *dst,
 /*
  * Alignment restriction for flash writes.
  */
-uint8_t flash_area_align(const struct flash_area *);
+uint32_t flash_area_align(const struct flash_area *fa);
 
 /*
  * Value read from flash when it is erased.
