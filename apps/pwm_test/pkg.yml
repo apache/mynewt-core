@@ -20,7 +20,7 @@
 pkg.name: apps/pwm_test
 pkg.type: app
 pkg.description: Basic example application which drives an LED using PWM.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
