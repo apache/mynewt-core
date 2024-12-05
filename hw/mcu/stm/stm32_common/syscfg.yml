@@ -460,6 +460,14 @@ syscfg.defs:
         description: "ADC_2"
         value:  0
 
+    BSP_FLASH_SPI_BUS:
+        description: 'bus name SPIFLASH is connected to'
+        value: '"spi0"'
+
+    BSP_FLASH_SPI_NAME:
+        description: 'SPIFLASH device name'
+        value: '"spiflash0"'
+
     OS_TICKS_USE_RTC:
         description: >
             Use RTC as source of system ticks.

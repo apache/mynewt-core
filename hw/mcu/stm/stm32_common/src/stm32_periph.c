@@ -64,6 +64,10 @@
 #include "os/os_cputime.h"
 #endif
 
+#if MYNEWT_VAL(SPIFLASH)
+#include <spiflash/spiflash.h>
+#endif
+
 #include "mcu/stm32_hal.h"
 
 #if MYNEWT_VAL(PWM_0)
@@ -646,6 +650,34 @@ stm32_periph_create_eth(void)
 #endif
 }
 
+#if MYNEWT_VAL(SPIFLASH) && MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+struct bus_spi_node_cfg flash_spi_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BSP_FLASH_SPI_BUS),
+    .pin_cs = MYNEWT_VAL(SPIFLASH_SPI_CS_PIN),
+    .mode = MYNEWT_VAL(SPIFLASH_SPI_MODE),
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = MYNEWT_VAL(SPIFLASH_BAUDRATE),
+};
+
+static void
+create_spi_flash_device(void)
+{
+    int rc;
+
+    rc = spiflash_create_spi_dev(&spiflash_dev.dev,
+                                 MYNEWT_VAL(BSP_FLASH_SPI_NAME), &flash_spi_cfg);
+    assert(rc == 0);
+}
+
+#else
+
+static inline void
+create_spi_flash_device(void)
+{
+}
+#endif
+
 void
 stm32_periph_create(void)
 {
@@ -659,4 +691,5 @@ stm32_periph_create(void)
     stm32_periph_create_spi();
     stm32_periph_create_adc();
     stm32_periph_create_eth();
+    create_spi_flash_device();
 }
