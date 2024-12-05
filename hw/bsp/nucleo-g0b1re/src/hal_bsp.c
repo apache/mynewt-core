@@ -198,18 +198,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
 
 extern const struct hal_flash stm32_flash_dev;
 
-#if MYNEWT_VAL(SPIFLASH)
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-struct bus_spi_node_cfg flash_spi_cfg = {
-    .node_cfg.bus_name = MYNEWT_VAL(BSP_FLASH_SPI_BUS),
-    .pin_cs = MYNEWT_VAL(SPIFLASH_SPI_CS_PIN),
-    .mode = MYNEWT_VAL(SPIFLASH_SPI_MODE),
-    .data_order = HAL_SPI_MSB_FIRST,
-    .freq = MYNEWT_VAL(SPIFLASH_BAUDRATE),
-};
-#endif
-#endif
-
 static const struct hal_flash *flash_devs[] = {
     [0] = &stm32_flash_dev,
 #if MYNEWT_VAL(SPIFLASH)
@@ -244,12 +232,6 @@ hal_bsp_init(void)
     (void)rc;
 
     stm32_periph_create();
-
-#if MYNEWT_VAL(SPIFLASH) && MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = spiflash_create_spi_dev(&spiflash_dev.dev,
-                                 MYNEWT_VAL(BSP_FLASH_SPI_NAME), &flash_spi_cfg);
-    assert(rc == 0);
-#endif
 }
 
 void
