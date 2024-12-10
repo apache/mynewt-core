@@ -77,12 +77,12 @@ nrfutil_load () {
     if [ -z ${ZIP_FILE} ] ; then
         echo "Downloading" ${HEX_FILE}
 
-        nrfutil device program --firmware ${HEX_FILE} ${NRFUTIL_ARG} ${NRFUTIL_TRAITS} --options chip_erase_mode=ERASE_RANGES_TOUCHED_BY_FIRMWARE
+        nrfutil device program --firmware ${HEX_FILE} ${JLINK_SN:+--serial-number $JLINK_SN} ${NRFUTIL_ARG} ${NRFUTIL_TRAITS} --options chip_erase_mode=ERASE_RANGES_TOUCHED_BY_FIRMWARE
 
         if [ $? -ne 0 ]; then
             ret=1
         else
-            nrfutil device reset
+            nrfutil device reset ${JLINK_SN:+--serial-number $JLINK_SN}
         fi
     fi
 
