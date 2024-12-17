@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,21 +16,19 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/display/lcd_itf
-pkg.description: LCD
-pkg.keywords:
-    - display
-    - LCD
+syscfg.defs:
+    LCD_I2C_DEV_NAME:
+        description: I2C device name that LCD is connected to.
+        value: '"i2c0"'
+    LCD_I2C_ADDR:
+        description: LCD I2C address.
+        value:
+        restriction: $notnull
+    LCD_I2C_FREQ:
+        description: I2C device frequency for LCD (typical 100/400 kHz)
+        value: 100
+    LCD_I2C_MAX_TRANSFER:
+        description: Maximum nuber of bytes that I2C interface supports
+        value:
 
-pkg.req_apis:
-    - lcd_interface
-
-pkg.deps.'LCD_ITF == "spi"':
-    - "@apache-mynewt-core/hw/drivers/display/lcd_itf/itf_spi"
-pkg.deps.'LCD_ITF == "i2c"':
-    - "@apache-mynewt-core/hw/drivers/display/lcd_itf/itf_i2c"
-pkg.deps.'LCD_ITF == "8080_II_8_bit"':
-    - "@apache-mynewt-core/hw/drivers/display/lcd_itf/itf_8080"
-pkg.deps.'LCD_ITF == "8080_II_16_bit"':
-    - "@apache-mynewt-core/hw/drivers/display/lcd_itf/itf_8080"
-
+syscfg.restrictions:
