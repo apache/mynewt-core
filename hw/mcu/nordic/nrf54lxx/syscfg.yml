@@ -1,0 +1,141 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_TARGET:
+        description: >
+            Specifies target MCU.
+        value: nRF54L15
+        restrictions:
+            - $notnull
+        choices:
+            - nRF54L15
+
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 1
+
+    MCU_DCDC_ENABLED:
+        description: >
+            Specifies whether or not to enable DC/DC regulator. This requires
+            external circuitry so is defined to be zero by default and
+            expected to be overridden by the BSP.
+        value: 0
+
+    MCU_LFCLK_SOURCE:
+        description: >
+            Selected source for low frequency clock (LFCLK).
+        value:
+        choices:
+            - LFRC      # 32.768 kHz RC oscillator
+            - LFXO      # 32.768 kHz crystal oscillator
+            - LFSYNTH   # 32.768 kHz synthesized from HFCLK
+
+    MCU_GPIO_USE_PORT_EVENT:
+        description: >
+            When enabled, hal_gpio will use GPIOTE PORT event instead of PIN
+            events for interrupts. This mode may be less accurate (i.e. pulse
+            length needs to be longer in order to be detected) but it reduces
+            power consumption since it does not require HFCLK to be running.
+            Refer to nRF54lxx Product Specification document for more details.
+        value: 0
+
+    MCU_DEBUG_IGNORE_BKPT:
+       description: >
+            When enabled, asm(bkpt) will be ignored. If not set, it will hit
+            the breakpoint wherever it gets called, For example, reset and crash
+       value: 0
+
+# MCU peripherals definitions
+    UART_0:
+        description: 'Enable nRF54Lxx UART20'
+        value: 1
+    UART_0_PIN_TX:
+        description: 'TX pin for UART20'
+        value: ''
+    UART_0_PIN_RX:
+        description: 'RX pin for UART20'
+        value: ''
+    UART_0_PIN_RTS:
+        description: 'RTS pin for UART20'
+        value: -1
+    UART_0_PIN_CTS:
+        description: 'CTS pin for UART20'
+        value: -1
+
+    UART_1:
+        description: 'Enable nRF54Lxx UART21'
+        value: 0
+    UART_1_PIN_TX:
+        description: 'TX pin for UART21'
+        value: ''
+    UART_1_PIN_RX:
+        description: 'RX pin for UART21'
+        value: ''
+    UART_1_PIN_RTS:
+        description: 'RTS pin for UART21'
+        value: -1
+    UART_1_PIN_CTS:
+        description: 'CTS pin for UART21'
+        value: -1
+
+    UART_2:
+        description: 'Enable nRF54Lxx UART22'
+        value: 0
+    UART_2_PIN_TX:
+        description: 'TX pin for UART22'
+        value: ''
+    UART_2_PIN_RX:
+        description: 'RX pin for UART22'
+        value: ''
+    UART_2_PIN_RTS:
+        description: 'RTS pin for UART22'
+        value: -1
+    UART_2_PIN_CTS:
+        description: 'CTS pin for UART22'
+        value: -1
+
+    TIMER_0:
+        description: 'Enable nRF54Lxx Timer 20'
+        value:  1
+    TIMER_1:
+        description: 'Enable nRF54Lxx Timer 21'
+        value:  0
+    TIMER_2:
+        description: 'Enable nRF54Lxx Timer 22'
+        value:  0
+    TIMER_3:
+        description: 'Enable nRF54Lxx Timer 23'
+        value:  0
+    TIMER_4:
+        description: 'Enable nRF54Lxx Timer 24'
+        value:  0
+    TIMER_5:
+        description: 'Enable nRF54Lxx Timer RTC10'
+        value:  0
+
+
+syscfg.vals:
+    OS_TICKS_PER_SEC: 1000
+
+syscfg.restrictions:
+    - "!UART_0 || (UART_0_PIN_TX != -1 && UART_0_PIN_RX != -1)"
+    - "!UART_1 || (UART_1_PIN_TX != -1 && UART_1_PIN_RX != -1)"
+    - "!UART_2 || (UART_2_PIN_TX != -1 && UART_2_PIN_RX != -1)"
