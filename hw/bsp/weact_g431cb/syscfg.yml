@@ -22,14 +22,6 @@ syscfg.defs:
         description: 'Total flash size in KB.'
         value: 128
 
-    BSP_FLASH_SPI_BUS:
-        description: 'bus name SPIFLASH is connected to'
-        value: '"spi0"'
-
-    BSP_FLASH_SPI_NAME:
-        description: 'SPIFLASH device name'
-        value: '"spiflash0"'
-
     BOOT_LOADER:
         description: 'Build everything as bootloader'
         value: 1
