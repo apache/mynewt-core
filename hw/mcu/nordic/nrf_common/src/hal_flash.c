@@ -26,6 +26,8 @@
 
 #ifdef NRF51
 #define NRF_FLASH_SECTOR_SZ 1024
+#elif defined(NRF5340_XXAA_NETWORK)
+#define NRF_FLASH_SECTOR_SZ 2048
 #else
 #define NRF_FLASH_SECTOR_SZ 4096
 #endif
