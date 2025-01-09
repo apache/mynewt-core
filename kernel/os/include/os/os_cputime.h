@@ -54,6 +54,10 @@ extern "C" {
 
 #define OS_CPUTIME_FREQ_1MHZ
 
+#elif MYNEWT_VAL(OS_CPUTIME_FREQ) == 32000
+
+#define OS_CPUTIME_FREQ_32000HZ
+
 #elif MYNEWT_VAL(OS_CPUTIME_FREQ) == 256        ||  \
       MYNEWT_VAL(OS_CPUTIME_FREQ) == 512        ||  \
       MYNEWT_VAL(OS_CPUTIME_FREQ) == 1024       ||  \
@@ -169,6 +173,22 @@ static inline uint32_t
 os_cputime_ticks_to_usecs(uint32_t ticks)
 {
     return ticks * (1000000 / MYNEWT_VAL(OS_CPUTIME_FREQ));
+}
+
+#elif defined(OS_CPUTIME_FREQ_32000HZ)
+
+static inline uint32_t
+os_cputime_usecs_to_ticks(uint32_t usecs)
+{
+    /* usecs * 4 / 125 without overflow */
+    return usecs / 125 * 4 + (usecs % 125) * 4 / 125;
+}
+
+static inline uint32_t
+os_cputime_ticks_to_usecs(uint32_t ticks)
+{
+    /* ticks * 125 / 4 without overflow */
+    return ticks * 31 + ticks / 4;
 }
 
 #else
