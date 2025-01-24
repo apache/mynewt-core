@@ -17,22 +17,21 @@
  * under the License.
  */
 
-/* Fragment that goes to MEMORY section */
-#ifndef SECTIONS_REGIONS
+/*
+ * Memory regions placed in DTCM
+ * If stack or core data or other section should be place in RAM
+ * <target_name>/link/include/target_config.ld.h should just do:
+ *  #undef BSSNZ_RAM
+ *  #undef COREBSS_RAM
+ *  #undef COREDATA_RAM
+ *  #undef STACK_REGION
+ *  #undef VECTOR_RELOCATION_RAM DTCM
+ */
 
-#ifdef STACK_REGION
-    DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = (64K - STACK_SIZE)
-    STACK_RAM (rw) : ORIGIN = 0x20010000 - STACK_SIZE, LENGTH = STACK_SIZE
-#else
-    DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = 64K
-#endif
-    ITCM (rx)  :  ORIGIN = 0x00000000, LENGTH = 16K
+#define BSSNZ_RAM DTCM
+#define COREBSS_RAM DTCM
+#define COREDATA_RAM DTCM
+#define STACK_REGION DTCM
+#define VECTOR_RELOCATION_RAM DTCM
 
-#else
-/* Fragment that goes into SECTIONS, can provide definition and sections if needed */
-    _itcm_start = ORIGIN(ITCM);
-    _itcm_end = ORIGIN(ITCM) + LENGTH(ITCM);
-    _dtcm_start = ORIGIN(DTCM);
-    _dtcm_end = ORIGIN(DTCM) + LENGTH(DTCM);
-
-#endif
+#define TEXT_RAM ITCM
