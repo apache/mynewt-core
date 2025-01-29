@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/pwm/pwm_nrf52
-pkg.description: PWM driver for the NRF52
+pkg.name: hw/drivers/pwm/pwm_nrf5x
+pkg.description: PWM driver for the NRF5x devices
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
