@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef __PWM_NRF52_H__
-#define __PWM_NRF52_H__
+#ifndef __PWM_NRF5X_H__
+#define __PWM_NRF5X_H__
 
 #include <pwm/pwm.h>
 
@@ -28,10 +28,10 @@
 extern "C" {
 #endif
 
-int nrf52_pwm_dev_init(struct os_dev *, void *);
+int nrf5x_pwm_dev_init(struct os_dev *odev, void *arg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __PWM_NRF52_H__ */
+#endif /* __PWM_NRF5X_H__ */
