@@ -42,6 +42,24 @@
 #error "At least one of HSE or HSI clock source must be enabled"
 #endif
 
+static void
+config_i2s_pll(void)
+{
+    RCC_PeriphCLKInitTypeDef i2s_clock_init = {0};
+
+    i2s_clock_init.PeriphClockSelection = RCC_PERIPHCLK_I2S;
+    i2s_clock_init.PLLI2S.PLLI2SN = MYNEWT_VAL(STM32_CLOCK_PLLI2S_PLLN);
+#if defined (STM32F745xx) || defined (STM32F746xx) || defined (STM32F756xx) || defined (STM32F765xx) || \
+    defined (STM32F767xx) || defined (STM32F769xx) || defined (STM32F777xx) || defined (STM32F779xx) || \
+    defined (STM32F750xx)
+    i2s_clock_init.PLLI2S.PLLI2SP = MYNEWT_VAL(STM32_CLOCK_PLLI2S_PLLP);
+#endif
+    i2s_clock_init.PLLI2S.PLLI2SQ = MYNEWT_VAL(STM32_CLOCK_PLLI2S_PLLQ);
+    i2s_clock_init.PLLI2S.PLLI2SR = MYNEWT_VAL(STM32_CLOCK_PLLI2S_PLLR);
+
+    HAL_RCCEx_PeriphCLKConfig(&i2s_clock_init);
+}
+
 void
 SystemClock_Config(void)
 {
@@ -230,6 +248,10 @@ SystemClock_Config(void)
     status = HAL_RCC_ClockConfig(&clk_init, MYNEWT_VAL(STM32_FLASH_LATENCY));
     if (status != HAL_OK) {
         assert(0);
+    }
+
+    if (MYNEWT_VAL(STM32_CLOCK_PLLI2S_ENABLE)) {
+        config_i2s_pll();
     }
 
 #if ((MYNEWT_VAL(STM32_CLOCK_HSI) == 0) || (MYNEWT_VAL(STM32_CLOCK_HSE) == 0))
