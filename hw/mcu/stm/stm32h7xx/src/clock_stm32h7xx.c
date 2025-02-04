@@ -49,7 +49,6 @@ SystemClock_Config(void)
     RCC_ClkInitTypeDef clk_init = {0};
     HAL_StatusTypeDef status;
 
-
     /* Enable the MCU instruction cache */
 #if MYNEWT_VAL(STM32_ENABLE_ICACHE)
     SCB_EnableICache();
