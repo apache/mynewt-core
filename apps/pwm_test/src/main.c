@@ -39,6 +39,11 @@
 #   define  PWM_TEST_CH_CFG_INV  false 
 #   define  PWM_TEST_CH_NUM      1
 #   define  PWM_TEST_IRQ_PRIO    0
+#elif MYNEWT_VAL(BSP_nucleo_h753zi)
+#   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 2)
+#   define  PWM_TEST_CH_CFG_INV  false
+#   define  PWM_TEST_CH_NUM      2
+#   define  PWM_TEST_IRQ_PRIO    0
 #else
 #   define  PWM_TEST_CH_CFG_PIN  LED_BLINK_PIN
 #   define  PWM_TEST_CH_CFG_INV  true 
