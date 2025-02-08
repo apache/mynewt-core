@@ -27,9 +27,6 @@
 #include "log/log.h"
 #include "fcb/fcb2.h"
 
-/* Assume the flash alignment requirement is no stricter than 32. */
-#define LOG_FCB2_MAX_ALIGN   32
-
 static int log_fcb2_rtr_erase(struct log *log);
 
 /**
@@ -326,11 +323,12 @@ log_fcb2_append_body(struct log *log, const struct log_entry_hdr *hdr,
             }
 
             chunk_sz += offset;
-            /* The first TLV gets appended after the padding + trailer_alignment
+
+            /* The first trailer gets appended after the padding + trailer_alignment
              * Trailers start from updated chunk_sz offset.
              */
-            rc = log_fcb2_tlvs_write(log, buf, sizeof(buf), &loc, &chunk_sz);
-            if (rc) {
+            rc = log_trailer_append(log, buf, trailer_len, &loc, &chunk_sz);
+            if (rc && rc != SYS_ENOTSUP) {
                 return rc;
             }
         }
@@ -415,11 +413,11 @@ log_fcb2_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 
     if (hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
 #if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
-        /* The first TLV gets appended after the padding + trailer_alignment
+        /* The trailer gets appended after the padding + trailer_alignment
          * Trailers start from updated loc.fe_data_off. Write everything
          * together
          */
-        rc = log_fcb2_mbuf_tlvs_write(log, om, &loc, len);
+        rc = log_mbuf_trailer_append(log, om, &loc, len);
         if (rc != 0) {
             return rc;
         }

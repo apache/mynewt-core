@@ -140,9 +140,6 @@ struct log_handler {
 #define LOG_FLAGS_IMG_HASH    (1 << 0)
 #define LOG_FLAGS_TRAILER_SUPPORT (1 << 1)
 
-#define LOGS_TLV_NUM_ENTRIES   (1 << 0)
-#define LOG_TLV_NUM_TLVS      (1 << 1)
-
 #if MYNEWT_VAL(LOG_VERSION) == 3
 struct log_entry_hdr {
     int64_t ue_ts;
@@ -152,29 +149,17 @@ struct log_entry_hdr {
     uint8_t ue_etype : 4;
     uint8_t ue_flags : 4;
     uint8_t ue_imghash[4];
-    /* Number of entries field which helps in calculating number of
-     * entries per log, these go on incrementing similar to an index
-     * but per log.
-     */
-    uint32_t ue_num_entries;
 } __attribute__((__packed__));
-
-struct log_tlv {
-    uint8_t len;
-    uint8_t tag;
-    /* Value is of variable size appended based on len,
-     * val is logged after the tag and len are logged
-     */
-} __attribute__((__packed__));
-
 #else
 #error "Unsupported log version"
 #endif
 
 #define LOG_BASE_ENTRY_HDR_SIZE (15)
 
-#define LOG_NUM_ENTRIES_SIZE (sizeof(((struct log *)0)->l_num_entries))
-#define LOG_NUM_TLVS_SIZE    (1)
+/* Assume the flash alignment requirement is no stricter than 32. */
+#define LOG_FCB_MAX_ALIGN    32
+#define LOG_FCB2_MAX_ALIGN   32
+
 
 #if MYNEWT_VAL(LOG_FCB2)
 #define LF_MAX_ALIGN LOG_FCB2_MAX_ALIGN
@@ -182,22 +167,16 @@ struct log_tlv {
 #define LF_MAX_ALIGN LOG_FCB_MAX_ALIGN
 #endif
 
-#define LOG_FCB_MAX_TLV_SIZE(__tlv_name__) \
-    /* sizeof(struct log_tlv)) + alignment */ \
-    (LF_MAX_ALIGN + \
-     /* Max size per value of TLV including alignment */ \
-     (LOG_ ## __tlv_name__ ## _SIZE/LF_MAX_ALIGN) ? \
-     (LOG_ ## __tlv_name__ ## _SIZE + LF_MAX_ALIGN) : \
-     LF_MAX_ALIGN)
-
-#define LOG_FCB_MAX_TLVS_SIZE LOG_FCB_MAX_TLV_SIZE(NUM_ENTRIES) + \
-    LOG_FCB_MAX_TLV_SIZE(NUM_TLVS)
-
 #define LOG_FCB_EXT_HDR_SIZE LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN + \
     LF_MAX_ALIGN
 
-#define LOG_FCB_FLAT_BUF_SIZE (LOG_FCB_EXT_HDR_SIZE > LOG_FCB_MAX_TLVS_SIZE) ? \
-    LOG_FCB_EXT_HDR_SIZE : LOG_FCB_MAX_TLVS_SIZE
+#ifndef LOG_FCB_FLAT_BUF_SIZE
+/* Assuming the trailer fits in this, an arbitrary value */
+#define LOG_FCB_FLAT_BUF_SIZE (LOG_FCB_EXT_HDR_SIZE > LF_MAX_ALIGN * 3) ? \
+    LOG_FCB_EXT_HDR_SIZE : LF_MAX_ALIGN * 3
+#endif
+
+#define LOG_MAX_TRAILER_LEN    MYNEWT_VAL(LOG_MAX_TRAILER_LEN)
 
 #define LOG_MODULE_STR(module)      log_module_get_name(module)
 
@@ -264,13 +243,14 @@ struct log {
 #if !MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t l_idx;
 #endif
-    uint32_t l_num_entries;
 #if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
     log_trailer_len_cb *l_trailer_len_cb;
     log_trailer_append_cb *l_trailer_append_cb;
+    log_process_trailer_cb *l_process_trailer_cb;
     log_trailer_mbuf_append_cb *l_trailer_mbuf_append_cb;
     log_cbmem_trailer_append_cb *l_cbmem_trailer_append_cb;
     log_cbmem_trailer_mbuf_append_cb *l_cbmem_trailer_mbuf_append_cb;
+    void *l_trailer_arg;
 #endif
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
@@ -796,33 +776,6 @@ int log_set_watermark(struct log *log, uint32_t index);
 #endif
 
 /**
- * Fill number of entries
- *
- * @param log Ptr to log structure
- * @param dptr Ptr to data to be read
- * @param num_entries Ptr to number of entries
- * @param offset Offset of the num of entries field in the log entry
- *
- * @return 0 on success, non-zero on failure
- */
-int log_fill_num_entries(struct log *log, const void *dptr,
-                         uint32_t *num_entries,
-                         uint16_t offset);
-/**
- * Fill number of tlvs
- *
- * @param log Ptr to log structure
- * @param dptr Ptr to data to be read
- * @param num_entries Ptr to number of entries
- * @param offset Offset of the num of entries field in the log entry
- *
- * @return 0 on success, non-zero on failure
- */
-int
-log_fill_num_tlvs(struct log *log, const void *dptr, uint8_t *num_tlvs,
-                  uint16_t offset);
-
-/**
  * Fill log current image hash
  *
  * @param hdr Ptr to the header
@@ -831,29 +784,6 @@ log_fill_num_tlvs(struct log *log, const void *dptr, uint8_t *num_tlvs,
  */
 int
 log_fill_current_img_hash(struct log_entry_hdr *hdr);
-
-/**
- * Reads the log entry's header from the specified log and log index
- *
- * @param log                   The log to read from.
- * @param idx                   Index of the log entry to read header from
- * @param out_hdr               On success, the last entry header gets written
- *                                  here.
- *
- * @return                      0 on success; nonzero on failure.
- */
-int
-log_read_hdr_by_idx(struct log *log, uint32_t idx, struct log_entry_hdr *out_hdr);
-
-/**
- * Get number of entries in log
- *
- * @param log The log to get number of entries for
- * @param idx The log index to read number of entries from
- * @param num_entries Ptr to fill up number of entries in log
- */
-int
-log_get_entries(struct log *log, uint32_t idx, uint32_t *entries);
 
 /**
  * Get the length of data in medium - storage (fcb/fcb2), memory or stream
@@ -875,30 +805,19 @@ log_len_in_medium(struct log *log, uint16_t len);
 uint16_t log_trailer_len(struct log *log, const struct log_entry_hdr *hdr);
 
 /**
- * @brief Reads a single log entry trailer.
- *
- * @param log                   The log to read from.
- * @param dptr                  Medium-specific data describing the area to
- *                                  read from; typically obtained by a call to
- *                                  `log_walk`.
- * @param tlv                   tlv type
- * @param buf                   Value buffer
- *
- * @return                      0 on success; nonzero on failure.
- */
-int log_read_trailer(struct log *log, const void *dptr, uint16_t tlv, void *buf);
-
-/**
  * Append trailer to the log entry
  *
  * @param log Pointer to the log
  * @param buf Pointer to the buffer containing trailer
  * @param buflen Length of the trailer
  * @param loc Pointer to the log entry
+ * @param f_offset Pointer to the offset(optional) at which append should
+ *                 happen, gets updated once append is successful
+ * @return 0 on success, non-zero on failure
  */
 int
 log_trailer_append(struct log *log, uint8_t *buf, uint16_t buflen,
-                   void *loc);
+                   void *loc, uint16_t *f_offset);
 
 /**
  * Append trailer in an mbuf to the log entry
@@ -906,9 +825,27 @@ log_trailer_append(struct log *log, uint8_t *buf, uint16_t buflen,
  * @param log Pointer to the log
  * @param om Pointer to the os_mbuf
  * @param loc Pointer to the log entry
+ * @param f_offset The offset(optional) at which append should
+ *                 happen
  */
 int
-log_mbuf_trailer_append(struct log *log, struct os_mbuf *om, void *loc);
+log_mbuf_trailer_append(struct log *log, struct os_mbuf *om, void *loc,
+                        uint16_t f_offset);
+
+/**
+ * Reads the final log entry's header and processes trailer if the flag
+ * indicates so from the specified log.
+ *
+ * @param log                   The log to read from.
+ * @param out_hdr               On success, the last entry header gets written
+ *                              here.
+ * @param trailer_exists        Pointer to a boolean
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+log_read_last_hdr_trailer(struct log *log, struct log_entry_hdr *out_hdr,
+                          bool *trailer_exists);
 
 /**
  * Register trailer callbacks
@@ -916,13 +853,16 @@ log_mbuf_trailer_append(struct log *log, struct os_mbuf *om, void *loc);
  * @param log Pointer to the log
  * @param ltac Pointer to the log trailer append callback
  * @param ltlc Pointer to the log trailer length callback
+ * @param lptc Pointer to the log process trailer callback
  */
 static inline void
 log_register_trailer_cbs(struct log *log, log_trailer_append_cb *ltac,
-                         log_trailer_len_cb *ltlc)
+                         log_trailer_len_cb *ltlc,
+                         log_process_trailer_cb *lptc)
 {
     log->l_trailer_append_cb = ltac;
     log->l_trailer_len_cb = ltlc;
+    log->l_process_trailer_cb = lptc;
 }
 
 /**

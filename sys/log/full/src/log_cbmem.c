@@ -27,7 +27,7 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     int rc = 0;
     struct cbmem *cbmem;
-    uint8_t trailer[LOG_NUM_ENTRIES_SIZE] = {0};
+    uint8_t trailer[LOG_MAX_TRAILER_LEN] = {0};
     uint16_t trailer_len = 0;
     struct cbmem_scat_gath *sg = (struct cbmem_scat_gath *)&trailer[0];
 

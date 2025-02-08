@@ -185,6 +185,11 @@ syscfg.defs:
             the global index to be sequentially increasing for persisted logs.
         value: 0
 
+    LOG_MAX_TRAILER_LEN:
+        description: >
+            Maximum length of trailer that can be appended to a log entry
+        value: "LF_MAX_ALIGN * 3"
+
 syscfg.vals.CONSOLE_TICKS:
     LOG_CONSOLE_PRETTY_WITH_TIMESTAMP: 0
 
