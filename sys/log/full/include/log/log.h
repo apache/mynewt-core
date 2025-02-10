@@ -243,7 +243,6 @@ struct log {
 #if !MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t l_idx;
 #endif
-#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
     log_trailer_len_cb *l_trailer_len_cb;
     log_trailer_append_cb *l_trailer_append_cb;
     log_process_trailer_cb *l_process_trailer_cb;
@@ -251,7 +250,6 @@ struct log {
     log_cbmem_trailer_append_cb *l_cbmem_trailer_append_cb;
     log_cbmem_trailer_mbuf_append_cb *l_cbmem_trailer_mbuf_append_cb;
     void *l_trailer_arg;
-#endif
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
 #endif
@@ -794,7 +792,6 @@ log_fill_current_img_hash(struct log_entry_hdr *hdr);
 int
 log_len_in_medium(struct log *log, uint16_t len);
 
-#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
 /**
  * @brief Reads the trailer length
  *
@@ -847,6 +844,7 @@ int
 log_read_last_hdr_trailer(struct log *log, struct log_entry_hdr *out_hdr,
                           bool *trailer_exists);
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
 /**
  * Register trailer callbacks
  *

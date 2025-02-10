@@ -323,13 +323,15 @@ log_read_hdr_trailer_walk(struct log *log, struct log_offset *log_offset,
     }
 
     if (arg->hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
-        rc = log->l_process_trailer_cb(log, arg->arg_trailer, dptr, len);
-        if (!rc) {
-            arg->read_success = 1;
-            arg->trailer_exists = true;
-        } else {
-            arg->read_success = 0;
-            arg->trailer_exists = false;
+        if (log->l_process_trailer_cb) {
+            rc = log->l_process_trailer_cb(log, arg->arg_trailer, dptr, len);
+            if (!rc) {
+                arg->read_success = 1;
+                arg->trailer_exists = true;
+            } else {
+                arg->read_success = 0;
+                arg->trailer_exists = false;
+            }
         }
     }
 

@@ -32,6 +32,7 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
     struct cbmem_scat_gath *sg = (struct cbmem_scat_gath *)&trailer[0];
 
     trailer_len = log_trailer_len(log, hdr);
+
     *sg = (struct cbmem_scat_gath) {
         .entries = (struct cbmem_scat_gath_entry[]) {
             {
@@ -59,7 +60,6 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
     }
 
     if (hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
-#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
         if (log->l_cbmem_trailer_append_cb) {
             rc = log->l_cbmem_trailer_append_cb(log, trailer, trailer_len);
             if (!rc) {
@@ -67,7 +67,6 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
                 sg->entries[3].flat_len = trailer_len;
             }
         }
-#endif
     }
 
     cbmem = (struct cbmem *) log->l_arg;
@@ -116,11 +115,9 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
     }
 
     if (hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
-#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
         if (log->l_cbmem_trailer_mbuf_append_cb) {
             log->l_cbmem_trailer_mbuf_append_cb(log, om);
         }
-#endif
     }
 
     cbmem = (struct cbmem *) log->l_arg;
