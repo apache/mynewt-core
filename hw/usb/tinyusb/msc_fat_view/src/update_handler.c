@@ -208,6 +208,7 @@ image_file_written(struct msc_fat_view_write_handler *handler, uint32_t size,
             MSC_FAT_VIEW_LOG_ERROR(
                 "New file not ready to flash new sectors (%d-%d), (sector %d)\n",
                 unallocated_write.first_sector, unallocated_write.last_sector, sector);
+            return 0;
         }
     } else {
         if ((int)unallocated_write.write_status < 0) {
