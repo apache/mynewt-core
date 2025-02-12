@@ -88,8 +88,6 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
     bool add_lf = true;
 
-    dlen = min(len, 128);
-
     if (arg) {
         arg->count++;
         /* Continue walk if number of entries to skip not reached yet */
@@ -97,6 +95,8 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
             return 0;
         }
     }
+
+    dlen = min(len, 128);
 
     if (read_data) {
         rc = log_read_body(log, dptr, data, 0, dlen);
@@ -118,7 +118,6 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         console_printf(" [%llu] ", ueh->ue_ts);
     }
 
-    console_printf(" [%llu] ", ueh->ue_ts);
 #if MYNEWT_VAL(LOG_SHELL_SHOW_INDEX)
     console_printf(" [ix=%lu] ", ueh->ue_index);
 #endif

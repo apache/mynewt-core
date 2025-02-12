@@ -26,7 +26,6 @@
 #include "flash_map/flash_map.h"
 #include "fcb/fcb.h"
 #include "log/log.h"
-#include <console/console.h>
 
 static int log_fcb_rtr_erase(struct log *log);
 
@@ -293,7 +292,7 @@ log_fcb_write_mbuf(struct fcb_entry *loc, struct os_mbuf *om)
     return 0;
 }
 
-int
+static int
 log_fcb_hdr_trailer_bytes(uint16_t align, uint16_t len)
 {
     uint16_t mod;
@@ -422,7 +421,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
             /* The first trailer gets appended after the padding + trailer_alignment
              * Trailers start from updated loc.fe_data_off.
              */
-            rc = log_trailer_append(log, buf, trailer_len, &loc, NULL);
+            rc = log_trailer_append(log, buf, &trailer_len, &loc, NULL);
             if (rc && rc != SYS_ENOTSUP) {
                 return rc;
             }

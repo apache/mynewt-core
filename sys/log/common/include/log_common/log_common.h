@@ -138,36 +138,14 @@ typedef void log_append_cb(struct log *log, uint32_t idx);
  */
 typedef void log_notify_rotate_cb(const struct log *log);
 
-/** @typedef log_cbmem_trailer_append_cb
- * @brief Callback that is executed each time the corresponding log entry is
- * appended to
- *
- * @param log                   The log that was just appended to
- * @param buf                   Pointer to the buffer that contains the log entry
- * @param buflen                Length of the trailer
- * @return                      0 on success, non-zero on failure
- */
-typedef int log_cbmem_trailer_append_cb(struct log *log, uint8_t *buf,
-                                        uint16_t buflen);
-
-/** @typedef log_cbmem_trailer_mbuf_append_cb
- * @brief Callback that is executed each time the corresponding log entry is
- * appended to
- *
- * @param log                   The log that was just appended to
- * @param om                    Pointer to the mbuf
- *
- * @return                      0 on success, non-zero on failure
- */
-typedef int log_cbmem_trailer_mbuf_append_cb(struct log *log, struct os_mbuf *om);
-
 /** @typedef log_trailer_append_cb
  * @brief Callback that is executed each time the corresponding log entry is
  * appended to
  *
  * @param log                   The log that was just appended to
  * @param buf                   Buffer to append trailer to
- * @param buflen                Length of the trailer to be filled up
+ * @param buflen                Pointer to the length of the trailer to be filled up
+ *                              optionally
  * @param loc                   Argument pointing to the location of
  *                              the entry
  * @param f_offset              Pointer to the offset(optional) at which append should
@@ -176,7 +154,7 @@ typedef int log_cbmem_trailer_mbuf_append_cb(struct log *log, struct os_mbuf *om
  * @return                      0 on success, non-zero on failure
  */
 typedef int log_trailer_append_cb(struct log *log, uint8_t *buf,
-                                  uint16_t buflen, void *loc,
+                                  uint16_t *buflen, void *loc,
                                   uint16_t *f_offset);
 
 /** @typedef log_mbuf_trailer_append_cb
@@ -199,14 +177,14 @@ typedef int log_trailer_mbuf_append_cb(struct log *log, struct os_mbuf *om,
  * @brief Callback that is executed each time a trailer is processed
  *
  * @param log                   The log that was just appended to
- * @param hdr                   Pointer to the log netry header
+ * @param arg                   Void pointer for a custom arg
  * @param dptr                  Pointer to the data buffer
  * @param len                   Length of the trailer
  *
  * @return                      0 on success, non-zero on failure
  */
-typedef int log_process_trailer_cb(struct log *log, struct log_entry_hdr *hdr,
-                                   const void *dptr, uint16_t len);
+typedef int log_process_trailer_cb(struct log *log, void *arg, const void *dptr,
+                                   uint16_t len);
 
 /** @typedef log_trailer_len_cb
  * @brief Callback used to read length of trailer in a log entry

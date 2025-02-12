@@ -60,12 +60,12 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
     }
 
     if (hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
-        if (log->l_cbmem_trailer_append_cb) {
-            rc = log->l_cbmem_trailer_append_cb(log, trailer, trailer_len);
-            if (!rc) {
-                sg->count += ((trailer_len - sizeof(sg->count))/sizeof(sg->entries[0]));
-                sg->entries[3].flat_len = trailer_len;
-            }
+        rc = log_trailer_append(log, trailer, &trailer_len, NULL, NULL);
+        if (rc && rc != SYS_ENOTSUP) {
+            return rc;
+        } else if (!rc) {
+            sg->count += ((trailer_len - sizeof(sg->count))/sizeof(sg->entries[0]));
+            sg->entries[3].flat_len = trailer_len;
         }
     }
 
@@ -115,8 +115,9 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
     }
 
     if (hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
-        if (log->l_cbmem_trailer_mbuf_append_cb) {
-            log->l_cbmem_trailer_mbuf_append_cb(log, om);
+        rc = log_mbuf_trailer_append(log, om, NULL, 0);
+        if (rc) {
+            return rc;
         }
     }
 

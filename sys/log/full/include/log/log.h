@@ -247,8 +247,6 @@ struct log {
     log_trailer_append_cb *l_trailer_append_cb;
     log_process_trailer_cb *l_process_trailer_cb;
     log_trailer_mbuf_append_cb *l_trailer_mbuf_append_cb;
-    log_cbmem_trailer_append_cb *l_cbmem_trailer_append_cb;
-    log_cbmem_trailer_mbuf_append_cb *l_cbmem_trailer_mbuf_append_cb;
     void *l_trailer_arg;
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
@@ -724,9 +722,9 @@ uint8_t log_get_level(const struct log *log);
 void log_set_max_entry_len(struct log *log, uint16_t max_entry_len);
 
 /**
- * Return last entry index in log.
+ * @brief Return last entry index in log.
  *
- * @param log Log to check last entry index from.
+ * @param log    Log to check last entry index from.
  *
  * @return last entry index
  */
@@ -734,13 +732,13 @@ uint32_t log_get_last_index(struct log *log);
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 /**
- * Return information about log storage
+ * @brief Return information about log storage
  *
  * This return information about size and usage of storage on top of which log
  * instance is created.
  *
- * @param log   The log to query.
- * @param info  The destination to write information to.
+ * @param log    The log to query.
+ * @param info   The destination to write information to.
  *
  * @return 0 on success, error code otherwise
  *
@@ -749,17 +747,17 @@ int log_storage_info(struct log *log, struct log_storage_info *info);
 #endif
 
 /**
- * Assign a callback function to be notified when the log is about to be rotated.
+ * @brief Assign a callback function to be notified when the log is about to be rotated.
  *
- * @param log   The log
- * @param cb    The callback function to be executed.
+ * @param log    The log
+ * @param cb     The callback function to be executed.
  */
 void
 log_set_rotate_notify_cb(struct log *log, log_notify_rotate_cb *cb);
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 /**
- * Set watermark on log
+ * @brief Set watermark on log
  *
  * This sets watermark on log item with given index. This information is used
  * to calculate size of entries which were logged after watermark item, i.e.
@@ -774,9 +772,9 @@ int log_set_watermark(struct log *log, uint32_t index);
 #endif
 
 /**
- * Fill log current image hash
+ * @brief Fill log current image hash
  *
- * @param hdr Ptr to the header
+ * @param hdr    Ptr to the header
  *
  * @return 0 on success, non-zero on failure
  */
@@ -784,10 +782,10 @@ int
 log_fill_current_img_hash(struct log_entry_hdr *hdr);
 
 /**
- * Get the length of data in medium - storage (fcb/fcb2), memory or stream
+ * @brief Get the length of data in medium - storage (fcb/fcb2), memory or stream
  *
- * @param log The log to get number of entries for
- * @param len Length in medium with padding if any
+ * @param log    The log to get number of entries for
+ * @param len    Length in medium with padding if any
  */
 int
 log_len_in_medium(struct log *log, uint16_t len);
@@ -795,50 +793,51 @@ log_len_in_medium(struct log *log, uint16_t len);
 /**
  * @brief Reads the trailer length
  *
- * @param hdr Ptr to the header
+ * @param hdr    Ptr to the header
  *
  * @return Length of the trailer
  */
 uint16_t log_trailer_len(struct log *log, const struct log_entry_hdr *hdr);
 
 /**
- * Append trailer to the log entry
+ * @brief Append trailer to the log entry
  *
- * @param log Pointer to the log
- * @param buf Pointer to the buffer containing trailer
- * @param buflen Length of the trailer
- * @param loc Pointer to the log entry
- * @param f_offset Pointer to the offset(optional) at which append should
- *                 happen, gets updated once append is successful
+ * @param log        Pointer to the log
+ * @param buf        Pointer to the buffer containing trailer
+ * @param buflen     Pointer to the length of the trailer
+ * @param loc        Pointer to the log entry
+ * @param f_offset   Pointer to the offset(optional) at which append should
+ *                   happen, gets updated once append is successful
  * @return 0 on success, non-zero on failure
  */
 int
-log_trailer_append(struct log *log, uint8_t *buf, uint16_t buflen,
+log_trailer_append(struct log *log, uint8_t *buf, uint16_t *buflen,
                    void *loc, uint16_t *f_offset);
 
 /**
- * Append trailer in an mbuf to the log entry
+ * @brief Append trailer in an mbuf to the log entry
  *
- * @param log Pointer to the log
- * @param om Pointer to the os_mbuf
- * @param loc Pointer to the log entry
- * @param f_offset The offset(optional) at which append should
- *                 happen
+ * @param log        Pointer to the log
+ * @param om         Pointer to the os_mbuf
+ * @param loc        Pointer to the log entry
+ * @param f_offset   The offset(optional) at which append should
+ *                   happen
+ * @return 0 on success; nonzero on failure.
  */
 int
 log_mbuf_trailer_append(struct log *log, struct os_mbuf *om, void *loc,
                         uint16_t f_offset);
 
 /**
- * Reads the final log entry's header and processes trailer if the flag
+ * @brief Reads the final log entry's header and processes trailer if the flag
  * indicates so from the specified log.
  *
- * @param log                   The log to read from.
- * @param out_hdr               On success, the last entry header gets written
- *                              here.
- * @param trailer_exists        Pointer to a boolean
+ * @param log            The log to read from.
+ * @param out_hdr        On success, the last entry header gets written
+ *                       here.
+ * @param trailer_exists Pointer to a boolean
  *
- * @return                      0 on success; nonzero on failure.
+ * @return 0 on success; nonzero on failure.
  */
 int
 log_read_last_hdr_trailer(struct log *log, struct log_entry_hdr *out_hdr,
@@ -846,12 +845,12 @@ log_read_last_hdr_trailer(struct log *log, struct log_entry_hdr *out_hdr,
 
 #if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
 /**
- * Register trailer callbacks
+ * @brief Register trailer callbacks
  *
- * @param log Pointer to the log
- * @param ltac Pointer to the log trailer append callback
- * @param ltlc Pointer to the log trailer length callback
- * @param lptc Pointer to the log process trailer callback
+ * @param log    Pointer to the log
+ * @param ltac   Pointer to the log trailer append callback
+ * @param ltlc   Pointer to the log trailer length callback
+ * @param lptc   Pointer to the log process trailer callback
  */
 static inline void
 log_register_trailer_cbs(struct log *log, log_trailer_append_cb *ltac,
@@ -864,10 +863,10 @@ log_register_trailer_cbs(struct log *log, log_trailer_append_cb *ltac,
 }
 
 /**
- * Register trailer callbacks
+ * @brief Register trailer callbacks
  *
- * @param log Pointer to the log
- * @param ltmac Pointer to the log trailer mbuf append callback
+ * @param log    Pointer to the log
+ * @param ltmac  Pointer to the log trailer mbuf append callback
  */
 static inline void
 log_register_mbuf_trailer_cbs(struct log *log,

@@ -495,7 +495,7 @@ log_trailer_len(struct log *log, const struct log_entry_hdr *hdr)
 }
 
 int
-log_trailer_append(struct log *log, uint8_t *buf, uint16_t buflen,
+log_trailer_append(struct log *log, uint8_t *buf, uint16_t *buflen,
                    void *loc, uint16_t *f_offset)
 {
     if (log->l_trailer_append_cb) {
