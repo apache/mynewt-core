@@ -168,9 +168,6 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
-    int rc;
-    (void)rc;
-
     stm32_periph_create();
 }
 

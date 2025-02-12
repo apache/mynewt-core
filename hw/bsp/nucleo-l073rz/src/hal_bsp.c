@@ -150,16 +150,7 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
-    int rc;
-    (void)rc;
-
     stm32_periph_create();
-
-#if MYNEWT_VAL(SPIFLASH) && MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = spiflash_create_spi_dev(&spiflash_dev.dev,
-                                 MYNEWT_VAL(BSP_FLASH_SPI_NAME), &flash_spi_cfg);
-    assert(rc == 0);
-#endif
 }
 
 void
