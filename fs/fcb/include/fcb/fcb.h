@@ -168,6 +168,28 @@ typedef int (*fcb_walk_cb)(struct fcb_entry *loc, void *arg);
 int fcb_walk(struct fcb *, struct flash_area *, fcb_walk_cb cb, void *cb_arg);
 int fcb_getnext(struct fcb *, struct fcb_entry *loc);
 
+/**
+ * Get first entry in the provided flash area
+ *
+ * @param fcb Pointer to FCB
+ * @param fa Optional pointer to flash area
+ * @param loc Pointer to first FCB entry in the provided flash area
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int fcb_getnext_in_area(struct fcb *fcb, struct flash_area *fa,
+                        struct fcb_entry *loc);
+
+/**
+ * Get next area pointer from the FCB pointer to by fcb pointer
+ *
+ * @param fcb Pointer to the FCB
+ * @param fap Pointer to the flash_area
+ *
+ * @return Pointer to the flash_area that comes next
+ */
+struct flash_area *fcb_getnext_area(struct fcb *fcb, struct flash_area *fap);
+
 #if MYNEWT_VAL_FCB_BIDIRECTIONAL
 /**
  * Call 'cb' for every element in flash circular buffer moving
