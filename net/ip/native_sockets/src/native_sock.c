@@ -37,6 +37,8 @@
 
 #include "native_sock_priv.h"
 
+OS_TASK_STACK_DEFINE(native_sock_stack, MYNEWT_VAL(NATIVE_SOCKETS_STACK_SZ));
+
 static struct native_sock {
     struct mn_socket ns_sock;
     int ns_fd;
@@ -834,7 +836,6 @@ native_sock_init(void)
 {
     struct native_sock_state *nss = &native_sock_state;
     int i;
-    os_stack_t *sp;
 
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
@@ -843,14 +844,11 @@ native_sock_init(void)
         native_socks[i].ns_fd = -1;
         STAILQ_INIT(&native_socks[i].ns_rx);
     }
-    sp = malloc(sizeof(os_stack_t) * MYNEWT_VAL(NATIVE_SOCKETS_STACK_SZ));
-    if (!sp) {
-        return -1;
-    }
+
     os_mutex_init(&nss->mtx);
     i = os_task_init(&nss->task, "socket", socket_task, &native_sock_state,
-      MYNEWT_VAL(NATIVE_SOCKETS_PRIO), OS_WAIT_FOREVER, sp,
-      MYNEWT_VAL(NATIVE_SOCKETS_STACK_SZ));
+                     MYNEWT_VAL(NATIVE_SOCKETS_PRIO), OS_WAIT_FOREVER, native_sock_stack,
+                     MYNEWT_VAL(NATIVE_SOCKETS_STACK_SZ));
     if (i) {
         return -1;
     }
