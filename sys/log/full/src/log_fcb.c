@@ -110,9 +110,12 @@ found_ent:
  * ignored; the "index" field is used instead.
  *
  * XXX: We should rename "timestamp" or make it an actual timestamp.
- * If bmark is found, fill up min_diff.
  *
  * The "index" field corresponds to a log entry index.
+ *
+ * If bookmark is found with the minimum difference in indexes, min_diff contains
+ * the difference else it will contain -1 if no bookmark is found. min_diff is 0
+ * means an exact match.
  *
  * If bookmarks are enabled, this function uses them in the search.
  *

@@ -39,7 +39,7 @@
 #include "tinycbor/compilersupport_p.h"
 #include "log_cbor_reader/log_cbor_reader.h"
 
-void log_console_print_hdr(struct log_entry_hdr *hdr);
+void log_console_print_hdr(const struct log_entry_hdr *hdr);
 
 static uint32_t shell_log_count;
 
@@ -111,7 +111,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     /* When LOG_CONSOLE_PRETTY is set use same function to dump log header that
      * is used when logs are printed in real time */
     if (MYNEWT_VAL(LOG_CONSOLE_PRETTY)) {
-        log_console_print_hdr((struct log_entry_hdr *)ueh);
+        log_console_print_hdr(ueh);
     } else {
         if (read_hash) {
             console_printf("[ih=0x%02x%02x%02x%02x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
@@ -179,7 +179,7 @@ shell_log_dump_cmd(int argc, char **argv)
     struct log_fcb_bmark *bmarks = NULL;
     struct walk_arg arg = {};
     int i;
-    int rc;
+    int rc = 0;
 
     clear_log = false;
     (void)dump_bmarks;
@@ -224,7 +224,7 @@ shell_log_dump_cmd(int argc, char **argv)
         }
         if (0 == strcmp(argv[i], "-i")) {
             if (i + 1 < argc) {
-                arg.idx = parse_ll_bounds(argv[i + 1], 1, 1000000, &rc);
+                arg.idx = parse_ll_bounds(argv[i + 1], 0, UINT32_MAX, &rc);
                 if (rc) {
                     arg.idx = 0;
                 }
@@ -295,6 +295,7 @@ shell_log_dump_cmd(int argc, char **argv)
                                bmarks[i].lfb_entry.fe_data_off);
 #endif
             }
+            goto err;
         }
 #endif
 
