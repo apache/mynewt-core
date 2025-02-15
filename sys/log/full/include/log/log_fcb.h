@@ -39,8 +39,6 @@ struct log_fcb_bmark {
 #endif
     /* The index of the log entry that the FCB entry contains. */
     uint32_t lfb_index;
-    /* Is this a sector boundary bookmark */
-    bool lfb_sect_bmark;
 };
 
 /** A set of fcb log bookmarks. */
@@ -48,22 +46,20 @@ struct log_fcb_bset {
     /** Array of bookmarks. */
     struct log_fcb_bmark *lfs_bmarks;
 
+    /** Enable sector bookmarks */
     bool lfs_en_sect_bmarks;
 
     /** The maximum number of bookmarks. */
     int lfs_cap;
 
     /** The number of currently used non-sector bookmarks. */
-    int lfs_non_s_size;
+    int lfs_non_sect_size;
 
     /** The number of currently usable bookmarks. */
     int lfs_size;
 
-    /** The index where the next bookmark will get written. */
-    uint32_t lfs_next;
-
     /** The index where the next non-sector bmark will get written */
-    uint32_t lfs_next_non_s;
+    uint32_t lfs_next_non_sect;
 };
 
 /**
@@ -114,12 +110,16 @@ struct fcb_log {
  * the log is walked, the starting point of the walk is added to the set of
  * bookmarks.
  *
- * FCB rotation invalidates all bookmarks.  It is up to the client code to
+ * FCB rotation invalidates all bookmarks. It is up to the client code to
  * clear a log's bookmarks whenever rotation occurs.
  */
 
 /**
  * @brief Configures an fcb_log to use the specified buffer for bookmarks.
+ *        If sector bookmarks are enabled, buffer should be big enough
+ *        to accomodate bookmarks for the entire flash area that is allocated
+ *        for the FCB log, i,e; sizeof(struct log_fcb_bmark) *
+ *        my_log.fl_fcb.f_sector_cnt + MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS)
  *
  * @param fcb_log               The log to configure.
  * @param buf                   The buffer to use for bookmarks.

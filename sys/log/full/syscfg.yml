@@ -179,7 +179,7 @@ syscfg.defs:
             the global index to be sequentially increasing for persisted logs.
         value: 0
 
-    LOG_FCB_NUM_ABS_BMARKS:
+    LOG_FCB_NUM_ABS_BOOKMARKS:
         description: >
             Number of absolute bookmarks excluding sector bookmarks
         value: 2

@@ -46,7 +46,10 @@ static int log_fcb2_rtr_erase(struct log *log);
  *
  * The "index" field corresponds to a log entry index.
  *
- * If bookmarks are enabled, this function uses them in the search.
+ *
+ * If bookmark is found with the minimum difference in indexes, min_diff contains
+ * the difference else it will contain -1 if no bookmark is found. min_diff is 0
+ * means an exact match.
  *
  * @return                      0 if an entry was found
  *                              SYS_ENOENT if there are no suitable entries.
@@ -185,7 +188,7 @@ log_fcb2_start_append(struct log *log, int len, struct fcb2_entry *loc)
          * bookmarks
          */
         log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
-                            fcb_log->fl_bset.lfs_cap);
+                            fcb_log->fl_bset.lfs_cap, true);
 #endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)

@@ -63,14 +63,14 @@ fcb_start_offset(struct fcb *fcb)
 }
 
 int
-fcb_getnext_in_area(struct fcb *fcb, struct flash_area *fa,
+fcb_getnext_in_area(struct fcb *fcb, struct flash_area *fap,
                     struct fcb_entry *loc)
 {
     int rc;
 
     /* If a flash area is specified, find first entry in that area */
-    if (fa) {
-        loc->fe_area = fa;
+    if (fap) {
+        loc->fe_area = fap;
         loc->fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
         loc->fe_elem_ix = 0;
         loc->fe_data_len = 0;
