@@ -101,6 +101,8 @@ SECTIONS
     /* The program code and other data goes into internal image location */
     .text :
     {
+        __text = .;
+
         . = ALIGN(4);
         *(.text)                 /* .text sections (code) */
         *(.text.*)               /* .text* sections (code) */
