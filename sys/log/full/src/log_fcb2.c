@@ -550,14 +550,15 @@ log_fcb2_registered(struct log *log)
 {
     struct fcb2 *fcb;
     int i;
-    struct fcb_log *fl;
+    struct fcb_log *fl = (struct fcb_log *)log->l_arg;
+
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 #if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     struct fcb2_entry loc;
 #endif
 #endif
+    fl->fl_log = log;
 
-    fl = (struct fcb_log *)log->l_arg;
     fcb = &fl->fl_fcb;
 
     for (i = 0; i < fcb->f_range_cnt; i++) {

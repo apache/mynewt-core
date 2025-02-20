@@ -94,6 +94,7 @@ struct fcb_log {
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     struct log_fcb_bset fl_bset;
 #endif
+    struct log *fl_log;
 };
 #endif
 
