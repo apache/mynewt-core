@@ -51,14 +51,14 @@ pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER || SPI_2_MASTER || SPI_3_MASTER || SPI_4
 
 repository.stm-cmsis_device_f7:
     type: github
-    vers: v1.2.8-commit
+    vers: v1.2.9-commit
     branch: master
     user: STMicroelectronics
     repo: cmsis_device_f7
 
 repository.stm-stm32f7xx_hal_driver:
     type: github
-    vers: v1.2.10-commit
+    vers: v1.3.1-commit
     branch: master
     user: STMicroelectronics
     repo: stm32f7xx_hal_driver
