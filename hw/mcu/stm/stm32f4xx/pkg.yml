@@ -58,14 +58,14 @@ pkg.deps.ADC_2:
 
 repository.stm-cmsis_device_f4:
     type: github
-    vers: v2.6.8-commit
+    vers: v2.6.10-commit
     branch: master
     user: STMicroelectronics
     repo: cmsis_device_f4
 
 repository.stm-stm32f4xx_hal_driver:
     type: github
-    vers: v1.7.13-commit
+    vers: v1.8.3-commit
     branch: master
     user: STMicroelectronics
     repo: stm32f4xx_hal_driver
