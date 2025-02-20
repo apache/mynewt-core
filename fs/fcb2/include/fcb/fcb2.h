@@ -197,6 +197,17 @@ int fcb2_walk(struct fcb2 *fcb, int sector, fcb2_walk_cb cb, void *cb_arg);
 int fcb2_getnext(struct fcb2 *fcb, struct fcb2_entry *loc);
 
 /**
+ * Get first entry in the provided flash area
+ *
+ * @param fcb Pointer to FCB
+ * @param loc Pointer to first FCB entry in the provided flash area
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+fcb2_getnext_in_area(struct fcb2 *fcb, struct fcb2_entry *loc);
+
+/**
  * Walk through entries within FCB from newest to oldest.
  * fcb_getprev() finds the previous valid entry backwards from loc, and fills in
  * the location of that entry.

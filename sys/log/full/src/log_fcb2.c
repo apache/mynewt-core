@@ -188,7 +188,8 @@ log_fcb2_start_append(struct log *log, int len, struct fcb2_entry *loc)
          * bookmarks
          */
         log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
-                            fcb_log->fl_bset.lfs_cap, true);
+                            fcb_log->fl_bset.lfs_cap,
+                            fcb_log->fl_bset.lfs_en_sect_bmarks);
 #endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
@@ -550,14 +551,15 @@ log_fcb2_registered(struct log *log)
 {
     struct fcb2 *fcb;
     int i;
-    struct fcb_log *fl;
+    struct fcb_log *fl = (struct fcb_log *)log->l_arg;
+
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 #if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     struct fcb2_entry loc;
 #endif
 #endif
+    fl->fl_log = log;
 
-    fl = (struct fcb_log *)log->l_arg;
     fcb = &fl->fl_fcb;
 
     for (i = 0; i < fcb->f_range_cnt; i++) {

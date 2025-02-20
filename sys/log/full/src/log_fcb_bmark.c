@@ -32,14 +32,23 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
 {
     int rc = 0;
     int i = 0;
-    struct fcb_entry loc = {0};
     struct log_entry_hdr ueh = {0};
+#if MYNEWT_VAL(LOG_FCB)
+    struct fcb_entry loc = {0};
     struct flash_area *fa = NULL;
 
     rc = fcb_getnext(&fcb_log->fl_fcb, &loc);
     if (rc) {
         return -1;
     }
+#else
+    struct fcb2_entry loc = {0};
+
+    rc = fcb2_getnext(&fcb_log->fl_fcb, &loc);
+    if (rc) {
+        return -1;
+    }
+#endif
 
     for (i = 0; i < fcb_log->fl_fcb.f_sector_cnt; i++) {
         rc = log_read_hdr(fcb_log->fl_log, &loc, &ueh);
@@ -51,6 +60,7 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
 
         log_fcb_add_bmark(fcb_log, &loc, ueh.ue_index, true);
 
+#if MYNEWT_VAL(LOG_FCB)
         fa = fcb_getnext_area(&fcb_log->fl_fcb, loc.fe_area);
         if (!fa) {
             break;
@@ -61,6 +71,13 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
         if (rc) {
             break;
         }
+#else
+        /* First entry in the next area */
+        rc = fcb2_getnext_in_area(&fcb_log->fl_fcb, &loc);
+        if (rc) {
+            break;
+        }
+#endif
     }
 
     return rc;
@@ -218,7 +235,7 @@ log_fcb_insert_sect_bmark(struct fcb_log *fcb_log, struct fcb_entry *entry,
                           uint32_t index, int pos)
 #elif MYNEWT_VAL(LOG_FCB2)
 static void
-log_fcb_insert_sect_bmark(struct fcb_log *fcb_log, fcb2_entry *entry,
+log_fcb_insert_sect_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry,
                           uint32_t index, int pos)
 #endif
 {

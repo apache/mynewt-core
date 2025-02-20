@@ -281,7 +281,8 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
          * bookmarks
          */
         log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
-                            fcb_log->fl_bset.lfs_cap, true);
+                            fcb_log->fl_bset.lfs_cap,
+                            fcb_log->fl_bset.lfs_en_sect_bmarks);
 #endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
