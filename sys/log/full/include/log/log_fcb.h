@@ -118,7 +118,7 @@ struct fcb_log {
 /**
  * @brief Configures an fcb_log to use the specified buffer for bookmarks.
  *        If sector bookmarks are enabled, buffer should be big enough
- *        to accomodate bookmarks for the entire flash area that is allocated
+ *        to accommodate bookmarks for the entire flash area that is allocated
  *        for the FCB log, i,e; sizeof(struct log_fcb_bmark) *
  *        my_log.fl_fcb.f_sector_cnt + MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS)
  *

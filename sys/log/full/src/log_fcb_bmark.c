@@ -42,6 +42,7 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
         return -1;
     }
 #else
+    struct flash_sector_range *range = NULL;
     struct fcb2_entry loc = {0};
 
     rc = fcb2_getnext(&fcb_log->fl_fcb, &loc);
@@ -72,8 +73,11 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
             break;
         }
 #else
+        /* Get next range */
+        range = fcb2_getnext_range(&fcb_log->fl_fcb, &loc);
+
         /* First entry in the next area */
-        rc = fcb2_getnext_in_area(&fcb_log->fl_fcb, &loc);
+        rc = fcb2_getnext_in_area(&fcb_log->fl_fcb, range, &loc);
         if (rc) {
             break;
         }
