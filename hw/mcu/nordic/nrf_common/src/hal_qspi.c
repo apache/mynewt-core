@@ -188,6 +188,7 @@ nrf_qspi_erase_sector(const struct hal_flash *dev,
     erases = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) / 4096;
     while (erases-- > 0) {
         nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_4KB, sector_address);
+        while (!nrf_qspi_event_check(NRF_QSPI, NRF_QSPI_EVENT_READY));
         sector_address += 4096;
     }
 
@@ -206,6 +207,7 @@ nrf_qspi_erase(const struct hal_flash *dev, uint32_t address,
     if (end == MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) *
         MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE)) {
         nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_ALL, 0);
+        while (!nrf_qspi_event_check(NRF_QSPI, NRF_QSPI_EVENT_READY));
         return 0;
     }
 
@@ -213,12 +215,14 @@ nrf_qspi_erase(const struct hal_flash *dev, uint32_t address,
         if ((address & 0xFFFFU) == 0 && (size >= 0x10000)) {
             /* 64 KB erase if possible */
             nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_64KB, address);
+            while (!nrf_qspi_event_check(NRF_QSPI, NRF_QSPI_EVENT_READY));
             address += 0x10000;
             size -= 0x10000;
             continue;
         }
 
         nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_4KB, address);
+        while (!nrf_qspi_event_check(NRF_QSPI, NRF_QSPI_EVENT_READY));
         address += 0x1000;
         if (size > 0x1000) {
             size -= 0x1000;
