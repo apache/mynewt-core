@@ -113,7 +113,7 @@ found_ent:
  *
  * The "index" field corresponds to a log entry index.
  *
- * If bookmark is found with the minimum difference in indexes, min_diff contains
+ * If bookmark is found with the minimum difference in indices, min_diff contains
  * the difference else it will contain -1 if no bookmark is found. min_diff is 0
  * means an exact match.
  *
