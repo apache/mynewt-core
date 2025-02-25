@@ -52,6 +52,9 @@ struct log_fcb_bset {
     /** The maximum number of bookmarks. */
     int lfs_cap;
 
+    /** The maximum number of sector bookmarks. */
+    int lfs_sect_cap;
+
     /** The number of currently used non-sector bookmarks. */
     int lfs_non_sect_size;
 
@@ -60,6 +63,9 @@ struct log_fcb_bset {
 
     /** The index where the next non-sector bmark will get written */
     uint32_t lfs_next_non_sect;
+
+    /** The sector interval at which to insert sector bookmarks */
+    int lfs_sect_bmark_itvl;
 
     /** The index where the next sector bmark will get written */
     uint32_t lfs_next_sect;
