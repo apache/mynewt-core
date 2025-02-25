@@ -18,14 +18,11 @@
 #
 
 syscfg.defs:
-    STM32_FLASH_SIZE_KB:
-        description: 'Total flash size in KB.'
-        value: 128
-
     BOOT_LOADER:
         description: 'Build everything as bootloader'
         value: 1
 syscfg.vals:
+    STM32_FLASH_SIZE_KB: 128
     MCU_RAM_START: 0x20000000
     MCU_RAM_SIZE: 0x8000
     STM32_CLOCK_VOLTAGESCALING_CONFIG: 'PWR_REGULATOR_VOLTAGE_SCALE1'

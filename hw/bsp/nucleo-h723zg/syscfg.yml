@@ -17,16 +17,9 @@
 # under the License.
 #
 
-syscfg.defs:
-    STM32_FLASH_SIZE_KB:
-        description: 'Total flash size in KB.'
-        value: 1024
-
-    STM32_FLASH_NUM_AREAS:
-        description: 'Number of flash sectors for a non-linear STM32 MCU.'
-        value: 8
-
 syscfg.vals:
+    STM32_FLASH_SIZE_KB: 1024
+    STM32_FLASH_NUM_AREAS: 8
     MCU_RAM_START: 0x24000000
     MCU_RAM_SIZE: 0x50000
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
