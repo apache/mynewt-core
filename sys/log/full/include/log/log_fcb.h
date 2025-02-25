@@ -60,6 +60,9 @@ struct log_fcb_bset {
 
     /** The index where the next non-sector bmark will get written */
     uint32_t lfs_next_non_sect;
+
+    /** The index where the next sector bmark will get written */
+    uint32_t lfs_next_sect;
 };
 
 /**
@@ -179,13 +182,15 @@ log_fcb_closest_bmark(struct fcb_log *fcb_log, uint32_t index, int *min_diff);
  * @param entry                 The entry the bookmark should point to.
  * @param index                 The log entry index of the bookmark.
  * @paran sect_bmark            Bool indicating it is a sector bookmark.
+ *
+ * @return                      non-zero on failure, 0 on success
  */
 #if MYNEWT_VAL(LOG_FCB)
-void log_fcb_add_bmark(struct fcb_log *fcb_log, struct fcb_entry *entry,
-                       uint32_t index, bool sect_bmark);
+int log_fcb_add_bmark(struct fcb_log *fcb_log, struct fcb_entry *entry,
+                      uint32_t index, bool sect_bmark);
 #elif MYNEWT_VAL(LOG_FCB2)
-void log_fcb_add_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry,
-                       uint32_t index, bool sect_bmark);
+int log_fcb_add_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry,
+                      uint32_t index, bool sect_bmark);
 #endif
 #endif
 
