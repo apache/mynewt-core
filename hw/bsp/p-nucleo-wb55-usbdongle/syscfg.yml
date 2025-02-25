@@ -18,9 +18,6 @@
 #
 
 syscfg.defs:
-    STM32_FLASH_SIZE_KB:
-        description: 'Total flash size in KB.'
-        value: 1024
     BUTTON_1_AS_RESET:
         description: >
             This USB dongle does not have physical Reset button.
@@ -36,6 +33,7 @@ syscfg.vals.BUTTON_1_AS_STM32_DFU:
     BOOT_PREBOOT: 1
 
 syscfg.vals:
+    STM32_FLASH_SIZE_KB: 1024
     MCU_RAM_START: 0x20000000
     MCU_RAM_SIZE: 192K
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

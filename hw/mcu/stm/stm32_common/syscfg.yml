@@ -492,5 +492,12 @@ syscfg.defs:
         range: 0..255
         value: 0
 
+    STM32_FLASH_SIZE_KB:
+        description: 'Total flash size in KB. Defined in BSP'
+        value:
+    STM32_FLASH_NUM_AREAS:
+        description: 'Number of flash sectors for a non-linear STM32 MCU.'
+        value:
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 1000

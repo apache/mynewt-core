@@ -17,11 +17,6 @@
 # under the License.
 #
 
-syscfg.defs:
-    STM32_FLASH_SIZE_KB:
-        description: 'Total flash size in KB.'
-        value: 192
-
 syscfg.defs.BUS_DRIVER_PRESENT:
     BSP_FLASH_SPI_NAME:
         description: 'SPIFLASH device name'
@@ -31,6 +26,7 @@ syscfg.defs.BUS_DRIVER_PRESENT:
         value: '"spi0"'
 
 syscfg.vals:
+    STM32_FLASH_SIZE_KB: 192
     MCU_RAM_START: 0x20000000
     MCU_RAM_SIZE: 20K
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
