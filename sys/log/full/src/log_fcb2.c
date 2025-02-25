@@ -187,9 +187,12 @@ log_fcb2_start_append(struct log *log, int len, struct fcb2_entry *loc)
         /* The FCB needs to be rotated, reinit previously allocated
          * bookmarks
          */
-        log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
-                            fcb_log->fl_bset.lfs_cap,
-                            fcb_log->fl_bset.lfs_en_sect_bmarks);
+        rc = log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
+                                 fcb_log->fl_bset.lfs_cap,
+                                 fcb_log->fl_bset.lfs_en_sect_bmarks);
+        if (rc) {
+            goto err;
+        }
 #endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
