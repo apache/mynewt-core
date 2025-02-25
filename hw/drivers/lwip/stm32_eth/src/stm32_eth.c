@@ -49,6 +49,7 @@
  * This shows up as MMCRFCECR going up, and no valid RX happening.
  */
 #define STM32_PHY_POLL_FREQ os_cputime_usecs_to_ticks(1500000) /* 1.5 secs */
+#define STM32_ETH_RX_BUFFER_CNT   MYNEWT_VAL(STM32_ETH_RX_BUFFER_CNT)
 
 /*
  * Phy specific registers
@@ -59,129 +60,108 @@
 #define SMSC_8710_ISR_AUTO_DONE 0x40
 #define SMSC_8710_ISR_LINK_DOWN 0x10
 
-#define STM32_ETH_RX_DESC_SZ 3
-#define STM32_ETH_TX_DESC_SZ 4
-
-struct stm32_eth_desc {
-    volatile ETH_DMADescTypeDef desc;
-    struct pbuf *p;
+struct rx_buff {
+    struct pbuf_custom pbuf_custom;
+    uint8_t buff[(ETH_RX_BUF_SIZE + 31) & ~31];
 };
 
 struct stm32_eth_state {
     struct netif st_nif;
     ETH_HandleTypeDef st_eth;
-    struct stm32_eth_desc st_rx_descs[STM32_ETH_RX_DESC_SZ];
-    struct stm32_eth_desc st_tx_descs[STM32_ETH_TX_DESC_SZ];
-    uint8_t st_rx_head;
-    uint8_t st_rx_tail;
-    uint8_t st_tx_head;
-    uint8_t st_tx_tail;
+    ETH_DMADescTypeDef st_rx_descs[ETH_RX_DESC_CNT];
+    ETH_DMADescTypeDef st_tx_descs[ETH_TX_DESC_CNT];
+    ETH_TxPacketConfig st_tx_cfg;
+    ETH_MACConfigTypeDef st_mac_cfg;
     struct hal_timer st_phy_tmr;
     const struct stm32_eth_cfg *cfg;
 };
 
-struct stm32_eth_stats {
-    uint32_t oframe;
-    uint32_t odone;
-    uint32_t oerr;
-    uint32_t iframe;
-    uint32_t imem;
-} stm32_eth_stats;
-
 static struct stm32_eth_state stm32_eth_state;
+static bool rx_alloc_failed;
 
-static void
-stm32_eth_setup_descs(struct stm32_eth_desc *descs, int cnt)
-{
-    int i;
-
-    for (i = 0; i < cnt - 1; i++) {
-        descs[i].desc.Status = 0;
-        descs[i].desc.Buffer2NextDescAddr = (uint32_t)&descs[i + 1].desc;
-    }
-    descs[cnt - 1].desc.Status = 0;
-    descs[cnt - 1].desc.Buffer2NextDescAddr = (uint32_t)&descs[0].desc;
-}
-
-static void
-stm32_eth_fill_rx(struct stm32_eth_state *ses)
-{
-    struct stm32_eth_desc *sed;
-    struct pbuf *p;
-
-    while (1) {
-        sed = &ses->st_rx_descs[ses->st_rx_tail];
-        if (sed->p) {
-            break;
-        }
-        p = pbuf_alloc(PBUF_RAW, ETH_MAX_PACKET_SIZE, PBUF_POOL);
-        if (!p) {
-            ++stm32_eth_stats.imem;
-            break;
-        }
-        sed->p = p;
-        sed->desc.Status = 0;
-        sed->desc.ControlBufferSize = ETH_DMARXDESC_RCH | ETH_MAX_PACKET_SIZE;
-        sed->desc.Buffer1Addr = (uint32_t)p->payload;
-        sed->desc.Status = ETH_DMARXDESC_OWN;
-
-        ses->st_rx_tail++;
-        if (ses->st_rx_tail >= STM32_ETH_RX_DESC_SZ) {
-            ses->st_rx_tail = 0;
-        }
-    }
-}
+LWIP_MEMPOOL_DECLARE(RX_POOL, STM32_ETH_RX_BUFFER_CNT, sizeof(struct rx_buff), "Zero-copy RX PBUF pool");
 
 static void
 stm32_eth_input(struct stm32_eth_state *ses)
 {
-    struct stm32_eth_desc *sed;
-    struct pbuf *p;
-    struct netif *nif;
+    struct pbuf *p = NULL;
 
-    nif = &ses->st_nif;
-
-    while (1) {
-        sed = &ses->st_rx_descs[ses->st_rx_head];
-        if (!sed->p) {
-            break;
-        }
-        if (sed->desc.Status & ETH_DMARXDESC_OWN) {
-            break;
-        }
-        p = sed->p;
-        sed->p = NULL;
-        if (!(sed->desc.Status & ETH_DMARXDESC_LS)) {
-            /*
-             * Incoming data spans multiple pbufs. XXX support later
-             */
-            pbuf_free(p);
-            continue;
-        }
-        p->len = p->tot_len = (sed->desc.Status & ETH_DMARXDESC_FL) >> 16;
-        ++stm32_eth_stats.iframe;
-        nif->input(p, nif);
-        ses->st_rx_head++;
-        if (ses->st_rx_head >= STM32_ETH_RX_DESC_SZ) {
-            ses->st_rx_head = 0;
-        }
+    if (rx_alloc_failed) {
+        return;
     }
 
-    stm32_eth_fill_rx(ses);
-
-    if (ses->st_eth.Instance->DMASR & ETH_DMASR_RBUS)  {
-        /*
-         * Resume DMA reception
-         */
-        ses->st_eth.Instance->DMASR = ETH_DMASR_RBUS;
-        ses->st_eth.Instance->DMARPDR = 0;
+    HAL_ETH_ReadData(&ses->st_eth, (void **)&p);
+    if (p != NULL) {
+        if (ses->st_nif.input(p, &ses->st_nif) != ERR_OK) {
+            pbuf_free(p);
+        }
     }
 }
 
 void
 HAL_ETH_RxCpltCallback(ETH_HandleTypeDef *heth)
 {
-    stm32_eth_input(&stm32_eth_state);
+    struct stm32_eth_state *ses = &stm32_eth_state;
+
+    stm32_eth_input(ses);
+}
+
+void
+pbuf_free_custom(struct pbuf *p)
+{
+    struct pbuf_custom *custom_pbuf = (struct pbuf_custom *)p;
+    struct stm32_eth_state *ses = &stm32_eth_state;
+    LWIP_MEMPOOL_FREE(RX_POOL, custom_pbuf);
+
+    if (rx_alloc_failed) {
+        rx_alloc_failed = 0;
+        stm32_eth_input(ses);
+    }
+}
+
+void
+HAL_ETH_RxAllocateCallback(uint8_t **buff)
+{
+    struct pbuf_custom *p;
+
+    p = LWIP_MEMPOOL_ALLOC(RX_POOL);
+    if (p != NULL) {
+        *buff = ((struct rx_buff *)p)->buff;
+        p->custom_free_function = pbuf_free_custom;
+        pbuf_alloced_custom(PBUF_RAW, 0, PBUF_REF, p, *buff, ETH_RX_BUF_SIZE);
+    } else {
+        rx_alloc_failed = 1;
+    }
+}
+
+void
+HAL_ETH_RxLinkCallback(void **p_start, void **p_end, uint8_t *buff, uint16_t len)
+{
+    struct pbuf **pp_start = (struct pbuf **)p_start;
+    struct pbuf **pp_end = (struct pbuf **)p_end;
+    struct pbuf *p = NULL;
+
+    /* Get the struct pbuf from the buff address. */
+    p = (struct pbuf *)(buff - offsetof(struct rx_buff, buff));
+    p->next = NULL;
+    p->tot_len = 0;
+    p->len = len;
+
+    /* Chain the buffer. */
+    if (!*pp_start) {
+        /* The first buffer of the packet. */
+        *pp_start = p;
+    } else {
+        /* Chain the buffer to the end of the packet. */
+        (*pp_end)->next = p;
+    }
+    *pp_end = p;
+
+    /* Update the total length of all the buffers of the chain. Each pbuf in the chain should have its tot_len
+     * set to its own length, plus the length of all the following pbufs in the chain. */
+    for (p = *pp_start; p != NULL; p = p->next) {
+        p->tot_len += len;
+    }
 }
 
 /*
@@ -215,99 +195,42 @@ stm32_mld_mac_filter(struct netif *nif, const ip6_addr_t *group,
 }
 #endif
 
-static void
-stm32_eth_output_done(struct stm32_eth_state *ses)
-{
-    struct stm32_eth_desc *sed;
-
-    while (1) {
-        sed = &ses->st_tx_descs[ses->st_tx_tail];
-        if (!sed->p) {
-            break;
-        }
-        if (sed->desc.Status & ETH_DMATXDESC_OWN) {
-            /*
-             * Belongs to board
-             */
-            break;
-        }
-        if (sed->desc.Status & ETH_DMATXDESC_ES) {
-            ++stm32_eth_stats.oerr;
-        } else {
-            ++stm32_eth_stats.odone;
-        }
-        pbuf_free(sed->p);
-        sed->p = NULL;
-        ses->st_tx_tail++;
-        if (ses->st_tx_tail >= STM32_ETH_TX_DESC_SZ) {
-            ses->st_tx_tail = 0;
-        }
-    }
-}
-
 static err_t
 stm32_eth_output(struct netif *nif, struct pbuf *p)
 {
-    struct stm32_eth_state *ses = (struct stm32_eth_state *)nif;
-    struct stm32_eth_desc *sed;
-    uint32_t reg;
+    int i = 0;
     struct pbuf *q;
-    err_t errval;
+    err_t errval = ERR_OK;
+    ETH_BufferTypeDef tx_buffer[ETH_TX_DESC_CNT] = {0};
+    struct stm32_eth_state *ses = &stm32_eth_state;
 
-    stm32_eth_output_done(ses);
+    memset(tx_buffer, 0, ETH_TX_DESC_CNT * sizeof(ETH_BufferTypeDef));
 
-    ++stm32_eth_stats.oframe;
-    sed = &ses->st_tx_descs[ses->st_tx_head];
-    for (q = p; q; q = q->next) {
-        if (!q->len) {
-            continue;
+    for (q = p; q != NULL; q = q->next) {
+        if (i >= ETH_TX_DESC_CNT) {
+            return ERR_IF;
         }
-        if (sed->desc.Status & ETH_DMATXDESC_OWN) {
-            /*
-             * Not enough space.
-             */
-            errval = ERR_MEM;
-            goto error;
-        }
-        sed = (struct stm32_eth_desc *)sed->desc.Buffer2NextDescAddr;
-    }
 
-    for (q = p; q; q = q->next) {
-        if (!q->len) {
-            continue;
+        tx_buffer[i].buffer = q->payload;
+        tx_buffer[i].len = q->len;
+
+        if (i > 0) {
+            tx_buffer[i - 1].next = &tx_buffer[i];
         }
-        sed = &ses->st_tx_descs[ses->st_tx_head];
-        if (q == p) {
-            reg = ETH_DMATXDESC_FS | ETH_DMATXDESC_TCH;
-        } else {
-            reg = ETH_DMATXDESC_TCH;
-        }
+
         if (q->next == NULL) {
-            reg |= ETH_DMATXDESC_LS;
+            tx_buffer[i].next = NULL;
         }
-        sed->desc.Status = reg;
-        sed->desc.ControlBufferSize = p->len;
-        sed->desc.Buffer1Addr = (uint32_t)p->payload;
-        sed->p = p;
-        pbuf_ref(p);
-        sed->desc.Status = reg | ETH_DMATXDESC_OWN;
-        ses->st_tx_head++;
-        if (ses->st_tx_head >= STM32_ETH_TX_DESC_SZ) {
-            ses->st_tx_head = 0;
-        }
+
+        i++;
     }
 
-    if (ses->st_eth.Instance->DMASR & ETH_DMASR_TBUS) {
-        /*
-         * Resume DMA transmission.
-         */
-        ses->st_eth.Instance->DMASR = ETH_DMASR_TBUS;
-        ses->st_eth.Instance->DMATPDR = 0U;
-    }
+    ses->st_tx_cfg.Length = p->tot_len;
+    ses->st_tx_cfg.TxBuffer = tx_buffer;
+    ses->st_tx_cfg.pData = p;
 
-    return ERR_OK;
-error:
-    ++stm32_eth_stats.oerr;
+    HAL_ETH_Transmit(&ses->st_eth, &ses->st_tx_cfg, 20);
+
     return errval;
 }
 
@@ -321,10 +244,14 @@ static void
 stm32_phy_isr(void *arg)
 {
     struct stm32_eth_state *ses = (void *)arg;
+    const struct stm32_eth_cfg *cfg;
     uint32_t reg;
 
-    HAL_ETH_ReadPHYRegister(&ses->st_eth, PHY_BSR, &reg);
-    if (reg & PHY_LINKED_STATUS &&
+    cfg = ses->cfg;
+
+    HAL_ETH_ReadPHYRegister(&ses->st_eth, cfg->sec_phy_addr, PHY_BSR, &reg);
+
+    if ((reg & PHY_LINKED_STATUS) &&
         (ses->st_nif.flags & NETIF_FLAG_LINK_UP) == 0) {
         netif_set_link_up(&ses->st_nif);
     } else if ((reg & PHY_LINKED_STATUS) == 0 &&
@@ -334,7 +261,7 @@ stm32_phy_isr(void *arg)
     switch (ses->cfg->sec_phy_type) {
     case SMSC_8710_RMII:
     case LAN_8742_RMII:
-        HAL_ETH_ReadPHYRegister(&ses->st_eth, SMSC_8710_ISR, &reg);
+        HAL_ETH_ReadPHYRegister(&ses->st_eth, cfg->sec_phy_addr, SMSC_8710_ISR, &reg);
     }
 }
 
@@ -378,6 +305,8 @@ stm32_lwip_init(struct netif *nif)
     nif->mld_mac_filter = stm32_mld_mac_filter;
 #endif
 
+    LWIP_MEMPOOL_INIT(RX_POOL);
+
     cfg = ses->cfg;
 
     /*
@@ -396,39 +325,27 @@ stm32_lwip_init(struct netif *nif)
     __HAL_RCC_ETH_CLK_ENABLE();
 
     ses->st_eth.Instance = ETH;
-
-    ses->st_eth.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
-    ses->st_eth.Init.Speed = ETH_SPEED_100M;
-    ses->st_eth.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
-    ses->st_eth.Init.PhyAddress = cfg->sec_phy_addr;
-    ses->st_eth.Init.RxMode = ETH_RXINTERRUPT_MODE;
-    ses->st_eth.Init.ChecksumMode = ETH_CHECKSUM_BY_HARDWARE;
+    ses->st_eth.Init.RxDesc = ses->st_rx_descs;
+    ses->st_eth.Init.TxDesc = ses->st_tx_descs;
+    ses->st_eth.Init.RxBuffLen = ETH_RX_BUF_SIZE;
 
     switch (cfg->sec_phy_type) {
     case SMSC_8710_RMII:
     case LAN_8742_RMII:
-        ses->st_eth.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
+        ses->st_eth.Init.MediaInterface = HAL_ETH_RMII_MODE;
     }
 
-    ses->st_rx_head = 0;
-    ses->st_rx_tail = 0;
-    ses->st_tx_head = 0;
-    ses->st_tx_tail = 0;
-
-    stm32_eth_setup_descs(ses->st_rx_descs, STM32_ETH_RX_DESC_SZ);
-    stm32_eth_setup_descs(ses->st_tx_descs, STM32_ETH_TX_DESC_SZ);
-    stm32_eth_fill_rx(ses);
-
-    if (HAL_ETH_Init(&ses->st_eth) == HAL_ERROR) {
-        return ERR_IF;
-    }
-
+    ses->st_tx_cfg.Attributes = ETH_TX_PACKETS_FEATURES_CSUM | ETH_TX_PACKETS_FEATURES_CRCPAD;
+    ses->st_tx_cfg.ChecksumCtrl = ETH_CHECKSUM_IPHDR_PAYLOAD_INSERT_PHDR_CALC;
+    ses->st_tx_cfg.CRCPadCtrl = ETH_CRC_PAD_INSERT;
     /*
      * XXX pass all multicast traffic for now
      */
     ses->st_eth.Instance->MACFFR |= ETH_MULTICASTFRAMESFILTER_NONE;
-    ses->st_eth.Instance->DMATDLAR = (uint32_t)ses->st_tx_descs;
-    ses->st_eth.Instance->DMARDLAR = (uint32_t)ses->st_rx_descs;
+
+    if (HAL_ETH_Init(&ses->st_eth) == HAL_ERROR) {
+        return ERR_IF;
+    }
 
     /*
      * Generate an interrupt when link state changes
@@ -436,9 +353,9 @@ stm32_lwip_init(struct netif *nif)
     if (cfg->sec_phy_irq >= 0) {
         switch (cfg->sec_phy_type) {
         case SMSC_8710_RMII:
-            HAL_ETH_ReadPHYRegister(&ses->st_eth, SMSC_8710_IMR, &reg);
+            HAL_ETH_ReadPHYRegister(&ses->st_eth, cfg->sec_phy_addr, SMSC_8710_IMR, &reg);
             reg |= (SMSC_8710_ISR_AUTO_DONE | SMSC_8710_ISR_LINK_DOWN);
-            HAL_ETH_WritePHYRegister(&ses->st_eth, SMSC_8710_IMR, reg);
+            HAL_ETH_WritePHYRegister(&ses->st_eth, cfg->sec_phy_addr, SMSC_8710_IMR, reg);
         case LAN_8742_RMII:
             /* XXX */
             break;
@@ -447,8 +364,16 @@ stm32_lwip_init(struct netif *nif)
         os_cputime_timer_init(&ses->st_phy_tmr, stm32_phy_poll, ses);
         os_cputime_timer_relative(&ses->st_phy_tmr, STM32_PHY_POLL_FREQ);
     }
+
+    HAL_ETH_GetMACConfig(&ses->st_eth, &ses->st_mac_cfg);
+    ses->st_mac_cfg.DuplexMode = ETH_FULLDUPLEX_MODE;
+    ses->st_mac_cfg.Speed = ETH_SPEED_100M;
+    HAL_ETH_SetMACConfig(&ses->st_eth, &ses->st_mac_cfg);
+
     NVIC_EnableIRQ(ETH_IRQn);
-    HAL_ETH_Start(&ses->st_eth);
+    if (HAL_ETH_Start_IT(&ses->st_eth) == HAL_ERROR) {
+        return ERR_IF;
+    }
 
     /*
      * Check for link.
@@ -462,19 +387,22 @@ stm32_mii_dump(int (*func)(const char *fmt, ...))
 {
     int i;
     struct stm32_eth_state *ses = &stm32_eth_state;
+    const struct stm32_eth_cfg *cfg;
     uint32_t reg;
     int rc;
 
+    cfg = ses->cfg;
+
     for (i = 0; i <= 6; i++) {
-        rc = HAL_ETH_ReadPHYRegister(&ses->st_eth, i, &reg);
+        rc = HAL_ETH_ReadPHYRegister(&ses->st_eth, cfg->sec_phy_addr, i, &reg);
         func("%d: %x (%d)\n", i, reg, rc);
     }
     for (i = 17; i <= 18; i++) {
-        rc = HAL_ETH_ReadPHYRegister(&ses->st_eth, i, &reg);
+        rc = HAL_ETH_ReadPHYRegister(&ses->st_eth, cfg->sec_phy_addr, i, &reg);
         func("%d: %x (%d)\n", i, reg, rc);
     }
     for (i = 26; i <= 31; i++) {
-        rc = HAL_ETH_ReadPHYRegister(&ses->st_eth, i, &reg);
+        rc = HAL_ETH_ReadPHYRegister(&ses->st_eth, cfg->sec_phy_addr, i, &reg);
         func("%d: %x (%d)\n", i, reg, rc);
     }
     return 0;
