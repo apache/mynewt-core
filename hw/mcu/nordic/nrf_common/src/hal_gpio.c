@@ -47,6 +47,9 @@
 #define GPIOTE_IRQn GPIOTE1_IRQn
 #define GPIOTE GPIOTE1
 #endif
+#elif defined(NRF54L15_XXAA)
+#define GPIOTE_IRQn GPIOTE20_IRQn
+#define NRF_GPIOTE NRF_GPIOTE20
 #endif
 
 /* Storage for GPIO callbacks. */
