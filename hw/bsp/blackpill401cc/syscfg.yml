@@ -1,0 +1,77 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    SPIFLASH8M:
+        description: Board has 8MB external SPI flash
+        value: 1
+
+syscfg.vals:
+    STM32_FLASH_SIZE_KB: 256
+    STM32_FLASH_NUM_AREAS: 6
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 0x10000
+    BOOTUTIL_SINGLE_APPLICATION_SLOT: 1
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    STM32_CLOCK_VOLTAGESCALING_CONFIG: 'PWR_REGULATOR_VOLTAGE_SCALE2'
+    STM32_CLOCK_HSI: 0
+    STM32_CLOCK_HSE: 1
+    STM32_CLOCK_HSE_VALUE: 25000000
+    STM32_CLOCK_HSE_BYPASS: 0
+    STM32_CLOCK_PLL_PLLM: 25
+    STM32_CLOCK_PLL_PLLN: 336
+    STM32_CLOCK_PLL_PLLP: 4
+    STM32_CLOCK_PLL_PLLQ: 7
+    STM32_CLOCK_ENABLE_OVERDRIVE: 0
+    STM32_CLOCK_AHB_DIVIDER: 'RCC_SYSCLK_DIV1'
+    STM32_CLOCK_APB1_DIVIDER: 'RCC_HCLK_DIV2'
+    STM32_CLOCK_APB2_DIVIDER: 'RCC_HCLK_DIV1'
+    STM32_FLASH_LATENCY: 'FLASH_LATENCY_3'
+    STM32_FLASH_PREFETCH_ENABLE: 1
+    STM32_INSTRUCTION_CACHE_ENABLE: 1
+    STM32_DATA_CACHE_ENABLE: 1
+    WATCHDOG_INTERVAL: 28000
+    UART_0_PIN_TX: 'MCU_GPIO_PORTA(2)'
+    UART_0_PIN_RX: 'MCU_GPIO_PORTA(3)'
+    UART_1_PIN_TX: 'MCU_GPIO_PORTA(9)'
+    UART_1_PIN_RX: 'MCU_GPIO_PORTA(10)'
+    SPI_0_PIN_SS: 'MCU_GPIO_PORTA(4)'
+    SPI_0_PIN_SCK: 'MCU_GPIO_PORTA(5)'
+    SPI_0_PIN_MISO: 'MCU_GPIO_PORTA(6)'
+    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTA(7)'
+    I2C_0_PIN_SCL: 'MCU_GPIO_PORTB(8)'
+    I2C_0_PIN_SDA: 'MCU_GPIO_PORTB(9)'
+    I2C_1_PIN_SCL: 'MCU_GPIO_PORTB(10)'
+    I2C_1_PIN_SDA: 'MCU_GPIO_PORTB(11)'
+    I2C_2_PIN_SCL: 'MCU_GPIO_PORTA(8)'
+    I2C_2_PIN_SDA: 'MCU_GPIO_PORTC(9)'
+    TIMER_0_TIM: 'TIM9'
+    SPIFLASH_SECTOR_COUNT: 1024
+    SPIFLASH_SECTOR_SIZE: 4096
+    SPIFLASH_PAGE_SIZE: 256
+    MYNEWT_DOWNLOADER: stm32_programmer_cli
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
+    PYOCD_TARGET: stm32f412xe
+    JLINK_TARGET: STM32F411CE
+
+syscfg.vals.SPIFLASH8M:
+    BOOTUTIL_SINGLE_APPLICATION_SLOT: 0
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
