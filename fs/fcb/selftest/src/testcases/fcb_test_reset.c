@@ -23,7 +23,7 @@ TEST_CASE_SELF(fcb_test_reset)
     struct fcb *fcb;
     int rc;
     int i;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
     uint8_t test_data[128];
     int var_cnt;
 

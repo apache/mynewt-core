@@ -305,7 +305,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN +
                 LOG_FCB_MAX_ALIGN - 1];
     struct fcb *fcb;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
     struct fcb_log *fcb_log;
     const uint8_t *u8p;
     int hdr_alignment;
@@ -412,7 +412,7 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
                          struct os_mbuf *om)
 {
     struct fcb *fcb;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
     struct fcb_log *fcb_log;
     int len;
     int rc;
@@ -578,7 +578,7 @@ log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
 {
     struct fcb *fcb;
     struct fcb_log *fcb_log;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
     struct flash_area *fap;
     int rc;
     struct fcb_entry_cache cache;
@@ -932,7 +932,7 @@ log_fcb_rtr_erase(struct log *log)
     struct fcb fcb_scratch;
     struct fcb *fcb;
     const struct flash_area *ptr;
-    struct fcb_entry entry;
+    struct fcb_entry entry = {};
     int rc;
     struct flash_area sector;
 

@@ -23,7 +23,7 @@ TEST_CASE_SELF(fcb_test_last_of_n)
     const uint8_t ENTRIES = 5;
     struct fcb *fcb;
     int rc;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
     struct fcb_entry areas[ENTRIES];
     uint8_t test_data[128];
     uint8_t i;
