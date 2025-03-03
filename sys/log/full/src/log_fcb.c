@@ -128,7 +128,7 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
                  struct fcb_entry *out_entry, int *min_diff)
 {
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    struct log_fcb_bmark *bmark;
+    const struct log_fcb_bmark *bmark;
 #endif
     struct log_entry_hdr hdr;
     struct fcb_log *fcb_log;
@@ -216,8 +216,8 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
     struct flash_area *old_fa;
     int rc = 0;
 #if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
-    int active_sector_cnt = 0;
-    uint32_t idx = 0;
+    int active_id;
+    uint32_t idx;
 #endif
 #if MYNEWT_VAL(LOG_STATS)
     int cnt;
@@ -226,9 +226,9 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
-    /* Cache sector count before appending */
+    /* Cache active ID before appending */
 #if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
-    active_sector_cnt = fcb->f_active_sector_entry_count;
+    active_id = fcb->f_active_id;
 #endif
     while (1) {
         rc = fcb_append(fcb, len, loc);
@@ -301,7 +301,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 #if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
     /* Add bookmark if entry is added to a new sector */
     if (!rc && log->l_log->log_type != LOG_TYPE_STREAM) {
-        if (active_sector_cnt > fcb->f_active_sector_entry_count) {
+        if (fcb->f_active_id != active_id) {
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
             idx = g_log_info.li_next_index;
 #else

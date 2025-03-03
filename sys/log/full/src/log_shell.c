@@ -180,11 +180,15 @@ shell_log_dump_cmd(int argc, char **argv)
     struct walk_arg arg = {};
     int i;
     int rc = 0;
+    int start = -1;
+    int end = -1;
 
     clear_log = false;
     (void)dump_bmarks;
     (void)bmarks;
     (void)bmarks_size;
+    (void)start;
+    (void)end;
 
     for (i = 1; i < argc; ++i) {
         if (0 == strcmp(argv[i], "-l")) {
@@ -281,17 +285,47 @@ shell_log_dump_cmd(int argc, char **argv)
             bmarks = log_fcb_get_bmarks(log, &bmarks_size);
             for (i = 0; i < bmarks_size; i++) {
 #if MYNEWT_VAL(LOG_FCB)
-                console_printf("%u: index:%lu fa: %x fe_elem_off: %lx\n", i,
+                if (!bmarks[i].lfb_entry.fe_area) {
+                    if (start == -1) {
+                        start = i;
+                    }
+                    end = i;
+                    continue;
+                }
+                if (start != -1) {
+                    console_printf("bookmarks unused: %d to %d\n", start, end);
+                    start = -1;
+                    end = -1;
+                }
+                console_printf("%u: index:%lu fa_off:%x fe_elem_off:%lx\n", i,
                                bmarks[i].lfb_index,
-                               (uintptr_t)bmarks[i].lfb_entry.fe_area.fa_off,
+                               (uintptr_t)bmarks[i].lfb_entry.fe_area->fa_off,
                                bmarks[i].lfb_entry.fe_elem_off);
 #else
-                console_printf("%u: index: %lu fr: %x fe_sector: %x fe_data_off: %lx\n", i,
+                if (!bmarks[i].lfb_entry.fe_range) {
+                    if (start == -1) {
+                        start = i;
+                    }
+                    end = i;
+                    continue;
+                }
+                if (start != -1) {
+                    console_printf("bookmarks unused: %d to %d\n", start, end);
+                    start = -1;
+                    end = -1;
+                }
+                console_printf("%u: index:%lu fa_off:%x fe_sector:%x fe_data_off:%lx\n", i,
                                bmarks[i].lfb_index,
-                               (uintptr_t)bmarks[i].lfb_entry.fe_range.fsr_flash_area.fa_off,
+                               (uintptr_t)bmarks[i].lfb_entry.fe_range->fsr_flash_area.fa_off,
                                (uintptr_t)bmarks[i].lfb_entry.fe_sector,
                                bmarks[i].lfb_entry.fe_data_off);
 #endif
+            }
+
+            if (start != -1) {
+                console_printf("bookmarks unused: %d to %d\n", start, end);
+                start = -1;
+                end = -1;
             }
             goto err;
         }

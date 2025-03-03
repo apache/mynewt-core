@@ -40,7 +40,7 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
 
     rc = fcb_getnext(&fcb_log->fl_fcb, &loc);
     if (rc) {
-        return rc;
+        return SYS_EOK;
     }
 #else
     struct flash_sector_range *range = NULL;
@@ -48,7 +48,7 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
 
     rc = fcb2_getnext(&fcb_log->fl_fcb, &loc);
     if (rc) {
-        return rc;
+        return SYS_EOK;
     }
 #endif
 
@@ -88,6 +88,7 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
         /* First entry in the next area */
         rc = fcb_getnext_in_area(&fcb_log->fl_fcb, fa, &loc);
         if (rc) {
+            rc = SYS_EOK;
             break;
         }
 #else
@@ -110,6 +111,7 @@ log_fcb_init_sector_bmarks(struct fcb_log *fcb_log)
         /* First entry in the next area */
         rc = fcb2_getnext_in_area(&fcb_log->fl_fcb, range, &loc);
         if (rc) {
+            rc = SYS_EOK;
             break;
         }
 #endif
@@ -160,9 +162,7 @@ log_fcb_init_bmarks(struct fcb_log *fcb_log,
         } else {
             bset->lfs_sect_cap = fcb_log->fl_fcb.f_sector_cnt;
         }
-    }
 
-    if (en_sect_bmarks) {
         return log_fcb_init_sector_bmarks(fcb_log);
     }
 #endif
@@ -220,35 +220,52 @@ log_fcb_get_bmarks(struct log *log, uint32_t *bmarks_size)
     return fcb_log->fl_bset.lfs_bmarks;
 }
 
-struct log_fcb_bmark *
-log_fcb_closest_bmark(struct fcb_log *fcb_log, uint32_t index,
+const struct log_fcb_bmark *
+log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index,
                       int *min_diff)
 {
-    struct log_fcb_bmark *closest;
-    struct log_fcb_bmark *bmark;
+    const struct log_fcb_bmark *closest;
+    const struct log_fcb_bmark *bmark;
     uint32_t diff;
-    int i;
+    int i = 0;
+    uint32_t start_idx = 0;
 
     *min_diff = -1;
     closest = NULL;
+
+    if (!fcb_log->fl_bset.lfs_bmarks) {
+        return closest;
+    }
+
+#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
+#if MYNEWT_VAL(LOG_FCB)
+    /* Reason for this is that we want to iterate to the end of the
+     * bmarks sector section of the array where a bookmark is valid,
+     * this is only for the case where the sector bookmarks have not
+     * been fully filled up, if they are filled up, we can iterate
+     * normally to the end of the array
+     */
+    if (!fcb_log->fl_bset.lfs_bmarks[i].lfb_entry.fe_area &&
+        fcb_log->fl_bset.lfs_next_sect < (fcb_log->fl_bset.lfs_sect_cap - 1)) {
+        start_idx = fcb_log->fl_bset.lfs_next_sect + 1;
+    }
+#elif MYNEWT_VAL(LOG_FCB2)
+    if (!fcb_log->fl_bset.lfs_bmarks[i].lfb_entry.fe_range &&
+        fcb_log->fl_bset.lfs_next_sect < (fcb_log->fl_bset.lfs_sect_cap - 1)) {
+        start_idx = fcb_log->fl_bset.lfs_next_sect + 1;
+    }
+#endif
+#endif
 
     /* This works for both sector as well as non-sector bmarks
      * because we calculate the min diff and iterate to the end
      * of the bmarks array keeping track of min diff
      */
-    for (i = 0; i < fcb_log->fl_bset.lfs_size; i++) {
+    for (i = start_idx; i < (start_idx + fcb_log->fl_bset.lfs_size); i++) {
         bmark = &fcb_log->fl_bset.lfs_bmarks[i];
 #if MYNEWT_VAL(LOG_FCB)
         if (!fcb_log->fl_bset.lfs_bmarks[i].lfb_entry.fe_area) {
-#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
-            if (i < fcb_log->fl_bset.lfs_sect_cap) {
-                /* Jump to the non-sector bookmarks since sector
-                 * bookmarks are empty here on
-                 */
-                i = fcb_log->fl_bset.lfs_sect_cap - 1;
-                continue;
-            }
-#else
+#if !MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
             /* Empty non-sector bookmark, nothing more to do
              * Previous closest bookmark is the closest one */
             break;
@@ -256,15 +273,7 @@ log_fcb_closest_bmark(struct fcb_log *fcb_log, uint32_t index,
         }
 #elif MYNEWT_VAL(LOG_FCB2)
         if (!fcb_log->fl_bset.lfs_bmarks[i].lfb_entry.fe_range) {
-#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
-            if (i < fcb_log->fl_bset.lfs_sect_cap) {
-                /* Jump to the non-sector bookmarks since sector
-                 * bookmarks are empty here on
-                 */
-                i = fcb_log->fl_bset.lfs_sect_cap - 1;
-                continue;
-            }
-#else
+#if !MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
             /* Empty non-sector bookmark, nothing more to do
              * Previous closest bookmark is the closest one */
             break;
@@ -276,7 +285,8 @@ log_fcb_closest_bmark(struct fcb_log *fcb_log, uint32_t index,
             if (diff < *min_diff) {
                 *min_diff = diff;
                 closest = bmark;
-                MODLOG_DEBUG(LOG_MODULE_DEFAULT, "index: %u, closest bmark idx: %u, \n",
+                MODLOG_DEBUG(LOG_MODULE_DEFAULT,
+                             "index: %u, closest bmark idx: %u, \n",
                              (unsigned int)index,
                              (unsigned int)bmark->lfb_index);
                 /* We found the exact match, no need to keep searching for a
@@ -314,8 +324,10 @@ log_fcb_insert_sect_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry,
         };
 
         bset->lfs_size++;
-        bset->lfs_next_sect = (bset->lfs_next_sect - 1) %
-                              fcb_log->fl_bset.lfs_sect_cap;
+        bset->lfs_next_sect--;
+        if (bset->lfs_next_sect >= fcb_log->fl_bset.lfs_sect_cap) {
+            bset->lfs_next_sect = fcb_log->fl_bset.lfs_sect_cap - 1;
+        }
     }
 
     return 0;
@@ -342,7 +354,7 @@ log_fcb_replace_non_sect_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry
              i++) {
             if (index == bset->lfs_bmarks[i].lfb_index) {
                 /* If index matches, no need to replace */
-                return 0;
+                return SYS_EALREADY;
             }
         }
     } else
@@ -351,7 +363,7 @@ log_fcb_replace_non_sect_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry
         for (i = 0; i < bset->lfs_non_sect_size; i++) {
             if (index == bset->lfs_bmarks[i].lfb_index) {
                 /* If index matches, no need to replace */
-                return 0;
+                return SYS_EALREADY;
             }
         }
     }
@@ -361,7 +373,7 @@ log_fcb_replace_non_sect_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry
         .lfb_index = index,
     };
 
-    return 0;
+    return SYS_EOK;
 }
 
 #if MYNEWT_VAL(LOG_FCB)
@@ -396,18 +408,20 @@ log_fcb_add_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry,
                                             bset->lfs_next_non_sect +
                                             (bset->lfs_en_sect_bmarks ?
                                              bset->lfs_sect_cap : 0));
-        MODLOG_DEBUG(LOG_MODULE_DEFAULT, "replace bmark index: %u, pos: %u\n",
-                     index, bset->lfs_next_non_sect +
-                     (bset->lfs_en_sect_bmarks ?
-                      bset->lfs_sect_cap : 0));
+        if (rc == SYS_EOK) {
+            MODLOG_DEBUG(LOG_MODULE_DEFAULT, "replace bmark index: %u, pos: %u\n",
+                         index, bset->lfs_next_non_sect +
+                         (bset->lfs_en_sect_bmarks ?
+                          bset->lfs_sect_cap : 0));
 
-        if (bset->lfs_non_sect_size < MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS)) {
-            bset->lfs_non_sect_size++;
-            bset->lfs_size++;
+            if (bset->lfs_non_sect_size < MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS)) {
+                bset->lfs_non_sect_size++;
+                bset->lfs_size++;
+            }
+
+            bset->lfs_next_non_sect = (bset->lfs_next_non_sect + 1) %
+                                      MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS);
         }
-
-        bset->lfs_next_non_sect = (bset->lfs_next_non_sect + 1) %
-                                  MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS);
     }
 #else
     if (!sect_bmark) {
@@ -415,26 +429,30 @@ log_fcb_add_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry,
             /* Replace oldest non-sector bmark */
             rc = log_fcb_replace_non_sect_bmark(fcb_log, entry, index,
                                                 bset->lfs_next_non_sect);
-            MODLOG_DEBUG(LOG_MODULE_DEFAULT, "replace bmark index: %u, pos: %u\n",
-                         index, bset->lfs_next_non_sect);
-            bset->lfs_next_non_sect = (bset->lfs_next_non_sect + 1) %
-                                      MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS);
+            if (rc == SYS_EOK) {
+                MODLOG_DEBUG(LOG_MODULE_DEFAULT, "replace bmark index: %u, pos: %u\n",
+                             index, bset->lfs_next_non_sect);
+                bset->lfs_next_non_sect = (bset->lfs_next_non_sect + 1) %
+                                          MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS);
+            }
         } else {
             rc = log_fcb_replace_non_sect_bmark(fcb_log, entry, index,
                                                 bset->lfs_size);
-            MODLOG_DEBUG(LOG_MODULE_DEFAULT, "replace bmark index: %u, pos: %u\n",
-                         index, bset->lfs_size);
-            if (!bset->lfs_size) {
-                /* First non-sector bmark position */
-                bset->lfs_next_non_sect = 0;
+            if (rc == SYS_EOK) {
+                MODLOG_DEBUG(LOG_MODULE_DEFAULT, "replace bmark index: %u, pos: %u\n",
+                             index, bset->lfs_size);
+                if (!bset->lfs_size) {
+                    /* First non-sector bmark position */
+                    bset->lfs_next_non_sect = 0;
+                }
+                bset->lfs_size++;
             }
-            bset->lfs_size++;
         }
 
         assert(bset->lfs_size <= MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS));
     }
 #endif
-    return rc;
+    return SYS_EOK;
 }
 
 #endif /* MYNEWT_VAL(LOG_FCB_BOOKMARKS) */

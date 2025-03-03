@@ -179,8 +179,8 @@ struct log_fcb_bmark *log_fcb_get_bmarks(struct log *log, uint32_t *bmarks_size)
  * @return                      The closest bookmark on success;
  *                              NULL if the log has no applicable bookmarks.
  */
-struct log_fcb_bmark *
-log_fcb_closest_bmark(struct fcb_log *fcb_log, uint32_t index, int *min_diff);
+const struct log_fcb_bmark *
+log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index, int *min_diff);
 
 /**
  * Inserts a bookmark into the provided log.
