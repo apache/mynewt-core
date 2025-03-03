@@ -34,7 +34,7 @@ TEST_CASE_SELF(enc_flash_test_fcb)
 {
     int rc;
     struct flash_area *fa;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
     struct fcb fcb;
     int i;
     char *writedata = "foobartest";

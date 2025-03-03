@@ -22,7 +22,7 @@ TEST_CASE_SELF(fcb_test_append)
 {
     int rc;
     struct fcb *fcb;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
     uint8_t test_data[128];
     int i;
     int j;

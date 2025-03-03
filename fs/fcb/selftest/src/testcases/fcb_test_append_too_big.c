@@ -23,7 +23,7 @@ TEST_CASE_SELF(fcb_test_append_too_big)
     struct fcb *fcb;
     int rc;
     int len;
-    struct fcb_entry elem_loc;
+    struct fcb_entry elem_loc = {};
 
     fcb_tc_pretest(2);
 

@@ -169,8 +169,8 @@ conf_fcb_compress_internal(struct fcb *fcb,
     int rc;
     char buf1[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
     char buf2[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
-    struct fcb_entry loc1;
-    struct fcb_entry loc2;
+    struct fcb_entry loc1 = {};
+    struct fcb_entry loc2 = {};
     char *name1, *val1;
     char *name2, *val2;
     int copy;
@@ -248,7 +248,7 @@ conf_fcb_append(struct fcb *fcb, char *buf, int len)
 {
     int rc;
     int i;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
 
     for (i = 0; i < 10; i++) {
         rc = fcb_append(fcb, len, &loc);

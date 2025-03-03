@@ -23,7 +23,7 @@ TEST_CASE_SELF(fcb_test_rotate)
     struct fcb *fcb;
     int rc;
     int old_id;
-    struct fcb_entry loc;
+    struct fcb_entry loc = {};
     uint8_t test_data[128];
     int elem_cnts[2] = {0, 0};
     int cnts[2];
