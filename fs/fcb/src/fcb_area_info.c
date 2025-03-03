@@ -23,13 +23,13 @@
 int
 fcb_area_info(struct fcb *fcb, struct flash_area *fa, int *elemsp, int *bytesp)
 {
-    struct fcb_entry loc;
+    struct fcb_entry loc = {
+        .fe_area = fa,
+        .fe_elem_off = 0,
+    };
     int rc;
     int elems = 0;
     int bytes = 0;
-
-    loc.fe_area = fa;
-    loc.fe_elem_off = 0;
 
     while (1) {
         rc = fcb_getnext(fcb, &loc);
