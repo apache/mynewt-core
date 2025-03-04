@@ -133,13 +133,14 @@ struct fcb_log {
  *
  * @param fcb_log               The log to configure.
  * @param buf                   The buffer to use for bookmarks.
- * @param bmark_count           The bookmark capacity of the supplied buffer.
+ * @param avl_bmark_cnt         The bookmark capacity of the supplied buffer,
+ *                              available bookmark count
  * @param en_sect_bmarks        Enable sector bookmarks
  *
  * @return 0 on success, non-zero on failure
  */
 int log_fcb_init_bmarks(struct fcb_log *fcb_log,
-                        struct log_fcb_bmark *buf, int bmark_count,
+                        struct log_fcb_bmark *buf, int avl_bmark_cnt,
                         bool en_sect_bmarks);
 
 /** @brief Remove bookmarks which point to oldest FCB/FCB2 area. This is
