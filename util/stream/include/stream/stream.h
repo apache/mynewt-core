@@ -124,6 +124,13 @@ struct mem_in_stream {
     uint32_t read_ptr;
 };
 
+struct mem_out_stream {
+    struct out_stream_vft *vft;
+    uint8_t *buf;
+    uint32_t size;
+    int write_ptr;
+};
+
 #define OSTREAM_DEF(type) \
     static int type ## _write(struct out_stream *ostream, const uint8_t *buf, uint32_t count); \
     static int type ## _flush(struct out_stream *ostream); \
@@ -230,6 +237,15 @@ int stream_pump(struct in_stream *istream, struct out_stream *ostream, uint32_t 
  * @param size  size of data
  */
 void mem_istream_init(struct mem_in_stream *mem, const uint8_t *buf, uint32_t size);
+
+/**
+ * Initialize output stream that will receive data into provided buffer
+ *
+ * @param mem - stream to initialize
+ * @param buf - memory to store written data
+ * @param size - size of buf
+ */
+void mem_ostream_init(struct mem_out_stream *mem, uint8_t *buf, uint32_t size);
 
 static inline int
 ostream_write_uint8(struct out_stream *ostream, uint8_t data)

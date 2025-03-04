@@ -76,6 +76,55 @@ mem_istream_init(struct mem_in_stream *mem, const uint8_t *buf, uint32_t size)
     mem->read_ptr = 0;
 }
 
+static int
+mem_ostream_write(struct out_stream *ostream, const uint8_t *buf, uint32_t count)
+{
+    struct mem_out_stream *mem = (struct mem_out_stream *)ostream;
+    int skip = 0;
+    int write = count;
+
+    /* If write_ptr is negative drop data and update write_ptr */
+    if (mem->write_ptr < 0) {
+        skip = min(-mem->write_ptr, count);
+        mem->write_ptr += skip;
+        write -= skip;
+    }
+
+    if (mem->write_ptr >= 0 && write > 0 && buf != NULL && mem->write_ptr < mem->size) {
+        if (write > mem->size - mem->write_ptr) {
+            write = mem->size - mem->write_ptr;
+        }
+        if (mem->buf) {
+            memcpy(mem->buf + mem->write_ptr, buf + skip, write);
+        }
+    }
+    mem->write_ptr += count - skip;
+
+    return count;
+}
+
+static int
+mem_ostream_flush(struct out_stream *ostream)
+{
+    (void)ostream;
+
+    return 0;
+}
+
+struct out_stream_vft mem_ostream_vft = {
+    .write = mem_ostream_write,
+    .flush = mem_ostream_flush,
+};
+
+void
+mem_ostream_init(struct mem_out_stream *mem, uint8_t *buf, uint32_t size)
+{
+    mem->vft = &mem_ostream_vft;
+    mem->buf = buf;
+    mem->size = size;
+    mem->write_ptr = 0;
+}
+
 int
 ostream_write(struct out_stream *ostream, const uint8_t *buf, uint32_t count, bool flush)
 {
