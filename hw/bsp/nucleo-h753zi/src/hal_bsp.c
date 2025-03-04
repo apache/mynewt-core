@@ -131,6 +131,42 @@ const struct stm32_hal_i2c_cfg os_bsp_i2c3_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(ETH_0)
+const struct stm32_eth_cfg os_bsp_eth0_cfg = {
+    /*
+     * PORTA
+     *   PA1 - ETH_RMII_REF_CLK
+     *   PA2 - ETH_RMII_MDIO
+     *   PA7 - ETH_RMII_CRS_DV
+     */
+    .sec_port_mask[0] = (1 << 1) | (1 << 2) | (1 << 7),
+
+    /*
+     * PORTB
+     *   PB13 - ETH_RMII_TXD1
+     */
+    .sec_port_mask[1] = (1 << 13),
+
+    /*
+     * PORTC
+     *   PC1 - ETH_RMII_MDC
+     *   PC4 - ETH_RMII_RXD0
+     *   PC5 - ETH_RMII_RXD1
+     */
+    .sec_port_mask[2] = (1 << 1) | (1 << 4) | (1 << 5),
+
+    /*
+     * PORTG
+     *   PG2  - ETH_RMII_RXER
+     *   PG11 - ETH_RMII_TXEN
+     *   PG13 - ETH_RMII_TXD0
+     */
+    .sec_port_mask[6] = (1 << 2) | (1 << 11) | (1 << 13),
+    .sec_phy_type = LAN_8742_RMII,
+    .sec_phy_irq = -1
+};
+#endif
+
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
         .hbmd_start = _ram_start,
