@@ -157,10 +157,11 @@ const struct stm32_eth_cfg os_bsp_eth0_cfg = {
 
     /*
      * PORTG
+     *   PG2  - ETH_RMII_RXER
      *   PG11 - ETH_RMII_TXEN
      *   PG13 - ETH_RMII_TXD0
      */
-    .sec_port_mask[6] = (1 << 11) | (1 << 13),
+    .sec_port_mask[6] = (1 << 2) | (1 << 11) | (1 << 13),
     .sec_phy_type = LAN_8742_RMII,
     .sec_phy_irq = -1
 };

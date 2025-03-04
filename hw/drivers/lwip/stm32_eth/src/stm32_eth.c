@@ -31,6 +31,20 @@
 #include <bsp/stm32f7xx_hal_conf.h>
 #include <mcu/stm32f7_bsp.h>
 #endif
+#if MYNEWT_VAL(MCU_STM32H7)
+#include <bsp/stm32h7xx_hal_conf.h>
+#include <mcu/stm32h7_bsp.h>
+
+#define ETH_RX_BUF_SIZE           (ETH_MAX_PACKET_SIZE)
+#define PHY_BSR                   ((uint16_t)0x0001U)
+#define PHY_LINKED_STATUS         ((uint16_t)0x0004U)
+
+#define __HAL_RCC_ETH_CLK_ENABLE()       do { \
+        __HAL_RCC_ETH1MAC_CLK_ENABLE();   \
+        __HAL_RCC_ETH1TX_CLK_ENABLE();    \
+        __HAL_RCC_ETH1RX_CLK_ENABLE();    \
+} while (0)
+#endif
 
 #include <netif/etharp.h>
 #include <netif/ethernet.h>
@@ -338,10 +352,15 @@ stm32_lwip_init(struct netif *nif)
     ses->st_tx_cfg.Attributes = ETH_TX_PACKETS_FEATURES_CSUM | ETH_TX_PACKETS_FEATURES_CRCPAD;
     ses->st_tx_cfg.ChecksumCtrl = ETH_CHECKSUM_IPHDR_PAYLOAD_INSERT_PHDR_CALC;
     ses->st_tx_cfg.CRCPadCtrl = ETH_CRC_PAD_INSERT;
+
     /*
      * XXX pass all multicast traffic for now
      */
+#if MYNEWT_VAL(MCU_STM32H7)
+    ses->st_eth.Instance->MACPFR |= ETH_MACPFR_PM;
+#else
     ses->st_eth.Instance->MACFFR |= ETH_MULTICASTFRAMESFILTER_NONE;
+#endif
 
     if (HAL_ETH_Init(&ses->st_eth) == HAL_ERROR) {
         return ERR_IF;
