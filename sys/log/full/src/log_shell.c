@@ -281,16 +281,14 @@ shell_log_dump_cmd(int argc, char **argv)
             bmarks = log_fcb_get_bmarks(log, &bmarks_size);
             for (i = 0; i < bmarks_size; i++) {
 #if MYNEWT_VAL(LOG_FCB)
-                console_printf("%u: index:%lu entry: %x fa: %x fe_elem_off: %lx\n", i,
+                console_printf("%u: index:%lu fa: %x fe_elem_off: %lx\n", i,
                                bmarks[i].lfb_index,
-                               (uintptr_t)&bmarks[i].lfb_entry,
-                               (uintptr_t)bmarks[i].lfb_entry.fe_area,
+                               (uintptr_t)bmarks[i].lfb_entry.fe_area.fa_off,
                                bmarks[i].lfb_entry.fe_elem_off);
 #else
-                console_printf("%u: index: %lu entry: %x fr: %x fe_sector: %x fe_data_off: %lx\n", i,
+                console_printf("%u: index: %lu fr: %x fe_sector: %x fe_data_off: %lx\n", i,
                                bmarks[i].lfb_index,
-                               (uintptr_t)&bmarks[i].lfb_entry,
-                               (uintptr_t)bmarks[i].lfb_entry.fe_range,
+                               (uintptr_t)bmarks[i].lfb_entry.fe_range.fsr_flash_area.fa_off,
                                (uintptr_t)bmarks[i].lfb_entry.fe_sector,
                                bmarks[i].lfb_entry.fe_data_off);
 #endif
