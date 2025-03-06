@@ -110,6 +110,12 @@ fcb_free_sector_cnt(struct fcb *fcb)
 {
     int i;
     struct flash_area *fa;
+    int rc = 0;
+
+    rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
+    if (rc && rc != OS_NOT_STARTED) {
+        return FCB_ERR_ARGS;
+    }
 
     fa = fcb->f_active.fe_area;
     for (i = 0; i < fcb->f_sector_cnt; i++) {
@@ -118,14 +124,29 @@ fcb_free_sector_cnt(struct fcb *fcb)
             break;
         }
     }
+
+    os_mutex_release(&fcb->f_mtx);
+
     return i;
 }
 
 int
 fcb_is_empty(struct fcb *fcb)
 {
-    return (fcb->f_active.fe_area == fcb->f_oldest &&
+    int rc = 0;
+    bool ret = false;
+
+    rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
+    if (rc && rc != OS_NOT_STARTED) {
+        return FCB_ERR_ARGS;
+    }
+
+    ret = (fcb->f_active.fe_area == fcb->f_oldest &&
       fcb->f_active.fe_elem_off == sizeof(struct fcb_disk_area));
+
+    os_mutex_release(&fcb->f_mtx);
+
+    return ret;
 }
 
 /**
@@ -226,7 +247,13 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
         struct fcb_entry *last_n_entry)
 {
     struct fcb_entry loc;
+    int rc = 0;
     int i;
+
+    rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
+    if (rc && rc != OS_NOT_STARTED) {
+        return FCB_ERR_ARGS;
+    }
 
     /* assure a minimum amount of entries */
     if (!entries) {
@@ -246,6 +273,8 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
         i++;
     }
 
+    os_mutex_release(&fcb->f_mtx);
+
     return (i == 0) ? FCB_ERR_NOVAR : 0;
 }
 
@@ -257,14 +286,21 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
 int
 fcb_clear(struct fcb *fcb)
 {
-    int rc;
+    int rc = 0;
 
-    rc = 0;
+    rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
+    if (rc && rc != OS_NOT_STARTED) {
+        return FCB_ERR_ARGS;
+    }
+
     while (!fcb_is_empty(fcb)) {
         rc = fcb_rotate(fcb);
         if (rc) {
             break;
         }
     }
+
+    os_mutex_release(&fcb->f_mtx);
+
     return rc;
 }
