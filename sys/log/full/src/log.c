@@ -78,6 +78,7 @@ struct shell_cmd g_shell_storage_cmd = {
 STATS_NAME_START(logs)
   STATS_NAME(logs, writes)
   STATS_NAME(logs, drops)
+  STATS_NAME(logs, regerr)
   STATS_NAME(logs, errs)
   STATS_NAME(logs, lost)
   STATS_NAME(logs, too_long)
@@ -382,22 +383,12 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
 #endif
 
     if (!log_registered(log)) {
-        STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
 #if MYNEWT_VAL(LOG_STATS)
         stats_init(STATS_HDR(log->l_stats),
                    STATS_SIZE_INIT_PARMS(log->l_stats, STATS_SIZE_32),
                    STATS_NAME_INIT_PARMS(logs));
         stats_register(log->l_name, STATS_HDR(log->l_stats));
 #endif
-    }
-
-    /* Call registered handler now - log structure is set and put on list */
-    if (log->l_log->log_registered) {
-        rc = log->l_log->log_registered(log);
-        if (rc) {
-            STAILQ_REMOVE(&g_log_list, log, log, l_next);
-            return rc;
-        }
     }
 
     /* If this is a persisted log, read the index from its most recent entry.
@@ -418,6 +409,21 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
             }
 #endif
             OS_EXIT_CRITICAL(sr);
+        } else {
+            LOG_STATS_INC(log, regerr);
+        }
+    }
+
+    if (!log_registered(log)) {
+        STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
+    }
+
+    /* Call registered handler now - log structure is set and put on list */
+    if (log->l_log->log_registered) {
+        rc = log->l_log->log_registered(log);
+        if (rc) {
+            STAILQ_REMOVE(&g_log_list, log, log, l_next);
+            return rc;
         }
     }
 

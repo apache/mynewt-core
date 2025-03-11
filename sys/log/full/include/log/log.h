@@ -191,6 +191,7 @@ struct log_entry_hdr {
 STATS_SECT_START(logs)
     STATS_SECT_ENTRY(writes)
     STATS_SECT_ENTRY(drops)
+    STATS_SECT_ENTRY(regerr)
     STATS_SECT_ENTRY(errs)
     STATS_SECT_ENTRY(lost)
     STATS_SECT_ENTRY(too_long)
