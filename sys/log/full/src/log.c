@@ -76,12 +76,12 @@ struct shell_cmd g_shell_storage_cmd = {
 
 #if MYNEWT_VAL(LOG_STATS)
 STATS_NAME_START(logs)
-  STATS_NAME(logs, writes)
-  STATS_NAME(logs, drops)
-  STATS_NAME(logs, regerr)
-  STATS_NAME(logs, errs)
-  STATS_NAME(logs, lost)
-  STATS_NAME(logs, too_long)
+    STATS_NAME(logs, writes)
+    STATS_NAME(logs, drops)
+    STATS_NAME(logs, regerr)
+    STATS_NAME(logs, errs)
+    STATS_NAME(logs, lost)
+    STATS_NAME(logs, too_long)
 STATS_NAME_END(logs)
 #endif
 
