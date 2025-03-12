@@ -59,6 +59,7 @@ static int mbedtls_gcm_mynewt_test_crypt(uint8_t enc)
     uint16_t off;
     uint16_t blklen;
     uint16_t totlen;
+    size_t len_check;
     int rc;
 
     if (rsm_ucast_cipher == NULL) {
@@ -69,14 +70,14 @@ static int mbedtls_gcm_mynewt_test_crypt(uint8_t enc)
 
     memset(&ctx, 0, sizeof(ctx));
     mbedtls_aes_init(&aes_ctx);
-    rc = mbedtls_gcm_setkey_noalloc(&ctx, rsm_ucast_cipher, key, &aes_ctx);
+    rc = mbedtls_gcm_setkey_noalloc(&ctx, rsm_ucast_cipher, key, 256, &aes_ctx);
     if (rc) {
         goto out;
     }
 
     rc = mbedtls_gcm_starts(&ctx,
                             enc == 1 ? MBEDTLS_GCM_ENCRYPT : MBEDTLS_GCM_DECRYPT,
-                            iv, sizeof(iv), NULL, 0);
+                            iv, sizeof(iv));
     if (rc) {
         goto out;
     }
@@ -103,10 +104,14 @@ static int mbedtls_gcm_mynewt_test_crypt(uint8_t enc)
         }
 
         if (off < add_len) {
-            mbedtls_gcm_update_add(&ctx, blklen, ptr);
+            mbedtls_gcm_update_ad(&ctx, ptr, blklen);
         } else {
-            rc = mbedtls_gcm_update(&ctx, blklen, ptr, ptr);
+            rc = mbedtls_gcm_update(&ctx, ptr, blklen, ptr, blklen, &len_check);
             if (rc) {
+                goto out;
+            }
+            if (len_check != blklen) {
+                rc = 1;
                 goto out;
             }
         }
@@ -114,7 +119,11 @@ static int mbedtls_gcm_mynewt_test_crypt(uint8_t enc)
         off += blklen;
     }
 
-    rc = mbedtls_gcm_finish(&ctx, test_tag, sizeof(test_tag));
+    rc = mbedtls_gcm_finish(&ctx, NULL, 0, &len_check, test_tag, sizeof(test_tag));
+    if (len_check != 0) {
+        rc = 1;
+        goto out;
+    }
 out:
     memset(&ctx, 0, sizeof(ctx));
     mbedtls_aes_free(&aes_ctx);
@@ -136,5 +145,5 @@ TEST_CASE_SELF(gcm_mynewt_test)
     rc = mbedtls_gcm_mynewt_test_crypt(0);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(memcmp(test_tag, expected_tag, sizeof(test_tag)) == 0);
-    TEST_ASSERT(memcmp(test_buf, initial_data, sizeof(test_buf)) == 0);
+    TEST_ASSERT(memcmp(test_buf, initial_data, sizeof(initial_data)) == 0);
 }
