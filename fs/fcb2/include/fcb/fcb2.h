@@ -197,19 +197,6 @@ int fcb2_walk(struct fcb2 *fcb, int sector, fcb2_walk_cb cb, void *cb_arg);
 int fcb2_getnext(struct fcb2 *fcb, struct fcb2_entry *loc);
 
 /**
- * Get first entry in the provided flash area
- *
- * @param fcb Pointer to FCB
- * @param range Optional range in flash sector
- * @param loc Pointer to first FCB entry in the provided flash area
- *
- * @return 0 on success, non-zero on failure
- */
-int
-fcb2_getnext_in_area(struct fcb2 *fcb, struct flash_sector_range *range,
-                     struct fcb2_entry *loc);
-
-/**
  * Walk through entries within FCB from newest to oldest.
  * fcb_getprev() finds the previous valid entry backwards from loc, and fills in
  * the location of that entry.
@@ -316,17 +303,6 @@ int fcb2_clear(struct fcb2 *fcb);
  * @param bytesp         Pointer where number of bytes used should be stored
  */
 int fcb2_area_info(struct fcb2 *fcb, int sector, int *elemsp, int *bytesp);
-
-/**
- * Returns the next sector flash range, given current entry
- *
- * @param fcb            Pointer to the FCB
- * @param loc            Pointer to the location
- *
- * @return Flash sector range of the next sector
- */
-struct flash_sector_range *
-fcb2_getnext_range(struct fcb2 *fcb, struct fcb2_entry *loc);
 
 #ifdef __cplusplus
 }

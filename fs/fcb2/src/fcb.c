@@ -88,7 +88,7 @@ fcb2_init(struct fcb2 *fcb)
     fcb->f_active_id = newest;
 
     while (1) {
-        rc = fcb2_getnext_in_area(fcb, NULL, &fcb->f_active);
+        rc = fcb2_getnext_in_area(fcb, &fcb->f_active);
         if (rc == FCB2_ERR_NOVAR) {
             rc = FCB2_OK;
             break;

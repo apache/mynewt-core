@@ -190,6 +190,7 @@ syscfg.defs:
         value: 0
         restrictions:
             - LOG_FCB_BOOKMARKS
+            - LOG_FCB
 
 syscfg.vals.CONSOLE_TICKS:
     LOG_CONSOLE_PRETTY_WITH_TIMESTAMP: 0

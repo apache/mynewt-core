@@ -49,6 +49,8 @@ fcb2_len_in_flash(const struct flash_sector_range *range, uint16_t len)
     return (len + (range->fsr_align - 1)) & ~(range->fsr_align - 1);
 }
 
+int fcb2_getnext_in_area(struct fcb2 *fcb, struct fcb2_entry *loc);
+
 static inline int
 fcb2_getnext_sector(struct fcb2 *fcb, int sector)
 {
