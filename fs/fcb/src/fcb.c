@@ -131,6 +131,17 @@ fcb_free_sector_cnt(struct fcb *fcb)
 }
 
 int
+fcb_is_empty_nolock(struct fcb *fcb)
+{
+    bool ret = false;
+
+    ret = (fcb->f_active.fe_area == fcb->f_oldest &&
+           fcb->f_active.fe_elem_off == sizeof(struct fcb_disk_area));
+
+    return ret;
+}
+
+int
 fcb_is_empty(struct fcb *fcb)
 {
     int rc = 0;
@@ -262,13 +273,13 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
 
     i = 0;
     memset(&loc, 0, sizeof(loc));
-    while (!fcb_getnext(fcb, &loc)) {
+    while (!fcb_getnext_nolock(fcb, &loc)) {
         if (i == 0) {
             /* Start from the beginning of fcb entries */
             *last_n_entry = loc;
         } else if (i > (entries - 1)) {
             /* Update last_n_entry after n entries and keep updating */
-            fcb_getnext(fcb, last_n_entry);
+            fcb_getnext_nolock(fcb, last_n_entry);
         }
         i++;
     }
@@ -293,7 +304,7 @@ fcb_clear(struct fcb *fcb)
         return FCB_ERR_ARGS;
     }
 
-    while (!fcb_is_empty(fcb)) {
+    while (!fcb_is_empty_nolock(fcb)) {
         rc = fcb_rotate(fcb);
         if (rc) {
             break;
