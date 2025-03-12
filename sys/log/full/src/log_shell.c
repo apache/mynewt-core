@@ -51,6 +51,8 @@ struct walk_arg {
     uint32_t count_limit;
     /* Entry number */
     uint32_t count;
+    /* Entry index */
+    uint32_t idx;
 };
 
 static int
@@ -172,11 +174,22 @@ shell_log_dump_cmd(int argc, char **argv)
     bool clear_log;
     bool reverse = false;
     bool dump_logs = true;
+    bool dump_bmarks = false;
+    uint32_t bmarks_size = 0;
+    struct log_fcb_bmark *bmarks = NULL;
     struct walk_arg arg = {};
     int i;
-    int rc;
+    int rc = 0;
+    int start = -1;
+    int end = -1;
 
     clear_log = false;
+    (void)dump_bmarks;
+    (void)bmarks;
+    (void)bmarks_size;
+    (void)start;
+    (void)end;
+
     for (i = 1; i < argc; ++i) {
         if (0 == strcmp(argv[i], "-l")) {
             list_only = true;
@@ -206,6 +219,22 @@ shell_log_dump_cmd(int argc, char **argv)
         }
         if (0 == strcmp(argv[i], "-t")) {
             dump_logs = false;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "-b")) {
+            dump_logs = false;
+            dump_bmarks = true;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "-i")) {
+            if (i + 1 < argc) {
+                arg.idx = parse_ll_bounds(argv[i + 1], 0, UINT32_MAX, &rc);
+                if (rc) {
+                    arg.idx = 0;
+                }
+                log_offset.lo_arg = &arg;
+            }
+            ++i;
             continue;
         }
         if (0 == strcmp(argv[i], "-r")) {
@@ -251,6 +280,57 @@ shell_log_dump_cmd(int argc, char **argv)
             continue;
         }
 
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+        if (dump_bmarks) {
+            bmarks = log_fcb_get_bmarks(log, &bmarks_size);
+            for (i = 0; i < bmarks_size; i++) {
+#if MYNEWT_VAL(LOG_FCB)
+                if (!bmarks[i].lfb_entry.fe_area) {
+                    if (start == -1) {
+                        start = i;
+                    }
+                    end = i;
+                    continue;
+                }
+                if (start != -1) {
+                    console_printf("bookmarks unused: %d to %d\n", start, end);
+                    start = -1;
+                    end = -1;
+                }
+                console_printf("%u: index:%lu fa_off:%x fe_elem_off:%lx\n", i,
+                               bmarks[i].lfb_index,
+                               (uintptr_t)bmarks[i].lfb_entry.fe_area->fa_off,
+                               bmarks[i].lfb_entry.fe_elem_off);
+#else
+                if (!bmarks[i].lfb_entry.fe_range) {
+                    if (start == -1) {
+                        start = i;
+                    }
+                    end = i;
+                    continue;
+                }
+                if (start != -1) {
+                    console_printf("bookmarks unused: %d to %d\n", start, end);
+                    start = -1;
+                    end = -1;
+                }
+                console_printf("%u: index:%lu fa_off:%x fe_sector:%x fe_data_off:%lx\n", i,
+                               bmarks[i].lfb_index,
+                               (uintptr_t)bmarks[i].lfb_entry.fe_range->fsr_flash_area.fa_off,
+                               (uintptr_t)bmarks[i].lfb_entry.fe_sector,
+                               bmarks[i].lfb_entry.fe_data_off);
+#endif
+            }
+
+            if (start != -1) {
+                console_printf("bookmarks unused: %d to %d\n", start, end);
+                start = -1;
+                end = -1;
+            }
+            goto err;
+        }
+#endif
+
         if (clear_log) {
             console_printf("Clearing log %s\n", log->l_name);
             rc = log_flush(log);
@@ -278,11 +358,13 @@ shell_log_dump_cmd(int argc, char **argv)
 
             if (dump_logs) {
                 arg.count = 0;
+                log_offset.lo_index = arg.idx;
                 rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
-            } else {
+            } else if (!dump_bmarks) {
                 /* Measure time for log_walk */
                 shell_log_count = 0;
                 os_time_t start = os_time_get();
+                log_offset.lo_index = arg.idx;
                 rc = log_walk_body(log, shell_log_count_entry, &log_offset);
                 os_time_t end = os_time_get();
                 console_printf("Log %s %d entries walked in %d ms\n", log->l_name,

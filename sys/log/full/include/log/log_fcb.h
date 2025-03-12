@@ -46,14 +46,29 @@ struct log_fcb_bset {
     /** Array of bookmarks. */
     struct log_fcb_bmark *lfs_bmarks;
 
+    /** Enable sector bookmarks */
+    bool lfs_en_sect_bmarks;
+
     /** The maximum number of bookmarks. */
     int lfs_cap;
+
+    /** The maximum number of sector bookmarks. */
+    int lfs_sect_cap;
+
+    /** The number of currently used non-sector bookmarks. */
+    int lfs_non_sect_size;
 
     /** The number of currently usable bookmarks. */
     int lfs_size;
 
-    /** The index where the next bookmark will get written. */
-    int lfs_next;
+    /** The index where the next non-sector bmark will get written */
+    uint32_t lfs_next_non_sect;
+
+    /** The sector interval at which to insert sector bookmarks */
+    int lfs_sect_bmark_itvl;
+
+    /** The index where the next sector bmark will get written */
+    uint32_t lfs_next_sect;
 };
 
 /**
@@ -72,6 +87,7 @@ struct fcb_log {
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     struct log_fcb_bset fl_bset;
 #endif
+    struct log *fl_log;
 };
 
 #elif MYNEWT_VAL(LOG_FCB2)
@@ -87,6 +103,7 @@ struct fcb_log {
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     struct log_fcb_bset fl_bset;
 #endif
+    struct log *fl_log;
 };
 #endif
 
@@ -103,19 +120,35 @@ struct fcb_log {
  * the log is walked, the starting point of the walk is added to the set of
  * bookmarks.
  *
- * FCB rotation invalidates all bookmarks.  It is up to the client code to
+ * FCB rotation invalidates all bookmarks. It is up to the client code to
  * clear a log's bookmarks whenever rotation occurs.
  */
 
 /**
  * @brief Configures an fcb_log to use the specified buffer for bookmarks.
+ *        If sector bookmarks are enabled, buffer should be big enough
+ *        to accommodate bookmarks for the entire flash area that is allocated
+ *        for the FCB log, i,e; sizeof(struct log_fcb_bmark) *
+ *        my_log.fl_fcb.f_sector_cnt + MYNEWT_VAL(LOG_FCB_NUM_ABS_BOOKMARKS)
  *
  * @param fcb_log               The log to configure.
  * @param buf                   The buffer to use for bookmarks.
- * @param bmark_count           The bookmark capacity of the supplied buffer.
+ * @param avl_bmark_cnt         The bookmark capacity of the supplied buffer,
+ *                              available bookmark count
+ * @param en_sect_bmarks        Enable sector bookmarks
+ *
+ * @return 0 on success, non-zero on failure
  */
-void log_fcb_init_bmarks(struct fcb_log *fcb_log,
-                         struct log_fcb_bmark *buf, int bmark_count);
+int log_fcb_init_bmarks(struct fcb_log *fcb_log,
+                        struct log_fcb_bmark *buf, int avl_bmark_cnt,
+                        bool en_sect_bmarks);
+
+/** @brief Remove bookmarks which point to oldest FCB/FCB2 area. This is
+ * meant to get called just before the area is rotated out.
+ *
+ * @param fcb_log               The fcb_log to operate on.
+ */
+void log_fcb_rotate_bmarks(struct fcb_log *fcb_log);
 
 /**
  * @brief Erases all bookmarks from the supplied fcb_log.
@@ -125,12 +158,14 @@ void log_fcb_init_bmarks(struct fcb_log *fcb_log,
 void log_fcb_clear_bmarks(struct fcb_log *fcb_log);
 
 /**
- * @brief Remove bookmarks which point to oldest FCB/FCB2 area. This is
- * meant to get called just before the area is rotated out.
+ * @brief Get bookmarks for a particular log
  *
- * @param fcb_log               The fcb_log to operate on.
+ * @param log Pointer to the log we want to read bookmarks from
+ * @param bmarks_size Pointer to the variable we want to read bookmarks into
+ *
+ * @return Pointer to the bookmarks array for the provided log
  */
-void log_fcb_rotate_bmarks(struct fcb_log *fcb_log);
+struct log_fcb_bmark *log_fcb_get_bmarks(struct log *log, uint32_t *bmarks_size);
 
 /**
  * @brief Searches an fcb_log for the closest bookmark that comes before or at
@@ -138,12 +173,14 @@ void log_fcb_rotate_bmarks(struct fcb_log *fcb_log);
  *
  * @param fcb_log               The log to search.
  * @param index                 The index to look for.
+ * @param min_diff              If bookmark was found, fill it up with the difference
+ *                              else it will return -1.
  *
  * @return                      The closest bookmark on success;
  *                              NULL if the log has no applicable bookmarks.
  */
 const struct log_fcb_bmark *
-log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index);
+log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index, int *min_diff);
 
 /**
  * Inserts a bookmark into the provided log.
@@ -151,13 +188,16 @@ log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index);
  * @param fcb_log               The log to insert a bookmark into.
  * @param entry                 The entry the bookmark should point to.
  * @param index                 The log entry index of the bookmark.
+ * @paran sect_bmark            Bool indicating it is a sector bookmark.
+ *
+ * @return                      non-zero on failure, 0 on success
  */
 #if MYNEWT_VAL(LOG_FCB)
-void log_fcb_add_bmark(struct fcb_log *fcb_log, const struct fcb_entry *entry,
-                       uint32_t index);
+int log_fcb_add_bmark(struct fcb_log *fcb_log, struct fcb_entry *entry,
+                      uint32_t index, bool sect_bmark);
 #elif MYNEWT_VAL(LOG_FCB2)
-void log_fcb_add_bmark(struct fcb_log *fcb_log, const struct fcb2_entry *entry,
-                       uint32_t index);
+int log_fcb_add_bmark(struct fcb_log *fcb_log, struct fcb2_entry *entry,
+                      uint32_t index, bool sect_bmark);
 #endif
 #endif
 
