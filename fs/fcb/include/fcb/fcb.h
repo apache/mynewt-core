@@ -216,11 +216,19 @@ int fcb_append_to_scratch(struct fcb *);
 
 /**
  * How many sectors are unused.
+ *
+ * @param fcb - fcb to check
+ * @return number of free sectors if successful,
+ *  negative value on error
  */
 int fcb_free_sector_cnt(struct fcb *fcb);
 
 /**
  * Whether FCB has any data.
+ *
+ * @param fcb - fcb to check
+ * @return 1 if FCB is empty, 0 if FCB has data,
+ *  negative value on error
  */
 int fcb_is_empty(struct fcb *fcb);
 
