@@ -179,6 +179,19 @@ syscfg.defs:
             the global index to be sequentially increasing for persisted logs.
         value: 0
 
+    LOG_FCB_NUM_ABS_BOOKMARKS:
+        description: >
+            Number of absolute bookmarks excluding sector bookmarks
+        value: 2
+
+    LOG_FCB_SECTOR_BOOKMARKS:
+        description: >
+            Enable sector bookmarks
+        value: 0
+        restrictions:
+            - LOG_FCB_BOOKMARKS
+            - LOG_FCB
+
 syscfg.vals.CONSOLE_TICKS:
     LOG_CONSOLE_PRETTY_WITH_TIMESTAMP: 0
 

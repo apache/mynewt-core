@@ -40,14 +40,29 @@ static struct log ltfbu_log;
 
 static struct log_fcb_bmark ltfbu_bmarks[LTFBU_MAX_BMARKS];
 
-static struct flash_sector_range ltfbu_fcb_range = {
-    .fsr_flash_area = {
+static struct flash_area ltfbu_fcb_areas[] = {
+    [0] = {
         .fa_off = 0 * LTFBU_SECTOR_SIZE,
-        .fa_size = 2 * LTFBU_SECTOR_SIZE
+        .fa_size = LTFBU_SECTOR_SIZE,
     },
-    .fsr_sector_count = 2,
-    .fsr_sector_size = LTFBU_SECTOR_SIZE,
-    .fsr_align = MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE)
+    [1] = {
+        .fa_off = 1 * LTFBU_SECTOR_SIZE,
+        .fa_size = LTFBU_SECTOR_SIZE,
+    },
+#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
+    [2] = {
+        .fa_off = 2 * LTFBU_SECTOR_SIZE,
+        .fa_size = LTFBU_SECTOR_SIZE,
+    },
+    [3] = {
+        .fa_off = 3 * LTFBU_SECTOR_SIZE,
+        .fa_size = LTFBU_SECTOR_SIZE,
+    },
+    [4] = {
+        .fa_off = 4 * LTFBU_SECTOR_SIZE,
+        .fa_size = LTFBU_SECTOR_SIZE,
+    }
+ #endif
 };
 
 static int
@@ -55,10 +70,19 @@ ltfbu_max_entries(void)
 {
     int entry_space;
     int entry_size;
+    int len_size;
+    int crc_size;
 
-    /* "+ 2" for CRC. */
+    if (ltfbu_cfg.body_len > 127) {
+        len_size = 2;
+    } else {
+        len_size = 1;
+    }
+    crc_size = 1;
+
+    /* "+ 1" for CRC. */
     entry_size = LOG_BASE_ENTRY_HDR_SIZE + ltfbu_cfg.body_len +
-                 FCB2_ENTRY_SIZE + 2;
+                 len_size + crc_size;
     entry_space = LTFBU_SECTOR_SIZE - 8;
 
     return entry_space / entry_size;
@@ -126,6 +150,13 @@ ltfbu_write_entry(void)
 
     memset(body, idx, ltfbu_cfg.body_len);
 
+#if 0
+    printf("log entry: ");
+    for (int i = 0; i < ltfbu_cfg.body_len; i++) {
+        printf("%2x", body[i]);
+    }
+    printf("\n");
+#endif
     rc = log_append_body(&ltfbu_log, 0, 255, LOG_ETYPE_BINARY, body,
                          ltfbu_cfg.body_len);
     TEST_ASSERT_FATAL(rc == 0);
@@ -196,6 +227,7 @@ void
 ltfbu_init(const struct ltfbu_cfg *cfg)
 {
     int rc;
+    int i;
 
     /* Ensure tests are repeatable. */
     srand(0);
@@ -205,26 +237,23 @@ ltfbu_init(const struct ltfbu_cfg *cfg)
 
     ltfbu_fcb_log = (struct fcb_log) {
         .fl_fcb.f_scratch_cnt = 1,
-        .fl_fcb.f_range_cnt = 1,
-        .fl_fcb.f_sector_cnt = ltfbu_fcb_range.fsr_sector_count,
-        .fl_fcb.f_ranges = &ltfbu_fcb_range,
+        .fl_fcb.f_sectors = ltfbu_fcb_areas,
+        .fl_fcb.f_sector_cnt = sizeof(ltfbu_fcb_areas) / sizeof(ltfbu_fcb_areas[0]),
         .fl_fcb.f_magic = 0x7EADBADF,
         .fl_fcb.f_version = 0,
     };
 
-    rc = flash_area_erase(&ltfbu_fcb_range.fsr_flash_area, 0,
-                     ltfbu_fcb_range.fsr_flash_area.fa_size);
-    TEST_ASSERT_FATAL(rc == 0);
-
-    rc = fcb2_init(&ltfbu_fcb_log.fl_fcb);
-    TEST_ASSERT_FATAL(rc == 0);
-
-    if (cfg->bmark_count > 0) {
-        log_fcb_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count, false);
+    for (i = 0; i < ltfbu_fcb_log.fl_fcb.f_sector_cnt; i++) {
+        rc = flash_area_erase(&ltfbu_fcb_areas[i], 0,
+                              ltfbu_fcb_areas[i].fa_size);
+        TEST_ASSERT_FATAL(rc == 0);
     }
+    rc = fcb_init(&ltfbu_fcb_log.fl_fcb);
+    TEST_ASSERT_FATAL(rc == 0);
 
     log_register("log", &ltfbu_log, &log_fcb_handler, &ltfbu_fcb_log,
                  LOG_SYSLEVEL);
+    
 }
 
 void
@@ -232,6 +261,7 @@ ltfbu_test_once(const struct ltfbu_cfg *cfg)
 {
     uint32_t start_idx;
     int i;
+    int rc = 0;
 
     ltfbu_init(cfg);
 
@@ -242,12 +272,21 @@ ltfbu_test_once(const struct ltfbu_cfg *cfg)
      *     a. All expected entries are visited.
      *     b. No extra entries are visited.
      *
-     * This procedure is repeated three times to ensure that the FCB is rotated
+     * This procedure is repeated six times to ensure that the FCB is rotated
      * between walks.
      */
-    for (i = 0; i < 3; i++) {
-        ltfbu_populate_log(cfg->pop_count);
+    ltfbu_populate_log(cfg->pop_count);
 
+    if (cfg->bmark_count > 0) {
+#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
+        rc = log_fcb_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count, true);
+#else
+        rc = log_fcb_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count, false);
+#endif
+        TEST_ASSERT_FATAL(rc == 0);
+    }
+
+    for (i = 0; i < 6; i++) {
         start_idx = 0;
         while (start_idx < ltfbu_entry_idxs[ltfbu_num_entry_idxs - 1]) {
             ltfbu_verify_log(start_idx);
