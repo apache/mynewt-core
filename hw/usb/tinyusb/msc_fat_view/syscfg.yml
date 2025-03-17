@@ -97,10 +97,12 @@ syscfg.defs:
         description: >
             If set to 1, adds 'Drop image here' file.
         value: 0
+        restrictions:
+            - 'MSC_FAT_VIEW_UPDATE_HANDLER if 1'
     MSC_FAT_VIEW_UPDATE_HANDLER:
         description: >
             If set to 1, image can be dropped to upgrade firmware.
-        value: 0
+        value: 1
     MSC_FAT_VIEW_SYSTEM_VOLUME_INFORMATION:
         description: >
             If set to 1, adds 'System Volume Information' file.
