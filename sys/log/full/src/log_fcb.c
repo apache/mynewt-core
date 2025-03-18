@@ -211,20 +211,19 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
 static int
 log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 {
-    struct fcb *fcb;
-    struct fcb_log *fcb_log;
+    struct fcb_log *fcb_log = (struct fcb_log *)log->l_arg;
+    struct fcb *fcb = &fcb_log->fl_fcb;
     struct flash_area *old_fa;
     int rc = 0;
 #if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
     int active_id;
     uint32_t idx;
+    struct log_fcb_bset *bset = &fcb_log->fl_bset;
 #endif
+
 #if MYNEWT_VAL(LOG_STATS)
     int cnt;
 #endif
-
-    fcb_log = (struct fcb_log *)log->l_arg;
-    fcb = &fcb_log->fl_fcb;
 
     /* Cache active ID before appending */
 #if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
@@ -280,9 +279,8 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
         /* The FCB needs to be rotated, reinit previously allocated
          * bookmarks
          */
-        log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
-                            fcb_log->fl_bset.lfs_cap,
-                            fcb_log->fl_bset.lfs_en_sect_bmarks);
+        log_fcb_init_bmarks(fcb_log, bset->lfs_bmarks, bset->lfs_cap,
+                            bset->lfs_en_sect_bmarks);
 #endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
@@ -301,12 +299,22 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 #if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
     /* Add bookmark if entry is added to a new sector */
     if (!rc && log->l_log->log_type != LOG_TYPE_STREAM) {
-        if (fcb->f_active_id != active_id) {
+        /* If sector bookmarks are enabled, add a bookmark if the entry is
+         * added to a new sector (active_id change) or if the the first sector
+         * bookmark is not set yet.
+         */
+        if (bset->lfs_en_sect_bmarks &&
+            (!bset->lfs_bmarks[bset->lfs_sect_cap - 1].lfb_entry.fe_area ||
+             fcb->f_active_id != active_id)) {
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
             idx = g_log_info.li_next_index;
 #else
             idx = log->l_idx;
 #endif
+            if (!bset->lfs_bmarks[bset->lfs_sect_cap - 1].lfb_entry.fe_area) {
+                bset->lfs_next_sect = bset->lfs_sect_cap - 1;
+            }
+
             log_fcb_add_bmark(fcb_log, loc, idx, true);
         }
     }
@@ -703,15 +711,25 @@ log_fcb_flush(struct log *log)
 {
     struct fcb_log *fcb_log;
     struct fcb *fcb;
+    int rc;
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
+    rc = fcb_clear(fcb);
+
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
+    /* Reinit previously allocated bookmarks */
+    log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
+                        fcb_log->fl_bset.lfs_cap,
+                        fcb_log->fl_bset.lfs_en_sect_bmarks);
+#else
     log_fcb_clear_bmarks(fcb_log);
 #endif
+#endif
 
-    return fcb_clear(fcb);
+    return rc;
 }
 
 static int
