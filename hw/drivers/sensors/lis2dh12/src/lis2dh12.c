@@ -3194,7 +3194,9 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
     if (rc) {
         goto err;
     }
-//    lis2dh12_shell_init();
+#if MYNEWT_VAL(LIS2DH12_CLI)
+    lis2dh12_shell_init();
+#endif
     lis2dh12->cfg.read_mode.int_cfg = cfg->read_mode.int_cfg;
     lis2dh12->cfg.read_mode.int_num = cfg->read_mode.int_num;
     lis2dh12->cfg.read_mode.mode = cfg->read_mode.mode;

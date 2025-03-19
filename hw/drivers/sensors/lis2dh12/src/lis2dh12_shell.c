@@ -25,7 +25,7 @@
 #include "lis2dh12/lis2dh12.h"
 #include "lis2dh12_priv.h"
 
-#if MYNEWT_VAL(LIS2DH12_CLI) && MYNEWT_VAL(SENSOR_CLI)
+#if MYNEWT_VAL(LIS2DH12_CLI)
 
 #include "shell/shell.h"
 #include "parse/parse.h"
@@ -166,9 +166,16 @@ lis2dh12_shell_cmd_read(int argc, char **argv)
         lis2dh12_calc_acc_ms2(y, &fy);
         lis2dh12_calc_acc_ms2(z, &fz);
                 
+#if MYNEWT_VAL(SENSOR_CLI)
         console_printf("x:%s ", sensor_ftostr(fx, tmpstr, 13));
         console_printf("y:%s ", sensor_ftostr(fy, tmpstr, 13));
         console_printf("z:%s\n", sensor_ftostr(fz, tmpstr, 13));
+#else
+        (void) tmpstr;
+        console_printf("x:%ld ", (int32_t) (fx * 1000.0f));
+        console_printf("y:%ld ", (int32_t) (fy * 1000.0f));
+        console_printf("z:%ld\n", (int32_t) (fz * 1000.0f));
+#endif
     }
 
     return 0;
