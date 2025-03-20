@@ -42,8 +42,9 @@ extern "C" {
 #define MBEDTLS_NO_PLATFORM_ENTROPY
 #undef MBEDTLS_NET_C
 
-#ifndef TEST
 #undef MBEDTLS_SELF_TEST
+#if MYNEWT_VAL(TEST)
+#define MBEDTLS_SELF_TEST
 #endif
 
 #define MBEDTLS_SHA256_SMALLER          /* Comes with performance hit */
