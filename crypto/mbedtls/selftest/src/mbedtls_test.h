@@ -56,6 +56,7 @@
 #include "mbedtls/timing.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/xtea.h"
+#include "gcm_mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {
