@@ -28,5 +28,3 @@ pkg.deps:
     - "@apache-mynewt-core/sys/log"
     - "@apache-mynewt-core/crypto/mbedtls"
     - "@apache-mynewt-core/crypto/tinycrypt"
-
-pkg.cflags: '-DMBEDTLS_USER_CONFIG_FILE="mbedtls/config_mynewt.h"'
