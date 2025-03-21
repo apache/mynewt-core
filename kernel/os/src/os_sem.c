@@ -35,6 +35,10 @@ os_sem_init(struct os_sem *sem, uint16_t tokens)
 {
     os_error_t ret;
 
+    if (!MYNEWT_VAL(OS_SCHEDULING)) {
+        return OS_OK;
+    }
+
     os_trace_api_u32x2(OS_TRACE_ID_SEM_INIT, (uint32_t)(uintptr_t)sem, (uint32_t)tokens);
 
     if (!sem) {
@@ -60,6 +64,10 @@ os_sem_release(struct os_sem *sem)
     struct os_task *current;
     struct os_task *rdy;
     os_error_t ret;
+
+    if (!MYNEWT_VAL(OS_SCHEDULING)) {
+        return OS_NOT_STARTED;
+    }
 
     os_trace_api_u32(OS_TRACE_ID_SEM_RELEASE, (uint32_t)(uintptr_t)sem);
 
@@ -128,6 +136,10 @@ os_sem_pend(struct os_sem *sem, os_time_t timeout)
     struct os_task *entry;
     struct os_task *last;
     os_error_t ret;
+
+    if (!MYNEWT_VAL(OS_SCHEDULING)) {
+        return OS_NOT_STARTED;
+    }
 
     os_trace_api_u32x2(OS_TRACE_ID_SEM_PEND, (uint32_t)(uintptr_t)sem, (uint32_t)timeout);
 
