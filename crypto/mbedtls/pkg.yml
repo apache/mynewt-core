@@ -26,11 +26,14 @@ pkg.keywords:
     - tls
 pkg.type: sdk
 
-pkg.cflags:
+app.cflags:
     - '-DMBEDTLS_USER_CONFIG_FILE=<mbedtls/config_mynewt.h>'
+app.cflags.TEST:
+    - '-DTEST'
+
+pkg.cflags:
     - -Wno-maybe-uninitialized
     - -Wno-unknown-warning-option
-pkg.cflags.TEST: -DTEST
 
 pkg.include_dirs:
     - "include"
