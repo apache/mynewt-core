@@ -134,3 +134,6 @@ syscfg.defs:
     MCU_FLASH_ERASED_VAL:
         description: Value read from erased flash.
         value: 0xff
+
+    MCU_PATH:
+        value: '"repos/apache-mynewt-core/hw/mcu/stm/stm32f7xx"'
