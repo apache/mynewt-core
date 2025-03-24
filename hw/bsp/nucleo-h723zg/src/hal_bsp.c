@@ -174,11 +174,11 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
         .hbmd_size = RAM_SIZE,
     },
     [1] = {
-        .hbmd_start = &_dtcmram_start,
+        .hbmd_start = &_dtcm_start,
         .hbmd_size = DTCMRAM_SIZE,
     },
     [2] = {
-        .hbmd_start = &_itcmram_start,
+        .hbmd_start = &_itcm_start,
         .hbmd_size = ITCMRAM_SIZE,
     },
 };

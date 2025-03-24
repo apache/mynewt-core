@@ -35,8 +35,8 @@ extern "C" {
 #define bssnz_t         sec_bss_nz_core
 
 extern uint8_t _ram_start;
-extern uint8_t _dtcmram_start;
-extern uint8_t _itcmram_start;
+extern uint8_t _dtcm_start;
+extern uint8_t _itcm_start;
 extern uint8_t _ram2_start;
 
 #define RAM_SIZE        (320 * 1024)

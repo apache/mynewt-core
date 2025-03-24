@@ -17,9 +17,6 @@
  * under the License.
  */
 
-/* Fragment that goes to MEMORY section */
-#ifndef SECTIONS_REGIONS
-
 #ifdef STACK_REGION
     DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = (128K - STACK_SIZE)
     STACK_RAM (rw) : ORIGIN = 0x20020000 - STACK_SIZE, LENGTH = STACK_SIZE
@@ -27,12 +24,3 @@
     DTCM (rwx) :  ORIGIN = 0x20000000, LENGTH = 128K
 #endif
     ITCM (rx)  :  ORIGIN = 0x00000000, LENGTH = 16K
-
-#else
-/* Fragment that goes into SECTIONS, can provide definition and sections if needed */
-    _itcm_start = ORIGIN(ITCM);
-    _itcm_end = ORIGIN(ITCM) + LENGTH(ITCM);
-    _dtcm_start = ORIGIN(DTCM);
-    _dtcm_end = ORIGIN(DTCM) + LENGTH(DTCM);
-
-#endif
