@@ -1,0 +1,70 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    SIMPLE_FCB_LOG_0:
+        description: >
+            Create and initialize instance of simple log.
+            When set to 0 default instance of simple log is not created,
+            user code can call simple_fcb_log_init() function to initialize
+            instance(es) of logs.
+        value: 1
+
+syscfg.defs.SIMPLE_FCB_LOG_0:
+    SIMPLE_FCB_LOG_0_FLASH_AREA:
+        description: >
+            Flash area for simple log instance.
+        value:
+        restrictions:
+            - $notnull
+
+    SIMPLE_FCB_LOG_0_NAME:
+        description: >
+            Simple log name.
+        value: '"simplelog"'
+
+    SIMPLE_FCB_LOG_0_FCB_MAGIC:
+        description: >
+            Magic number that identifies flash area structure to be FCB.
+        value:
+
+    SIMPLE_FCB_LOG_0_BOOKMARKS:
+        description: >
+            Enable bookmarks for simple log.
+        value: 0
+        restrictions:
+            - 'LOG_FCB_BOOKMARKS if 1'
+
+    SIMPLE_FCB_LOG_0_BOOKMARK_COUNT:
+        description: >
+            Maximum number of bookmarks.  When this value is 0 and SIMPLE_FCB_LOG_0_BOOKMARKS
+            is enabled and LOG_FCB_SECTOR_BOOKMARKS is enabled, bookmarks are allocated
+            on heap and number of bookmarks is sum of flash area sector count and LOG_FCB_NUM_ABS_BOOKMARKS.
+        value: 0
+
+    SIMPLE_FCB_LOG_0_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for instance if simple log.
+        value: 100
+
+syscfg.vals.LOG_FCB:
+    SIMPLE_FCB_LOG_0_FCB_MAGIC: 0x31474F4C
+
+syscfg.vals.LOG_FCB2:
+    SIMPLE_FCB_LOG_0_FCB_MAGIC: 0x32474F4C
