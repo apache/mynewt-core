@@ -17,7 +17,7 @@
  * under the License.
  */
 
-    _dtcmram_start = ORIGIN(DTCM);
-    _dtcmram_limit = ORIGIN(DTCM) + LENGTH(DTCM);
-    _itcmram_start = ORIGIN(ITCM);
-    _itcmram_limit = ORIGIN(ITCM) + LENGTH(ITCM);
+    _dtcm_start = ORIGIN(DTCM);
+    _dtcm_limit = ORIGIN(DTCM) + LENGTH(DTCM);
+    _itcm_start = ORIGIN(ITCM);
+    _itcm_limit = ORIGIN(ITCM) + LENGTH(ITCM);
