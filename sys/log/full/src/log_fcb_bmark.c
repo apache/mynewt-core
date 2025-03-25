@@ -205,6 +205,11 @@ log_fcb_clear_bmarks(struct fcb_log *fcb_log)
     fcb_log->fl_bset.lfs_size = 0;
     fcb_log->fl_bset.lfs_next_non_sect = 0;
     fcb_log->fl_bset.lfs_non_sect_size = 0;
+#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
+    if (fcb_log->fl_bset.lfs_en_sect_bmarks) {
+        fcb_log->fl_bset.lfs_next_sect = fcb_log->fl_bset.lfs_sect_cap - 1;
+    }
+#endif
     memset(fcb_log->fl_bset.lfs_bmarks, 0,
            sizeof(struct log_fcb_bmark) *
            fcb_log->fl_bset.lfs_cap);
