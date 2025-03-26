@@ -43,3 +43,4 @@ syscfg.defs:
 
 syscfg.vals.BOOT_LOADER:
     INCLUDE_IMAGE_HEADER: 0
+    MAIN_STACK_SIZE: 1024
