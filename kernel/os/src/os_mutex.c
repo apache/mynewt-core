@@ -29,6 +29,10 @@ os_mutex_init(struct os_mutex *mu)
 {
     os_error_t ret;
 
+    if (!MYNEWT_VAL(OS_SCHEDULING)) {
+        return OS_OK;
+    }
+
     if (!mu) {
         ret = OS_INVALID_PARM;
         goto done;
@@ -57,6 +61,10 @@ os_mutex_release(struct os_mutex *mu)
     struct os_task *current;
     struct os_task *rdy;
     os_error_t ret;
+
+    if (!MYNEWT_VAL(OS_SCHEDULING)) {
+        return OS_NOT_STARTED;
+    }
 
     os_trace_api_u32(OS_TRACE_ID_MUTEX_RELEASE, (uintptr_t)mu);
 
@@ -144,6 +152,10 @@ os_mutex_pend(struct os_mutex *mu, os_time_t timeout)
     struct os_task *current;
     struct os_task *entry;
     struct os_task *last;
+
+    if (!MYNEWT_VAL(OS_SCHEDULING)) {
+        return OS_NOT_STARTED;
+    }
 
     os_trace_api_u32x2(OS_TRACE_ID_MUTEX_PEND, (uintptr_t)mu, (uint32_t)timeout);
 
