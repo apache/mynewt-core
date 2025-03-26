@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include "syscfg/syscfg.h"
+
     .syntax unified
     .arch   armv6-m
 
@@ -63,6 +65,15 @@ Reset_Handler:
     b       .L_zero_loop
 
 .L_zero_table_done:
+
+#if MYNEWT_VAL_MAIN_STACK_FILL
+    ldr     r0, =MYNEWT_VAL_MAIN_STACK_FILL
+    ldr     r2, =__StackLimit
+    mov     r1, sp
+0:  stm     r2!, {r0}
+    cmp     r2, r1
+    blt     0b
+#endif
 
     ldr     r0, =__HeapBase
     ldr     r1, =__HeapLimit

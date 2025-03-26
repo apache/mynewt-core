@@ -34,6 +34,11 @@ syscfg.defs:
             For bootloader it's main stack, for application this stack is used by interrupts
             and exceptions.
         value: 768
+    MAIN_STACK_FILL:
+        description: >
+            Fill main stack (interrupt stack) with pattern on startup.
+            If not 0, value will be used as a pattern.
+        value: 0
     INCLUDE_IMAGE_HEADER:
         description: Add image header to generated executable.
         value: 1
