@@ -26,3 +26,6 @@ pkg.keywords:
 
 pkg.pre_link_cmds:
     scripts/build_net_core.sh: 100
+
+pkg.link_tables:
+    - net_core_img
