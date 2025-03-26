@@ -1,0 +1,84 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    BLE_TRANSPORT_NETCORE: 1
+
+    BSP_NRF5340_NET:
+        description: 'Set to indicate that BSP has NRF5340 NET'
+        value: 1
+
+    COREDUMP_SKIP_UNUSED_HEAP:
+        description: >
+            Store whole RAM in crash dump.
+            When 1 only part of heap that was used will be dumped, that
+            can reduce size of crash dump.
+        value: 0
+
+syscfg.vals:
+    MCU_DEFAULT_STARTUP: 0
+    CORTEX_DEFAULT_STARTUP: 1
+
+    MYNEWT_DOWNLOADER: nrfjprog
+    JLINK_TARGET: NRF5340_XXAA_NET
+    NRFJPROG_COPROCESSOR: CP_NETWORK
+    # Set default pins for peripherals
+    UART_0_PIN_TX: 20
+    UART_0_PIN_RX: 22
+    UART_0_PIN_RTS: 19
+    UART_0_PIN_CTS: 21
+
+    SPI_0_MASTER_PIN_SCK: 45
+    SPI_0_MASTER_PIN_MOSI: 46
+    SPI_0_MASTER_PIN_MISO: 47
+    SPI_0_SLAVE_PIN_SCK: 45
+    SPI_0_SLAVE_PIN_MOSI: 46
+    SPI_0_SLAVE_PIN_MISO: 47
+    SPI_0_SLAVE_PIN_SS: 44
+
+    I2C_0_PIN_SCL: ARDUINO_PIN_A5
+    I2C_0_PIN_SDA: ARDUINO_PIN_A4
+
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_COREDUMP
+    #Net Core DCDC is enabled from application core
+    #MCU_DCDC_ENABLED: 1
+    MCU_LFCLK_SOURCE: LFXO
+    FLASH_MAP_SYSINIT_STAGE: 15
+
+    # Always use non-blocking API
+    SPI_HAL_USE_NOBLOCK: 1
+
+    # nRF5340 Network Core doesn't have floating point unit
+    HARDFLOAT: 0
+
+syscfg.vals.BLE_CONTROLLER:
+    TIMER_0: 0
+    TIMER_3: 1
+    OS_CPUTIME_FREQ: 32768
+    OS_CPUTIME_TIMER_NUM: 3
+    BLE_LL_RFMGMT_ENABLE_TIME: 1500
+    BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL: 1
+
+    # VDDH is connected in DK
+    BLE_PHY_NRF5340_VDDH: 1
+
+syscfg.vals.BLE_TRANSPORT:
+    BLE_TRANSPORT_HS: nrf5340
