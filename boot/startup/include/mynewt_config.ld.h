@@ -68,9 +68,11 @@
 #if MYNEWT_VAL_RAM_RESIDENT
 #define MYNEWT_CODE RAM
 #elif MYNEWT_VAL_BOOT_LOADER
-#define MYNEWT_CODE BOOT
+#define BOOT FLASH
+#define MYNEWT_CODE FLASH
 #else
-#define MYNEWT_CODE SLOT0
+#define SLOT0 FLASH
+#define MYNEWT_CODE FLASH
 #endif
 #endif
 
