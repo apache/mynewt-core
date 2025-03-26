@@ -109,13 +109,6 @@ INCLUDE "link_tables.ld.h"
         . = ALIGN(4);
     } > FLASH
 
-    .net_core_img :
-    {
-        PROVIDE(net_core_img_start = .);
-        KEEP(*(.net_core_img));
-        PROVIDE(net_core_img_end = .);
-    } > FLASH
-
     .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
