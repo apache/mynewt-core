@@ -55,3 +55,5 @@ pkg.deps.BLE_CONTROLLER:
 pkg.deps.MCU_DEFAULT_STARTUP:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net/startup"
 
+pkg.deps.CORTEX_DEFAULT_STARTUP:
+    - "@apache-mynewt-core/boot/startup"

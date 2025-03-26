@@ -113,5 +113,8 @@ pkg.cflags.MCU_NRF5340_EN_APPROTECT_USERHANDLING:
 pkg.deps.MCU_DEFAULT_STARTUP:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/startup"
 
+pkg.deps.CORTEX_DEFAULT_STARTUP:
+    - "@apache-mynewt-core/boot/startup"
+
 pkg.deps.MCU_MPU_ENABLE:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/mpu"
