@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 struct log;
+struct log_entry_hdr;
 
 #define LOG_VERSION_V3  3
 
@@ -132,10 +133,78 @@ typedef void log_append_cb(struct log *log, uint32_t idx);
 
 /** @typdef log_notify_rotate_cb
  * @brief Callback that is executed each time we are about to rotate a log.
- * 
- * @param log                   The log that is about to rotate 
+ *
+ * @param log                   The log that is about to rotate
  */
 typedef void log_notify_rotate_cb(const struct log *log);
+
+/** @typedef log_trailer_append_cb
+ * @brief Callback that is executed each time the corresponding log entry is
+ * appended to
+ *
+ * @param log                   The log that was just appended to
+ * @param buf                   Buffer to append trailer to
+ * @param buflen                Pointer to the length of the trailer to be filled up
+ *                              optionally
+ * @param loc                   Argument pointing to the location of
+ *                              the entry
+ * @param f_offset              Pointer to the offset(optional) at which append should
+ *                              happen
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+typedef int log_trailer_append_cb(struct log *log, uint8_t *buf,
+                                  uint16_t *buflen, void *loc,
+                                  uint16_t *f_offset);
+
+/** @typedef log_mbuf_trailer_append_cb
+ * @brief Callback that is executed each time the corresponding log entry is
+ * appended to
+ *
+ * @param log                   The log that was just appended to
+ * @param om                    Pointer to the mbuf that contains the log entry
+ * @param loc                   Argument pointing to the location of
+ *                              the entry
+ * @param f_offset              The offset(optional) at which append should
+ *                              happen
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+typedef int log_trailer_mbuf_append_cb(struct log *log, struct os_mbuf *om,
+                                       void *loc, uint16_t f_offset);
+
+/** @typedef log_process_trailer_cb
+ * @brief Callback that is executed each time a trailer is processed
+ *
+ * @param log                   The log that was just appended to
+ * @param arg                   Void pointer for a custom arg
+ * @param dptr                  Pointer to the data buffer
+ * @param len                   Length of the trailer
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+typedef int log_process_trailer_cb(struct log *log, void *arg, const void *dptr,
+                                   uint16_t len);
+
+/** @typedef log_trailer_len_cb
+ * @brief Callback used to read length of trailer in a log entry
+ *
+ * @param log                   The log the trailer is to be read from
+ * @param hdr                   Log entry header of the log entry the log is
+ *                              read from
+ * @return                      Length of the appended trailer
+ */
+typedef uint16_t log_trailer_len_cb(struct log *log, const struct log_entry_hdr *hdr);
+
+/** @typedef log_trailer_data_len_cb
+ * @brief Callback used to read length of trailer data in a log entry
+ *
+ * @param log                   The log the trailer is to be read from
+ * @param hdr                   Log entry header of the log entry the log is
+ *                              read from
+ * @return                      Length of the appended trailer data
+ */
+typedef uint16_t log_trailer_data_len_cb(struct log *log, const struct log_entry_hdr *hdr);
 
 #ifdef __cplusplus
 }
