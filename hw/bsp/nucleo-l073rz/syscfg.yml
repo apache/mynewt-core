@@ -17,14 +17,6 @@
 # under the License.
 #
 
-syscfg.defs.BUS_DRIVER_PRESENT:
-    BSP_FLASH_SPI_NAME:
-        description: 'SPIFLASH device name'
-        value: '"spiflash0"'
-    BSP_FLASH_SPI_BUS:
-        description: 'bus name SPIFLASH is connected to'
-        value: '"spi0"'
-
 syscfg.vals:
     STM32_FLASH_SIZE_KB: 192
     MCU_RAM_START: 0x20000000
