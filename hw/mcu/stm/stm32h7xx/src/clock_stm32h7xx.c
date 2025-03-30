@@ -47,6 +47,7 @@ SystemClock_Config(void)
 {
     RCC_OscInitTypeDef osc_init = {0};
     RCC_ClkInitTypeDef clk_init = {0};
+    RCC_PeriphCLKInitTypeDef per_clk_init = {0};
     HAL_StatusTypeDef status;
 
     /* Enable the MCU instruction cache */
@@ -168,6 +169,11 @@ SystemClock_Config(void)
 
     osc_init.PLL.PLLRGE = MYNEWT_VAL(STM32_CLOCK_PLLRGE);
 
+    if (MYNEWT_VAL(STM32_CLOCK_HSI48)) {
+        osc_init.OscillatorType |= RCC_OSCILLATORTYPE_HSI48;
+        osc_init.HSI48State = RCC_HSI48_ON;
+    }
+
     status = HAL_RCC_OscConfig(&osc_init);
     if (status != HAL_OK) {
         assert(0);
@@ -231,5 +237,10 @@ SystemClock_Config(void)
         assert(0);
     }
 #endif
+    if (MYNEWT_VAL(STM32_CLOCK_USBSEL)) {
+        per_clk_init.PeriphClockSelection = RCC_PERIPHCLK_USB;
+        per_clk_init.UsbClockSelection = MYNEWT_VAL(STM32_CLOCK_USBSEL);
+        HAL_RCCEx_PeriphCLKConfig(&per_clk_init);
+    }
 }
 #endif

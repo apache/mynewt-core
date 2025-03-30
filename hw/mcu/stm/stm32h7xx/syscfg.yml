@@ -70,6 +70,18 @@ syscfg.defs:
         description: HSI calibration value
         value: 'RCC_HSICALIBRATION_DEFAULT'
 
+    STM32_CLOCK_HSI48:
+        description: Enable high-speed 48MHz internal clock source
+        value: 0
+
+    STM32_CLOCK_USBSEL:
+        description: >
+            Select USB clock source.
+            0 - disabled
+            Other acceptable values
+            RCC_USBCLKSOURCE_PLL, RCC_USBCLKSOURCE_PLL3, RCC_USBCLKSOURCE_HSI48
+        value: RCC_USBCLKSOURCE_PLL
+
     STM32_CLOCK_PLL_PLLM:
         description: PLL config M parameter
         value: 0
@@ -137,3 +149,6 @@ syscfg.defs:
 syscfg.vals:
     MCU_RAM_START: 0x24000000
     MCU_RAM_SIZE: 0x1C000
+
+syscfg.vals.STM32_CLOCK_HSI48:
+    STM32_CLOCK_USBSEL: RCC_USBCLKSOURCE_HSI48
