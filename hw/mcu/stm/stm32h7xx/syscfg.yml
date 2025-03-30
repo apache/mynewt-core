@@ -94,10 +94,6 @@ syscfg.defs:
         description: PLL input frequency range
         value: 0
 
-    STM32_CLOCK_ENABLE_OVERDRIVE:
-        description: Turn on over-drive mode (reach higher clock rates)
-        value: 0
-
     STM32_CLOCK_AHB_DIVIDER:
         description: AHB prescaler
         value: 0
