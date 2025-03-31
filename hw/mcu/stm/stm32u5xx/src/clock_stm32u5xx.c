@@ -207,6 +207,8 @@ SystemClock_Config(void)
     osc_init.PLL.PLLP = MYNEWT_VAL(STM32_CLOCK_PLL_PLLP);
     osc_init.PLL.PLLQ = MYNEWT_VAL(STM32_CLOCK_PLL_PLLQ);
     osc_init.PLL.PLLR = MYNEWT_VAL(STM32_CLOCK_PLL_PLLR);
+    osc_init.PLL.PLLRGE = MYNEWT_VAL(STM32_CLOCK_PLL_PLLRGE);
+
     if (MYNEWT_VAL(STM32_CLOCK_PLL_BOOST_DIV) >= 0) {
         osc_init.PLL.PLLMBOOST = MYNEWT_VAL(STM32_CLOCK_PLL_BOOST_DIV);
     }
@@ -237,9 +239,14 @@ SystemClock_Config(void)
 #error "APB2 clock divider is invalid"
 #endif
 
+#if !IS_RCC_PCLK(MYNEWT_VAL(STM32_CLOCK_APB3_DIVIDER))
+#error "APB2 clock divider is invalid"
+#endif
+
     clk_init.AHBCLKDivider = MYNEWT_VAL(STM32_CLOCK_AHB_DIVIDER);
     clk_init.APB1CLKDivider = MYNEWT_VAL(STM32_CLOCK_APB1_DIVIDER);
     clk_init.APB2CLKDivider = MYNEWT_VAL(STM32_CLOCK_APB2_DIVIDER);
+    clk_init.APB3CLKDivider = MYNEWT_VAL(STM32_CLOCK_APB3_DIVIDER);
 
 #if !IS_FLASH_LATENCY(MYNEWT_VAL(STM32_FLASH_LATENCY))
 #error "Flash latency value is invalid"

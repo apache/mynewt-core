@@ -99,6 +99,10 @@ syscfg.defs:
         description: PLL config R parameter
         value: 0
 
+    STM32_CLOCK_PLL_PLLRGE:
+        description: PLL input frequency range
+        value: RCC_PLLVCIRANGE_0
+
     STM32_CLOCK_PLL_BOOST_DIV:
         description: >
             Divider for PLL boost required when target SYSCLK > 55MHz.
@@ -108,15 +112,19 @@ syscfg.defs:
         value: RCC_PLLMBOOST_DIV1
 
     STM32_CLOCK_AHB_DIVIDER:
-        description: AHB CLK1 prescaler (80MHz max)
+        description: AHB CLK1 prescaler (AHB 160MHz max)
         value: 0
 
     STM32_CLOCK_APB1_DIVIDER:
-        description: APB low-speed prescaler (80MHz max)
+        description: APB prescaler (APB1 160MHz max)
         value: 0
 
     STM32_CLOCK_APB2_DIVIDER:
-        description: APB high-speed prescaler (80MHz max)
+        description: APB prescaler (APB2 160MHz max)
+        value: 0
+
+    STM32_CLOCK_APB3_DIVIDER:
+        description: APB prescaler (APB3 160MHz max)
         value: 0
 
     STM32_FLASH_LATENCY:
