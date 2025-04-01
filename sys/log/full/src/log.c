@@ -298,8 +298,10 @@ log_find(const char *name)
 struct log_read_hdr_arg {
     struct log_entry_hdr *hdr;
     int read_success;
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
     bool trailer_exists;
     void *arg_trailer;
+#endif
 };
 
 static int
@@ -323,9 +325,10 @@ log_read_hdr_trailer_walk(struct log *log, struct log_offset *log_offset,
         }
     }
 
-    if (arg->hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
-        if (log->l_process_trailer_cb) {
-            rc = log->l_process_trailer_cb(log, arg->arg_trailer, dptr, len);
+    if (arg->hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT && log->l_th) {
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+        if (log->l_th->log_process_trailer) {
+            rc = log->l_th->log_process_trailer(log, arg->arg_trailer, dptr, len);
             if (!rc) {
                 arg->read_success = 1;
                 arg->trailer_exists = true;
@@ -336,6 +339,7 @@ log_read_hdr_trailer_walk(struct log *log, struct log_offset *log_offset,
         }
     } else {
         arg->trailer_exists = false;
+#endif
     }
 
     /* Abort the walk; only one header needed. */
@@ -358,45 +362,53 @@ log_read_last_hdr_trailer(struct log *log, struct log_entry_hdr *out_hdr,
                           bool *trailer_exists)
 {
     struct log_read_hdr_arg arg;
-    uint8_t trailer_arg[LOG_FCB_FLAT_BUF_SIZE] = {0};
     struct log_offset log_offset = {};
-    int sr;
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    uint8_t trailer_arg[LOG_FCB_FLAT_BUF_SIZE] = {0};
     uint16_t len = 0;
+    int sr;
+#endif
 
     arg.hdr = out_hdr;
     arg.read_success = 0;
-    arg.trailer_exists = false;
-    arg.arg_trailer = trailer_arg;
 
     log_offset.lo_arg = &arg;
     log_offset.lo_ts = -1;
     log_offset.lo_index = 0;
     log_offset.lo_data_len = 0;
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    arg.trailer_exists = false;
+    arg.arg_trailer = trailer_arg;
+#endif
 
     log_walk(log, log_read_hdr_trailer_walk, &log_offset);
     if (!arg.read_success) {
         return -1;
     }
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
     if (trailer_exists) {
         *trailer_exists = arg.trailer_exists;
     }
 
     if (arg.trailer_exists) {
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
         len = log_trailer_data_len(log, out_hdr);
-        OS_ENTER_CRITICAL(sr);
         /* If the trailer datalen is less than the size of the trailer arg
          * buffer, we can use the buffer directly. Otherwise, we need to
          * allocate memory for the trailer data and treat the l_trailer_arg
          * as a pointer to the trailer.
          */
+        OS_ENTER_CRITICAL(sr);
         if (len <= sizeof(log->l_trailer_arg)) {
-            log->l_trailer_arg = (void *)(uintptr_t)(*(uint32_t *)arg.arg_trailer);
+            memcpy(&log->l_trailer_arg, arg.arg_trailer, len);
         } else {
             memcpy(log->l_trailer_arg, arg.arg_trailer, len);
         }
         OS_EXIT_CRITICAL(sr);
+#endif
     }
+#endif
 
     return 0;
 }
@@ -510,47 +522,69 @@ log_len_in_medium(struct log *log, uint16_t len)
     return len;
 }
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
 uint16_t
 log_trailer_len(struct log *log, const struct log_entry_hdr *hdr)
 {
-    if (log->l_trailer_len_cb) {
-        return log->l_trailer_len_cb(log, hdr);
-    } else {
-        return 0;
+    if (log->l_th) {
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+        if (log->l_th->log_trailer_len) {
+            return log->l_th->log_trailer_len(log, hdr);
+        } else {
+            return 0;
+        }
+#endif
     }
+    return 0;
 }
 
 uint16_t
 log_trailer_data_len(struct log *log, const struct log_entry_hdr *hdr)
 {
-    if (log->l_trailer_len_cb) {
-        return log->l_trailer_data_len_cb(log, hdr);
-    } else {
-        return 0;
+    if (log->l_th) {
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+        if (log->l_th->log_trailer_data_len) {
+            return log->l_th->log_trailer_data_len(log, hdr);
+        } else {
+            return 0;
+        }
+ #endif
     }
+    return 0;
 }
 
 int
 log_trailer_append(struct log *log, uint8_t *buf, uint16_t *buflen,
                    void *loc, uint16_t *f_offset)
 {
-    if (log->l_trailer_append_cb) {
-        return log->l_trailer_append_cb(log, buf, buflen, loc, f_offset);
-    } else {
-        return SYS_ENOTSUP;
+    if (log->l_th) {
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+        if (log->l_th->log_trailer_append) {
+            return log->l_th->log_trailer_append(log, buf, buflen, loc, f_offset);
+        } else {
+            return SYS_ENOTSUP;
+        }
+#endif
     }
+    return SYS_ENOTSUP;
 }
 
 int
 log_mbuf_trailer_append(struct log *log, struct os_mbuf *om, void *loc,
                         uint16_t f_offset)
 {
-    if (log->l_trailer_mbuf_append_cb) {
-        return log->l_trailer_mbuf_append_cb(log, om, loc, f_offset);
-    } else {
-        return SYS_ENOTSUP;
+    if (log->l_th) {
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+        if (log->l_th->log_trailer_mbuf_append) {
+            return log->l_th->log_trailer_mbuf_append(log, om, loc, f_offset);
+        } else {
+            return SYS_ENOTSUP;
+        }
+#endif
     }
+    return SYS_ENOTSUP;
 }
+#endif
 
 void
 log_set_rotate_notify_cb(struct log *log, log_notify_rotate_cb *cb)
@@ -710,7 +744,7 @@ int
 log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
                  void *data, uint16_t len)
 {
-    struct log_entry_hdr hdr;
+    struct log_entry_hdr *hdr;
     int rc;
 
     LOG_STATS_INC(log, writes);
@@ -720,20 +754,20 @@ log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
         goto err;
     }
 
-    hdr = *(struct log_entry_hdr *)data;
-    rc = log_append_prepare(log, module, level, etype, &hdr);
+    hdr = (struct log_entry_hdr *)data;
+    rc = log_append_prepare(log, module, level, etype, hdr);
     if (rc != 0) {
         LOG_STATS_INC(log, drops);
         goto err;
     }
 
-    rc = log->l_log->log_append(log, data, len + log_hdr_len(&hdr));
+    rc = log->l_log->log_append(log, data, len + log_hdr_len(hdr));
     if (rc != 0) {
         LOG_STATS_INC(log, errs);
         goto err;
     }
 
-    log_call_append_cb(log, hdr.ue_index);
+    log_call_append_cb(log, hdr->ue_index);
 
     return (0);
 err:
@@ -1149,7 +1183,9 @@ log_flush(struct log *log)
 {
     int rc;
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
     log->l_trailer_arg = (uintptr_t)0;
+#endif
 
     rc = log->l_log->log_flush(log);
     if (rc != 0) {

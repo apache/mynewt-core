@@ -27,6 +27,7 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     int rc = 0;
     struct cbmem *cbmem;
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
     uint8_t trailer[LOG_MAX_TRAILER_LEN] = {0};
     uint16_t trailer_len = 0;
     struct cbmem_scat_gath *sg = (struct cbmem_scat_gath *)&trailer[0];
@@ -34,6 +35,9 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
     trailer_len = log_trailer_len(log, hdr);
 
     *sg = (struct cbmem_scat_gath) {
+#else
+    struct cbmem_scat_gath sg = {
+#endif
         .entries = (struct cbmem_scat_gath_entry[]) {
             {
                 .flat_buf = hdr,
@@ -47,14 +51,28 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
                 .flat_buf = body,
                 .flat_len = body_len,
             },
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
             {
                 .flat_buf = trailer,
                 .flat_len = 0
-            }
+            },
+            {
+                .flat_buf = NULL,
+                .flat_len = 0,
+            },
+        },
+        .count = 5,
+#else
+            {
+                .flat_buf = NULL,
+                .flat_len = 0,
+            },
         },
         .count = 4,
+#endif
     };
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         sg->entries[1].flat_len = LOG_IMG_HASHLEN;
     }
@@ -72,6 +90,15 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
     cbmem = (struct cbmem *) log->l_arg;
 
     rc = cbmem_append_scat_gath(cbmem, sg);
+#else
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        sg.entries[1].flat_len = LOG_IMG_HASHLEN;
+    }
+
+    cbmem = (struct cbmem *) log->l_arg;
+
+    rc = cbmem_append_scat_gath(cbmem, &sg);
+#endif
 
     return rc;
 }
@@ -115,10 +142,12 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
     }
 
     if (hdr->ue_flags & LOG_FLAGS_TRAILER_SUPPORT) {
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
         rc = log_mbuf_trailer_append(log, om, NULL, 0);
         if (rc) {
             return rc;
         }
+#endif
     }
 
     cbmem = (struct cbmem *) log->l_arg;

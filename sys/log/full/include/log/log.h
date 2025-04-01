@@ -77,6 +77,74 @@ struct log_storage_info {
 };
 #endif
 
+/** @typedef log_trailer_append_func_t
+ * @brief Callback that is executed each time the corresponding log entry is
+ * appended to
+ *
+ * @param log                   The log that was just appended to
+ * @param buf                   Buffer to append trailer to
+ * @param buflen                Pointer to the length of the trailer to be filled up
+ *                              optionally
+ * @param loc                   Argument pointing to the location of
+ *                              the entry
+ * @param f_offset              Pointer to the offset(optional) at which append should
+ *                              happen
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+typedef int log_trailer_append_func_t(struct log *log, uint8_t *buf,
+                                      uint16_t *buflen, void *loc,
+                                      uint16_t *f_offset);
+
+/** @typedef log_mbuf_trailer_append_func_t
+ * @brief Callback that is executed each time the corresponding log entry is
+ * appended to
+ *
+ * @param log                   The log that was just appended to
+ * @param om                    Pointer to the mbuf that contains the log entry
+ * @param loc                   Argument pointing to the location of
+ *                              the entry
+ * @param f_offset              The offset(optional) at which append should
+ *                              happen
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+typedef int log_trailer_mbuf_append_func_t(struct log *log, struct os_mbuf *om,
+                                           void *loc, uint16_t f_offset);
+
+/** @typedef log_process_trailer_func_t
+ * @brief Callback that is executed each time a trailer is processed
+ *
+ * @param log                   The log that was just appended to
+ * @param arg                   Void pointer for a custom arg
+ * @param dptr                  Pointer to the data buffer
+ * @param len                   Length of the trailer
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+typedef int log_process_trailer_func_t(struct log *log, void *arg, const void *dptr,
+                                       uint16_t len);
+
+/** @typedef log_trailer_len_func_t
+ * @brief Callback used to read length of trailer in a log entry
+ *
+ * @param log                   The log the trailer is to be read from
+ * @param hdr                   Log entry header of the log entry the log is
+ *                              read from
+ * @return                      Length of the appended trailer
+ */
+typedef uint16_t log_trailer_len_func_t(struct log *log, const struct log_entry_hdr *hdr);
+
+/** @typedef log_trailer_data_len_func_t
+ * @brief Callback used to read length of trailer data in a log entry
+ *
+ * @param log                   The log the trailer is to be read from
+ * @param hdr                   Log entry header of the log entry the log is
+ *                              read from
+ * @return                      Length of the appended trailer data
+ */
+typedef uint16_t log_trailer_data_len_func_t(struct log *log, const struct log_entry_hdr *hdr);
+
 typedef int (*log_walk_func_t)(struct log *log, struct log_offset *log_offset,
         const void *dptr, uint16_t len);
 
@@ -137,8 +205,8 @@ struct log_handler {
 #define LOG_IMG_HASHLEN 4
 
 /* Flags used to indicate type of data in reserved payload */
-#define LOG_FLAGS_IMG_HASH    (1 << 0)
-#define LOG_FLAGS_TRAILER_SUPPORT (1 << 1)
+#define LOG_FLAGS_IMG_HASH           (1 << 0)
+#define LOG_FLAGS_TRAILER_SUPPORT    (1 << 1)
 
 #if MYNEWT_VAL(LOG_VERSION) == 3
 struct log_entry_hdr {
@@ -232,6 +300,15 @@ STATS_SECT_END
 #define LOG_STATS_INCN(log, name, cnt)
 #endif
 
+/* Trailer support callbacks */
+struct log_trailer_handler {
+    log_trailer_len_func_t *log_trailer_len;
+    log_trailer_data_len_func_t *log_trailer_data_len;
+    log_trailer_append_func_t *log_trailer_append;
+    log_process_trailer_func_t *log_process_trailer;
+    log_trailer_mbuf_append_func_t *log_trailer_mbuf_append;
+};
+
 struct log {
     const char *l_name;
     const struct log_handler *l_log;
@@ -244,14 +321,13 @@ struct log {
 #if !MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t l_idx;
 #endif
-    log_trailer_len_cb *l_trailer_len_cb;
-    log_trailer_data_len_cb *l_trailer_data_len_cb;
-    log_trailer_append_cb *l_trailer_append_cb;
-    log_process_trailer_cb *l_process_trailer_cb;
-    log_trailer_mbuf_append_cb *l_trailer_mbuf_append_cb;
-    void *l_trailer_arg;
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
+#endif
+    /* Gets set when trailer callbacks are registered */
+    struct log_trailer_handler *l_th;
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    void *l_trailer_arg;
 #endif
 };
 
@@ -858,15 +934,15 @@ int log_read_last_hdr_trailer(struct log *log, struct log_entry_hdr *out_hdr,
  * @param lptc   Pointer to the log process trailer callback
  */
 static inline void
-log_register_trailer_cbs(struct log *log, log_trailer_append_cb *ltac,
-                         log_trailer_len_cb *ltlc,
-                         log_trailer_data_len_cb *ltdlc,
-                         log_process_trailer_cb *lptc)
+log_register_trailer_cbs(struct log *log, log_trailer_append_func_t *ltac,
+                         log_trailer_len_func_t *ltlc,
+                         log_trailer_data_len_func_t *ltdlc,
+                         log_process_trailer_func_t *lptc)
 {
-    log->l_trailer_append_cb = ltac;
-    log->l_trailer_len_cb = ltlc;
-    log->l_trailer_data_len_cb = ltdlc;
-    log->l_process_trailer_cb = lptc;
+    log->l_th->log_trailer_append = ltac;
+    log->l_th->log_trailer_len = ltlc;
+    log->l_th->log_trailer_data_len = ltdlc;
+    log->l_th->log_process_trailer = lptc;
 }
 
 /**
@@ -877,9 +953,9 @@ log_register_trailer_cbs(struct log *log, log_trailer_append_cb *ltac,
  */
 static inline void
 log_register_mbuf_trailer_cbs(struct log *log,
-                              log_trailer_mbuf_append_cb *ltmac)
+                              log_trailer_mbuf_append_func_t *ltmac)
 {
-    log->l_trailer_mbuf_append_cb = ltmac;
+    log->l_th->log_trailer_mbuf_append = ltmac;
 }
 #endif
 
