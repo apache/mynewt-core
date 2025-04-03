@@ -56,6 +56,9 @@ pkg.source_files.MSC_FAT_VIEW_HUGE_FILE:
 pkg.source_files.MSC_FAT_VIEW_SLOT0_IMAGE:
     - src/entry_slot0.c
 
+pkg.source_files.MSC_FAT_VIEW_BOOT_BIN:
+    - src/entry_boot_bin.c
+
 pkg.source_files.MSC_FAT_VIEW_SLOT0_HEX:
     - src/entry_slot0_hex.c
 
