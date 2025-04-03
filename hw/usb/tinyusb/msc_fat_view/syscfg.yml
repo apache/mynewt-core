@@ -68,6 +68,10 @@ syscfg.defs:
         description: >
             Show image from slot 0 as a file 'FIRMWARE.IMG'.
         value: 0
+    MSC_FAT_VIEW_BOOT_BIN:
+        description: >
+            Show bootloader bin as a file 'BOOT.BIN'.
+        value: 0
     MSC_FAT_VIEW_SLOT0_HEX:
         description: >
             Show content of slot 0 as a text file 'SLOT0.HEX'.
