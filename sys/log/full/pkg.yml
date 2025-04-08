@@ -29,6 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/sys/log/common"
     - "@apache-mynewt-core/util/cbmem"
+    - "@apache-mynewt-core/time/datetime"
 
 pkg.deps.LOG_FCB:
     - "@apache-mynewt-core/hw/hal"
