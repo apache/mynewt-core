@@ -36,3 +36,11 @@ syscfg.defs:
             When set to 1, USB ID pin connected to PA10 is used to select
             host or device mode.
         value: 0
+    USB_USE_OTG_HS:
+        description:
+            Use USB_OTG_HS peripheral.
+        value: 0
+    USB_AF_USB:
+        description:
+            USB pins alternate function mapping (10 or 12).
+        value: 10

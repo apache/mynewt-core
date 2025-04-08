@@ -62,6 +62,7 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM12'
     TIMER_1_TIM: 'TIM13'
     TIMER_2_TIM: 'TIM14'
+    USB_USE_OTG_HS: 1
 
     # Flasher parameters
     MYNEWT_DOWNLOADER: stflash
