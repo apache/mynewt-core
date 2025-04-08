@@ -26,6 +26,7 @@
 #include "log/log.h"
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_buf_reader.h"
+#include "datetime/datetime.h"
 
 static int
 log_console_dump_cbor_entry(const void *dptr, uint16_t len)
@@ -182,7 +183,19 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
         level_str = level_str_buf;
     }
 
-    if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_TIMESTAMP)) {
+    if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_TIMESTAMP) &&
+        MYNEWT_VAL(LOG_CONSOLE_PRETTY_TIMESTAMP_CLOCK)) {
+        struct os_timeval tv = {
+            .tv_usec = (unsigned int)hdr->ue_ts % 1000000,
+            .tv_sec = (unsigned int)(hdr->ue_ts / 1000000),
+        };
+        struct clocktime ct;
+        timeval_to_clocktime(&tv, NULL, &ct);
+        console_printf("[%d-%02d-%02dT%02d:%02d:%02d.%06u][%s%7s%s][%s]%s ",
+                       ct.year, ct.mon, ct.day,
+                       ct.hour, ct.min, ct.sec, ct.usec,
+                       color, module_name, color_off, level_str, image_hash_str);
+    } else if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_TIMESTAMP)) {
         unsigned int us = (unsigned int)hdr->ue_ts % 1000000;
         unsigned int s = (unsigned int)(hdr->ue_ts / 1000000);
         console_printf("[%u.%06u][%s%7s%s][%s]%s ", s, us, color, module_name, color_off, level_str, image_hash_str);

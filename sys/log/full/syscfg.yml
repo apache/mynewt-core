@@ -52,6 +52,11 @@ syscfg.defs:
             Turned off by default when CONSOLE_TICKS is on.
         value: 1
 
+    LOG_CONSOLE_PRETTY_TIMESTAMP_CLOCK:
+        description: >
+            Print timestamp as time yyyy-mm-ddThh:ss:mm.uuuuuu.
+        value: 0
+
     LOG_FLAGS_IMAGE_HASH:
         description: >
             Enable logging of the first 4 bytes of the image hash. 0 - disable;
