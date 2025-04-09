@@ -20,6 +20,8 @@ MEMORY
 {
   FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x8000
   RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x80000
+  sram_ipc0_tx (rw)  : ORIGIN = 0x20070000, LENGTH = 0x4000
+  sram_ipc0_rx (rw)  : ORIGIN = 0x20074000, LENGTH = 0x4000
 }
 
 /* The bootloader does not contain an image header */
