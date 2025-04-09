@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 struct log;
+struct log_entry_hdr;
 
 #define LOG_VERSION_V3  3
 
@@ -132,8 +133,8 @@ typedef void log_append_cb(struct log *log, uint32_t idx);
 
 /** @typdef log_notify_rotate_cb
  * @brief Callback that is executed each time we are about to rotate a log.
- * 
- * @param log                   The log that is about to rotate 
+ *
+ * @param log                   The log that is about to rotate
  */
 typedef void log_notify_rotate_cb(const struct log *log);
 
