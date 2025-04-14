@@ -83,6 +83,10 @@ def is_ignored(fname: str, ign_dirs: list[str]) -> bool:
     if not re.search(r"\.(c|cpp|h|hpp)$", fname):
         return True
 
+    # Those are linker scripts not C headers.
+    if re.search(r"\.(ld\.h)$", fname):
+        return True
+
     for d in ign_dirs:
         if fname.startswith(d):
             return True
