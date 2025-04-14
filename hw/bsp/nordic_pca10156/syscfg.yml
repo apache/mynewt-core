@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,14 +16,32 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/pwm/pwm_nrf52
-pkg.description: PWM driver for the NRF52
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
+syscfg.defs:
+    BSP_NRF54:
+        description: 'Set to indicate that BSP has NRF54'
+        value: 1
 
-pkg.apis:
-    - PWM_HW_IMPL
-pkg.deps:
-    - "@apache-mynewt-core/hw/drivers/pwm"
-    - "@apache-mynewt-core/hw/mcu/nordic"
+syscfg.vals:
+    # Set default pins for peripherals
+    UART_0_PIN_TX: 36
+    UART_0_PIN_RX: 37
+    UART_0_PIN_RTS: 38
+    UART_0_PIN_CTS: 39
+
+    MCU_RAM_SIZE: 256K
+    MCU_RAM_START: 0x20000000
+
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    MCU_DCDC_ENABLED: 1
+    MCU_LFCLK_SOURCE: LFXO
+
+    MYNEWT_DOWNLOADER: nrfjprog
+    JLINK_TARGET: CORTEX-M33
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x0
+
+syscfg.vals.BLE_CONTROLLER:
+    TIMER_0: 0
+    TIMER_5: 1
+    OS_CPUTIME_FREQ: 32768
+    OS_CPUTIME_TIMER_NUM: 5
+    BLE_LL_RFMGMT_ENABLE_TIME: 1500
