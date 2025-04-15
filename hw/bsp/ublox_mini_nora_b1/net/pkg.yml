@@ -17,15 +17,22 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic/nrf5340/net_core_image
-pkg.description: Package that incorporates net core build into app image
+pkg.name: hw/bsp/ublox_mini_nora_b1/net
+pkg.type: bsp
+pkg.description: BSP definition for the Mini Nora B1 - Net Core
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - nrf5340
+    - nordic
+    - ublox
 
-pkg.pre_link_cmds:
-    scripts/build_net_core.sh: 100
+pkg.cflags:
+    - '-DNRF5340_XXAA_NETWORK'
 
-pkg.link_tables:
-    - net_core_img
+pkg.deps:
+    - "@apache-mynewt-core/hw/scripts"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net"
+    - "@apache-mynewt-core/libc"
+    - "@apache-mynewt-core/sys/flash_map"
+    - "@apache-mynewt-core/hw/drivers/flash/ipc_nrf5340_flash"

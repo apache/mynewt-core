@@ -1,0 +1,129 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    BSP_NRF5340:
+        description: 'Set to indicate that BSP has NRF5340'
+        value: 1
+
+    SOFT_PWM:
+        description: 'Enable soft PWM'
+        value: 0
+
+    BSP_NRF5340_NET_ENABLE:
+       description: >
+            When enabled Network Core of nRF5340 is started on init.
+       value: 0
+
+    BSP_NRF5340_NET_FLASH_ENABLE:
+        description: >
+            When enabled Application core can use Network core flash
+            with ipc flash driver.
+        value: 0
+
+    COREDUMP_SKIP_UNUSED_HEAP:
+        description: >
+            Store whole RAM in crash dump.
+            When 1 only part of heap that was used will be dumped, that
+            can reduce size of crash dump.
+        value: 0
+
+syscfg.vals:
+    MCU_DEFAULT_STARTUP: 0
+    CORTEX_DEFAULT_STARTUP: 1
+
+    # Set default pins for peripherals
+    UART_0_PIN_TX: 20
+    UART_0_PIN_RX: 22
+    UART_0_PIN_RTS: 19
+    UART_0_PIN_CTS: 21
+
+    SPI_0_MASTER_PIN_SCK: 45
+    SPI_0_MASTER_PIN_MOSI: 46
+    SPI_0_MASTER_PIN_MISO: 47
+    SPI_0_SLAVE_PIN_SCK: 45
+    SPI_0_SLAVE_PIN_MOSI: 46
+    SPI_0_SLAVE_PIN_MISO: 47
+    SPI_0_SLAVE_PIN_SS: 44
+
+    I2C_0_PIN_SCL: ARDUINO_PIN_A5
+    I2C_0_PIN_SDA: ARDUINO_PIN_A4
+
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    MCU_DCDC_ENABLED: 1
+
+    # Always use non-blocking API
+    SPI_HAL_USE_NOBLOCK: 1
+
+    QSPI_FLASH_SECTOR_SIZE: 4096
+    QSPI_FLASH_SECTOR_COUNT: 2048
+    QSPI_PIN_CS: 18
+    QSPI_PIN_SCK: 17
+    QSPI_PIN_DIO0: 13
+    QSPI_PIN_DIO1: 14
+    QSPI_PIN_DIO2: 15
+    QSPI_PIN_DIO3: 16
+    # QUAD IO Read (opcode EBh)
+    QSPI_READOC: 4
+    # QUAD IO Page program (opcode 38h)
+    QSPI_WRITEOC: 3
+
+    # Set 192M to 192MHz
+    MCU_HFCLCK192_DIV: 1
+    # Set QSPI clock divider to (6 = (2 * (QSPI_SCK_FREQ + 1)) resulting in 32MHz QSPI clock
+    QSPI_SCK_FREQ: 2
+
+    QSPI_XIP_OFFSET: 0x10000000
+    FLASH_MAP_SYSINIT_STAGE: 15
+
+    # Flasher parameters
+    MYNEWT_DOWNLOADER: nrfjprog
+    JLINK_TARGET: NRF5340_XXAA_APP
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x0
+
+    NET_CORE_IMAGE_TARGET_NAME: "@apache-mynewt-nimble/targets/nordic_pca10121_net-blehci"
+
+syscfg.vals.!BOOT_LOADER:
+    MCU_LFCLK_SOURCE: LFXO
+    MCU_LFCLK_XO_INTCAP: c9pf
+    MCU_HFXO_INTCAP: 8
+
+syscfg.vals.BLE_HOST:
+    BLE_HS_FLOW_CTRL: 1
+
+syscfg.vals.BLE_TRANSPORT:
+    BLE_TRANSPORT_LL: nrf5340
+
+syscfg.vals.BSP_NRF5340_NET_ENABLE:
+    BSP_NRF5340_NET_FLASH_ENABLE: 1
+    BLE_HCI_VS: 1
+
+syscfg.vals.BSP_NRF5340_NET_FLASH_ENABLE:
+    IPC_NRF5340_CHANNELS: 4
+
+syscfg.vals.IPC_NRF5340_FLASH_CLIENT:
+    HAL_FLASH_MAX_DEVICE_COUNT: 3
+
+syscfg.restrictions.BSP_NRF5340_NET_FLASH_ENABLE:
+    - 'IPC_NRF5340_CHANNELS >= 4'
+
+syscfg.restrictions:
+    - '!BSP_NRF5340_NET_FLASH_ENABLE || BSP_NRF5340_NET_ENABLE'
