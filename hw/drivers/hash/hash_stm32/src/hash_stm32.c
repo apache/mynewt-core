@@ -30,13 +30,10 @@ static struct os_mutex gmtx;
  * STM32F415xx and STM32F417xx have a HASH unit that only supports MD5/SHA1
  */
 
-#if defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F479xx) || \
-    defined(STM32F756xx) || defined(STM32F777xx) || defined(STM32F779xx) || \
-    defined(STM32L4A6xx) || defined(STM32L4S5xx) || defined(STM32L4S7xx) || \
-    defined(STM32L4S9xx)
-static uint32_t g_algos = HASH_ALGO_SHA224 | HASH_ALGO_SHA256;
-#else
+#if defined(STM32F415xx) || defined(STM32F417xx)
 static uint32_t g_algos = 0;
+#else
+static uint32_t g_algos = HASH_ALGO_SHA224 | HASH_ALGO_SHA256;
 #endif
 
 static int
