@@ -304,6 +304,15 @@ int fcb2_clear(struct fcb2 *fcb);
  */
 int fcb2_area_info(struct fcb2 *fcb, int sector, int *elemsp, int *bytesp);
 
+/**
+ * Length of data in flash considering alignment
+ *
+ * @param range Active range
+ * @param len Length to be calculated using alignment
+ *
+ */
+int fcb2_len_in_flash(const struct flash_sector_range *range, uint16_t len);
+
 #ifdef __cplusplus
 }
 
