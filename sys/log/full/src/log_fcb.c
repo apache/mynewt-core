@@ -914,7 +914,8 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     uint16_t hdr_len;
     int dlen;
     int rc;
-    struct fcb *fcb_tmp;
+    struct fcb_log fcb_log_tmp;
+    struct fcb_log *fcb_log_ptr;
 
     rc = log_fcb_read(log, entry, &ueh, 0, LOG_BASE_ENTRY_HDR_SIZE);
 
@@ -932,12 +933,19 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
         goto err;
     }
 
-    /* Changing the fcb to be logged to be dst fcb */
-    fcb_tmp = &((struct fcb_log *)log->l_arg)->fl_fcb;
+    /* Cache fcb_log pointer */
+    fcb_log_ptr = (struct fcb_log *)log->l_arg;
 
-    log->l_arg = dst_fcb;
+    /* Cache the fcb log, so that we preserve original fcb pointer */
+    fcb_log_tmp = *fcb_log_ptr;
+    fcb_log_tmp.fl_fcb = *dst_fcb;
+    log->l_arg = &fcb_log_tmp;
     rc = log_fcb_append(log, data, dlen);
-    log->l_arg = fcb_tmp;
+
+    /* Restore the original fcb_log pointer */
+    log->l_arg = fcb_log_ptr;
+    *dst_fcb = fcb_log_tmp.fl_fcb;
+
     if (rc) {
         goto err;
     }
