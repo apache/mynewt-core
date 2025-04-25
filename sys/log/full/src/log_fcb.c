@@ -960,24 +960,19 @@ err:
  * @param log      Log this operation applies to
  * @param src_fcb  FCB area which is the source of data
  * @param dst_fcb  FCB area which is the target
- * @param offset   Flash offset where to start the copy
+ * @param entry    Location in src_fcb to start copy from
  *
  * @return 0 on success; non-zero on error
  */
 static int
 log_fcb_copy(struct log *log, struct fcb *src_fcb, struct fcb *dst_fcb,
-             uint32_t offset)
+             struct fcb_entry *entry)
 {
-    struct fcb_entry entry;
     int rc;
 
     rc = 0;
-    memset(&entry, 0, sizeof(entry));
-    while (!fcb_getnext(src_fcb, &entry)) {
-        if (entry.fe_elem_off < offset) {
-            continue;
-        }
-        rc = log_fcb_copy_entry(log, &entry, dst_fcb);
+    while (!fcb_getnext(src_fcb, entry)) {
+        rc = log_fcb_copy_entry(log, entry, dst_fcb);
         if (rc) {
             break;
         }
@@ -1038,7 +1033,7 @@ log_fcb_rtr_erase(struct log *log)
     }
 
     /* Copy to scratch */
-    rc = log_fcb_copy(log, fcb, &fcb_scratch, entry.fe_elem_off);
+    rc = log_fcb_copy(log, fcb, &fcb_scratch, &entry);
     if (rc) {
         goto err;
     }
@@ -1049,8 +1044,9 @@ log_fcb_rtr_erase(struct log *log)
         goto err;
     }
 
+    memset(&entry, 0, sizeof(entry));
     /* Copy back from scratch */
-    rc = log_fcb_copy(log, &fcb_scratch, fcb, 0);
+    rc = log_fcb_copy(log, &fcb_scratch, fcb, &entry);
 
 err:
     return (rc);
