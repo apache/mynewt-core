@@ -68,7 +68,7 @@ struct stm32_hal_spi {
     uint8_t tx_in_prog:1;             /* slave: tx'ing user data not def */
     uint8_t selected:1;               /* slave: if we see SS */
     uint8_t def_char[4];              /* slave: default data to tx */
-    struct stm32_hal_spi_cfg *cfg;
+    struct stm32_hal_spi_cfg cfg;
     hal_spi_txrx_cb txrx_cb_func;     /* callback function */
     void            *txrx_cb_arg;     /* callback arguments */
 };
@@ -282,7 +282,7 @@ spi_ss_isr(void *arg)
     uint16_t reg;
 
     spi_stat.ss_irq++;
-    ss = hal_gpio_read(spi->cfg->ss_pin);
+    ss = hal_gpio_read(spi->cfg.ss_pin);
     if (ss == 0 && !spi->selected) {
         /*
          * We're now seeing chip select. Enable SPI, SPI interrupts.
@@ -450,7 +450,7 @@ hal_spi_init(int spi_num, void *usercfg, uint8_t spi_type)
      */
     STM32_HAL_SPI_RESOLVE(spi_num, spi);
 
-    spi->cfg = usercfg;
+    spi->cfg = *(struct stm32_hal_spi_cfg *)usercfg;
     spi->slave = (spi_type == HAL_SPI_TYPE_SLAVE);
     switch (spi_num) {
 #if SPI_0_ENABLED
@@ -638,7 +638,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 
     init = &spi->handle.Init;
 
-    cfg = spi->cfg;
+    cfg = &spi->cfg;
 
     if (!spi->slave) {
         spi->handle.Init.NSS = SPI_NSS_HARD_OUTPUT;
@@ -1040,7 +1040,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     }
     __HAL_DISABLE_INTERRUPTS(sr);
     spi_stat.tx++;
-    __HAL_SPI_ENABLE(&spi->handle);
+    __HAL_ENABLE_INTERRUPTS(sr);
     if (rxbuf) {
         rc = HAL_SPI_TransmitReceive(&spi->handle, (uint8_t *)txbuf,
                                      (uint8_t *)rxbuf, len,
@@ -1049,7 +1049,6 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
         rc = HAL_SPI_Transmit(&spi->handle, (uint8_t *)txbuf,
                               len, STM32_HAL_SPI_TIMEOUT);
     }
-    __HAL_ENABLE_INTERRUPTS(sr);
     if (rc != HAL_OK) {
         rc = -1;
         goto err;
@@ -1076,6 +1075,29 @@ hal_spi_abort(int spi_num)
     __HAL_SPI_DISABLE_IT(&spi->handle, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
     spi->handle.Instance->CR1 &= ~SPI_CR1_SPE;
     __HAL_ENABLE_INTERRUPTS(sr);
+err:
+    return rc;
+}
+
+int
+hal_spi_init_hw(uint8_t spi_num, uint8_t spi_type,
+                const struct hal_spi_hw_settings *cfg)
+{
+    int rc = SYS_EINVAL;
+    struct stm32_hal_spi *spi;
+    struct stm32_hal_spi_cfg hal_cfg;
+
+    STM32_HAL_SPI_RESOLVE(spi_num, spi);
+    if (spi->slave) {
+        rc = SYS_ENOTSUP;
+        goto err;
+    }
+    hal_cfg.sck_pin = cfg->pin_sck;
+    hal_cfg.mosi_pin = cfg->pin_mosi;
+    hal_cfg.miso_pin = cfg->pin_miso;
+    hal_cfg.ss_pin = cfg->pin_ss;
+    hal_cfg.irq_prio = 2;
+    rc = hal_spi_init(spi_num, &hal_cfg, spi_type);
 err:
     return rc;
 }
