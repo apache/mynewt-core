@@ -25,6 +25,14 @@
 #include "bus/bus_debug.h"
 #include "bus/drivers/spi_hal.h"
 
+static void
+bus_spi_set_cs(struct bus_spi_node *node, int value)
+{
+    if (node->pin_cs >= 0) {
+        hal_gpio_write(node->pin_cs, value);
+    }
+}
+
 static int
 bus_spi_init_node(struct bus_dev *bdev, struct bus_node *bnode, void *arg)
 {
@@ -39,7 +47,9 @@ bus_spi_init_node(struct bus_dev *bdev, struct bus_node *bnode, void *arg)
     node->freq = cfg->freq;
     node->quirks = cfg->quirks;
 
-    hal_gpio_init_out(node->pin_cs, 1);
+    if (node->pin_cs >= 0) {
+        hal_gpio_init_out(node->pin_cs, 1);
+    }
 
     return 0;
 }
@@ -137,7 +147,7 @@ bus_spi_read(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
     BUS_DEBUG_VERIFY_DEV(&dev->spi_dev);
     BUS_DEBUG_VERIFY_NODE(node);
 
-    hal_gpio_write(node->pin_cs, 0);
+    bus_spi_set_cs(node, 0);
 
     /* Use output buffer as input to generate SPI clock.
      * For security mostly, do not output random data, fill it with 0xFF.
@@ -154,7 +164,7 @@ bus_spi_read(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
 #endif
 
     if (rc || !(flags & BUS_F_NOSTOP)) {
-        hal_gpio_write(node->pin_cs, 1);
+        bus_spi_set_cs(node, 1);
     }
 
     return rc;
@@ -171,7 +181,7 @@ bus_spi_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
     BUS_DEBUG_VERIFY_DEV(&dev->spi_dev);
     BUS_DEBUG_VERIFY_NODE(node);
 
-    hal_gpio_write(node->pin_cs, 0);
+    bus_spi_set_cs(node, 0);
 
     /* XXX update HAL to accept const instead */
 
@@ -185,7 +195,7 @@ bus_spi_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
 #endif
 
     if (rc || !(flags & BUS_F_NOSTOP)) {
-        hal_gpio_write(node->pin_cs, 1);
+        bus_spi_set_cs(node, 1);
     }
 
     return rc;
@@ -205,7 +215,7 @@ bus_spi_write_read(struct bus_dev *bdev, struct bus_node *bnode,
     BUS_DEBUG_VERIFY_DEV(&dev->spi_dev);
     BUS_DEBUG_VERIFY_NODE(node);
 
-    hal_gpio_write(node->pin_cs, 0);
+    bus_spi_set_cs(node, 0);
 
     /* XXX update HAL to accept const instead */
 
@@ -246,7 +256,7 @@ bus_spi_write_read(struct bus_dev *bdev, struct bus_node *bnode,
 #endif
 
     if (rc || !(flags & BUS_F_NOSTOP)) {
-        hal_gpio_write(node->pin_cs, 1);
+        bus_spi_set_cs(node, 1);
     }
 
     return rc;
@@ -264,7 +274,7 @@ bus_spi_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
     BUS_DEBUG_VERIFY_DEV(&dev->spi_dev);
     BUS_DEBUG_VERIFY_NODE(node);
 
-    hal_gpio_write(node->pin_cs, 0);
+    bus_spi_set_cs(node, 0);
 
 #if MYNEWT_VAL(SPI_HAL_USE_NOBLOCK)
     rc = hal_spi_txrx_noblock(dev->spi_dev.cfg.spi_num, (uint8_t *)wbuf, rbuf, length);
@@ -276,7 +286,7 @@ bus_spi_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
 #endif
 
     if (rc || !(flags & BUS_F_NOSTOP)) {
-        hal_gpio_write(node->pin_cs, 1);
+        bus_spi_set_cs(node, 1);
     }
 
     return rc;
