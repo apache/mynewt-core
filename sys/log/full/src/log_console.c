@@ -52,63 +52,49 @@ log_console_get(void)
 }
 
 #if MYNEWT_VAL(LOG_CONSOLE_PRETTY)
-#define CSI                     "\x1b["
-#define COLOR_BLACK             CSI "30m"
-#define COLOR_RED               CSI "31m"
-#define COLOR_GREEN             CSI "32m"
-#define COLOR_YELLOW            CSI "33m"
-#define COLOR_BLUE              CSI "34m"
-#define COLOR_MAGENTA           CSI "35m"
-#define COLOR_CYAN              CSI "36m"
-#define COLOR_WHITE             CSI "37m"
-#define COLOR_BLACK_BG          CSI "40m"
-#define COLOR_RED_BG            CSI "41m"
-#define COLOR_GREEN_BG          CSI "42m"
-#define COLOR_YELLOW_BG         CSI "43m"
-#define COLOR_WHITE_BG          CSI "47m"
 
 #if MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_COLORS)
-#define COLOR_DBG               COLOR_CYAN
-#define COLOR_INF               ""
-#define COLOR_WRN               COLOR_YELLOW
-#define COLOR_ERR               COLOR_RED
-#define COLOR_CRI               COLOR_RED_BG
-#define COLOR_RESET             CSI "0m"
 
-const char *const module_colors[] = {
-    COLOR_GREEN COLOR_BLACK_BG,
-    COLOR_RED COLOR_WHITE_BG,
-    COLOR_BLUE,
-    COLOR_YELLOW COLOR_BLACK_BG,
-    COLOR_MAGENTA COLOR_WHITE_BG,
-    COLOR_CYAN COLOR_BLACK_BG,
-    COLOR_WHITE COLOR_RED_BG,
-    COLOR_BLACK COLOR_GREEN_BG,
-    COLOR_BLACK COLOR_YELLOW_BG,
-};
+#define CSI                     "\x1b["
+#define CSE                     "m"
 
-static uint8_t log_module_color_index[10];
+#define INV_COLOR               "7;"
+
+#define COLOR_BLACK             30
+#define COLOR_RED               31
+#define COLOR_GREEN             32
+#define COLOR_YELLOW            33
+#define COLOR_BLUE              34
+#define COLOR_MAGENTA           35
+#define COLOR_CYAN              36
+#define COLOR_WHITE             37
+
+#define MOD_COLOR_MIN           COLOR_GREEN
+#define MOD_COLOR_MAX           COLOR_CYAN
+
+#define STRINGIFY(x)            #x
+#define MK_COLOR(x)             CSI STRINGIFY(x) CSE
+#define MK_INV_COLOR(x)         CSI INV_COLOR STRINGIFY(x) CSE
+
+#define COLOR_DBG               ""
+#define COLOR_INF               MK_COLOR(COLOR_CYAN)
+#define COLOR_WRN               MK_COLOR(COLOR_YELLOW)
+#define COLOR_ERR               MK_COLOR(COLOR_RED)
+#define COLOR_CRI               MK_INV_COLOR(COLOR_RED)
+
+#define COLOR_RESET             CSI "0" CSE
 
 static void
 log_module_color(uint8_t module, char *color_on, char *color_off)
 {
-    int i;
-
     *color_on = 0;
     *color_off = 0;
 
     if (module) {
-        for (i = 0; i < ARRAY_SIZE(log_module_color_index) &&
-             log_module_color_index[i] != 0 &&
-             log_module_color_index[i] != module; ++i) {
-        }
-        if (i < ARRAY_SIZE(log_module_color_index)) {
-            if (log_module_color_index[i] == 0) {
-                log_module_color_index[i] = module;
-            }
-            strcpy(color_on, module_colors[i]);
-            strcpy(color_off, COLOR_RESET);
-        }
+        sprintf(color_on, CSI "%s%d" CSE,
+                module < LOG_MODULE_PERUSER ? INV_COLOR : "",
+                MOD_COLOR_MIN + module % (MOD_COLOR_MAX - MOD_COLOR_MIN + 1));
+        strcpy(color_off, COLOR_RESET);
     }
 }
 
@@ -146,17 +132,14 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
     char level_str_buf[23];
     const char *level_str = "";
     const char *module_name = NULL;
-    char color[11];
-    char color_off[6];
+    char color[11] = "";
+    char color_off[6] = "";
 
     /* Find module defined in syscfg.logcfg sections */
     module_name = log_module_get_name(hdr->ue_module);
 
-    if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_COLORS)) {
+    if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_COLOR_MODULES)) {
         log_module_color(hdr->ue_module, color, color_off);
-    } else {
-        color[0] = 0;
-        color_off[0] = 0;
     }
 
     if (module_name == NULL) {
