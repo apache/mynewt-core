@@ -94,7 +94,13 @@ extern uint8_t _ram_start;
 /* Other on board pin selection */
 
 #define PCA100121_SDCARD_CS_PIN         11
+#define PCA100121_SDCARD_SCK_PIN        8
+#define PCA100121_SDCARD_MOSI_PIN       9
+#define PCA100121_SDCARD_MISO_PIN       10
 #define PCA100121_CS47L63_CS_PIN        17
+#define PCA100121_CS47L63_SCK_PIN       8
+#define PCA100121_CS47L63_MOSI_PIN      9
+#define PCA100121_CS47L63_MISO_PIN      10
 #define PCA100121_CS47L63_RESET_PIN     18
 #define PCA100121_HW_CODEC_ON_BOARD_PIN 21
 
