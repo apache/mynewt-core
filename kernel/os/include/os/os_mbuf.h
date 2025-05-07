@@ -150,6 +150,11 @@ struct os_mqueue {
 #define OS_MBUF_PKTHDR_TO_MBUF(__hdr)   \
      (struct os_mbuf *)((uint8_t *)(__hdr) - sizeof(struct os_mbuf))
 
+/** Given a user packet header pointer, return a pointer to the mbuf */
+#define OS_MBUF_USRHDR_TO_MBUF(__hdr)                                         \
+    ((struct os_mbuf *)((uint8_t *)OS_MBUF_PKTHDR_TO_MBUF(__hdr) -            \
+                        sizeof(struct os_mbuf_pkthdr)))
+
 /**
  * Gets the length of an entire mbuf chain.  The specified mbuf must have a
  * packet header.
