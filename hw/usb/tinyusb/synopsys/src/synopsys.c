@@ -24,44 +24,31 @@
 
 #include <mcu/stm32_hal.h>
 
-#if defined(USB_OTG_FS)
-#if defined(STM32U5)
-#define GPIO_AF_USB GPIO_AF10_USB
+#if MYNEWT_VAL(USB_USE_OTG_HS)
+#define USB_OTG            USB_OTG_HS
+#define USB_OTG_IRQHandler OTG_HS_IRQHandler
+#define USB_OTG_IRQn       OTG_HS_IRQn
+#define USB_OTG_CLK_ENABLE __HAL_RCC_USB_OTG_HS_CLK_ENABLE
 #else
-#define GPIO_AF_USB GPIO_AF10_OTG_FS
+#define USB_OTG            USB_OTG_FS
+#define USB_OTG_IRQHandler OTG_FS_IRQHandler
+#define USB_OTG_IRQn       OTG_FS_IRQn
+#define USB_OTG_CLK_ENABLE __HAL_RCC_USB_OTG_FS_CLK_ENABLE
 #endif
+#define GPIO_AF_USB        MYNEWT_VAL(USB_AF_USB)
 
 static void
-OTG_FS_IRQHandler(void)
+OTG_IRQHandler(void)
 {
     /* TinyUSB provides interrupt handler code */
     tud_int_handler(0);
 }
-#define USB_OTG                 USB_OTG_FS
-#define USB_OTG_CLK_ENABLE      __HAL_RCC_USB_OTG_FS_CLK_ENABLE
-#elif defined(USB_OTG_HS)
-static void
-OTG_HS_IRQHandler(void)
-{
-    /* TinyUSB provides interrupt handler code */
-    tud_int_handler(0);
-}
-#define USB_OTG                 USB_OTG_HS
-#define USB_OTG_CLK_ENABLE      __HAL_RCC_USB_OTG_HS_CLK_ENABLE
-#define GPIO_AF10_OTG_FS        GPIO_AF10_OTG1_FS
-#define GPIO_AF_USB             GPIO_AF10_OTG_FS
-#endif
 
 void
 tinyusb_hardware_init(void)
 {
-#if defined(USB_OTG_FS)
-    NVIC_SetVector(OTG_FS_IRQn, (uint32_t)OTG_FS_IRQHandler);
-    NVIC_SetPriority(OTG_FS_IRQn, 2);
-#elif defined(USB_OTG_HS)
-    NVIC_SetVector(OTG_HS_IRQn, (uint32_t)OTG_HS_IRQHandler);
-    NVIC_SetPriority(OTG_HS_IRQn, 2);
-#endif
+    NVIC_SetVector(USB_OTG_IRQn, (uint32_t)OTG_IRQHandler);
+    NVIC_SetPriority(USB_OTG_IRQn, 2);
     /*
      * USB Pin Init
      * PA11- DM, PA12- DP
@@ -69,7 +56,7 @@ tinyusb_hardware_init(void)
     hal_gpio_init_af(MCU_GPIO_PORTA(11), GPIO_AF_USB, GPIO_NOPULL, GPIO_MODE_AF_PP);
 #if MYNEWT_VAL(USB_DP_HAS_EXTERNAL_PULL_UP)
     hal_gpio_init_out(MCU_GPIO_PORTA(12), 0);
-#if MYNEWT_VAL(BOOT_LOADER)
+#if MYNEWT_VAL(OS_SCHEDULING)
     os_cputime_delay_usecs(1000);
 #else
     os_time_delay(1);
@@ -110,7 +97,7 @@ tinyusb_hardware_init(void)
 #elif USB_OTG_GCCFG_VBDEN
 #if MYNEWT_VAL(USB_VBUS_DETECTION_ENABLE)
     hal_gpio_init_in(MCU_GPIO_PORTA(9), HAL_GPIO_PULL_NONE);
-    USB_OTG_FS->GCCFG |= USB_OTG_GCCFG_VBDEN;
+    USB_OTG->GCCFG |= USB_OTG_GCCFG_VBDEN;
 #else
     /* PA9- VUSB not used for USB */
     USB_OTG->GCCFG &= ~USB_OTG_GCCFG_VBDEN;
@@ -120,8 +107,11 @@ tinyusb_hardware_init(void)
 #endif
 #endif
 
-#if MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32L4)
+#if MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32L5)
+    __HAL_RCC_PWR_CLK_ENABLE();
     /* Enable USB power */
     HAL_PWREx_EnableVddUSB();
+#elif MYNEWT_VAL(MCU_STM32H7)
+    HAL_PWREx_EnableUSBVoltageDetector();
 #endif
 }
