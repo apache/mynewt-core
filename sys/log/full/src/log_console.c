@@ -216,6 +216,9 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
 
     if (hdr->ue_etype != LOG_ETYPE_CBOR) {
         console_write(body, body_len);
+        if (((const uint8_t *)body)[body_len - 1] != '\n') {
+            console_out('\n');
+        }
     } else {
         log_console_dump_cbor_entry(body, body_len);
     }
