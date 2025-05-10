@@ -657,9 +657,6 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
     if (HAL_OK != HAL_SPI_Init(&dd->hspi)) {
         rc = SYS_EINVAL;
     }
-
-    __HAL_SPI_ENABLE(&dd->hspi);
-
 end:
     return rc;
 }
