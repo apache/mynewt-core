@@ -86,7 +86,6 @@ bus_spi_configure(struct bus_dev *bdev, struct bus_node *bnode)
 {
     struct bus_spi_dev *spi_dev = (struct bus_spi_dev *)bdev;
     struct bus_spi_node *node = (struct bus_spi_node *)bnode;
-    struct bus_spi_node *current_node = (struct bus_spi_node *)bdev->configured_for;
     struct hal_spi_settings spi_cfg;
     int rc;
 
@@ -94,9 +93,8 @@ bus_spi_configure(struct bus_dev *bdev, struct bus_node *bnode)
     BUS_DEBUG_VERIFY_NODE(node);
 
     /* No need to reconfigure if already configured with the same settings */
-    if (current_node && (current_node->mode == node->mode) &&
-                        (current_node->data_order == node->data_order) &&
-                        (current_node->freq == node->freq)) {
+    if ((spi_dev->mode == node->mode) && (spi_dev->data_order == node->data_order) &&
+        (spi_dev->freq == node->freq)) {
         return 0;
     }
 
@@ -104,6 +102,10 @@ bus_spi_configure(struct bus_dev *bdev, struct bus_node *bnode)
     if (rc) {
         goto done;
     }
+
+    spi_dev->freq = node->freq;
+    spi_dev->data_order = node->data_order;
+    spi_dev->mode = node->mode;
 
     spi_cfg.data_mode = node->mode;
     spi_cfg.data_order = node->data_order;
