@@ -53,6 +53,10 @@ struct bus_i2c_dev_cfg {
 struct bus_i2c_dev {
     struct bus_dev bdev;
     struct bus_i2c_dev_cfg cfg;
+    /** I2C address */
+    uint16_t addr;
+    /** I2C frequency in kHz */
+    uint16_t freq;
 
 #if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t devmagic;

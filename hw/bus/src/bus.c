@@ -530,11 +530,6 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
     }
 #endif
 
-    /* No need to configure if already configured for the same node */
-    if (bdev->configured_for == bnode) {
-        return 0;
-    }
-
     /*
      * Configuration is done on 1st lock so in case we need to configure device
      * on nested lock it means that most likely bus device was locked for one

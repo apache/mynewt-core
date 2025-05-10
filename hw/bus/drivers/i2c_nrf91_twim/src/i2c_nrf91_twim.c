@@ -395,20 +395,18 @@ bus_i2c_nrf91_twim_configure(struct bus_dev *bdev, struct bus_node *bnode)
 {
     struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
     struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
-    struct bus_i2c_node *current_node = (struct bus_i2c_node *)bdev->configured_for;
     NRF_TWIM_Type *nrf_twim;
     int rc;
 
     BUS_DEBUG_VERIFY_DEV(dev);
     BUS_DEBUG_VERIFY_NODE(node);
 
+    if (dev->addr == node->addr && dev->freq == node->freq) {
+        return 0;
+    }
     nrf_twim = twims[dev->cfg.i2c_num].nrf_twim;
 
     nrf_twim->ADDRESS = node->addr;
-
-    if (current_node && (current_node->freq == node->freq)) {
-        return 0;
-    }
 
     rc = 0;
 
@@ -427,6 +425,11 @@ bus_i2c_nrf91_twim_configure(struct bus_dev *bdev, struct bus_node *bnode)
         break;
     default:
         rc = SYS_EIO;
+    }
+
+    if (rc == 0) {
+        dev->freq = node->freq;
+        dev->addr = node->addr;
     }
 
     return rc;
