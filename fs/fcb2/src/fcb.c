@@ -102,6 +102,15 @@ fcb2_init(struct fcb2 *fcb)
 }
 
 int
+fcb2_len_in_flash(const struct flash_sector_range *range, uint16_t len)
+{
+    if (range->fsr_align <= 1) {
+        return len;
+    }
+    return (len + (range->fsr_align - 1)) & ~(range->fsr_align - 1);
+}
+
+int
 fcb2_free_sector_cnt(struct fcb2 *fcb)
 {
     int i;
