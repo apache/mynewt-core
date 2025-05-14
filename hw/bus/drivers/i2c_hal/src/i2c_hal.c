@@ -82,14 +82,13 @@ bus_i2c_configure(struct bus_dev *bdev, struct bus_node *bnode)
 {
     struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
     struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
-    struct bus_i2c_node *current_node = (struct bus_i2c_node *)bdev->configured_for;
     struct hal_i2c_settings i2c_cfg;
     int rc;
 
     BUS_DEBUG_VERIFY_DEV(dev);
     BUS_DEBUG_VERIFY_NODE(node);
 
-    if (current_node && (current_node->freq == node->freq)) {
+    if (dev->freq == node->freq) {
         return 0;
     }
 
@@ -104,6 +103,8 @@ bus_i2c_configure(struct bus_dev *bdev, struct bus_node *bnode)
     if (rc) {
         goto done;
     }
+    dev->freq = node->freq;
+    dev->addr = node->addr;
 
     rc = hal_i2c_enable(dev->cfg.i2c_num);
 

@@ -421,6 +421,9 @@ i2c_da1469x_configure_controller(struct bus_i2c_dev *dev, uint8_t address, uint1
 
     BUS_DEBUG_VERIFY_DEV(dev);
 
+    if (dev->addr == address && dev->freq == freq) {
+        goto end;
+    }
     i2c_regs = da1469x_i2c[dev->cfg.i2c_num].regs;
 
     if (i2c_regs->I2C_ENABLE_REG & I2C_I2C_ENABLE_REG_I2C_EN_Msk) {

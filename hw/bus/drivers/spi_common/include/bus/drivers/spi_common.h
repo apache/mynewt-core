@@ -41,6 +41,12 @@ struct bus_spi_dev_cfg {
 struct bus_spi_dev {
     struct bus_dev bdev;
     struct bus_spi_dev_cfg cfg;
+    /** Data mode, one of the BUS_SPI_MODE_x */
+    int mode;
+    /** Data order, one of the BUS_SPI_DATA_ORDER_LSB/MSB */
+    int data_order;
+    /** Current SPI frequency in kHz */
+    uint32_t freq;
 
 #if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t devmagic;

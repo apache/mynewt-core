@@ -393,7 +393,7 @@ spi_da1469x_disable(struct bus_dev *bdev)
      * Domain COM can be powered off, register content can be lost prepare
      * to set it from scratch.
      */
-    bdev->configured_for = NULL;
+    dev->freq = 0;
 
     da1469x_pd_release(MCU_PD_DOMAIN_COM);
 
@@ -437,7 +437,6 @@ spi_da1469x_configure(struct bus_dev *bdev, struct bus_node *bnode)
 {
     struct bus_spi_dev *dev = (struct bus_spi_dev *)bdev;
     struct bus_spi_node *node = (struct bus_spi_node *)bnode;
-    struct bus_spi_node *current_node = (struct bus_spi_node *)bdev->configured_for;
     struct spi_da1469x_driver_data *dd;
     SPI_Type *regs;
     uint32_t ctrl_reg;
@@ -453,10 +452,15 @@ spi_da1469x_configure(struct bus_dev *bdev, struct bus_node *bnode)
         regs->SPI_CTRL_REG = ctrl_reg ^ (SPI_SPI_CTRL_REG_SPI_ON_Msk);
     }
 
-    if (current_node && (current_node->freq == node->freq) && current_node->mode == node->mode) {
-        /* Same device, no changes required. */
+    if ((spi_dev->mode == node->mode) && (spi_dev->data_order == node->data_order) &&
+        (spi_dev->freq == node->freq)) {
+        /* Same configuration, no changes required. */
         goto end;
     }
+
+    spi_dev->freq = node->freq;
+    spi_dev->data_order = node->data_order;
+    spi_dev->mode = node->mode;
 
     ctrl_reg &= ~(SPI_SPI_CTRL_REG_SPI_TX_FIFO_NOTFULL_MASK_Msk |
                   SPI_SPI_CTRL_REG_SPI_DMA_TXREQ_MODE_Msk |

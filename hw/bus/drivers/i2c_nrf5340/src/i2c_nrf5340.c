@@ -207,6 +207,10 @@ bus_i2c_nrf5340_configure_controller(struct bus_i2c_dev *dev, uint8_t address, u
     NRF_TWIM_Type *nrf_twim;
     int rc = 0;
 
+    if (dev->freq == freq && dev->addr == address) {
+        goto end;
+    }
+
     nrf_twim = twims[dev->cfg.i2c_num].nrf_twim;
 
     switch (freq) {
@@ -228,8 +232,10 @@ bus_i2c_nrf5340_configure_controller(struct bus_i2c_dev *dev, uint8_t address, u
 
     if (rc == 0) {
         nrf_twim->ADDRESS = address;
+        dev->addr = address;
+        dev->freq = freq;
     }
-
+end:
     return rc;
 }
 

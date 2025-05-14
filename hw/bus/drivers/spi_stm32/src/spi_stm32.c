@@ -607,7 +607,6 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
 {
     struct bus_spi_dev *dev = (struct bus_spi_dev *)bdev;
     struct bus_spi_node *node = (struct bus_spi_node *)bnode;
-    struct bus_spi_node *current_node = (struct bus_spi_node *)bdev->configured_for;
     struct spi_stm32_driver_data *dd;
     const struct stm32_spi_hw *hw;
     uint32_t pclk;
@@ -620,10 +619,8 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
 
     dd = driver_data(dev);
 
-    if (current_node &&
-        current_node->freq == node->freq &&
-        current_node->data_order == node->data_order &&
-        current_node->mode == node->mode) {
+    if (dev->freq == node->freq && dev->data_order == node->data_order &&
+        dev->mode == node->mode) {
         goto end;
     }
 
@@ -639,6 +636,9 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
     if (prescaler > 7) {
         rc = SYS_EINVAL;
     } else {
+        dev->freq = node->freq;
+        dev->data_order = node->data_order;
+        dev->mode = node->mode;
 #if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
         dd->hspi.Init.BaudRatePrescaler = prescaler << SPI_CFG1_MBR_Pos;
 #else
