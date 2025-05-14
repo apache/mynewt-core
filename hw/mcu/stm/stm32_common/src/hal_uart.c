@@ -482,6 +482,9 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 #if !MYNEWT_VAL(MCU_STM32F1)
     cr1 &= ~(USART_CR1_OVER8);
 #endif
+#ifdef USART_CR1_FIFOEN
+    cr1 |= USART_CR1_FIFOEN;
+#endif
     cr2 &= ~(USART_CR2_STOP);
     cr3 &= ~(USART_CR3_RTSE | USART_CR3_CTSE);
 
