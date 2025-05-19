@@ -209,7 +209,7 @@ os_arch_os_init(void)
         err = OS_OK;
 
         /* Drop priority for all interrupts */
-        for (i = 0; i < sizeof(NVIC->IP); i++) {
+        for (i = 0; i < ARRAY_SIZE(NVIC->IP); i++) {
             NVIC->IP[i] = -1;
         }
 
