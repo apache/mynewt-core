@@ -209,12 +209,20 @@ void
 st7789_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
 {
     uint8_t cmd[5];
+    lv_disp_t *disp = lv_disp_get_default();
+    lv_coord_t hor_res = lv_disp_get_hor_res(disp);
+    lv_coord_t ver_res = lv_disp_get_ver_res(disp);
+
+    if (area->x2 < 0 || area->y2 < 0 || area->x1 >= hor_res || area->y1 >= ver_res) {
+        lv_disp_flush_ready(drv);
+        return;
+    }
 
     /* Truncate the area to the screen */
     int32_t offsetx1 = area->x1 < 0 ? 0 : area->x1;
     int32_t offsety1 = area->y1 < 0 ? 0 : area->y1;
-    int32_t offsetx2 = area->x2 >= ST7789_HOR_RES ? ST7789_HOR_RES - 1 : area->x2;
-    int32_t offsety2 = area->y2 >= ST7789_VER_RES ? ST7789_VER_RES - 1 : area->y2;
+    int32_t offsetx2 = area->x2 >= hor_res ? hor_res - 1 : area->x2;
+    int32_t offsety2 = area->y2 >= ver_res ? ver_res - 1 : area->y2;
 
 #if (CONFIG_LV_TFT_DISPLAY_OFFSETS)
     offsetx1 += CONFIG_LV_TFT_DISPLAY_X_OFFSET;
