@@ -128,7 +128,7 @@ os_arch_os_init(void)
     }
 
     /* Drop priority for all interrupts */
-    for (i = 0; i < sizeof(NVIC->IP) / 4; i++) {
+    for (i = 0; i < ARRAY_SIZE(NVIC->IP); i++) {
         NVIC->IP[i] = -1;
     }
 
