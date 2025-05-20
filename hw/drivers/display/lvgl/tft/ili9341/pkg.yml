@@ -23,6 +23,3 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.cflags:
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/bus/drivers/spi_common"
