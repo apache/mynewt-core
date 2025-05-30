@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#include <stdio.h>
-#include <string.h>
-
 #include "os/mynewt.h"
+
+#if MYNEWT_VAL(SHELL_PROMPT_MODULE)
+
 #include "console/console.h"
 #include "console/ticks.h"
 
@@ -73,12 +73,8 @@ static const struct shell_cmd prompt_commands[] = {
         .help = &ticks_help,
 #endif
     },
-    { 0 },
 };
 
+SHELL_MODULE_WITH_TABLE(prompt, prompt_commands)
 
-void
-shell_prompt_register(void)
-{
-    shell_register(SHELL_PROMPT, prompt_commands);
-}
+#endif
