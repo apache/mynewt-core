@@ -22,7 +22,7 @@
 TEST_CASE_SELF(log_test_case_cbmem_printf)
 {
     struct cbmem cbmem;
-    struct log log;
+    struct log log = {0};
     char *str;
     int i;
 
