@@ -48,7 +48,7 @@ log_last(struct log *log)
 TEST_CASE_SELF(log_test_case_level)
 {
     struct cbmem cbmem;
-    struct log log;
+    struct log log = {0};
     uint32_t idx;
     int rc;
     int i;

@@ -35,6 +35,8 @@
 #define LOG_HDR_SIZE 15
 #endif
 
+#define LOG_TRAILER_LEN_SIZE 2
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -77,6 +79,38 @@ struct log_storage_info {
 };
 #endif
 
+/** @typedef log_trailer_free_func_t
+ * @brief Callback that frees the trailer buffer, to be called by user of the library
+ * once append returns, either successfully or unsuccessfully
+ *
+ * @param log                 The log the trailer is being appended to
+ * @param om                  mbuf pointer to be freed
+ *
+ * @return                    0 on success, non-zero on failure
+ */
+typedef int log_trailer_free_func_t(struct log *log, struct os_mbuf *om);
+
+/** @typedef log_trailer_get_data_func_t
+ * @brief Callback that is executed each time the corresponding log entry is
+ * appended to
+ *
+ * @param log                 The log the trailer needs to be appended to
+ * @param om                  mbuf pointer to be set to mbuf which contains
+ *                            trailer data
+ *
+ * @return                    0 on success, non-zero on failure
+ */
+typedef int log_trailer_get_data_func_t(struct log *log, struct os_mbuf **om);
+
+/** @typedef log_trailer_reset_data_func_t
+ * @brief Callback used to reset trailer data per log
+ *
+ * @param log                 The log the trailer is to be read from
+ *
+ * @return                    0 on success, non-zero on failure.
+ */
+typedef int log_trailer_reset_data_func_t(struct log *log);
+
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
         const void *dptr, uint16_t len);
 
@@ -99,6 +133,7 @@ typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
+typedef uint16_t (*lh_read_entry_len_func_t)(struct log *log, const void *dptr);
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 typedef int (*lh_storage_info_func_t)(struct log *, struct log_storage_info *);
 #endif
@@ -118,6 +153,7 @@ struct log_handler {
     lh_walk_func_t log_walk;
     lh_walk_func_t log_walk_sector;
     lh_flush_func_t log_flush;
+    lh_read_entry_len_func_t log_read_entry_len;
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     lh_storage_info_func_t log_storage_info;
 #endif
@@ -131,8 +167,9 @@ struct log_handler {
 /* Image hash length to be looged */
 #define LOG_IMG_HASHLEN 4
 
-/* Flags used to indicate type of data in reserved payload*/
-#define LOG_FLAGS_IMG_HASH (1 << 0)
+/* Flags used to indicate type of data in reserved payload */
+#define LOG_FLAGS_IMG_HASH    (1 << 0)
+#define LOG_FLAGS_TRAILER     (1 << 1)
 
 #if MYNEWT_VAL(LOG_VERSION) == 3
 struct log_entry_hdr {
@@ -204,6 +241,18 @@ STATS_SECT_END
 #define LOG_STATS_INCN(log, name, cnt)
 #endif
 
+/* Trailer support callbacks */
+struct log_trailer_handler {
+    /* Frees the trailer buffer */
+    log_trailer_free_func_t *lth_trailer_free;
+    /* Trailer append callback used to append trailer to the log entry */
+    log_trailer_get_data_func_t *lth_trailer_get_data;
+    /* Trailer reset data callback used to reset the trailer data
+     * per log which is defined by the application registering these callbacks
+     */
+    log_trailer_reset_data_func_t *lth_trailer_reset_data;
+};
+
 struct log {
     const char *l_name;
     const struct log_handler *l_log;
@@ -219,6 +268,17 @@ struct log {
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
 #endif
+    /* Custom log init callback to be called by the last hdr
+     * read function to read custom data from log entries
+     * at init
+     */
+    log_walk_func_t l_init_cb;
+    /* Gets set when trailer callbacks are registered */
+    struct log_trailer_handler *l_th;
+    /* Trailer arg to be passed to callbacks */
+    void *l_tr_arg;
+    /* Trailer data pointer */
+    struct os_mbuf *l_tr_om;
 };
 
 /* Log system level functions (for all logs.) */
@@ -515,6 +575,98 @@ int log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
         uint16_t len);
 
 /**
+ * Reads entry length from the specified log.
+ *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
+ * @return                      The number of bytes of entry length; 0 on failure.
+ */
+uint16_t
+log_read_entry_len(struct log *log, const void *dptr);
+
+/**
+ * @brief Reads the trailer data from the specified log.
+ *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
+ * @param buf                   The destination buffer to read into.
+ *
+ * @return                      The number of bytes of trailer data; 0 on failure.
+ */
+uint16_t
+log_read_trailer(struct log *log, const void *dptr, uint8_t *buf);
+
+/**
+ * @brief Returns trailer data in an mbuf specified by the caller
+ *
+ * @param log                   The log to append to
+ * @param om                    mbuf pointer to be set to buffer which contains
+ *                              trailer data
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static inline int
+log_trailer_get_data(struct log *log, struct os_mbuf **om)
+{
+    if (log->l_th && log->l_th->lth_trailer_get_data) {
+        return log->l_th->lth_trailer_get_data(log, om);
+    }
+    return SYS_ENOTSUP;
+}
+
+/**
+ * @brief Callback that frees the trailer buffer, to be called by user of the library
+ * once append returns, either successfully or unsuccessfully
+ *
+ * @param log                   The log the trailer is being appended to
+ * @param om                    mbuf pointer to be freed
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static inline int
+log_trailer_free(struct log *log, struct os_mbuf *om)
+{
+    if (log->l_th && log->l_th->lth_trailer_free) {
+        return log->l_th->lth_trailer_free(log, om);
+    }
+    return SYS_ENOTSUP;
+}
+
+/**
+ * @brief Resets the trailer data in the log, calling user callback
+ *
+ * @param log                   The log to reset.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static inline int
+log_trailer_reset_data(struct log *log)
+{
+    if (log->l_th && log->l_th->lth_trailer_reset_data) {
+        return log->l_th->lth_trailer_reset_data(log);
+    }
+    return SYS_ENOTSUP;
+}
+
+/**
+ * @brief Register Log init callback to be called by log_read_last_hdr_trailer
+ * while reading the last log entry at init
+ *
+ * @param log                   The log to register.
+ * @param cb                    The callback to associate with the log.
+ *
+ */
+static inline void
+log_register_init_cb(struct log *log, log_walk_func_t cb)
+{
+    log->l_init_cb = cb;
+}
+
+/**
  * @brief Reads a single log entry header.
  *
  * @param log                   The log to read from.
@@ -531,7 +683,7 @@ int log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr);
  * @brief Reads the header length
  *
  * @param hdr Ptr to the header
- * 
+ *
  * @return Length of the header
  */
 uint16_t
@@ -737,6 +889,52 @@ int log_set_watermark(struct log *log, uint32_t index);
  */
 int
 log_fill_current_img_hash(struct log_entry_hdr *hdr);
+
+/**
+ * @brief Reads the final log entry's header and processes trailer if the flag
+ * indicates so from the specified log.
+ *
+ * @param log            The log to read from.
+ * @param out_hdr        On success, the last entry header gets written
+ *                       here.
+ * @param trailer_exists Pointer to a boolean
+ *
+ * @return 0 on success; nonzero on failure.
+ */
+int log_read_last_hdr_trailer(struct log *log, struct log_entry_hdr *out_hdr,
+                              bool *trailer_exists);
+
+/**
+ * @brief Reset log trailer data
+ *
+ * @param log The log to reset trailer data for
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int log_trailer_reset_data(struct log *log);
+
+/**
+ * @brief Register trailer callbacks
+ *
+ * @param log           The log to read from.
+ * @param lth           The trailer handler to register.
+ * @param data          Pointer to the trailer data.
+ * @param trailer_len   Length of the trailer data.
+ * @param arg           Argument to be passed to the trailer handler
+ *
+ * @return 0 on success; nonzero on failure.
+ */
+static inline void
+log_trailer_cbs_register(struct log *log, struct log_trailer_handler *lth,
+                         void *arg)
+{
+    if (!lth || !log) {
+        return;
+    }
+
+    log->l_th = lth;
+    log->l_tr_arg = arg;
+}
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)
