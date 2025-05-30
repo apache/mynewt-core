@@ -273,25 +273,9 @@ static const struct shell_cmd_help ls_dev_help = {
 };
 #endif
 
-static const struct shell_cmd os_commands[] = {
-    SHELL_CMD_EXT("tasks", shell_os_tasks_display_cmd, &tasks_help),
-    SHELL_CMD_EXT("mpool", shell_os_mpool_display_cmd, &mpool_help),
-    SHELL_CMD_EXT("date", shell_os_date_cmd, &date_help),
-    SHELL_CMD_EXT("reset", shell_os_reset_cmd, &reset_help),
-    SHELL_CMD_EXT("reset_cause", shell_os_print_reset_cause, &print_reset_cause_help),
-    SHELL_CMD_EXT("lsdev", shell_os_ls_dev_cmd, &ls_dev_help),
-    { 0 },
-};
-
-void
-shell_os_register(void)
-{
-    const struct shell_cmd *cmd;
-    int rc;
-
-    for (cmd = os_commands; cmd->sc_cmd != NULL; cmd++) {
-        rc = shell_cmd_register(cmd);
-        SYSINIT_PANIC_ASSERT_MSG(
-            rc == 0, "Failed to register OS shell commands");
-    }
-}
+MAKE_SHELL_EXT_CMD(tasks, shell_os_tasks_display_cmd, &tasks_help)
+MAKE_SHELL_EXT_CMD(mpool, shell_os_mpool_display_cmd, &mpool_help)
+MAKE_SHELL_EXT_CMD(date, shell_os_date_cmd, &date_help)
+MAKE_SHELL_EXT_CMD(reset, shell_os_reset_cmd, &reset_help)
+MAKE_SHELL_EXT_CMD(reset_cause, shell_os_print_reset_cause, &print_reset_cause_help)
+MAKE_SHELL_EXT_CMD(lsdev, shell_os_ls_dev_cmd, &ls_dev_help)
