@@ -49,8 +49,6 @@ void shell_nlip_init(void);
 void shell_nlip_clear_pkt(void);
 #endif
 
-void shell_prompt_register(void);
-
 #if MYNEWT_VAL(SHELL_BRIDGE)
 void shell_bridge_streamer_new(struct shell_bridge_streamer *sbs,
                                struct CborEncoder *str_encoder);
