@@ -22,7 +22,7 @@
 TEST_CASE_SELF(log_test_case_fcb_append)
 {
     struct fcb_log fcb_log;
-    struct log log;
+    struct log log = {0};
     uint8_t buf[256];
     char *str;
     int body_len;

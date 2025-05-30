@@ -294,6 +294,71 @@ log_find(const char *name)
     return log;
 }
 
+uint16_t
+log_read_trailer(struct log *log, const void *dptr, uint8_t *buf)
+{
+    int rc = 0;
+    uint16_t offset = 0;
+    uint16_t trailer_len = 0;
+
+    if (log->l_th) {
+        /* This reads log entry length without alignment */
+        offset = log_read_entry_len(log, dptr);
+        if (offset) {
+            rc = log_read(log, dptr, &trailer_len,
+                          offset - LOG_TRAILER_LEN_SIZE,
+                          LOG_TRAILER_LEN_SIZE);
+            if (rc == LOG_TRAILER_LEN_SIZE) {
+                offset -= LOG_TRAILER_LEN_SIZE;
+                rc = log_read(log, dptr, buf, offset - trailer_len,
+                              trailer_len);
+                if (rc != trailer_len) {
+                    /* Trailer read failed, return 0 length
+                     * buffer remains untouched
+                     */
+                    return 0;
+                }
+            }
+        } else {
+            /* Entry length is 0, no trailer buffer remains untouched */
+            return 0;
+        }
+    }
+
+    /* No trailer, return 0 length */
+    return trailer_len;
+}
+
+uint16_t
+log_read_trailer_len(struct log *log, const void *dptr)
+{
+    int rc = 0;
+    uint16_t offset = 0;
+    uint16_t trailer_len = 0;
+
+    if (log->l_th) {
+        /* This reads log entry length without alignment */
+        offset = log_read_entry_len(log, dptr);
+        if (offset) {
+            rc = log_read(log, dptr, &trailer_len,
+                          offset - LOG_TRAILER_LEN_SIZE,
+                          LOG_TRAILER_LEN_SIZE);
+            if (rc == LOG_TRAILER_LEN_SIZE) {
+                return trailer_len;
+            } else {
+                /* Trailer read failed, return 0 length */
+                return 0;
+            }
+        } else {
+            /* Entry length is 0, no trailer */
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+/* Argument for header/trailer walks */
 struct log_read_hdr_arg {
     struct log_entry_hdr *hdr;
     int read_success;
@@ -347,7 +412,12 @@ log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
     log_offset.lo_index = 0;
     log_offset.lo_data_len = 0;
 
-    log_walk(log, log_read_hdr_walk, &log_offset);
+    if (log->l_init_cb) {
+        log_walk(log, log->l_init_cb, &log_offset);
+    } else {
+        log_walk(log, log_read_hdr_walk, &log_offset);
+    }
+
     if (!arg.read_success) {
         return -1;
     }
@@ -496,6 +566,9 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     int sr;
     struct os_timeval tv;
     uint32_t idx;
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    struct os_mbuf *om;
+#endif
 
     rc = 0;
 
@@ -571,6 +644,20 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     }
 #endif
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    if (log->l_th) {
+        rc = log_trailer_append(log, (void **)&om);
+        if (rc >= os_mbuf_len(om)) {
+            ue->ue_flags |= LOG_FLAGS_TRAILER_SUPPORT;
+            log->l_tr_om = om;
+            log->l_tr_len = os_mbuf_len(om);
+            rc = 0;
+        } else {
+            rc = SYS_ENOMEM;
+        }
+    }
+#endif
+
 err:
     return (rc);
 }
@@ -625,8 +712,11 @@ log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
 
     log_call_append_cb(log, hdr->ue_index);
 
+    log_trailer_free(log);
+
     return (0);
 err:
+    log_trailer_free(log);
     return (rc);
 }
 
@@ -641,24 +731,29 @@ log_append_body(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
 
     rc = log_chk_max_entry_len(log, body_len);
     if (rc != OS_OK) {
-        return rc;
+        goto err;
     }
 
     rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
         LOG_STATS_INC(log, drops);
-        return rc;
+        goto err;
     }
 
     rc = log->l_log->log_append_body(log, &hdr, body, body_len);
     if (rc != 0) {
         LOG_STATS_INC(log, errs);
-        return rc;
+        goto err;
     }
 
     log_call_append_cb(log, hdr.ue_index);
 
+    log_trailer_free(log);
+
     return 0;
+err:
+    log_trailer_free(log);
+    return rc;
 }
 
 int
@@ -671,7 +766,7 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
     uint16_t hdr_len;
     int rc;
 
-    /* Remove a loyer of indirection for convenience. */
+    /* Remove a layer of indirection for convenience. */
     om = *om_ptr;
 
     LOG_STATS_INC(log, writes);
@@ -729,6 +824,8 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
 
     log_call_append_cb(log, hdr->ue_index);
 
+    log_trailer_free(log);
+
     *om_ptr = om;
 
     return 0;
@@ -736,6 +833,7 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
 err:
     LOG_STATS_INC(log, errs);
 drop:
+    log_trailer_free(log);
     if (om) {
         os_mbuf_free_chain(om);
         *om_ptr = NULL;
@@ -792,10 +890,13 @@ log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
 
     log_call_append_cb(log, hdr.ue_index);
 
+    log_trailer_free(log);
+
     return 0;
 err:
     LOG_STATS_INC(log, errs);
 drop:
+    log_trailer_free(log);
     return rc;
 }
 
@@ -939,6 +1040,20 @@ err:
 }
 
 /**
+ * Reads entry length from the specified log.
+ *
+ * @return                      The number of bytes of entry length; 0 on failure.
+ */
+uint16_t
+log_read_entry_len(struct log *log, const void *dptr)
+{
+    if (log->l_log->log_read_entry_len) {
+        return log->l_log->log_read_entry_len(log, dptr);
+    }
+    return 0;
+}
+
+/**
  * Reads from the specified log.
  *
  * @return                      The number of bytes read; 0 on failure.
@@ -957,7 +1072,7 @@ log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
 int
 log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
 {
-    int bytes_read;
+    int bytes_read = 0;
 
     bytes_read = log_read(log, dptr, hdr, 0, LOG_BASE_ENTRY_HDR_SIZE);
     if (bytes_read != LOG_BASE_ENTRY_HDR_SIZE) {
@@ -1024,6 +1139,14 @@ int
 log_flush(struct log *log)
 {
     int rc;
+
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER_SUPPORT)
+    /* Reset trailer data if it exists, if it does not exist
+     * this function will return SYS_ENOTSUP. Currently,
+     * we do not use the return value.
+     */
+    log_trailer_reset_data(log);
+#endif
 
     rc = log->l_log->log_flush(log);
     if (rc != 0) {

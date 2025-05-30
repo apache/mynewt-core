@@ -23,7 +23,7 @@ TEST_CASE_SELF(log_test_case_fcb_append_mbuf_body)
 {
     struct fcb_log fcb_log;
     struct os_mbuf *om;
-    struct log log;
+    struct log log = {0};
     char *str;
     int rc;
     int i;
