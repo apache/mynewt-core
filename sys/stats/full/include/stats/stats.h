@@ -217,9 +217,6 @@ struct stats_hdr *stats_group_find(const char *name);
 #if MYNEWT_VAL(STATS_MGMT)
 int stats_mgmt_register_group(void);
 #endif
-#if MYNEWT_VAL(STATS_CLI)
-int stats_shell_register(void);
-#endif
 
 #if MYNEWT_VAL(STATS_PERSIST)
 
