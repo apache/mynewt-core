@@ -392,6 +392,7 @@ err:
     return (rc);
 }
 
+MAKE_SHELL_CMD(log, shell_log_dump_cmd, NULL)
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 int
@@ -425,8 +426,13 @@ shell_log_storage_cmd(int argc, char **argv)
 
     return (0);
 }
+
+SHELL_MODULE_CMD_WITH_NAME(compat, log_storage, "log-storage", 0,
+                           shell_log_storage_cmd, NULL)
+
 #endif
 
+#if MYNEWT_VAL(LOG_CLI_FILL_CMD)
 static int
 log_fill_command(int argc, char **argv)
 {
@@ -458,14 +464,8 @@ log_fill_command(int argc, char **argv)
     return 0;
 }
 
-static struct shell_cmd log_fill_cmd = {
-    .sc_cmd = "log-fill",
-    .sc_cmd_func = log_fill_command
-};
+SHELL_MODULE_CMD_WITH_NAME(compat, log_fill, "log-fill", 0, log_fill_command, NULL)
 
-void
-shell_log_fill_register(void)
-{
-    shell_cmd_register(&log_fill_cmd);
-}
+#endif
+
 #endif
