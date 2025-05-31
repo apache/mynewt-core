@@ -29,17 +29,6 @@
 #include <string.h>
 #include <ctype.h>
 
-static int flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
-                         struct streamer *streamer);
-static int flash_speed_test_cli(const struct shell_cmd *cmd, int argc,
-                                char **argv, struct streamer *streamer);
-
-static struct shell_cmd flash_cmd_struct =
-    SHELL_CMD_EXT("flash", flash_cli_cmd, NULL);
-
-static struct shell_cmd flash_speed_cli_struct =
-    SHELL_CMD_EXT("flash_speed", flash_speed_test_cli, NULL);
-
 static void
 dump_sector_range_info(struct streamer *streamer, int start_sector, uint32_t start_address,
                        int sector_count, uint32_t sector_size)
@@ -370,12 +359,5 @@ flash_speed_test_cli(const struct shell_cmd *cmd, int argc, char **argv,
     return 0;
 }
 
-/*
- * Initialize the package. Only called from sysinit().
- */
-void
-flash_test_init(void)
-{
-    shell_cmd_register(&flash_cmd_struct);
-    shell_cmd_register(&flash_speed_cli_struct);
-}
+MAKE_SHELL_EXT_CMD(flash, flash_cli_cmd, NULL)
+MAKE_SHELL_EXT_CMD(flash_speed, flash_speed_test_cli, NULL);

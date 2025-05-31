@@ -30,5 +30,4 @@ pkg.deps:
 pkg.req_apis:
     - console
 
-pkg.init:
-    flash_test_init: 'MYNEWT_VAL(FLASH_TEST_SYSINIT_STAGE)'
+pkg.whole_archive: true
