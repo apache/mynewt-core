@@ -33,8 +33,15 @@ pkg.deps.STATS_CLI:
 pkg.deps.STATS_MGMT:
     - "@apache-mynewt-mcumgr/cmd/stat_mgmt"
 
+pkg.whole_archive: true
+
 pkg.init:
     stats_module_init: 'MYNEWT_VAL(STATS_SYSINIT_STAGE)'
+
+pkg.source_files:
+    - src/stats.c
+pkg.source_files.STATS_CLI:
+    - src/stats_shell.c
 
 pkg.init.STATS_PERSIST:
     stats_conf_init: 'MYNEWT_VAL(STATS_SYSINIT_STAGE_CONF)'
