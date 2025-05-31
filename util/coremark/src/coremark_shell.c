@@ -26,10 +26,12 @@
 extern uint32_t SystemCoreClock;
 
 static int
-coremark_shell_cmd(int argc, char **argv)
+coremark_shell_cmd(const struct shell_cmd *cmd,
+                   int argc, char *argv[],
+                   struct streamer *streamer)
 {
-    printf("Coremark running on %s at %lu MHz\n\n",
-           MYNEWT_VAL(BSP_NAME), SystemCoreClock / 1000000L);
+    streamer_printf(streamer, "Coremark running on %s at %lu MHz\n\n",
+                    MYNEWT_VAL(BSP_NAME), SystemCoreClock / 1000000L);
 
     if(MYNEWT_VAL(WATCHDOG_INTERVAL) > 0) {
         hal_watchdog_tickle();
@@ -48,18 +50,4 @@ static const struct shell_cmd_help coremark_help = {
     .usage = NULL,
 };
 
-static const struct shell_cmd coremark_shell_cmd_struct = {
-    .sc_cmd = "coremark",
-    .sc_cmd_func = coremark_shell_cmd,
-    .help = &coremark_help,
-};
-
-void
-coremark_shell_init_pkg(void)
-{
-#if MYNEWT_VAL(SHELL_COMPAT)
-    int rc;
-    rc = shell_cmd_register(&coremark_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
-}
+MAKE_SHELL_CMD(coremark, coremark_shell_cmd, &coremark_help)
