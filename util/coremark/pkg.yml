@@ -33,11 +33,10 @@ pkg.deps:
 
 pkg.cflags:
 
+pkg.whole_archive: true
+
 pkg.source_files:
     - src/core_portme.c
 
 pkg.source_files.COREMARK_SHELL:
     - src/coremark_shell.c
-
-pkg.init.COREMARK_SHELL:
-    coremark_shell_init_pkg: $after:shell_init
