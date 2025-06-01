@@ -30,13 +30,6 @@
 #include <shell/shell.h>
 #include <console/console.h>
 
-static int shell_conf_command(int argc, char **argv);
-
-static struct shell_cmd shell_conf_cmd = {
-    .sc_cmd = "config",
-    .sc_cmd_func = shell_conf_command
-};
-
 #if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
 static void
 conf_running_one(char *name, char *val)
@@ -149,10 +142,7 @@ err:
     return 0;
 }
 
-int
-conf_cli_register(void)
-{
-    return shell_cmd_register(&shell_conf_cmd);
-}
+MAKE_SHELL_CMD(config, shell_conf_command, NULL)
+
 #endif
 
