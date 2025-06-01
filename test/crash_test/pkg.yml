@@ -31,5 +31,7 @@ pkg.deps.CRASH_TEST_MGMT:
     - "@apache-mynewt-core/encoding/json"
     - "@apache-mynewt-mcumgr/cborattr"
 
+pkg.whole_archive: true
+
 pkg.init:
     crash_test_init: 'MYNEWT_VAL(CRASH_TEST_SYSINIT_STAGE)'

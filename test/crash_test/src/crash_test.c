@@ -27,9 +27,6 @@
 #include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
-#if MYNEWT_VAL(CRASH_TEST_CLI)
-#include "shell/shell.h"
-#endif
 #if MYNEWT_VAL(CRASH_TEST_MGMT)
 #include "mgmt/mgmt.h"
 #endif
@@ -90,9 +87,6 @@ crash_test_init(void)
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-#if MYNEWT_VAL(CRASH_TEST_CLI)
-    shell_cmd_register(&crash_cmd_struct);
-#endif
 #if MYNEWT_VAL(CRASH_TEST_MGMT)
     mgmt_register_group(&crash_test_mgmt_group);
 #endif
