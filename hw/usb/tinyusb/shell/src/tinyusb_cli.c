@@ -50,13 +50,6 @@ usb_cli_stop_cmd(const struct shell_cmd *cmd, int argc, char **argv,
 static const struct shell_cmd usb_cli_commands[] = {
     SHELL_CMD_EXT("start", usb_cli_start_cmd, NULL),
     SHELL_CMD_EXT("stop", usb_cli_stop_cmd, NULL),
-    { },
 };
 
-int
-tinyusb_cli_init(void)
-{
-    shell_register("usb", usb_cli_commands);
-
-    return 0;
-}
+SHELL_MODULE_WITH_TABLE(usb, usb_cli_commands)
