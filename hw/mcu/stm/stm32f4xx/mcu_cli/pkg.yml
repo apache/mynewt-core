@@ -31,5 +31,4 @@ pkg.deps:
 pkg.req_apis:
     - console
 
-pkg.init:
-    mcu_cli_init: 'MYNEWT_VAL(MCU_CLI_SYSINIT_STAGE)'
+pkg.whole_archive: true
