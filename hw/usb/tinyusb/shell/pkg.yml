@@ -29,5 +29,4 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/usb/tinyusb"
 
-pkg.init:
-    tinyusb_cli_init: 'MYNEWT_VAL(SHELL_SYSINIT_STAGE) + 1'
+pkg.whole_archive: true
