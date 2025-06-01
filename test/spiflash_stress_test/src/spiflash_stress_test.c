@@ -142,12 +142,6 @@ void flash_test_task1(void *arg)
     }
 }
 
-static int spiflash_stress_test_cli_cmd(int argc, char **argv);
-static struct shell_cmd spiflash_stress_cmd_struct = {
-    .sc_cmd = "flashstress",
-    .sc_cmd_func = spiflash_stress_test_cli_cmd
-};
-
 static int
 spiflash_stress_test_cli_cmd(int argc, char **argv)
 {
@@ -164,6 +158,8 @@ spiflash_stress_test_cli_cmd(int argc, char **argv)
     return 0;
 }
 
+MAKE_SHELL_CMD(flashstress, spiflash_stress_test_cli_cmd, NULL)
+
 /*
  * Initialize the package. Only called from sysinit().
  */
@@ -174,6 +170,4 @@ spiflash_stress_test_init(void)
     runtest_init_task(flash_test_task1, MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);
     runtest_init_task(flash_test_task1, MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 2);
     runtest_init_task(flash_test_task1, MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 3);
-
-    shell_cmd_register(&spiflash_stress_cmd_struct);
 }
