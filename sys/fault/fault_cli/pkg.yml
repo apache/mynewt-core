@@ -28,5 +28,4 @@ pkg.deps:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/util/parse"
 
-pkg.init:
-    fault_cli_init: 'MYNEWT_VAL(FAULT_CLI_SYSINIT_STAGE)'
+pkg.whole_archive: true
