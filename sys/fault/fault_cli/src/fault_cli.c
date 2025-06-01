@@ -27,8 +27,6 @@
 #include "shell/shell.h"
 #include "fault/fault.h"
 
-static int fault_cli_cmd_fn(int argc, char **argv);
-
 static const struct shell_cmd_help fault_cli_help = {
     .summary = "Fault management",
     .usage = 
@@ -47,12 +45,6 @@ static const struct shell_cmd_help fault_cli_help = {
         "    Simulates a fatal error for the given domain.\n"
         "fault fatalgood <fault-domain> [uint-param]\n"
         "    Simulates a fatal success for the given domain.\n",
-};
-
-static const struct shell_cmd fault_cli_cmd = {
-    .sc_cmd = "fault",
-    .sc_cmd_func = fault_cli_cmd_fn,
-    .help = &fault_cli_help,
 };
 
 static int
@@ -248,11 +240,4 @@ fault_cli_cmd_fn(int argc, char **argv)
     return SYS_EINVAL;
 }
 
-void
-fault_cli_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&fault_cli_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-}
+MAKE_SHELL_CMD(fault, fault_cli_cmd_fn, &fault_cli_help)

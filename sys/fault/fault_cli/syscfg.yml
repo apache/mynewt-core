@@ -18,7 +18,3 @@
 #
 
 syscfg.defs:
-    FAULT_CLI_SYSINIT_STAGE:
-        description: >
-            Sysinit stage for the fault CLI.
-        value: 520
