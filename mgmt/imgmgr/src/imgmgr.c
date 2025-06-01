@@ -276,16 +276,8 @@ imgr_erase_state(struct mgmt_ctxt *ctxt)
 void
 imgmgr_module_init(void)
 {
-    int rc;
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
     mgmt_register_group(&imgr_mgmt_group);
-
-#if MYNEWT_VAL(IMGMGR_CLI)
-    rc = imgr_cli_register();
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#else
-    (void) rc;
-#endif
 }

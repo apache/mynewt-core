@@ -52,11 +52,6 @@ static const struct shell_cmd_help imgr_cli_help = {
 };
 #endif
 
-static struct shell_cmd shell_imgr_cmd[] = {
-    SHELL_CMD_EXT("imgr", imgr_cli_cmd, &imgr_cli_help),
-    { 0 },
-};
-
 static void
 imgr_cli_too_few_args(struct streamer *streamer)
 {
@@ -261,9 +256,6 @@ imgr_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer
     return 0;
 }
 
-int
-imgr_cli_register(void)
-{
-    return shell_cmd_register(shell_imgr_cmd);
-}
+MAKE_SHELL_EXT_CMD(imgr, imgr_cli_cmd, &imgr_cli_help)
+
 #endif /* MYNEWT_VAL(IMGMGR_CLI) */

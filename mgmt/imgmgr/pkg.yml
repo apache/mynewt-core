@@ -45,5 +45,7 @@ pkg.deps.IMGMGR_CLI:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/util/parse"
 
+pkg.whole_archive: true
+
 pkg.init:
     imgmgr_module_init: 'MYNEWT_VAL(IMGMGR_SYSINIT_STAGE)'
