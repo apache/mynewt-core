@@ -24,7 +24,6 @@
 extern "C" {
 #endif
 
-int conf_cli_register(void);
 int conf_mgmt_register(void);
 
 struct mgmt_cbuf;

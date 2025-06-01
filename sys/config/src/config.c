@@ -53,10 +53,6 @@ conf_init(void)
 
     (void)rc;
 
-#if MYNEWT_VAL(CONFIG_CLI)
-    rc = conf_cli_register();
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
 #if MYNEWT_VAL(CONFIG_MGMT)
     rc = conf_mgmt_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
