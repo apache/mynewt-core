@@ -498,13 +498,6 @@ static const struct shell_cmd_help mcu_cli_info_help = {
 
 static const struct shell_cmd mcu_cli_commands[] = {
     SHELL_CMD_EXT("info", mcu_cli_info_cmd, &mcu_cli_info_help),
-    { },
 };
 
-int
-mcu_cli_init(void)
-{
-    shell_register("mcu", mcu_cli_commands);
-
-    return 0;
-}
+SHELL_MODULE_WITH_TABLE(mcu, mcu_cli_commands)

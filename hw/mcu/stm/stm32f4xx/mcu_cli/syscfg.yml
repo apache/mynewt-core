@@ -18,7 +18,3 @@
 #
 
 syscfg.defs:
-    MCU_CLI_SYSINIT_STAGE:
-        description: >
-            Sysinit stage for mcu cli.
-        value: 501
