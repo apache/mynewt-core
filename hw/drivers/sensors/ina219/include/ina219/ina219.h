@@ -228,16 +228,6 @@ int ina219_start_continuous_mode(struct ina219_dev *ina219, enum ina219_oper_mod
  */
 int ina219_stop_continuous_mode(struct ina219_dev *ina219);
 
-#if MYNEWT_VAL(INA219_CLI)
-/**
- * Initialize the INA219 shell extensions.
- *
- * @return 0 on success, non-zero on failure.
- */
-int ina219_shell_init(void);
-#endif
-
-
 #ifdef __cplusplus
 }
 #endif

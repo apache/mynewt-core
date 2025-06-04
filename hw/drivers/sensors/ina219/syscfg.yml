@@ -52,9 +52,6 @@ syscfg.defs:
     INA219_LOG_LVL:
         description: 'Minimum level for the INA219 log.'
         value: 1
-    INA219_CLI_SYSINIT_STAGE:
-        description: 'Sysinit stage for the INA219 shell'
-        value: 500
 syscfg.logs:
     INA219_LOG:
         module: MYNEWT_VAL(INA219_LOG_MODULE)

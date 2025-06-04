@@ -30,13 +30,6 @@ static enum ina219_adc_mode smod = MYNEWT_VAL(INA219_DEFAULT_VSHUNT_ADC_MODE);
 static enum ina219_vbus_full_scale fs = MYNEWT_VAL(INA219_DEFAULT_VBUS_FULL_SACLE);
 static uint8_t soft_avg = 1;
 
-static int ina219_shell_cmd(int argc, char **argv);
-
-static struct shell_cmd ina219_shell_cmd_struct = {
-    .sc_cmd = "ina219",
-    .sc_cmd_func = ina219_shell_cmd
-};
-
 static int
 ina219_shell_err_too_many_args(char *cmd_name)
 {
@@ -64,7 +57,7 @@ ina219_shell_err_invalid_arg(char *cmd_name)
 static int
 ina219_shell_help(void)
 {
-    console_printf("%s cmd [flags...]\n", ina219_shell_cmd_struct.sc_cmd);
+    console_printf("ina219 cmd [flags...]\n");
     console_printf("cmd:\n");
     console_printf("\tr [n_samples]\n");
     console_printf("\tfs [0..1]\n");
@@ -238,15 +231,6 @@ ina219_shell_cmd(int argc, char **argv)
     return ina219_shell_err_unknown_arg(argv[1]);
 }
 
-int
-ina219_shell_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&ina219_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    return rc;
-}
+MAKE_SHELL_CMD(ina219, ina219_shell_cmd, NULL)
 
 #endif
