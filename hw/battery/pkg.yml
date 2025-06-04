@@ -23,6 +23,7 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/drivers/adc"
 
 pkg.req_apis:
     - console
