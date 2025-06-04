@@ -28,5 +28,7 @@ pkg.deps:
 pkg.req_apis:
     - console
 
+pkg.whole_archive: true
+
 pkg.init:
     battery_pkg_init: 'MYNEWT_VAL(BATTERY_SYSINIT_STAGE)'
