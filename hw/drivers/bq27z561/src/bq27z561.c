@@ -1348,15 +1348,6 @@ bq27z561_init(struct os_dev *dev, void *arg)
     return 0;
 }
 
-int bq27z561_pkg_init(void)
-{
-#if MYNEWT_VAL(BQ27Z561_CLI)
-    return bq27z561_shell_init();
-#else
-    return 0;
-#endif
-}
-
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static void
 init_node_cb(struct bus_node *bnode, void *arg)

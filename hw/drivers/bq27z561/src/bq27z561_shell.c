@@ -113,15 +113,6 @@ bq27z561_shell_cmd(int argc, char * argv[])
     return 0;
 }
 
-static const struct shell_cmd bq27z561_shell_cmd_desc = {
-    .sc_cmd      = "bq27z561",
-    .sc_cmd_func = bq27z561_shell_cmd,
-};
-
-int
-bq27z561_shell_init(void)
-{
-    return shell_cmd_register(&bq27z561_shell_cmd_desc);
-}
+MAKE_SHELL_CMD(bq27z561, bq27z561_shell_cmd, NULL)
 
 #endif

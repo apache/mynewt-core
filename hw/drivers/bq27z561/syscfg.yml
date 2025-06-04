@@ -39,10 +39,6 @@ syscfg.defs:
         description: >
             Number of OS ticks to wait for each I2C transaction to complete.
         value: 6
-    BQ27Z561_SYSINIT_STAGE:
-        description: >
-            Sysinit stage for the BQ27Z561 driver.
-        value: 500
 
     ### Log settings.
 
