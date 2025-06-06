@@ -203,7 +203,6 @@ extern struct lora_mac_obj g_lora_mac_data;
 #define LM_F_REPEATER_SUPP()    (g_lora_mac_data.lmflags.lmfbit.repeater_supp)
 #define LM_F_LAST_TX_IS_JOIN_REQ() (g_lora_mac_data.lmflags.lmfbit.last_tx_join)
 
-void lora_cli_init(void);
 void lora_app_init(void);
 
 struct os_mbuf;

@@ -44,12 +44,6 @@
 #include "hal/hal_i2c.h"
 #include "parse/parse.h"
 
-static int sensor_cmd_exec(int, char **);
-static struct shell_cmd shell_sensor_cmd = {
-    .sc_cmd = "sensor",
-    .sc_cmd_func = sensor_cmd_exec
-};
-
 struct sensor_poll_data {
     int spd_nsamples;
     int spd_poll_itvl;
@@ -1074,6 +1068,7 @@ done:
     return (rc);
 }
 
+MAKE_SHELL_CMD(sensor, sensor_cmd_exec, NULL)
 
 int
 sensor_shell_register(void)
@@ -1081,8 +1076,6 @@ sensor_shell_register(void)
     memset(&g_spd, 0, sizeof(g_spd));
     g_spd.spd_read_ev.ev_cb  = sensor_shell_read_ev_cb;
     os_cputime_timer_init(&g_spd.spd_read_timer, sensor_shell_read_timer_cb, NULL);
-
-    shell_cmd_register((struct shell_cmd *) &shell_sensor_cmd);
 
     return (0);
 }
