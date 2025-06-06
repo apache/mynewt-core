@@ -624,13 +624,6 @@ static const struct adp5061_reg adp5061_device_regs[] = {
 #define NUM_DEVICE_REGS (sizeof(adp5061_device_regs)\
                         /sizeof(adp5061_device_regs[0]))
 
-static int adp5061_shell_cmd(int argc, char **argv);
-
-static const struct shell_cmd adp5061_shell_cmd_struct = {
-    .sc_cmd = "adp5061",
-    .sc_cmd_func = adp5061_shell_cmd
-};
-
 static int
 adp5061_shell_err_too_many_args(const char *cmd_name)
 {
@@ -665,7 +658,7 @@ adp5061_shell_err_missing_arg(const char *cmd_name)
 static int
 adp5061_shell_help(void)
 {
-    console_printf("%s cmd\n", adp5061_shell_cmd_struct.sc_cmd);
+    console_printf("adp5061 cmd\n");
     console_printf("cmd:\n");
     console_printf("\thelp\n");
 #if MYNEWT_VAL(ADP5061_CLI_DECODE)
@@ -970,16 +963,14 @@ adp5061_shell_cmd(int argc, char **argv)
     return adp5061_shell_err_unknown_arg(argv[1]);
 }
 
+MAKE_SHELL_CMD(adp5061, adp5061_shell_cmd, NULL);
+
 int
 adp5061_shell_init(struct adp5061_dev *dev)
 {
-    int rc;
-
     adp5061_dev = dev;
-    rc = shell_cmd_register(&adp5061_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
 
-    return rc;
+    return 0;
 }
 
 #endif

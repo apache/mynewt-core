@@ -674,10 +674,6 @@ adp5061_init(struct os_dev *dev, void *arg)
     }
 #endif /* ADP5061_USE_CHARGE_CONTROL */
 
-#if MYNEWT_VAL(ADP5061_CLI)
-    adp5061_shell_init(adp5061);
-#endif
-
     return 0;
 err:
     return rc;
