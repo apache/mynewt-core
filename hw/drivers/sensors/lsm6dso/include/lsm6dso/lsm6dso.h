@@ -315,13 +315,6 @@ int lsm6dso_init(struct os_dev *dev, void *arg);
 int lsm6dso_config(struct lsm6dso *, struct lsm6dso_cfg *);
 
 /**
- * Init shell
- *
- * @return 0 on success, non-zero on failure.
- */
-int lsm6dso_shell_init(void);
-
-/**
  * Read acc/gyro data
  *
  * @param itf interface pointer
