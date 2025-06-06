@@ -1,0 +1,34 @@
+name: Clang Format Diff Check
+
+on: [pull_request]
+
+jobs:
+  clang-format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required to get full history for diff
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Check formatting (diff only)
+        run: |
+          git diff -U0 origin/master...HEAD > diff.patch
+          clang-format-diff -p1 -style=file < diff.patch > clang-fmt.patch
+          if [ -s clang-fmt.patch ]; then
+            echo "Code formatting issues found:"
+            cat clang-fmt.patch
+            exit 1
+          else
+            echo "All good, no formatting issues."
+          fi
