@@ -24,17 +24,10 @@
 
 #if MYNEWT_VAL(DS1307_CLI)
 
-static int ds1307_shell_cmd(int argc, char **argv);
-
-static struct shell_cmd ds1307_shell_cmd_struct = {
-    .sc_cmd = "ds1307",
-    .sc_cmd_func = ds1307_shell_cmd
-};
-
 static int
 ds1307_shell_help(void)
 {
-    console_printf("%s cmd [args]\n", ds1307_shell_cmd_struct.sc_cmd);
+    console_printf("ds1307 cmd [args]\n");
     console_printf("cmd:\n");
     console_printf("\tdate [date-time]\n");
     console_printf("\tr addr\n");
@@ -161,13 +154,6 @@ ds1307_shell_cmd(int argc, char **argv)
     return 0;
 }
 
-void
-ds1307_shell_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&ds1307_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-}
+MAKE_SHELL_CMD(ds1307, ds1307_shell_cmd, NULL)
 
 #endif
