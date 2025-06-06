@@ -36,5 +36,10 @@ pkg.req_apis:
 pkg.init:
     ds3231_pkg_init: 601
 
-pkg.init.DS3231_CLI:
-    ds3231_shell_init: 1000
+pkg.whole_archive: true
+
+pkg.source_files:
+    - src/ds3231.c
+
+pkg.source_files.DS3231_CLI:
+    - src/ds3231_shell.c
