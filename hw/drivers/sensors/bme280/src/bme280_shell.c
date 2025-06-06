@@ -30,13 +30,6 @@
 #include "parse/parse.h"
 #include "bsp/bsp.h"
 
-static int bme280_shell_cmd(int argc, char **argv);
-
-static struct shell_cmd bme280_shell_cmd_struct = {
-    .sc_cmd = "bme280",
-    .sc_cmd_func = bme280_shell_cmd
-};
-
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static struct sensor_itf g_sensor_itf;
 #else
@@ -74,7 +67,7 @@ bme280_shell_err_invalid_arg(char *cmd_name)
 static int
 bme280_shell_help(void)
 {
-    console_printf("%s cmd [flags...]\n", bme280_shell_cmd_struct.sc_cmd);
+    console_printf("bme280 cmd [flags...]\n");
     console_printf("cmd:\n");
     console_printf("\tr    [n_samples]\n");
     console_printf("\tmode [0-sleep | 1/2-forced | 3-normal]\n");
@@ -414,10 +407,12 @@ static const struct bus_spi_node_cfg bme280_raw_cfg = {
 
 #endif
 
+MAKE_SHELL_CMD(bme280, bme280_shell_cmd, NULL)
+
 int
 bme280_shell_init(void)
 {
-    int rc;
+    int rc = 0;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     struct os_dev *dev = NULL;
@@ -437,8 +432,6 @@ bme280_shell_init(void)
         console_printf("Failed to create bme280_raw device\n");
     }
 #endif
-    rc = shell_cmd_register(&bme280_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
 
     return rc;
 }
