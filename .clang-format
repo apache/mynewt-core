@@ -1,0 +1,59 @@
+# Use LLVM style as a base
+BasedOnStyle: LLVM
+
+# Indentation settings
+IndentWidth: 4
+UseTab: Never
+TabWidth: 4
+
+# Line length
+ColumnLimit: 79
+
+# Braces placement
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: false
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+# Pointer and reference alignment
+PointerAlignment: Left
+
+# Function declaration formatting
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+BinPackArguments: false
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+
+# Control statements
+AlwaysBreakAfterReturnType: All
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+
+Cpp11BracedListStyle: false
+SpacesInParentheses: false
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+
+AlignArrayOfStructures: Left
+
+SortIncludes: false
+
+# Disable formatting for specific code sections
+DisableFormat: false
