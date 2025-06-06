@@ -23,7 +23,6 @@
 
 #include <os/mynewt.h>
 #include <console/console.h>
-#include <mcu/nrf52_hal.h>
 #include <hal/hal_gpio.h>
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/drivers/i2c_common.h"
@@ -674,10 +673,6 @@ adp5061_init(struct os_dev *dev, void *arg)
         goto err;
     }
 #endif /* ADP5061_USE_CHARGE_CONTROL */
-
-#if MYNEWT_VAL(ADP5061_CLI)
-    adp5061_shell_init(adp5061);
-#endif
 
     return 0;
 err:
