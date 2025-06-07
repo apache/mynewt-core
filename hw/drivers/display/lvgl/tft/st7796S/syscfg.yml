@@ -16,10 +16,11 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/display/lvgl/tft/ili9341
-pkg.description: LVGL display driver for ili9341
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
+syscfg.defs:
+    ST7796S_INVERSION_ON:
+        description: ST7796S enable display inversion.
+        value: 0
 
-pkg.cflags:
+syscfg.vals:
+    LVGL_DISPLAY_HORIZONTAL_RESOLUTION: 320
+    LVGL_DISPLAY_VERTICAL_RESOLUTION: 480
