@@ -161,7 +161,8 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
 }
 
 int
-shell_log_dump_cmd(int argc, char **argv)
+shell_log_dump_cmd(const struct shell_cmd *cmd, int argc, char **argv,
+                   struct streamer *streamer)
 {
     struct log *log;
     struct log_offset log_offset = {};
@@ -381,10 +382,12 @@ err:
     return (rc);
 }
 
+MAKE_SHELL_CMD(log, shell_log_dump_cmd, NULL)
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 int
-shell_log_storage_cmd(int argc, char **argv)
+shell_log_storage_cmd(const struct shell_cmd *cmd, int argc, char **argv,
+                      struct streamer *streamer)
 {
     struct log *log;
     struct log_storage_info info;
@@ -401,23 +404,28 @@ shell_log_storage_cmd(int argc, char **argv)
         }
 
         if (log_storage_info(log, &info)) {
-            console_printf("Storage info not supported for %s\n", log->l_name);
+            streamer_printf(streamer, "Storage info not supported for %s\n", log->l_name);
         } else {
-            console_printf("%s: %d of %d used\n", log->l_name,
-                           (unsigned)info.used, (unsigned)info.size);
+            streamer_printf(streamer, "%s: %d of %d used\n", log->l_name,
+                            (unsigned)info.used, (unsigned)info.size);
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
-            console_printf("%s: %d of %d used by unread entries\n", log->l_name,
-                           (unsigned)info.used_unread, (unsigned)info.size);
+            streamer_printf(streamer, "%s: %d of %d used by unread entries\n", log->l_name,
+                            (unsigned)info.used_unread, (unsigned)info.size);
 #endif
         }
     }
 
     return (0);
 }
+
+SHELL_MODULE_CMD_WITH_NAME(compat, log_storage, "log-storage", shell_log_storage_cmd, NULL)
+
 #endif
 
+#if MYNEWT_VAL(LOG_CLI_FILL_CMD)
 static int
-log_fill_command(int argc, char **argv)
+log_fill_command(const struct shell_cmd *cmd, int argc, char **argv,
+                 struct streamer *streamer)
 {
     const char *log_name;
     struct log *log;
@@ -430,7 +438,7 @@ log_fill_command(int argc, char **argv)
         log = log_list_get_next(NULL);
     }
     if (log == NULL) {
-        console_printf("No log to fill\n");
+        streamer_printf(streamer, "No log to fill\n");
         return -1;
     }
     if (argc > 1) {
@@ -447,14 +455,8 @@ log_fill_command(int argc, char **argv)
     return 0;
 }
 
-static struct shell_cmd log_fill_cmd = {
-    .sc_cmd = "log-fill",
-    .sc_cmd_func = log_fill_command
-};
+SHELL_MODULE_CMD_WITH_NAME(compat, log_fill, "log-fill", log_fill_command, NULL)
 
-void
-shell_log_fill_register(void)
-{
-    shell_cmd_register(&log_fill_cmd);
-}
+#endif
+
 #endif

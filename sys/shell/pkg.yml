@@ -39,5 +39,11 @@ pkg.deps.SHELL_BRIDGE:
 pkg.req_apis:
     - console
 
+pkg.whole_archive: true
+
+pkg.link_tables:
+    - shell_modules
+    - compat_commands
+
 pkg.init:
     shell_init: 'MYNEWT_VAL(SHELL_SYSINIT_STAGE)'

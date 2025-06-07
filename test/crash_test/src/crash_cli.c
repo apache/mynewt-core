@@ -20,29 +20,22 @@
 #include "os/mynewt.h"
 
 #if MYNEWT_VAL(CRASH_TEST_CLI)
-#include <inttypes.h>
-#include <console/console.h>
 #include <shell/shell.h>
-#include <stdio.h>
 #include <string.h>
 
-#include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
-static int crash_cli_cmd(int argc, char **argv);
-struct shell_cmd crash_cmd_struct = {
-    .sc_cmd = "crash",
-    .sc_cmd_func = crash_cli_cmd
-};
-
 static int
-crash_cli_cmd(int argc, char **argv)
+crash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
+              struct streamer *streamer)
 {
     if (argc >= 2 && crash_device(argv[1]) == 0) {
         return 0;
     }
-    console_printf("Usage crash [div0|jump0|ref0|assert|wdog|wdog2]\n");
+    streamer_printf(streamer, "Usage crash [div0|jump0|ref0|assert|wdog|wdog2]\n");
     return 0;
 }
+
+MAKE_SHELL_CMD(crash, crash_cli_cmd, NULL)
 
 #endif /* MYNEWT_VAL(CRASH_TEST_CLI) */

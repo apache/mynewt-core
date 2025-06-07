@@ -33,12 +33,7 @@ static int shell_stats_display(const struct shell_cmd *cmd,
                                int argc, char **argv,
                                struct streamer *streamer);
 
-static struct shell_cmd shell_stats_cmd =
-    SHELL_CMD_EXT("stat", shell_stats_display, NULL);
-
-uint8_t stats_shell_registered;
-
-static int 
+static int
 stats_shell_display_entry(struct stats_hdr *hdr, void *arg, char *name,
         uint16_t stat_off)
 {
@@ -114,17 +109,6 @@ err:
     return (rc);
 }
 
-
-int 
-stats_shell_register(void)
-{
-    if (!stats_shell_registered) {
-        stats_shell_registered = 1;
-        shell_cmd_register(&shell_stats_cmd);
-    }
-
-    return (0);
-}
-
+MAKE_SHELL_CMD(stat, shell_stats_display, NULL)
 
 #endif

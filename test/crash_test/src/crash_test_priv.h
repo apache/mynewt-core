@@ -23,9 +23,6 @@
 extern "C" {
 #endif
 
-#if MYNEWT_VAL(CRASH_TEST_CLI)
-extern struct shell_cmd crash_cmd_struct;
-#endif
 #if MYNEWT_VAL(CRASH_TEST_MGMT)
 extern struct mgmt_group crash_test_mgmt_group;
 #endif
