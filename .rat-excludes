@@ -11,7 +11,7 @@ RELEASE_NOTES.md
 repository.yml
 .gitignore
 00readme.txt
-uncrustify.cfg
+.clang-format
 README.md
 .mailmap
 .style_ignored_dirs
