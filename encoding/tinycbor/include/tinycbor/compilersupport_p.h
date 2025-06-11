@@ -155,9 +155,15 @@ extern "C" {
 #endif
 
 #ifdef __GNUC__
+#ifndef likely
 #  define likely(x)     __builtin_expect(!!(x), 1)
+#endif
+#ifndef unlikely
 #  define unlikely(x)   __builtin_expect(!!(x), 0)
+#endif
+#ifndef unreachable
 #  define unreachable() __builtin_unreachable()
+#endif
 #elif defined(_MSC_VER)
 #  define likely(x)     (x)
 #  define unlikely(x)   (x)
