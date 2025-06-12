@@ -42,7 +42,9 @@ jobs:
           sudo apt-get install -y clang-format
 
       - name: Check formatting (diff only)
+        shell: bash
         run: |
+          set +e
           git diff -U0 origin/master...HEAD > diff.patch
           clang-format-diff -p1 -style=file < diff.patch > clang-fmt.patch
           if [ -s clang-fmt.patch ]; then
