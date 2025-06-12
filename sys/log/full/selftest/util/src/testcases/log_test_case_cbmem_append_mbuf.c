@@ -23,8 +23,8 @@ TEST_CASE_SELF(log_test_case_cbmem_append_mbuf)
 {
     struct cbmem cbmem;
     struct os_mbuf *om;
-    struct log log;
     char *str;
+    struct log log = {0};
     int rc;
     int i;
 
