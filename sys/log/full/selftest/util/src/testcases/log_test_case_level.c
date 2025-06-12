@@ -19,37 +19,43 @@
 
 #include "log_test_util/log_test_util.h"
 
+struct log_walk_data {
+    struct log_offset log_offset;
+    size_t walk_count;
+    int idx;
+};
+
 static int
 log_last_walk(struct log *log, struct log_offset *log_offset,
               const void *dptr, uint16_t len)
 {
-    uint32_t *idx;
+    struct log_walk_data *wd = (struct log_walk_data *)log_offset;
+    struct log_entry_hdr hdr;
 
-    idx = log_offset->lo_arg;
-    *idx = log_offset->lo_index;
+    log_read(log, dptr, &hdr, 0, sizeof(hdr));
+
+    wd->idx = hdr.ue_index;
+    wd->walk_count++;
 
     return 0;
 }
 
 static uint32_t
-log_last(struct log *log)
+log_last(struct log *log, struct log_walk_data *wd)
 {
-    struct log_offset lo;
-    uint32_t idx;
+    memset(wd, 0, sizeof(*wd));
 
-    idx = 0;
+    log_walk(log, log_last_walk, &wd->log_offset);
 
-    lo.lo_arg = &idx;
-    log_walk(log, log_last_walk, &lo);
-
-    return idx;
+    return wd->walk_count;
 }
 
 TEST_CASE_SELF(log_test_case_level)
 {
     struct cbmem cbmem;
     struct log log;
-    uint32_t idx;
+    struct log_walk_data wd;
+    size_t log_count;
     int rc;
     int i;
 
@@ -78,11 +84,32 @@ TEST_CASE_SELF(log_test_case_level)
     rc = log_level_set(100, 4);
     TEST_ASSERT(rc == 0);
 
-    idx = log_last(&log);
-    log_printf(&log, 100, 1, "hello");
-    TEST_ASSERT(log_last(&log) == idx);
+    /* wd is used several times and it is cleared at the beginning of log_last */
+    log_count = log_last(&log, &wd);
+    /* Log is empty */
+    TEST_ASSERT(log_count == 0);
+    /* Write logs that should be dropped due to level */
+    for (uint8_t level = 0; level < 4; ++level) {
+        log_printf(&log, 100, 1, "hello");
+        /* Log is still empty? */
+        log_count = log_last(&log, &wd);
+        TEST_ASSERT(log_count == 0);
+    }
 
     /* Ensure log write when level is equal. */
-    log_printf(&log, 100, 4, "hello");
-    TEST_ASSERT(log_last(&log) > idx);
+    log_printf(&log, 100, 4, "hello1");
+    log_count = log_last(&log, &wd);
+    int log_idx = wd.idx;
+    TEST_ASSERT(log_count == 1);
+    /* Ensure log write when level is equal. */
+    log_printf(&log, 100, 4, "hello2");
+    log_count = log_last(&log, &wd);
+    TEST_ASSERT(log_count == 2);
+    TEST_ASSERT(log_idx < wd.idx);
+    /* Write log with higher level */
+    log_idx = wd.idx;
+    log_printf(&log, 100, 5, "hello3");
+    log_count = log_last(&log, &wd);
+    TEST_ASSERT(log_count == 3);
+    TEST_ASSERT(log_idx < wd.idx);
 }
