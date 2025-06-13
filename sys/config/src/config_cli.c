@@ -30,13 +30,6 @@
 #include <shell/shell.h>
 #include <console/console.h>
 
-static int shell_conf_command(int argc, char **argv);
-
-static struct shell_cmd shell_conf_cmd = {
-    .sc_cmd = "config",
-    .sc_cmd_func = shell_conf_command
-};
-
 #if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
 static void
 conf_running_one(char *name, char *val)
@@ -76,7 +69,8 @@ conf_dump_saved(void)
 #endif
 
 static int
-shell_conf_command(int argc, char **argv)
+shell_conf_command(const struct shell_cmd *cmd, int argc, char **argv,
+                   struct streamer *streamer)
 {
 #if MYNEWT_VAL(CONFIG_CLI_RW)
     char *name = NULL;
@@ -107,7 +101,7 @@ shell_conf_command(int argc, char **argv)
         } else {
             val = "Done\n";
         }
-        console_printf("%s", val);
+        streamer_printf(streamer, "%s", val);
         return 0;
     } else if (!strcmp(name, "delete")) {
         name = val;
@@ -131,28 +125,25 @@ shell_conf_command(int argc, char **argv)
     if (!val) {
         val = conf_get_value(name, tmp_buf, sizeof(tmp_buf));
         if (!val) {
-            console_printf("Cannot display value\n");
+            streamer_printf(streamer, "Cannot display value\n");
             goto err;
         }
-        console_printf("%s\n", val);
+        streamer_printf(streamer, "%s\n", val);
     } else {
         rc = conf_set_value(name, val);
         if (rc) {
-            console_printf("Failed to set, err: %d\n", rc);
+            streamer_printf(streamer, "Failed to set, err: %d\n", rc);
             goto err;
         }
     }
     return 0;
 err:
 #endif
-    console_printf("Invalid args\n");
+    streamer_printf(streamer, "Invalid args\n");
     return 0;
 }
 
-int
-conf_cli_register(void)
-{
-    return shell_cmd_register(&shell_conf_cmd);
-}
+MAKE_SHELL_CMD(config, shell_conf_command, NULL)
+
 #endif
 
