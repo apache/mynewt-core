@@ -63,16 +63,49 @@
 #include <string.h>
 
 #if defined(MBEDTLS_AESNI_C)
-#include "mbedtls/aesni.h"
+#include "aesni.h"
 #endif
 
 #if !defined(MBEDTLS_GCM_ALT)
 
-/* Parameter validation macros */
-#define GCM_VALIDATE_RET(cond) \
-    MBEDTLS_INTERNAL_VALIDATE_RET(cond, MBEDTLS_ERR_GCM_BAD_INPUT)
-#define GCM_VALIDATE(cond) \
-    MBEDTLS_INTERNAL_VALIDATE(cond)
+/* Used to select the acceleration mechanism */
+#define MBEDTLS_GCM_ACC_SMALLTABLE  0
+#define MBEDTLS_GCM_ACC_LARGETABLE  1
+#define MBEDTLS_GCM_ACC_AESNI       2
+#define MBEDTLS_GCM_ACC_AESCE       3
+
+static inline void gcm_set_acceleration(mbedtls_gcm_context *ctx)
+{
+#if defined(MBEDTLS_GCM_LARGE_TABLE)
+    ctx->acceleration = MBEDTLS_GCM_ACC_LARGETABLE;
+#else
+    ctx->acceleration = MBEDTLS_GCM_ACC_SMALLTABLE;
+#endif
+
+#if defined(MBEDTLS_AESNI_HAVE_CODE)
+    /* With CLMUL support, we need only h, not the rest of the table */
+    if (mbedtls_aesni_has_support(MBEDTLS_AESNI_CLMUL)) {
+        ctx->acceleration = MBEDTLS_GCM_ACC_AESNI;
+    }
+#endif
+
+#if defined(MBEDTLS_AESCE_HAVE_CODE)
+    if (MBEDTLS_AESCE_HAS_SUPPORT()) {
+        ctx->acceleration = MBEDTLS_GCM_ACC_AESCE;
+    }
+#endif
+}
+
+static inline void gcm_gen_table_rightshift(uint64_t dst[2], const uint64_t src[2])
+{
+    uint8_t *u8Dst = (uint8_t *) dst;
+    uint8_t *u8Src = (uint8_t *) src;
+
+    MBEDTLS_PUT_UINT64_BE(MBEDTLS_GET_UINT64_BE(&src[1], 0) >> 1, &dst[1], 0);
+    u8Dst[8] |= (u8Src[7] & 0x01) << 7;
+    MBEDTLS_PUT_UINT64_BE(MBEDTLS_GET_UINT64_BE(&src[0], 0) >> 1, &dst[0], 0);
+    u8Dst[0] ^= (u8Src[15] & 0x01) ? 0xE1 : 0;
+}
 
 /*
  * Precompute small multiples of H, that is set
@@ -85,170 +118,77 @@
 static int gcm_gen_table(mbedtls_gcm_context *ctx)
 {
     int ret, i, j;
-    uint64_t hi, lo;
-    uint64_t vl, vh;
-    unsigned char h[16];
-    size_t olen = 0;
+    uint64_t u64h[2] = { 0 };
+    uint8_t *h = (uint8_t *) u64h;
 
-    memset(h, 0, 16);
-    if ((ret = mbedtls_cipher_update(&ctx->cipher_ctx, h, 16, h, &olen)) != 0) {
+#if defined(MBEDTLS_BLOCK_CIPHER_C)
+    ret = mbedtls_block_cipher_encrypt(&ctx->block_cipher_ctx, h, h);
+#else
+    size_t olen = 0;
+    ret = mbedtls_cipher_update(&ctx->cipher_ctx, h, 16, h, &olen);
+#endif
+    if (ret != 0) {
         return ret;
     }
 
-    /* pack h as two 64-bits ints, big-endian */
-    hi = MBEDTLS_GET_UINT32_BE(h,  0);
-    lo = MBEDTLS_GET_UINT32_BE(h,  4);
-    vh = (uint64_t) hi << 32 | lo;
+    gcm_set_acceleration(ctx);
 
-    hi = MBEDTLS_GET_UINT32_BE(h,  8);
-    lo = MBEDTLS_GET_UINT32_BE(h,  12);
-    vl = (uint64_t) hi << 32 | lo;
+    /* MBEDTLS_GCM_HTABLE_SIZE/2 = 1000 corresponds to 1 in GF(2^128) */
+    ctx->H[MBEDTLS_GCM_HTABLE_SIZE/2][0] = u64h[0];
+    ctx->H[MBEDTLS_GCM_HTABLE_SIZE/2][1] = u64h[1];
 
-    /* 8 = 1000 corresponds to 1 in GF(2^128) */
-    ctx->HL[8] = vl;
-    ctx->HH[8] = vh;
-
+    switch (ctx->acceleration) {
 #if defined(MBEDTLS_AESNI_HAVE_CODE)
-    /* With CLMUL support, we need only h, not the rest of the table */
-    if (mbedtls_aesni_has_support(MBEDTLS_AESNI_CLMUL)) {
-        return 0;
-    }
+        case MBEDTLS_GCM_ACC_AESNI:
+            return 0;
 #endif
 
-    /* 0 corresponds to 0 in GF(2^128) */
-    ctx->HH[0] = 0;
-    ctx->HL[0] = 0;
+#if defined(MBEDTLS_AESCE_HAVE_CODE)
+        case MBEDTLS_GCM_ACC_AESCE:
+            return 0;
+#endif
 
-    for (i = 4; i > 0; i >>= 1) {
-        uint32_t T = (vl & 1) * 0xe1000000U;
-        vl  = (vh << 63) | (vl >> 1);
-        vh  = (vh >> 1) ^ ((uint64_t) T << 32);
+    default:
+        /* 0 corresponds to 0 in GF(2^128) */
+        ctx->H[0][0] = 0;
+        ctx->H[0][1] = 0;
 
-        ctx->HL[i] = vl;
-        ctx->HH[i] = vh;
-    }
+        for (i = MBEDTLS_GCM_HTABLE_SIZE/4; i > 0; i >>= 1) {
+            gcm_gen_table_rightshift(ctx->H[i], ctx->H[i*2]);
+        }
 
-    for (i = 2; i <= 8; i *= 2) {
-        uint64_t *HiL = ctx->HL + i, *HiH = ctx->HH + i;
-        vh = *HiH;
-        vl = *HiL;
-        for (j = 1; j < i; j++) {
-            HiH[j] = vh ^ ctx->HH[j];
-            HiL[j] = vl ^ ctx->HL[j];
+#if !defined(MBEDTLS_GCM_LARGE_TABLE)
+        /* pack elements of H as 64-bits ints, big-endian */
+        for (i = MBEDTLS_GCM_HTABLE_SIZE/2; i > 0; i >>= 1) {
+            MBEDTLS_PUT_UINT64_BE(ctx->H[i][0], &ctx->H[i][0], 0);
+            MBEDTLS_PUT_UINT64_BE(ctx->H[i][1], &ctx->H[i][1], 0);
+        }
+#endif
+
+        for (i = 2; i < MBEDTLS_GCM_HTABLE_SIZE; i <<= 1) {
+            for (j = 1; j < i; j++) {
+                mbedtls_xor_no_simd((unsigned char *) ctx->H[i+j],
+                                    (unsigned char *) ctx->H[i],
+                                    (unsigned char *) ctx->H[j],
+                                    16);
+            }
         }
     }
 
     return 0;
 }
 
-/*
- * Shoup's method for multiplication use this table with
- *      last4[x] = x times P^128
- * where x and last4[x] are seen as elements of GF(2^128) as in [MGV]
- */
-static const uint64_t last4[16] =
-{
-    0x0000, 0x1c20, 0x3840, 0x2460,
-    0x7080, 0x6ca0, 0x48c0, 0x54e0,
-    0xe100, 0xfd20, 0xd940, 0xc560,
-    0x9180, 0x8da0, 0xa9c0, 0xb5e0
-};
-
-/*
- * Sets output to x times H using the precomputed tables.
- * x and output are seen as elements of GF(2^128) as in [MGV].
- */
-static void gcm_mult(mbedtls_gcm_context *ctx, const unsigned char x[16],
-                     unsigned char output[16])
-{
-    int i = 0;
-    unsigned char lo, hi, rem;
-    uint64_t zh, zl;
-
-#if defined(MBEDTLS_AESNI_HAVE_CODE)
-    if (mbedtls_aesni_has_support(MBEDTLS_AESNI_CLMUL)) {
-        unsigned char h[16];
-
-        MBEDTLS_PUT_UINT32_BE(ctx->HH[8] >> 32, h,  0);
-        MBEDTLS_PUT_UINT32_BE(ctx->HH[8],       h,  4);
-        MBEDTLS_PUT_UINT32_BE(ctx->HL[8] >> 32, h,  8);
-        MBEDTLS_PUT_UINT32_BE(ctx->HL[8],       h, 12);
-
-        mbedtls_aesni_gcm_mult(output, x, h);
-        return;
-    }
-#endif /* MBEDTLS_AESNI_HAVE_CODE */
-
-    lo = x[15] & 0xf;
-
-    zh = ctx->HH[lo];
-    zl = ctx->HL[lo];
-
-    for (i = 15; i >= 0; i--) {
-        lo = x[i] & 0xf;
-        hi = (x[i] >> 4) & 0xf;
-
-        if (i != 15) {
-            rem = (unsigned char) zl & 0xf;
-            zl = (zh << 60) | (zl >> 4);
-            zh = (zh >> 4);
-            zh ^= (uint64_t) last4[rem] << 48;
-            zh ^= ctx->HH[lo];
-            zl ^= ctx->HL[lo];
-
-        }
-
-        rem = (unsigned char) zl & 0xf;
-        zl = (zh << 60) | (zl >> 4);
-        zh = (zh >> 4);
-        zh ^= (uint64_t) last4[rem] << 48;
-        zh ^= ctx->HH[hi];
-        zl ^= ctx->HL[hi];
-    }
-
-    MBEDTLS_PUT_UINT32_BE(zh >> 32, output, 0);
-    MBEDTLS_PUT_UINT32_BE(zh, output, 4);
-    MBEDTLS_PUT_UINT32_BE(zl >> 32, output, 8);
-    MBEDTLS_PUT_UINT32_BE(zl, output, 12);
-}
-
-int mbedtls_gcm_update_add( mbedtls_gcm_context *ctx,
-                            size_t add_len,
-                            const unsigned char *add )
-{
-    const unsigned char *p;
-    size_t i;
-    size_t use_len;
-
-    if ( ctx->add_len & 15 )
-    {
-        return( MBEDTLS_ERR_GCM_BAD_INPUT );
-    }
-    ctx->add_len += add_len;
-    p = add;
-
-    while (add_len > 0)
-    {
-        use_len = ( add_len < 16 ) ? add_len : 16;
-
-        for( i = 0; i < use_len; i++ ) {
-            ctx->buf[i] ^= p[i];
-        }
-        gcm_mult( ctx, ctx->buf, ctx->buf );
-
-        add_len -= use_len;
-        p += use_len;
-    }
-
-    return( 0 );
-}
-
 int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
                                 const mbedtls_cipher_info_t *cipher_info,
                                 const unsigned char *key,
+                                unsigned int keybits,
                                 void *cipher_ctx)
 {
     int ret;
+
+    if (keybits != 128 && keybits != 192 && keybits != 256) {
+        return MBEDTLS_ERR_GCM_BAD_INPUT;
+    }
 
     ctx->cipher_ctx.cipher_info = cipher_info;
     ctx->cipher_ctx.cipher_ctx = cipher_ctx;
@@ -266,7 +206,7 @@ int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
 #endif /* MBEDTLS_CIPHER_MODE_WITH_PADDING */
 
     if( ( ret = mbedtls_cipher_setkey( &ctx->cipher_ctx, key,
-                               cipher_info->key_bitlen,
+                               keybits,
                                MBEDTLS_ENCRYPT ) ) != 0 )
     {
         return( ret );
