@@ -85,6 +85,7 @@ TEST_CASE_DECL(sha512_test)
 TEST_CASE_DECL(timing_test)
 TEST_CASE_DECL(x509_test)
 TEST_CASE_DECL(xtea_test)
+TEST_CASE_DECL(gcm_mynewt_test)
 
 TEST_SUITE(mbedtls_test_all)
 {
@@ -120,6 +121,7 @@ TEST_SUITE(mbedtls_test_all)
     timing_test();
     x509_test();
     xtea_test();
+    gcm_mynewt_test();
 }
 
 int
