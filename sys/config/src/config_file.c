@@ -19,7 +19,7 @@
 
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(CONFIG_NFFS) || MYNEWT_VAL(CONFIG_LITTLEFS)
+#if MYNEWT_VAL(CONFIG_FILE)
 
 #include <string.h>
 #include <assert.h>
@@ -35,7 +35,7 @@ static int conf_file_load(struct conf_store *, conf_store_load_cb cb,
 static int conf_file_save(struct conf_store *, const char *name,
   const char *value);
 
-static struct conf_store_itf conf_file_itf = {
+static const struct conf_store_itf conf_file_itf = {
     .csi_load = conf_file_load,
     .csi_save = conf_file_save,
 };
@@ -281,6 +281,22 @@ conf_file_save(struct conf_store *cs, const char *name, const char *value)
     }
     fs_close(file);
     return rc;
+}
+
+static struct conf_file config_init_conf = {
+    .cf_name = MYNEWT_VAL(CONFIG_FILE_FILE_NAME),
+    .cf_maxlines = MYNEWT_VAL(CONFIG_FILE_MAX_LINES)
+};
+
+void
+config_file_init(void)
+{
+    int rc;
+
+    rc = conf_file_src(&config_init_conf);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    rc = conf_file_dst(&config_init_conf);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
 #endif
