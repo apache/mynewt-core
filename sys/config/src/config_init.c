@@ -27,46 +27,7 @@
 
 #if MYNEWT_VAL(CONFIG_AUTO_INIT)
 
-#if MYNEWT_VAL(CONFIG_LITTLEFS)
-#include "fs/fs.h"
-
-static struct conf_file config_init_conf_littlefs = {
-    .cf_name = MYNEWT_VAL(CONFIG_LITTLEFS_FILE),
-    .cf_maxlines = MYNEWT_VAL(CONFIG_LITTLEFS_MAX_LINES)
-};
-
-static void
-config_init_littlefs(void)
-{
-    int rc;
-
-    rc = conf_file_src(&config_init_conf_littlefs);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-    rc = conf_file_dst(&config_init_conf_littlefs);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-}
-
-#elif MYNEWT_VAL(CONFIG_NFFS)
-
-#include "fs/fs.h"
-
-static struct conf_file config_init_conf_file = {
-    .cf_name = MYNEWT_VAL(CONFIG_NFFS_FILE),
-    .cf_maxlines = MYNEWT_VAL(CONFIG_NFFS_MAX_LINES)
-};
-
-static void
-config_init_fs(void)
-{
-    int rc;
-
-    rc = conf_file_src(&config_init_conf_file);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-    rc = conf_file_dst(&config_init_conf_file);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-}
-
-#elif MYNEWT_VAL(CONFIG_FCB)
+#if MYNEWT_VAL(CONFIG_FCB)
 
 #include "config/config_fcb.h"
 
@@ -157,10 +118,8 @@ config_pkg_init(void)
     conf_init();
 
 #if MYNEWT_VAL(CONFIG_AUTO_INIT)
-#if MYNEWT_VAL(CONFIG_LITTLEFS)
-    config_init_littlefs();
-#elif MYNEWT_VAL(CONFIG_NFFS)
-    config_init_fs();
+#if MYNEWT_VAL(CONFIG_FILE)
+    config_file_init();
 #elif MYNEWT_VAL(CONFIG_FCB)
     config_init_fcb();
 #elif MYNEWT_VAL(CONFIG_FCB2)

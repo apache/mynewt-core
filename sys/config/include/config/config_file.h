@@ -39,6 +39,13 @@ struct conf_file {
 int conf_file_src(struct conf_file *);  /* register file to be source of cfg */
 int conf_file_dst(struct conf_file *);  /* cfg saves go to a file */
 
+/**
+ * @brief Initialize config with syscfg values
+ *
+ * Function registers config source and destination stores.
+ */
+void config_file_init(void);
+
 #ifdef __cplusplus
 }
 #endif

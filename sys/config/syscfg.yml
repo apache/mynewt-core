@@ -48,6 +48,13 @@ syscfg.defs:
             - '!CONFIG_FCB'
             - '!CONFIG_FCB2'
 
+    CONFIG_FILE:
+        description: 'Config default storage is in file system file'
+        value: 0
+        restrictions:
+            - '!CONFIG_FCB'
+            - '!CONFIG_FCB2'
+
     CONFIG_MGMT:
         description: 'SMP access to config'
         value: 0
@@ -143,8 +150,26 @@ syscfg.defs.CONFIG_LITTLEFS:
         description: 'Limit how many items stored in file before compressing'
         value: 32
 
+syscfg.defs.CONFIG_FILE:
+    CONFIG_FILE_FILE_NAME:
+        description: 'Name for the default config file'
+        value: '"cfg"'
+    CONFIG_FILE_MAX_LINES:
+        description: 'Limit how many items stored in file before compressing'
+        value: 32
+
 syscfg.vals.CONFIG_FCB2:
     CONFIG_FCB_MAGIC: 0xd0b1d0b1
 
 syscfg.vals.CONFIG_NEWTMGR:
     CONFIG_MGMT: MYNEWT_VAL(CONFIG_NEWTMGR)
+
+syscfg.vals.CONFIG_LITTLEFS:
+    CONFIG_FILE: 1
+    CONFIG_FILE_FILE_NAME: MYNEWT_VAL(CONFIG_LITTLEFS_FILE)
+    CONFIG_FILE_MAX_LINES: MYNEWT_VAL(CONFIG_LITTLEFS_MAX_LINES)
+
+syscfg.vals.CONFIG_NFFS:
+    CONFIG_FILE: 1
+    CONFIG_FILE_FILE_NAME: MYNEWT_VAL(CONFIG_NFFS_FILE)
+    CONFIG_FILE_MAX_LINES: MYNEWT_VAL(CONFIG_NFFS_MAX_LINES)
