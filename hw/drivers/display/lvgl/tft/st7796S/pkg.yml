@@ -16,10 +16,8 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/display/lvgl/tft/ili9341
-pkg.description: LVGL display driver for ili9341
+pkg.name: hw/drivers/display/lvgl/tft/st7796S
+pkg.description: LVGL display driver for ST7796S
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-
-pkg.cflags:

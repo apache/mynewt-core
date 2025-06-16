@@ -37,6 +37,9 @@ syscfg.defs:
     LVGL_ST7789:
         description: Enable ST7789 display driver.
         value:
+    LVGL_ST7796S:
+        description: Enable ST7796S display driver.
+        value:
     LVGL_XPT2046:
         description: Enable XPT2046 touchscreen driver.
         value:

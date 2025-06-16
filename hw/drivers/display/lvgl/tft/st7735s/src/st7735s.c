@@ -183,8 +183,11 @@ void
 st7735s_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
 {
     uint8_t cmd[5];
+    lv_disp_t *disp = lv_disp_get_default();
+    lv_coord_t hor_res = lv_disp_get_hor_res(disp);
+    lv_coord_t ver_res = lv_disp_get_ver_res(disp);
 
-    if (area->x2 < 0 || area->y2 < 0 || area->x1 >= ST7735S_HOR_RES || area->y1 >= ST7735S_VER_RES) {
+    if (area->x2 < 0 || area->y2 < 0 || area->x1 >= hor_res || area->y1 >= ver_res) {
         lv_disp_flush_ready(drv);
         return;
     }
@@ -192,8 +195,8 @@ st7735s_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
     /* Truncate the area to the screen */
     int32_t act_x1 = area->x1 < 0 ? 0 : area->x1;
     int32_t act_y1 = area->y1 < 0 ? 0 : area->y1;
-    int32_t act_x2 = area->x2 >= ST7735S_HOR_RES ? ST7735S_HOR_RES - 1 : area->x2;
-    int32_t act_y2 = area->y2 >= ST7735S_VER_RES ? ST7735S_VER_RES - 1 : area->y2;
+    int32_t act_x2 = area->x2 >= hor_res ? hor_res - 1 : area->x2;
+    int32_t act_y2 = area->y2 >= ver_res ? ver_res - 1 : area->y2;
 
     /* Column address */
     cmd[0] = ST7735S_CASET;
