@@ -27,8 +27,6 @@
 #include "shell/shell.h"
 #include "fault/fault.h"
 
-static int fault_cli_cmd_fn(int argc, char **argv);
-
 static const struct shell_cmd_help fault_cli_help = {
     .summary = "Fault management",
     .usage = 
@@ -47,12 +45,6 @@ static const struct shell_cmd_help fault_cli_help = {
         "    Simulates a fatal error for the given domain.\n"
         "fault fatalgood <fault-domain> [uint-param]\n"
         "    Simulates a fatal success for the given domain.\n",
-};
-
-static const struct shell_cmd fault_cli_cmd = {
-    .sc_cmd = "fault",
-    .sc_cmd_func = fault_cli_cmd_fn,
-    .help = &fault_cli_help,
 };
 
 static int
@@ -80,7 +72,7 @@ fault_cli_parse_domain(const char *arg)
 }
 
 static int
-fault_cli_chronls(int argc, char **argv)
+fault_cli_chronls(struct streamer *streamer, int argc, char **argv)
 {
     const char *name;
     uint8_t count;
@@ -94,7 +86,7 @@ fault_cli_chronls(int argc, char **argv)
             if (name == NULL) {
                 name = "";
             }
-            console_printf("(%d) %s: %d\n", i, name, count);
+            streamer_printf(streamer, "(%d) %s: %d\n", i, name, count);
         }
     }
 
@@ -102,7 +94,7 @@ fault_cli_chronls(int argc, char **argv)
 }
 
 static int
-fault_cli_chronset(int argc, char **argv)
+fault_cli_chronset(struct streamer *streamer, int argc, char **argv)
 {
     uint8_t count;
     int dom;
@@ -114,13 +106,13 @@ fault_cli_chronset(int argc, char **argv)
 
     dom = fault_cli_parse_domain(argv[0]);
     if (dom == -1) {
-        console_printf("invalid domain string\n");
+        streamer_printf(streamer, "invalid domain string\n");
         return SYS_EINVAL;
     }
 
     count = parse_ull_bounds(argv[1], 0, UINT8_MAX, &rc);
     if (rc != 0) {
-        console_printf("invalid failure count\n");
+        streamer_printf(streamer, "invalid failure count\n");
         return rc;
     }
 
@@ -133,11 +125,11 @@ fault_cli_chronset(int argc, char **argv)
 }
 
 static int
-fault_cli_chronsetr(int argc, char **argv)
+fault_cli_chronsetr(struct streamer *streamer, int argc, char **argv)
 {
     int rc;
 
-    rc = fault_cli_chronset(argc, argv);
+    rc = fault_cli_chronset(streamer, argc, argv);
     if (rc != 0) {
         return rc;
     }
@@ -148,7 +140,7 @@ fault_cli_chronsetr(int argc, char **argv)
 }
 
 static int
-fault_cli_chronclr(int argc, char **argv)
+fault_cli_chronclr(struct streamer *streamer, int argc, char **argv)
 {
     int dom;
     int rc;
@@ -166,7 +158,7 @@ fault_cli_chronclr(int argc, char **argv)
 }
 
 static int
-fault_cli_fatal_gen(int argc, char **argv, bool is_failure)
+fault_cli_fatal_gen(struct streamer *streamer, int argc, char **argv, bool is_failure)
 {
     uintptr_t int_arg;
     int dom;
@@ -178,7 +170,7 @@ fault_cli_fatal_gen(int argc, char **argv, bool is_failure)
 
     dom = fault_cli_parse_domain(argv[0]);
     if (dom == -1) {
-        console_printf("invalid domain string\n");
+        streamer_printf(streamer, "invalid domain string\n");
         return SYS_EINVAL;
     }
 
@@ -186,7 +178,7 @@ fault_cli_fatal_gen(int argc, char **argv, bool is_failure)
         int_arg = parse_ull_bounds(argv[1], 0, UINT_MAX, &rc);
         if (rc != 0)
         {
-            console_printf("invalid fault argument (`arg`)\n");
+            streamer_printf(streamer, "invalid fault argument (`arg`)\n");
             return rc;
         }
     } else {
@@ -199,19 +191,20 @@ fault_cli_fatal_gen(int argc, char **argv, bool is_failure)
 }
 
 static int
-fault_cli_fatalfail(int argc, char **argv)
+fault_cli_fatalfail(struct streamer *streamer, int argc, char **argv)
 {
-    return fault_cli_fatal_gen(argc, argv, true);
+    return fault_cli_fatal_gen(streamer, argc, argv, true);
 }
 
 static int
-fault_cli_fatalgood(int argc, char **argv)
+fault_cli_fatalgood(struct streamer *streamer, int argc, char **argv)
 {
-    return fault_cli_fatal_gen(argc, argv, false);
+    return fault_cli_fatal_gen(streamer, argc, argv, false);
 }
 
 static int
-fault_cli_cmd_fn(int argc, char **argv)
+fault_cli_cmd_fn(const struct shell_cmd *cmd, int argc, char **argv,
+                 struct streamer *streamer)
 {
     /* Shift initial "fault" argument. */
     argc--;
@@ -222,37 +215,30 @@ fault_cli_cmd_fn(int argc, char **argv)
     }
 
     if (strcmp(argv[0], "chronls") == 0) {
-        return fault_cli_chronls(argc - 1, argv + 1);
+        return fault_cli_chronls(streamer, argc - 1, argv + 1);
     }
 
     if (strcmp(argv[0], "chronset") == 0) {
-        return fault_cli_chronset(argc - 1, argv + 1);
+        return fault_cli_chronset(streamer, argc - 1, argv + 1);
     }
 
     if (strcmp(argv[0], "chronsetr") == 0) {
-        return fault_cli_chronsetr(argc - 1, argv + 1);
+        return fault_cli_chronsetr(streamer, argc - 1, argv + 1);
     }
 
     if (strcmp(argv[0], "chronclr") == 0) {
-        return fault_cli_chronclr(argc - 1, argv + 1);
+        return fault_cli_chronclr(streamer, argc - 1, argv + 1);
     }
 
     if (strcmp(argv[0], "fatalfail") == 0) {
-        return fault_cli_fatalfail(argc - 1, argv + 1);
+        return fault_cli_fatalfail(streamer, argc - 1, argv + 1);
     }
 
     if (strcmp(argv[0], "fatalgood") == 0) {
-        return fault_cli_fatalgood(argc - 1, argv + 1);
+        return fault_cli_fatalgood(streamer, argc - 1, argv + 1);
     }
 
     return SYS_EINVAL;
 }
 
-void
-fault_cli_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&fault_cli_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-}
+MAKE_SHELL_CMD(fault, fault_cli_cmd_fn, &fault_cli_help)

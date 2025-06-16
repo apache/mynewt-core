@@ -29,51 +29,24 @@
 
 #include "fs/fs.h"
 
-static int fs_ls_cmd(int argc, char **argv);
-static int fs_rm_cmd(int argc, char **argv);
-static int fs_mkdir_cmd(int argc, char **argv);
-static int fs_mv_cmd(int argc, char **argv);
-static int fs_cat_cmd(int argc, char **argv);
-
-static struct shell_cmd fs_ls_struct = {
-    .sc_cmd = "ls",
-    .sc_cmd_func = fs_ls_cmd
-};
-static struct shell_cmd fs_rm_struct = {
-    .sc_cmd = "rm",
-    .sc_cmd_func = fs_rm_cmd
-};
-static struct shell_cmd fs_mkdir_struct = {
-    .sc_cmd = "mkdir",
-    .sc_cmd_func = fs_mkdir_cmd
-};
-static struct shell_cmd fs_mv_struct = {
-    .sc_cmd = "mv",
-    .sc_cmd_func = fs_mv_cmd
-};
-static struct shell_cmd fs_cat_struct = {
-    .sc_cmd = "cat",
-    .sc_cmd_func = fs_cat_cmd
-};
-
 static void
-fs_ls_file(const char *name, struct fs_file *file)
+fs_ls_file(struct streamer *streamer, const char *name, struct fs_file *file)
 {
     uint32_t len;
 
     len = 0;
     fs_filelen(file, &len);
-    console_printf("\t%6lu %s\n", (unsigned long)len, name);
+    streamer_printf(streamer, "\t%6lu %s\n", (unsigned long)len, name);
 }
 
 static void
-fs_ls_dir(const char *name)
+fs_ls_dir(struct streamer *streamer, const char *name)
 {
-    console_printf("\t%6s %s\n", "dir", name);
+    streamer_printf(streamer, "\t%6s %s\n", "dir", name);
 }
 
 static int
-fs_ls_cmd(int argc, char **argv)
+fs_ls_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *streamer)
 {
     int rc, file_cnt = 0;
     char *path;
@@ -92,13 +65,13 @@ fs_ls_cmd(int argc, char **argv)
         path = argv[1];
         break;
     default:
-        console_printf("ls <path>\n");
+        streamer_printf(streamer, "ls <path>\n");
         return 1;
     }
 
     rc = fs_open(path, FS_ACCESS_READ, &file);
     if (rc == 0) {
-        fs_ls_file(path, file);
+        fs_ls_file(streamer, path, file);
         fs_close(file);
         file_cnt = 1;
         goto done;
@@ -124,24 +97,24 @@ fs_ls_cmd(int argc, char **argv)
             }
             rc = fs_open(name, FS_ACCESS_READ, &file);
             if (rc == 0) {
-                fs_ls_file(name, file);
+                fs_ls_file(streamer, name, file);
                 fs_close(file);
             } else {
-                fs_ls_dir(name);
+                fs_ls_dir(streamer, name);
             }
             file_cnt++;
         } while (1);
         fs_closedir(dir);
         goto done;
     }
-    console_printf("Error listing %s - %d\n", path, rc);
+    streamer_printf(streamer, "Error listing %s - %d\n", path, rc);
 done:
-    console_printf("%d files\n", file_cnt);
+    streamer_printf(streamer, "%d files\n", file_cnt);
     return 0;
 }
 
 static int
-fs_rm_cmd(int argc, char **argv)
+fs_rm_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *streamer)
 {
     int i;
     int rc;
@@ -156,7 +129,7 @@ fs_rm_cmd(int argc, char **argv)
 }
 
 static int
-fs_mkdir_cmd(int argc, char **argv)
+fs_mkdir_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *streamer)
 {
     int i;
     int rc;
@@ -164,14 +137,14 @@ fs_mkdir_cmd(int argc, char **argv)
     for (i = 1; i < argc; i++) {
         rc = fs_mkdir(argv[1]);
         if (rc) {
-            console_printf("Error creating %s - %d\n", argv[i], rc);
+            streamer_printf(streamer, "Error creating %s - %d\n", argv[i], rc);
         }
     }
     return 0;
 }
 
 static int
-fs_mv_cmd(int argc, char **argv)
+fs_mv_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *streamer)
 {
     int rc;
 
@@ -182,13 +155,13 @@ fs_mv_cmd(int argc, char **argv)
     rc = fs_rename(argv[1], argv[2]);
 out:
     if (rc) {
-        console_printf("Error moving - %d\n", rc);
+        streamer_printf(streamer, "Error moving - %d\n", rc);
     }
     return 0;
 }
 
 static int
-fs_cat_cmd(int argc, char **argv)
+fs_cat_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *streamer)
 {
     int rc;
     struct fs_file *file;
@@ -196,23 +169,23 @@ fs_cat_cmd(int argc, char **argv)
     uint32_t len;
 
     if (argc != 2) {
-        console_printf("cat <filename>\n");
+        streamer_printf(streamer, "cat <filename>\n");
         return -1;
     }
 
     rc = fs_open(argv[1], FS_ACCESS_READ, &file);
     if (rc != FS_EOK) {
-        console_printf("Error opening %s - %d\n", argv[1], rc);
+        streamer_printf(streamer, "Error opening %s - %d\n", argv[1], rc);
         return -1;
     }
 
     do {
         rc = fs_read(file, sizeof(buf), buf, &len);
         if (rc != FS_EOK) {
-            console_printf("\nError reading %s - %d\n", argv[1], rc);
+            streamer_printf(streamer, "\nError reading %s - %d\n", argv[1], rc);
             break;
         }
-        console_write(buf, len);
+        streamer_write(streamer, buf, len);
     } while (len > 0);
 
     fs_close(file);
@@ -220,13 +193,10 @@ fs_cat_cmd(int argc, char **argv)
     return 0;
 }
 
-void
-fs_cli_init(void)
-{
-    shell_cmd_register(&fs_ls_struct);
-    shell_cmd_register(&fs_rm_struct);
-    shell_cmd_register(&fs_mkdir_struct);
-    shell_cmd_register(&fs_mv_struct);
-    shell_cmd_register(&fs_cat_struct);
-}
+MAKE_SHELL_CMD(ls, fs_ls_cmd, NULL)
+MAKE_SHELL_CMD(rm, fs_rm_cmd, NULL)
+MAKE_SHELL_CMD(mkdir, fs_mkdir_cmd, NULL)
+MAKE_SHELL_CMD(mv, fs_mv_cmd, NULL)
+MAKE_SHELL_CMD(cat, fs_cat_cmd, NULL)
+
 #endif /* MYNEWT_VAL(FS_CLI) */
