@@ -869,17 +869,17 @@ msc_fat_view_create_short_name(const dir_entry_t *entry, char short_name[11])
     int len = strlen(entry->file->name);
     int last_dot;
     const char *name = entry->file->name;
-    bool add_tilda = false;
+    bool add_tilde = false;
 
     memset(short_name, ' ', 11);
     if (entry->dir_slots > 1) {
         last_dot = len;
         for (i = len - 1; i > 0; --i) {
             if (name[i] == '.') {
+                last_dot = i++;
                 for (j = 8; j < 11 && i < len; ++i, ++j) {
                     short_name[j] = toupper((uint8_t)name[i]);
                 }
-                last_dot = i;
                 break;
             }
         }
@@ -887,10 +887,10 @@ msc_fat_view_create_short_name(const dir_entry_t *entry, char short_name[11])
             if (name[i] != '.' && name[i] != ' ') {
                 short_name[j++] = toupper((uint8_t)name[i]);
             } else {
-                add_tilda = true;
+                add_tilde = true;
             }
         }
-        if (add_tilda) {
+        if (add_tilde) {
             for (i = 0; i < 6 && short_name[i] != ' '; ++i) {
             }
             short_name[i++] = '~';
