@@ -38,6 +38,10 @@ syscfg.defs:
             Auto-confirm image when directory is read after reboot.
         value: 1
 
+    MSC_FAT_VIEW_ROOT_DIR_SECTORS:
+        description: >
+            Number of sectors for root directory.
+        value: 3
     MSC_FAT_VIEW_COREDUMP_FILES:
         description: >
             Adds coredump files (if present) to root directory.

@@ -34,6 +34,7 @@
 #include <modlog/modlog.h>
 #include <hal/hal_flash.h>
 #include <console/console.h>
+#include <stream/stream.h>
 #include "coredump_files.h"
 
 #if MYNEWT_VAL(BOOT_LOADER)
@@ -76,7 +77,7 @@
 #define SECTOR_BIT_COUNT            ((SECTOR_SIZE) * 8)
 
 #define DIR_ENTRY_SIZE              32
-#define ROOT_SECTOR_COUNT           1
+#define ROOT_SECTOR_COUNT           MYNEWT_VAL(MSC_FAT_VIEW_ROOT_DIR_SECTORS)
 
 #define FAT_FIRST_SECTOR            1
 #define FAT_ROOT_DIR_FIRST_SECTOR   ((FAT_FIRST_SECTOR) + (FAT_SECTOR_COUNT) * (FAT_COUNT))
@@ -787,22 +788,19 @@ msc_fat_view_fat_next_cluster(cluster_t cluster, fat_chain_t **cache)
 }
 
 static void
-msc_fat_view_write_ucs_2(uint8_t *dst, const char **ascii, int len)
+msc_fat_view_write_ucs_2(struct out_stream *ostr, const char *ascii, int field_len)
 {
-    for ( ; len; --len) {
-        if (*ascii) {
-            if (**ascii) {
-                *dst++ = **ascii;
-                *ascii += 1;
-            } else {
-                *dst++ = 0;
-                *ascii = NULL;
-            }
-            *dst++ = 0;
+    for (; ascii && field_len; --field_len) {
+        ostream_write_uint8(ostr, *ascii);
+        ostream_write_uint8(ostr, 0);
+        if (*ascii == '\0') {
+            ascii = NULL;
         } else {
-            *dst++ = 0xFF;
-            *dst++ = 0xFF;
+            ++ascii;
         }
+    }
+    for (; field_len; --field_len) {
+        ostream_write_uint16(ostr, 0xFFFF);
     }
 }
 
@@ -832,34 +830,49 @@ msc_fat_view_short_name_checksum(const char *short_name)
     return check_sum;
 }
 
-static fat_dir_entry_t *
-msc_fat_view_write_long_name_entry(fat_dir_entry_t *buffer, const char *long_name, const char *short_name)
+/*
+ * Return pointer to character in the string if offset is valid
+ * If offset is outside of the string return NULL
+ */
+static const char *
+long_name_part(const char *long_name, int long_name_len, int long_name_offset)
+{
+    if (long_name_offset > long_name_len + 1) {
+        return NULL;
+    }
+    return long_name + long_name_offset;
+}
+
+void
+msc_fat_view_write_long_name_entry(struct out_stream *ostr, const char *name,
+                                   const char *short_name)
 {
     int len;
     int n;
     int i;
     uint8_t checksum;
-    fat_dir_entry_t *p;
+    int offset;
 
-    len = strlen(long_name);
+    len = strlen(name);
     if (len) {
         checksum = msc_fat_view_short_name_checksum(short_name);
         n = (len + 12) / 13;
-        buffer += n;
-        for (i = 1; i <= n; ++i) {
-            p = buffer - i;
+        for (i = n; i > 0; --i) {
+            offset = (i - 1) * 13;
             /* First part of long entry has the highest index and 6th bit set */
-            p->sequence = i + ((i == n) ? 0x40 : 0);
-            p->attr1 = 0x0f;
-            p->reserved2 = 0;
-            p->reserved3 = 0;
-            p->checksum = checksum;
-            msc_fat_view_write_ucs_2((uint8_t *)p->name1, &long_name, 5);
-            msc_fat_view_write_ucs_2((uint8_t *)p->name2, &long_name, 6);
-            msc_fat_view_write_ucs_2((uint8_t *)p->name3, &long_name, 2);
+            ostream_write_uint8(ostr, i + ((i == n) ? 0x40 : 0));
+            msc_fat_view_write_ucs_2(ostr, long_name_part(name, len, offset), 5);
+            /* attrib */
+            ostream_write_uint8(ostr, 0x0f);
+            /* reserved2 */
+            ostream_write_uint8(ostr, 0);
+            ostream_write_uint8(ostr, checksum);
+            msc_fat_view_write_ucs_2(ostr, long_name_part(name, len, offset + 5), 6);
+            /* reserved3 */
+            ostream_write_uint16(ostr, 0);
+            msc_fat_view_write_ucs_2(ostr, long_name_part(name, len, offset + 11), 2);
         }
     }
-    return buffer;
 }
 
 static char *
@@ -958,35 +971,41 @@ msc_fat_view_read_root_sector(uint16_t dir_sector, uint8_t buffer[512])
     int cluster = 2;
     int cluster_count;
     uint32_t size;
-    fat_dir_entry_t *dst = (fat_dir_entry_t *)buffer;
+    struct mem_out_stream mstr;
+    struct out_stream *ostr = (struct out_stream *)&mstr;
+    fat_dir_entry_t fat_dir_entry;
     dir_entry_t *entry;
     char short_name[11];
+
+    memset(buffer, 0, 512);
+    mem_ostream_init(&mstr, buffer, 512);
+    mstr.write_ptr -= dir_sector * 512;
 
     TU_LOG1("msc_fat_view_read_root %d\n", dir_sector);
     for (i = 0; i < root_dir_entry_count; ++i) {
         entry = &root_dir[i];
         msc_fat_view_create_short_name(entry, short_name);
         if (entry->dir_slots > 1) {
-            dst = msc_fat_view_write_long_name_entry(dst, entry->file->name, short_name);
+            msc_fat_view_write_long_name_entry(ostr, entry->file->name, short_name);
         }
-        memcpy(dst->name, short_name, 11);
+        memcpy(fat_dir_entry.bytes, short_name, 11);
         /* Clear out rest of the entry */
-        memset(dst->bytes + 11, 0, 32 - 11);
-        dst->attr = root_dir[i].file->attributes;
+        memset(fat_dir_entry.bytes + 11, 0, 32 - 11);
+
+        fat_dir_entry.attr = root_dir[i].file->attributes;
         if (i > 0) {
             assert(root_dir[i].file->size);
             size = root_dir[i].file->size(root_dir[i].file);
             if (size) {
                 cluster_count = cluster_count_from_bytes(size);
-                dst->cluster_hi = htole16((cluster >> 16));
-                dst->cluster_lo = htole16((uint16_t)cluster);
-                dst->size = htole32(size);
+                fat_dir_entry.cluster_hi = htole16((cluster >> 16));
+                fat_dir_entry.cluster_lo = htole16((uint16_t)cluster);
+                fat_dir_entry.size = htole32(size);
                 cluster += cluster_count;
             }
         }
-        dst++;
+        ostream_write(ostr, fat_dir_entry.bytes, 32, false);
     }
-    memset(dst, 0xE5, buffer + 512 - (uint8_t *)dst);
 }
 
 static void
