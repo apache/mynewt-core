@@ -320,6 +320,11 @@ log_read_hdr_walk(struct log *log, struct log_offset *log_offset, const void *dp
         }
     }
 
+    if (log->l_init_cb) {
+        /* If the log has an init callback, call it with the header. */
+        log->l_init_cb(log, log_offset, dptr, len);
+    }
+
     /* Abort the walk; only one header needed. */
     return 1;
 }
