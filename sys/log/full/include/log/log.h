@@ -219,6 +219,13 @@ struct log {
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
 #endif
+#if MYNEWT_VAL(LOG_INIT_CB)
+    /* Custom log init callback to be called by the last hdr
+     * read function to read custom data from log entries
+     * at init
+     */
+    log_walk_func_t l_init_cb;
+#endif
 };
 
 /* Log system level functions (for all logs.) */
@@ -513,6 +520,22 @@ void log_printf(struct log *log, uint8_t module, uint8_t level,
         const char *msg, ...);
 int log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
         uint16_t len);
+
+#if MYNEWT_VAL(LOG_INIT_CB)
+/**
+ * @brief Register Log init callback to be called by log_read_last_hdr
+ * while reading the last log entry at init
+ *
+ * @param log                   The log to register.
+ * @param cb                    The callback to associate with the log.
+ *
+ */
+static inline void
+log_register_init_cb(struct log *log, log_walk_func_t cb)
+{
+    log->l_init_cb = cb;
+}
+#endif
 
 /**
  * @brief Reads a single log entry header.

@@ -197,6 +197,12 @@ syscfg.defs:
             - LOG_FCB_BOOKMARKS
             - LOG_FCB
 
+    LOG_INIT_CB:
+        description: >
+            Enable log init callback. This callback is called after the log
+            module is initialized and most recent entry is read.
+        value: 0
+
 syscfg.vals.CONSOLE_TICKS:
     LOG_CONSOLE_PRETTY_WITH_TIMESTAMP: 0
 
