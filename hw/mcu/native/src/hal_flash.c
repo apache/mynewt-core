@@ -152,7 +152,7 @@ static int
 flash_native_write_internal(uint32_t address, const void *src, uint32_t length,
                             int allow_overwrite)
 {
-    static uint8_t buf[256];
+    uint8_t buf[256] = { 0 };
     uint32_t cur;
     uint32_t end;
     int chunk_sz;

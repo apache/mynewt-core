@@ -44,9 +44,9 @@ TEST_CASE_SELF(log_test_case_2logs)
 {
     int rc;
     struct fcb_log fcb_log1;
-    struct log log1;
+    struct log log1 = {0};
     struct fcb_log fcb_log2;
-    struct log log2;
+    struct log log2 = {0};
 
     ltu_setup_2fcbs(&fcb_log1, &log1, &fcb_log2, &log2);
 
