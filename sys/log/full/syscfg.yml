@@ -63,6 +63,12 @@ syscfg.defs:
             1 - enable.
         value: 0
 
+    LOG_FLAGS_TRAILER:
+        description: >
+            Enable logging trailer with custom data types in every log entry
+            0 - disable; 1 - enable.
+        value: 0
+
     LOG_FCB:
         description: 'Support logging to FCB.'
         value: 0
