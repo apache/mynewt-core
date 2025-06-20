@@ -51,14 +51,14 @@ os_msys_init_pool(void *data, struct os_mempool *mempool,
     TEST_ASSERT_FATAL(rc == 0, "os_msys_register failed");
 }
 
-extern STAILQ_HEAD(, os_mempool) g_os_mempool_list;
+extern struct os_mempool_list g_os_mempool_list;
 
 void
 os_msys_test_setup(int pool_count, struct msys_context *context)
 {
     /* Preserve default state of pools and msys in case other cases use it */
     context->mbuf_list = *get_msys_pool_list();
-    context->mempool_list = *(struct os_mempool_list *)&g_os_mempool_list;
+    context->mempool_list = g_os_mempool_list;
 
     os_mempool_module_init();
     os_msys_reset();
