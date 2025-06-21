@@ -28,6 +28,7 @@
 #include <console/console.h>
 
 #include "fs/fs.h"
+#include "fs/fs_if.h"
 
 static void
 fs_ls_file(const char *name, struct fs_file *file)
@@ -160,6 +161,21 @@ out:
     return 0;
 }
 
+extern struct mount_point mount_points[];
+
+static int
+fs_mount_cmd(int argc, char **argv)
+{
+    console_printf("mount points:\n");
+    for (int i = 0; i < MYNEWT_VAL_FS_MAX_MOUNT_POINTS; ++i) {
+        if (mount_points[i].fs) {
+            console_printf("%s %s\n", mount_points[i].mount_point, mount_points[i].fs->name);
+        }
+    }
+
+    return 0;
+}
+
 static int
 fs_cat_cmd(int argc, char **argv)
 {
@@ -198,5 +214,6 @@ MAKE_SHELL_CMD(rm, fs_rm_cmd, NULL)
 MAKE_SHELL_CMD(mkdir, fs_mkdir_cmd, NULL)
 MAKE_SHELL_CMD(mv, fs_mv_cmd, NULL)
 MAKE_SHELL_CMD(cat, fs_cat_cmd, NULL)
+MAKE_SHELL_CMD(mount, fs_mount_cmd, NULL)
 
 #endif /* MYNEWT_VAL(FS_CLI) */
