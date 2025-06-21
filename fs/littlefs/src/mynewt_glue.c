@@ -23,7 +23,6 @@
 #include <string.h>
 #include "os/mynewt.h"
 #include <hal/hal_flash.h>
-#include <disk/disk.h>
 #include <flash_map/flash_map.h>
 
 #include "lfs.h"
@@ -91,8 +90,6 @@ static struct fs_ops littlefs_ops = {
 
     .f_dirent_name = littlefs_dirent_name,
     .f_dirent_is_dir = littlefs_dirent_is_dir,
-
-    .f_name = "littlefs"
 };
 
 static int
@@ -785,6 +782,11 @@ littlefs_reformat(void)
     return lfs_format(g_lfs, &g_lfs_cfg);
 }
 
+static const file_system_t littlefs_fs0 = {
+    .ops = &littlefs_ops,
+    .name = "littlefs"
+};
+
 int
 littlefs_init(void)
 {
@@ -816,7 +818,7 @@ littlefs_init(void)
     }
 
     if (!rc) {
-        fs_register(&littlefs_ops);
+        fs_mount(&littlefs_fs0, "lfs0:");
     }
 
     return rc;
