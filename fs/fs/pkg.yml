@@ -26,9 +26,6 @@ pkg.keywords:
     - filesystem
     - ffs
 
-pkg.deps:
-    - "@apache-mynewt-core/fs/disk"
-
 pkg.deps.FS_CLI:
     - "@apache-mynewt-core/sys/shell"
 

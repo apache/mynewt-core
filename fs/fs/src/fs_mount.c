@@ -26,7 +26,74 @@
 #include <fs_mgmt/fs_mgmt.h>
 #endif
 
-static SLIST_HEAD(, fs_ops) root_fops = SLIST_HEAD_INITIALIZER();
+#define MAX_MOUNT_POINTS MYNEWT_VAL_FS_MAX_MOUNT_POINTS
+
+struct mount_point mount_points[MAX_MOUNT_POINTS];
+
+int
+fs_mount(const file_system_t *fs, const char *mount_point)
+{
+    int free_slot = -1;
+    int rc = FS_EOK;
+
+    for (int i = 0; i < ARRAY_SIZE(mount_points); ++i) {
+        if (mount_points[i].mount_point == NULL) {
+            if (free_slot < 0) {
+                free_slot = i;
+            }
+        } else if (strcmp(mount_point, mount_points[i].mount_point) == 0) {
+            rc = FS_EEXIST;
+            goto end;
+        }
+    }
+    if (free_slot >= 0) {
+        mount_points[free_slot].mount_point = mount_point;
+        mount_points[free_slot].fs = fs;
+        rc = fs->ops->f_mount ? fs->ops->f_mount(fs) : 0;
+        if (rc) {
+            mount_points[free_slot].mount_point = NULL;
+            mount_points[free_slot].fs = NULL;
+        }
+    } else {
+        rc = FS_ENOMEM;
+    }
+end:
+    return rc;
+}
+
+const file_system_t *
+fs_unmount_mount_point(const char *mount_point)
+{
+    const file_system_t *fs = NULL;
+
+    for (int i = 0; i < ARRAY_SIZE(mount_points); ++i) {
+        if (strcmp(mount_point, mount_points[i].mount_point) == 0) {
+            fs = mount_points[i].fs;
+            mount_points[i].mount_point = NULL;
+            mount_points[i].fs = NULL;
+            break;
+        }
+    }
+
+    return fs;
+}
+
+int
+fs_unmount_file_system(const file_system_t *fs)
+{
+    int rc = FS_EINVAL;
+
+    for (int i = 0; i < ARRAY_SIZE(mount_points); ++i) {
+        if (mount_points[i].fs == fs) {
+            mount_points[i].mount_point = NULL;
+            mount_points[i].fs = NULL;
+            rc = 0;
+            break;
+        }
+    }
+
+    return rc;
+}
 
 #if MYNEWT_VAL(FS_MGMT)
 static uint8_t g_mgmt_initialized;
@@ -35,59 +102,58 @@ static uint8_t g_mgmt_initialized;
 int
 fs_register(struct fs_ops *fops)
 {
-    struct fs_ops *sc;
+    return FS_EINVAL;
+}
 
-    SLIST_FOREACH(sc, &root_fops, sc_next) {
-        if (strcmp(sc->f_name, fops->f_name) == 0) {
-            return FS_EEXIST;
+const file_system_t *
+get_only_file_system(void)
+{
+    const file_system_t *fs = NULL;
+
+    for (int i = 0; i < ARRAY_SIZE(mount_points); ++i) {
+        if (mount_points[i].mount_point == NULL) {
+            continue;
         }
+        if (fs != NULL) {
+            fs = NULL;
+            break;
+        }
+        fs = mount_points[i].fs;
     }
 
-    SLIST_INSERT_HEAD(&root_fops, fops, sc_next);
-
-#if MYNEWT_VAL(FS_MGMT)
-    if (!g_mgmt_initialized) {
-        fs_mgmt_register_group();
-        g_mgmt_initialized = 1;
-    }
-#endif
-
-    return FS_EOK;
+    return fs;
 }
 
-struct fs_ops *
-fs_ops_try_unique(void)
+const char *
+file_system_path(const char *uri, const file_system_t **fs)
 {
-    struct fs_ops *fops = SLIST_FIRST(&root_fops);
+    const char *fs_path = NULL;
+    const char *m;
 
-    if (fops && !SLIST_NEXT(fops, sc_next)) {
-        return fops;
-    }
-
-    return NULL;
-}
-
-struct fs_ops *
-fs_ops_for(const char *fs_name)
-{
-    struct fs_ops *fops = NULL;
-    struct fs_ops *sc;
-
-    if (fs_name) {
-        SLIST_FOREACH(sc, &root_fops, sc_next) {
-            if (strcmp(sc->f_name, fs_name) == 0) {
-                fops = sc;
+    for (int i = 0; i < ARRAY_SIZE(mount_points); ++i) {
+        if (mount_points[i].mount_point != NULL) {
+            fs_path = uri;
+            m = mount_points[i].mount_point;
+            while (*fs_path == *m) {
+                ++fs_path;
+                ++m;
+            }
+            /* Reached end of mount point path ? */
+            if (*m == '\0') {
+                if (fs) {
+                    *fs = mount_points[i].fs;
+                }
                 break;
             }
+            fs_path = NULL;
         }
     }
-
-    return fops;
+    return fs_path;
 }
 
-extern struct fs_ops not_initialized_ops;
+extern const struct fs_ops not_initialized_ops;
 
-struct fs_ops *
+const struct fs_ops *
 fs_ops_from_container(struct fops_container *container)
 {
     if (!container) {
