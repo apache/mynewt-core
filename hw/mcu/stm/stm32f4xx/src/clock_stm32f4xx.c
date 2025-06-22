@@ -113,16 +113,18 @@ SystemClock_Config(void)
 #endif
 
     /*
-     * LSE is only used to clock the RTC.
+     * Enable LSE if requested.
+     * Do not disable LSE it if it's not requested
+     * (it may be need by application while not by bootloader).
+     * Do not reconfigure when it is requested but already running.
      */
-    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_LSE;
-#if (MYNEWT_VAL(STM32_CLOCK_LSE) == 0)
-    osc_init.LSEState = RCC_LSE_OFF;
-#elif MYNEWT_VAL(STM32_CLOCK_LSE_BYPASS)
-    osc_init.LSEState = RCC_LSE_BYPASS;
-#else
-    osc_init.LSEState = RCC_LSE_ON;
-#endif
+    if (MYNEWT_VAL(STM32_CLOCK_LSE_BYPASS) && !__HAL_RCC_GET_FLAG(RCC_FLAG_LSERDY)) {
+        osc_init.OscillatorType |= RCC_OSCILLATORTYPE_LSE;
+        osc_init.LSEState = RCC_LSE_BYPASS;
+    } else if (MYNEWT_VAL(STM32_CLOCK_LSE) && !__HAL_RCC_GET_FLAG(RCC_FLAG_LSERDY)) {
+        osc_init.OscillatorType |= RCC_OSCILLATORTYPE_LSE;
+        osc_init.LSEState = RCC_LSE_ON;
+    }
 
     /*
      * HSE Oscillator (can be used as PLL, SYSCLK and RTC clock source)
