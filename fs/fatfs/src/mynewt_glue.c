@@ -281,7 +281,7 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
         mode |= FA_READ;
     }
     if (access_flags & FS_ACCESS_WRITE) {
-        mode |= FA_WRITE;
+        mode |= FA_WRITE | FA_OPEN_ALWAYS;
     }
     if (access_flags & FS_ACCESS_APPEND) {
         mode |= FA_OPEN_APPEND;
