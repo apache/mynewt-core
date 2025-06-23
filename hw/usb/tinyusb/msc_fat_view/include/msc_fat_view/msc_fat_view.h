@@ -22,6 +22,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <os/link_tables.h>
 
 #define SECTOR_SIZE                 512
 
@@ -89,62 +90,33 @@ void msc_fat_view_media_eject(void);
  */
 void msc_fat_view_media_insert(void);
 
-/* Section name for root entries */
-#define ROOT_DIR_SECTION __attribute__((section(".msc_fat_view_root_entry"), used))
-
-/* Section name for write handlers */
-#define WRITE_HANDLER_SECTION __attribute__((section(".msc_fat_view_write_handlers"), used))
-
 /**
  * Macro to add static root entries
  */
-#define ROOT_DIR_ENTRY(entry, file_name, attr, size_fun, read_fun, write_fun, delete_fun, valid_fun) \
-    file_entry_t entry = {                         \
-        .name = file_name,                         \
-        .attributes = attr,                        \
-        .size = size_fun,                          \
-        .read_sector = read_fun,                   \
-        .write_sector = write_fun,                 \
-        .delete_entry = delete_fun,                \
-        .valid = valid_fun,                        \
-    };                                             \
-    file_entry_t *const entry ## _ptr ROOT_DIR_SECTION = &entry;
+#define ROOT_DIR_ENTRY(entry, file_name, attr, size_fun, read_fun, write_fun, \
+                       delete_fun, valid_fun)                                 \
+    file_entry_t entry = {                                                    \
+        .name = file_name,                                                    \
+        .attributes = attr,                                                   \
+        .size = size_fun,                                                     \
+        .read_sector = read_fun,                                              \
+        .write_sector = write_fun,                                            \
+        .delete_entry = delete_fun,                                           \
+        .valid = valid_fun,                                                   \
+    };                                                                        \
+    LINK_TABLE_ELEMENT_REF(msc_fat_view_root_entry, entry, entry)
 
 /**
  * Macro to add static write handlers
  */
-#define MSC_FAT_VIEW_WRITE_HANDLER(entry, _write_sector, _file_written) \
-    msc_fat_view_write_handler_t entry = {                      \
-        .write_sector = _write_sector,                          \
-        .file_written = _file_written,                          \
-    };                                                          \
-    msc_fat_view_write_handler_t *const entry ## _ptr WRITE_HANDLER_SECTION = &entry;
+#define MSC_FAT_VIEW_WRITE_HANDLER(entry, _write_sector, _file_written)       \
+    msc_fat_view_write_handler_t entry = {                                    \
+        .write_sector = _write_sector,                                        \
+        .file_written = _file_written,                                        \
+    };                                                                        \
+    LINK_TABLE_ELEMENT_REF(msc_fat_view_write_handlers, entry, entry)
 
-#define TABLE_START(table) __ ## table ## _start__
-#define TABLE_END(table) __ ## table ## _end__
-
-/**
- * Simple inline loop for link table tables
- *
- * @param table - name of table as defined in pkg.link_tables: section
- * @param type - type of element in table
- * @param fun - function to call for each element of the table.
- *              Function should have prototype like this: void fun(type *element)
- */
-#define FOR_EACH_ENTRY(type, table, fun)           \
-    {                                              \
-        extern type const TABLE_START(table)[];    \
-        extern type const TABLE_END(table)[];      \
-        type *entry;                               \
-        for (entry = (type *)TABLE_START(table);   \
-             entry != TABLE_END(table); ++entry) { \
-            fun(entry);                            \
-        }                                          \
-    }
-
-#define FOR_TABLE(type, e, table)                  \
-    extern type const TABLE_START(table)[];        \
-    extern type const TABLE_END(table)[];          \
-    for (type *e = (type *)TABLE_START(table); e != TABLE_END(table); ++e)
+LINK_TABLE(file_entry_t *, msc_fat_view_root_entry)
+LINK_TABLE(msc_fat_view_write_handler_t *, msc_fat_view_write_handlers)
 
 #endif /* __MSC_FAT_VIEW_H__ */

@@ -36,6 +36,7 @@
 #include <console/console.h>
 #include <stream/stream.h>
 #include "coredump_files.h"
+#include <os/link_tables.h>
 
 #if MYNEWT_VAL(BOOT_LOADER)
 #define BOOT_LOADER     1
@@ -1191,7 +1192,7 @@ msc_fat_view_write_unallocated_sector(uint32_t sector, uint8_t *buffer)
             return 512;
         }
     }
-    FOR_TABLE(msc_fat_view_write_handler_t *, p, msc_fat_view_write_handlers) {
+    LINK_TABLE_FOREACH(p, msc_fat_view_write_handlers) {
         if (*p == current_write_handler) {
             continue;
         }
@@ -1238,7 +1239,7 @@ msc_fat_view_write_normal_sector(uint32_t sector, uint8_t *buffer)
 }
 
 static void
-add_dir_entry(file_entry_t **entry)
+add_dir_entry(file_entry_t *const *entry)
 {
     if ((*entry)->valid == NULL || (*entry)->valid(*entry) == MSC_FAT_VIEW_FILE_ENTRY_VALID) {
         msc_fat_view_add_dir_entry(*entry);
@@ -1258,7 +1259,7 @@ init_disk_data(void)
     if (MYNEWT_VAL(MSC_FAT_VIEW_DROP_IMAGE_HERE)) {
         msc_fat_view_add_dir_entry(&drop_image_here);
     }
-    FOR_EACH_ENTRY(file_entry_t *, msc_fat_view_root_entry, add_dir_entry);
+    LINK_TABLE_FOREACH_CALL(msc_fat_view_root_entry, add_dir_entry);
 
     if (MYNEWT_VAL(MSC_FAT_VIEW_COREDUMP_FILES)) {
         msc_fat_view_add_coredumps();
