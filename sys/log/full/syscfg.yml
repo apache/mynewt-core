@@ -63,6 +63,12 @@ syscfg.defs:
             1 - enable.
         value: 0
 
+    LOG_FLAGS_TRAILER:
+        description: >
+            Enable logging trailer with custom data types in every log entry
+            0 - disable; 1 - enable.
+        value: 0
+
     LOG_FCB:
         description: 'Support logging to FCB.'
         value: 0
@@ -196,6 +202,12 @@ syscfg.defs:
         restrictions:
             - LOG_FCB_BOOKMARKS
             - LOG_FCB
+
+    LOG_INIT_CB:
+        description: >
+            Enable log init callback. This callback is called after the log
+            module is initialized and most recent entry is read.
+        value: 0
 
 syscfg.vals.CONSOLE_TICKS:
     LOG_CONSOLE_PRETTY_WITH_TIMESTAMP: 0
