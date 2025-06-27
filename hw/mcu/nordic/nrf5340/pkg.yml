@@ -59,18 +59,17 @@ pkg.deps.UART_3:
 pkg.deps.ADC_0:
     - "@apache-mynewt-core/hw/drivers/adc/adc_nrf52"
 
-#nrf52 driver is using nrfx so we can just reuse it
 pkg.deps.PWM_0:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf5x"
 
 pkg.deps.PWM_1:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf5x"
 
 pkg.deps.PWM_2:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf5x"
 
 pkg.deps.PWM_3:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf5x"
 
 pkg.deps.SPI_0_MASTER:
     - "@apache-mynewt-core/hw/bus"
