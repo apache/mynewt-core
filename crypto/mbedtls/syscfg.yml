@@ -119,8 +119,10 @@ syscfg.defs:
     value: 0
   MBEDTLS_CIPHER_MODE_CFB:
     value: 0
+  # XXX: This should be 0 on default, but mcuboot's test needs this enabled. Until a new mcuboot version with this
+  # config enabled is released we have to enable this by default.
   MBEDTLS_CIPHER_MODE_CTR:
-    value: 0
+    value: 1
   MBEDTLS_CIPHER_MODE_OFB:
     value: 0
   MBEDTLS_CIPHER_MODE_XTS:
