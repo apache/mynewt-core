@@ -39,6 +39,21 @@ source is here: http://www.apache.org/dev/apply-license.html
  */
 ```
 
+## Checking coding-style locally
+
+To maintain code quality and consistency across the project, all contributors
+**should** verify that their committed changes conform to the project's coding style
+before pushing to the remote repository.
+
+We strongly recommend running git-clang-format locally to check your committed changes.
+This helps catch formatting issues early, avoiding CI failures and reducing review delays.
+
+> **Tip:** Before pushing your commits, run this command to see any formatting issues that need fixing:
+>```sh
+>git-clang-format $(git merge-base upstream/master HEAD) HEAD --diff
+>```
+
+
 ## Whitespace and Braces
 
 * Code must be indented to 4 spaces, tabs should not be used.
