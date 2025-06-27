@@ -95,7 +95,7 @@
     __attribute__((section("." #table_name), used))
 /* Macro to create attribute for table with name that may affect order of elements */
 #define LINK_TABLE_ELEMENT_SECTION(table_name, elem)                          \
-    __attribute__((section("." #table_name "." #elem)))
+    __attribute__((section("." #table_name "." #elem), used))
 /* Macro to create element that goes to link table.
  * It could be used like this:
  * LINK_TABLE_ELEMENT(example1_table, foo5) = {
@@ -126,7 +126,7 @@
  */
 #define LINK_TABLE_ELEMENT_REF(table_name, elem, var)                         \
     LINK_TABLE_ELEMENT_TYPE(table_name)                                       \
-    const elem##_ptr LINK_TABLE_ELEMENT_SECTION(table_name, elem) = &var
+    const elem##_ptr LINK_TABLE_ELEMENT_SECTION(table_name, elem) = &var;
 
 #define LINK_TABLE(element_type, table_name)                                  \
     typedef element_type table_name##_element_t;                              \
