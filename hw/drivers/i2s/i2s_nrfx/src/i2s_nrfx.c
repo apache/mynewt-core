@@ -219,6 +219,48 @@ static const struct i2s_clock_cfg mck_for_24_bit_samples[] = {
 };
 
 static void
+set_mck_setup_for_bypass(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
+{
+#if NRF_I2S_HAS_CLKCONFIG
+    static const struct {
+        uint16_t ratio_val;
+        nrf_i2s_ratio_t ratio_enum;
+    } ratios[] = {
+        { 32,  NRF_I2S_RATIO_32X  },
+        { 48,  NRF_I2S_RATIO_48X  },
+        { 64,  NRF_I2S_RATIO_64X  },
+        { 96,  NRF_I2S_RATIO_96X  },
+        { 128, NRF_I2S_RATIO_128X },
+        { 192, NRF_I2S_RATIO_192X },
+        { 256, NRF_I2S_RATIO_256X },
+        { 384, NRF_I2S_RATIO_384X },
+        { 512, NRF_I2S_RATIO_512X }
+    };
+    uint32_t mclk;
+    uint16_t mclk_div;
+    size_t i;
+
+    if (cfg->enable_bypass) {
+        mclk = cfg->clksrc == NRF_I2S_CLKSRC_PCLK32M ? 32000000UL : 12288000UL;
+        mclk_div = mclk / sample_rate;
+
+        for (i = 0; i < ARRAY_SIZE(ratios); i++) {
+            if (mclk_div == ratios[i].ratio_val) {
+                /* Ratio for bit clock */
+                cfg->ratio = ratios[i].ratio_enum;
+                break;
+            }
+        }
+
+        assert(i < ARRAY_SIZE(ratios));
+
+        /* Anything, needed by NRFX */
+        cfg->mck_setup = NRF_I2S_MCK_32MDIV8;
+    }
+#endif
+}
+
+static void
 i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
 {
     int i;
@@ -227,6 +269,9 @@ i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
     float src_frq;
     uint32_t ratio;
     uint32_t mck;
+
+    set_mck_setup_for_bypass(cfg, sample_rate);
+
     if (cfg->clksrc == I2S_CONFIG_CLKCONFIG_CLKSRC_ACLK) {
         NRF_CLOCK->TASKS_HFCLKAUDIOSTOP = 1;
         if (88200 / sample_rate * sample_rate == 88200) {
