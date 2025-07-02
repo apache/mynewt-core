@@ -23,6 +23,7 @@
 #include "bus/bus.h"
 #include "bus/bus_debug.h"
 #include "bus/bus_driver.h"
+#include "bus/drivers/spi_common.h"
 #if MYNEWT_VAL(BUS_STATS)
 #include "stats/stats.h"
 #endif
@@ -499,8 +500,10 @@ done:
 int
 bus_node_lock(struct os_dev *node, os_time_t timeout)
 {
-    struct bus_node *bnode = (struct bus_node *)node;
-    struct bus_dev *bdev = bnode->parent_bus;
+    struct bus_spi_node *spi_node = (struct bus_spi_node *)node;
+    struct bus_node *bnode = &spi_node->bnode;
+    struct bus_spi_dev *spi_dev = (struct bus_spi_dev *)spi_node->bnode.parent_bus;
+    struct bus_dev *bdev = &spi_dev->bdev;
     os_error_t err;
     int rc;
 
@@ -529,6 +532,12 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
         bus_dev_enable(bdev);
     }
 #endif
+
+    /* No need to configure if already configured for the same node */
+    if (spi_dev->freq == spi_node->freq && spi_dev->data_order == spi_node->data_order &&
+        spi_dev->mode == spi_node->mode) {
+        return 0;
+    }
 
     /*
      * Configuration is done on 1st lock so in case we need to configure device
