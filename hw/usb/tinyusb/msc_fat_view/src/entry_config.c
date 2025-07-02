@@ -18,6 +18,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include <ctype.h>
 #include <stream/stream.h>
 #include <msc_fat_view/msc_fat_view.h>
