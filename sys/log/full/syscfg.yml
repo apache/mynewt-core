@@ -201,7 +201,6 @@ syscfg.defs:
         value: 0
         restrictions:
             - LOG_FCB_BOOKMARKS
-            - LOG_FCB
 
     LOG_INIT_CB:
         description: >
