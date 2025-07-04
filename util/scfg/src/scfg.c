@@ -154,7 +154,7 @@ scfg_handler_export(void (*func)(char *name, char *val),
 
     SCFG_FOREACH_SETTING(group, setting) {
         scfg_setting_id(group->handler.ch_name, setting->name, id_buf);
-        if (setting->private) {
+        if (setting->priv) {
             val = "<set>";
         } else {
             val = conf_str_from_value(setting->type, setting->val,
@@ -218,7 +218,7 @@ scfg_save_val(const struct scfg_group *group, const void *val)
 }
 
 int
-scfg_register(struct scfg_group *group, char *name)
+scfg_register(struct scfg_group *group, const char *name)
 {
     const struct scfg_setting *setting;
     int rc;

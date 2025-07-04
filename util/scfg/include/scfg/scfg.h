@@ -20,7 +20,13 @@
 #ifndef H_SCFG_
 #define H_SCFG_
 
-#include "config/config.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <config/config.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct scfg_setting {
     /** The name of the setting. */
@@ -42,7 +48,7 @@ struct scfg_setting {
      * Whether this setting contains private data.  If true, the value is
      * hidden in config dump output.
      */
-    bool private;
+    bool priv;
 };
 
 struct scfg_group {
@@ -96,6 +102,10 @@ int scfg_save_val(const struct scfg_group *group, const void *val);
  *
  * @return                      0 on success; SYS_E[...] code on failure.
  */
-int scfg_register(struct scfg_group *group, char *name);
+int scfg_register(struct scfg_group *group, const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
