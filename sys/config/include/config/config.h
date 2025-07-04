@@ -171,7 +171,7 @@ struct conf_handler {
     /**
      * The name of the conifguration item/subtree
      */
-    char *ch_name;
+    const char *ch_name;
 
     /**
      * Whether to use the extended callbacks.
