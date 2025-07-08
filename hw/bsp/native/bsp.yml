@@ -21,6 +21,7 @@ bsp.arch: sim
 bsp.exclude_site: 1
 bsp.compiler: compiler/sim
 bsp.debugscript: "hw/bsp/native/native_debug.sh"
+bsp.linkerscript: "hw/bsp/native/native.ld"
 
 bsp.flash_map:
     areas:
