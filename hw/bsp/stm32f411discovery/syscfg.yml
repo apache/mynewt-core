@@ -60,3 +60,6 @@ syscfg.vals:
     I2C_2_PIN_SCL: 'MCU_GPIO_PORTA(8)'
     I2C_2_PIN_SDA: 'MCU_GPIO_PORTC(9)'
     TIMER_0_TIM: 'TIM9'
+
+syscfg.vals.BOOT_LOADER: 
+    UART_0: 0
