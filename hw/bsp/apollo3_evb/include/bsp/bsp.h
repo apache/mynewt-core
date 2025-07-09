@@ -42,16 +42,16 @@ extern uint8_t _ram_start;
 #define UART_CNT        (2)
 
 /* LED pins */
-#define LED_1           MYNEWT_VAL(LED_1_PIN)
-#define LED_2           MYNEWT_VAL(LED_2_PIN)
-#define LED_3           MYNEWT_VAL(LED_3_PIN)
-#define LED_4           MYNEWT_VAL(LED_4_PIN)
-#define LED_BLINK_PIN   MYNEWT_VAL(LED_0_PIN)
+#define LED_1         MYNEWT_VAL_LED_1_PIN
+#define LED_2         MYNEWT_VAL_LED_2_PIN
+#define LED_3         MYNEWT_VAL_LED_3_PIN
+#define LED_4         MYNEWT_VAL_LED_4_PIN
+#define LED_BLINK_PIN MYNEWT_VAL_LED_0_PIN
 
 /* Buttons */
-#define BUTTON_1        MYNEWT_VAL(BUTTON_0_PIN)
-#define BUTTON_2        MYNEWT_VAL(BUTTON_1_PIN)
-#define BUTTON_3        MYNEWT_VAL(BUTTON_2_PIN)
+#define BUTTON_1 MYNEWT_VAL_BUTTON_0_PIN
+#define BUTTON_2 MYNEWT_VAL_BUTTON_1_PIN
+#define BUTTON_3 MYNEWT_VAL_BUTTON_2_PIN
 
 /* Arduino pins */
 #define ARDUINO_PIN_D0      23
