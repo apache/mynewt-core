@@ -53,3 +53,6 @@ syscfg.vals:
     TIMER_0_TIM: 'TIM9'
     TIMER_1_TIM: 'TIM10'
     TIMER_2_TIM: 'TIM11'
+
+syscfg.vals.BOOT_LOADER: 
+    UART_0: 0
