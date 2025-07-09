@@ -542,6 +542,7 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
     struct fcb_log *fcb_log;
     int len;
     int rc;
+    uint16_t buflen = 0;
 #if MYNEWT_VAL(LOG_FLAGS_TRAILER)
     int trailer_alignment = 0;
     uint8_t pad[LOG_FCB_MAX_ALIGN] = {0};
@@ -558,7 +559,8 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         return SYS_ENOTSUP;
     }
 
-    len = log_hdr_len(hdr) + os_mbuf_len(om);
+    buflen = os_mbuf_len(om);
+    len = log_hdr_len(hdr) + buflen;
 
 #if MYNEWT_VAL(LOG_FLAGS_TRAILER)
     if (hdr->ue_flags & LOG_FLAGS_TRAILER) {
@@ -616,10 +618,12 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
          */
 
         if (log->l_tr_om) {
-            /* Copy mbuf chain len */
-            rc = os_mbuf_copyinto(om, trailer_len, pad, trailer_alignment);
-            if (rc) {
-                return rc;
+            if (trailer_alignment) {
+                /* Copy padding for trailer alignment */
+                rc = os_mbuf_copyinto(om, buflen, pad, trailer_alignment);
+                if (rc) {
+                    return rc;
+                }
             }
 
             /* Append from the trailer */
@@ -630,8 +634,8 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 
             om = os_mbuf_pullup(om, LOG_TRAILER_LEN_SIZE);
             /* Copy the trailer length */
-            rc = os_mbuf_copyinto(om, trailer_len, &trailer_len,
-                                  LOG_TRAILER_LEN_SIZE);
+            rc = os_mbuf_copyinto(om, buflen + trailer_alignment + trailer_len,
+                                  &trailer_len, LOG_TRAILER_LEN_SIZE);
             if (rc) {
                 return rc;
             }

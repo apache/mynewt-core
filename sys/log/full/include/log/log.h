@@ -667,7 +667,10 @@ log_trailer_reset_data(struct log *log, void *arg)
 }
 
 /**
- * @brief Register trailer callbacks
+ * @brief Register trailer callbacks, this is an experimental API
+ *        and may be changed/deprecated later. This needs to be
+ *        called before log_register() if the trailer data needs
+ *        to be initialized when the log gets registered.
  *
  * @param log            The log to read from.
  * @param lth            The trailer handler to register.
