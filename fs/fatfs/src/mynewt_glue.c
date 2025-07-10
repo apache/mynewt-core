@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -715,6 +716,30 @@ ff_del_syncobj(_SYNC_t sobj)
     os_free(mutex);
 
     return FR_OK;
+}
+
+void *
+ff_memalloc(UINT msize)
+{
+    return os_malloc(msize);
+}
+
+void
+ff_memfree(void *mblock)
+{
+    os_free(mblock);
+}
+
+WCHAR
+ff_convert(WCHAR chr, UINT dir)
+{
+    return chr;
+}
+
+WCHAR
+ff_wtoupper(WCHAR chr)
+{
+    return toupper(chr);
 }
 
 void

@@ -99,9 +99,8 @@
 /   950 - Traditional Chinese (DBCS)
 */
 
-
-#define	_USE_LFN	0
-#define	_MAX_LFN	255
+#define _USE_LFN MYNEWT_VAL(FATFS_LONG_FILE_NAMES)
+#define _MAX_LFN 255
 /* The _USE_LFN switches the support of long file name (LFN).
 /
 /   0: Disable support of LFN. _MAX_LFN has no effect.
@@ -210,8 +209,7 @@
 /  Instead of private sector buffer eliminated from the file object, common sector
 /  buffer in the file system object (FATFS) is used for the file data transfer. */
 
-
-#define _FS_EXFAT	0
+#define _FS_EXFAT MYNEWT_VAL(FATFS_EXFAT_SUPPORT)
 /* This option switches support of exFAT file system. (0:Disable or 1:Enable)
 /  When enable exFAT, also LFN needs to be enabled. (_USE_LFN >= 1)
 /  Note that enabling exFAT discards C89 compatibility. */
