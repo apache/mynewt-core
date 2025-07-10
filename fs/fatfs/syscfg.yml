@@ -23,6 +23,20 @@ syscfg.defs:
             Sysinit stage for FATFS functionality.
         value: 200
 
+    FATFS_LONG_FILE_NAMES:
+        description: >
+            0 - Disable support of LFN. _MAX_LFN has no effect.
+            1 - Enable LFN with static working buffer on the BSS. Always NOT thread-safe.
+            2 - Enable LFN with dynamic working buffer on the STACK.
+            3 - Enable LFN with dynamic working buffer on the HEAP.
+        value: 2
+
+    FATFS_EXFAT_SUPPORT:
+        description: >
+            0 - Disable ExFAT support
+            1 - Enable ExFAT support
+        value: 1
+
     FATFS_REENTRANT:
         description: >
             0 - Disable locking on file system
