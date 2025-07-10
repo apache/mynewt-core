@@ -23,12 +23,26 @@ syscfg.defs:
             Sysinit stage for FATFS functionality.
         value: 200
 
+    FATFS_REENTRANT:
+        description: >
+            0 - Disable locking on file system
+            1 - Enable locking to multi thread access
+        value: 0
+
+    FATFS_TIMEOUT:
+        description: >
+            Timout for locking file system object.
+        value: 1000
+
     FATFS_LOG_MODULE:
         description: 'Numeric module ID to use for FATFS log messages.'
         value: 253
     FATFS_LOG_LVL:
         description: 'Minimum level for the FATFS log.'
         value: 2
+
+syscfg.vals.OS_SCHEDULING:
+    FATFS_REENTRANT: 1
 
 syscfg.logs:
     FATFS_LOG:

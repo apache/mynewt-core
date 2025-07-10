@@ -674,6 +674,49 @@ get_fattime(void)
     return 0;
 }
 
+int
+ff_cre_syncobj(BYTE vol, _SYNC_t *sobj)
+{
+    struct os_mutex *mutex = os_malloc(sizeof(*mutex));
+
+    if (mutex) {
+        os_mutex_init(mutex);
+        *sobj = mutex;
+    }
+
+    return mutex != NULL;
+}
+
+int
+ff_req_grant(_SYNC_t sobj)
+{
+    struct os_mutex *mutex = (struct os_mutex *)sobj;
+    int rc;
+
+    rc = os_mutex_pend(mutex, _FS_TIMEOUT);
+
+    return rc == OS_OK;
+}
+
+void
+ff_rel_grant(_SYNC_t sobj)
+{
+    struct os_mutex *mutex = (struct os_mutex *)sobj;
+
+    os_mutex_release(mutex);
+}
+
+int
+ff_del_syncobj(_SYNC_t sobj)
+{
+    struct os_mutex *mutex = (struct os_mutex *)sobj;
+
+    assert(mutex->mu_owner == NULL);
+    os_free(mutex);
+
+    return FR_OK;
+}
+
 void
 fatfs_pkg_init(void)
 {
