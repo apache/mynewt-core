@@ -856,7 +856,7 @@ mmc_pkg_init(void)
             /* For now only FAT partition are mounted */
             if (mmc_read(0, 0, sector, 512) == 0) {
                 /* Check if first partition is FAT */
-                if (sector[450] == 0x0C) {
+                if (sector[450] == 0x0C || sector[450] == 0x07) {
                     disk_register(MYNEWT_VAL(MMC_DEV_NAME), "fatfs", &mmc_ops);
                 }
             }
