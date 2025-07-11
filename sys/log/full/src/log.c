@@ -462,12 +462,6 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
     log->l_idx = 0;
 #endif
 
-#if MYNEWT_VAL(LOG_FLAGS_TRAILER)
-    log->l_tr_om = NULL;
-    log->l_tr_arg = NULL;
-    log->l_th = NULL;
-#endif
-
     if (!log_registered(log)) {
 #if MYNEWT_VAL(LOG_STATS)
         stats_init(STATS_HDR(log->l_stats),
