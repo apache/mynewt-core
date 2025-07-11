@@ -39,6 +39,14 @@ pkg.deps.!BUS_DRIVER_PRESENT:
 pkg.req_apis:
     - stats
 
+pkg.source_files:
+    - src/bme280.c
+
+pkg.source_files.BME280_CLI:
+    - src/bme280_shell.c
+
+pkg.whole_archive: true
+
 pkg.deps.BME280_CLI:
     - "@apache-mynewt-core/util/parse"
 

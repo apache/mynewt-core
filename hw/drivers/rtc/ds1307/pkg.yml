@@ -35,8 +35,13 @@ pkg.req_apis:
     - log
     - stats
 
+pkg.whole_archive: true
+
+pkg.source_files:
+    - src/ds1307.c
+
+pkg.source_files.DS1307_CLI:
+    - src/ds1307_shell.c
+
 pkg.init:
     ds1307_pkg_init: 601
-
-pkg.init.DS1307_CLI:
-    ds1307_shell_init: 1000

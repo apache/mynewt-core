@@ -27,13 +27,6 @@
 #include <bus/drivers/i2c_common.h>
 #endif
 
-static int i2c_scan_cli_cmd(int argc, char **argv);
-
-static struct shell_cmd i2c_scan_cmd_struct = {
-    .sc_cmd = "i2c_scan",
-    .sc_cmd_func = i2c_scan_cli_cmd
-};
-
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static int
 i2c_scan_probe(int i2c_num, uint16_t address, uint32_t timeout)
@@ -108,8 +101,4 @@ i2c_scan_cli_cmd(int argc, char **argv)
     return 0;
 }
 
-void
-i2c_scan_init(void)
-{
-    shell_cmd_register(&i2c_scan_cmd_struct);
-}
+MAKE_SHELL_CMD(i2c_scan, i2c_scan_cli_cmd, NULL)

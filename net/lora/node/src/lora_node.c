@@ -642,15 +642,9 @@ lora_node_init(void)
         STATS_NAME_INIT_PARMS(lora_mac_stats), "lora_mac");
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-#if MYNEWT_VAL(LORA_NODE_CLI)
-    lora_cli_init();
-#else
+#if !MYNEWT_VAL(LORA_NODE_CLI)
     /* Init app */
     lora_app_init();
-
-#if MYNEWT_VAL(LORA_NODE_LOG_CLI) == 1
-    lora_cli_init();
-#endif
 
     /*--- MAC INIT ---*/
     /* Initialize eventq */

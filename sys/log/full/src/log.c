@@ -50,30 +50,6 @@ static struct log_module_entry g_log_module_list[
 static int g_log_module_count;
 static uint8_t log_written;
 
-#if MYNEWT_VAL(LOG_CLI)
-int shell_log_dump_cmd(int, char **);
-struct shell_cmd g_shell_log_cmd = {
-    .sc_cmd = "log",
-    .sc_cmd_func = shell_log_dump_cmd
-};
-
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-int shell_log_slot1_cmd(int, char **);
-struct shell_cmd g_shell_slot1_cmd = {
-    .sc_cmd = "slot1",
-    .sc_cmd_func = shell_log_slot1_cmd,
-};
-#endif
-
-#if MYNEWT_VAL(LOG_STORAGE_INFO)
-int shell_log_storage_cmd(int, char **);
-struct shell_cmd g_shell_storage_cmd = {
-    .sc_cmd = "log-storage",
-    .sc_cmd_func = shell_log_storage_cmd,
-};
-#endif
-#endif
-
 #if MYNEWT_VAL(LOG_STATS)
 STATS_NAME_START(logs)
     STATS_NAME(logs, writes)
@@ -148,15 +124,6 @@ log_init(void)
     g_log_info.li_version = MYNEWT_VAL(LOG_VERSION);
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
     g_log_info.li_next_index = 0;
-#endif
-#if MYNEWT_VAL(LOG_CLI)
-    shell_cmd_register(&g_shell_log_cmd);
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-    shell_cmd_register(&g_shell_slot1_cmd);
-#endif
-#if MYNEWT_VAL(LOG_STORAGE_INFO)
-    shell_cmd_register(&g_shell_storage_cmd);
-#endif
 #endif
 
 #if MYNEWT_VAL(LOG_CONSOLE)
