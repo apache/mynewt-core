@@ -18,7 +18,7 @@
 #
 
 pkg.name: fs/fs
-pkg.description: File system abstrction.
+pkg.description: File system abstraction.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -33,4 +33,4 @@ pkg.deps.FS_CLI:
     - "@apache-mynewt-core/sys/shell"
 
 pkg.deps.FS_MGMT:
-    - "@apache-mynewt-mcumgr/cmd/fs/port/mynewt"
+    - "@apache-mynewt-mcumgr/cmd/fs_mgmt/port/mynewt"
