@@ -303,7 +303,8 @@ littlefs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_fi
      */
 
     flags = 0;
-    if (access_flags & (FS_ACCESS_READ | FS_ACCESS_WRITE)) {
+    if ((access_flags & (FS_ACCESS_READ | FS_ACCESS_WRITE)) ==
+        (FS_ACCESS_READ | FS_ACCESS_WRITE)) {
         flags |= LFS_O_RDWR;
     } else if (access_flags & FS_ACCESS_READ) {
         flags |= LFS_O_RDONLY;
