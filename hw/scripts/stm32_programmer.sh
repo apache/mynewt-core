@@ -21,7 +21,15 @@
 # FILE_NAME must contain the name of the file to load
 # FLASH_OFFSET must contain the offset in flash where to place it
 #
+stlink_sn () {
+    if [ -n "$STLINK_SN" ]; then
+        EXTRA_JTAG_CMD="sn=$STLINK_SN " $EXTRA_JTAG_CMD
+    fi
+}
+
 stlink_load () {
+    stlink_sn
+
     if [ -z $FILE_NAME ]; then
         echo "Missing filename"
         exit 1
@@ -39,7 +47,7 @@ stlink_load () {
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    STM32_Programmer_CLI -c port=SWD -d $FILE_NAME $FLASH_OFFSET -rst
+    STM32_Programmer_CLI -c port=SWD $EXTRA_JTAG_CMD -d $FILE_NAME $FLASH_OFFSET -rst
 
     if [ $? -ne 0 ]; then
         exit 1
