@@ -26,6 +26,18 @@ CONNECTION_MODE_DEFAULT="halt"
 # TARGET must be correectly set by the BSP; check `pyocd list --targets`
 # CONNECTION_MODE can be one of "attach", "halt" (default), "pre-reset", "under-reset"
 #
+pyocd_sn() {
+    if [ -n "$JLINK_SN" ]; then
+        UID_ARG="-u $JLINK_SN"
+    elif [ -n "$STLINK_SN" ]; then
+        UID_ARG="-u $STLINK_SN"
+    elif [ -n "$CMSIS_DAP_SN" ]; then
+        UID_ARG="-u $CMSIS_DAP_SN"
+    else
+        UID_ARG=""
+    fi
+}
+
 pyocd_load () {
     if [ -z $TARGET ]; then
         echo "Missing TARGET (get a list with 'pyocd list --targets')"
@@ -51,9 +63,11 @@ pyocd_load () {
         exit 1
     fi
 
+    pyocd_sn
+
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    pyocd flash -e sector -M $CONNECTION_MODE -t $TARGET $FILE_NAME@$FLASH_OFFSET --format bin ${JLINK_SN:+-u $JLINK_SN}
+    pyocd flash -e sector -M $CONNECTION_MODE -t $TARGET $FILE_NAME@$FLASH_OFFSET --format bin $UID_ARG
     if [ $? -ne 0 ]; then
         exit 1
     fi
