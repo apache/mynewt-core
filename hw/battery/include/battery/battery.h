@@ -301,10 +301,6 @@ int battery_get_driver_count(struct os_dev *battery);
 struct battery_driver *get_battery_driver(struct os_dev *battery,
         const char *dev_name);
 
-#if MYNEWT_VAL(BATTERY_SHELL)
-void battery_shell_register(void);
-#endif
-
 /**
  * }@
  */

@@ -39,3 +39,5 @@ pkg.deps.!BUS_DRIVER_PRESENT||ADP5061_USE_CHARGE_CONTROL:
 pkg.deps.ADP5061_CLI:
     - '@apache-mynewt-core/sys/shell'
     - '@apache-mynewt-core/util/parse'
+
+pkg.whole_archive: true

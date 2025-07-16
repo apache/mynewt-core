@@ -39,6 +39,8 @@ pkg.deps.CONFIG_NFFS:
 pkg.deps.CONFIG_LITTLEFS:
     - "@apache-mynewt-core/fs/littlefs"
 
+pkg.whole_archive: true
+
 pkg.init:
     config_pkg_init: 'MYNEWT_VAL(CONFIG_SYSINIT_STAGE_1)'
     config_pkg_init_stage2: 'MYNEWT_VAL(CONFIG_SYSINIT_STAGE_2)'
