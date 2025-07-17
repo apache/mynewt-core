@@ -23,6 +23,20 @@ CFG_RESET="reset halt"
 # FILE_NAME must contain the name of the file to load
 # FLASH_OFFSET must contain the offset in flash where to place it
 #
+openocd_sn() {
+    OCD_SERIAL_FILE=openocd_serial.cfg
+
+    if [ -n "$STLINK_SN" ]; then
+        echo "adapter serial $STLINK_SN" > $OCD_SERIAL_FILE
+    elif [ -n "$JLINK_SN" ]; then
+        echo "adapter serial $JLINK_SN" > $OCD_SERIAL_FILE
+    else
+        return
+    fi
+    # Add the debugger serial number file to the OpenOCD CFG options
+    CFG="$CFG -f $OCD_SERIAL_FILE"
+}
+
 openocd_load () {
     OCD_CMD_FILE=.openocd_cmds
 
@@ -37,6 +51,8 @@ openocd_load () {
     echo "$CFG_RESET" >> $OCD_CMD_FILE
     echo "$CFG_POST_INIT" >> $OCD_CMD_FILE
     echo "flash write_image erase $FILE_NAME $FLASH_OFFSET" >> $OCD_CMD_FILE
+
+    openocd_sn
 
     if [ -z $FILE_NAME ]; then
         echo "Missing filename"
@@ -55,7 +71,8 @@ openocd_load () {
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    openocd $CFG -f $OCD_CMD_FILE -c shutdown
+    openocd $CFG -f $OCD_CMD_FILE $EXTRA_JTAG_CMD -c shutdown
+
     if [ $? -ne 0 ]; then
         exit 1
     fi
@@ -142,12 +159,16 @@ openocd_debug () {
 
 openocd_halt () {
     openocd $CFG -c init -c "halt" -c shutdown
-    return $?
+    ret=$?
+    [ -f $OCD_SERIAL_FILE ] && rm $OCD_SERIAL_FILE
+    return $ret
 }
 
 openocd_reset_run () {
     openocd $CFG -c init -c "reset run" -c shutdown
-    return $?
+    ret=$?
+    [ -f $OCD_SERIAL_FILE ] && rm $OCD_SERIAL_FILE
+    return $ret
 }
 
 openocd_detect_interface () {
