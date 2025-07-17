@@ -100,3 +100,52 @@ nrf5340_clock_hfclk192m_release(void)
 
     return stopped;
 }
+
+int
+nrf5340_set_lf_clock_source(uint32_t clksrc)
+{
+    uint32_t regmsk;
+    uint32_t regval;
+
+    regmsk = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSTAT_SRC_Msk;
+    regval = CLOCK_LFCLKSTAT_STATE_Running << CLOCK_LFCLKSTAT_STATE_Pos;
+
+    regval |= clksrc << CLOCK_LFCLKSTAT_SRC_Pos;
+
+    /* Check if this clock source isn't already running */
+    if ((NRF_CLOCK->LFCLKSTAT & regmsk) == regval) {
+        return 0;
+    }
+
+    /*
+     * Request HFXO if LFSYNTH is going to be set as source. If LFSYNTH is going to be
+     * replaced with other source, release HFXO.
+     */
+    if (clksrc == CLOCK_LFCLKSTAT_SRC_LFSYNT) {
+        if ((NRF_CLOCK->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
+            (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) {
+            NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+            nrf5340_clock_hfxo_request();
+            while (!NRF_CLOCK->EVENTS_HFCLKSTARTED) {
+            }
+        } else {
+            nrf5340_clock_hfxo_request();
+        }
+    } else if (NRF_CLOCK->LFCLKSRC == CLOCK_LFCLKSTAT_SRC_LFSYNT) {
+        nrf5340_clock_hfxo_release();
+    }
+
+    NRF_CLOCK->LFCLKSRC = clksrc;
+    NRF_CLOCK->TASKS_LFCLKSTART = 1;
+
+    /* Wait here till started! */
+    while (1) {
+        if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
+            if ((NRF_CLOCK->LFCLKSTAT & regmsk) == regval) {
+                break;
+            }
+        }
+    }
+
+    return 1;
+}
