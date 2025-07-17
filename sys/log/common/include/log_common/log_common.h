@@ -49,7 +49,8 @@ struct log;
     (LOG_LEVEL_WARN     == level ? "WARN"     :\
     (LOG_LEVEL_ERROR    == level ? "ERROR"    :\
     (LOG_LEVEL_CRITICAL == level ? "CRITICAL" :\
-     "UNKNOWN")))))
+    (LOG_LEVEL_MAX      == level ? "MAX"      :\
+     "UNKNOWN"))))))
 
 /* XXX: These module IDs are defined for backwards compatibility.  Application
  * code should use the syscfg settings directly.  These defines will be removed
@@ -132,8 +133,8 @@ typedef void log_append_cb(struct log *log, uint32_t idx);
 
 /** @typdef log_notify_rotate_cb
  * @brief Callback that is executed each time we are about to rotate a log.
- * 
- * @param log                   The log that is about to rotate 
+ *
+ * @param log                   The log that is about to rotate
  */
 typedef void log_notify_rotate_cb(const struct log *log);
 

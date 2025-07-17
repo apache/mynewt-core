@@ -41,6 +41,7 @@ syscfg.defs:
         description: >
             Use color for mod log levels.
         value: 0
+
     LOG_CONSOLE_PRETTY_COLOR_MODULES:
         description: >
             Use color for module names.
@@ -208,6 +209,90 @@ syscfg.defs:
             Enable log init callback. This callback is called after the log
             module is initialized and most recent entry is read.
         value: 0
+
+    LOG_COLOR_HILIGHT_MODULE:
+        description: >
+            Highlight attribute for system modules (terminal support may vary)
+            0: none, 1: bold, 2: faint, 3: italic, 4: underline, 5: flash, 6: blink, 7: reverse, 8: conceal, 9: strike
+        value: 7
+
+    LOG_COLOR_HILIGHT_LEVEL:
+        description: >
+            Highlight attribute for highlighted levels (terminal support may vary)
+            0: none, 1: bold, 2: faint, 3: italic, 4: underline, 5: flash, 6: blink, 7: reverse, 8: conceal, 9: strike
+        value: 7
+
+    LOG_LEVEL_STRING_DEBUG:
+        description: >
+            String for the debug log level
+        value: '"DBG"'
+
+    LOG_LEVEL_COLOR_CODE_DEBUG:
+        description: >
+            Color code for the debug log level
+            0: black, 1: red, 2: green, 3: yellow, 4: blue, 5: magenta, 6: cyan, 7: white, 8: no coloring
+            n+10: color with highlight, per LOG_COLOR_HILIGHT_LEVEL
+        value: 8
+
+    LOG_LEVEL_STRING_INFO:
+        description: >
+            String for the informational log level
+        value: '"INF"'
+
+    LOG_LEVEL_COLOR_CODE_INFO:
+        description: >
+            Color code for the informational log level
+            0: black, 1: red, 2: green, 3: yellow, 4: blue, 5: magenta, 6: cyan, 7: white, 8: no coloring
+            n+10: color with highlight, per LOG_COLOR_HILIGHT_LEVEL
+        value: 6
+
+    LOG_LEVEL_STRING_WARNING:
+        description: >
+            String for the warning log level
+        value: '"WRN"'
+
+    LOG_LEVEL_COLOR_CODE_WARNING:
+        description: >
+            Color code for the warning log level
+            0: black, 1: red, 2: green, 3: yellow, 4: blue, 5: magenta, 6: cyan, 7: white, 8: no coloring
+            n+10: color with highlight, per LOG_COLOR_HILIGHT_LEVEL
+        value: 3
+
+    LOG_LEVEL_STRING_ERROR:
+        description: >
+            String for the error log level
+        value: '"ERR"'
+
+    LOG_LEVEL_COLOR_CODE_ERROR:
+        description: >
+            Color code for the error log level
+            0: black, 1: red, 2: green, 3: yellow, 4: blue, 5: magenta, 6: cyan, 7: white, 8: no coloring
+            n+10: color with highlight, per LOG_COLOR_HILIGHT_LEVEL
+        value: 1
+
+    LOG_LEVEL_STRING_CRITICAL:
+        description: >
+            String for the critical log level
+        value: '"CRI"'
+
+    LOG_LEVEL_COLOR_CODE_CRITICAL:
+        description: >
+            Color code for the critical log level
+            0: black, 1: red, 2: green, 3: yellow, 4: blue, 5: magenta, 6: cyan, 7: white, 8: no coloring
+            n+10: color with highlight, per LOG_COLOR_HILIGHT_LEVEL
+        value: 11
+
+    LOG_LEVEL_STRING_MAXIMUM:
+        description: >
+            String for the maximum log level
+        value: '"MAX"'
+
+    LOG_LEVEL_COLOR_CODE_MAXIMUM:
+        description: >
+            Color code for the maximum log level
+            0: black, 1: red, 2: green, 3: yellow, 4: blue, 5: magenta, 6: cyan, 7: white, 8: no coloring
+            n+10: color with highlight, per LOG_COLOR_HILIGHT_LEVEL
+        value: 4
 
 syscfg.vals.CONSOLE_TICKS:
     LOG_CONSOLE_PRETTY_WITH_TIMESTAMP: 0
