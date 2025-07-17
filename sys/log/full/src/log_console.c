@@ -55,10 +55,10 @@ log_console_get(void)
 
 #if MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_COLORS)
 
-#define CSI                     "\x1b["
-#define CSE                     "m"
-
-#define INV_COLOR               "7;"
+#define ANSI_CSI               "\x1b["
+#define ANSI_SEP               ";"
+#define ANSI_CSE               "m"
+#define ANSI_COLOR_RESET       ANSI_CSI "0" ANSI_CSE
 
 #define COLOR_BLACK             30
 #define COLOR_RED               31
@@ -72,17 +72,6 @@ log_console_get(void)
 #define MOD_COLOR_MIN           COLOR_GREEN
 #define MOD_COLOR_MAX           COLOR_CYAN
 
-#define STRINGIFY(x)            #x
-#define MK_COLOR(x)             CSI STRINGIFY(x) CSE
-#define MK_INV_COLOR(x)         CSI INV_COLOR STRINGIFY(x) CSE
-
-#define COLOR_DBG               ""
-#define COLOR_INF               MK_COLOR(COLOR_CYAN)
-#define COLOR_WRN               MK_COLOR(COLOR_YELLOW)
-#define COLOR_ERR               MK_COLOR(COLOR_RED)
-#define COLOR_CRI               MK_INV_COLOR(COLOR_RED)
-
-#define COLOR_RESET             CSI "0" CSE
 
 static void
 log_module_color(uint8_t module, char *color_on, char *color_off)
@@ -91,38 +80,42 @@ log_module_color(uint8_t module, char *color_on, char *color_off)
     *color_off = 0;
 
     if (module) {
-        sprintf(color_on, CSI "%s%d" CSE,
-                module < LOG_MODULE_PERUSER ? INV_COLOR : "",
+        sprintf(color_on, ANSI_CSI "%d" ANSI_SEP "%d" ANSI_CSE,
+                module < LOG_MODULE_PERUSER ? MYNEWT_VAL(LOG_COLOR_HILIGHT_MODULE) : 0,
                 MOD_COLOR_MIN + module % (MOD_COLOR_MAX - MOD_COLOR_MIN + 1));
-        strcpy(color_off, COLOR_RESET);
+        strcpy(color_off, ANSI_COLOR_RESET);
     }
 }
 
 #else
-#define COLOR_DBG               ""
-#define COLOR_INF               ""
-#define COLOR_WRN               ""
-#define COLOR_ERR               ""
-#define COLOR_CRI               ""
-#define COLOR_RESET             ""
+#define ANSI_CSI                ""
+#define ANSI_SEP                ""
+#define ANSI_CSE                ""
+#define ANSI_COLOR_RESET        ""
 #define log_module_color(hdr, on, off)
 #endif
 
-static const char * const log_level_color[] = {
-    COLOR_DBG,
-    COLOR_INF,
-    COLOR_WRN,
-    COLOR_ERR,
-    COLOR_CRI,
+static const uint8_t log_level_color_code[] = {
+    MYNEWT_VAL(LOG_LEVEL_COLOR_CODE_DEBUG),
+    MYNEWT_VAL(LOG_LEVEL_COLOR_CODE_INFO),
+    MYNEWT_VAL(LOG_LEVEL_COLOR_CODE_WARNING),
+    MYNEWT_VAL(LOG_LEVEL_COLOR_CODE_ERROR),
+    MYNEWT_VAL(LOG_LEVEL_COLOR_CODE_CRITICAL),
+    /* Add new custom log levels here */
+    MYNEWT_VAL(LOG_LEVEL_COLOR_CODE_MAXIMUM),
 };
 
 static const char * const log_level_str[] = {
-    "DBG",
-    "INF",
-    "WRN",
-    "ERR",
-    "CRI",
+    MYNEWT_VAL(LOG_LEVEL_STRING_DEBUG),
+    MYNEWT_VAL(LOG_LEVEL_STRING_INFO),
+    MYNEWT_VAL(LOG_LEVEL_STRING_WARNING),
+    MYNEWT_VAL(LOG_LEVEL_STRING_ERROR),
+    MYNEWT_VAL(LOG_LEVEL_STRING_CRITICAL),
+    /* Add new custom log levels here */
+    MYNEWT_VAL(LOG_LEVEL_STRING_MAXIMUM),
 };
+
+static const int real_log_levels = ARRAY_SIZE(log_level_str) - 1;
 
 void
 log_console_print_hdr(const struct log_entry_hdr *hdr)
@@ -134,6 +127,8 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
     const char *module_name = NULL;
     char color[11] = "";
     char color_off[6] = "";
+    uint8_t mapped_log_level;
+    uint8_t color_code;
 
     /* Find module defined in syscfg.logcfg sections */
     module_name = log_module_get_name(hdr->ue_module);
@@ -152,14 +147,18 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
     } else {
         image_hash_str[0] = 0;
     }
-    if (hdr->ue_level <= LOG_LEVEL_CRITICAL) {
+    if (hdr->ue_level < real_log_levels || hdr->ue_level == LOG_LEVEL_MAX) {
+        mapped_log_level =
+            hdr->ue_level < real_log_levels ? hdr->ue_level : real_log_levels;
+        color_code = log_level_color_code[mapped_log_level];
         if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_COLORS)) {
-            strcpy(level_str_buf, log_level_color[hdr->ue_level]);
-            strcat(level_str_buf, log_level_str[hdr->ue_level]);
-            strcat(level_str_buf, COLOR_RESET);
+            sprintf(level_str_buf, ANSI_CSI "%d" ANSI_SEP "%d" ANSI_CSE "%s" ANSI_COLOR_RESET,
+                color_code >= 10 ? MYNEWT_VAL(LOG_COLOR_HILIGHT_LEVEL) : 0,
+                color_code % 10 + 30,
+                log_level_str[mapped_log_level]);
             level_str = level_str_buf;
         } else {
-            level_str = log_level_str[hdr->ue_level];
+            level_str = log_level_str[mapped_log_level];
         }
     } else {
         sprintf(level_str_buf, "%-3u", hdr->ue_level);
