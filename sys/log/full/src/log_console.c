@@ -81,6 +81,7 @@ log_console_get(void)
 #define COLOR_WRN               MK_COLOR(COLOR_YELLOW)
 #define COLOR_ERR               MK_COLOR(COLOR_RED)
 #define COLOR_CRI               MK_INV_COLOR(COLOR_RED)
+#define COLOR_MAX               MK_COLOR(COLOR_BLUE)
 
 #define COLOR_RESET             CSI "0" CSE
 
@@ -104,6 +105,7 @@ log_module_color(uint8_t module, char *color_on, char *color_off)
 #define COLOR_WRN               ""
 #define COLOR_ERR               ""
 #define COLOR_CRI               ""
+#define COLOR_MAX               ""
 #define COLOR_RESET             ""
 #define log_module_color(hdr, on, off)
 #endif
@@ -114,6 +116,8 @@ static const char * const log_level_color[] = {
     COLOR_WRN,
     COLOR_ERR,
     COLOR_CRI,
+/* Add new custom log levels here */
+    COLOR_MAX,
 };
 
 static const char * const log_level_str[] = {
@@ -122,7 +126,11 @@ static const char * const log_level_str[] = {
     "WRN",
     "ERR",
     "CRI",
+/* Add new custom log levels here */
+    "MAX",
 };
+
+static int real_log_levels = ARRAY_SIZE(log_level_str) - 1;
 
 void
 log_console_print_hdr(const struct log_entry_hdr *hdr)
@@ -134,6 +142,7 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
     const char *module_name = NULL;
     char color[11] = "";
     char color_off[6] = "";
+    uint8_t mapped_log_level;
 
     /* Find module defined in syscfg.logcfg sections */
     module_name = log_module_get_name(hdr->ue_module);
@@ -152,14 +161,16 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
     } else {
         image_hash_str[0] = 0;
     }
-    if (hdr->ue_level <= LOG_LEVEL_CRITICAL) {
+    if (hdr->ue_level < real_log_levels || hdr->ue_level == LOG_LEVEL_MAX) {
+        mapped_log_level =
+            hdr->ue_level < real_log_levels ? hdr->ue_level : real_log_levels;
         if (MYNEWT_VAL(LOG_CONSOLE_PRETTY_WITH_COLORS)) {
-            strcpy(level_str_buf, log_level_color[hdr->ue_level]);
-            strcat(level_str_buf, log_level_str[hdr->ue_level]);
+            strcpy(level_str_buf, log_level_color[mapped_log_level]);
+            strcat(level_str_buf, log_level_str[mapped_log_level]);
             strcat(level_str_buf, COLOR_RESET);
             level_str = level_str_buf;
         } else {
-            level_str = log_level_str[hdr->ue_level];
+            level_str = log_level_str[mapped_log_level];
         }
     } else {
         sprintf(level_str_buf, "%-3u", hdr->ue_level);
