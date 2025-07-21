@@ -48,7 +48,32 @@ hal_system_reset(void)
 enum hal_reset_reason
 hal_reset_cause(void)
 {
-    enum hal_reset_reason reason = 0;
+    static enum hal_reset_reason reason;
+    uint32_t reg;
+
+    if (reason) {
+        return reason;
+    }
+
+    /* Read STAT register */
+    reg = RSTGEN->STAT;
+
+    if (reg & RSTGEN_STAT_PORSTAT_Msk) {
+        reason = HAL_RESET_POR;
+    } else if (reg & RSTGEN_STAT_WDRSTAT_Msk) {
+        reason = HAL_RESET_WATCHDOG;
+    } else if (reg & RSTGEN_STAT_SWRSTAT_Msk) {
+        reason = HAL_RESET_SOFT;
+    } else if (reg & RSTGEN_STAT_EXRSTAT_Msk) {
+        reason = HAL_RESET_PIN;
+    } else if (reg & RSTGEN_STAT_BORSTAT_Msk) {
+        reason = HAL_RESET_BROWNOUT;
+    } else {
+        reason = HAL_RESET_OTHER;
+    }
+
+    /* Clear STAT register */
+    RSTGEN->CLRSTAT = 1;
     return (reason);
 }
 
