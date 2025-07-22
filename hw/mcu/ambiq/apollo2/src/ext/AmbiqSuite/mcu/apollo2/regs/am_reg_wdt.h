@@ -44,6 +44,8 @@
 #ifndef AM_REG_WDT_H
 #define AM_REG_WDT_H
 
+#include "am_reg_base_addresses.h"
+
 //*****************************************************************************
 //
 // Instance finder. (1 instance(s) available)
