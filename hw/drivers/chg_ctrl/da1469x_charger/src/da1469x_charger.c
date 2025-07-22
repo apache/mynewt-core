@@ -253,8 +253,7 @@ da1469x_charger_charge_disable(struct da1469x_charger_dev *dev)
 }
 
 int
-da1469x_charger_set_state_change_irq_mask(struct da1469x_charger_dev *dev,
-                                          da1469x_charger_state_irq_t mask)
+da1469x_charger_set_state_change_irq_mask(struct da1469x_charger_dev *dev, uint16_t mask)
 {
     (void)dev;
 
