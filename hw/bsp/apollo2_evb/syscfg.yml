@@ -96,6 +96,10 @@ syscfg.defs:
     SPI_5_MASTER_PIN_MISO:
         description: 'MISO pin for SPI_5_MASTER'
         value:  49
+    AM_WATCHDOG_CLOCK:
+        description: "Watchdog clock frequency in Hz"
+        value: 1
+        range: 1, 16, 128
 
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS

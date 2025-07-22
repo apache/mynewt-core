@@ -50,6 +50,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "am_reg_wdt.h"
+#include "am_reg_macros.h"
 
 //*****************************************************************************
 //
