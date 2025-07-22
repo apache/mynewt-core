@@ -452,15 +452,15 @@ spi_da1469x_configure(struct bus_dev *bdev, struct bus_node *bnode)
         regs->SPI_CTRL_REG = ctrl_reg ^ (SPI_SPI_CTRL_REG_SPI_ON_Msk);
     }
 
-    if ((spi_dev->mode == node->mode) && (spi_dev->data_order == node->data_order) &&
-        (spi_dev->freq == node->freq)) {
+    if ((dev->mode == node->mode) && (dev->data_order == node->data_order) &&
+        (dev->freq == node->freq)) {
         /* Same configuration, no changes required. */
         goto end;
     }
 
-    spi_dev->freq = node->freq;
-    spi_dev->data_order = node->data_order;
-    spi_dev->mode = node->mode;
+    dev->freq = node->freq;
+    dev->data_order = node->data_order;
+    dev->mode = node->mode;
 
     ctrl_reg &= ~(SPI_SPI_CTRL_REG_SPI_TX_FIFO_NOTFULL_MASK_Msk |
                   SPI_SPI_CTRL_REG_SPI_DMA_TXREQ_MODE_Msk |
