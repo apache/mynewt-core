@@ -90,3 +90,7 @@ syscfg.defs:
             It can be 'nordicDfu' to upload binary using Nordic SDK DFU
             bootloader protocol.
         value:
+    MYNEWT_DEBUGGER_SN:
+        description: >
+            Debugger serial number to use for flash
+        value:
