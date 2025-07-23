@@ -84,7 +84,7 @@ SECTIONS
     /* Keep first in RAM, no need to clear it */
     .vector_relocation :
     {
-        . = ALIGN(4);
+        . = ALIGN(128);
         __vector_tbl_reloc__ = .;
         . = . + (__isr_vector_end - __isr_vector_start);
         . = ALIGN(4);
