@@ -437,6 +437,9 @@ log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
 
 /*
  * Associate an instantiation of a log with the logging infrastructure
+ * If trailer data needs to be read, the trailer callbacks should be
+ * registered before calling this function. They are set using
+ * log_trailer_cbs_register().
  */
 int
 log_register(const char *name, struct log *log, const struct log_handler *lh,
@@ -460,12 +463,6 @@ log_register(const char *name, struct log *log, const struct log_handler *lh,
     log->l_max_entry_len = 0;
 #if !MYNEWT_VAL(LOG_GLOBAL_IDX)
     log->l_idx = 0;
-#endif
-
-#if MYNEWT_VAL(LOG_FLAGS_TRAILER)
-    log->l_tr_om = NULL;
-    log->l_tr_arg = NULL;
-    log->l_th = NULL;
 #endif
 
     if (!log_registered(log)) {
