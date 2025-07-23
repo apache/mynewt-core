@@ -96,6 +96,11 @@ syscfg.defs:
         description: 'Cortex Serial Wire DIO Pin'
         value: 21
 
+    AM_WATCHDOG_CLOCK:
+        description: "Watchdog clock frequency in Hz"
+        value: 1
+        range: 1, 16, 128
+
 syscfg.vals:
     UART_0: 1
     UART_0_PIN_TX: 22
