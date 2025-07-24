@@ -17,6 +17,16 @@
 #
 . $CORE_PATH/hw/scripts/common.sh
 
+jlink_sn () {
+    if [ -n "$JLINK_SN" ]; then
+        SRN_ARG="--serial-number $JLINK_SN"
+    elif [ -n "$MYNEWT_VAL_JLINK_SN" ]; then
+        SRN_ARG="--serial-number $MYNEWT_VAL_JLINK_SN"
+    else
+        SRN_ARG=""
+    fi
+}
+
 #
 # FILE_NAME must contain the name of the file to load
 # FLASH_OFFSET must contain the offset in flash where to place it
@@ -75,14 +85,16 @@ nrfutil_load () {
     fi
 
     if [ -z ${ZIP_FILE} ] ; then
+        jlink_sn
+
         echo "Downloading" ${HEX_FILE}
 
-        nrfutil device program --firmware ${HEX_FILE} ${JLINK_SN:+--serial-number $JLINK_SN} ${NRFUTIL_ARG} ${NRFUTIL_TRAITS} --options chip_erase_mode=ERASE_RANGES_TOUCHED_BY_FIRMWARE
+        nrfutil device program --firmware ${HEX_FILE} $SRN_ARG ${NRFUTIL_ARG} ${NRFUTIL_TRAITS} --options chip_erase_mode=ERASE_RANGES_TOUCHED_BY_FIRMWARE
 
         if [ $? -ne 0 ]; then
             ret=1
         else
-            nrfutil device reset ${JLINK_SN:+--serial-number $JLINK_SN}
+            nrfutil device reset $SRN_ARG
         fi
     fi
 

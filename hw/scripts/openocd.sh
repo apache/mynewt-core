@@ -30,6 +30,10 @@ openocd_sn() {
         echo "adapter serial $STLINK_SN" > $OCD_SERIAL_FILE
     elif [ -n "$JLINK_SN" ]; then
         echo "adapter serial $JLINK_SN" > $OCD_SERIAL_FILE
+    elif [ -n "$MYNEWT_VAL_STLINK_SN" ]; then
+        echo "adapter serial $MYNEWT_VAL_STLINK_SN" > $OCD_SERIAL_FILE
+    elif [ -n "$MYNEWT_VAL_JLINK_SN" ]; then
+        echo "adapter serial $MYNEWT_VAL_JLINK_SN" > $OCD_SERIAL_FILE
     else
         return
     fi
