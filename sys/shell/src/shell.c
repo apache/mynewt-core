@@ -401,7 +401,7 @@ show_help(const struct shell_cmd *cmd, int argc, char *argv[],
     return 0;
 }
 
-MAKE_SHELL_CMD(help, show_help, NULL)
+MAKE_SHELL_EXT_CMD(help, show_help, NULL)
 
 static int
 set_default_module(const char *name)
@@ -432,7 +432,7 @@ select_module(const struct shell_cmd *cmd, int argc, char *argv[],
     return 0;
 }
 
-MAKE_SHELL_CMD(select, select_module, NULL)
+MAKE_SHELL_EXT_CMD(select, select_module, NULL)
 
 static const struct shell_cmd *
 shell_find_cmd(int argc, char *argv[], struct streamer *streamer)
