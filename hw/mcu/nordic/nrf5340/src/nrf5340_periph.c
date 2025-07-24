@@ -37,7 +37,7 @@
 
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2) || MYNEWT_VAL(PWM_3)
 #include <pwm/pwm.h>
-#include <pwm_nrf52/pwm_nrf52.h>
+#include "pwm_nrf5x/pwm_nrf5x.h"
 #endif
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || MYNEWT_VAL(UART_3)
@@ -284,25 +284,25 @@ nrf5340_periph_create_pwm(void)
 #if MYNEWT_VAL(PWM_0)
     rc = os_dev_create(&os_bsp_pwm0.pwm_os_dev, "pwm0",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                       nrf52_pwm_dev_init, UINT_TO_POINTER(0));
+                       nrf5x_pwm_dev_init, UINT_TO_POINTER(0));
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(PWM_1)
     rc = os_dev_create(&os_bsp_pwm1.pwm_os_dev, "pwm1",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                       nrf52_pwm_dev_init, UINT_TO_POINTER(1));
+                       nrf5x_pwm_dev_init, UINT_TO_POINTER(1));
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(PWM_2)
     rc = os_dev_create(&os_bsp_pwm2.pwm_os_dev, "pwm2",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                       nrf52_pwm_dev_init, UINT_TO_POINTER(2));
+                       nrf5x_pwm_dev_init, UINT_TO_POINTER(2));
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(PWM_3)
     rc = os_dev_create(&os_bsp_pwm3.pwm_os_dev, "pwm3",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                       nrf52_pwm_dev_init, UINT_TO_POINTER(3));
+                       nrf5x_pwm_dev_init, UINT_TO_POINTER(3));
     assert(rc == 0);
 #endif
 }
