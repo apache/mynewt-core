@@ -26,3 +26,6 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/drivers/flash/spiflash/chips"
+
+pkg.deps.SPIFLASH_STAT:
+    - "@apache-mynewt-core/sys/stats"
