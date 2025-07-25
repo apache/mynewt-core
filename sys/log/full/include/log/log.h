@@ -611,6 +611,16 @@ log_read_entry_len(struct log *log, const void *dptr);
 uint16_t
 log_read_trailer(struct log *log, const void *dptr, uint8_t *buf);
 
+/**
+ * @brief                Read log trailer length of a specific entry
+ *
+ * @param log            The log to read trailer data from
+ * @param dptr           Data pointer to the log entry
+ *
+ * @return length of the trailer for a specific log entry;
+ */
+uint16_t log_read_trailer_len(struct log *log, const void *dptr);
+
 /**Add commentMore actions
  * @brief Returns trailer data in an mbuf specified by the caller
  *
