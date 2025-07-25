@@ -89,6 +89,9 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     bool read_data = ueh->ue_etype != LOG_ETYPE_CBOR;
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
     bool add_lf = true;
+    uint16_t trailer_len = 0;
+
+    (void)trailer_len;
 
     if (arg) {
         arg->count++;
@@ -98,6 +101,14 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         }
     }
 
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER)
+    trailer_len = log_read_trailer_len(log, dptr);
+    if (trailer_len) {
+        /* If trailer is present, so is the length of the trailer */
+        trailer_len += LOG_TRAILER_LEN_SIZE;
+    }
+    len -= trailer_len;
+#endif
     dlen = min(len, 128);
 
     if (read_data) {
