@@ -19,6 +19,8 @@
 
 #ifndef __MCU_MCU_H_
 #define __MCU_MCU_H_
+#include <stdint.h>
+#include <cmsis_gcc.h>
 
 #ifdef __cplusplus
 extern "C" {
