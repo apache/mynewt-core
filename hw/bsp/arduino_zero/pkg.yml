@@ -29,5 +29,9 @@ pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart"
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
+pkg.deps.UART_1:
+    - "@apache-mynewt-core/hw/drivers/uart"
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
 pkg.cflags:
     - -D__SAMD21G18A__

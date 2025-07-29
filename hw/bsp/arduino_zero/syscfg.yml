@@ -25,6 +25,9 @@ syscfg.defs:
     UART_0:
         description: 'Whether to enable UART0'
         value: 1
+    UART_1:
+        description: 'Whether to enable UART1'
+        value: 0
 
     TIMER_0:
         description: 'Arduino zero Timer 0.'

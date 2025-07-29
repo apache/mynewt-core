@@ -46,12 +46,11 @@
 #include <usart.h>
 
 #include <os/os_dev.h>
-#if MYNEWT_VAL(UART_0)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
 #include <mcu/hal_uart.h>
 
-static struct uart_dev hal_uart0;
 #endif
 #if MYNEWT_VAL(SPI_0)
 /* configure the SPI port for arduino external spi */
@@ -84,18 +83,31 @@ struct samd21_i2c_config i2c_config = {
 #endif
 
 #if MYNEWT_VAL(UART_0)
-static const struct samd21_uart_config uart_cfgs[] = {
-    [0] = {
-        .suc_sercom = SERCOM2,
-        .suc_mux_setting = USART_RX_3_TX_2_XCK_3,
-        .suc_generator_source = GCLK_GENERATOR_0,
-        .suc_sample_rate = USART_SAMPLE_RATE_16X_ARITHMETIC,
-        .suc_sample_adjustment = USART_SAMPLE_ADJUSTMENT_7_8_9,
-        .suc_pad0 = 0,
-        .suc_pad1 = 0,
-        .suc_pad2 = PINMUX_PA10D_SERCOM2_PAD2,
-        .suc_pad3 = PINMUX_PA11D_SERCOM2_PAD3
-    }
+static const struct samd21_uart_config uart0_cfg = {
+    .suc_sercom = SERCOM5,
+    .suc_mux_setting = USART_RX_3_TX_2_XCK_3,
+    .suc_generator_source = GCLK_GENERATOR_0,
+    .suc_sample_rate = USART_SAMPLE_RATE_16X_ARITHMETIC,
+    .suc_sample_adjustment = USART_SAMPLE_ADJUSTMENT_7_8_9,
+    .suc_pad0 = PINMUX_UNUSED,
+    .suc_pad1 = PINMUX_UNUSED,
+    .suc_pad2 = PINMUX_PB22D_SERCOM5_PAD2,
+    .suc_pad3 = PINMUX_PB23D_SERCOM5_PAD3,
+};
+#endif
+
+#if MYNEWT_VAL(UART_1)
+static const struct samd21_uart_config uart1_cfg = {
+    .suc_sercom = SERCOM2,
+    .suc_mux_setting = USART_RX_3_TX_2_XCK_3,
+    .suc_generator_source = GCLK_GENERATOR_0,
+    .suc_sample_rate = USART_SAMPLE_RATE_16X_ARITHMETIC,
+    .suc_sample_adjustment = USART_SAMPLE_ADJUSTMENT_7_8_9,
+    .suc_pad0 = PINMUX_UNUSED,
+    .suc_pad1 = PINMUX_UNUSED,
+    .suc_pad2 = PINMUX_PA10D_SERCOM2_PAD2,
+    .suc_pad3 = PINMUX_PA11D_SERCOM2_PAD3
+
 };
 #endif
 
@@ -129,7 +141,6 @@ hal_bsp_core_dump(int *area_cnt)
     return dump_cfg;
 }
 
-
 /**
  * Returns the configured priority for the given interrupt. If no priority
  * configured, return the priority passed in
@@ -157,8 +168,16 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfgs[0]);
+    static struct uart_dev hal_uart0;
+    rc = os_dev_create((struct os_dev *)&hal_uart0, "uart0", OS_DEV_INIT_PRIMARY,
+                       0, uart_hal_init, (void *)&uart0_cfg);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_1)
+    static struct uart_dev hal_uart1;
+    rc = os_dev_create((struct os_dev *)&hal_uart1, "uart1", OS_DEV_INIT_PRIMARY,
+                       0, uart_hal_init, (void *)&uart1_cfg);
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 
