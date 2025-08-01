@@ -16,22 +16,44 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-#ifndef __PWM_NRF52_H__
-#define __PWM_NRF52_H__
-
-#include <pwm/pwm.h>
-
+#include <mcu/cortex_m33.h>
+#include <hal/hal_nvreg.h>
 #include <nrf.h>
-#include <nrf_pwm.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-int nrf52_pwm_dev_init(struct os_dev *, void *);
+/* There are two GPREGRET registers on the NRF54 */
+#define HAL_NVREG_MAX (2)
 
-#ifdef __cplusplus
+/* GPREGRET registers only save the 8 lsbits */
+#define HAL_NVREG_WIDTH_BYTES (1)
+
+void
+hal_nvreg_write(unsigned int reg, uint32_t val)
+{
+    if (reg < HAL_NVREG_MAX) {
+        NRF_POWER_S->GPREGRET[reg] = val;
+    }
 }
-#endif
 
-#endif /* __PWM_NRF52_H__ */
+uint32_t
+hal_nvreg_read(unsigned int reg)
+{
+    uint32_t val = 0;
+
+    if (reg < HAL_NVREG_MAX) {
+        val = NRF_POWER_S->GPREGRET[reg];
+    }
+
+    return val;
+}
+
+unsigned int
+hal_nvreg_get_num_regs(void)
+{
+    return HAL_NVREG_MAX;
+}
+
+unsigned int
+hal_nvreg_get_reg_width(void)
+{
+    return HAL_NVREG_WIDTH_BYTES;
+}
