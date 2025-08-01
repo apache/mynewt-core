@@ -90,3 +90,15 @@ syscfg.defs:
             It can be 'nordicDfu' to upload binary using Nordic SDK DFU
             bootloader protocol.
         value:
+    STLINK_SN:
+        description: >
+            STLink serial number to use for flash
+        value:
+    JLINK_SN:
+        description: >
+            JLink serial number to use for flash
+        value:
+    CMSIS_DAP_SN:
+        description: >
+            CMSIS-DAP serial number to use for flash
+        value:

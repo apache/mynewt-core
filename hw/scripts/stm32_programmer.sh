@@ -24,6 +24,8 @@
 stlink_sn () {
     if [ -n "$STLINK_SN" ]; then
         EXTRA_JTAG_CMD="sn=$STLINK_SN " $EXTRA_JTAG_CMD
+    elif [ -n "$MYNEWT_VAL_STLINK_SN" ]; then
+        EXTRA_JTAG_CMD="sn=$MYNEWT_VAL_STLINK_SN " $EXTRA_JTAG_CMD
     fi
 }
 

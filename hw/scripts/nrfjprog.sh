@@ -17,6 +17,16 @@
 #
 . $CORE_PATH/hw/scripts/common.sh
 
+jlink_sn () {
+    if [ -n "$JLINK_SN" ]; then
+        SRN_ARG="--snr $JLINK_SN"
+    elif [ -n "$MYNEWT_VAL_JLINK_SN" ]; then
+        SRN_ARG="--snr $MYNEWT_VAL_JLINK_SN"
+    else
+        SRN_ARG=""
+    fi
+}
+
 #
 # FILE_NAME must contain the name of the file to load
 # FLASH_OFFSET must contain the offset in flash where to place it
@@ -42,14 +52,16 @@ nrfjprog_load () {
     fi
     arm-none-eabi-objcopy -O ihex -I binary --adjust-vma ${FLASH_OFFSET} ${FILE_NAME} ${BIN_BASENAME}.hex
 
+    jlink_sn
+
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    nrfjprog ${NRFJPROG_ARG} --program ${BIN_BASENAME}.hex --sectorerase --verify ${JLINK_SN:+--snr $JLINK_SN}
+    nrfjprog ${NRFJPROG_ARG} --program ${BIN_BASENAME}.hex --sectorerase --verify $SRN_ARG
 
     if [ $? -ne 0 ]; then
         exit 1
     fi
-    nrfjprog --reset ${JLINK_SN:+--snr $JLINK_SN}
+    nrfjprog --reset $SRN_ARG
 
     return 0
 }
