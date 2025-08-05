@@ -1,0 +1,96 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    BMP5_INT1_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT1 on device'
+        value: 1
+    BMP5_INT1_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on BMP5 device'
+        value: 1
+    BMP5_INT1_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+    BMP5_INT_ENABLE:
+        description: 'Enable interrupt support for the BMP5'
+        value: 0
+    BMP5_FIFO_ENABLE:
+        description: 'Enable fifo support for the BMP5'
+        value: 0
+    BMP5_INT_PIN_HOST:
+        description: 'Host interrupt pin number for the BMP5'
+        value: 21
+    BMP5_INT_NUM:
+        description: 'Index of Host interrupt si_ints for the BMP5'
+        value: 0
+    BMP5_SHELL_ITF_NUM:
+        description: 'Shell interface number for the BMP5'
+        value: 0
+    BMP5_SHELL_ITF_TYPE:
+        description: 'Shell interface type for the BMP5'
+        value: 1
+    BMP5_SHELL_CSPIN:
+        description: 'CS pin for BMP5'
+        value : -1
+    BMP5_SHELL_ITF_ADDR:
+        description: 'Slave address for BMP5'
+        value : 0x47
+    BMP5_SHELL_DEV_NAME:
+        description: 'BMP5 Shell device name'
+        value: "\"bmp5_0\""
+    BMP5_CLI:
+        description: 'Enable shell support for the BMP5'
+        value: 0
+    BMP5_NOTIF_STATS:
+        description: 'Enable notification stats'
+        value: 0
+    BMP5_ITF_LOCK_TMO:
+        description: 'BMP5 interface lock timeout in milliseconds'
+        value: 1000
+    BMP5_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the BMP5 sends an unexpected NACK.
+        value: 2
+    BMP5_I2C_TIMEOUT_TICKS:
+        description: >
+            Number of OS ticks to wait for each I2C transaction to complete.
+        value: 3
+    BMP5_SPI3_MODE_EN:
+        description: >
+            Enable SPI3 mode for the BMP5.
+        value: 0
+    BMP5_FIFO_CONVERTED_DATA_SIZE:
+        description: >
+            The number of available bmp3_data structs to hold the converted
+            sensor data that is read from the device.
+        value: 74
+
+    ### Log settings.
+
+    BMP5_LOG_MODULE:
+        description: 'Numeric module ID to use for BMP5 log messages.'
+        value: 255
+    BMP5_LOG_LVL:
+        description: 'Minimum level for the BMP5 log.'
+        value: 1
+
+syscfg.logs:
+    BMP5_LOG:
+        module: MYNEWT_VAL(BMP5_LOG_MODULE)
+        level: MYNEWT_VAL(BMP5_LOG_LVL)
