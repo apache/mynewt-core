@@ -58,6 +58,8 @@ pkg.deps.BMA2XX_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bma2xx"
 pkg.deps.BMP388_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bmp388"
+pkg.deps.BMP5_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/bmp5"
 pkg.deps.LIS2DW12_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lis2dw12"
 pkg.deps.LIS2DH12_OFB:

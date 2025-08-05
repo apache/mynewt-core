@@ -633,6 +633,7 @@ under the "3-clause BSD" license. Bundled files are:
 This products bundles BMP388 driver by Bosch Sensortec GmbH , which is available
 under the "3-clause BSD" license. For details, see:
     * hw/drivers/sensors/bmp388
+    * hw/drivers/sensors/bmp5
 
 This product bundles part of DA1469 SDK by Dialog Semiconductor which is
 available under the "3-clause BSD" license. Bundled files are:

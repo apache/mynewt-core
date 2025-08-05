@@ -388,6 +388,12 @@ bmp388.c
 bmp388_priv.h
 bmp388_shell.c
 
+# Bosch BMP5 driver - BSD License
+bmp5.h
+bmp5.c
+bmp5_priv.h
+bmp5_shell.c
+
 # Nordic NRF5340 SDK - APL2 license
 system_nrf5340.c
 gcc_startup_nrf5340.s
