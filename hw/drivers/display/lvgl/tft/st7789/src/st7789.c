@@ -145,13 +145,13 @@ st7789_rotate(lv_disp_rot_t rotation)
 
     switch (rotation) {
     case LV_DISP_ROT_270:
-        madcmd[1] |= ST7789_MADCTL_MV | ST7789_MADCTL_MY | ST7789_MADCTL_ML;
+        madcmd[1] |= ST7789_MADCTL_MX | ST7789_MADCTL_MV;
         break;
     case LV_DISP_ROT_180:
         madcmd[1] |= ST7789_MADCTL_MX | ST7789_MADCTL_MY;
         break;
     case LV_DISP_ROT_90:
-        madcmd[1] |= ST7789_MADCTL_MX | ST7789_MADCTL_MV;
+        madcmd[1] |= ST7789_MADCTL_MV | ST7789_MADCTL_MY | ST7789_MADCTL_ML;
         break;
     case LV_DISP_ROT_NONE:
         break;
