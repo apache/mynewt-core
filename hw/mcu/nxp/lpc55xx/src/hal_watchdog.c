@@ -21,10 +21,13 @@
 
 #include <fsl_wwdt.h>
 
-#ifndef WATCHDOG_STUB
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
+_Static_assert(((1ULL << 24) * 4 * 1000) / 1000000 >= MYNEWT_VAL(WATCHDOG_INTERVAL),
+               "Watchdog interval out of range, decrease value WATCHDOG_INTERVAL in syscfg.yml");
 #endif
 
-int hal_watchdog_init(uint32_t expire_msecs)
+int
+hal_watchdog_init(uint32_t expire_msecs)
 {
 #ifndef WATCHDOG_STUB
     wwdt_config_t config;
@@ -34,21 +37,26 @@ int hal_watchdog_init(uint32_t expire_msecs)
 
     WWDT_GetDefaultConfig(&config);
     config.clockFreq_Hz = 1000000;
-    config.timeoutValue = expire_msecs * 1000;
+    config.enableWatchdogReset = true;
+    /* Convert timeout from milliseconds to watchdog timer ticks
+     * (1 tick = 4 us due to fixed prescaler of 4) */
+    config.timeoutValue = expire_msecs * 250;
     WWDT_Init(WWDT, &config);
 #endif
 
     return 0;
 }
 
-void hal_watchdog_enable(void)
+void
+hal_watchdog_enable(void)
 {
 #ifndef WATCHDOG_STUB
     WWDT_Enable(WWDT);
 #endif
 }
 
-void hal_watchdog_tickle(void)
+void
+hal_watchdog_tickle(void)
 {
 #ifndef WATCHDOG_STUB
     WWDT_Refresh(WWDT);
