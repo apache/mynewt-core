@@ -33,6 +33,8 @@ pyocd_sn() {
         UID_ARG="-u $STLINK_SN"
     elif [ -n "$CMSIS_DAP_SN" ]; then
         UID_ARG="-u $CMSIS_DAP_SN"
+    elif [ -n "$MYNEWT_VAL_MYNEWT_DEBUGGER_SN" ]; then
+        UID_ARG="-u $MYNEWT_VAL_MYNEWT_DEBUGGER_SN"
     else
         UID_ARG=""
     fi
