@@ -62,8 +62,8 @@ void *memset(void *dst, int c, size_t n)
                   "1: strb %[val], [%[buf], %[len]]         \n"
                   "3: subs %[len], #1                       \n"
                   "   bpl  1b                               \n"
-                  : [buf] "+r" (q), [val] "+r" (c), [len] "+r" (n)
-                  :
+                  : [buf] "+l" (q), [len] "+l" (n)
+                  : [val] "l" (c)
                   : "r3", "r4", "memory"
                  );
 #elif defined(__riscv)
