@@ -20,7 +20,16 @@ syscfg.defs:
     ST7789_INVERSION_ON:
         description: ST7789 enable display inversion.
         value: 1
-
+    ST7789_HORIZONTAL_OFFSET:
+        description: >
+            Value added to x coordinates.
+            This can be set if display is not aligned correctly.
+        value:
+    ST7789_VERTICAL_OFFSET:
+        description: >
+            Value added to y coordinates.
+            This can be set if display is not aligned correctly.
+        value:
 syscfg.vals:
     LVGL_DISPLAY_HORIZONTAL_RESOLUTION: 240
     LVGL_DISPLAY_VERTICAL_RESOLUTION: 320
