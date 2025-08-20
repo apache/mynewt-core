@@ -79,6 +79,9 @@
 #include <bmp388/bmp388.h>
 #endif
 
+#if MYNEWT_VAL(BMP5_OFB)
+#include <bmp5/bmp5.h>
+#endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
 #include <adxl345/adxl345.h>
@@ -183,6 +186,10 @@ static struct bma2xx bma2xx;
 
 #if MYNEWT_VAL(BMP388_OFB)
 static struct bmp388 bmp388;
+#endif
+
+#if MYNEWT_VAL(BMP5_OFB)
+static struct bmp5 bmp5;
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
@@ -516,6 +523,40 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
+#endif
+#endif
+
+#if MYNEWT_VAL(BMP5_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP5_OFB_I2C_NUM) >= 0
+static const struct bus_i2c_node_cfg bmp5_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BMP5_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(BMP5_OFB_I2C_ADDR),
+    .freq = 400,
+};
+#endif
+static struct sensor_itf bmp5_itf = {
+    .si_ints = {
+        {
+            .host_pin = MYNEWT_VAL(BMP5_OFB_INT_PIN),
+            .device_pin = MYNEWT_VAL(BMP5_INT1_PIN_DEVICE),
+            .active = MYNEWT_VAL(BMP5_INT1_CFG_ACTIVE)
+        },
+    }
+};
+#else
+#if MYNEWT_VAL(BMP5_OFB_I2C_NUM) >= 0
+static struct sensor_itf spi2c_0_itf_bmp5 = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num = MYNEWT_VAL(BMP5_OFB_I2C_NUM),
+    .si_addr = MYNEWT_VAL(BMP5_OFB_I2C_ADDR),
+    .si_ints = { { .host_pin = MYNEWT_VAL(BMP5_OFB_INT_PIN),
+                   .device_pin = MYNEWT_VAL(BMP5_INT1_PIN_DEVICE),
+                   .active = MYNEWT_VAL(BMP5_INT1_CFG_ACTIVE) } }
+};
+#endif
 #endif
 #endif
 
@@ -1702,6 +1743,50 @@ config_bmp388_sensor(void)
 }
 #endif
 
+#if MYNEWT_VAL(BMP5_OFB)
+static int
+config_bmp5_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct bmp5_cfg cfg = { 0 };
+
+    dev = (struct os_dev *)os_dev_open("bmp5_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.rate = BMP5_ODR_50_056_HZ;
+
+    /*options: BMP5_DRDY_INT, BMP5_FIFO_WTMK_INT, BMP5_FIFO_FULL_INT */
+    cfg.int_enable_type = BMP5_FIFO_FULL_INT;
+
+    cfg.int_pp_od = 0;
+    cfg.int_mode = 0;
+    cfg.int_active_pol = 1;
+
+    /* options: BMP5_FIFO_M_BYPASS, BMP5_FIFO_M_FIFO */
+    cfg.fifo_mode = BMP5_FIFO_M_BYPASS;
+    cfg.fifo_threshold = 73;
+
+    cfg.filter_press_osr = BMP5_OVERSAMPLING_2X;
+    cfg.filter_temp_osr = BMP5_OVERSAMPLING_2X;
+    cfg.power_mode = BMP5_FORCED_MODE;
+
+    /* options: BMP5_READ_M_POLL or BMP5_READ_M_STREAM */
+    cfg.read_mode.mode = BMP5_READ_M_STREAM;
+
+    /* options: BMP5_DRDY_INT,  BMP5_FIFO_WTMK_INT, BMP5_FIFO_FULL_INT */
+    cfg.read_mode.int_type = BMP5_FIFO_FULL_INT;
+    cfg.read_mode.int_num = MYNEWT_VAL(BMP5_INT_NUM);
+    cfg.mask = SENSOR_TYPE_TEMPERATURE | SENSOR_TYPE_PRESSURE;
+
+    rc = bmp5_config((struct bmp5 *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 #if MYNEWT_VAL(BME680_OFB)
 int
 config_bme680_sensor(void)
@@ -2028,6 +2113,19 @@ sensor_dev_create(void)
 #endif
 #endif
 
+#if MYNEWT_VAL(BMP5_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP5_OFB_I2C_NUM) >= 0
+    rc = bmp5_create_i2c_sensor_dev(&bmp5.i2c_node, "bmp5_0", &bmp5_node_cfg, &bmp5_itf);
+#endif
+    assert(rc == 0);
+#else
+    rc = os_dev_create((struct os_dev *)&bmp5, "bmp5_0", OS_DEV_INIT_PRIMARY,
+                       0, bmp5_init, &spi2c_0_itf_bmp5);
+    assert(rc == 0);
+
+#endif
+#endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
@@ -2213,6 +2311,10 @@ sensor_dev_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(BMP5_OFB)
+    rc = config_bmp5_sensor();
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
     rc = config_adxl345_sensor();
