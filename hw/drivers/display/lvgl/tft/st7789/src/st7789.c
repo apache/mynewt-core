@@ -138,6 +138,22 @@
 #define ST7789_HOR_RES          MYNEWT_VAL(LVGL_DISPLAY_HORIZONTAL_RESOLUTION)
 #define ST7789_VER_RES          MYNEWT_VAL(LVGL_DISPLAY_VERTICAL_RESOLUTION)
 
+#ifdef MYNEWT_VAL_ST7789_HORIZONTAL_OFFSET
+#define HOR_OFF MYNEWT_VAL_ST7789_HORIZONTAL_OFFSET
+#else
+#define HOR_OFF ((240 - ST7789_HOR_RES) / 2)
+#endif
+#ifdef MYNEWT_VAL_ST7789_VERTICAL_OFFSET
+#define VER_OFF MYNEWT_VAL_ST7789_VERTICAL_OFFSET
+#else
+#define VER_OFF ((320 - ST7789_VER_RES) / 2)
+#endif
+
+static const uint16_t x_off[4] = { HOR_OFF, 320 - ST7789_VER_RES - VER_OFF,
+                                   240 - ST7789_HOR_RES - HOR_OFF, VER_OFF };
+static const uint16_t y_off[4] = { VER_OFF, 240 - ST7789_HOR_RES - HOR_OFF,
+                                   320 - ST7789_VER_RES - VER_OFF, HOR_OFF };
+
 void
 st7789_rotate(lv_disp_rot_t rotation)
 {
@@ -212,6 +228,7 @@ st7789_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
     lv_disp_t *disp = lv_disp_get_default();
     lv_coord_t hor_res = lv_disp_get_hor_res(disp);
     lv_coord_t ver_res = lv_disp_get_ver_res(disp);
+    int rot = drv->rotated;
 
     if (area->x2 < 0 || area->y2 < 0 || area->x1 >= hor_res || area->y1 >= ver_res) {
         lv_disp_flush_ready(drv);
@@ -224,37 +241,10 @@ st7789_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p)
     int32_t offsetx2 = area->x2 >= hor_res ? hor_res - 1 : area->x2;
     int32_t offsety2 = area->y2 >= ver_res ? ver_res - 1 : area->y2;
 
-#if (CONFIG_LV_TFT_DISPLAY_OFFSETS)
-    offsetx1 += CONFIG_LV_TFT_DISPLAY_X_OFFSET;
-    offsetx2 += CONFIG_LV_TFT_DISPLAY_X_OFFSET;
-    offsety1 += CONFIG_LV_TFT_DISPLAY_Y_OFFSET;
-    offsety2 += CONFIG_LV_TFT_DISPLAY_Y_OFFSET;
-
-#elif (ST7789_HOR_RES == 240) && (ST7789_VER_RES == 240)
-#if (CONFIG_LV_DISPLAY_ORIENTATION_PORTRAIT)
-    offsetx1 += 80;
-    offsetx2 += 80;
-#elif (CONFIG_LV_DISPLAY_ORIENTATION_LANDSCAPE_INVERTED)
-    offsety1 += 80;
-    offsety2 += 80;
-#endif
-#elif (LV_HOR_RES_MAX == 240) && (LV_VER_RES_MAX == 135)
-#if (CONFIG_LV_DISPLAY_ORIENTATION_PORTRAIT) || \
-    (CONFIG_LV_DISPLAY_ORIENTATION_PORTRAIT_INVERTED)
-    offsetx1 += 40;
-    offsetx2 += 40;
-    offsety1 += 53;
-    offsety2 += 53;
-#endif
-#elif (LV_HOR_RES_MAX == 135) && (LV_VER_RES_MAX == 240)
-#if (CONFIG_LV_DISPLAY_ORIENTATION_LANDSCAPE) || \
-    (CONFIG_LV_DISPLAY_ORIENTATION_LANDSCAPE_INVERTED)
-    offsetx1 += 52;
-    offsetx2 += 52;
-    offsety1 += 40;
-    offsety2 += 40;
-#endif
-#endif
+    offsetx1 += x_off[rot];
+    offsetx2 += x_off[rot];
+    offsety1 += y_off[rot];
+    offsety2 += y_off[rot];
 
     /* Column addresses */
     cmd[0] = ST7789_CASET;
