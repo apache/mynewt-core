@@ -67,6 +67,8 @@ struct touch_screen_data {
 
 #define INVERTED_X (MYNEWT_VAL(ADC_TOUCH_ADC_LEFT) > MYNEWT_VAL(ADC_TOUCH_ADC_RIGHT))
 #define INVERTED_Y (MYNEWT_VAL(ADC_TOUCH_ADC_TOP) > MYNEWT_VAL(ADC_TOUCH_ADC_BOTTOM))
+#define HOR_RES MYNEWT_VAL_LVGL_DISPLAY_HORIZONTAL_RESOLUTION
+#define VER_RES MYNEWT_VAL_LVGL_DISPLAY_VERTICAL_RESOLUTION
 
 static struct touch_screen_data touch_screen_data = {
     .adc_left = MYNEWT_VAL(ADC_TOUCH_ADC_LEFT),
@@ -184,9 +186,9 @@ adc_touch_handler(void)
         }
 
         /* Convert to display coordinates */
-        touch_screen_data.x = (x - touch_screen_data.adc_left) * LV_HOR_RES /
+        touch_screen_data.x = (x - touch_screen_data.adc_left) * HOR_RES /
                               (touch_screen_data.adc_right - touch_screen_data.adc_left);
-        touch_screen_data.y = (y - touch_screen_data.adc_top) * LV_VER_RES /
+        touch_screen_data.y = (y - touch_screen_data.adc_top) * VER_RES /
                               (touch_screen_data.adc_bottom - touch_screen_data.adc_top);
     }
 done:
