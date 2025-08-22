@@ -32,14 +32,20 @@ ezflashcli_load () {
         echo "Cannot find file" $FILE
         exit 1
     fi
-    if [ -z ${FLASH_OFFSET} ]; then
-        echo "Missing flash offset"
-        exit 1
+
+    if [ "$BOOT_LOADER" ]; then
+        echo "Downloading" $FILE_NAME
+        ezFlashCLI image_flash ${FILE_NAME}
+    else
+        if [ -z ${FLASH_OFFSET} ]; then
+            echo "Missing flash offset"
+            exit 1
+        fi
+
+        echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
+
+        ezFlashCLI write_flash ${FLASH_OFFSET} ${FILE_NAME}
     fi
-
-    echo "Downloading" $FILE "to" $FLASH_OFFSET
-
-    ezFlashCLI write_flash ${FLASH_OFFSET} ${FILE_NAME}
     ezFlashCLI go
 
     if [ $? -ne 0 ]; then
