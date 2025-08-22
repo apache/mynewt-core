@@ -50,6 +50,9 @@ if [ "$MFG_IMAGE" ]; then
 fi
 
 case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
+  "bsp_downloader")
+    $CORE_PATH/$MYNEWT_VAL_MYNEWT_DOWNLOADER_SCRIPT
+    ;;
   "ezflashcli")
     check_downloader ezFlashCLI
     . $CORE_PATH/hw/scripts/ezflashcli.sh

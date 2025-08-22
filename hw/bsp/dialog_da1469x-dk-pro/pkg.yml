@@ -33,3 +33,4 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/hw/mcu/dialog/da14699"
+    - "@apache-mynewt-core/hw/scripts"
