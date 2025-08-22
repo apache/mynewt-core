@@ -85,6 +85,8 @@ syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    MYNEWT_DOWNLOADER: bsp_downloader
+    MYNEWT_DOWNLOADER_SCRIPT: hw/mcu/dialog/da1469x/scripts/dialog_da1469x-download_jlink.sh
 
 syscfg.vals.BLE_TRANSPORT:
     BLE_TRANSPORT_LL: dialog_cmac
