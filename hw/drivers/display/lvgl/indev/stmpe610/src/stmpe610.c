@@ -34,8 +34,8 @@
 #define STMPE610_MAX_Y           MYNEWT_VAL(STMPE610_MAX_Y)
 #define STMPE610_X_RANGE         ((STMPE610_MAX_X) - (STMPE610_MIN_X))
 #define STMPE610_Y_RANGE         ((STMPE610_MAX_Y) - (STMPE610_MIN_Y))
-#define STMPE610_HOR_RES         MYNEWT_VAL(STMPE610_HOR_RES)
-#define STMPE610_VER_RES         MYNEWT_VAL(STMPE610_VER_RES)
+#define STMPE610_HOR_RES         MYNEWT_VAL_LVGL_DISPLAY_HORIZONTAL_RESOLUTION
+#define STMPE610_VER_RES         MYNEWT_VAL_LVGL_DISPLAY_VERTICAL_RESOLUTION
 
 struct bus_spi_node touch;
 struct bus_spi_node_cfg touch_spi_cfg = {
@@ -202,15 +202,15 @@ xpt2046_corr(int16_t *xp, int16_t *yp)
         y = MYNEWT_VAL(STMPE610_MIN_Y);
     }
 
-    x = (x - STMPE610_MIN_X) * LV_HOR_RES / STMPE610_X_RANGE;
-    y = (y - STMPE610_MIN_Y) * LV_VER_RES / STMPE610_Y_RANGE;
+    x = (x - STMPE610_MIN_X) * STMPE610_HOR_RES / STMPE610_X_RANGE;
+    y = (y - STMPE610_MIN_Y) * STMPE610_VER_RES / STMPE610_Y_RANGE;
 
 #if STMPE610_X_INV
-    x = LV_HOR_RES - x;
+    x = STMPE610_HOR_RES - x;
 #endif
 
 #if STMPE610_Y_INV
-    y = LV_VER_RES - y;
+    y = STMPE610_VER_RES - y;
 #endif
     *xp = x;
     *yp = y;

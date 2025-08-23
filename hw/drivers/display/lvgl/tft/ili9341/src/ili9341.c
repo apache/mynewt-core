@@ -132,9 +132,9 @@
 
 static const uint8_t madctl[] = {
     MADCTL_MX,
-    MADCTL_MV,
-    MADCTL_MY,
     MADCTL_MX | MADCTL_MY | MADCTL_MV,
+    MADCTL_MY,
+    MADCTL_MV,
 };
 
 void

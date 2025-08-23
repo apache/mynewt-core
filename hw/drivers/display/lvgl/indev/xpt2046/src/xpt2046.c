@@ -39,8 +39,8 @@
 #define XPT2046_MAX_Y           MYNEWT_VAL(XPT2046_MAX_Y)
 #define XPT2046_X_RANGE         ((XPT2046_MAX_X) - (XPT2046_MIN_X))
 #define XPT2046_Y_RANGE         ((XPT2046_MAX_Y) - (XPT2046_MIN_Y))
-#define XPT2046_HOR_RES         MYNEWT_VAL(XPT2046_HOR_RES)
-#define XPT2046_VER_RES         MYNEWT_VAL(XPT2046_VER_RES)
+#define XPT2046_HOR_RES         MYNEWT_VAL_LVGL_DISPLAY_HORIZONTAL_RESOLUTION
+#define XPT2046_VER_RES         MYNEWT_VAL_LVGL_DISPLAY_VERTICAL_RESOLUTION
 
 struct bus_spi_node touch;
 struct bus_spi_node_cfg touch_spi_cfg = {
@@ -99,15 +99,15 @@ xpt2046_corr(int16_t *xp, int16_t *yp)
         y = MYNEWT_VAL(XPT2046_MIN_Y);
     }
 
-    x = (x - XPT2046_MIN_X) * LV_HOR_RES / XPT2046_X_RANGE;
-    y = (y - XPT2046_MIN_Y) * LV_VER_RES / XPT2046_Y_RANGE;
+    x = (x - XPT2046_MIN_X) * XPT2046_HOR_RES / XPT2046_X_RANGE;
+    y = (y - XPT2046_MIN_Y) * XPT2046_VER_RES / XPT2046_Y_RANGE;
 
 #if XPT2046_X_INV
-    x = LV_HOR_RES - x;
+    x = XPT2046_HOR_RES - x;
 #endif
 
 #if XPT2046_Y_INV
-    y = LV_VER_RES - y;
+    y = XPT2046_VER_RES - y;
 #endif
     *xp = x;
     *yp = y;

@@ -107,13 +107,13 @@ st7735s_rotate(lv_disp_rot_t rotation)
 
     switch (rotation) {
     case LV_DISP_ROT_270:
-        madctl[1] |= ST7735S_MADCTL_MV | ST7735S_MADCTL_MY | ST7735S_MADCTL_ML;
+        madctl[1] |= ST7735S_MADCTL_MX | ST7735S_MADCTL_MV;
         break;
     case LV_DISP_ROT_180:
         madctl[1] |= ST7735S_MADCTL_MX | ST7735S_MADCTL_MY;
         break;
     case LV_DISP_ROT_90:
-        madctl[1] |= ST7735S_MADCTL_MX | ST7735S_MADCTL_MV;
+        madctl[1] |= ST7735S_MADCTL_MV | ST7735S_MADCTL_MY | ST7735S_MADCTL_ML;
         break;
     case LV_DISP_ROT_NONE:
         break;
@@ -139,7 +139,6 @@ LCD_SEQUENCE(init_cmds)
         LCD_SEQUENCE_DELAY(5),
         4, ST7735S_FRMCTR1, 0x01, 0x2C, 0x2D,
         4, ST7735S_FRMCTR2, 0x01, 0x2C, 0x2D,
-        7, ST7735S_FRMCTR2, 0x01, 0x2C, 0x2D, 0x01, 0x2C, 0x2D,
         2, ST7735S_INVCTR, 0x07,
         4, ST7735S_PWCTR1, 0xA2, 0x02, 0x84,
         2, ST7735S_PWCTR2, 0xC5,
