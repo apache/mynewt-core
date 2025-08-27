@@ -17,20 +17,21 @@
 # under the License.
 #
 
-pkg.name: hw/usb/tinyusb/da146xx
-pkg.description: Hardware initialization for Tinyusb
+pkg.name: hw/usb/tinyusb/keepalive_detect
+pkg.description: USB keep-alive detection for TinyUSB
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - usb
+    - keepalive
     - tinyusb
-
-pkg.apis:
-    - TINYUSB_HW_INIT
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/usb/tinyusb"
+    - "@apache-mynewt-core/hw/hal"
 
-pkg.deps.USB_KEEPALIVE_DETECT:
-    - "@apache-mynewt-core/hw/usb/tinyusb/keepalive_detect"
+pkg.apis:
+    - usb_keepalive_detect
+
+pkg.init:
+    usb_keepalive_init: 'MYNEWT_VAL(USB_KEEPALIVE_SYSINIT_STAGE)'

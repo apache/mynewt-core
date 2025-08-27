@@ -60,3 +60,7 @@ syscfg.defs:
         choices:
             - USB0
             - USB1
+
+    USB_KEEPALIVE_DETECT:
+        description: 'Enable USB keep-alive detection'
+        value: 0

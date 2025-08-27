@@ -25,6 +25,39 @@
 #include <syscfg/syscfg.h>
 #include <stdbool.h>
 
+#if MYNEWT_VAL(DA1469X_USB_KEEPALIVE_DETECT)
+/**
+ * Set event queue for keep-alive monitoring
+ */
+void tinyusb_ka_evq_set(struct os_eventq *evq);
+
+/**
+ * Check if USB keep-alive detection considers USB to be active
+ */
+bool tinyusb_ka_is_active(void);
+
+/**
+ * Get number of SOFs received since last USB disconnect
+ */
+uint32_t tinyusb_ka_get_sof_cnt(void);
+
+/**
+ * Reset SOF count to zero
+ */
+void tinyusb_ka_reset_sof_cnt(void);
+
+/**
+ *
+ * Register callback for keep-alive state changes
+ */
+void tinyusb_ka_register_cb(void (*cb)(bool connected));
+#endif
+
+/**
+ * Check if USB is connected (based on keep-alive and VBUS if used)
+ */
+bool tinyusb_is_connected(void);
+
 /* Function should be exported from TinyUSB */
 void tusb_vbus_changed(bool present);
 

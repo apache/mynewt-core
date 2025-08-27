@@ -17,20 +17,23 @@
 # under the License.
 #
 
-pkg.name: hw/usb/tinyusb/da146xx
-pkg.description: Hardware initialization for Tinyusb
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - usb
-    - tinyusb
+syscfg.defs:
+    USB_KEEPALIVE_MONITOR_RATE_MS:
+        description: 'Keep-alive monitor check rate in milliseconds'
+        value: 5
 
-pkg.apis:
-    - TINYUSB_HW_INIT
+    USB_KEEPALIVE_TIMEOUT_MS:
+        description: 'Timeout for USB disconnection detection in milliseconds'
+        value: 10
 
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/usb/tinyusb"
+    USB_KEEPALIVE_SUSPEND_COUNT:
+        description: 'Number of suspend events before declaring USB disconnected'
+        value: 2
 
-pkg.deps.USB_KEEPALIVE_DETECT:
-    - "@apache-mynewt-core/hw/usb/tinyusb/keepalive_detect"
+    USB_KEEPALIVE_SYSINIT_STAGE:
+        description: 'Sysinit stage for USB keep-alive detection'
+        value: 500
+
+    USB_KEEPALIVE_EVQ:
+        description: 'Event queue for keep-alive monitoring (NULL for default)'
+        value: ""
