@@ -17,20 +17,15 @@
 # under the License.
 #
 
-pkg.name: hw/usb/tinyusb/da146xx
-pkg.description: Hardware initialization for Tinyusb
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - usb
-    - tinyusb
+syscfg.defs:
+    USB_MONITOR_RATE_MS:
+        description: 'USB monitor check rate in milliseconds'
+        value: 500
 
-pkg.apis:
-    - TINYUSB_HW_INIT
+    USB_MONITOR_TIMEOUT_MS:
+        description: 'Timeout for USB disconnection detection in milliseconds'
+        value: 10
 
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/usb/tinyusb"
-
-pkg.deps.USB_MONITOR:
-    - "@apache-mynewt-core/hw/usb/tinyusb/usb_monitor"
+    USB_MONITOR_EVQ:
+        description: 'Event queue for USB state monitoring (NULL for default)'
+        value: ""
