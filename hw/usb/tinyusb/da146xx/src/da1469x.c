@@ -24,21 +24,24 @@
 
 #include <device/usbd.h>
 
-static bool vbus_present;
+#if MYNEWT_VAL(DA146XX_USB_MONITOR)
 
-static void
-USBD_IRQHandler(void)
-{
-    tud_int_handler(0);
-}
+#ifdef MYNEWT_VAL_DA146XX_USB_MONITOR_EVQ
+struct os_eventq MYNEWT_VAL(DA146XX_USB_MONITOR_EVQ);
+#endif
+
+#include <da146xx_usb_monitor/da146xx_usb_monitor.h>
+#endif
+
+static bool g_vbus_present;
 
 static void
 tinyusb_vbus_changed(bool present)
 {
-    if (vbus_present == present) {
+    if (g_vbus_present == present) {
         return;
     }
-    vbus_present = present;
+    g_vbus_present = present;
 
     if (present) {
         da1469x_pd_acquire(MCU_PD_DOMAIN_SYS);
@@ -47,6 +50,27 @@ tinyusb_vbus_changed(bool present)
         tusb_vbus_changed(false);
         da1469x_pd_release(MCU_PD_DOMAIN_SYS);
     }
+}
+
+#if MYNEWT_VAL(DA146XX_USB_MONITOR)
+static void
+da1469x_da146xx_usb_monitor_cb(bool connected)
+{
+    /* Trigger vbus change if not using VBUS detection
+     * or if using custom VBUS handling
+     */
+    if (MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, ignore) ||
+        MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, custom)) {
+        tinyusb_vbus_changed(connected);
+    }
+}
+#endif /* MYNEWT_VAL(DA146XX_USB_MONITOR) */
+
+static void
+USBD_IRQHandler(void)
+{
+    /* Let TinyUSB handle its interrupts first */
+    tud_int_handler(0);
 }
 
 void
@@ -66,9 +90,59 @@ tinyusb_hardware_init(void)
     if (MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, auto)) {
         /* If VBUS handling is set to 'auto' let da1469x_vbus module handle notification */
         da1469x_vbus_add_handler(tinyusb_vbus_changed);
-    }
-    else if (MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, ignore)) {
+    } else if (MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, ignore) ||
+               MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, custom)) {
         /* If VBUS handling is ignored notify TinyUSB that VBUS is on */
-        tinyusb_vbus_changed(true);
+#if MYNEWT_VAL(DA146XX_USB_MONITOR)
+        /* With USB Monitor enabled, don't immediately notify VBUS on
+         * Wait for actual USB activity (Setup packet) to be detected
+         * by USB Monitor before notifying TinyUSB of VBUS presence.
+         */
+        tinyusb_vbus_changed(tinyusb_da146xx_is_connected());
+#else
+        /* Without USB Monitor, just assume VBUS is present */
+        if (MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, ignore)) {
+            tinyusb_vbus_changed(true);
+        }
+#endif
     }
+
+#if MYNEWT_VAL(DA146XX_USB_MONITOR)
+    /* Register callback for connection events */
+    da146xx_usb_monitor_register_cb(da1469x_da146xx_usb_monitor_cb);
+
+    /* Initialize USB monitor for USB state monitoring */
+    da146xx_usb_monitor_init();
+#endif
 }
+
+/*
+ * Public API functions - map to da146xx_usb_monitor functions
+ */
+#if MYNEWT_VAL(DA146XX_USB_MONITOR)
+
+void
+tinyusb_da146xx_usb_monitor_register_cb(void (*cb)(bool connected))
+{
+    da146xx_usb_monitor_register_cb(cb);
+}
+
+bool
+tinyusb_da146xx_is_connected(void)
+{
+    bool usb_active;
+
+    /* Check USB is active/connected */
+    usb_active = da146xx_usb_monitor_is_connected();
+
+    /* If using auto or custom VBUS handling, also check VBUS */
+    if (MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, auto) ||
+        MYNEWT_VAL_CHOICE(DA1469X_USB_VBUS_HANDLING, custom)) {
+        return g_vbus_present || usb_active;
+    }
+
+    /* If ignoring VBUS, rely only on USB state */
+    return usb_active;
+}
+
+#endif /* MYNEWT_VAL(DA146XX_USB_MONITOR) */

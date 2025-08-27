@@ -39,6 +39,11 @@ syscfg.defs:
             - ignore
             - custom
 
+    DA146XX_USB_MONITOR:
+        description: >
+          'Enable USB monitoring to track USB connect/disconnect events on DA1469x'
+        value: 0
+
 syscfg.restrictions:
     - USBD_EP0_SIZE == 8
     - MCU_PLL_ENABLE

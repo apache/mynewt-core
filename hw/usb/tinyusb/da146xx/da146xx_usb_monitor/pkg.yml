@@ -17,20 +17,18 @@
 # under the License.
 #
 
-pkg.name: hw/usb/tinyusb/da146xx
-pkg.description: Hardware initialization for Tinyusb
+pkg.name: hw/usb/tinyusb/da146xx/da146xx_usb_monitor
+pkg.description: USB state monitor for TinyUSB, DA146xx implementation
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - usb
+    - monitor
     - tinyusb
-
-pkg.apis:
-    - TINYUSB_HW_INIT
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/usb/tinyusb"
+    - "@apache-mynewt-core/hw/hal"
 
-pkg.deps.DA146XX_USB_MONITOR:
-    - "@apache-mynewt-core/hw/usb/tinyusb/da146xx/da146xx_usb_monitor"
+pkg.apis:
+    - da146xx_usb_monitor
