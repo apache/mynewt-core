@@ -17,21 +17,17 @@
  * under the License.
  */
 
-#ifndef __PWM_NRF52_H__
-#define __PWM_NRF52_H__
+#ifndef _NRF54L_PERIPH_H_
+#define _NRF54L_PERIPH_H_
 
-#include <pwm/pwm.h>
-
-#include <nrf.h>
-#include <nrf_pwm.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int nrf52_pwm_dev_init(struct os_dev *, void *);
+void nrf54l_periph_create(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __PWM_NRF52_H__ */
+#endif /* _NRF54L_PERIPH_H_ */
