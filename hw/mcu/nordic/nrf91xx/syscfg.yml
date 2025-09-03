@@ -17,6 +17,9 @@
 #
 
 syscfg.defs:
+    MCU_FAMILY_NRF: 1
+    MCU_SERIES_NRF91: 1
+
     MCU_TARGET:
         description: >
             Specifies target MCU, shall be set by BSP.
