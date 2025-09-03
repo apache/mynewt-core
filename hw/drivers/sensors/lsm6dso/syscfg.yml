@@ -30,6 +30,9 @@ syscfg.defs:
         description: >
             Number of OS ticks to wait for each I2C transaction to complete.
         value: 3
+    LSM6DSO_SHELL:
+        description: 'Add lsm6dso command to shell'
+        value: 0
     LSM6DSO_SHELL_DEV_NAME:
         description: 'Name of LSM6DSO device to use in shell'
         value: '"lsm6dso_0"'

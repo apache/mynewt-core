@@ -37,5 +37,13 @@ pkg.deps:
 pkg.req_apis:
     - stats
 
+pkg.whole_archive: true
+
+pkg.srouce_files:
+    - src/ds1307.c
+
+pkg.srouce_files.ADXL345_CLI:
+    - src/ds1307_shell.c
+
 pkg.deps.ADXL345_CLI:
     - "@apache-mynewt-core/util/parse"

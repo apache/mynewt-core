@@ -18,7 +18,3 @@
 #
 
 syscfg.defs:
-    I2C_SCAN_SYSINIT_STAGE:
-        description: >
-            Sysinit stage for I2C scan test functionality.
-        value: 500

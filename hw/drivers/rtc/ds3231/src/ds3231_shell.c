@@ -23,13 +23,6 @@
 
 #if MYNEWT_VAL(DS3231_CLI)
 
-static int ds3231_shell_cmd(int argc, char **argv);
-
-static struct shell_cmd ds3231_shell_cmd_struct = {
-    .sc_cmd = "ds3231",
-    .sc_cmd_func = ds3231_shell_cmd
-};
-
 static int
 ds3231_shell_err_unknown_arg(char *cmd_name)
 {
@@ -41,7 +34,7 @@ ds3231_shell_err_unknown_arg(char *cmd_name)
 static int
 ds3231_shell_help(void)
 {
-    console_printf("%s cmd [flags...]\n", ds3231_shell_cmd_struct.sc_cmd);
+    console_printf("ds3231 cmd [flags...]\n");
     console_printf("cmd:\n");
     console_printf("\tdate [date-time]\n");
     console_printf("\ttemp\n");
@@ -71,7 +64,7 @@ ds3231_shell_cmd_date(int argc, char **argv)
             console_printf("Invalid time format\n");
         } else {
             timeval_to_clocktime(&tv, &tz, &ct);
-            ds3231_write_time(ds3231, &ct);
+            rc = ds3231_write_time(ds3231, &ct);
             if (rc) {
                 console_printf("write time failed %d\n", rc);
             }
@@ -217,13 +210,6 @@ ds3231_shell_cmd(int argc, char **argv)
     return ds3231_shell_err_unknown_arg(argv[1]);
 }
 
-void
-ds3231_shell_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&ds3231_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-}
+MAKE_SHELL_CMD(ds3231, ds3231_shell_cmd, NULL)
 
 #endif

@@ -142,10 +142,6 @@ battery_pkg_init(void)
     SYSINIT_ASSERT_ACTIVE();
 
     battery_mgr_init();
-
-#if MYNEWT_VAL(BATTERY_SHELL)
-    battery_shell_register();
-#endif
 }
 
 int
