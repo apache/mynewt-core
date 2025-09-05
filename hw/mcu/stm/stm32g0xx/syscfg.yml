@@ -37,7 +37,7 @@ syscfg.defs:
 
     STM32_CLOCK_LSI:
         description: Enable low-speed internal clock source
-        value: 0
+        value: 1
 
     STM32_CLOCK_LSE:
         description: Enable low-speed external clock source (aka RTC xtal)
