@@ -60,3 +60,7 @@ syscfg.defs:
         choices:
             - USB0
             - USB1
+
+    USB_MONITOR:
+        description: 'Enable USB monitoring to track USB connect/disconnect events'
+        value: 0
