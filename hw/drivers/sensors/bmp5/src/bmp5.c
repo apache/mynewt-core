@@ -1433,6 +1433,7 @@ err:
     return bmp5_check_and_return(rc, __func__);
 }
 
+#if MYNEWT_VAL(BMP5_INT_ENABLE)
 /**
  * @brief This API gets the interrupt (fifo threshold, fifo full, data ready)
  * status from the sensor.
@@ -1457,6 +1458,7 @@ get_int_status(struct bmp5_dev *dev)
     }
     return bmp5_check_and_return(rc, __func__);
 }
+#endif
 
 /**
  * @brief This API gets the sensor status
@@ -1467,10 +1469,13 @@ bmp5_get_status(struct bmp5_dev *dev)
     int rc;
 
     rc = get_sensor_status(dev);
+
+#if MYNEWT_VAL(BMP5_INT_ENABLE)
     /* Proceed further if the earlier operation is fine */
     if (!rc) {
         rc = get_int_status(dev);
     }
+#endif
 
     return rc;
 }
@@ -2500,9 +2505,15 @@ bmp5_hybrid_read(struct sensor *sensor, sensor_type_t sensor_type,
 
         do {
             rc = bmp5_get_status(&bmp5->bmp5_dev);
-            if (bmp5->bmp5_dev.status.intr.drdy) {
+#if MYNEWT_VAL(BMP5_INT_ENABLE)
+            if (!rc && bmp5->bmp5_dev.status.intr.drdy) {
                 break;
             }
+#else
+            if (!rc) {
+                break;
+            }
+#endif
             delay_msec(2);
 #if FIFOPARSE_DEBUG
             BMP5_LOG_ERROR("status %d\n", rc);
