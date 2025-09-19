@@ -501,6 +501,7 @@ extern "C" {
 #undef MBEDTLS_PSA_CRYPTO_SE_C
 #undef MBEDTLS_PSA_CRYPTO_STORAGE_C
 #undef MBEDTLS_PSA_ITS_FILE_C
+#undef MBEDTLS_LMS_C
 
 #ifdef __cplusplus
 }
