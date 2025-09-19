@@ -22,8 +22,27 @@
 
 #define CFG_TUSB_MCU OPT_MCU_DA1469X
 
+#include <os/mynewt.h>
 #include <syscfg/syscfg.h>
 #include <stdbool.h>
+
+#if MYNEWT_VAL(DA146XX_USB_MONITOR)
+/**
+ * Set event queue for USB monitoring
+ */
+void tinyusb_da146xx_usb_monitor_evq_set(struct os_eventq *evq);
+
+/**
+ *
+ * Register callback for USB state monitor changes
+ */
+void tinyusb_da146xx_usb_monitor_register_cb(void (*cb)(bool connected));
+#endif
+
+/**
+ * Check if USB is connected (based on keep-alive and VBUS if used)
+ */
+bool tinyusb_da146xx_is_connected(void);
 
 /* Function should be exported from TinyUSB */
 void tusb_vbus_changed(bool present);
