@@ -30,13 +30,6 @@ static enum ina226_ct sct;
 static enum ina226_avg_mode avg;
 static uint8_t soft_avg = 1;
 
-static int ina226_shell_cmd(int argc, char **argv);
-
-static struct shell_cmd ina226_shell_cmd_struct = {
-    .sc_cmd = "ina226",
-    .sc_cmd_func = ina226_shell_cmd
-};
-
 static int
 ina226_shell_err_too_many_args(char *cmd_name)
 {
@@ -64,7 +57,7 @@ ina226_shell_err_invalid_arg(char *cmd_name)
 static int
 ina226_shell_help(void)
 {
-    console_printf("%s cmd [flags...]\n", ina226_shell_cmd_struct.sc_cmd);
+    console_printf("ina226 cmd [flags...]\n");
     console_printf("cmd:\n");
     console_printf("\tr [n_samples]\n");
     console_printf("\tavg n\n");
@@ -240,15 +233,6 @@ ina226_shell_cmd(int argc, char **argv)
     return ina226_shell_err_unknown_arg(argv[1]);
 }
 
-int
-ina226_shell_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&ina226_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    return rc;
-}
+MAKE_SHELL_CMD(ina226, ina226_shell_cmd, NULL)
 
 #endif
