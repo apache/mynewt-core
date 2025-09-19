@@ -32,12 +32,33 @@
 #include <nrf_pwm.h>
 
 /* Mynewt Nordic driver */
-#include "pwm_nrf52/pwm_nrf52.h"
+#include "pwm_nrf5x/pwm_nrf5x.h"
 
-/* Max number on PWM instances on existing nRF52xxx MCUs */
-#define NRF52_PWM_MAX_INSTANCES     4
+/* Max number on PWM instances on existing nRF5x MCUs */
+#if defined(NRF54L_SERIES)
+#define NRF_PWM_MAX_INSTANCES 3
+#else
+#define NRF_PWM_MAX_INSTANCES 4
+#endif
 
-struct nrf52_pwm_dev_global {
+#if defined(NRF54L_SERIES)
+#define PWM_0_ID               20
+#define PWM_1_ID               21
+#define PWM_2_ID               22
+#define PWM0_IRQn              PWM20_IRQn
+#define PWM1_IRQn              PWM21_IRQn
+#define PWM2_IRQn              PWM22_IRQn
+#define nrfx_pwm_0_irq_handler nrfx_pwm_20_irq_handler
+#define nrfx_pwm_1_irq_handler nrfx_pwm_21_irq_handler
+#define nrfx_pwm_2_irq_handler nrfx_pwm_22_irq_handler
+#else
+#define PWM_0_ID 0
+#define PWM_1_ID 1
+#define PWM_2_ID 2
+#define PWM_3_ID 3
+#endif
+
+struct nrf5x_pwm_dev_global {
     bool in_use;
     bool playing;
     nrfx_pwm_t drv_instance;
@@ -52,18 +73,16 @@ struct nrf52_pwm_dev_global {
     void* seq_end_data;
 };
 
-static struct nrf52_pwm_dev_global instances[] =
-{
+static struct nrf5x_pwm_dev_global instances[] = {
 #if MYNEWT_VAL(PWM_0)
     [0].in_use = false,
     [0].playing = false,
-    [0].drv_instance = NRFX_PWM_INSTANCE(0),
-    [0].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED),
+    [0].drv_instance = NRFX_PWM_INSTANCE(PWM_0_ID),
+    [0].config = NRFX_PWM_DEFAULT_CONFIG(
+        NRF_PWM_PIN_NOT_CONNECTED, NRF_PWM_PIN_NOT_CONNECTED,
+        NRF_PWM_PIN_NOT_CONNECTED, NRF_PWM_PIN_NOT_CONNECTED),
     [0].flags = NRFX_PWM_FLAG_LOOP,
-    [0].duty_cycles = {0},
+    [0].duty_cycles = { 0 },
     [0].n_cycles = 1,
     [0].internal_handler = NULL,
     [0].cycle_handler = NULL,
@@ -74,13 +93,12 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_1)
     [1].in_use = false,
     [1].playing = false,
-    [1].drv_instance = NRFX_PWM_INSTANCE(1),
-    [1].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED),
+    [1].drv_instance = NRFX_PWM_INSTANCE(PWM_1_ID),
+    [1].config = NRFX_PWM_DEFAULT_CONFIG(
+        NRF_PWM_PIN_NOT_CONNECTED, NRF_PWM_PIN_NOT_CONNECTED,
+        NRF_PWM_PIN_NOT_CONNECTED, NRF_PWM_PIN_NOT_CONNECTED),
     [1].flags = NRFX_PWM_FLAG_LOOP,
-    [1].duty_cycles = {0},
+    [1].duty_cycles = { 0 },
     [1].n_cycles = 1,
     [1].internal_handler = NULL,
     [1].cycle_handler = NULL,
@@ -91,13 +109,12 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_2)
     [2].in_use = false,
     [2].playing = false,
-    [2].drv_instance = NRFX_PWM_INSTANCE(2),
-    [2].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED),
+    [2].drv_instance = NRFX_PWM_INSTANCE(PWM_2_ID),
+    [2].config = NRFX_PWM_DEFAULT_CONFIG(
+        NRF_PWM_PIN_NOT_CONNECTED, NRF_PWM_PIN_NOT_CONNECTED,
+        NRF_PWM_PIN_NOT_CONNECTED, NRF_PWM_PIN_NOT_CONNECTED),
     [2].flags = NRFX_PWM_FLAG_LOOP,
-    [2].duty_cycles = {0},
+    [2].duty_cycles = { 0 },
     [2].n_cycles = 1,
     [2].internal_handler = NULL,
     [2].cycle_handler = NULL,
@@ -108,13 +125,12 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_3)
     [3].in_use = false,
     [3].playing = false,
-    [3].drv_instance = NRFX_PWM_INSTANCE(3),
-    [3].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED,
-                                         NRF_PWM_PIN_NOT_CONNECTED),
+    [3].drv_instance = NRFX_PWM_INSTANCE(PWM_3_ID),
+    [3].config = NRFX_PWM_DEFAULT_CONFIG(
+        NRF_PWM_PIN_NOT_CONNECTED, NRF_PWM_PIN_NOT_CONNECTED,
+        NRF_PWM_PIN_NOT_CONNECTED, NRF_PWM_PIN_NOT_CONNECTED),
     [3].flags = NRFX_PWM_FLAG_LOOP,
-    [3].duty_cycles = {0},
+    [3].duty_cycles = { 0 },
     [3].n_cycles = 1,
     [3].internal_handler = NULL,
     [3].cycle_handler = NULL,
@@ -286,7 +302,7 @@ cleanup_instance(int inst_id)
 }
 
 /**
- * Open the NRF52 PWM device
+ * Open the NRF5x PWM device
  *
  * This function locks the device for access from other tasks.
  *
@@ -301,7 +317,7 @@ cleanup_instance(int inst_id)
  * @return 0 on success, non-zero error code on failure.
  */
 static int
-nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
+nrf5x_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
     struct pwm_dev *dev;
     int stat = 0;
@@ -338,7 +354,7 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
 }
 
 /**
- * Close the NRF52 PWM device.
+ * Close the NRF5x PWM device.
  *
  * This function unlocks the device.
  *
@@ -347,7 +363,7 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
  * @return 0 on success, non-zero error code on failure.
  */
 static int
-nrf52_pwm_close(struct os_dev *odev)
+nrf5x_pwm_close(struct os_dev *odev)
 {
     struct pwm_dev *dev;
     int inst_id;
@@ -376,7 +392,7 @@ nrf52_pwm_close(struct os_dev *odev)
  * Play using current configuration.
  */
 static void
-play_current_config(struct nrf52_pwm_dev_global *instance)
+play_current_config(struct nrf5x_pwm_dev_global *instance)
 {
     nrf_pwm_sequence_t const seq =
         {
@@ -402,10 +418,10 @@ play_current_config(struct nrf52_pwm_dev_global *instance)
  * @return 0 on success, non-zero error code on failure.
  */
 int
-nrf52_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
+nrf5x_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
 {
     int inst_id = dev->pwm_instance_id;
-    struct nrf52_pwm_dev_global *instance = &instances[inst_id];
+    struct nrf5x_pwm_dev_global *instance = &instances[inst_id];
 
     instance->n_cycles = (cfg->n_cycles) ? cfg->n_cycles : 1;
 
@@ -453,12 +469,10 @@ nrf52_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
  * @return 0 on success, non-zero error code on failure.
  */
 static int
-nrf52_pwm_configure_channel(struct pwm_dev *dev,
-                            uint8_t cnum,
-                            struct pwm_chan_cfg *cfg)
+nrf5x_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg)
 {
     int inst_id = dev->pwm_instance_id;
-    struct nrf52_pwm_dev_global *instance = &instances[inst_id];
+    struct nrf5x_pwm_dev_global *instance = &instances[inst_id];
     nrfx_pwm_config_t *config = &instance->config;
 
     if (!instance->in_use) {
@@ -494,7 +508,7 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
  * @return 0 on success, non-zero error code on failure.
  */
 static int
-nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
+nrf5x_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 {
     int inst_id = dev->pwm_instance_id;
     nrfx_pwm_config_t *config;
@@ -526,10 +540,10 @@ nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
  * @return 0 on success, non-zero error code on failure.
  */
 int
-nrf52_pwm_enable(struct pwm_dev *dev)
+nrf5x_pwm_enable(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
-    struct nrf52_pwm_dev_global *instance = &instances[inst_id];
+    struct nrf5x_pwm_dev_global *instance = &instances[inst_id];
 
     nrfx_pwm_init(&instance->drv_instance,
                   &instance->config,
@@ -550,7 +564,7 @@ nrf52_pwm_enable(struct pwm_dev *dev)
  * @return true if enabled, false if not.
  */
 static bool
-nrf52_pwm_is_enabled(struct pwm_dev *dev)
+nrf5x_pwm_is_enabled(struct pwm_dev *dev)
 {
     return (instances[dev->pwm_instance_id].playing);
 }
@@ -563,7 +577,7 @@ nrf52_pwm_is_enabled(struct pwm_dev *dev)
  * @return 0 on success, non-zero error code on failure.
  */
 static int
-nrf52_pwm_disable(struct pwm_dev *dev)
+nrf5x_pwm_disable(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
     if (!instances[inst_id].in_use) {
@@ -592,7 +606,7 @@ nrf52_pwm_disable(struct pwm_dev *dev)
  * @return A value is in Hz on success, negative error code on failure.
  */
 static int
-nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
+nrf5x_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
 {
     int inst_id = dev->pwm_instance_id;
     if (!instances[inst_id].in_use) {
@@ -655,7 +669,7 @@ nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
  * @return value is in Hz on success, error code on failure.
  */
 static int
-nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
+nrf5x_pwm_get_clock_freq(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
     if (!instances[inst_id].in_use) {
@@ -692,7 +706,7 @@ nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
  * @return value in cycles on success, negative error code on failure.
  */
 int
-nrf52_pwm_get_top_value(struct pwm_dev *dev)
+nrf5x_pwm_get_top_value(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
     if (!instances[inst_id].in_use) {
@@ -710,7 +724,7 @@ nrf52_pwm_get_top_value(struct pwm_dev *dev)
  * @return The value in bits on success, negative error code on failure.
  */
 static int
-nrf52_pwm_get_resolution_bits(struct pwm_dev *dev)
+nrf5x_pwm_get_resolution_bits(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
     if (!instances[inst_id].in_use) {
@@ -804,11 +818,11 @@ pwm_3_irq_handler(void)
 
 /**
  * Callback to initialize an adc_dev structure from the os device
- * initialization callback.  This sets up a nrf52_pwm_device(), so
+ * initialization callback.  This sets up a nrf5x_pwm_device(), so
  * that subsequent lookups to this device allow us to manipulate it.
  */
 int
-nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
+nrf5x_pwm_dev_init(struct os_dev *odev, void *arg)
 {
     struct pwm_dev *dev;
     struct pwm_driver_funcs *pwm_funcs;
@@ -826,29 +840,29 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
      * - if number is valid instance_id, let's use it directly
      * - otherwise assume it's a valid pointer
      */
-    if (POINTER_TO_UINT(arg) < NRF52_PWM_MAX_INSTANCES) {
+    if (POINTER_TO_UINT(arg) < NRF_PWM_MAX_INSTANCES) {
         dev->pwm_instance_id = POINTER_TO_UINT(arg);
     } else {
         dev->pwm_instance_id = *((int*) arg);
-        assert(dev->pwm_instance_id < NRF52_PWM_MAX_INSTANCES);
+        assert(dev->pwm_instance_id < NRF_PWM_MAX_INSTANCES);
     }
 
     dev->pwm_chan_count = NRF_PWM_CHANNEL_COUNT;
     os_mutex_init(&dev->pwm_lock);
 
-    OS_DEV_SETHANDLERS(odev, nrf52_pwm_open, nrf52_pwm_close);
+    OS_DEV_SETHANDLERS(odev, nrf5x_pwm_open, nrf5x_pwm_close);
 
     pwm_funcs = &dev->pwm_funcs;
-    pwm_funcs->pwm_configure_device = nrf52_pwm_configure_device;
-    pwm_funcs->pwm_configure_channel = nrf52_pwm_configure_channel;
-    pwm_funcs->pwm_set_duty_cycle = nrf52_pwm_set_duty_cycle;
-    pwm_funcs->pwm_enable = nrf52_pwm_enable;
-    pwm_funcs->pwm_is_enabled = nrf52_pwm_is_enabled;
-    pwm_funcs->pwm_set_frequency = nrf52_pwm_set_frequency;
-    pwm_funcs->pwm_get_clock_freq = nrf52_pwm_get_clock_freq;
-    pwm_funcs->pwm_get_top_value = nrf52_pwm_get_top_value;
-    pwm_funcs->pwm_get_resolution_bits = nrf52_pwm_get_resolution_bits;
-    pwm_funcs->pwm_disable = nrf52_pwm_disable;
+    pwm_funcs->pwm_configure_device = nrf5x_pwm_configure_device;
+    pwm_funcs->pwm_configure_channel = nrf5x_pwm_configure_channel;
+    pwm_funcs->pwm_set_duty_cycle = nrf5x_pwm_set_duty_cycle;
+    pwm_funcs->pwm_enable = nrf5x_pwm_enable;
+    pwm_funcs->pwm_is_enabled = nrf5x_pwm_is_enabled;
+    pwm_funcs->pwm_set_frequency = nrf5x_pwm_set_frequency;
+    pwm_funcs->pwm_get_clock_freq = nrf5x_pwm_get_clock_freq;
+    pwm_funcs->pwm_get_top_value = nrf5x_pwm_get_top_value;
+    pwm_funcs->pwm_get_resolution_bits = nrf5x_pwm_get_resolution_bits;
+    pwm_funcs->pwm_disable = nrf5x_pwm_disable;
 
     switch (dev->pwm_instance_id) {
 #if MYNEWT_VAL(PWM_0)
