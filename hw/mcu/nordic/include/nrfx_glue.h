@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2023, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2025, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -76,7 +76,7 @@ extern "C" {
 /**
  * @brief Macro for setting the priority of a specific IRQ.
  *
- * @param irq_number  IRQ number.
+ * @param irq_number IRQ number.
  * @param priority   Priority to be set.
  */
 #define NRFX_IRQ_PRIORITY_SET(irq_number, priority) NVIC_SetPriority(irq_number, priority)
@@ -84,14 +84,14 @@ extern "C" {
 /**
  * @brief Macro for enabling a specific IRQ.
  *
- * @param irq_number  IRQ number.
+ * @param irq_number IRQ number.
  */
 #define NRFX_IRQ_ENABLE(irq_number) NVIC_EnableIRQ(irq_number)
 
 /**
  * @brief Macro for checking if a specific IRQ is enabled.
  *
- * @param irq_number  IRQ number.
+ * @param irq_number IRQ number.
  *
  * @retval true  If the IRQ is enabled.
  * @retval false Otherwise.
@@ -101,21 +101,21 @@ extern "C" {
 /**
  * @brief Macro for disabling a specific IRQ.
  *
- * @param irq_number  IRQ number.
+ * @param irq_number IRQ number.
  */
 #define NRFX_IRQ_DISABLE(irq_number) NVIC_DisableIRQ(irq_number)
 
 /**
  * @brief Macro for setting a specific IRQ as pending.
  *
- * @param irq_number  IRQ number.
+ * @param irq_number IRQ number.
  */
 #define NRFX_IRQ_PENDING_SET(irq_number) NVIC_SetPendingIRQ(irq_number)
 
 /**
  * @brief Macro for clearing the pending status of a specific IRQ.
  *
- * @param irq_number  IRQ number.
+ * @param irq_number IRQ number.
  */
 #define NRFX_IRQ_PENDING_CLEAR(irq_number) NVIC_ClearPendingIRQ(irq_number)
 
@@ -273,6 +273,39 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 
+/**
+ * @brief Macro for writing back cache lines associated with the specified buffer.
+ *
+ * @note Macro should be empty if data cache is disabled or not present.
+ *
+ * @param[in] p_buffer Pointer to the buffer.
+ * @param[in] size     Size of the buffer.
+ */
+#define NRFY_CACHE_WB(p_buffer, size) (void)size
+
+/**
+ * @brief Macro for invalidating cache lines associated with the specified buffer.
+ *
+ * @note Macro should be empty if data cache is disabled or not present.
+ *
+ * @param[in] p_buffer Pointer to the buffer.
+ * @param[in] size     Size of the buffer.
+ */
+#define NRFY_CACHE_INV(p_buffer, size) (void)size
+
+/**
+ * @brief Macro for writing back and invalidating cache lines associated with
+ *        the specified buffer.
+ *
+ * @note Macro should be empty if data cache is disabled or not present.
+ *
+ * @param[in] p_buffer Pointer to the buffer.
+ * @param[in] size     Size of the buffer.
+ */
+#define NRFY_CACHE_WBINV(p_buffer, size) (void)size
+
+//------------------------------------------------------------------------------
+
 /** @brief Bitmask that defines DPPI channels that are reserved for use outside of the nrfx library. */
 #define NRFX_DPPI_CHANNELS_USED   0
 
@@ -280,10 +313,10 @@ extern "C" {
 #define NRFX_DPPI_GROUPS_USED     0
 
 /** @brief Bitmask that defines PPI channels that are reserved for use outside of the nrfx library. */
-#define NRFX_PPI_CHANNELS_USED  0
+#define NRFX_PPI_CHANNELS_USED    0
 
 /** @brief Bitmask that defines PPI groups that are reserved for use outside of the nrfx library. */
-#define NRFX_PPI_GROUPS_USED    0
+#define NRFX_PPI_GROUPS_USED      0
 
 /** @brief Bitmask that defines GPIOTE channels that are reserved for use outside of the nrfx library. */
 #define NRFX_GPIOTE_CHANNELS_USED 0
@@ -292,7 +325,7 @@ extern "C" {
 #define NRFX_EGUS_USED            0
 
 /** @brief Bitmask that defines TIMER instances that are reserved for use outside of the nrfx library. */
-#define NRFX_TIMERS_USED        0
+#define NRFX_TIMERS_USED          0
 
 /** @} */
 

@@ -476,7 +476,7 @@ nrf52_adc_sample(struct adc_dev *dev)
 
     if ((used_chans == 1) &&
         (g_drv_instance.oversample != NRF_SAADC_OVERSAMPLE_DISABLED)) {
-        nrf_saadc_burst_set(NRF_SAADC, cnum_last, NRF_SAADC_BURST_ENABLED);
+        nrf_saadc_channel_burst_set(NRF_SAADC, cnum_last, NRF_SAADC_BURST_ENABLED);
         nrf_saadc_oversample_set(NRF_SAADC, g_drv_instance.oversample);
     } else {
         nrf_saadc_oversample_set(NRF_SAADC, NRF_SAADC_OVERSAMPLE_DISABLED);
@@ -539,7 +539,7 @@ nrf52_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
                                 g_drv_instance.channels[cnum].pin_n);
 
     if (g_drv_instance.oversample != NRF_SAADC_OVERSAMPLE_DISABLED) {
-        nrf_saadc_burst_set(NRF_SAADC, cnum, NRF_SAADC_BURST_ENABLED);
+        nrf_saadc_channel_burst_set(NRF_SAADC, cnum, NRF_SAADC_BURST_ENABLED);
         nrf_saadc_oversample_set(NRF_SAADC, g_drv_instance.oversample);
     } else {
         nrf_saadc_oversample_set(NRF_SAADC, NRF_SAADC_OVERSAMPLE_DISABLED);
