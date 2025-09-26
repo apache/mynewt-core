@@ -94,9 +94,11 @@ static int bmp5_sensor_handle_interrupt(struct sensor *sensor);
 static int bmp5_sensor_set_config(struct sensor *sensor, void *cfg);
 
 /** Internal API declarations */
-static int set_pwr_ctrl_settings(uint32_t desired_settings, struct bmp5_dev *dev);
+static int set_pwr_ctrl_settings(struct bmp5_dev *dev);
 
 static int set_odr_filter_settings(uint32_t desired_settings, struct bmp5_dev *dev);
+
+static int bmp5_set_pwr_mode_bycfg(struct bmp5_dev *dev);
 
 /* Sensor framework driver callbacks */
 static const struct sensor_driver g_bmp5_sensor_driver = {
@@ -333,20 +335,12 @@ bmp5_check_and_return(int rc, const char *func)
  * settings of the sensor.
  */
 static int
-set_pwr_ctrl_settings(uint32_t desired_settings, struct bmp5_dev *dev)
+set_pwr_ctrl_settings(struct bmp5_dev *dev)
 {
     int rc;
-    uint8_t reg_data;
-    uint8_t reg_addr = BMP5_ODR_CONFIG_ADDR;
 
-    rc = bmp5_get_regs(reg_addr, &reg_data, 1, dev);
-    if (!rc) {
-    }
-
-    if (desired_settings & BMP5_POWER_MODE_SEL) {
-        /* Set the power mode settings in the register variable */
-        rc = set_power_mode(dev->settings.pwr_mode, dev);
-    }
+    /* Set the power mode settings in the register variable */
+    rc = set_power_mode(dev->settings.pwr_mode, dev);
 
     return bmp5_check_and_return(rc, __func__);
 }
@@ -611,10 +605,16 @@ bmp5_set_sensor_settings(uint32_t desired_settings, struct bmp5_dev *dev)
 {
     int rc = 0;
 
-    if (desired_settings & BMP5_POWER_MODE_SEL) {
-        /* Set the power control settings */
-        rc = set_pwr_ctrl_settings(desired_settings, dev);
+    if ((desired_settings & BMP5_POWER_MODE_SEL) == 0) {
+        /* Put the device to standby mode before changing any settings */
+        rc = set_power_mode(BMP5_STANDBY_MODE, dev);
+        if (rc) {
+            goto err;
+        }
     }
+    /* Give some time for device to go into sleep mode */
+    delay_msec(2);
+
     if ((desired_settings & BMP5_ODR_FILTER) && (!rc)) {
         /* Set the over sampling, odr and filter settings */
         rc = set_odr_filter_settings(desired_settings, dev);
@@ -631,6 +631,20 @@ bmp5_set_sensor_settings(uint32_t desired_settings, struct bmp5_dev *dev)
         /* Set the power mode */
         rc = set_temp_press_compensate(desired_settings, dev);
     }
+
+    if ((desired_settings & BMP5_POWER_MODE_SEL) == 0) {
+        /* Force set the power control settings without
+         * reading the existing power mode
+         */
+        rc = set_pwr_ctrl_settings(dev);
+    } else if (!rc) {
+        /* Read the most recent power mode, if the device is in the same power
+         * as what we want to configure, don't reconfigure, if not, put the
+         * sensor into the requested power mode.
+         */
+        rc = bmp5_set_pwr_mode_bycfg(dev);
+    }
+err:
     return bmp5_check_and_return(rc, __func__);
 }
 
@@ -2814,6 +2828,14 @@ bmp5_config(struct bmp5 *bmp5, struct bmp5_cfg *cfg)
         BMP5_LOG_ERROR("%s:gets BMP5 chipID 0x%x\n", __func__, chip_id);
     }
 
+    /* Configure sensor in standby mode */
+    rc = bmp5_set_power_mode(bmp5, BMP5_STANDBY_MODE);
+    if (rc) {
+        goto err;
+    }
+
+    delay_msec(2);
+
     rc = bmp5_set_int_pp_od(bmp5, cfg->int_pp_od);
     if (rc) {
         goto err;
@@ -2848,13 +2870,6 @@ bmp5_config(struct bmp5 *bmp5, struct bmp5_cfg *cfg)
 
     bmp5->cfg.rate = cfg->rate;
 
-    rc = bmp5_set_power_mode(bmp5, cfg->power_mode);
-    if (rc) {
-        goto err;
-    }
-
-    bmp5->cfg.power_mode = cfg->power_mode;
-
     rc = bmp5_set_fifo_cfg(bmp5, cfg->fifo_mode, cfg->fifo_threshold);
     if (rc) {
         goto err;
@@ -2864,6 +2879,14 @@ bmp5_config(struct bmp5 *bmp5, struct bmp5_cfg *cfg)
     bmp5->cfg.fifo_threshold = cfg->fifo_threshold;
 
     bmp5->cfg.int_enable_type = cfg->int_enable_type;
+
+    rc = bmp5_set_power_mode(bmp5, cfg->power_mode);
+    if (rc) {
+        goto err;
+    }
+
+    bmp5->cfg.power_mode = cfg->power_mode;
+
 
     rc = sensor_set_type_mask(&(bmp5->sensor), cfg->mask);
     if (rc) {
