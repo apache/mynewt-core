@@ -28,33 +28,7 @@
 #include <console/console.h>
 
 #include "fs/fs.h"
-
-static int fs_ls_cmd(int argc, char **argv);
-static int fs_rm_cmd(int argc, char **argv);
-static int fs_mkdir_cmd(int argc, char **argv);
-static int fs_mv_cmd(int argc, char **argv);
-static int fs_cat_cmd(int argc, char **argv);
-
-static struct shell_cmd fs_ls_struct = {
-    .sc_cmd = "ls",
-    .sc_cmd_func = fs_ls_cmd
-};
-static struct shell_cmd fs_rm_struct = {
-    .sc_cmd = "rm",
-    .sc_cmd_func = fs_rm_cmd
-};
-static struct shell_cmd fs_mkdir_struct = {
-    .sc_cmd = "mkdir",
-    .sc_cmd_func = fs_mkdir_cmd
-};
-static struct shell_cmd fs_mv_struct = {
-    .sc_cmd = "mv",
-    .sc_cmd_func = fs_mv_cmd
-};
-static struct shell_cmd fs_cat_struct = {
-    .sc_cmd = "cat",
-    .sc_cmd_func = fs_cat_cmd
-};
+#include "fs/fs_if.h"
 
 static void
 fs_ls_file(const char *name, struct fs_file *file)
@@ -187,6 +161,21 @@ out:
     return 0;
 }
 
+extern struct mount_point mount_points[];
+
+static int
+fs_mount_cmd(int argc, char **argv)
+{
+    console_printf("mount points:\n");
+    for (int i = 0; i < MYNEWT_VAL_FS_MAX_MOUNT_POINTS; ++i) {
+        if (mount_points[i].fs) {
+            console_printf("%s %s\n", mount_points[i].mount_point, mount_points[i].fs->name);
+        }
+    }
+
+    return 0;
+}
+
 static int
 fs_cat_cmd(int argc, char **argv)
 {
@@ -220,13 +209,11 @@ fs_cat_cmd(int argc, char **argv)
     return 0;
 }
 
-void
-fs_cli_init(void)
-{
-    shell_cmd_register(&fs_ls_struct);
-    shell_cmd_register(&fs_rm_struct);
-    shell_cmd_register(&fs_mkdir_struct);
-    shell_cmd_register(&fs_mv_struct);
-    shell_cmd_register(&fs_cat_struct);
-}
+MAKE_SHELL_CMD(ls, fs_ls_cmd, NULL)
+MAKE_SHELL_CMD(rm, fs_rm_cmd, NULL)
+MAKE_SHELL_CMD(mkdir, fs_mkdir_cmd, NULL)
+MAKE_SHELL_CMD(mv, fs_mv_cmd, NULL)
+MAKE_SHELL_CMD(cat, fs_cat_cmd, NULL)
+MAKE_SHELL_CMD(mount, fs_mount_cmd, NULL)
+
 #endif /* MYNEWT_VAL(FS_CLI) */

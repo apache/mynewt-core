@@ -48,6 +48,12 @@ syscfg.defs:
             Timout for locking file system object.
         value: 1000
 
+    FATFS_AUTO_MOUNT_DISKS:
+        description: >
+            If 1 package tries to read every disks that is inserted
+            and if it's FAT disk, mounts it automatically.
+        value: 1
+
     FATFS_LOG_MODULE:
         description: 'Numeric module ID to use for FATFS log messages.'
         value: 253

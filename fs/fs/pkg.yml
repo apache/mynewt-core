@@ -26,11 +26,10 @@ pkg.keywords:
     - filesystem
     - ffs
 
-pkg.deps:
-    - "@apache-mynewt-core/fs/disk"
-
 pkg.deps.FS_CLI:
     - "@apache-mynewt-core/sys/shell"
 
 pkg.deps.FS_MGMT:
     - "@apache-mynewt-mcumgr/cmd/fs_mgmt/port/mynewt"
+
+pkg.whole_archive: true

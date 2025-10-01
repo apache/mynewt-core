@@ -30,11 +30,11 @@ pkg.deps:
     - "@apache-mynewt-core/util/crc"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/test/testutil"
-    - "@apache-mynewt-core/sys/flash_map"
 pkg.req_apis:
     - log
     - stats
 
-pkg.init:
-    fatfs_pkg_init: 'MYNEWT_VAL(FATFS_SYSINIT_STAGE)'
+pkg.whole_archive: true
+
+pkg.cflags:
+    - -Wno-unused-variable
