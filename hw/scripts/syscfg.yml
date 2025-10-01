@@ -38,6 +38,11 @@ syscfg.defs:
             - nrfutil
             # Renesas ezFlashCLI for DA146x devices
             - ezflashcli
+            - bsp_downloader
+        value:
+    MYNEWT_DOWNLOADER_SCRIPT:
+        description: >
+            Custom downloader script name
         value:
     MYNEWT_DEBUGGER:
         description: >
