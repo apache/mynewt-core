@@ -34,3 +34,5 @@ pkg.deps.FS_CLI:
 
 pkg.deps.FS_MGMT:
     - "@apache-mynewt-mcumgr/cmd/fs_mgmt/port/mynewt"
+
+pkg.whole_archive: true

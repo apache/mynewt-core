@@ -31,5 +31,4 @@ pkg.deps:
 pkg.req_apis:
     - console
 
-pkg.init:
-    i2c_scan_init: 'MYNEWT_VAL(I2C_SCAN_SYSINIT_STAGE)'
+pkg.whole_archive: true

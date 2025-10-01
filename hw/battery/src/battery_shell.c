@@ -30,8 +30,6 @@
 #include <battery/battery.h>
 #include <battery/battery_prop.h>
 
-static int bat_compat_cmd(int argc, char **argv);
-
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 #define HELP(a) &(a)
 
@@ -77,37 +75,6 @@ static const struct shell_cmd_help bat_monitor_help = {
 #else
 #define HELP(a) NULL
 #endif
-
-static const struct shell_cmd bat_cli_cmd = {
-    .sc_cmd = "bat",
-    .sc_cmd_func = bat_compat_cmd,
-};
-
-/**
- * cmd bat help
- *
- * Help for the bat command.
- *
- */
-static void
-cmd_bat_help(void)
-{
-    console_printf("Usage: bat <cmd> [options]\n");
-    console_printf("Available bat commands:\n");
-    console_printf("  pollrate <time_in_s>\n");
-    console_printf("  monitor [<prop>] [off]\n");
-    console_printf("  list\n");
-    console_printf("  read [<prop>] | all\n");
-    console_printf("  write <prop> <value>\n");
-
-    console_printf("Examples:\n");
-    console_printf("  list\n");
-    console_printf("  monitor VoltageADC\n");
-    console_printf("  monitor off\n");
-    console_printf("  read Voltage\n");
-    console_printf("  read all\n");
-    console_printf("  write VoltageLoAlarmSet\n");
-}
 
 static const char *bat_status[] = {
     "???",
@@ -482,57 +449,8 @@ static const struct shell_cmd bat_cli_commands[] = {
     SHELL_CMD("list", cmd_bat_list, &bat_list_help),
     SHELL_CMD("pollrate", cmd_bat_poll_rate, &bat_poll_rate_help),
     SHELL_CMD("monitor", cmd_bat_monitor, &bat_monitor_help),
-    { 0 },
 };
 
-/**
- * bat cmd
- *
- * Main processing function for K4 cli bat command
- *
- * @param argc Number of arguments
- * @param argv Argument list
- *
- * @return int 0: success, -1 error
- */
-static int
-bat_compat_cmd(int argc, char **argv)
-{
-    int rc;
-    int i;
-
-    if (argc < 2) {
-        rc = SYS_EINVAL;
-    } else {
-        for (i = 0; bat_cli_commands[i].sc_cmd; ++i) {
-            if (strcmp(bat_cli_commands[i].sc_cmd, argv[1]) == 0) {
-                rc = bat_cli_commands[i].sc_cmd_func(argc - 1, argv + 1);
-                break;
-            }
-        }
-        /* No command found */
-        if (bat_cli_commands[i].sc_cmd == NULL) {
-            console_printf("Invalid command.\n");
-            rc = -1;
-        }
-    }
-
-    /* Print help in case of error */
-    if (rc) {
-        cmd_bat_help();
-    }
-
-    return rc;
-}
-
-void
-battery_shell_register(void)
-{
-    int rc;
-
-    rc = shell_register("bat", bat_cli_commands);
-    rc = shell_cmd_register(&bat_cli_cmd);
-    SYSINIT_PANIC_ASSERT_MSG(rc == 0, "Failed to register battery shell");
-}
+SHELL_MODULE_WITH_TABLE(bat, bat_cli_commands)
 
 #endif
