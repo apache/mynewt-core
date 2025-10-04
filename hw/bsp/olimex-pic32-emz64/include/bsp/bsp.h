@@ -36,7 +36,7 @@ extern "C" {
 /* More convenient section placement macros. */
 #define bssnz_t         sec_bss_nz_core
 
-extern uint8_t _ram_start;
+extern uint8_t _ram_start[];
 
 #define RAM_SIZE        (512 * 1024)
 
@@ -50,6 +50,33 @@ extern uint8_t _ram_start;
 #define BUTTON_1        MCU_GPIO_PORTB(12)
 #define BUTTON_2        MCU_GPIO_PORTB(13)
 #define BUTTON_3        MCU_GPIO_PORTB(14)
+
+/* UEXT connector pins UEXT_1-VCC, UEXT_2-GND */
+#define UEXT_3  MCU_GPIO_PORTD(4)
+#define UEXT_4  MCU_GPIO_PORTD(0)
+#define UEXT_5  MCU_GPIO_PORTG(8)
+#define UEXT_6  MCU_GPIO_PORTG(7)
+#define UEXT_7  MCU_GPIO_PORTD(11)
+#define UEXT_8  MCU_GPIO_PORTD(5)
+#define UEXT_9  MCU_GPIO_PORTD(10)
+#define UEXT_10 MCU_GPIO_PORTD(9)
+
+#define UEXT_3_U4TX  UEXT_3
+#define UEXT_4_U4RX  UEXT_4
+#define UEXT_5_SCL4  UEXT_5
+#define UEXT_6_SDA4  UEXT_6
+#define UEXT_7_MISO4 UEXT_7
+#define UEXT_8_POSI4 UEXT_8
+#define UEXT_9_SCK4  UEXT_9
+#define UEXT_10_SS4  UEXT_10
+
+/* Micro SD */
+#define MICROSD_SPI_NUM      1
+#define MICROSD_SPI_MISO_PIN MCU_GPIO_PORTD(3)
+#define MICROSD_SPI_MOSI_PIN MCU_GPIO_PORTD(2)
+#define MICROSD_SPI_SCK_PIN  MCU_GPIO_PORTG(6)
+#define MICROSD_SPI_CS_PIN   MCU_GPIO_PORTG(9)
+#define MICROSD_SPI_CD_PIN   MCU_GPIO_PORTF(0)
 
 /* UART */
 #define UART_CNT        (6)
