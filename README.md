@@ -21,21 +21,33 @@
 
 <img src="http://mynewt.apache.org/img/logo.svg" width="250" alt="Apache Mynewt">
 
-## Overview
-
-<a href="https://github.com/apache/mynewt-core/actions/workflows/build_targets.yml">
-  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_targets.yml/badge.svg">
-<a/>
+## CI status
 
 <a href="https://github.com/apache/mynewt-core/actions/workflows/build_blinky.yml">
   <img src="https://github.com/apache/mynewt-core/actions/workflows/build_blinky.yml/badge.svg">
 <a/>
 
-<a href="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml/badge.svg">
+<a href="https://github.com/apache/mynewt-core/actions/workflows/build_targets.yml">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_targets.yml/badge.svg">
+<a/>
+
+<a href="https://github.com/apache/mynewt-core/actions/workflows/build_cc_target.yml">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_cc_target.yml/badge.svg">
+<a/>
+
+<a href="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader.yml">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader.yml/badge.svg">
+<a/>
+
+<a href="https://github.com/apache/mynewt-core/actions/workflows/build_all_apps.yml">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_all_apps.yml/badge.svg">
+<a/>
+
+<a href="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml">
   <img src="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml/badge.svg">
 <a/>
 
-<p>
+## Overview
 
 Apache Mynewt is an open-source operating system for tiny embedded devices.
 Its goal is to make it easy to develop applications for microcontroller
