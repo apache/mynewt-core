@@ -30,6 +30,8 @@
 
 #include <fsl_iap.h>
 
+#define ROUND_DOWN(a, n) (((a) / (n)) * (n))
+
 /*
  * Alignment restriction on writes.
  */
@@ -68,14 +70,26 @@ mcux_flash_read(const struct hal_flash *dev,
                 void *dst,
                 uint32_t num_bytes)
 {
-    status_t status = FLASH_VerifyErase(&mcux_config, address, num_bytes);
-    /* If flash is erased memcpy will result in hard fault, just fill 0xFF */
+    status_t status;
+
+    status = FLASH_Read(&mcux_config, address, dst, num_bytes);
     if (status == kStatus_FLASH_Success) {
-        memset(dst, 0xFF, num_bytes);
-    } else {
-        memcpy(dst, (void *)address, num_bytes);
+        return 0;
     }
-    return 0;
+
+    if (status == kStatus_FLASH_EccError) {
+        status = FLASH_VerifyErase(&mcux_config, ROUND_DOWN(address, 4),
+                                   ROUND_DOWN(address + num_bytes + 3, 4) -
+                                       ROUND_DOWN(address, 4));
+        /* If flash is erased memcpy will result in hard fault, just fill 0xFF */
+        if (status == kStatus_FLASH_Success) {
+            memset(dst, 0xFF, num_bytes);
+            return 0;
+        } else {
+            return -2;
+        }
+    }
+    return -1;
 }
 
 static int
