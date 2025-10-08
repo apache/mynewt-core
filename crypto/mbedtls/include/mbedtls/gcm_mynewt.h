@@ -26,11 +26,9 @@
 /**
  * Same as mbedtls_gcm_setkey, but with preallocated memory for cipher algorithm context
  */
-int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
-                                const mbedtls_cipher_info_t *cipher_info,
-                                const unsigned char *key,
-                                unsigned int keybits,
-                                void *cipher_ctx);
-
+int mbedtls_gcm_setkey_noalloc(mbedtls_gcm_context *ctx,
+                               const mbedtls_cipher_info_t *cipher_info,
+                               const unsigned char *key, unsigned int keybits,
+                               void *cipher_ctx);
 
 #endif /* _GCM_MYNEWT_H_ */
