@@ -69,12 +69,13 @@
 #if !defined(MBEDTLS_GCM_ALT)
 
 /* Used to select the acceleration mechanism */
-#define MBEDTLS_GCM_ACC_SMALLTABLE  0
-#define MBEDTLS_GCM_ACC_LARGETABLE  1
-#define MBEDTLS_GCM_ACC_AESNI       2
-#define MBEDTLS_GCM_ACC_AESCE       3
+#define MBEDTLS_GCM_ACC_SMALLTABLE 0
+#define MBEDTLS_GCM_ACC_LARGETABLE 1
+#define MBEDTLS_GCM_ACC_AESNI      2
+#define MBEDTLS_GCM_ACC_AESCE      3
 
-static inline void gcm_set_acceleration(mbedtls_gcm_context *ctx)
+static inline void
+gcm_set_acceleration(mbedtls_gcm_context *ctx)
 {
 #if defined(MBEDTLS_GCM_LARGE_TABLE)
     ctx->acceleration = MBEDTLS_GCM_ACC_LARGETABLE;
@@ -96,10 +97,11 @@ static inline void gcm_set_acceleration(mbedtls_gcm_context *ctx)
 #endif
 }
 
-static inline void gcm_gen_table_rightshift(uint64_t dst[2], const uint64_t src[2])
+static inline void
+gcm_gen_table_rightshift(uint64_t dst[2], const uint64_t src[2])
 {
-    uint8_t *u8Dst = (uint8_t *) dst;
-    uint8_t *u8Src = (uint8_t *) src;
+    uint8_t *u8Dst = (uint8_t *)dst;
+    uint8_t *u8Src = (uint8_t *)src;
 
     MBEDTLS_PUT_UINT64_BE(MBEDTLS_GET_UINT64_BE(&src[1], 0) >> 1, &dst[1], 0);
     u8Dst[8] |= (u8Src[7] & 0x01) << 7;
@@ -115,11 +117,12 @@ static inline void gcm_gen_table_rightshift(uint64_t dst[2], const uint64_t src[
  * is the high-order bit of HH corresponds to P^0 and the low-order bit of HL
  * corresponds to P^127.
  */
-static int gcm_gen_table(mbedtls_gcm_context *ctx)
+static int
+gcm_gen_table(mbedtls_gcm_context *ctx)
 {
     int ret, i, j;
     uint64_t u64h[2] = { 0 };
-    uint8_t *h = (uint8_t *) u64h;
+    uint8_t *h = (uint8_t *)u64h;
 
 #if defined(MBEDTLS_BLOCK_CIPHER_C)
     ret = mbedtls_block_cipher_encrypt(&ctx->block_cipher_ctx, h, h);
@@ -134,18 +137,18 @@ static int gcm_gen_table(mbedtls_gcm_context *ctx)
     gcm_set_acceleration(ctx);
 
     /* MBEDTLS_GCM_HTABLE_SIZE/2 = 1000 corresponds to 1 in GF(2^128) */
-    ctx->H[MBEDTLS_GCM_HTABLE_SIZE/2][0] = u64h[0];
-    ctx->H[MBEDTLS_GCM_HTABLE_SIZE/2][1] = u64h[1];
+    ctx->H[MBEDTLS_GCM_HTABLE_SIZE / 2][0] = u64h[0];
+    ctx->H[MBEDTLS_GCM_HTABLE_SIZE / 2][1] = u64h[1];
 
     switch (ctx->acceleration) {
 #if defined(MBEDTLS_AESNI_HAVE_CODE)
-        case MBEDTLS_GCM_ACC_AESNI:
-            return 0;
+    case MBEDTLS_GCM_ACC_AESNI:
+        return 0;
 #endif
 
 #if defined(MBEDTLS_AESCE_HAVE_CODE)
-        case MBEDTLS_GCM_ACC_AESCE:
-            return 0;
+    case MBEDTLS_GCM_ACC_AESCE:
+        return 0;
 #endif
 
     default:
@@ -153,13 +156,13 @@ static int gcm_gen_table(mbedtls_gcm_context *ctx)
         ctx->H[0][0] = 0;
         ctx->H[0][1] = 0;
 
-        for (i = MBEDTLS_GCM_HTABLE_SIZE/4; i > 0; i >>= 1) {
-            gcm_gen_table_rightshift(ctx->H[i], ctx->H[i*2]);
+        for (i = MBEDTLS_GCM_HTABLE_SIZE / 4; i > 0; i >>= 1) {
+            gcm_gen_table_rightshift(ctx->H[i], ctx->H[i * 2]);
         }
 
 #if !defined(MBEDTLS_GCM_LARGE_TABLE)
         /* pack elements of H as 64-bits ints, big-endian */
-        for (i = MBEDTLS_GCM_HTABLE_SIZE/2; i > 0; i >>= 1) {
+        for (i = MBEDTLS_GCM_HTABLE_SIZE / 2; i > 0; i >>= 1) {
             MBEDTLS_PUT_UINT64_BE(ctx->H[i][0], &ctx->H[i][0], 0);
             MBEDTLS_PUT_UINT64_BE(ctx->H[i][1], &ctx->H[i][1], 0);
         }
@@ -167,10 +170,9 @@ static int gcm_gen_table(mbedtls_gcm_context *ctx)
 
         for (i = 2; i < MBEDTLS_GCM_HTABLE_SIZE; i <<= 1) {
             for (j = 1; j < i; j++) {
-                mbedtls_xor_no_simd((unsigned char *) ctx->H[i+j],
-                                    (unsigned char *) ctx->H[i],
-                                    (unsigned char *) ctx->H[j],
-                                    16);
+                mbedtls_xor_no_simd((unsigned char *)ctx->H[i + j],
+                                    (unsigned char *)ctx->H[i],
+                                    (unsigned char *)ctx->H[j], 16);
             }
         }
     }
@@ -178,11 +180,11 @@ static int gcm_gen_table(mbedtls_gcm_context *ctx)
     return 0;
 }
 
-int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
-                                const mbedtls_cipher_info_t *cipher_info,
-                                const unsigned char *key,
-                                unsigned int keybits,
-                                void *cipher_ctx)
+int
+mbedtls_gcm_setkey_noalloc(mbedtls_gcm_context *ctx,
+                           const mbedtls_cipher_info_t *cipher_info,
+                           const unsigned char *key, unsigned int keybits,
+                           void *cipher_ctx)
 {
     int ret;
 
@@ -205,17 +207,16 @@ int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
 #endif
 #endif /* MBEDTLS_CIPHER_MODE_WITH_PADDING */
 
-    if( ( ret = mbedtls_cipher_setkey( &ctx->cipher_ctx, key,
-                               keybits,
-                               MBEDTLS_ENCRYPT ) ) != 0 )
-    {
-        return( ret );
+    if ((ret = mbedtls_cipher_setkey(&ctx->cipher_ctx, key, keybits,
+                                     MBEDTLS_ENCRYPT)) != 0) {
+        return ret;
     }
 
-    if( ( ret = gcm_gen_table( ctx ) ) != 0 )
-        return( ret );
+    if ((ret = gcm_gen_table(ctx)) != 0) {
+        return ret;
+    }
 
-    return( 0 );
+    return 0;
 }
 #endif /* !MBEDTLS_GCM_ALT */
 
