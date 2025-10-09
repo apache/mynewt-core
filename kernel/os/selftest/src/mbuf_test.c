@@ -92,6 +92,7 @@ os_mbuf_test_misc_assert_sane(struct os_mbuf *om, void *data,
 
 TEST_CASE_DECL(os_mbuf_test_alloc)
 TEST_CASE_DECL(os_mbuf_test_dup)
+TEST_CASE_DECL(os_mbuf_test_dup_pool)
 TEST_CASE_DECL(os_mbuf_test_append)
 TEST_CASE_DECL(os_mbuf_test_pullup)
 TEST_CASE_DECL(os_mbuf_test_extend)
@@ -104,6 +105,7 @@ TEST_SUITE(os_mbuf_test_suite)
 {
     os_mbuf_test_alloc();
     os_mbuf_test_dup();
+    os_mbuf_test_dup_pool();
     os_mbuf_test_append();
     os_mbuf_test_pullup();
     os_mbuf_test_extend();
