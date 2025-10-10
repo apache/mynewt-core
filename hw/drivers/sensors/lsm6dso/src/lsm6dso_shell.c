@@ -32,8 +32,6 @@ typedef struct {
     char *regname;
 } reg_name_t;
 
-static int lsm6dso_shell_cmd(int argc, char **argv);
-
 /* Human readable register map for page 0 */
 static const reg_name_t reg_name[] = {
     { .add = 0x02, .regname = "PIN_CTRL" },
@@ -69,11 +67,6 @@ static const reg_name_t reg_name[] = {
     { .add = 0x5d, .regname = "FREE_FALL" },
     { .add = 0x5e, .regname = "MD1_CFG" },
     { .add = 0x5f, .regname = "MD2_CFG" },
-};
-
-static struct shell_cmd lsm6dso_shell_cmd_struct = {
-    .sc_cmd = "lsm6dso",
-    .sc_cmd_func = lsm6dso_shell_cmd
 };
 
 static struct sensor_itf *g_sensor_itf;
@@ -119,7 +112,7 @@ static int lsm6dso_shell_err_unknown_arg(char *cmd_name)
 
 static void lsm6dso_shell_help(void)
 {
-    console_printf("%s cmd [flags...]\n", lsm6dso_shell_cmd_struct.sc_cmd);
+    console_printf("lsm6dso cmd [flags...]\n");
     console_printf("cmd:\n");
     console_printf("\tdump\tSTART\tEND\n");
     console_printf("\tread\tADD\n");
@@ -278,12 +271,4 @@ static int lsm6dso_shell_cmd(int argc, char **argv)
     return lsm6dso_shell_err_unknown_arg(argv[1]);
 }
 
-int lsm6dso_shell_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&lsm6dso_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    return rc;
-}
+MAKE_SHELL_CMD(lsm6dso, lsm6dso_shell_cmd, NULL)

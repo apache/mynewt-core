@@ -87,7 +87,6 @@ int imgr_core_load(struct mgmt_ctxt *);
 int imgr_core_erase(struct mgmt_ctxt *);
 int imgr_find_by_ver(struct image_version *find, uint8_t *hash);
 int imgr_find_by_hash(uint8_t *find, struct image_version *ver);
-int imgr_cli_register(void);
 
 #ifdef __cplusplus
 }

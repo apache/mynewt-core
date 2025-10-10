@@ -166,17 +166,6 @@ int ds3231_read_regs(struct ds3231_dev *ds3231, uint8_t addr, uint8_t *regs, uin
  */
 int ds3231_write_regs(struct ds3231_dev *ds3231, uint8_t addr, uint8_t *vals, uint8_t count);
 
-
-#if MYNEWT_VAL(DS3231_CLI)
-/**
- * Initialize the DS3231 shell extensions.
- *
- * @return 0 on success, non-zero on failure.
- */
-void ds3231_shell_init(void);
-#endif
-
-
 #ifdef __cplusplus
 }
 #endif
