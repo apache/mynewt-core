@@ -27,6 +27,13 @@ syscfg.defs:
         description: 'Enables file system mgmt commands.'
         value: 0
 
+    FS_MAX_MOUNT_POINTS:
+        description: >
+            Number of mount point tha can be used.
+            There should be one mount point for each file system that
+            could be mounted.
+        value: 2
+
     FS_UPLOAD_MAX_CHUNK_SIZE:
         description: >
             The maximum amount of file data that can fit in a
