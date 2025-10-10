@@ -144,8 +144,6 @@ tu_create_test_task(const char *task_name, os_task_func_t task_handler)
     os_task_init(&task, task_name, tu_test_task_handler, (void *)task_handler,
                  TU_TEST_TASK_PRIO, OS_WAIT_FOREVER, stack,
                  OS_STACK_ALIGN(TU_TEST_STACK_SIZE));
-
-    os_start();
 }
 
 /**
