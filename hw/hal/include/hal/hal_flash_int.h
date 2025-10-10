@@ -26,6 +26,8 @@ extern "C" {
 
 #include <inttypes.h>
 
+#define ROUND_DOWN(a, n) (((a) / (n)) * (n))
+
 /*
  * API that flash driver has to implement.
  */
