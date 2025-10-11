@@ -131,7 +131,11 @@ STATS_SECT_START(ina226_stat_section)
 STATS_SECT_END
 
 struct ina226_dev {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     /* Hardware wiring config, (pin, shunt, i2c) */
     struct ina226_hw_cfg hw_cfg;
@@ -257,6 +261,12 @@ int ina226_start_continuous_mode(struct ina226_dev *ina226, enum ina226_oper_mod
  * @return 0 on success, non-zero on failure.
  */
 int ina226_stop_continuous_mode(struct ina226_dev *ina226);
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+int ina226_create_sensor_dev(struct ina226_dev *ina226, const char *name,
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             const struct ina226_hw_cfg *hw_cfg);
+#endif
 
 #if MYNEWT_VAL(INA226_CLI)
 /**
