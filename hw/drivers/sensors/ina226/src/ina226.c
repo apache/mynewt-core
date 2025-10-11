@@ -29,6 +29,14 @@
 #include <ina226/ina226.h>
 #include <hal/hal_gpio.h>
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#define OS_DEV(dev_)   (&dev_->i2c_node.bnode.odev)
+#define I2C_ADDR(dev_) (dev_->i2c_node.addr)
+#else
+#define OS_DEV(dev_)   (&dev_->dev)
+#define I2C_ADDR(dev_) (dev_->hw_cfg.itf.si_addr)
+#endif
+
 /* Define stat names for querying */
 STATS_NAME_START(ina226_stat_section)
     STATS_NAME(ina226_stat_section, read_count)
@@ -133,6 +141,41 @@ enable_interrupt(struct ina226_dev *ina226)
 #define ina226_init_interrupt(i) 0
 #endif
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+int
+ina226_write_reg(struct ina226_dev *ina226, uint8_t reg, uint16_t reg_val)
+{
+    int rc;
+    uint8_t payload[3] = { reg, reg_val >> 8, (uint8_t)reg_val };
+
+    STATS_INC(ina226->stats, write_count);
+    rc = bus_node_simple_write(OS_DEV(ina226), payload, sizeof(payload));
+    if (rc) {
+        STATS_INC(ina226->stats, write_errors);
+        INA226_LOG_ERROR("INA226 write I2C failed\n");
+    }
+
+    return rc;
+}
+
+int
+ina226_read_reg(struct ina226_dev *ina226, uint8_t reg, uint16_t *reg_val)
+{
+    int rc;
+    uint8_t buf[2];
+
+    STATS_INC(ina226->stats, read_count);
+    rc = bus_node_simple_write_read_transact(OS_DEV(ina226), &reg, 1, buf, 2);
+    if (rc) {
+        STATS_INC(ina226->stats, read_errors);
+        INA226_LOG_ERROR("INA226 read I2C failed\n");
+    } else {
+        *reg_val = (buf[0] << 8) | buf[1];
+    }
+
+    return rc;
+}
+#else
 int
 ina226_write_reg(struct ina226_dev *ina226, uint8_t reg, uint16_t reg_val)
 {
@@ -203,6 +246,7 @@ exit:
 
     return rc;
 }
+#endif
 
 int
 ina226_reset(struct ina226_dev *ina226)
@@ -445,7 +489,7 @@ ina226_open(struct os_dev *dev, uint32_t wait, void *arg)
     }
     if (mfg != INA226_MANUFACTURER_ID) {
         INA226_LOG_ERROR("INA226 read ID failed, no INA226 at 0x%X, found 0x%X 0x%X\n",
-                         ina226->hw_cfg.itf.si_addr, mfg, die);
+                         I2C_ADDR(ina226), mfg, die);
         rc = SYS_ENODEV;
         goto exit;
     }
@@ -495,7 +539,7 @@ ina226_init(struct os_dev *dev, void *arg)
         STATS_NAME_INIT_PARMS(ina226_stat_section));
     SYSINIT_PANIC_ASSERT(rc == SYS_EOK);
     /* Register the entry with the stats registry */
-    rc = stats_register(ina226->dev.od_name, STATS_HDR(ina226->stats));
+    rc = stats_register(OS_DEV(ina226)->od_name, STATS_HDR(ina226->stats));
     SYSINIT_PANIC_ASSERT(rc == SYS_EOK);
 
     rc = ina226_init_interrupt(ina226);
@@ -579,3 +623,26 @@ ina226_sensor_get_config(struct sensor *sensor, sensor_type_t typ,
     }
     return rc;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    ina226_init(&bnode->odev, arg);
+}
+
+int
+ina226_create_sensor_dev(struct ina226_dev *ina226, const char *name,
+                         const struct bus_i2c_node_cfg *i2c_cfg,
+                         const struct ina226_hw_cfg *hw_cfg)
+{
+    int rc;
+    static struct sensor_itf itf;
+
+    rc = sensor_create_i2c_device(&ina226->i2c_node, name, i2c_cfg,
+                                  init_node_cb, (void *)hw_cfg, &itf);
+
+    return rc;
+}
+#endif
