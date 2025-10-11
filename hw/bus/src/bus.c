@@ -531,11 +531,13 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
 #endif
 
     /*
-     * Configuration is done on 1st lock so in case we need to configure device
-     * on nested lock it means that most likely bus device was locked for one
-     * node and then access is done on another node which is not correct.
+     * Configuration is done on 1st lock. For nested lock make sure that
+     * bnode did not change.
      */
     if (MYNEWT_VAL(OS_SCHEDULING) && os_mutex_get_level(&bdev->lock) != 1) {
+        if (bdev->configured_for == bnode) {
+            return 0;
+        }
         (void)bus_node_unlock(node);
         return SYS_EACCES;
     }
