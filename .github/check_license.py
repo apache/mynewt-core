@@ -30,13 +30,6 @@ tmp_folder = "/tmp/check_license/"
 licenses_url = "https://www.apache.org/legal/resolved.html"
 LICENSE_FILE = "LICENSE"
 RAT_EXCLUDES_FILE = ".rat-excludes"
-ignored = {
-    ".gdb_history",
-    ".gdb_out",
-    "tags",
-    "bin"
-}
-
 
 def run_cmd(cmd: str) -> list[str]:
     out = subprocess.check_output(cmd, text=True, shell=True)
@@ -83,12 +76,10 @@ def get_license_files(file_path: str) -> set[str]:
     return file_paths
 
 
-def check_rat_exclusions(rat_entries: set[str], ignored_entries: set[str]) -> list[str]:
+def check_rat_exclusions(rat_entries: set[str]) -> list[str]:
     result = []
-    base_dir = Path.cwd()
-    existing_paths = {path.name for path in base_dir.rglob('*')}
     for entry in rat_entries:
-        if entry not in existing_paths and entry not in ignored_entries:
+        if not os.path.exists(entry) and not re.search(r"\*\*", entry):
             result.append(entry)
     return result
 
@@ -108,7 +99,7 @@ def run_rat_check(files_diff: list[str]) -> list[str]:
     for cfg_fname in files_diff:
         os.makedirs(str(Path(tmp_folder + cfg_fname).parent), 0o755, True)
         shutil.copy(cfg_fname, tmp_folder + cfg_fname)
-    rat_out = run_cmd_no_check(f"java -jar apache-rat.jar -E .rat-excludes -d {tmp_folder} | grep \"^ !\"")
+    rat_out = run_cmd_no_check(f"java -jar apache-rat.jar --input-exclude-std GIT --input-exclude-parsed-scm GIT --input-exclude-file .rat-excludes --output-style .github/rat_report.xsl -- . {tmp_folder} | grep \"^ ! \"")
     if rat_out:
         for entry in rat_out:
             result.append(entry.strip(' !').replace(tmp_folder, '\t\t'))
@@ -135,14 +126,14 @@ def main() -> bool:
     result_license = check_license_files(files)
 
     files = get_rat_exclusions(RAT_EXCLUDES_FILE)
-    result_rat_exclusions = check_rat_exclusions(files, ignored)
+    result_rat_exclusions = check_rat_exclusions(files)
 
     if any([result_license, result_rat_exclusions, result_rat_check]):
         if result_rat_check:
             print(f"\033[31m! Files with unapproved or unknown licenses detected.\033[0m")
             print(f"\033[31m! See {licenses_url} for details.\033[0m")
             print()
-            print(f"\033[90mLicense\t\tFilename\033[0m")
+            print(f"Files:")
             for result in result_rat_check:
                 print(result)
             print()
