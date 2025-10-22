@@ -26,7 +26,6 @@ import sys
 import shutil
 from pathlib import Path
 
-tmp_folder = "/tmp/check_license/"
 licenses_url = "https://www.apache.org/legal/resolved.html"
 LICENSE_FILE = "LICENSE"
 RAT_EXCLUDES_FILE = ".rat-excludes"
@@ -96,13 +95,12 @@ def check_license_files(license_entries: set[str]) -> list[str]:
 
 def run_rat_check(files_diff: list[str]) -> list[str]:
     result = []
-    for cfg_fname in files_diff:
-        os.makedirs(str(Path(tmp_folder + cfg_fname).parent), 0o755, True)
-        shutil.copy(cfg_fname, tmp_folder + cfg_fname)
-    rat_out = run_cmd_no_check(f"java -jar apache-rat.jar --input-exclude-std GIT --input-exclude-parsed-scm GIT --input-exclude-file .rat-excludes --output-style .github/rat_report.xsl -- . {tmp_folder} | grep \"^ ! \"")
+    rat_out = run_cmd_no_check(f"java -jar apache-rat.jar --input-exclude-std GIT --input-exclude-parsed-scm GIT --input-exclude-file .rat-excludes --output-style .github/rat_report.xsl -- . | grep \"^ ! \"")
     if rat_out:
         for entry in rat_out:
-            result.append(entry.strip(' !').replace(tmp_folder, '\t\t'))
+            entry = entry.strip(' ! /')
+            if entry in files_diff:
+                result.append(entry)
     return result
 
 
