@@ -29,6 +29,7 @@ from pathlib import Path
 licenses_url = "https://www.apache.org/legal/resolved.html"
 LICENSE_FILE = "LICENSE"
 RAT_EXCLUDES_FILE = ".rat-excludes"
+RAT_REPORT_XSL = os.path.dirname(__file__) + "/rat_report.xsl"
 
 def run_cmd(cmd: str) -> list[str]:
     out = subprocess.check_output(cmd, text=True, shell=True)
@@ -95,7 +96,7 @@ def check_license_files(license_entries: set[str]) -> list[str]:
 
 def run_rat_check(files_diff: list[str]) -> list[str]:
     result = []
-    rat_out = run_cmd_no_check(f"java -jar apache-rat.jar --input-exclude-std GIT --input-exclude-parsed-scm GIT --input-exclude-file .rat-excludes --output-style .github/rat_report.xsl -- . | grep \"^ ! \"")
+    rat_out = run_cmd_no_check(f"java -jar apache-rat.jar --input-exclude-std GIT --input-exclude-parsed-scm GIT --input-exclude-file .rat-excludes --output-style {RAT_REPORT_XSL} -- . | grep \"^ ! \"")
     if rat_out:
         for entry in rat_out:
             entry = entry.strip(' ! /')
