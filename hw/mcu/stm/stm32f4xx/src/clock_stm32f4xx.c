@@ -24,9 +24,93 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stm32f4xx_hal_pwr_ex.h"
-#include "stm32f4xx_hal.h"
 #include <assert.h>
+#include <stm32f4xx_hal_pwr_ex.h>
+#include <stm32f4xx_hal.h>
+#include <mcu/clock_stm32f4xx.h>
+
+#define FIELD_VAL(per, reg, field)                                            \
+    ((per->reg & per##_##reg##_##field##_Msk) >> per##_##reg##_##field##_Pos)
+
+uint32_t
+stm32f4xx_pll_vco_freq(void)
+{
+    uint32_t pll_vco;
+    uint32_t pll_source_freq;
+    uint32_t pll_m;
+
+    pll_source_freq = FIELD_VAL(RCC, PLLCFGR, PLLSRC) ? HSE_VALUE : HSI_VALUE;
+    pll_m = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
+
+    pll_vco = (pll_source_freq / pll_m) * FIELD_VAL(RCC, PLLCFGR, PLLN);
+
+    return pll_vco;
+}
+
+uint32_t
+stm32f4xx_plli2s_vco_freq(void)
+{
+    uint32_t pll_vco;
+    uint32_t pll_source_freq;
+    uint32_t pll_m;
+
+#ifdef RCC_PLLI2SCFGR_PLLI2SSRC
+    pll_source_freq = FIELD_VAL(RCC, PLLI2SCFGR, PLLI2SSRC) ? HSE_VALUE : HSI_VALUE;
+    pll_m = FIELD_VAL(RCC, PLLI2SCFGR, PLLI2SM);
+#else
+    pll_source_freq = FIELD_VAL(RCC, PLLCFGR, PLLSRC) ? HSE_VALUE : HSI_VALUE;
+    pll_m = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
+#endif
+
+    pll_vco = (pll_source_freq / pll_m);
+    pll_vco *= FIELD_VAL(RCC, PLLI2SCFGR, PLLI2SN);
+
+    return pll_vco;
+}
+
+uint32_t
+stm32f4xx_pll_p_freq(void)
+{
+    uint32_t pll_p = (FIELD_VAL(RCC, PLLCFGR, PLLP) + 1) * 2;
+
+    return stm32f4xx_pll_vco_freq() / pll_p;
+}
+
+uint32_t
+stm32f4xx_pll_q_freq(void)
+{
+    uint32_t pll_q = FIELD_VAL(RCC, PLLCFGR, PLLQ);
+
+    return stm32f4xx_pll_vco_freq() / pll_q;
+}
+
+#ifdef RCC_PLLCFGR_PLLR
+uint32_t
+stm32f4xx_pll_r_freq(void)
+{
+    uint32_t pll_r = FIELD_VAL(RCC, PLLCFGR, PLLR);
+
+    return stm32f4xx_pll_vco_freq() / pll_r;
+}
+#endif
+
+#ifdef RCC_PLLI2SCFGR_PLLP
+uint32_t
+stm32f4xx_plli2s_p_freq(void)
+{
+    uint32_t pll_p = (FIELD_VAL(RCC, PLLI2SCFGR, PLLP) + 1) * 2;
+
+    return stm32f4xx_plli2s_vco_freq() / pll_p;
+}
+#endif
+
+uint32_t
+stm32f4xx_plli2s_r_freq(void)
+{
+    uint32_t pll_r = FIELD_VAL(RCC, PLLI2SCFGR, PLLI2SR);
+
+    return stm32f4xx_pll_vco_freq() / pll_r;
+}
 
 /*
  * This allows an user to have a custom clock configuration by zeroing
