@@ -23,7 +23,6 @@
 
 #include <os/mynewt.h>
 #include <console/console.h>
-#include <mcu/nrf52_hal.h>
 #include <hal/hal_gpio.h>
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/drivers/i2c_common.h"
