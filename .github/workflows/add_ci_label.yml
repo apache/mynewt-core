@@ -30,13 +30,37 @@ permissions:
 
 jobs:
   add-label:
-    if: ${{ !contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
-           && github.actor != 'dependabot[bot]' }}
+    if: ${{ github.event.pull_request.author_association != 'CONTRIBUTOR' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
+           const pr = context.payload.pull_request;
+
+            // Fetch author's repository permission level: admin|maintain|write|triage|read|none
+            let permission = 'unknown';
+            try {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                ...context.repo,
+                username: pr.user.login,
+              });
+              permission = data.permission;
+            } catch (e) {
+              core.warning(`Could not fetch collaborator permission: ${e.status || ''} ${e.message}`);
+            }
+
+            const info = {
+              number: pr.number,
+              title: pr.title,
+              author: pr.user.login,
+              author_association: pr.author_association,
+              author_permission: permission,
+              base_repo: pr.base.repo.full_name,
+              head_repo: pr.head.repo.full_name,
+              is_fork: !!pr.head.repo.fork,
+            };
+            core.info('PR author info:\n' + JSON.stringify(info, null, 2));
             const label = 'needs-ci-approval';
             try {
               try {
