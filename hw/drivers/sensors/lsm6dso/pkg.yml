@@ -33,3 +33,11 @@ pkg.deps:
 
 pkg.req_apis:
     - stats
+
+pkg.source_files:
+    - src/lsm6dso.c
+
+pkg.source_files.LSM6DSO_SHELL:
+    - src/lsm6dso_shell.c
+
+pkg.whole_archive: true

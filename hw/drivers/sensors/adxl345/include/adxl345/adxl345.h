@@ -193,10 +193,6 @@ int adxl345_config(struct adxl345 *, struct adxl345_cfg *);
 
 int adxl345_get_accel_data(struct sensor_itf *itf, struct sensor_accel_data *sad);
 
-#if MYNEWT_VAL(ADXL345_CLI)
-int adxl345_shell_init(void);
-#endif
-
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 int adxl345_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
                                   const struct bus_i2c_node_cfg *i2c_cfg,
