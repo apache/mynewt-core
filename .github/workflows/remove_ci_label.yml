@@ -34,12 +34,25 @@ jobs:
         with:
           script: |
             const label = 'needs-ci-approval';
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info('No pull_request in event payload. Skipping.');
+              return;
+            }
+            const issue_number = pr.number;
 
-            // List current labels on the PR
-            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
-              ...context.repo,
-              issue_number: context.issue.number,
-            });
+            // List current labels on the PR (use PR number from payload)
+            let labels = [];
+            try {
+              const res = await github.rest.issues.listLabelsOnIssue({
+                ...context.repo,
+                issue_number,
+              });
+              labels = res.data || [];
+            } catch (e) {
+              core.info(`Could not list labels on PR #${issue_number}: ${e.status || ''} ${e.message}. Skipping.`);
+              return;
+            }
 
             const hasLabel = labels.some(l => l.name === label);
             if (!hasLabel) {
@@ -47,18 +60,18 @@ jobs:
               return;
             }
 
-            // Remove the label if present
+            // Remove if label is present
             try {
               await github.rest.issues.removeLabel({
                 ...context.repo,
-                issue_number: context.issue.number,
+                issue_number,
                 name: label,
               });
-              core.info(`Removed '${label}' from PR #${context.issue.number}.`);
+              core.info(`Removed '${label}' from PR #${issue_number}.`);
             } catch (e) {
               if (e.status === 404) {
                 core.info(`'${label}' already gone.`);
               } else {
-                throw e;
+                core.info(`Failed to remove '${label}' on PR #${issue_number}: ${e.status || ''} ${e.message}. Skipping.`);
               }
             }
