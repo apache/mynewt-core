@@ -30,6 +30,8 @@
 struct pwm_dev *_pwm_dev;
 #endif
 
+// TEST
+
 /***
  * Initialize the PWM device to be used as a square wave generator. This is
  * automatically invoked by the Mynewt initialization system.
