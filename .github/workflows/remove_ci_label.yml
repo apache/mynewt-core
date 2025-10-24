@@ -19,36 +19,45 @@
 
 name: Remove informative CI status
 
-on:
-  pull_request:
-    types: [labeled]
+on: [push, pull_request]
 
 permissions:
   contents: read
   issues: write
   pull-requests: write
 
-env:
-  LABEL: needs-ci-approval
-
 jobs:
   remove-ci-label:
-    if: ${{ github.event.label.name == env.LABEL }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
+            const label = 'needs-ci-approval';
+
+            // List current labels on the PR
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+
+            const hasLabel = labels.some(l => l.name === label);
+            if (!hasLabel) {
+              core.info(`'${label}' not present — nothing to do.`);
+              return;
+            }
+
+            // Remove the label if present
             try {
               await github.rest.issues.removeLabel({
                 ...context.repo,
                 issue_number: context.issue.number,
-                name: process.env.LABEL,
+                name: label,
               });
-              core.info(`Removed '${process.env.LABEL}' from PR #${context.issue.number}.`);
+              core.info(`Removed '${label}' from PR #${context.issue.number}.`);
             } catch (e) {
               if (e.status === 404) {
-                core.info(`Label '${process.env.LABEL}' not present; nothing to remove.`);
+                core.info(`'${label}' already gone.`);
               } else {
                 throw e;
               }
