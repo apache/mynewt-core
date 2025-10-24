@@ -26,6 +26,16 @@ extern "C" {
 
 #include "os/mynewt.h"
 
+typedef struct file_system {
+    const struct fs_ops *ops;
+    const char *name;
+} file_system_t;
+
+struct mount_point {
+    const char *mount_point;
+    const file_system_t *fs;
+};
+
 /*
  * Common interface filesystem(s) provide.
  */
@@ -53,10 +63,8 @@ struct fs_ops {
     int (*f_dirent_name)(const struct fs_dirent *dirent, size_t max_len,
       char *out_name, uint8_t *out_name_len);
     int (*f_dirent_is_dir)(const struct fs_dirent *dirent);
-
-    const char *f_name;
-
-    SLIST_ENTRY(fs_ops) sc_next;
+    int (*f_mount)(const file_system_t *fs);
+    int (*f_umount)(const file_system_t *fs);
 };
 
 struct fops_container {
@@ -78,18 +86,67 @@ int fs_register(struct fs_ops *fops);
  *
  * @return fops if there's only one registered filesystem, NULL otherwise.
  */
-struct fs_ops *fs_ops_try_unique(void);
+const struct fs_ops *fs_ops_try_unique(void);
+
+const struct fs_ops *fs_ops_from_container(struct fops_container *container);
 
 /**
- * Retrieve a filesystem's operations table
+ * Mount file system
  *
- * @param name Name of the filesystem to retrieve fs_ops for
- *
- * @return valid pointer on success, NULL on failure
+ * @param fs - file system to mount
+ * @param path - path to mount i.e. 0:, nffs:
+ * @return 0 on success
  */
-struct fs_ops *fs_ops_for(const char *name);
+int fs_mount(const file_system_t *fs, const char *path);
 
-struct fs_ops *fs_ops_from_container(struct fops_container *container);
+/**
+ * Unmount file system by mount point
+ *
+ * @param mount_point - mount point to unmount i.e. 0:, nffs:
+ * @return 0 on success
+ */
+const file_system_t *fs_unmount_mount_point(const char *mount_point);
+
+/**
+ * Unmount file system
+ *
+ * @param fs - mounted file system to unmount
+ * @return 0 on success
+ */
+int fs_unmount_file_system(const file_system_t *fs);
+
+/**
+ * Get file system mount point path
+ *
+ * For given path it will return mount point and file system
+ * i.e.:
+ * For 0:/DIREC/FIL.TXT function will return "0:" and fs
+ * will be filled with pointer to valid file_system_t structure.
+ *
+ * @param path - file or directory name
+ * @param fs - on success file system
+ * @return file system mount point string
+ */
+const char *file_system_path(const char *path, const file_system_t **fs);
+
+/**
+ * Return the only file system mounted
+ *
+ * It there is only one file system mounted it will be returned by this
+ * function. If two file system were mounted funciton will return NULL.
+ * @return non-NULL if exactly one file system is mounted, otherwise NULL
+ */
+const file_system_t *get_only_file_system(void);
+
+/**
+ * Get file system and file system mount point
+ *
+ * Usually
+ * @param path - file system path
+ * @param fs - file system for path
+ * @param fs_path - mount point (usually prefix of file path)
+ */
+void get_file_system_path(const char *path, const file_system_t **fs, const char **fs_path);
 
 #ifdef __cplusplus
 }

@@ -19,7 +19,6 @@
 #include <fs/fs.h>
 #include <fs/fs_if.h>
 
-#include <disk/disk.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -123,7 +122,7 @@ fake_dirent_is_dir(const struct fs_dirent *dirent)
     return FS_EUNINIT;
 }
 
-struct fs_ops not_initialized_ops = {
+const struct fs_ops not_initialized_ops = {
     .f_open          = &fake_open,
     .f_close         = &fake_close,
     .f_read          = &fake_read,
@@ -140,13 +139,17 @@ struct fs_ops not_initialized_ops = {
     .f_closedir      = &fake_closedir,
     .f_dirent_name   = &fake_dirent_name,
     .f_dirent_is_dir = &fake_dirent_is_dir,
-    .f_name          = "fakefs",
 };
 
-struct fs_ops *
+const file_system_t fake_fs = {
+    .ops = &not_initialized_ops,
+    .name = "fakefs",
+};
+
+const struct fs_ops *
 safe_fs_ops_for(const char *fs_name)
 {
-    struct fs_ops *fops;
+    const struct fs_ops *fops;
 
     fops = fs_ops_for(fs_name);
     if (fops == NULL) {
@@ -156,31 +159,20 @@ safe_fs_ops_for(const char *fs_name)
     return fops;
 }
 
-struct fs_ops *
-fops_from_filename(const char *filename)
+void
+get_file_system_path(const char *path, const file_system_t **fs, const char **fs_path)
 {
-    char *disk;
-    char *fs_name = NULL;
-    struct fs_ops *unique;
-
-    disk = disk_name_from_path(filename);
-    if (disk) {
-        fs_name = disk_fs_for(disk);
-        free(disk);
-    } else {
-        /**
-         * special case: if only one fs was ever registered,
-         * return that fs' ops.
-         */
-        if ((unique = fs_ops_try_unique()) != NULL) {
-            return unique;
+    *fs_path = file_system_path(path, fs);
+    if (*fs_path == NULL) {
+        *fs = get_only_file_system();
+        if (*fs == NULL) {
+            *fs = &fake_fs;
         }
+        *fs_path = path;
     }
-
-    return safe_fs_ops_for(fs_name);
 }
 
-static inline struct fs_ops *
+static inline const struct fs_ops *
 fops_from_file(const struct fs_file *file)
 {
     return fs_ops_from_container((struct fops_container *) file);
@@ -189,62 +181,68 @@ fops_from_file(const struct fs_file *file)
 int
 fs_open(const char *filename, uint8_t access_flags, struct fs_file **out_file)
 {
-    struct fs_ops *fops = fops_from_filename(filename);
-    return fops->f_open(filename, access_flags, out_file);
+    const file_system_t *fs;
+    const char *fs_filename;
+
+    get_file_system_path(filename, &fs, &fs_filename);
+    return fs->ops->f_open(fs_filename, access_flags, out_file);
 }
 
 int
 fs_close(struct fs_file *file)
 {
-    struct fs_ops *fops = fops_from_file(file);
+    const struct fs_ops *fops = fops_from_file(file);
     return fops->f_close(file);
 }
 
 int
 fs_read(struct fs_file *file, uint32_t len, void *out_data, uint32_t *out_len)
 {
-    struct fs_ops *fops = fops_from_file(file);
+    const struct fs_ops *fops = fops_from_file(file);
     return fops->f_read(file, len, out_data, out_len);
 }
 
 int
 fs_write(struct fs_file *file, const void *data, int len)
 {
-    struct fs_ops *fops = fops_from_file(file);
+    const struct fs_ops *fops = fops_from_file(file);
     return fops->f_write(file, data, len);
 }
 
 int
 fs_seek(struct fs_file *file, uint32_t offset)
 {
-    struct fs_ops *fops = fops_from_file(file);
+    const struct fs_ops *fops = fops_from_file(file);
     return fops->f_seek(file, offset);
 }
 
 uint32_t
 fs_getpos(const struct fs_file *file)
 {
-    struct fs_ops *fops = fops_from_file(file);
+    const struct fs_ops *fops = fops_from_file(file);
     return fops->f_getpos(file);
 }
 
 int
 fs_filelen(const struct fs_file *file, uint32_t *out_len)
 {
-    struct fs_ops *fops = fops_from_file(file);
+    const struct fs_ops *fops = fops_from_file(file);
     return fops->f_filelen(file, out_len);
 }
 
 int
 fs_unlink(const char *filename)
 {
-    struct fs_ops *fops = fops_from_filename(filename);
-    return fops->f_unlink(filename);
+    const file_system_t *fs;
+    const char *fs_filename;
+
+    get_file_system_path(filename, &fs, &fs_filename);
+    return fs->ops->f_unlink(fs_filename);
 }
 
 int
 fs_flush(struct fs_file *file)
 {
-    struct fs_ops *fops = fops_from_file(file);
+    const struct fs_ops *fops = fops_from_file(file);
     return fops->f_flush(file);
 }

@@ -17,135 +17,38 @@
  * under the License.
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include "os/mynewt.h"
+#include <inttypes.h>
+#include <os/mynewt.h>
+#include <os/link_tables.h>
 #include <disk/disk.h>
 
-struct disk_info {
-    const char *disk_name;
-    const char *fs_name;
-    struct disk_ops *dops;
+#define DISK_EOK          0  /* Success */
+#define DISK_EHW          1  /* Error accessing storage medium */
+#define DISK_ENOMEM       2  /* Insufficient memory */
+#define DISK_ENOENT       3  /* No such file or directory */
+#define DISK_EOS          4  /* OS error */
+#define DISK_EUNINIT      5  /* File system not initialized */
 
-    SLIST_ENTRY(disk_info) sc_next;
-};
-
-static SLIST_HEAD(, disk_info) disks = SLIST_HEAD_INITIALIZER();
-
-/**
- *
- */
-int disk_register(const char *disk_name, const char *fs_name, struct disk_ops *dops)
+int
+mn_disk_inserted(disk_t *disk)
 {
-    struct disk_info *info = NULL;
-    struct disk_info *sc;
+    int count = LINK_TABLE_SIZE(disk_listeners);
 
-    SLIST_FOREACH(sc, &disks, sc_next) {
-        if (strcmp(sc->disk_name, disk_name) == 0) {
-            return DISK_ENOENT;
-        }
+    for (int i = 0; i < count; ++i) {
+        disk_listener_t *listener = disk_listeners[i];
+        listener->ops->disk_added(listener, disk);
     }
-
-    info = malloc(sizeof(struct disk_info));
-    if (!info) {
-        return DISK_ENOMEM;
-    }
-
-    info->disk_name = disk_name;
-    info->fs_name = fs_name;
-    info->dops = dops;
-
-    SLIST_INSERT_HEAD(&disks, info, sc_next);
-
     return 0;
 }
 
-struct disk_ops *
-disk_ops_for(const char *disk_name)
+int
+mn_disk_ejected(disk_t *disk)
 {
-    struct disk_info *sc;
+    int count = LINK_TABLE_SIZE(disk_listeners);
 
-    if (disk_name) {
-        SLIST_FOREACH(sc, &disks, sc_next) {
-            if (strcmp(sc->disk_name, disk_name) == 0) {
-                return sc->dops;
-            }
-        }
+    for (int i = 0; i < count; ++i) {
+        disk_listener_t *listener = disk_listeners[i];
+        listener->ops->disk_removed(listener, disk);
     }
-
-    return NULL;
-}
-
-char *
-disk_fs_for(const char *disk_name)
-{
-    struct disk_info *sc;
-
-    if (disk_name) {
-        SLIST_FOREACH(sc, &disks, sc_next) {
-            if (strcmp(sc->disk_name, disk_name) == 0) {
-                return ((char *) sc->fs_name);
-            }
-        }
-    }
-
-    return NULL;
-}
-
-char *
-disk_name_from_path(const char *path)
-{
-    char *colon;
-    uint8_t len;
-    char *disk;
-
-    colon = (char *) path;
-    while (*colon && *colon != ':') {
-        colon++;
-    }
-
-    if (*colon != ':') {
-        return NULL;
-    }
-
-    len = colon - path;
-    disk = malloc(len + 1);
-    if (!disk) {
-        return NULL;
-    }
-    memcpy(disk, path, len);
-    disk[len] = '\0';
-
-    return disk;
-}
-
-/**
- * @brief Returns the path with the disk prefix removed (if found)
- *
- * Paths should be given in the form disk<number>:/path. This routine
- * will parse and return only the path, removing the disk information.
- */
-char *
-disk_filepath_from_path(const char *path)
-{
-    char *colon;
-    char *filepath;
-    size_t len;
-
-    colon = (char *) path;
-    while (*colon && *colon != ':') {
-        colon++;
-    }
-
-    if (*colon != ':') {
-        filepath = strdup(path);
-    } else {
-        colon++;
-        len = strlen(colon);
-        filepath = malloc(len + 1);
-        memcpy(filepath, colon, len);
-        filepath[len] = '\0';
-    }
-
-    return filepath;
+    return 0;
 }
