@@ -25,7 +25,6 @@
 #include "testutil/testutil.h"
 
 #include "mbedtls/aes.h"
-#include "mbedtls/arc4.h"
 #include "mbedtls/aria.h"
 #include "mbedtls/base64.h"
 #include "mbedtls/bignum.h"
@@ -42,8 +41,6 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/gcm.h"
 #include "mbedtls/hmac_drbg.h"
-#include "mbedtls/md2.h"
-#include "mbedtls/md4.h"
 #include "mbedtls/md5.h"
 #include "mbedtls/nist_kw.h"
 #include "mbedtls/pkcs5.h"
@@ -53,9 +50,6 @@
 #include "mbedtls/sha1.h"
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
-#include "mbedtls/timing.h"
-#include "mbedtls/x509.h"
-#include "mbedtls/xtea.h"
 #include "gcm_mynewt.h"
 
 #ifdef __cplusplus
