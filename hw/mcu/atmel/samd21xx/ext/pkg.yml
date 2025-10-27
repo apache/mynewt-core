@@ -23,7 +23,7 @@ pkg.type: sdk
 
 repository.atmel-samd21xx:
     type: github
-    vers: c24381e11d1b494684b84f80536afe95aeec376a-commit
+    vers: 08b4c2fdadfaac4b40811b9561a1cfd6b99c1c34-commit
     branch: master
     user: runtimeco
     repo: mynewt_arduino_zero
