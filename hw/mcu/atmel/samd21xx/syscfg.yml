@@ -23,6 +23,11 @@ syscfg.defs:
             Used internally by the newt tool.
         value: 1
 
+    CPU_CLOCK_FREQ_MHZ:
+        description: "CPU clock frequency in MHz"
+        value: 48
+        range: 1, 3, 6, 8, 12, 24, 48
+
     SPI_0:
         description: 'Whether to enable SPI0'
         value:  0
