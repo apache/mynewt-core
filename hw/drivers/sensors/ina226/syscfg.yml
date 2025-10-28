@@ -54,9 +54,6 @@ syscfg.defs:
     INA226_LOG_LVL:
         description: 'Minimum level for the INA226 log.'
         value: 1
-    INA226_CLI_SYSINIT_STAGE:
-        description: 'Sysinit stage for the INA226 shell'
-        value: 500
 syscfg.logs:
     INA226_LOG:
         module: MYNEWT_VAL(INA226_LOG_MODULE)

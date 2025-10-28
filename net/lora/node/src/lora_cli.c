@@ -30,7 +30,6 @@
 
 #if MYNEWT_VAL(LORA_NODE_CLI)
 
-static int lora_cli_cmd_fn(int argc, char **argv);
 static int lora_cli_set_freq(int argc, char **argv);
 static int lora_cli_tx_cfg(int argc, char **argv);
 static int lora_cli_rx_cfg(int argc, char **argv);
@@ -38,36 +37,13 @@ static int lora_cli_tx(int argc, char **argv);
 static int lora_cli_rx(int argc, char **argv);
 static int lora_cli_max_payload_len(int argc, char **argv);
 
-static struct shell_cmd lora_cli_cmd = {
-    .sc_cmd = "lora",
-    .sc_cmd_func = lora_cli_cmd_fn,
-};
-
-static struct shell_cmd lora_cli_subcmds[] = {
-    {
-        .sc_cmd = "set_freq",
-        .sc_cmd_func = lora_cli_set_freq,
-    },
-    {
-        .sc_cmd = "tx_cfg",
-        .sc_cmd_func = lora_cli_tx_cfg,
-    },
-    {
-        .sc_cmd = "rx_cfg",
-        .sc_cmd_func = lora_cli_rx_cfg,
-    },
-    {
-        .sc_cmd = "tx",
-        .sc_cmd_func = lora_cli_tx,
-    },
-    {
-        .sc_cmd = "rx",
-        .sc_cmd_func = lora_cli_rx,
-    },
-    {
-        .sc_cmd = "max_payload_len",
-        .sc_cmd_func = lora_cli_max_payload_len,
-    },
+static const struct shell_cmd lora_cli_subcmds[] = {
+    SHELL_CMD("set_freq", lora_cli_set_freq, NULL),
+    SHELL_CMD("tx_cfg", lora_cli_tx_cfg, NULL),
+    SHELL_CMD("rx_cfg", lora_cli_rx_cfg, NULL),
+    SHELL_CMD("tx", lora_cli_tx, NULL),
+    SHELL_CMD("rx", lora_cli_rx, NULL),
+    SHELL_CMD("max_payload_len", lora_cli_max_payload_len, NULL),
 };
 
 static int
@@ -557,18 +533,11 @@ err:
     return rc;
 }
 
+MAKE_SHELL_CMD(lora, lora_cli_cmd_fn, NULL)
+
 #endif /* MYNEWT_VAL(LORA_NODE_CLI) */
 
 #if MYNEWT_VAL(LORA_NODE_LOG_CLI) == 1
-
-#if MYNEWT_VAL(LORA_NODE_LOG_CLI) == 1
-static int lora_cli_log_cmd(int argc, char **argv);
-
-static struct shell_cmd lora_node_log_cmd = {
-    .sc_cmd = "ln_log",
-    .sc_cmd_func = lora_cli_log_cmd
-};
-#endif
 
 int
 lora_cli_log_cmd(int argc, char **argv)
@@ -704,21 +673,7 @@ next_entry:
     return 0;
 }
 
-#endif /* MYNEWT_VAL(LORA_NODE_LOG_CLI) */
+MAKE_SHELL_CMD(ln_log, lora_cli_log_cmd, NULL)
 
-void
-lora_cli_init(void)
-{
-    int rc;
-
-    (void)rc;
-#if MYNEWT_VAL(LORA_NODE_CLI)
-    rc = shell_cmd_register(&lora_cli_cmd);
-    SYSINIT_PANIC_ASSERT_MSG(rc == 0, "Failed to register lora CLI command");
-#endif
-#if MYNEWT_VAL(LORA_NODE_LOG_CLI)
-    rc = shell_cmd_register(&lora_node_log_cmd);
-    assert(rc == 0);
 #endif /* MYNEWT_VAL(LORA_NODE_LOG_CLI) */
-}
 

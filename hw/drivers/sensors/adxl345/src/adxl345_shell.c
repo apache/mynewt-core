@@ -29,13 +29,6 @@
 
 #if MYNEWT_VAL(ADXL345_CLI)
 
-static int adxl345_shell_cmd(int argc, char **argv);
-
-static struct shell_cmd adxl345_shell_cmd_struct = {
-    .sc_cmd = "adxl345",
-    .sc_cmd_func = adxl345_shell_cmd
-};
-
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(ADXL345_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(ADXL345_SHELL_ITF_NUM),
@@ -70,7 +63,7 @@ adxl345_shell_err_invalid_arg(char *cmd_name)
 static int
 adxl345_shell_help(void)
 {
-    console_printf("%s cmd [flags...]\n", adxl345_shell_cmd_struct.sc_cmd);
+    console_printf("adxl345 cmd [flags...]\n");
     console_printf("cmd:\n");
     console_printf("\tr    [n_samples]\n");
     console_printf("\tchipid\n");
@@ -249,15 +242,6 @@ adxl345_shell_cmd(int argc, char **argv)
     return adxl345_shell_err_unknown_arg(argv[1]);
 }
 
-int
-adxl345_shell_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&adxl345_shell_cmd_struct);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    return rc;
-}
+MAKE_SHELL_CMD(adxl345, adxl345_shell_cmd, NULL)
 
 #endif

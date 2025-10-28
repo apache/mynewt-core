@@ -634,15 +634,6 @@ int bq27z561_config(struct bq27z561 * bq27z561, struct bq27z561_cfg * cfg);
  */
 int bq27z561_init(struct os_dev * dev, void * arg);
 
-#if MYNEWT_VAL(BQ27Z561_CLI)
-/**
- * Initialize the BQ27Z561 shell extensions.
- *
- * @return 0 on success, non-zero on failure.
- */
-int bq27z561_shell_init(void);
-#endif
-
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
  * Create I2C bus node for BQ27Z561

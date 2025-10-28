@@ -41,5 +41,7 @@ pkg.deps.LORA_NODE_LOG_CLI:
 pkg.req_apis:
     - lora_node_driver
 
+pkg.whole_archive: true
+
 pkg.init:
     lora_node_init: 'MYNEWT_VAL(LORA_NODE_SYSINIT_STAGE)'
