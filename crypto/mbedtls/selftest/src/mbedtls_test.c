@@ -27,7 +27,6 @@
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
 #include "mbedtls/aes.h"
-#include "mbedtls/arc4.h"
 #include "mbedtls/bignum.h"
 #include "mbedtls/ccm.h"
 #include "mbedtls/dhm.h"
@@ -41,7 +40,6 @@
 #include "mbedtls/ripemd160.h"
 #include "mbedtls/rsa.h"
 #include "mbedtls/x509.h"
-#include "mbedtls/xtea.h"
 #include "mbedtls/poly1305.h"
 #include "mbedtls/chacha20.h"
 #include "mbedtls/chachapoly.h"
@@ -53,7 +51,6 @@
 #include "mbedtls/timing.h"
 
 TEST_CASE_DECL(aes_test)
-TEST_CASE_DECL(arc4_test)
 TEST_CASE_DECL(aria_test)
 TEST_CASE_DECL(base64_test)
 TEST_CASE_DECL(bignum_test)
@@ -70,8 +67,6 @@ TEST_CASE_DECL(ecp_test)
 TEST_CASE_DECL(entropy_test)
 TEST_CASE_DECL(gcm_test)
 TEST_CASE_DECL(hmac_drbg_test)
-TEST_CASE_DECL(md2_test)
-TEST_CASE_DECL(md4_test)
 TEST_CASE_DECL(md5_test)
 TEST_CASE_DECL(memory_buffer_alloc_test)
 TEST_CASE_DECL(nist_kw_test)
@@ -82,15 +77,11 @@ TEST_CASE_DECL(rsa_test)
 TEST_CASE_DECL(sha1_test)
 TEST_CASE_DECL(sha256_test)
 TEST_CASE_DECL(sha512_test)
-TEST_CASE_DECL(timing_test)
-TEST_CASE_DECL(x509_test)
-TEST_CASE_DECL(xtea_test)
 TEST_CASE_DECL(gcm_mynewt_test)
 
 TEST_SUITE(mbedtls_test_all)
 {
     aes_test();
-    arc4_test();
     aria_test();
     base64_test();
     bignum_test();
@@ -107,8 +98,6 @@ TEST_SUITE(mbedtls_test_all)
     entropy_test();
     gcm_test();
     hmac_drbg_test();
-    md2_test();
-    md4_test();
     md5_test();
     nist_kw_test();
     pkcs5_test();
@@ -118,9 +107,6 @@ TEST_SUITE(mbedtls_test_all)
     sha1_test();
     sha256_test();
     sha512_test();
-    timing_test();
-    x509_test();
-    xtea_test();
     gcm_mynewt_test();
 }
 

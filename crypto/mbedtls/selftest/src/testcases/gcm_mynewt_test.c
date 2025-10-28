@@ -35,16 +35,13 @@ static const uint8_t initial_data[110] = {
     0x89, 0x8A, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99,
     0x9A, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA
 };
-
 static const uint8_t key[32] = { 0xC0, 0xCA, 0xC0, 0x1A, 0xC0, 0xCA, 0xC0,
                                  0x1A, 0xC0, 0xCA, 0xC0, 0x1A, 0xC0, 0xCA,
                                  0xC0, 0x1A, 0xC0, 0xCA, 0xC0, 0x1A, 0xC0,
                                  0xCA, 0xC0, 0x1A, 0xC0, 0xCA, 0xC0, 0x1A,
                                  0xC0, 0xCA, 0xC0, 0x1A };
-
 static const uint8_t iv[12] = { 0x0, 0x1, 0x2, 0x3, 0x4, 0x5,
                                 0x6, 0x7, 0x8, 0x9, 0xA, 0xB };
-
 static const uint8_t expected_tag[16] = { 0x05, 0x5D, 0x8E, 0xD4, 0xF9, 0x2A,
                                           0x87, 0x87, 0x6F, 0x23, 0xF2, 0xE6,
                                           0xF0, 0x1D, 0x6D, 0x5C };
@@ -63,6 +60,7 @@ mbedtls_gcm_mynewt_test_crypt(uint8_t enc)
     uint16_t off;
     uint16_t blklen;
     uint16_t totlen;
+    size_t len_check;
     int rc;
 
     if (rsm_ucast_cipher == NULL) {
@@ -72,13 +70,13 @@ mbedtls_gcm_mynewt_test_crypt(uint8_t enc)
 
     memset(&ctx, 0, sizeof(ctx));
     mbedtls_aes_init(&aes_ctx);
-    rc = mbedtls_gcm_setkey_noalloc(&ctx, rsm_ucast_cipher, key, &aes_ctx);
+    rc = mbedtls_gcm_setkey_noalloc(&ctx, rsm_ucast_cipher, key, 256, &aes_ctx);
     if (rc) {
         goto out;
     }
 
     rc = mbedtls_gcm_starts(&ctx, enc == 1 ? MBEDTLS_GCM_ENCRYPT : MBEDTLS_GCM_DECRYPT,
-                            iv, sizeof(iv), NULL, 0);
+                            iv, sizeof(iv));
     if (rc) {
         goto out;
     }
@@ -105,10 +103,14 @@ mbedtls_gcm_mynewt_test_crypt(uint8_t enc)
         }
 
         if (off < add_len) {
-            mbedtls_gcm_update_add(&ctx, blklen, ptr);
+            mbedtls_gcm_update_ad(&ctx, ptr, blklen);
         } else {
-            rc = mbedtls_gcm_update(&ctx, blklen, ptr, ptr);
+            rc = mbedtls_gcm_update(&ctx, ptr, blklen, ptr, blklen, &len_check);
             if (rc) {
+                goto out;
+            }
+            if (len_check != blklen) {
+                rc = 1;
                 goto out;
             }
         }
@@ -116,7 +118,11 @@ mbedtls_gcm_mynewt_test_crypt(uint8_t enc)
         off += blklen;
     }
 
-    rc = mbedtls_gcm_finish(&ctx, test_tag, sizeof(test_tag));
+    rc = mbedtls_gcm_finish(&ctx, NULL, 0, &len_check, test_tag, sizeof(test_tag));
+    if (len_check != 0) {
+        rc = 1;
+        goto out;
+    }
 out:
     memset(&ctx, 0, sizeof(ctx));
     mbedtls_aes_free(&aes_ctx);
@@ -138,5 +144,5 @@ TEST_CASE_SELF(gcm_mynewt_test)
     rc = mbedtls_gcm_mynewt_test_crypt(0);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(memcmp(test_tag, expected_tag, sizeof(test_tag)) == 0);
-    TEST_ASSERT(memcmp(test_buf, initial_data, sizeof(test_buf)) == 0);
+    TEST_ASSERT(memcmp(test_buf, initial_data, sizeof(initial_data)) == 0);
 }
