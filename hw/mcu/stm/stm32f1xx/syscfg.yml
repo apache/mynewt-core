@@ -59,13 +59,26 @@ syscfg.defs:
         description: HSI calibration value
         value: 'RCC_HSICALIBRATION_DEFAULT'
 
+    STM32_CLOCK_PLL:
+        description: Enable PLL
+        value: 1
+
     STM32_CLOCK_PLL_MUL:
         description: PLL clock multiplication
         value: 0
 
+    STM32_CLOCK_PLL_SOURCE:
+        description: Enable PLL
+        value: LL_RCC_PLLSOURCE_HSI_DIV_2
+
     STM32_CLOCK_PREDIV:
         description: HSE clock divider (pre PLL)
         value: 'RCC_HSE_PREDIV_DIV1'
+
+    STM32_CLOCK_SYSCLK_SOURCE:
+        description: >
+            System clock selection
+        value: LL_RCC_SYS_CLKSOURCE_HSI
 
     STM32_CLOCK_AHB_DIVIDER:
         description: AHB prescaler
