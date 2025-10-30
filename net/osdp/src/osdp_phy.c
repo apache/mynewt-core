@@ -282,7 +282,7 @@ osdp_phy_check_packet(struct osdp_pd *pd, uint8_t *buf, int len,
 
     if (!ISSET_FLAG(pd, PD_FLAG_PD_MODE) &&
         !(pkt->pd_address & 0x80)) {
-        OSDP_LOG_ERROR("Reply without address MSB set!\n", pkt->pd_address);
+        OSDP_LOG_ERROR("Reply without address MSB set 0x%02x!\n", pkt->pd_address);
         return OSDP_ERR_PKT_FMT;
     }
 

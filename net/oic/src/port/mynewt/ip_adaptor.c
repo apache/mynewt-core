@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include "os/mynewt.h"
 
@@ -165,7 +166,7 @@ oc_send_buffer_ip6_int(struct os_mbuf *m, int is_mcast)
             to.msin6_scope_id = itf2.mif_idx;
             rc = mn_sendto(oc_ucast6, n, (struct mn_sockaddr *) &to);
             if (rc != 0) {
-                OC_LOG_ERROR("Failed to send buffer %u on itf %d\n",
+                OC_LOG_ERROR("Failed to send buffer %u on itf %" PRIu32 "\n",
                              OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
                 STATS_INC(oc_ip_stats, oerr);
                 os_mbuf_free_chain(n);
@@ -176,7 +177,7 @@ oc_send_buffer_ip6_int(struct os_mbuf *m, int is_mcast)
             to.msin6_scope_id = itf2.mif_idx;
             rc = mn_sendto(oc_ucast6, m, (struct mn_sockaddr *) &to);
             if (rc != 0) {
-                OC_LOG_ERROR("Failed sending buffer %u on itf %d\n",
+                OC_LOG_ERROR("Failed sending buffer %u on itf %" PRIu32 "\n",
                              OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
                 STATS_INC(oc_ip_stats, oerr);
                 os_mbuf_free_chain(m);
@@ -187,7 +188,7 @@ oc_send_buffer_ip6_int(struct os_mbuf *m, int is_mcast)
     } else {
         rc = mn_sendto(oc_ucast6, m, (struct mn_sockaddr *) &to);
         if (rc != 0) {
-            OC_LOG_ERROR("Failed to send buffer %u on itf %d\n",
+            OC_LOG_ERROR("Failed to send buffer %u on itf %" PRIu32 "\n",
                          OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
             STATS_INC(oc_ip_stats, oerr);
             os_mbuf_free_chain(m);
