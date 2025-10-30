@@ -190,7 +190,12 @@ int modlog_foreach(modlog_foreach_fn *fn, void *arg);
  * @param level                 The severity of the log entry to write.
  * @param msg                   The "printf" formatted string to write.
  */
-void modlog_printf(uint8_t module, uint8_t level, const char *msg, ...);
+
+void modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
+#if MYNEWT_VAL(MODLOG_USE_PRINTF_ATTRIBUTE)
+    __attribute__((format(printf, 3, 4)))
+#endif
+    ;
 
 /**
  * @brief Writes a specified number of bytes as a text entry to the specified log module.

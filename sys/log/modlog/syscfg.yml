@@ -45,3 +45,9 @@ syscfg.defs:
         description: >
             Sysinit stage for modular logging functionality.
         value: 100
+    MODLOG_USE_PRINTF_ATTRIBUTE:
+        description: >
+            Use the `format(printf, ...)` attribute on the modlog_printf
+            prototype. Enables compile-time checking of modlog_printf arguments
+            against the format string.
+        value: 0
