@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <stdbool.h>
+#include <os/mynewt.h>
 #include <hal/hal_nvreg.h>
 #include <mcu/stm32_hal.h>
 
@@ -30,8 +32,14 @@
 #define HAL_NVREG_MAX (0)
 #endif
 
+#if MYNEWT_VAL_MCU_STM32F1
+#define HAL_NVREG_WIDTH_BYTES 2
+#define HAL_NVREG_START_INDEX 1
+#else
 /* RTC backup registers are 32-bits wide */
 #define HAL_NVREG_WIDTH_BYTES (4)
+#define HAL_NVREG_START_INDEX 0
+#endif
 
 void
 hal_nvreg_write(unsigned int reg, uint32_t val)
@@ -39,14 +47,25 @@ hal_nvreg_write(unsigned int reg, uint32_t val)
 #if PWR_ENABLED
     RTC_HandleTypeDef hrtc = { .Instance = RTC };
     if (reg < HAL_NVREG_MAX) {
+#if defined(__HAL_RCC_PWR_IS_CLK_DISABLED)
+        bool was_pwr_disabled = __HAL_RCC_PWR_IS_CLK_DISABLED();
+        if (was_pwr_disabled) {
+            __HAL_RCC_PWR_CLK_ENABLE();
+        }
+#endif
 #if defined(__HAL_RCC_BKP_CLK_ENABLE)
         __HAL_RCC_BKP_CLK_ENABLE();
 #endif
         HAL_PWR_EnableBkUpAccess();
-        HAL_RTCEx_BKUPWrite(&hrtc, reg, val);
+        HAL_RTCEx_BKUPWrite(&hrtc, reg + HAL_NVREG_START_INDEX, val);
         HAL_PWR_DisableBkUpAccess();
 #if defined(__HAL_RCC_BKP_CLK_DISABLE)
         __HAL_RCC_BKP_CLK_DISABLE();
+#endif
+#if defined(__HAL_RCC_PWR_IS_CLK_DISABLED)
+        if (was_pwr_disabled) {
+            __HAL_RCC_PWR_CLK_DISABLE();
+        }
 #endif
     }
 #endif
@@ -60,7 +79,7 @@ hal_nvreg_read(unsigned int reg)
     RTC_HandleTypeDef hrtc = { .Instance = RTC };
     if (reg < HAL_NVREG_MAX) {
         HAL_PWR_EnableBkUpAccess();
-        val = HAL_RTCEx_BKUPRead(&hrtc, reg);
+        val = HAL_RTCEx_BKUPRead(&hrtc, reg + HAL_NVREG_START_INDEX);
         HAL_PWR_DisableBkUpAccess();
     }
 #endif
