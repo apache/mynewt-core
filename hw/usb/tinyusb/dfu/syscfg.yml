@@ -130,6 +130,9 @@ syscfg.defs:
 syscfg.vals:
     USBD_DFU: 1
 
+syscfg.vals.USBD_DFU_RUNTIME:
+    USBD_DFU: 0
+
 syscfg.logs:
     USBD_DFU_LOG:
         module: MYNEWT_VAL(USBD_DFU_LOG_MODULE)

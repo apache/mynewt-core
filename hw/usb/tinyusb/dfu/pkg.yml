@@ -29,8 +29,16 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/usb/tinyusb"
+
+pkg.deps.USBD_DFU:
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@mcuboot/boot/bootutil"
+
+pkg.source_files.USBD_DFU:
+    - src/dfu.c
+
+pkg.source_files.USBD_DFU_RUNTIME:
+    - src/dfu_runtime.c
 
 pkg.init.USBD_DFU_AUTO_CONFIRM:
     dfu_init: 'MYNEWT_VAL(USBD_DFU_SYSINIT_STAGE)'
