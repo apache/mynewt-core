@@ -27,6 +27,23 @@ jlink_sn () {
     fi
 }
 
+verify_sn() {
+    if [ -n "$SRN_ARG" ]; then
+         return 0
+    fi
+
+    SN_LIST=$(nrfutil device list --json | grep -oE '"serialNumber"[[:space:]]*:[[:space:]]*"[0-9]+"' \
+      | grep -oE '[0-9]+' | sort -u)
+    SN_COUNT=$(wc -l <<< "$SN_LIST")
+
+    if [ "$SN_COUNT" -eq 1 ]; then
+        SRN_ARG="--serial-number $SN_LIST "
+        return 0
+    else
+        echo -e "Multiple devices found, serial numbers: \n$SN_LIST \n"
+        return 1
+    fi
+}
 #
 # FILE_NAME must contain the name of the file to load
 # FLASH_OFFSET must contain the offset in flash where to place it
@@ -86,6 +103,11 @@ nrfutil_load () {
 
     if [ -z ${ZIP_FILE} ] ; then
         jlink_sn
+
+        verify_sn
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
 
         echo "Downloading" ${HEX_FILE}
 
