@@ -30,16 +30,16 @@ syscfg.defs:
             tool without debugger.
         value: 0
 
-syscfg.BSP_NRF_SDK_FLASH_LAYOUT:
+syscfg.vals.BSP_NRF_SDK_FLASH_LAYOUT:
     # Change to use Nordic DFU bootloader which is likely to be used
     # when device still has original bootloader
-    NRFUTIL_TRAITS: nordicDfu
+    NRFUTIL_DFU_MODE: 1
+    BOOTUTIL_SINGLE_APPLICATION_SLOT: 1
 
 syscfg.vals:
     MYNEWT_DOWNLOADER: nrfutil
     JLINK_TARGET: nRF52840_xxAA
     PYOCD_TARGET: nrf52840
-    NRFUTIL_TRAITS: jlink
 
 # Enable nRF52840 MCU and common startup code
     MCU_TARGET: nRF52840
