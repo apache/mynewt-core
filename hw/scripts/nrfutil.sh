@@ -38,8 +38,14 @@ nrfutil_load () {
         echo "Missing filename"
         exit 1
     fi
+
+    NRF_TRAITS_OPT=""
+    if [ -n "${MYNEWT_VAL_NRFUTIL_TRAITS}" ]; then
+        NRF_TRAITS_OPT="--traits ${MYNEWT_VAL_NRFUTIL_TRAITS}"
+    fi
+
     # If nordicDfu is to be used, create hex file directly from ELF
-    if [ "$MYNEWT_VAL_NRFUTIL_TRAITS" == "nordicDfu" ] ; then
+    if [ "${MYNEWT_VAL_NRFUTIL_DFU_MODE:-0}" -eq 1 ] ; then
         arm-none-eabi-objcopy -O ihex ${ELF_FILE} ${HEX_FILE}
     elif [ ! -f "${FILE_NAME}" ]; then
         # tries stripping current path for readability
@@ -65,22 +71,35 @@ nrfutil_load () {
     fi
 
     ret=0
-    if [ -z ${NRFUTIL_TRAITS} ] ; then
-        if [ -z ${MYNEWT_VAL_NRFUTIL_TRAITS} ] ; then
-            NRFUTIL_TRAITS="--traits jlink"
-        else
-            NRFUTIL_TRAITS="--traits ${MYNEWT_VAL_NRFUTIL_TRAITS}"
-            if [ $MYNEWT_VAL_NRFUTIL_TRAITS == "nordicDfu" ] ; then
-                ZIP_FILE=${BIN_BASENAME}.zip
-                PORT=`nrfutil device list --traits nordicDfu | awk '/ports/ { print $2 }'`
-                # TODO: hw-version is probably incorrect for non NRF52 devices
-                nrfutil pkg generate --hw-version 52 --sd-req 0 --application ${HEX_FILE} --application-version 1 ${ZIP_FILE}
-                echo "Downloading" ${ZIP_FILE}
-                nrfutil dfu usb-serial -p ${PORT} --package ${ZIP_FILE}
-                if [ $? -ne 0 ]; then
-                    ret=1
-                fi
+    if [ "${MYNEWT_VAL_NRFUTIL_DFU_MODE:-0}" -eq 1 ] ; then
+        ZIP_FILE=${BIN_BASENAME}.zip
+        if [ -n "${MYNEWT_VAL_NRFUTIL_DFU_SN}" ] ; then
+            PORT=$(nrfutil device list --traits nordicDfu | awk -v dfu_sn=$MYNEWT_VAL_NRFUTIL_DFU_SN \
+            'dfu_sn==$1 { sn_match=1 }
+             /^Ports/ { if(sn_match) { print $2; sn_match=0 }}
+             ')
+            if [ -z "$PORT" ] ; then
+              echo "Error: NRFUTIL_DFU_SN does not match any connected board."
+              return 1
             fi
+        else
+            PORT=$(nrfutil device list --traits nordicDfu | awk '/^Ports/ { print $2 }')
+            PORT_COUNT=$(echo "$PORT" | wc -w)
+            if [ "$PORT_COUNT" -eq 0 ]; then
+                echo "Error: No Nordic DFU devices found."
+                return 1
+            elif [ "$PORT_COUNT" -gt 1 ]; then
+                echo "Error: Found multiple DFU devices. Connect exactly one supported device or add NRFUTIL_DFU_SN to your target."
+                return 1
+            fi
+        fi
+
+        # TODO: hw-version is probably incorrect for non NRF52 devices
+        nrfutil pkg generate --hw-version 52 --sd-req 0 --application ${HEX_FILE} --application-version 1 ${ZIP_FILE}
+        echo "Downloading" ${ZIP_FILE}
+        nrfutil dfu usb-serial -p ${PORT} --package ${ZIP_FILE}
+        if [ $? -ne 0 ]; then
+            ret=1
         fi
     fi
 
@@ -88,13 +107,12 @@ nrfutil_load () {
         jlink_sn
 
         echo "Downloading" ${HEX_FILE}
-
-        nrfutil device program --firmware ${HEX_FILE} $SRN_ARG ${NRFUTIL_ARG} ${NRFUTIL_TRAITS} --options chip_erase_mode=ERASE_RANGES_TOUCHED_BY_FIRMWARE
+        nrfutil device program --firmware ${HEX_FILE} ${SRN_ARG} ${NRF_TRAITS_OPT} ${NRFUTIL_ARG} --options chip_erase_mode=ERASE_RANGES_TOUCHED_BY_FIRMWARE
 
         if [ $? -ne 0 ]; then
             ret=1
         else
-            nrfutil device reset $SRN_ARG
+            nrfutil device reset $SRN_ARG ${NRF_TRAITS_OPT}
         fi
     fi
 
