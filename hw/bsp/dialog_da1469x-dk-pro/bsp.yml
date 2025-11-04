@@ -30,12 +30,24 @@ bsp.linkerscript:
     - "hw/bsp/dialog_da1469x-dk-pro/da1469x.ld"
     - "hw/mcu/dialog/da1469x/da1469x.ld"
 
+bsp.linkerscript.'MCU_TARGET == "DA14691"'.OVERWRITE:
+    - "hw/bsp/dialog_da1469x-dk-pro/da14691.ld"
+    - "hw/mcu/dialog/da1469x/da1469x.ld"
+
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/dialog_da1469x-dk-pro/boot-da1469x.ld"
     - "hw/mcu/dialog/da1469x/da1469x.ld"
 
+bsp.linkerscript.BOOT_LOADER.'MCU_TARGET == "DA14691"'.OVERWRITE:
+    - "hw/bsp/dialog_da1469x-dk-pro/boot-da14691.ld"
+    - "hw/mcu/dialog/da1469x/da1469x.ld"
+
 bsp.linkerscript.RAM_RESIDENT.OVERWRITE:
     - "hw/bsp/dialog_da1469x-dk-pro/boot-da1469x.ld"
+    - "hw/mcu/dialog/da1469x/da1469x_ram_resident.ld"
+
+bsp.linkerscript.RAM_RESIDENT.'MCU_TARGET == "DA14691"'.OVERWRITE:
+    - "hw/bsp/dialog_da1469x-dk-pro/boot-da14691.ld"
     - "hw/mcu/dialog/da1469x/da1469x_ram_resident.ld"
 
 bsp.flash_map:
