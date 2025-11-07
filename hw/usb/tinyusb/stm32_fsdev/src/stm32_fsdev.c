@@ -32,6 +32,44 @@ USB_IRQHandler(void)
     tud_int_handler(0);
 }
 
+#define IS_PIN_MODE(m) MYNEWT_VAL_CHOICE(USB_DP_PULLUP_CONTROL_PIN_MODE, m)
+
+void
+dcd_disconnect(uint8_t rhport)
+{
+    (void)rhport;
+
+    if (MYNEWT_VAL_USB_DP_PULLUP_CONTROL_PIN >= 0) {
+        if (IS_PIN_MODE(enable_1_disable_0) || IS_PIN_MODE(enable_input_disable_0)) {
+            hal_gpio_init_out(MYNEWT_VAL_USB_DP_PULLUP_CONTROL_PIN, 0);
+        } else if (IS_PIN_MODE(enable_0_disable_1) ||
+                   IS_PIN_MODE(enable_input_disable_1)) {
+            hal_gpio_init_out(MYNEWT_VAL_USB_DP_PULLUP_CONTROL_PIN, 1);
+        } else if (IS_PIN_MODE(enable_0_disable_input) ||
+                   IS_PIN_MODE(enable_1_disable_input)) {
+            hal_gpio_deinit(MYNEWT_VAL_USB_DP_PULLUP_CONTROL_PIN);
+        }
+    }
+}
+
+void
+dcd_connect(uint8_t rhport)
+{
+    (void)rhport;
+
+    if (MYNEWT_VAL_USB_DP_PULLUP_CONTROL_PIN >= 0) {
+        if (IS_PIN_MODE(enable_1_disable_0) || IS_PIN_MODE(enable_1_disable_input)) {
+            hal_gpio_init_out(MYNEWT_VAL(USB_DP_PULLUP_CONTROL_PIN), 1);
+        } else if (IS_PIN_MODE(enable_0_disable_1) ||
+                   IS_PIN_MODE(enable_0_disable_input)) {
+            hal_gpio_init_out(MYNEWT_VAL(USB_DP_PULLUP_CONTROL_PIN), 0);
+        } else if (IS_PIN_MODE(enable_input_disable_0) ||
+                   IS_PIN_MODE(enable_input_disable_1)) {
+            hal_gpio_deinit(MYNEWT_VAL(USB_DP_PULLUP_CONTROL_PIN));
+        }
+    }
+}
+
 void
 tinyusb_hardware_init(void)
 {
@@ -43,6 +81,7 @@ tinyusb_hardware_init(void)
     NVIC_SetVector(USBWakeUp_IRQn, (uint32_t)USB_IRQHandler);
     NVIC_SetPriority(USBWakeUp_IRQn, 2);
 
+    dcd_disconnect(0);
     /*
      * USB Pin Init
      * PA11- DM, PA12- DP

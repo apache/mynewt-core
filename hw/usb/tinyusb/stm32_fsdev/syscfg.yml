@@ -25,3 +25,28 @@ syscfg.defs:
             then device is discovered by host.
         value: 1
 
+    USB_DP_PULLUP_CONTROL_PIN:
+        description: >
+            Set pin number (other then PA11) that connects 1.5k resistor to D+
+        value: -1
+
+    USB_DP_PULLUP_CONTROL_PIN_MODE:
+        description: >
+            1.5 kOhm Resistor can be connected directly to one of the output pins,
+            or it can use additional switch to connect resistor.
+        choices:
+            # Following two cases are used when 1.5k is connected when MCU is down
+            # and needs some control pin value to be shorted to ground
+            - enable_input_disable_0
+            - enable_input_disable_1
+            # This is rare case when both disable and enable requires control pin
+            # to be connected and set to certain value
+            - enable_1_disable_0
+            - enable_0_disable_1
+            # Current can be drawn directly from control PIN it there is not additional
+            # switching hardware element.
+            - enable_1_disable_input
+            # Case when resistor is connected from MCU pin via inverting transistor
+            # current is not drawn from MCU pin.
+            - enable_0_disable_input
+        value: enable_1_disable_0
