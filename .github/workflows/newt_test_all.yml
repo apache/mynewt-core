@@ -60,6 +60,7 @@ jobs:
              newt upgrade --shallow=1
              cd ..
       - name: newt test all
+        shell: bash
         run: |
              cd build
-             newt test all
+             sudo `which newt` test all
