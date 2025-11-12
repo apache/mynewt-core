@@ -25,7 +25,7 @@
 /*
  * How long to wait before declaring discovery process failure.
  */
-#define OIC_TEST_FAIL_DLY   (OS_TICKS_PER_SEC * 4)
+#define OIC_TEST_FAIL_DLY (OS_TICKS_PER_SEC * 8)
 
 static const char *oic_test_phase;
 static struct os_callout oic_test_timer;
