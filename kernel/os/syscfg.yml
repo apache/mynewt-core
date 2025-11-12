@@ -201,6 +201,15 @@ syscfg.defs:
             If set, run time is measured in cpu time ticks rather than OS time
             ticks.
         value: 0
+    OS_ASSERT_ON_ERRORS:
+        description: >
+            Assert on errors covered with the M_CHECKIF() macro.
+        value: 0
+    OS_NO_RUNTIME_CHECKS:
+        description: >
+            Do not do any runtime checks or asserts when using the M_CHECKIF()
+            macro.
+        value: 0
 
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1
