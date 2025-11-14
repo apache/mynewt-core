@@ -25,6 +25,9 @@
 
 #ifdef __cplusplus
 extern "C" {
+
+
+
 #endif
 
 /* Define special stackos sections */
@@ -36,7 +39,13 @@ extern "C" {
 #define bssnz_t         sec_bss_nz_core
 
 extern uint8_t _ram_start;
-#define RAM_SIZE        0x80000
+
+#if MYNEWT_VAL_CHOICE(MCU_TARGET, DA14691)
+#define RAM_SIZE 0x60000
+#else
+#define RAM_SIZE 0x80000
+#endif
+
 
 /* LED pins */
 #define LED_1           (33)    /* P1_1 */
