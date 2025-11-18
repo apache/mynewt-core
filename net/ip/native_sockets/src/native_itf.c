@@ -73,6 +73,7 @@ native_sock_itf_getnext(struct mn_itf *mi)
             continue;
         }
         strncpy(mi->mif_name, ifa->ifa_name, sizeof(mi->mif_name));
+        mi->mif_name[sizeof(mi->mif_name) - 1] = '\0';
         mi->mif_idx = cur_idx;
         mi->mif_flags = itf_flags(ifa->ifa_flags);
         rc = 0;
