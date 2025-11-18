@@ -169,10 +169,14 @@ conf_test_file_strstr(const char *fname, char *string)
     buf[rlen] = '\0';
 
     if (strstr(buf, string)) {
-        return 0;
+        rc = 0;
     } else {
-        return -1;
+        rc = -1;
     }
+
+    free(buf);
+
+    return rc;
 }
 
 void config_test_fill_area(char test_value[64][CONF_MAX_VAL_LEN],
