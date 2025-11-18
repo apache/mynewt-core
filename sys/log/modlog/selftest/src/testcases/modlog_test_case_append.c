@@ -198,5 +198,9 @@ mltca_run(bool use_mbufs)
 TEST_CASE_SELF(modlog_test_case_append)
 {
     mltca_run(false);
+}
+
+TEST_CASE_SELF(modlog_test_case_append_mbuf)
+{
     mltca_run(true);
 }
