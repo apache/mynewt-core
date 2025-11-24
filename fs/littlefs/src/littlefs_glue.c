@@ -21,16 +21,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "os/mynewt.h"
+#include <os/mynewt.h>
 #include <hal/hal_flash.h>
-#include <disk/disk.h>
 #include <flash_map/flash_map.h>
-
+#include <fs/fs.h>
+#include <fs/fs_if.h>
 #include "lfs.h"
 #include "lfs_util.h"
 
-#include <fs/fs.h>
-#include <fs/fs_if.h>
+static int flash_read(const struct lfs_config *c, lfs_block_t block,
+                      lfs_off_t off, void *buffer, lfs_size_t size);
+static int flash_prog(const struct lfs_config *c, lfs_block_t block,
+                      lfs_off_t off, const void *buffer, lfs_size_t size);
+static int flash_erase(const struct lfs_config *c, lfs_block_t block);
+static int flash_sync(const struct lfs_config *c);
+
+#ifdef LFS_THREADSAFE
+static int littlefs_lock(const struct lfs_config *c);
+static int littlefs_unlock(const struct lfs_config *c);
+#endif
 
 static int littlefs_open(const char *path, uint8_t access_flags,
                          struct fs_file **out_file);
@@ -95,6 +104,52 @@ static struct fs_ops littlefs_ops = {
     .f_name = "littlefs"
 };
 
+/* Min block size equired by littlefs implementation */
+#define MIN_BLOCK_SIZE 128
+
+/* Use min block size for cache and lookahead (no reason, just an arbitrary value) */
+#define CACHE_SIZE     MIN_BLOCK_SIZE
+#define LOOKAHEAD_SIZE MIN_BLOCK_SIZE
+
+static uint32_t g_littlefs_read_buf[CACHE_SIZE / sizeof(uint32_t)];
+static uint32_t g_littlefs_prog_buf[CACHE_SIZE / sizeof(uint32_t)];
+static uint32_t g_littlefs_lookahead_buf[LOOKAHEAD_SIZE / sizeof(uint32_t)];
+
+#ifdef LFS_THREADSAFE
+static struct os_mutex g_littlefs_mutex;
+#endif
+
+static lfs_t g_littlefs;
+static struct lfs_config g_littlefs_config = {
+    .context = NULL,
+
+    .read = flash_read,
+    .prog = flash_prog,
+    .erase = flash_erase,
+    .sync = flash_sync,
+
+#ifdef LFS_THREADSAFE
+    .lock = littlefs_lock,
+    .unlock = littlefs_unlock,
+#endif
+
+    .read_size = MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE),
+    .prog_size = MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE),
+    .block_size = MYNEWT_VAL(LITTLEFS_BLOCK_SIZE),
+    .block_count = MYNEWT_VAL(LITTLEFS_BLOCK_COUNT),
+    .block_cycles = MYNEWT_VAL(LITTLEFS_BLOCK_CYCLES),
+    .cache_size = CACHE_SIZE,
+    .lookahead_size = LOOKAHEAD_SIZE,
+    .read_buffer = g_littlefs_read_buf,
+    .prog_buffer = g_littlefs_prog_buf,
+    .lookahead_buffer = g_littlefs_lookahead_buf,
+    .name_max = 0,
+    .file_max = 0,
+    .attr_max = 0,
+    .metadata_max = 0,
+    .inline_max = MYNEWT_VAL(LITTLEFS_DISABLE_INLINED_FILES) ? -1 : 0,
+};
+
 static int
 littlefs_to_vfs_error(int err)
 {
@@ -128,11 +183,9 @@ littlefs_to_vfs_error(int err)
     case LFS_ERR_NOTEMPTY:        /* fallthrough */
     case LFS_ERR_NOTDIR:          /* fallthrough */
     case LFS_ERR_ISDIR:           /* fallthrough */
+    default:
         rc = FS_EINVAL;
         break;
-    default:
-        /* Possibly unhandled error, maybe in newer versions */
-        assert(0);
     }
 
     return rc;
@@ -215,61 +268,27 @@ flash_sync(const struct lfs_config *c)
     return 0;
 }
 
-static lfs_t *g_lfs = NULL;
-static bool g_lfs_alloc_done = false;
-
-#define READ_SIZE       MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE)
-#define PROG_SIZE       MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE)
-#define CACHE_SIZE      16
-#define LOOKAHEAD_SIZE  16
-
-static uint8_t read_buffer[CACHE_SIZE];
-static uint8_t prog_buffer[CACHE_SIZE];
-static uint8_t __attribute__((aligned(4))) lookahead_buffer[LOOKAHEAD_SIZE];
-static struct lfs_config g_lfs_cfg = {
-    .context = NULL,
-
-    .read = flash_read,
-    .prog = flash_prog,
-    .erase = flash_erase,
-    .sync = flash_sync,
-
-    /* block device configuration */
-    .read_size = READ_SIZE,
-    .prog_size = PROG_SIZE,
-    .block_size = MYNEWT_VAL(LITTLEFS_BLOCK_SIZE),
-    .block_count = MYNEWT_VAL(LITTLEFS_BLOCK_COUNT),
-    .block_cycles = 500,
-    .cache_size = CACHE_SIZE,
-    .lookahead_size = LOOKAHEAD_SIZE,
-    .read_buffer = read_buffer,
-    .prog_buffer = prog_buffer,
-    .lookahead_buffer = lookahead_buffer,
-    .name_max = 0,
-    .file_max = 0,
-    .attr_max = 0,
-    .metadata_max = 0,
-};
-
-static struct os_mutex littlefs_mutex;
-
-static void
-littlefs_lock(void)
+#ifdef LFS_THREADSAFE
+static int
+littlefs_lock(const struct lfs_config *c)
 {
     int rc;
 
-    rc = os_mutex_pend(&littlefs_mutex, OS_TIMEOUT_NEVER);
-    assert(rc == 0 || rc == OS_NOT_STARTED);
+    rc = os_mutex_pend(&g_littlefs_mutex, OS_TIMEOUT_NEVER);
+
+    return (rc == 0 || rc == OS_NOT_STARTED) ? LFS_ERR_OK : LFS_ERR_IO;
 }
 
-static void
-littlefs_unlock(void)
+static int
+littlefs_unlock(const struct lfs_config *c)
 {
     int rc;
 
-    rc = os_mutex_release(&littlefs_mutex);
-    assert(rc == 0 || rc == OS_NOT_STARTED);
+    rc = os_mutex_release(&g_littlefs_mutex);
+
+    return (rc == 0 || rc == OS_NOT_STARTED) ? LFS_ERR_OK : LFS_ERR_IO;
 }
+#endif
 
 static int
 littlefs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
@@ -301,19 +320,15 @@ littlefs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_fi
      * TODO: LitteFS also has LFS_O_EXCL, which causes a failure if a file
      * already exists. This is currently not supported in the FS abstraction.
      */
-
     flags = 0;
     if ((access_flags & (FS_ACCESS_READ | FS_ACCESS_WRITE)) ==
         (FS_ACCESS_READ | FS_ACCESS_WRITE)) {
-        flags |= LFS_O_RDWR;
+        flags = LFS_O_RDWR | LFS_O_CREAT;
     } else if (access_flags & FS_ACCESS_READ) {
-        flags |= LFS_O_RDONLY;
+        flags = LFS_O_RDONLY;
     } else if (access_flags & FS_ACCESS_WRITE) {
-        flags |= LFS_O_WRONLY;
+        flags = LFS_O_WRONLY | LFS_O_CREAT;
     }
-
-    flags |= LFS_O_CREAT;
-
     if (access_flags & FS_ACCESS_APPEND) {
         flags |= LFS_O_APPEND;
     }
@@ -321,9 +336,7 @@ littlefs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_fi
         flags |= LFS_O_TRUNC;
     }
 
-    littlefs_lock();
-    rc = lfs_file_open(g_lfs, out_file, path, flags);
-    littlefs_unlock();
+    rc = lfs_file_open(&g_littlefs, out_file, path, flags);
     if (rc != LFS_ERR_OK) {
         rc = littlefs_to_vfs_error(rc);
         goto out;
@@ -331,7 +344,7 @@ littlefs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_fi
 
     file->file = out_file;
     file->fops = &littlefs_ops;
-    file->lfs = g_lfs;
+    file->lfs = &g_littlefs;
     *out_fs_file = (struct fs_file *) file;
     rc = FS_EOK;
 
@@ -361,9 +374,7 @@ littlefs_close(struct fs_file *fs_file)
 
     lfs = ((struct littlefs_file *) fs_file)->lfs;
 
-    littlefs_lock();
     rc = lfs_file_close(lfs, file);
-    littlefs_unlock();
     free(file);
 
     return littlefs_to_vfs_error(rc);
@@ -384,9 +395,7 @@ littlefs_seek(struct fs_file *fs_file, uint32_t offset)
     lfs = ((struct littlefs_file *) fs_file)->lfs;
 
     /* Returns the new position if succesful */
-    littlefs_lock();
     rc = lfs_file_seek(lfs, file, offset, LFS_SEEK_SET);
-    littlefs_unlock();
     if (rc < 0) {
         return littlefs_to_vfs_error(rc);
     }
@@ -413,9 +422,7 @@ littlefs_getpos(const struct fs_file *fs_file)
      * failing, so just return 0 and hope for the best. This should
      * eventually be fixed in the FS abstraction.
      */
-    littlefs_lock();
     rc = lfs_file_tell(lfs, file);
-    littlefs_unlock();
     if (rc < 0) {
         return 0;
     }
@@ -437,9 +444,7 @@ littlefs_file_len(const struct fs_file *fs_file, uint32_t *out_len)
     file = ((struct littlefs_file *) fs_file)->file;
     lfs = ((struct littlefs_file *) fs_file)->lfs;
 
-    littlefs_lock();
     len = (int32_t)lfs_file_size(lfs, file);
-    littlefs_unlock();
     if (len < 0) {
         return littlefs_to_vfs_error((int)len);
     }
@@ -468,9 +473,7 @@ littlefs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
     file = ((struct littlefs_file *) fs_file)->file;
     lfs = ((struct littlefs_file *) fs_file)->lfs;
 
-    littlefs_lock();
     size = lfs_file_read(lfs, file, out_data, len);
-    littlefs_unlock();
     if (size < 0) {
         return littlefs_to_vfs_error((int)size);
     }
@@ -497,9 +500,7 @@ littlefs_write(struct fs_file *fs_file, const void *data, int len)
     file = ((struct littlefs_file *) fs_file)->file;
     lfs = ((struct littlefs_file *) fs_file)->lfs;
 
-    littlefs_lock();
     size = lfs_file_write(lfs, file, data, len);
-    littlefs_unlock();
     if (size < 0) {
         return littlefs_to_vfs_error((int)size);
     }
@@ -527,9 +528,7 @@ littlefs_unlink(const char *path)
         return FS_EINVAL;
     }
 
-    littlefs_lock();
-    rc = lfs_remove(g_lfs, path);
-    littlefs_unlock();
+    rc = lfs_remove(&g_littlefs, path);
 
     return littlefs_to_vfs_error(rc);
 }
@@ -543,9 +542,7 @@ littlefs_rename(const char *from, const char *to)
         return FS_EINVAL;
     }
 
-    littlefs_lock();
-    rc = lfs_rename(g_lfs, from, to);
-    littlefs_unlock();
+    rc = lfs_rename(&g_littlefs, from, to);
 
     return littlefs_to_vfs_error(rc);
 }
@@ -559,9 +556,7 @@ littlefs_mkdir(const char *path)
         return FS_EINVAL;
     }
 
-    littlefs_lock();
-    rc = lfs_mkdir(g_lfs, path);
-    littlefs_unlock();
+    rc = lfs_mkdir(&g_littlefs, path);
 
     return littlefs_to_vfs_error(rc);
 }
@@ -591,9 +586,7 @@ littlefs_opendir(const char *path, struct fs_dir **out_fs_dir)
         goto out;
     }
 
-    littlefs_lock();
-    rc = lfs_dir_open(g_lfs, out_dir, path);
-    littlefs_unlock();
+    rc = lfs_dir_open(&g_littlefs, out_dir, path);
     if (rc < 0) {
         rc = littlefs_to_vfs_error(rc);
         goto out;
@@ -602,7 +595,7 @@ littlefs_opendir(const char *path, struct fs_dir **out_fs_dir)
     dir->dir = out_dir;
     dir->cur_dirent = NULL;
     dir->fops = &littlefs_ops;
-    dir->lfs = g_lfs;
+    dir->lfs = &g_littlefs;
     *out_fs_dir = (struct fs_dir *)dir;
     rc = FS_EOK;
 
@@ -641,9 +634,7 @@ littlefs_readdir(struct fs_dir *fs_dir, struct fs_dirent **out_fs_dirent)
     dir = ldir->dir;
     lfs = ldir->lfs;
 
-    littlefs_lock();
     rc = lfs_dir_read(lfs, dir, &dirent->info);
-    littlefs_unlock();
     if (rc < 0) {
         free(dirent);
         ldir->cur_dirent = NULL;
@@ -674,9 +665,7 @@ littlefs_closedir(struct fs_dir *fs_dir)
     dir = ((struct littlefs_dir *) fs_dir)->dir;
     lfs = ((struct littlefs_dir *) fs_dir)->lfs;
 
-    littlefs_lock();
     rc = lfs_dir_close(lfs, dir);
-    littlefs_unlock();
 
     free(((struct littlefs_dir *) fs_dir)->cur_dirent);
     free(dir);
@@ -714,125 +703,118 @@ littlefs_dirent_is_dir(const struct fs_dirent *fs_dirent)
     struct lfs_info *info;
 
     if (!fs_dirent) {
-        return FS_EINVAL;
+        return 0;
     }
 
     info = &((struct littlefs_dirent *)fs_dirent)->info;
     return info->type == LFS_TYPE_DIR;
 }
 
-/*
- * Initializes only Mynewt glue, to fully initialize call
- * LitteFS must call littlefs_format or littlefs_mount.
- */
-static int
-littlefs_alloc(void)
+int
+littlefs_format(void)
 {
-    const struct flash_area *fa;
     int rc;
 
-    /*
-     * Already initialized.
-     */
-    if (g_lfs && g_lfs_alloc_done) {
-        return FS_EOK;
-    }
-
-    rc = os_mutex_init(&littlefs_mutex);
-    if (rc != 0) {
-        return FS_EOS;
-    }
-
-    g_lfs = malloc(sizeof(lfs_t));
-    if (!g_lfs) {
-        return FS_ENOMEM;
-    }
-
-    /*
-     * This doesn't seem to be needed because lfs_mount initializes
-     * all fields, but just to stay on the safe side...
-     */
-    memset(g_lfs, 0, sizeof(lfs_t));
-
-    rc = flash_area_open(MYNEWT_VAL(LITTLEFS_FLASH_AREA), &fa);
+    rc = lfs_format(&g_littlefs, &g_littlefs_config);
     if (rc) {
-        free(g_lfs);
-        g_lfs = NULL;
-        return FS_EHW;
+        return littlefs_to_vfs_error(rc);
     }
-
-    /*
-     * TODO: could check that fa_size matches the configured block size * count
-     */
-    g_lfs_cfg.context = (struct flash_area *)fa;
-    g_lfs_alloc_done = true;
 
     return FS_EOK;
 }
 
 int
-littlefs_reformat(void)
+littlefs_mount(void)
 {
     int rc;
 
-    if (!g_lfs_alloc_done) {
-        rc = littlefs_alloc();
-        if (rc != FS_EOK) {
-            return -1;
-        }
-    }
-
-    return lfs_format(g_lfs, &g_lfs_cfg);
-}
-
-int
-littlefs_init(void)
-{
-    int rc;
-
-    if (!g_lfs_alloc_done) {
-        rc = littlefs_alloc();
-        if (rc != FS_EOK) {
-            return rc;
-        }
-    }
-
-    rc = lfs_mount(g_lfs, &g_lfs_cfg);
+    rc = lfs_mount(&g_littlefs, &g_littlefs_config);
     switch (rc) {
     case LFS_ERR_OK:
         break;
     case LFS_ERR_INVAL:
     case LFS_ERR_CORRUPT:
-        /* No valid LittleFS instance detected; act based on configued
-         * detection failure policy.
-         */
-#if MYNEWT_VAL(LITTLEFS_DETECT_FAIL_FORMAT)
-        rc = lfs_format(g_lfs, &g_lfs_cfg);
+#if MYNEWT_VAL(LITTLEFS_AUTO_FORMAT)
+        rc = lfs_format(&g_littlefs, &g_littlefs_config);
         if (!rc) {
-            rc = lfs_mount(g_lfs, &g_lfs_cfg);
+            rc = lfs_mount(&g_littlefs, &g_littlefs_config);
         }
 #endif
         break;
     }
 
-    if (!rc) {
-        fs_register(&littlefs_ops);
+    if (rc) {
+        return littlefs_to_vfs_error(rc);
     }
 
-    return rc;
+    return FS_EOK;
+}
+
+int
+littlefs_init(void)
+{
+    struct lfs_config *lfs_cfg = &g_littlefs_config;
+    const struct flash_area *fa;
+    static struct flash_sector_range fsr;
+    int fsr_cnt;
+    uint32_t block_count;
+    uint32_t block_size;
+    int rc;
+
+#ifdef LFS_THREADSAFE
+    rc = os_mutex_init(&g_littlefs_mutex);
+    if (rc) {
+        return FS_EOS;
+    }
+#endif
+
+    rc = flash_area_open(MYNEWT_VAL(LITTLEFS_FLASH_AREA), &fa);
+    if (rc) {
+        return FS_EHW;
+    }
+
+    lfs_cfg->context = (struct flash_area *)fa;
+
+    fsr_cnt = 1;
+    rc = flash_area_to_sector_ranges(FLASH_AREA_STORAGE, &fsr_cnt, &fsr);
+    if (rc) {
+        return FS_EHW;
+    }
+
+    if (lfs_cfg->block_size == 0 && lfs_cfg->block_count == 0) {
+        block_size = fsr.fsr_sector_size;
+        block_count = fsr.fsr_sector_count;
+
+        /* If sector size is less than required min block size, adjust size and count as needed */
+        if (block_size < MIN_BLOCK_SIZE) {
+            block_size = max(MIN_BLOCK_SIZE, block_size);
+            block_count = fsr.fsr_sector_size * fsr.fsr_sector_count / block_size;
+        }
+
+        lfs_cfg->block_size = block_size;
+        lfs_cfg->block_count = block_count;
+    } else {
+        assert(lfs_cfg->block_size > MIN_BLOCK_SIZE);
+        assert(lfs_cfg->block_count > 0);
+    }
+
+    fs_register(&littlefs_ops);
+
+    return FS_EOK;
 }
 
 void
-littlefs_pkg_init(void)
+littlefs_sysinit(void)
 {
-#if !MYNEWT_VAL(LITTLEFS_DISABLE_SYSINIT)
     int rc;
 
-    /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    /* Attempt to restore an existing littlefs file system from flash. */
     rc = littlefs_init();
+    SYSINIT_PANIC_ASSERT(rc == 0);
+
+#if MYNEWT_VAL(LITTLEFS_AUTO_MOUNT)
+    rc = littlefs_mount();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }

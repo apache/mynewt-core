@@ -18,7 +18,7 @@
 #
 
 pkg.name: fs/littlefs
-pkg.description: LittleFS file system.
+pkg.description: littlefs file system glue
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -30,7 +30,7 @@ pkg.type: sdk
 
 repository.littlefs:
     type: github
-    vers: v2.5.0-commit
+    vers: v2.11.2-commit
     branch: master
     user: littlefs-project
     repo: littlefs
@@ -44,15 +44,21 @@ pkg.deps:
 pkg.source_dirs:
     - "@littlefs/."
     - "src"
-
 pkg.include_dirs:
     - "@littlefs/."
-
-pkg.cflags.LITTLEFS_MIGRATE_V1:
-    - -DLFS_MIGRATE
+pkg.ignore_dirs:
+    - "bd"
+    - "benches"
+    - "runners"
+    - "scripts"
+    - "tests"
 
 pkg.cflags.LITTLEFS_READONLY:
     - -DLFS_READONLY
+pkg.cflags.LITTLEFS_THREAD_SAFE:
+    - -DLFS_THREADSAFE
+pkg.cflags.LITTLEFS_ENABLE_TRACE:
+    - -DLFS_YES_TRACE
 
 pkg.init:
-    littlefs_pkg_init: 'MYNEWT_VAL(LITTLEFS_SYSINIT_STAGE)'
+    littlefs_sysinit: 'MYNEWT_VAL(LITTLEFS_SYSINIT_STAGE)'

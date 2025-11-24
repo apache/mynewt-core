@@ -24,36 +24,55 @@ syscfg.defs:
         restrictions:
             - $notnull
 
-    LITTLEFS_DETECT_FAIL_FORMAT:
+    LITTLEFS_BLOCK_COUNT:
         description: >
-            Behavior when mounting an FS fails. If set, re-format it (default).
-            If unset just ignore the error and continue without mouting the FS.
-        value: 1
+            Number of blocks (sectors) use by this partition.
+            If 0, all sectors of littlefs flash ares are used.
+        value: 0
 
     LITTLEFS_BLOCK_SIZE:
         description: >
-            Size of the sectors used to store a littlefs partition. All sectors
-            must have the same size.
+            Size of the blocks (sectors) on littlefs flash area.
+            All blocks shall have the same size.
+            If 0, sector size of littlefs flash area is used.
         value: 0
 
-    LITTLEFS_MIGRATE_V1:
+    LITTLEFS_BLOCK_CYCLES:
         description: >
-            Enable support for migrating LFSv1 filesystems to v2.
+            Number of erase cycles before metadata is moved to another sector
+            to reduce wear.
+            Equivalent to block_cycles value in littlefs configuration.
+        value: 500
+
+    LITTLEFS_AUTO_MOUNT:
+        description: >
+            Enables mounting of filesystem on init.
         value: 0
+
+    LITTLEFS_AUTO_FORMAT:
+        description: >
+            Enables (re)formatting of filesystem on mount error.
+        value: 0
+
+    LITTLEFS_THREAD_SAFE:
+        description: >
+            Enables littlefs calls locking to endure thread-safety.
+        value: 1
 
     LITTLEFS_READONLY:
         description: >
-            Build LittleFS without write support.
+            Build littlefs without write support.
         value: 0
 
-    LITTLEFS_BLOCK_COUNT:
-        description: >
-            Number of blocks/sectors use by this partition.
-        value: 0
+    LITTLEFS_DISABLE_INLINED_FILES:
+         description: >
+             Disables inlined files.
+         value: 0
 
-    LITTLEFS_DISABLE_SYSINIT:
+    LITTLEFS_ENABLE_TRACE:
         description: >
-            Skip sysinit based initialization when enabled.
+            Enabled littlefs internal trace.
+            This is only for debugging pruposes and it may create a lot of printouts.
         value: 0
 
     LITTLEFS_SYSINIT_STAGE:
@@ -61,6 +80,16 @@ syscfg.defs:
             Sysinit stage for littlefs functionality.
         value: 200
 
+    LITTLEFS_DETECT_FAIL_FORMAT:
+        description: Use LITTLEFS_AUTO_FORMAT
+        value: 0
+        defunct: 1
+
+    LITTLEFS_DISABLE_SYSINIT:
+        description: Use LITTLEFS_AUTO_MOUNT instead
+        value: 0
+        defunct: 1
+
 syscfg.restrictions:
-    - LITTLEFS_BLOCK_SIZE > 0
-    - LITTLEFS_BLOCK_COUNT > 0
+    # block size and block count must be both either default or set; block size must be >=128 (littlefs requirement)
+    - (LITTLEFS_BLOCK_COUNT == 0 && LITTLEFS_BLOCK_SIZE == 0) || (LITTLEFS_BLOCK_COUNT > 0 && LITTLEFS_BLOCK_SIZE >= 128)
