@@ -776,7 +776,7 @@ littlefs_init(void)
     lfs_cfg->context = (struct flash_area *)fa;
 
     fsr_cnt = 1;
-    rc = flash_area_to_sector_ranges(FLASH_AREA_STORAGE, &fsr_cnt, &fsr);
+    rc = flash_area_to_sector_ranges(MYNEWT_VAL(LITTLEFS_FLASH_AREA), &fsr_cnt, &fsr);
     if (rc) {
         return FS_EHW;
     }
