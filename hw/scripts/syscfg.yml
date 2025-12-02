@@ -89,11 +89,20 @@ syscfg.defs:
             Some NRF have more then one core. This can specify non-default core
             (i.e. CP_NETWORK for NRF5340).
         value:
+    NRFUTIL_DFU_MODE:
+        description: >
+            Enables firmware upload through nrfutil dfu usb-serial.
+        value:
     NRFUTIL_TRAITS:
         description: >
-            Traits passed to nrfutil command. If not set `jlink` is the default.
-            It can be 'nordicDfu' to upload binary using Nordic SDK DFU
-            bootloader protocol.
+              Optional device traits used by nrfutil to select boards for flashing.
+              When set (e.g. 'jlink'), all connected devices matching this trait
+              will be programmed.
+        value:
+    NRFUTIL_DFU_SN:
+        description: >
+            DFU serial number passed to the nrfutil script.
+            Used to select the target device for firmware upload.
         value:
     MYNEWT_DEBUGGER_SN:
         description: >
