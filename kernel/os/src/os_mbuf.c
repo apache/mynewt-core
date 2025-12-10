@@ -371,8 +371,6 @@ os_mbuf_dup(struct os_mbuf *om)
     struct os_mbuf *head;
     struct os_mbuf *copy;
 
-    omp = om->om_omp;
-
     head = NULL;
     copy = NULL;
 
