@@ -41,6 +41,7 @@ repo.versions:
     "1.11.0": "mynewt_1_11_0_tag"
     "1.12.0": "mynewt_1_12_0_tag"
     "1.13.0": "mynewt_1_13_0_tag"
+    "1.14.0": "mynewt_1_14_0_tag"
 
     "0-latest": "1.13.0"
     "1-latest": "1.13.0"
@@ -62,6 +63,7 @@ repo.versions:
     "1.11-latest": "1.11.0"
     "1.12-latest": "1.12.0"
     "1.13-latest": "1.13.0"
+    "1.14-latest": "1.14.0"
 
 repo.newt_compatibility:
     # Allow all versions for 0.0.0.  This is a workaround to prevent a warning
@@ -81,6 +83,9 @@ repo.newt_compatibility:
     # Core 1.11.0+ requires newt 1.11.0+ (feature: external modules)
     # Core 1.12.0+ requires newt 1.12.0+ (feature: generated linked scripts)
     # Core 1.13.0+ requires newt 1.13.0+ (feature: modlog module name generation)
+    # Core 1.14.0+ requires newt 1.14.0+ (feature: whole_archive)
+    1.14.0:
+        1.14.0: good
     1.13.0:
         1.13.0: good
     1.12.0:
@@ -128,6 +133,7 @@ repo.deps:
             mynewt_1_11_0_tag: 1.6.0
             mynewt_1_12_0_tag: 1.7.0
             mynewt_1_13_0_tag: 1.8.0
+            mynewt_1_14_0_tag: 1.9.0
 
     mcuboot:
         type: github
@@ -143,6 +149,7 @@ repo.deps:
             mynewt_1_11_0_tag: 1.10.0
             mynewt_1_12_0_tag: 2.0.0
             mynewt_1_13_0_tag: 2.1.0
+            mynewt_1_14_0_tag: 2.1.0
 
     apache-mynewt-mcumgr:
         type: github
@@ -156,3 +163,4 @@ repo.deps:
             mynewt_1_11_0_tag: 0.4.0
             mynewt_1_12_0_tag: 0.4.0
             mynewt_1_13_0_tag: 0.5.0
+            mynewt_1_14_0_tag: 0.6.0
