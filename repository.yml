@@ -43,8 +43,8 @@ repo.versions:
     "1.13.0": "mynewt_1_13_0_tag"
     "1.14.0": "mynewt_1_14_0_tag"
 
-    "0-latest": "1.13.0"
-    "1-latest": "1.13.0"
+    "0-latest": "1.14.0"
+    "1-latest": "1.14.0"
     "0-dev": "0.0.0"       # master
 
     "0.8-latest": "0.8.0"
