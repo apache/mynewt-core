@@ -164,29 +164,56 @@ static int
 fs_cat_cmd(int argc, char **argv)
 {
     int rc;
+    const char *fname;
     struct fs_file *file;
     char buf[32];
+    bool plain_hex;
+    bool verbose_hex;
+    uint16_t offset = 0;
     uint32_t len;
+    int i;
 
-    if (argc != 2) {
-        console_printf("cat <filename>\n");
+    if (argc < 2) {
+        console_printf("cat [-x|X] <filename>\n");
         return -1;
     }
 
-    rc = fs_open(argv[1], FS_ACCESS_READ, &file);
+    plain_hex = !strcmp(argv[1], "-x");
+    verbose_hex = !strcmp(argv[1], "-X");
+
+    fname = plain_hex || verbose_hex ? argv[2] : argv[1];
+
+    rc = fs_open(fname, FS_ACCESS_READ, &file);
     if (rc != FS_EOK) {
-        console_printf("Error opening %s - %d\n", argv[1], rc);
+        console_printf("Error opening %s - %d\n", fname, rc);
         return -1;
     }
 
-    do {
-        rc = fs_read(file, sizeof(buf), buf, &len);
+    while (1) {
+        rc = fs_read(file, verbose_hex ? 16 : sizeof(buf), buf, &len);
         if (rc != FS_EOK) {
-            console_printf("\nError reading %s - %d\n", argv[1], rc);
+            console_printf("\nError reading %s - %d\n", fname, rc);
             break;
         }
-        console_write(buf, len);
-    } while (len > 0);
+
+        if (len == 0) {
+            break;
+        }
+
+        if (verbose_hex) {
+            console_printf("%04X: ", offset);
+        }
+        if (plain_hex || verbose_hex) {
+            for (i = 0; i < len; i++) {
+                console_printf("%02X ", buf[i]);
+            }
+            console_printf("\n");
+        } else {
+            console_write(buf, len);
+        }
+
+        offset += len;
+    }
 
     fs_close(file);
 
