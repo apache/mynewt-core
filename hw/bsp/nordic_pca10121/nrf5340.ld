@@ -20,6 +20,8 @@ MEMORY
 {
   FLASH (rx) : ORIGIN = 0x0000c000, LENGTH = 0x76000
   RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x80000
+  sram_ipc0_tx (rw)  : ORIGIN = 0x20070000, LENGTH = 0x4000
+  sram_ipc0_rx (rw)  : ORIGIN = 0x20074000, LENGTH = 0x4000
 }
 
 /* This linker script is used for images and thus contains an image header */
