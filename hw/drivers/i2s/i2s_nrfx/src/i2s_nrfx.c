@@ -60,6 +60,10 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
         nrfx_buffers.p_rx_buffer = buffer->sample_data;
     }
 
+#if NRFX_API_VER_AT_LEAST(3, 3, 0)
+    nrfx_buffers.buffer_size = buffer_size;
+#endif
+
     assert(i2s_nrfx.nrfx_queued_count < 2);
     assert(i2s_nrfx.nrfx_buffers[i2s_nrfx.nrfx_queued_count] == NULL);
 
@@ -67,7 +71,11 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
     i2s_nrfx.nrfx_queued_count++;
     if (i2s_nrfx.nrfx_queued_count == 1) {
         i2s_driver_state_changed (i2s, I2S_STATE_RUNNING);
+#if NRFX_API_VER_AT_LEAST(3, 3, 0)
+        err = nrfx_i2s_start(&i2s_nrfx.inst, &nrfx_buffers, 0);
+#else
         err = nrfx_i2s_start(&i2s_nrfx.inst, &nrfx_buffers, buffer_size, 0);
+#endif
     } else {
         err = nrfx_i2s_next_buffers_set(&i2s_nrfx.inst, &nrfx_buffers);
     }
