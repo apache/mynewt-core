@@ -354,6 +354,8 @@ hal_uart_init(int port, void *arg)
         assert(false);
     }
 
+    /* Disable UART for pin configuration */
+    u->nrf_uart->ENABLE = 0;
     u->nrf_uart->PSEL.TXD = cfg->suc_pin_tx;
     u->nrf_uart->PSEL.RXD = cfg->suc_pin_rx;
     u->nrf_uart->PSEL.RTS = cfg->suc_pin_rts;
