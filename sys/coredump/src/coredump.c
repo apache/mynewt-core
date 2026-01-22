@@ -96,7 +96,7 @@ coredump_dump(void *regs, int regs_sz)
     off = sizeof(hdr);
     dump_core_tlv(fa, &off, &tlv, regs);
 
-    if (img_mgmt_read_info(boot_current_slot, &ver, hash, NULL) == 0) {
+    if (img_mgmt_read_info(0, &ver, hash, NULL) == 0) {
         tlv.ct_type = COREDUMP_TLV_IMAGE;
         tlv.ct_len = IMGMGR_HASH_LEN;
 

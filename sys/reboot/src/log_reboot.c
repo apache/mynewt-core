@@ -192,7 +192,7 @@ log_reboot_write(const struct log_reboot_info *info)
     }
 #endif
 
-    rc = img_mgmt_read_info(boot_current_slot, &ver, hash, &flags);
+    rc = img_mgmt_read_info(0, &ver, hash, &flags);
     if (rc != 0) {
         return rc;
     }
@@ -245,7 +245,7 @@ log_reboot_write(const struct log_reboot_info *info)
         cbor_encode_int(&map, info->pc);
     }
 
-    state_flags = img_mgmt_state_flags(boot_current_slot);
+    state_flags = img_mgmt_state_flags(0);
     cbor_encode_text_stringz(&map, "flags");
     off = 0;
     buf[0] = '\0';

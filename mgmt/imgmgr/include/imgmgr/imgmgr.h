@@ -44,8 +44,6 @@ extern "C" {
 #define IMGMGR_STATE_F_ACTIVE           0x04
 #define IMGMGR_STATE_F_PERMANENT        0x08
 
-extern int boot_current_slot;
-
 void imgmgr_module_init(void);
 
 struct image_version;

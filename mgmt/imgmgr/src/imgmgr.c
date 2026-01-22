@@ -154,7 +154,7 @@ imgr_get_current_hash(uint8_t *hash, uint16_t hashlen)
 int
 imgr_my_version(struct image_version *ver)
 {
-    return img_mgmt_read_info(boot_current_slot, ver, NULL, NULL);
+    return img_mgmt_read_info(0, ver, NULL, NULL);
 }
 
 /*
