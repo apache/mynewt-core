@@ -20,8 +20,6 @@
 #include <defs/error.h>
 #include "bootutil/bootutil.h"
 
-int boot_current_slot;
-
 int boot_swap_type(void)
 {
     return BOOT_SWAP_TYPE_NONE;
