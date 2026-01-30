@@ -1,0 +1,96 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+syscfg.defs:
+    PWM_TEST_READ_PIN:
+      description: 'Pin used to read the incoming PWM signal.'
+      value: ARDUINO_PIN_D7
+
+    PWM_TEST_OUT_PIN:
+      description: 'Pin used to output the generated PWM signal.'
+      value: LED_BLINK_PIN
+
+    PWM_TEST_OUT_PIN_AF:
+      description: 'Alternate Function number for the output pin (STM32 only).'
+      value: 0
+
+    PWM_TEST_CHANNEL:
+      description: 'Hardware timer channel used for PWM generation.'
+      value: 0
+
+    PWM_TEST_DEV_NAME:
+      description: 'Name of the OS device for PWM.'
+      value: '"pwm0"'
+
+    PWM_TEST_INVERT_OUTPUT:
+      description: 'Set to 1 to invert the output PWM signal.'
+      value: 0
+
+    PWM_TEST_TOLERANCE:
+      description: 'Acceptable error for PWM readings (in %).'
+      value: 5
+
+    BSP_IS_NUCLEO:
+      description: 'Set to 1 if the current board is an STM32 Nucleo.'
+      value: 0
+
+syscfg.vals:
+    PWM_0: 1
+
+syscfg.vals.BSP_nucleo_f411re:
+    BSP_IS_NUCLEO: 1
+    PWM_TEST_DEV_NAME: '"pwm1"'
+    PWM_1: 1
+    PWM_0: 0
+    PWM_TEST_OUT_PIN_AF: 1
+
+syscfg.vals.BSP_nucleo_f767zi:
+    BSP_IS_NUCLEO: 1
+    PWM_TEST_OUT_PIN_AF: 2
+    PWM_TEST_CHANNEL: 2
+
+syscfg.vals.BSP_nucleo_g0b1re:
+    BSP_IS_NUCLEO: 1
+    PWM_TEST_OUT_PIN_AF: 2
+
+syscfg.vals.BSP_nucleo_g491re:
+    BSP_IS_NUCLEO: 1
+    PWM_TEST_OUT_PIN: ARDUINO_PIN_D5
+    PWM_TEST_OUT_PIN_AF: 2
+    PWM_TEST_READ_PIN: ARDUINO_PIN_D6
+
+syscfg.vals.BSP_nucleo_h723zg:
+    BSP_IS_NUCLEO: 1
+    PWM_TEST_OUT_PIN_AF: 2
+    PWM_TEST_CHANNEL: 2
+
+syscfg.vals.BSP_nucleo_h753zi:
+    BSP_IS_NUCLEO: 1
+    PWM_TEST_OUT_PIN_AF: 2
+    PWM_TEST_CHANNEL: 2
+
+syscfg.vals.BSP_nucleo_u575zi_q:
+    BSP_IS_NUCLEO: 1
+    PWM_TEST_OUT_PIN: ARDUINO_PIN_D11
+    PWM_TEST_OUT_PIN_AF: 2
+    PWM_TEST_CHANNEL: 1
+    PWM_TEST_READ_PIN: ARDUINO_PIN_D7
+
+syscfg.vals.BSP_dialog_da1469x_dk_pro:
+    TIMER_0: 0
+    TIMER_1: 1
+    OS_CPUTIME_TIMER_NUM: 1
