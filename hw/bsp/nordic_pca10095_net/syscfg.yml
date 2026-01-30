@@ -23,6 +23,10 @@ syscfg.defs:
         description: 'Set to indicate that BSP has NRF5340 NET'
         value: 1
 
+    BSP_NRF5340_WDT_STOP:
+        description: 'Enable WDT STOP/STOPEN mode on nRF5340'
+        value: 0
+
     COREDUMP_SKIP_UNUSED_HEAP:
         description: >
             Store whole RAM in crash dump.
