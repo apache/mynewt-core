@@ -17,6 +17,4 @@
  * under the License.
  */
 
-#ifndef MYNEWT_VAL_BOOT_LOADER
     VECTOR_RELOCATION_REGION (rw) : ORIGIN = 0x20000000, LENGTH = 0x400
-#endif
