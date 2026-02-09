@@ -17,6 +17,4 @@
  * under the License.
  */
 
-#ifndef MYNEWT_VAL_BOOT_LOADER
 #define VECTOR_RELOCATION_RAM VECTOR_RELOCATION_REGION
-#endif
