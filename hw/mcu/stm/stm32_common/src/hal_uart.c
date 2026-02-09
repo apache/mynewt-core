@@ -210,7 +210,7 @@ uart_irq_handler(int num)
     }
     if (isr & (TXE | TC)) {
         cr1 = regs->CR1;
-        if (isr & TXE) {
+        if (isr & TXE && cr1 & USART_CR1_TXEIE) {
             data = u->u_tx_func(u->u_func_arg);
             if (data < 0) {
                 cr1 &= ~USART_CR1_TXEIE;
