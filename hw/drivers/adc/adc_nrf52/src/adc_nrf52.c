@@ -513,7 +513,7 @@ nrf52_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
 {
     int rc;
     int unlock = 0;
-    nrf_saadc_value_t adc_value;
+    uint16_t adc_value;
 
     if (nrf_saadc_busy_check(NRF_SAADC)) {
         return OS_EBUSY;
@@ -585,13 +585,13 @@ static int
 nrf52_adc_read_buffer(struct adc_dev *dev, void *buf, int buf_len, int off,
                       int *result)
 {
-    nrf_saadc_value_t val;
+    uint16_t val;
     int data_off;
 
-    data_off = off * sizeof(nrf_saadc_value_t);
+    data_off = off * sizeof(uint16_t);
     assert(data_off < buf_len);
 
-    val = *(nrf_saadc_value_t *) ((uint8_t *) buf + data_off);
+    val = *(uint16_t *) ((uint8_t *) buf + data_off);
     *result = val;
 
     return 0;
