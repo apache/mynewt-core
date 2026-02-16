@@ -88,6 +88,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
       - name: Install Dependencies
         run: |
              wget https://archive.apache.org/dist/creadur/apache-rat-0.17/apache-rat-0.17-bin.tar.gz
@@ -95,6 +99,7 @@ jobs:
              mv apache-rat-0.17/apache-rat-0.17.jar apache-rat.jar
       - name: check licensing
         run: |
+             java --version
              .github/check_license.py
 
   doxygen_check:
