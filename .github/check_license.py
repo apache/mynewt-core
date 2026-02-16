@@ -123,6 +123,12 @@ def main() -> bool:
     upstream = mb[0]
 
     files = run_cmd(f"git diff --diff-filter=AM --name-only {upstream} {commit}")
+
+    print("Files to check:")
+    for file_name in sorted(files):
+        print("  " + file_name)
+    print("Running license check...")
+
     result_rat_check = run_rat_check(files)
 
     files = get_license_files(LICENSE_FILE)
@@ -153,6 +159,8 @@ def main() -> bool:
                 print(result)
             print()
         return False
+
+    print("License check completed.")
 
     return True
 
