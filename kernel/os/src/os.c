@@ -31,6 +31,8 @@
 #include "rtt/SEGGER_RTT.h"
 #endif
 
+
+
 /**
  * @defgroup OSKernel Operating System Kernel
  * @brief This section contains documentation for the core operating system kernel
