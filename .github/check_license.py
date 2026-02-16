@@ -96,6 +96,10 @@ def check_license_files(license_entries: set[str]) -> list[str]:
 
 def run_rat_check(files_diff: list[str]) -> list[str]:
     result = []
+
+    # smoke run to confirm java and rat are properly installed
+    run_cmd("java -jar apache-rat.jar --help-licenses")
+
     rat_out = run_cmd_no_check(f"java -jar apache-rat.jar --input-exclude-std GIT --input-exclude-parsed-scm GIT --input-exclude-file .rat-excludes --output-style {RAT_REPORT_XSL} -- . | grep \"^ ! \"")
     if rat_out:
         for entry in rat_out:
