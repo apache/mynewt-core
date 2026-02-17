@@ -77,6 +77,7 @@ const struct hal_bsp_mem_dump *hal_bsp_core_dump(int *area_cnt);
  *
  * @return                      The length of the hardware ID.
  */
+__attribute__((deprecated))
 int hal_bsp_hw_id_len(void);
 
 /**
@@ -88,6 +89,7 @@ int hal_bsp_hw_id_len(void);
  *
  * @return 0 on success, non-zero error code on failure
  */
+__attribute__((deprecated))
 int hal_bsp_hw_id(uint8_t *id, int max_len);
 
 /** Full System On */
@@ -130,6 +132,56 @@ int hal_bsp_power_state(int state);
  * Returns priority of given interrupt number
  */
 uint32_t hal_bsp_get_nvic_priority(int irq_num, uint32_t pri);
+
+/* Provisioned data identifiers */
+#define HAL_BSP_PROV_HW_ID                  0x0001
+#define HAL_BSP_PROV_BLE_PUBLIC_ADDR        0x0002
+#define HAL_BSP_PROV_BLE_STATIC_ADDR        0x0003
+#define HAL_BSP_PROV_BLE_IRK                0x0004
+/* First id for user-defined data identifiers */
+#define HAL_BSP_PROV_USER                   0x8000
+
+/**
+ * Get provisioned data
+ *
+ * \p length input value shall be set to size of buffer pointer by \p data.
+ *
+ * If provided buffer is too small, SYS_ENOMEM is returned and \p length is set
+ * to minimum required buffer size.
+ *
+ * On success \p length is is updated to length of data written to buffer.
+ *
+ * @param id      provisioned data identifier
+ * @param data    output buffer to store data
+ * @param length  length
+ *
+ * @return  0 on success
+ *          SYS_EINVAL if \p data or \p length is NULL
+ *          SYS_ENOMEM if provided buffer size it too small
+ *          SYS_ENOENT if requested data is not provisioned
+ *          SYS_ENOTSUP if requested data identifier is not supported
+ */
+int hal_bsp_prov_data_get(uint16_t id, void *data, uint16_t *length);
+
+typedef int (* hal_bsp_prov_data_cb)(uint16_t id, void *data, uint16_t *length);
+
+/**
+ * Set custom callback to override provisioned data
+ *
+ * Sets callback which is called prior to BSP code and can override handling
+ * for selected data identifiers.
+ *
+ * Callback parameters and behavior shall be the same as hal_bsp_prov_data().
+ *
+ * Callback can be registered only once.
+ *
+ * @param cb  Data callback
+ *
+ * @return 0 on success
+ *         SYS_EINVAL if \p cb is NULL
+ *         SYS_EALREADY if callback is already registered
+ */
+int hal_bsp_prov_data_set_cb(hal_bsp_prov_data_cb cb);
 
 #ifdef __cplusplus
 }
