@@ -31,6 +31,9 @@
 #include "rtt/SEGGER_RTT.h"
 #endif
 
+/* Include BSP header to allow it to override defines if required */
+#include "bsp/bsp.h"
+
 /**
  * @defgroup OSKernel Operating System Kernel
  * @brief This section contains documentation for the core operating system kernel
