@@ -19,7 +19,6 @@
 
 target.app: "@apache-mynewt-nimble/apps/btshell"
 target.bsp: "@apache-mynewt-core/hw/bsp/nordic_pca10056"
-target.build_profile: optimized
 
 bsp.linkerscript:
     - "targets/coverity/btshell_nrf52840_coverity/nrf52840aa.ld"
