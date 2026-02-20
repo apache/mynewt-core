@@ -148,12 +148,3 @@ syscfg.defs:
         description: >
             Sysinit stage for console functionality.
         value: 20
-
-    CONSOLE_HISTORY_SIZE:
-        description: >
-            This is no longer used.
-            Equivalent settings:
-                CONSOLE_HISTORY: ram
-                CONSOLE_HISTORY_RAM_HISTORY_SIZE: <n>   <- previous value of CONSOLE_HISTORY_SIZE
-        value: 0
-        defunct: 1
