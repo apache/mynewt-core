@@ -16,6 +16,33 @@
 # under the License.
 #
 
+syscfg.defs:
+    LWIP_ICMP:
+        description: Enable ICMP support
+        value: 1
+    LWIP_IGMP:
+        description: Enable ICMP support
+        value: 1
+    LWIP_DHCP:
+        description: Enable DHCP support
+        value: 1
+        restrictions: LWIP_UDP
+    LWIP_DNS:
+        description: Enable DNS support
+        value: 1
+    LWIP_UDP:
+        description: Enable UDP support
+        value: 1
+    LWIP_TCP:
+        description: Enable TCP support
+        value: 1
+    LWIP_IPV4:
+        description: Enable IPV4 support
+        value: 1
+    LWIP_IPV6:
+        description: Enable IPV6 support
+        value: 1
+
 syscfg.restrictions:
     # As long as MEM_LIBC_MALLOC is 1 this restriction applies
     - 'BASELIBC_THREAD_SAFE_HEAP_ALLOCATION'
