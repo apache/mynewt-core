@@ -262,9 +262,6 @@ encoding/base64/src/base64.c
 # tinycrypt - BSD License.
 crypto/tinycrypt
 
-# LWIP - BSD License.
-net/ip/lwip_base
-
 # OIC - BSD License.
 net/oic/include/oic/port/oc_random.h
 net/oic/include/oic/messaging/coap
