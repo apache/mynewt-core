@@ -22,11 +22,6 @@ syscfg.defs:
         description: "Indicates that baselibc is the libc implementation."
         value: 1
 
-    BASELIBC_ASSERT_FILE_LINE:
-        defunct: 1
-        description: 'Use OS_CRASH_FILE_LINE instead'
-        value: 0
-
     BASELIBC_EXECUTE_GLOBAL_CONSTRUCTORS:
         description: >
             Set to 1 if project contains C++ files with global objects that
