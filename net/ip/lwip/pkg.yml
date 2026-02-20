@@ -17,23 +17,44 @@
 # under the License.
 #
 
-pkg.name: net/ip/lwip_mn
-pkg.description: LwIP adaptation to Mynewt
+pkg.name: net/ip/lwip
+pkg.description: LwIP repository
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage:
+pkg.homepage: "http://savannah.nongnu.org/git/?group=lwip"
 pkg.keywords:
     - lwip
+    - ip
+    - ipv6
+    - tcp
+    - udp
+
+pkg.type: sdk
+
+pkg.include_dirs:
+    - "@lwip/src/include"
+
+pkg.source_dirs:
+    - "@lwip/src/api"
+    - "@lwip/src/core"
+    - "@lwip/src/core/ipv4"
+    - "@lwip/src/netif"
+    - "@lwip/src/core/ipv6"
+    - "@lwip/src/netif/ppp"
+    - "@lwip/src/netif/ppp/polarssl"
 
 pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/net/ip/lwip"
-    - "@apache-mynewt-core/net/ip/mn_socket"
+    - "@apache-mynewt-core/net/ip"
 
-pkg.deps.LWIP_CLI:
-    - "@apache-mynewt-core/sys/shell"
+pkg.cflags:
+    - -Wno-unused
+    - -Wno-error=address
+    - -DLWIP_HTTPD_STRNSTR_PRIVATE=0
 
-pkg.deps.STD_LWIPOPTS:
-    - "@apache-mynewt-core/net/ip/lwip_mn/lwipopts"
+pkg.cflags.LWIP_PPP:
+    - -DPPP_SUPPORT=1
 
-pkg.init:
-    ip_init: 'MYNEWT_VAL(IP_SYSINIT_STAGE)'
+repository.lwip:
+    type: github
+    vers: STABLE-2_1_2_RELEASE-commit
+    user: lwip-tcpip
+    repo: lwip
