@@ -180,7 +180,7 @@ bsnprph_tx_timer_exp(struct os_event *ev)
     if (om == NULL) {
         /* XXX: OOM; log this. */
     } else {
-        rc = ble_gattc_notify_custom(bsnprph_conn_handle,
+        rc = ble_gatts_notify_custom(bsnprph_conn_handle,
                                      gatt_svr_chr_gendata_val_handle, om);
         if (rc != 0) {
             /* XXX: Log this. */

@@ -185,8 +185,7 @@ smp_ble_event_data_in(struct os_event *ev)
     while ((m_resp = os_mqueue_get(&g_smp_ble_mq)) != NULL) {
         assert(OS_MBUF_USRHDR_LEN(m_resp) >= sizeof (conn_handle));
         memcpy(&conn_handle, OS_MBUF_USRHDR(m_resp), sizeof (conn_handle));
-        ble_gattc_notify_custom(conn_handle, g_ble_smp_attr_handle,
-                                m_resp);
+        ble_gatts_notify_custom(conn_handle, g_ble_smp_attr_handle, m_resp);
     }
 }
 
