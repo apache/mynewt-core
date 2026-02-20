@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+#define LWIP_ICMP MYNEWT_VAL_LWIP_ICMP
+
 #define MEM_LIBC_MALLOC			1	/* use platform malloc */
 #define LWIP_NETIF_TX_SINGLE_PBUF 	1
 #define LWIP_NETIF_LOOPBACK		1	/* yes loopback interface */
@@ -34,9 +36,9 @@ extern "C" {
 #define MEMP_NUM_ARP_QUEUE		4
 #define MEMP_NUM_RAW_PCB		1
 #define LWIP_SO_RCVTIMEO                1
-#define LWIP_IGMP                       1
+#define LWIP_IGMP                       MYNEWT_VAL_LWIP_IGMP
 #define SO_REUSE                        1
-#define LWIP_DNS                        1
+#define LWIP_DNS                        MYNEWT_VAL_LWIP_DNS
 #define DNS_TABLE_SIZE                  3
 #define DNS_MAX_NAME_LENGTH             64
 #define LWIP_NETIF_HOSTNAME             1
@@ -48,9 +50,11 @@ extern "C" {
 #define LWIP_AUTOIP                     0
 #define LWIP_DHCP_AUTOIP_COOP           0
 
-#define LWIP_IPV6                       1
+#define LWIP_IPV4                       MYNEWT_VAL_LWIP_IPV4
+#define LWIP_IPV6                       MYNEWT_VAL_LWIP_IPV6
 #define LWIP_ND6                        0
 #define MEMP_NUM_ND6_QUEUE              4
+#define LWIP_SUPPORT_CUSTOM_PBUF        1
 
 #ifndef LWIP_DEBUG
 #define LWIP_NOASSERT                   1
@@ -116,7 +120,7 @@ extern "C" {
 #define PBUF_LINK_HLEN                  16
 
 /* ---------- TCP options ---------- */
-#define LWIP_TCP                        1
+#define LWIP_TCP                        MYNEWT_VAL_LWIP_TCP
 #define TCP_TTL                         255
 
 /* Controls if TCP should queue segments that arrive out of
@@ -164,14 +168,16 @@ extern "C" {
 /* Define LWIP_DHCP to 1 if you want DHCP configuration of
    interfaces. DHCP is not implemented in lwIP 0.5.1, however, so
    turning this on does currently not work. */
-#define LWIP_DHCP                       1
+#define LWIP_DHCP                       MYNEWT_VAL_LWIP_DHCP
 
 /* 1 if you want to do an ARP check on the offered address
    (recommended). */
+#if LWIP_DHCP || LWIP_ARP
 #define DHCP_DOES_ARP_CHECK             1
+#endif
 
 /* ---------- UDP options ---------- */
-#define LWIP_UDP                        1
+#define LWIP_UDP                        MYNEWT_VAL_LWIP_UDP
 #define UDP_TTL                         255
 
 
