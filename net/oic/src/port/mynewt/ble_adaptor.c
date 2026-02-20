@@ -560,7 +560,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
 #if (MYNEWT_VAL(OC_BLE_CENTRAL) == 1)
         ble_gattc_write_no_rsp(conn_handle, attr_handle, m);
 #else
-        ble_gattc_notify_custom(conn_handle, attr_handle, m);
+        ble_gatts_notify_custom(conn_handle, attr_handle, m);
 #endif
         if (pkt) {
             m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
