@@ -531,11 +531,6 @@ under the "3-clause BSD" license.  Bundled files are:
     * hw/bsp/ci40/src/arch/mips/abiflags.S
     * hw/bsp/ci40/src/arch/mips/gcc_startup_mips.S
 
-This product bundles LwIP, which is available under the "3-clause BSD"
-license. For details, and bundled files see:
-    * net/ip/lwip_base/COPYING
-    * net/ip/lwip_base
-
 This product bundles tinycrypt, which is available under the "3-clause BSD"
 license. For details, and bundled files see:
     * crypto/tinycrypt/LICENSE
