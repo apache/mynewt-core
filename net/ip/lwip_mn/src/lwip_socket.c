@@ -89,6 +89,8 @@ lwip_mn_addr_to_addr(struct mn_sockaddr *ms, ip_addr_t *addr, uint16_t *port)
 {
     struct mn_sockaddr_in *msin;
     struct mn_sockaddr_in6 *msin6;
+    (void)msin;
+    (void)msin6;
 
     switch (ms->msa_family) {
 #if LWIP_IPV4
@@ -118,6 +120,8 @@ lwip_addr_to_mn_addr(struct mn_sockaddr *ms, const ip_addr_t *addr,
 {
     struct mn_sockaddr_in *msin;
     struct mn_sockaddr_in6 *msin6;
+    (void)msin;
+    (void)msin6;
 
     if (IP_IS_V4_VAL(*addr)) {
         ms->msa_family = MN_AF_INET;
@@ -504,6 +508,11 @@ lwip_sendto(struct mn_socket *ms, struct os_mbuf *m,
     uint16_t port;
     int off;
     int rc;
+    (void)off;
+    (void)port;
+    (void)ip_addr;
+    (void)n;
+    (void)p;
 
     switch (s->ls_type) {
 #if LWIP_UDP
@@ -633,6 +642,7 @@ lwip_setsockopt(struct mn_socket *ms, uint8_t level, uint8_t name, void *val)
     struct netif *nif;
     struct mn_mreq *mreq;
     int rc = MN_EPROTONOSUPPORT;
+    (void)nif;
 
     if (level == MN_SO_LEVEL) {
         switch (name) {
