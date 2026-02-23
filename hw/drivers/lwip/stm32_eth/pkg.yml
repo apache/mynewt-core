@@ -35,6 +35,18 @@ pkg.deps.MCU_STM32F4:
 pkg.deps.MCU_STM32F7:
     - "@apache-mynewt-core/hw/mcu/stm/stm32f7xx"
 
+app.cflags:
+    - -DCHECKSUM_GEN_IP=0
+    - -DCHECKSUM_GEN_UDP=0
+    - -DCHECKSUM_GEN_TCP=0
+    - -DCHECKSUM_GEN_ICMP=0
+    - -DCHECKSUM_GEN_ICMP6=0
+    - -DCHECKSUM_CHECK_IP=0
+    - -DCHECKSUM_CHECK_UDP=0
+    - -DCHECKSUM_CHECK_TCP=0
+    - -DCHECKSUM_CHECK_ICMP=0
+    - -DCHECKSUM_CHECK_ICMP6=0
+
 pkg.req_apis:
 
 pkg.init:
