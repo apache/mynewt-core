@@ -108,40 +108,8 @@ syscfg.defs:
             - LFXO      # 32.768 kHz crystal oscillator
             - LFSYNTH   # 32.768 kHz synthesized from HFCLK
 
-    # Deprecated settings
-
-    XTAL_32768:
-        description: "Use 'MCU_LFCLK_SOURCE: LFXO' instead"
-        value: 0
-        restrictions:
-            - "!XTAL_32768_SYNTH"
-            - "!XTAL_RC"
-        deprecated: 1
-    XTAL_RC:
-        description: "Use 'MCU_LFCLK_SOURCE: LFRC' instead"
-        value: 0
-        restrictions:
-            - "!XTAL_32768_SYNTH"
-            - "!XTAL_32768"
-        deprecated: 1
-    XTAL_32768_SYNTH:
-        description: "Use 'MCU_LFCLK_SOURCE: LFSYNTH' instead"
-        value: 0
-        restrictions:
-            - "!XTAL_RC"
-            - "!XTAL_32768"
-        deprecated: 1
-
-
 syscfg.vals:
     # The nRF51 microcontroller uses RTC0 for periodic interrupts and it is
     # clocked at 32768Hz. The tick frequency is chosen such that it divides
     # cleanly into 32768 to avoid a systemic bias in the actual tick frequency.
     OS_TICKS_PER_SEC: 128
-
-syscfg.vals.XTAL_32768:
-    MCU_LFCLK_SOURCE: LFXO
-syscfg.vals.XTAL_RC:
-    MCU_LFCLK_SOURCE: LFRC
-syscfg.vals.XTAL_32768_SYNTH:
-    MCU_LFCLK_SOURCE: LFSYNTH
