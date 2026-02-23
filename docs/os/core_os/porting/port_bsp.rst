@@ -384,7 +384,7 @@ Our example nRF52 BSP requires the following changes:
 
         # Settings this BSP overrides.
         syscfg.vals:
-            XTAL_32768: 1
+            MCU_LFCLK_SOURCE: LFXO
 
 Test it
 ~~~~~~~
