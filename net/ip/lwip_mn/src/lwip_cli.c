@@ -77,6 +77,7 @@ lwip_nif_up(const char *name)
 {
     struct netif *nif;
     err_t err;
+    (void)err;
 
     nif = netif_find(name);
     if (!nif) {
@@ -89,8 +90,10 @@ lwip_nif_up(const char *name)
         nif->ip6_autoconfig_enabled = 1;
         netif_create_ip6_linklocal_address(nif, 1);
 #endif
+#if LWIP_DHCP
         err = dhcp_start(nif);
         return lwip_err_to_mn_err(err);
+#endif
     }
     return 0;
 }
