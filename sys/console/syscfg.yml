@@ -25,9 +25,3 @@ syscfg.defs:
             - full
             - minimal
             - stub
-
-    # Defunct settings
-
-    CONSOLE_MODE:
-        description: Use 'CONSOLE_IMPLEMENTATION' instead
-        defunct: 1
