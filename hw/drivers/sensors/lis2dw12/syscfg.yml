@@ -30,30 +30,6 @@ syscfg.defs:
         description: >
             Device name for lis2dw12 device used in shell
         value: '"lis2dw12_0"'
-    LIS2DW12_SHELL_ITF_NUM:
-        description: >
-            This is no longer used.
-            LIS2DW12_SHELL_DEV_NAME points to device that will be used by shell.
-        value: 0
-        defunct: 1
-    LIS2DW12_SHELL_ITF_TYPE:
-        description: >
-            This is no longer used.
-            LIS2DW12_SHELL_DEV_NAME points to device that will be used by shell.
-        value: 0
-        defunct: 1
-    LIS2DW12_SHELL_CSPIN:
-        description: >
-            This is no longer used.
-            LIS2DW12_SHELL_DEV_NAME points to device that will be used by shell.
-        value: 0
-        defunct: 1
-    LIS2DW12_SHELL_ITF_ADDR:
-        description: >
-            This is no longer used.
-            LIS2DW12_SHELL_DEV_NAME points to device that will be used by shell.
-        value: 0
-        defunct: 1
     LIS2DW12_CLI:
         description: 'Enable shell support for the LIS2DW12'
         value: 0
