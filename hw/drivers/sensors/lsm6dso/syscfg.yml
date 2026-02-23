@@ -36,22 +36,6 @@ syscfg.defs:
     LSM6DSO_SHELL_DEV_NAME:
         description: 'Name of LSM6DSO device to use in shell'
         value: '"lsm6dso_0"'
-    LSM6DSO_SHELL_ITF_NUM:
-        description: 'Shell interface number for the LSM6DSO'
-        value: 0
-        deprecated: 1
-    LSM6DSO_SHELL_ITF_TYPE:
-        description: 'Shell interface type for the LSM6DSO'
-        value: 1
-        deprecated: 1
-    LSM6DSO_SHELL_CSPIN:
-        description: 'CS pin for LSM6DSO'
-        value : -1
-        deprecated: 1
-    LSM6DSO_SHELL_ITF_ADDR:
-        description: 'Slave address for LSM6DSO'
-        value : 0x6b
-        deprecated: 1
     LSM6DSO_NOTIF_STATS:
         description: 'Enable notification stats'
         value: 1
