@@ -47,6 +47,143 @@
   <img src="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml/badge.svg">
 <a/>
 
+## HW CI status
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog.svg)
+
+<details>
+<summary>Toggle for more informations</summary>
+
+## clockdrift
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/reel_board.svg)
+
+## coremark
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/reel_board.svg)
+
+## cputimer
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/reel_board.svg)
+
+## datetime
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/reel_board.svg)
+
+## image
+![](https://static.codecoup.pl/mynewt/run/latest/image/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/reel_board.svg)
+
+## pwm
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/reel_board.svg)
+
+## trng
+![](https://static.codecoup.pl/mynewt/run/latest/trng/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/reel_board.svg)
+
+## usb-cdc
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/reel_board.svg)
+
+## usb-msc
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/reel_board.svg)
+
+## watchdog
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/reel_board.svg)
+
+</details>
+
 ## Overview
 
 Apache Mynewt is an open-source operating system for tiny embedded devices.
