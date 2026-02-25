@@ -213,6 +213,74 @@ const void *ipc_nrf5340_net_image_get(uint32_t *size);
 volatile struct hci_ipc_shm *ipc_nrf5340_hci_shm_get(void);
 #endif
 
+struct shm_memory_region {
+    uint32_t region_id;
+    void *region_start;
+    uint32_t region_size;
+};
+
+#if MYNEWT_VAL(MCU_APP_CORE)
+
+#define __REGION_ID(id) shm_region_ ## id
+/**
+ * Macro for shared memory region declaration
+ *
+ * It should be used on application core to specify memory region that should be accessible
+ * on the network core.
+ * example declaration form application core:
+ * \code
+ * struct application_shared_data {
+ *   int anything;
+ *   uint8_t buffer[1234]
+ * } shared_data;
+ *
+ * #define MY_REGION_ID 112233
+ * SHM_REGION(MY_REGION_ID, &shared_data, sizeof(shared_data));
+ * \endcode
+ *
+ * @param id number that will be used on netcore to locate this region by
+ * @param address start of shared memory region
+ * @param size size of shared memory region
+ */
+#define SHM_REGION(id, address, size) \
+    static struct shm_memory_region __attribute__((section(".shm_descriptor"), used)) __REGION_ID(id) = {     \
+        .region_id = id,                                                                          \
+        .region_start = address,                                                                  \
+        .region_size = size,                                                                      \
+    }
+
+#else
+/**
+ * Find shared memory region by it's ID.
+ *
+ * Region should be declared on application core with SHM_REGION macro.
+ * example declaration form application core:
+ * \code
+ * struct application_shared_data {
+ *   int anything;
+ *   uint8_t buffer[1234]
+ * } shared_data;
+ *
+ * SHM_REGION(112233, &shared_data, sizeof(shared_data));
+ * \endcode
+ * access on netcode:
+ * \code
+ * ...
+ * const struct shm_memory_region *shared_region;
+ * region = ipc_nrf5340_find_region(122233);
+ * if (region) {
+ *   struct application_shared_data *shared_data = region->region_start;
+ *   shared_data->anything = 1;
+ *   ...
+ * }
+ * \endcode
+ * @param region_id   Region ID to find.
+ *
+ * @return            Pointer to region, NULL if not present
+ */
+const struct shm_memory_region *ipc_nrf5340_find_region(uint32_t region_id);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

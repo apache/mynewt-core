@@ -54,6 +54,8 @@ struct ipc_shared {
         APP_AND_NET_RUNNING,
         NET_RESTARTED,
     } ipc_state;
+    struct shm_memory_region *region_descriptor_start;
+    struct shm_memory_region *region_descriptor_end;
 #if MYNEWT_PKG_apache_mynewt_nimble__nimble_transport_common_hci_ipc
     volatile struct hci_ipc_shm hci_shm;
 #endif
@@ -96,6 +98,9 @@ static struct ipc_channel ipcs[IPC_MAX_CHANS];
 __attribute__((section(".ipc"))) static struct ipc_shared ipc_shared[1];
 
 #if MYNEWT_VAL(MCU_APP_CORE)
+extern struct shm_memory_region __shm_descriptor_start__[];
+extern struct shm_memory_region __shm_descriptor_end__[];
+
 static struct ipc_shm shms[IPC_MAX_CHANS];
 static uint8_t shms_bufs[IPC_MAX_CHANS][IPC_BUF_SIZE];
 
@@ -289,6 +294,8 @@ ipc_nrf5340_init(void)
         }
     }
 #endif
+    ipc_shared[0].region_descriptor_start = __shm_descriptor_start__;
+    ipc_shared[0].region_descriptor_end = __shm_descriptor_end__;
 
     for (i = 0; i < IPC_MAX_CHANS; ++i) {
         shms[i].buf = shms_bufs[i];
@@ -380,6 +387,18 @@ ipc_nrf5340_netcore_init(void)
         /* Normal start app core waits for net core to initialize IPC, mark net core as ready */
         ipc_shared->ipc_state = APP_AND_NET_RUNNING;
     }
+}
+
+const struct shm_memory_region *
+ipc_nrf5340_find_region(uint32_t region_id)
+{
+    const struct shm_memory_region *region;
+    for (region = ipc_shared->region_descriptor_start; region != ipc_shared->region_descriptor_end; ++region) {
+        if (region->region_id == region_id) {
+            return region;
+        }
+    }
+    return NULL;
 }
 #endif
 
