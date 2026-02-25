@@ -17,6 +17,8 @@
 #
 
 syscfg.defs:
+    MCU_SERIES_STM32F1: 1
+
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.

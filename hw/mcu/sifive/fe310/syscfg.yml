@@ -17,6 +17,9 @@
 #
 
 syscfg.defs:
+    MCU_FAMILY_SIFIVE_FREEDOM_FE300: 1
+    MCU_SERIES_SIFIVE_FREEDOM_FE310: 1
+
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
