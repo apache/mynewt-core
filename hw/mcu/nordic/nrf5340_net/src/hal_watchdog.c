@@ -36,6 +36,9 @@ nrf5340_net_wdt_irq_handler(void)
     os_trace_isr_enter();
     if (NRF_WDT_NS->INTENSET & WDT_INTENSET_TIMEOUT_Msk) {
         NRF_WDT_NS->EVENTS_TIMEOUT = 0;
+#if MYNEWT_VAL(BSP_NRF5340_WDT_STOP)
+        NRF_WDT_NS->TASKS_STOP = 1;
+#endif
         nrf5340_net_hal_wdt_default_handler();
     }
     os_trace_isr_exit();
@@ -46,7 +49,12 @@ hal_watchdog_init(uint32_t expire_msecs)
 {
     uint64_t expiration;
 
+#if MYNEWT_VAL(BSP_NRF5340_WDT_STOP)
+    NRF_WDT_NS->CONFIG = WDT_CONFIG_SLEEP_Msk | WDT_CONFIG_STOPEN_Msk;
+    NRF_WDT_NS->TSEN = WDT_TSEN_TSEN_Enable;
+#else
     NRF_WDT_NS->CONFIG = WDT_CONFIG_SLEEP_Msk;
+#endif
 
     /* Convert msec timeout to counts of a 32768 crystal */
     expiration = ((uint64_t)expire_msecs * 32768) / 1000;
