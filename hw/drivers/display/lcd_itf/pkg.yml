@@ -28,6 +28,8 @@ pkg.req_apis:
 
 pkg.deps.'LCD_ITF == "spi"':
     - "@apache-mynewt-core/hw/drivers/display/lcd_itf/itf_spi"
+pkg.deps.'LCD_ITF == "i2c"':
+    - "@apache-mynewt-core/hw/drivers/display/lcd_itf/itf_i2c"
 pkg.deps.'LCD_ITF == "8080_II_8_bit"':
     - "@apache-mynewt-core/hw/drivers/display/lcd_itf/itf_8080"
 pkg.deps.'LCD_ITF == "8080_II_16_bit"':
