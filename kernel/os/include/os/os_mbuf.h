@@ -441,6 +441,95 @@ struct os_mbuf *os_mbuf_off(const struct os_mbuf *om, int off,
 int os_mbuf_copydata(const struct os_mbuf *om, int off, int len, void *dst);
 
 /**
+ * Extracts data from the beginning of an mbuf into a flat buffer, consuming it in the process.
+ *
+ * @param om The mbuf chain to extract data from
+ * @param len The length of the data to copy
+ * @param dst The destination buffer to copy into
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int os_mbuf_consume_data(struct os_mbuf *om, int len, void *dst);
+
+/**
+ * Extracts little endian 32-bit value from the beginning of an mbuf, consuming it in the process.
+ *
+ * @param om The mbuf chain to extract data from
+ * @param dst The destination variable to copy into
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int os_mbuf_consume_le32(struct os_mbuf *om, uint32_t *dst);
+
+/**
+ * Extracts big endian 32-bit value from the beginning of an mbuf, consuming it in the process.
+ *
+ * @param om The mbuf chain to extract data from
+ * @param dst The destination variable to copy into
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int os_mbuf_consume_be32(struct os_mbuf *om, uint32_t *dst);
+
+/**
+ * Extracts little endian 24-bit value from the beginning of an mbuf, consuming it in the process.
+ *
+ * @param om The mbuf chain to extract data from
+ * @param dst The destination variable to copy into (stored in a 32-bit container)
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int os_mbuf_consume_le24(struct os_mbuf *om, uint32_t *dst);
+
+/**
+ * Extracts big endian 24-bit value from the beginning of an mbuf, consuming it in the process.
+ *
+ * @param om The mbuf chain to extract data from
+ * @param dst The destination variable to copy into (stored in a 32-bit container)
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int os_mbuf_consume_be24(struct os_mbuf *om, uint32_t *dst);
+
+/**
+ * Extracts little endian 16-bit value from the beginning of an mbuf, consuming it in the process.
+ *
+ * @param om The mbuf chain to extract data from
+ * @param dst The destination variable to copy into
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int os_mbuf_consume_le16(struct os_mbuf *om, uint16_t *dst);
+
+/**
+ * Extracts big endian 16-bit value from the beginning of an mbuf, consuming it in the process.
+ *
+ * @param om The mbuf chain to extract data from
+ * @param dst The destination variable to copy into
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int os_mbuf_consume_be16(struct os_mbuf *om, uint16_t *dst);
+
+/**
+ * Extracts 8-bit value from the beginning of an mbuf, consuming it in the process.
+ *
+ * @param om The mbuf chain to extract data from
+ * @param dst The destination variable to copy into
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int os_mbuf_consume_u8(struct os_mbuf *om, uint8_t *dst);
+
+/**
  * @brief Calculates the length of an mbuf chain.
  *
  * Calculates the length of an mbuf chain.  If the mbuf contains a packet
@@ -465,6 +554,83 @@ uint16_t os_mbuf_len(const struct os_mbuf *om);
  *                              an error code on failure
  */
 int os_mbuf_append(struct os_mbuf *om, const void *data, uint16_t len);
+
+/**
+ * Append 32-bit little endian value onto a mbuf
+ *
+ * @param om                    The mbuf to append the data onto
+ * @param val                   32-bit value to append
+ *
+ * @return                      0 on success;
+ *                              an error code on failure
+ */
+int os_mbuf_append_le32(struct os_mbuf *om, uint32_t val);
+
+/**
+ * Append 32-bit big endian value onto a mbuf
+ *
+ * @param om                    The mbuf to append the data onto
+ * @param val                   32-bit value to append
+ *
+ * @return                      0 on success;
+ *                              an error code on failure
+ */
+int os_mbuf_append_be32(struct os_mbuf *om, uint32_t val);
+
+/**
+ * Append 24-bit little endian value onto a mbuf
+ *
+ * @param om                    The mbuf to append the data onto
+ * @param val                   24-bit value to append
+ *
+ * @return                      0 on success;
+ *                              an error code on failure
+ */
+int os_mbuf_append_le24(struct os_mbuf *om, uint32_t val);
+
+/**
+ * Append 24-bit big endian value onto a mbuf
+ *
+ * @param om                    The mbuf to append the data onto
+ * @param val                   24-bit value to append
+ *
+ * @return                      0 on success;
+ *                              an error code on failure
+ */
+int os_mbuf_append_be24(struct os_mbuf *om, uint32_t val);
+
+/**
+ * Append 16-bit little endian value onto a mbuf
+ *
+ * @param om                    The mbuf to append the data onto
+ * @param val                   16-bit value to append
+ *
+ * @return                      0 on success;
+ *                              an error code on failure
+ */
+int os_mbuf_append_le16(struct os_mbuf *om, uint16_t val);
+
+/**
+ * Append 16-bit big endian value onto a mbuf
+ *
+ * @param om                    The mbuf to append the data onto
+ * @param val                   16-bit value to append
+ *
+ * @return                      0 on success;
+ *                              an error code on failure
+ */
+int os_mbuf_append_be16(struct os_mbuf *om, uint16_t val);
+
+/**
+ * Append 8-bit value onto a mbuf
+ *
+ * @param om                    The mbuf to append the data onto
+ * @param val                   8-bit value to append
+ *
+ * @return                      0 on success;
+ *                              an error code on failure
+ */
+int os_mbuf_append_u8(struct os_mbuf *om, uint8_t val);
 
 /**
  * Reads data from one mbuf and appends it to another.  On error, the specified
