@@ -23,10 +23,6 @@ syscfg.defs:
     NATIVE_SOCKETS_MAX_UDP:
         description: 'The maximum UDP datagram size (send and receive).'
         value: 2048
-    NATIVE_SOCKETS_POLL_ITVL:
-        description: Use NATIVE_SOCKETS_POLL_INTERVAL instead.
-        defunct: 1
-        value:
     NATIVE_SOCKETS_POLL_INTERVAL_MS:
         description: >
             The frequency at which to poll for received data.  Units

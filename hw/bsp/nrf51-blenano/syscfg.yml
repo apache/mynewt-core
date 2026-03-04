@@ -47,18 +47,6 @@ syscfg.defs:
     I2C_0_FREQ_KHZ:
         description: 'Frequency in khz for I2C_0 bus'
         value:  100
-    I2C_0_FREQUENCY:
-        description: 'Use I2C_0_FREQ_KHZ instead'
-        defunct: 1
-        value:  100
-    I2C_0_SDA_PIN:
-        description: 'Use I2C_0_PIN_SDA instead'
-        defunct: 1
-        value:  6
-    I2C_0_SCL_PIN:
-        description: 'Use I2C_0_PIN_SCL instead'
-        defunct: 1
-        value:  7
 
     I2C_1_PIN_SCL:
         description: 'SCL pin for I2C_1'
@@ -69,19 +57,6 @@ syscfg.defs:
     I2C_1_FREQ_KHZ:
         description: 'Frequency in khz for I2C_1 bus'
         value:  100
-    I2C_1_FREQUENCY:
-        description: 'Use I2C_1_FREQ_KHZ instead'
-        defunct: 1
-        value:  100
-    I2C_1_SDA_PIN:
-        description: 'Use I2C_1_PIN_SDA instead'
-        defunct: 1
-        value:  28
-    I2C_1_SCL_PIN:
-        description: 'Use I2C_1_PIN_SCL instead'
-        defunct: 1
-        value:  29
-
 
     TIMER_0:
         description: 'NRF51 Timer 0'
