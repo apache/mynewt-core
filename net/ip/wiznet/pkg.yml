@@ -1,0 +1,115 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: net/ip/wiznet
+pkg.description:
+pkg.author:
+pkg.homepage:
+pkg.keywords:
+    - ip
+    - ipv6
+    - tcp
+    - udp
+pkg.type: sdk
+
+pkg.include_dirs:
+    - "@wiznet-iolibrary/Ethernet"
+
+pkg.include_dirs.WIZNET_W5500:
+    - "@wiznet-iolibrary/Ethernet/W5500"
+
+pkg.source_dirs.WIZNET_W5500:
+    - "@wiznet-iolibrary/Ethernet/W5500"
+
+pkg.include_dirs.WIZNET_DHCP:
+    - "@wiznet-iolibrary/Internet/DHCP"
+
+pkg.source_dirs.WIZNET_DHCP:
+    - "@wiznet-iolibrary/Internet/DHCP"
+
+pkg.include_dirs.WIZNET_DNS:
+    - "@wiznet-iolibrary/Internet/DNS"
+
+pkg.source_dirs.WIZNET_DNS:
+    - "@wiznet-iolibrary/Internet/DNS"
+
+pkg.include_dirs.WIZNET_MQTT:
+    - "@wiznet-iolibrary/Internet/MQTT"
+
+pkg.source_dirs.WIZNET_MQTT:
+    - "@wiznet-iolibrary/Internet/MQTT"
+
+pkg.include_dirs.WIZNET_SNMP:
+    - "@wiznet-iolibrary/Internet/SNMP"
+
+pkg.source_dirs.WIZNET_SNMP:
+    - "@wiznet-iolibrary/Internet/SNMP"
+
+pkg.include_dirs.WIZNET_SNTP:
+    - "@wiznet-iolibrary/Internet/SNTP"
+
+pkg.source_dirs.WIZNET_SNTP:
+    - "@wiznet-iolibrary/Internet/SNTP"
+
+pkg.include_dirs.WIZNET_TFTP:
+    - "@wiznet-iolibrary/Internet/TFTP"
+
+pkg.source_dirs.WIZNET_TFTP:
+    - "@wiznet-iolibrary/Internet/TFTP"
+
+pkg.include_dirs.WIZNET_FTPCLIENT:
+    - "@wiznet-iolibrary/Internet/FTPClient"
+
+pkg.source_dirs.WIZNET_FTCLIENT:
+    - "@wiznet-iolibrary/Internet/FTPClient"
+
+pkg.include_dirs.WIZNET_FTPSERVER:
+    - "@wiznet-iolibrary/Internet/FTPServer"
+
+pkg.source_dirs.WIZNET_FTPSERVER:
+    - "@wiznet-iolibrary/Internet/FTPServer"
+
+pkg.include_dirs.WIZNET_HTTPSERVER:
+    - "@wiznet-iolibrary/Internet/httpServer"
+
+pkg.source_dirs.HTTPSERVER:
+    - "@wiznet-iolibrary/Internet/httpServer"
+
+pkg.source_files.WIZNET_CONF:
+    - "@wiznet-iolibrary/Ethernet/wizchip_conf.c"
+
+pkg.source_files.WIZNET_SOCKET:
+    - "@wiznet-iolibrary/Ethernet/socket.c"
+
+pkg.include_dirs.WIZNET_APP:
+    - "@wiznet-iolibrary/Application/loopback"
+    - "@wiznet-iolibrary/Application/multicast"
+
+pkg.source_dirs.WIZNET_APP:
+    - "@wiznet-iolibrary/Application/loopback"
+    - "@wiznet-iolibrary/Application/multicast"
+
+pkg.cflags:
+    - -w
+
+repository.wiznet-iolibrary:
+    type: github
+    vers: v3.2.0-commit
+    user: Wiznet
+    repo: ioLibrary_Driver
