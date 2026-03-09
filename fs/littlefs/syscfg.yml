@@ -80,16 +80,6 @@ syscfg.defs:
             Sysinit stage for littlefs functionality.
         value: 200
 
-    LITTLEFS_DETECT_FAIL_FORMAT:
-        description: Use LITTLEFS_AUTO_FORMAT
-        value: 0
-        defunct: 1
-
-    LITTLEFS_DISABLE_SYSINIT:
-        description: Use LITTLEFS_AUTO_MOUNT instead
-        value: 0
-        defunct: 1
-
 syscfg.restrictions:
     # block size and block count must be both either default or set; block size must be >=128 (littlefs requirement)
     - (LITTLEFS_BLOCK_COUNT == 0 && LITTLEFS_BLOCK_SIZE == 0) || (LITTLEFS_BLOCK_COUNT > 0 && LITTLEFS_BLOCK_SIZE >= 128)

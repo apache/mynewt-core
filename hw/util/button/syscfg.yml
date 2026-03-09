@@ -18,22 +18,6 @@
 #
 
 syscfg.defs:
-    BUTTON_DBLCLICK_TICKS:
-        description: Use BUTTON_DBLCLICK_TIMEOUT_MS instead.
-        defunct: 1
-        value:
-    BUTTON_LONGHOLD_TICKS:
-        description: Use BUTTON_LONGHOLD_TIME_MS instead.
-        defunct: 1
-        value:
-    BUTTON_REPEAT_FIRST_TICKS:
-        description: Use BUTTON_REPEAT_FIRST_TIME_MS instead.
-        defunct: 1
-        value:
-    BUTTON_REPEAT_TICKS:
-        description: Use BUTTON_REPEAT_TIME_MS instead.
-        defunct: 1
-        value:
     BUTTON_DBLCLICK_TIMEOUT_MS:
         description: >
             Maximum time in which a second click should be performed
