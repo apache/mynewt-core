@@ -17,49 +17,24 @@
  * under the License.
  */
 
-#include <inttypes.h>
-#include <string.h>
-#include <hal/hal_bsp.h>
-#include "mcu/nrf52_hw_id.h"
-#include "nrf.h"
+#ifndef __HAL_BSP_INT_H_
+#define __HAL_BSP_INT_H_
 
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-int
-nrf52_hw_id_len(void)
-{
-    return sizeof(NRF_FICR->DEVICEID) + sizeof(NRF_FICR->DEVICEADDR);
-}
+#include <stdint.h>
 
 /*
- * These values are generated at random.
- * DEVICEID[0-1] and DEVICEADDR[0-1].
+ * Below API shall be defined by BSP to provide provisioned data. It will be
+ * called by generic hal_bsp_prov_data_get().
  */
-int
-nrf52_hw_id(uint8_t *id, int max_len)
-{
-    int len, cnt;
 
-    cnt = min(sizeof(NRF_FICR->DEVICEID), max_len);
-    memcpy(id, (void *)NRF_FICR->DEVICEID, cnt);
-    len = cnt;
+int hal_bsp_prov_data_get_int(uint16_t id, void *data, uint16_t *length);
 
-    cnt = min(sizeof(NRF_FICR->DEVICEADDR), max_len - len);
-    memcpy(id + len, (void *)NRF_FICR->DEVICEADDR, cnt);
-
-    return len + cnt;
+#ifdef __cplusplus
 }
+#endif
 
-int
-hal_bsp_hw_id_len(void)
-{
-    return nrf52_hw_id_len();
-}
-
-int
-hal_bsp_hw_id(uint8_t *id, int max_len)
-{
-    return nrf52_hw_id(id, max_len);
-}
+#endif
