@@ -295,6 +295,9 @@ stm32_lwip_init(struct netif *nif)
     int i, j;
     const struct stm32_eth_cfg *cfg;
     uint32_t reg;
+    const ETH_MACFilterConfigTypeDef filterConfig = {
+        .PassAllMulticast = ENABLE,
+    };
 
     /*
      * LwIP clears most of these field in netif_add() before calling
@@ -353,18 +356,14 @@ stm32_lwip_init(struct netif *nif)
     ses->st_tx_cfg.ChecksumCtrl = ETH_CHECKSUM_IPHDR_PAYLOAD_INSERT_PHDR_CALC;
     ses->st_tx_cfg.CRCPadCtrl = ETH_CRC_PAD_INSERT;
 
-    /*
-     * XXX pass all multicast traffic for now
-     */
-#if MYNEWT_VAL(MCU_STM32H7)
-    ses->st_eth.Instance->MACPFR |= ETH_MACPFR_PM;
-#else
-    ses->st_eth.Instance->MACFFR |= ETH_MULTICASTFRAMESFILTER_NONE;
-#endif
-
     if (HAL_ETH_Init(&ses->st_eth) == HAL_ERROR) {
         return ERR_IF;
     }
+
+    /*
+     * XXX pass all multicast traffic for now
+     */
+    HAL_ETH_SetMACFilterConfig(&ses->st_eth, &filterConfig);
 
     /*
      * Generate an interrupt when link state changes
