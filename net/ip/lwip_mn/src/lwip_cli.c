@@ -29,7 +29,8 @@
 #include <lwip/tcpip.h>
 #include <lwip/dhcp.h>
 
-#include "ip_priv.h"
+#include <ip_priv.h>
+#include <lwip/priv/tcp_priv.h>
 
 static void
 lwip_nif_print(struct mn_itf *itf)
@@ -99,20 +100,29 @@ lwip_nif_up(const char *name)
 }
 
 static int
+lwip_lsif_cmd(int argc, char **argv)
+{
+    struct mn_itf itf = {};
+    int rc;
+
+    while (1) {
+        rc = mn_itf_getnext(&itf);
+        if (rc) {
+            break;
+        }
+        lwip_nif_print(&itf);
+    }
+    return 0;
+}
+
+static int
 lwip_cli(int argc, char **argv)
 {
     int rc;
     struct mn_itf itf;
 
     if (argc == 1 || !strcmp(argv[1], "listif")) {
-        memset(&itf, 0, sizeof(itf));
-        while (1) {
-            rc = mn_itf_getnext(&itf);
-            if (rc) {
-                break;
-            }
-            lwip_nif_print(&itf);
-        }
+        lwip_lsif_cmd(argc - 1, argv + 1);
     } else if (mn_itf_get(argv[1], &itf) == 0) {
         if (argc == 2) {
             lwip_nif_print(&itf);
@@ -131,10 +141,67 @@ lwip_cli(int argc, char **argv)
     return 0;
 }
 
+static const char *const tcp_state_str[] = {
+    "CLOSED",      "LISTEN",     "SYN_SENT",   "SYN_RCVD",
+    "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSE_WAIT",
+    "CLOSING",     "LAST_ACK",   "TIME_WAIT",
+};
+
+static void
+lwip_netstat_cmd(int argc, char **argv)
+{
+    char buf1[48];
+    char buf2[48];
+    const struct tcp_pcb *tcp_pcb;
+    const struct udp_pcb *udp_pcb;
+    int len;
+
+    for (int i = 0; i < 4; ++i) {
+        for (tcp_pcb = *tcp_pcb_lists[i]; tcp_pcb != NULL; tcp_pcb = tcp_pcb->next) {
+            ipaddr_ntoa_r(&tcp_pcb->local_ip, buf1, sizeof(buf1));
+            len = strlen(buf1);
+            sprintf(buf1 + len, ":%d", tcp_pcb->local_port);
+            if (tcp_pcb->state >= ESTABLISHED) {
+                ipaddr_ntoa_r(&tcp_pcb->remote_ip, buf2, sizeof(buf2));
+                len = strlen(buf2);
+                sprintf(buf2 + len, ":%d", tcp_pcb->remote_port);
+            } else {
+                strcpy(buf2, "*.*");
+            }
+            if (IP_IS_V4_VAL(tcp_pcb->local_ip)) {
+                console_printf("TCP   %-22s  %-22s  %s\n", buf1, buf2,
+                               tcp_state_str[tcp_pcb->state]);
+            } else {
+                console_printf("TCP   %s  %s  %s\n", buf1, buf2,
+                               tcp_state_str[tcp_pcb->state]);
+            }
+        }
+    }
+
+    for (udp_pcb = udp_pcbs; udp_pcb != NULL; udp_pcb = udp_pcb->next) {
+        ipaddr_ntoa_r(&udp_pcb->local_ip, buf1, sizeof(buf1));
+        len = strlen(buf1);
+        sprintf(buf1 + len, ":%d", udp_pcb->local_port);
+        if (IP_IS_V4_VAL(udp_pcb->local_ip)) {
+            console_printf("UDP   %-22s  *.*\n", buf1);
+        } else {
+            console_printf("UDP   %s\n", buf1);
+        }
+    }
+}
+
 struct shell_cmd lwip_cli_cmd = {
     .sc_cmd = "ip",
     .sc_cmd_func = lwip_cli
 };
+
+#if LWIP_IPV6 || LWIP_IPV4
+SHELL_MODULE_CMD(lwip, netstat, lwip_netstat_cmd, NULL);
+#endif
+SHELL_MODULE_CMD(lwip, lsif, lwip_lsif_cmd, NULL);
+SHELL_MODULE_CMD(lwip, ip, lwip_cli, NULL);
+
+SHELL_MODULE_WITH_LINK_TABLE(lwip);
 
 void
 lwip_cli_init(void)

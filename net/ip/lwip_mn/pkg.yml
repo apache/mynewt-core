@@ -37,3 +37,8 @@ pkg.deps.STD_LWIPOPTS:
 
 pkg.init:
     ip_init: 'MYNEWT_VAL(IP_SYSINIT_STAGE)'
+
+pkg.whole_archive: true
+
+pkg.link_tables:
+    - lwip_commands
