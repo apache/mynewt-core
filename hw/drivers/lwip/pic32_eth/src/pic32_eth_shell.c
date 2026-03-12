@@ -276,7 +276,8 @@ pic32_eth_compat_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct 
     } else {
         for (i = 0; pic32_eth_commands[i].sc_cmd; ++i) {
             if (strcmp(pic32_eth_commands[i].sc_cmd, argv[1]) == 0) {
-                rc = pic32_eth_commands[i].sc_cmd_func(argc - 1, argv + 1);
+                rc = pic32_eth_commands[i].sc_cmd_ext_func(
+                    &pic32_eth_commands[i], argc - 1, argv + 1, streamer);
                 break;
             }
         }
@@ -291,6 +292,7 @@ pic32_eth_compat_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct 
 }
 
 static const struct shell_cmd pic32_eth_cmd = {
+    .sc_ext = 1,
     .sc_cmd = "eth",
     .sc_cmd_ext_func = pic32_eth_compat_cmd,
 };
