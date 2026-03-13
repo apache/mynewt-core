@@ -44,3 +44,7 @@ syscfg.defs:
         description:
             USB pins alternate function mapping (10 or 12).
         value: 10
+    USB_USE_OTG_HS_ULPI:
+        description:
+            Use ULPI interface
+        value: 0
