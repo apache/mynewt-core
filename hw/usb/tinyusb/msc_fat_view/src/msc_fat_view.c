@@ -1383,7 +1383,12 @@ tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer, uint
     if (medium_state < MEDIUM_RELOAD) {
         return -1;
     }
-    msc_fat_view_read_sector(lba, buffer);
+    MSC_FAT_VIEW_LOG_DEBUG("SCSI READ10 %d, %d, %d\n", (int)lba, (int)offset,
+                           (int)bufsize);
+
+    for (uint32_t i = 0; i < bufsize; i += SECTOR_SIZE, ++lba) {
+        msc_fat_view_read_sector(lba, (uint8_t *)buffer + i);
+    }
 
     return bufsize;
 }
@@ -1397,7 +1402,6 @@ tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t *buffer, 
 {
     int32_t res;
     MSC_FAT_VIEW_LOG_DEBUG("SCSI WRITE10 %d, %d, %d\n", (int)lba, (int)offset, (int)bufsize);
-    assert(bufsize == SECTOR_SIZE);
     assert(offset == 0);
 
     last_scsi_command = SCSI_CMD_WRITE_10;
@@ -1408,17 +1412,18 @@ tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t *buffer, 
         return -1;
     }
 
-    if (lba == 0) {
-        res = bufsize;
-        /* Ignore writes to boot sector */
-    } else if (lba < FAT_ROOT_DIR_FIRST_SECTOR) {
-        res = msc_fat_view_write_fat_sector(lba - FAT_FIRST_SECTOR, buffer);
-    } else if (lba < FAT_CLUSTER2_FIRST_SECTOR) {
-        res = msc_fat_view_write_root_sector(lba - FAT_ROOT_DIR_FIRST_SECTOR, buffer);
-    } else {
-        res = msc_fat_view_write_normal_sector(lba, buffer);
+    for (res = 0; res + SECTOR_SIZE <= bufsize; res += SECTOR_SIZE, ++lba) {
+        if (lba == 0) {
+            /* Ignore writes to boot sector */
+        } else if (lba < FAT_ROOT_DIR_FIRST_SECTOR) {
+            msc_fat_view_write_fat_sector(lba - FAT_FIRST_SECTOR, buffer + res);
+        } else if (lba < FAT_CLUSTER2_FIRST_SECTOR) {
+            msc_fat_view_write_root_sector(lba - FAT_ROOT_DIR_FIRST_SECTOR,
+                                           buffer + res);
+        } else {
+            msc_fat_view_write_normal_sector(lba, buffer + res);
+        }
     }
-
     return res;
 }
 
