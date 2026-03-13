@@ -37,8 +37,15 @@
 #endif
 #define GPIO_AF_USB        MYNEWT_VAL(USB_AF_USB)
 
-static void
-OTG_IRQHandler(void)
+void
+OTG_HS_IRQHandler(void)
+{
+    /* TinyUSB provides interrupt handler code */
+    tud_int_handler(1);
+}
+
+void
+OTG_FS_IRQHandler(void)
 {
     /* TinyUSB provides interrupt handler code */
     tud_int_handler(0);
@@ -47,8 +54,47 @@ OTG_IRQHandler(void)
 void
 tinyusb_hardware_init(void)
 {
-    NVIC_SetVector(USB_OTG_IRQn, (uint32_t)OTG_IRQHandler);
+    NVIC_SetVector(USB_OTG_IRQn, (uint32_t)USB_OTG_IRQHandler);
     NVIC_SetPriority(USB_OTG_IRQn, 2);
+#if MYNEWT_VAL(USB_USE_OTG_HS)
+#ifdef __HAL_RCC_PWR_CLK_ENABLE
+    __HAL_RCC_PWR_CLK_ENABLE();
+#endif
+    USB_OTG_CLK_ENABLE();
+#if MYNEWT_VAL_USB_USE_OTG_HS_ULPI
+    hal_gpio_init_af(MCU_GPIO_PORTA(3), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTA(5), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTB(0), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTB(1), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTB(5), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTB(10), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTB(11), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTB(12), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTB(13), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTC(0), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTC(2), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTC(3), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+
+    __HAL_RCC_USB1_OTG_HS_ULPI_CLK_ENABLE();
+#else
+    /*
+     * USB Pin Init
+     * PB14- DM, PB15- DP
+     */
+    hal_gpio_init_af(MCU_GPIO_PORTB(14), 12, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    hal_gpio_init_af(MCU_GPIO_PORTB(15), 12, GPIO_NOPULL, GPIO_MODE_AF_PP);
+#endif
+    // No VBUS sense
+    USB_OTG->GCCFG &= ~USB_OTG_GCCFG_VBDEN;
+
+    /* B-peripheral session valid override enable */
+    USB_OTG->GOTGCTL |= USB_OTG_GOTGCTL_BVALOEN;
+    USB_OTG->GOTGCTL |= USB_OTG_GOTGCTL_BVALOVAL;
+
+    // Force device mode
+    USB_OTG->GUSBCFG &= ~USB_OTG_GUSBCFG_FHMOD;
+    USB_OTG->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
+#else
     /*
      * USB Pin Init
      * PA11- DM, PA12- DP
@@ -64,9 +110,6 @@ tinyusb_hardware_init(void)
 #endif
     hal_gpio_init_af(MCU_GPIO_PORTA(12), GPIO_AF_USB, GPIO_NOPULL, GPIO_MODE_AF_PP);
 
-#if MYNEWT_VAL(MCU_STM32H7)
-    HAL_PWREx_EnableUSBVoltageDetector();
-#endif
     /*
      * Enable USB OTG clock, force device mode
      */
@@ -104,6 +147,7 @@ tinyusb_hardware_init(void)
     /* B-peripheral session valid override enable */
     USB_OTG->GOTGCTL |= USB_OTG_GOTGCTL_BVALOEN;
     USB_OTG->GOTGCTL |= USB_OTG_GOTGCTL_BVALOVAL;
+#endif
 #endif
 #endif
 
