@@ -18,7 +18,6 @@
 #
 
 syscfg.vals:
-    XTAL_32768: 1
     SYS_CLOCK: HFXOSC_PLL_256_MHZ
     UART_0: 1
     TIMER_0: 1
