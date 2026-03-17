@@ -46,9 +46,6 @@ syscfg.defs:
         description: >
             Default divider used when high frequency oscillator is starting.
         value: 4
-    XTAL_32768:
-        description: 'External 32k oscillator available.'
-        value: 0
     SYS_CLOCK:
         description: 'System clock'
         value:  HFROSC_DIV_4
