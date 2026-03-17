@@ -1,0 +1,54 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    CDC_UART_UART_DEV_NAME:
+        description: Device name of UART device for CDC_UART"
+        value: '"uart0"'
+
+    CDC_UART_RX_FIFO_SIZE:
+        description: >
+            RX FIFO size. FIFO that keeps data received over UART,
+            before they are transported out of USB.
+        value: 2048
+
+    CDC_UART_TX_FIFO_SIZE:
+        description: >
+            TX FIFO size. FIFO that keeps data received from USB,
+            before they are transported out of UART.
+        value: 2048
+
+    CDC_UART_TX_LED_PIN:
+        description: TX LED pin that.
+        value: -1
+
+    CDC_UART_TX_LED_ON_VALUE:
+        description: Value set to CDC_UART_TX_LED_PIN to lit LED.
+        value: 1
+
+    CDC_UART_RX_LED_PIN:
+        description: RX LED pin that.
+        value: -1
+
+    CDC_UART_RX_LED_ON_VALUE:
+        description: Value set to USB2UART_RX_LED_PIN to lit LED.
+        value: 1
+
+syscfg.vals:
+    USBD_CDC: 1
