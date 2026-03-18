@@ -55,6 +55,8 @@ hal_nvreg_write(unsigned int reg, uint32_t val)
 #endif
 #if defined(__HAL_RCC_BKP_CLK_ENABLE)
         __HAL_RCC_BKP_CLK_ENABLE();
+#elif defined(__HAL_RCC_RTCAPB_CLK_ENABLE)
+        __HAL_RCC_RTCAPB_CLK_ENABLE();
 #endif
         HAL_PWR_EnableBkUpAccess();
         HAL_RTCEx_BKUPWrite(&hrtc, reg + HAL_NVREG_START_INDEX, val);
@@ -78,6 +80,11 @@ hal_nvreg_read(unsigned int reg)
 #if PWR_ENABLED
     RTC_HandleTypeDef hrtc = { .Instance = RTC };
     if (reg < HAL_NVREG_MAX) {
+#if defined(__HAL_RCC_BKP_CLK_ENABLE)
+        __HAL_RCC_BKP_CLK_ENABLE();
+#elif defined(__HAL_RCC_RTCAPB_CLK_ENABLE)
+        __HAL_RCC_RTCAPB_CLK_ENABLE();
+#endif
         HAL_PWR_EnableBkUpAccess();
         val = HAL_RTCEx_BKUPRead(&hrtc, reg + HAL_NVREG_START_INDEX);
         HAL_PWR_DisableBkUpAccess();
