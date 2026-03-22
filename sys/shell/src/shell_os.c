@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "os/mynewt.h"
 #include "datetime/datetime.h"
@@ -79,6 +80,40 @@ shell_os_tasks_display_cmd(const struct shell_cmd *cmd, int argc, char **argv,
     if (name && !found) {
         streamer_printf(streamer, "Couldn't find task with name %s\n", name);
     }
+
+    return 0;
+}
+
+static int
+uptime_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *streamer)
+{
+    struct os_timeval uptime;
+    char days_str[17] = "";
+    int days;
+    int hours;
+    int minutes;
+    int seconds;
+    uint64_t n;
+
+    (void)cmd;
+    (void)argc;
+    (void)argv;
+
+    os_get_uptime(&uptime);
+
+    seconds = uptime.tv_sec % 60;
+    n = uptime.tv_sec / 60;
+    minutes = n % 60;
+    n /= 60;
+    hours = n % 24;
+    days = n / 24;
+    if (days == 1) {
+        strcpy(days_str, "1 day ");
+    } else if (days > 1) {
+        sprintf(days_str, "%d days ", days);
+    }
+    streamer_printf(streamer, "up %s%d:%02d:%02d.%03d\n", days_str, hours,
+                    minutes, seconds, (int)(uptime.tv_usec / 1000));
 
     return 0;
 }
@@ -225,6 +260,11 @@ static const struct shell_cmd_help tasks_help = {
     .params = tasks_params,
 };
 
+static const struct shell_cmd_help uptime_help = {
+    .summary = "Display system up time",
+    .params = NULL,
+};
+
 static const struct shell_param mpool_params[] = {
     {"", "mpool name"},
     {NULL, NULL}
@@ -274,6 +314,7 @@ static const struct shell_cmd_help ls_dev_help = {
 #endif
 
 MAKE_SHELL_EXT_CMD(tasks, shell_os_tasks_display_cmd, &tasks_help)
+MAKE_SHELL_EXT_CMD(uptime, uptime_cmd, &uptime_help);
 MAKE_SHELL_EXT_CMD(mpool, shell_os_mpool_display_cmd, &mpool_help)
 MAKE_SHELL_EXT_CMD(date, shell_os_date_cmd, &date_help)
 MAKE_SHELL_EXT_CMD(reset, shell_os_reset_cmd, &reset_help)
