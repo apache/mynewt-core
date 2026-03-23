@@ -145,6 +145,7 @@ HAL_ETH_RxAllocateCallback(uint8_t **buff)
         pbuf_alloced_custom(PBUF_RAW, 0, PBUF_REF, p, *buff, ETH_RX_BUF_SIZE);
     } else {
         rx_alloc_failed = 1;
+        *buff = NULL;
     }
 }
 
