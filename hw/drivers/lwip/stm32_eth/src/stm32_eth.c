@@ -302,7 +302,7 @@ stm32_lwip_init(struct netif *nif)
     int i, j;
     const struct stm32_eth_cfg *cfg;
     uint32_t reg;
-    const ETH_MACFilterConfigTypeDef filterConfig = {
+    ETH_MACFilterConfigTypeDef filterConfig = {
         .PassAllMulticast = ENABLE,
     };
 
