@@ -99,12 +99,18 @@ static void
 stm32_eth_input(struct stm32_eth_state *ses)
 {
     struct pbuf *p = NULL;
+    int sr;
 
     if (rx_alloc_failed) {
         return;
     }
 
+    OS_ENTER_CRITICAL(sr);
+
     HAL_ETH_ReadData(&ses->st_eth, (void **)&p);
+
+    OS_EXIT_CRITICAL(sr);
+
     if (p != NULL) {
         if (ses->st_nif.input(p, &ses->st_nif) != ERR_OK) {
             pbuf_free(p);
