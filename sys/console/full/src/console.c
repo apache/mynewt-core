@@ -1184,6 +1184,9 @@ console_handle_char(uint8_t byte)
                 console_switch_to_prompt();
                 console_clear_line();
             } else {
+                if (trailing_selection) {
+                    console_write_nolock(input->line + cur, trailing_chars);
+                }
                 console_filter_out('\r');
                 console_filter_out('\n');
             }
