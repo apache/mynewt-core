@@ -161,38 +161,31 @@ static size_t
 line2argv(char *str, char *argv[], size_t size, struct streamer *streamer)
 {
     size_t argc = 0;
+    const char *limit = str + strlen(str);
+    char separator = ' ';
+    bool in_arg = false;
 
-    if (!strlen(str)) {
-        return 0;
-    }
-
-    while (*str && *str == ' ') {
-        str++;
-    }
-
-    if (!*str) {
-        return 0;
-    }
-
-    argv[argc++] = str;
-
-    while ((str = strchr(str, ' '))) {
-        *str++ = '\0';
-
-        while (*str && *str == ' ') {
-            str++;
-        }
-
-        if (!*str) {
-            break;
-        }
-
-        argv[argc++] = str;
-
-        if (argc == size) {
-            streamer_printf(streamer, "Too many parameters (max %zu)\n",
-                            size - 1);
-            return 0;
+    for (; str < limit; ++str) {
+        if (in_arg) {
+            if (*str == separator) {
+                *str = '\0';
+                in_arg = false;
+                separator = ' ';
+            }
+        } else {
+            if (*str == ' ') {
+                continue;
+            }
+            if (*str == '"' && (str + 1 < limit)) {
+                ++str;
+                separator = '"';
+            }
+            argv[argc++] = str;
+            in_arg = true;
+            if (argc == size) {
+                streamer_printf(streamer, "Too many parameters (max %zu)\n", size - 1);
+                return 0;
+            }
         }
     }
 
