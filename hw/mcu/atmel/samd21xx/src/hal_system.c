@@ -16,23 +16,14 @@
 
 #include <mcu/cortex_m0.h>
 #include "hal/hal_system.h"
+#include "hal/hal_debug.h"
 #include <stdlib.h>
 
 void
 hal_system_reset(void)
 {
     while (1) {
-        if (hal_debugger_connected()) {
-            /*
-             * If debugger is attached, breakpoint here.
-             */
-            __asm__("bkpt");
-        }
-
-        /* Cortex-M0+ Core Debug Registers (DCB registers, SHCSR, and DFSR)
-           are only accessible over DAP and not via processor. Therefore
-           they are not covered by the Cortex-M0 header file. */
-
+        HAL_DEBUG_BREAK();
         NVIC_SystemReset();
     }
 }
@@ -40,6 +31,9 @@ hal_system_reset(void)
 int
 hal_debugger_connected(void)
 {
+    /* Cortex-M0+ Core Debug Registers (DCB registers, SHCSR, and DFSR)
+       are only accessible over DAP and not via processor. Therefore
+       they are not covered by the Cortex-M0 header file. */
     return DSU->STATUSB.reg & DSU_STATUSB_DBGPRES;
 }
 
@@ -50,7 +44,7 @@ HAL_GetTick(void)
 }
 
 int
-HAL_InitTick (uint32_t TickPriority)
+HAL_InitTick(uint32_t TickPriority)
 {
     return 0;
 }
