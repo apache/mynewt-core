@@ -42,6 +42,17 @@ syscfg.defs:
             When 1 only part of heap that was used will be dumped, that
             can reduce size of crash dump.
         value: 0
+    FANSTEL_NRF5340_MODULE:
+        description: >
+            Selects specific module
+        choices:
+            - BT40
+            - BT40F
+            - BT40E
+            - BT40N
+            - BT40NE
+        value:
+            BT40E
 
 syscfg.vals:
     MCU_DEFAULT_STARTUP: 0
@@ -122,6 +133,10 @@ syscfg.vals.BSP_NRF5340_NET_FLASH_ENABLE:
 
 syscfg.vals.IPC_NRF5340_FLASH_CLIENT:
     HAL_FLASH_MAX_DEVICE_COUNT: 3
+
+syscfg.vals.'FANSTEL_NRF5340_MODULE=="BT40NE" || FANSTEL_NRF5340_MODULE=="BT40N"':
+    # NRF21540 pins managed by Network core
+    IPC_NRF5340_NET_GPIO: 21, 26, 27, 36, 37
 
 syscfg.restrictions.BSP_NRF5340_NET_FLASH_ENABLE:
     - 'IPC_NRF5340_CHANNELS >= 4'

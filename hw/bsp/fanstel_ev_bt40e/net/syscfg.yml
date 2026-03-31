@@ -23,6 +23,18 @@ syscfg.defs:
         description: 'Set to indicate that BSP has NRF5340 NET'
         value: 1
 
+    FANSTEL_NRF5340_MODULE:
+        description: >
+            Selects specific module
+        choices:
+            - BT40
+            - BT40F
+            - BT40E
+            - BT40N
+            - BT40NE
+        value:
+            BT40E
+
     COREDUMP_SKIP_UNUSED_HEAP:
         description: >
             Store whole RAM in crash dump.
@@ -82,3 +94,20 @@ syscfg.vals.BLE_CONTROLLER:
 
 syscfg.vals.BLE_TRANSPORT:
     BLE_TRANSPORT_HS: nrf5340
+
+syscfg.vals.'FANSTEL_NRF5340_MODULE=="BT40NE" || FANSTEL_NRF5340_MODULE=="BT40N"':
+    BLE_FEM_PA: 1
+    BLE_FEM_PA_GPIO: 21
+    # Max time PD->PG->TX
+    BLE_FEM_PA_TURN_ON_US: 28
+    BLE_FEM_LNA: 1
+    BLE_FEM_LNA_GPIO: 27
+    # Max time PD->PG->RX
+    BLE_FEM_LNA_TURN_ON_US: 28
+    NRF21540_PIN_PDN: 26
+    NRF21540_PIN_ANT_SEL: 37
+    NRF21540_PIN_MODE: 36
+    # Default value +10 dBm
+    NRF21540_TX_GAIN_PRESET: POUTB
+    # PCB Antenna
+    NRF21540_ANTENNA_PORT: 1
