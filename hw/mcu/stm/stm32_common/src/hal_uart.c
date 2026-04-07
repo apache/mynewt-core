@@ -149,8 +149,8 @@ static struct hal_uart_irq uart_irqs[3];
 #  define TC            USART_ISR_TC
 #  define RXDR(x)       ((x)->RDR)
 #  define TXDR(x)       ((x)->TDR)
-#if MYNEWT_VAL(MCU_STM32WB) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32G4) || \
-    MYNEWT_VAL(MCU_STM32G0)
+#if MYNEWT_VAL(MCU_STM32WB) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32G4) ||\
+    MYNEWT_VAL(MCU_STM32G0) || MYNEWT_VAL(MCU_STM32H5)
 #  define BAUD(x,y)     UART_DIV_SAMPLING16((x), (y), UART_PRESCALER_DIV1)
 #else
 #  define BAUD(x,y)     UART_DIV_SAMPLING16((x), (y))

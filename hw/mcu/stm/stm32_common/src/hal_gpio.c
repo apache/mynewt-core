@@ -142,7 +142,7 @@ struct ext_irqs
     volatile uint32_t irq2;
     volatile uint32_t irq3;
     volatile uint32_t irq4;
-#if defined(STM32U5) || defined(STM32L5)
+#if defined(STM32U5) || defined(STM32L5) || defined(STM32H5)
     volatile uint32_t irq5;
     volatile uint32_t irq6;
     volatile uint32_t irq7;
@@ -231,7 +231,7 @@ ext_irq4(void)
     ext_irq_handler(4);
 }
 
-#if defined(STM32U5) || defined(STM32L5)
+#if defined(STM32U5) || defined(STM32L5) || defined(STM32H5)
 
 static void
 ext_irq5(void)
@@ -500,7 +500,7 @@ hal_gpio_pin_to_irq(int pin)
     } else {
         irqn = EXTI4_15_IRQn;
     }
-#elif defined(STM32U5) || defined(STM32L5)
+#elif defined(STM32U5) || defined(STM32L5) || defined(STM32H5)
     irqn = EXTI0_IRQn + index;
 #else
     if (index <= 4) {
@@ -553,7 +553,7 @@ hal_gpio_set_nvic(IRQn_Type irqn)
     case EXTI4_IRQn:
         isr = (uint32_t)&ext_irq4;
         break;
-#if defined(STM32U5) || defined(STM32L5)
+#if defined(STM32U5) || defined(STM32L5) || defined(STM32H5)
     case EXTI5_IRQn:
         isr = (uint32_t)&ext_irq5;
         break;
@@ -971,8 +971,9 @@ hal_gpio_irq_enable(int pin)
     mask = GPIO_MASK(pin);
 
     __HAL_DISABLE_INTERRUPTS(ctx);
-#if MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || \
-    MYNEWT_VAL(MCU_STM32G4) || MYNEWT_VAL(MCU_STM32G0)
+#if MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB) ||                     \
+    MYNEWT_VAL(MCU_STM32H5) || MYNEWT_VAL(MCU_STM32H7) ||                     \
+    MYNEWT_VAL(MCU_STM32G0) || MYNEWT_VAL(MCU_STM32G4) || MYNEWT_VAL(MCU_STM32U5)
     EXTI->IMR1 |= mask;
 #else
     EXTI->IMR |= mask;
@@ -994,8 +995,10 @@ hal_gpio_irq_disable(int pin)
 
     mask = GPIO_MASK(pin);
     __HAL_DISABLE_INTERRUPTS(ctx);
-#if MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB) || MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || \
-    MYNEWT_VAL(MCU_STM32G4) || MYNEWT_VAL(MCU_STM32G0)
+#if MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB) ||                     \
+    MYNEWT_VAL(MCU_STM32H5) || MYNEWT_VAL(MCU_STM32H7) ||                     \
+    MYNEWT_VAL(MCU_STM32G0) || MYNEWT_VAL(MCU_STM32G4) || MYNEWT_VAL(MCU_STM32U5)
+
     EXTI->IMR1 |= mask;
 #else
     EXTI->IMR &= ~mask;
