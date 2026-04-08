@@ -22,6 +22,8 @@
 #ifndef __STM32H7xx_HAL_CONF_H
 #define __STM32H7xx_HAL_CONF_H
 
+#include <syscfg/syscfg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
