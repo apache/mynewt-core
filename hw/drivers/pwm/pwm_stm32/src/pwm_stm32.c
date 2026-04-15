@@ -541,7 +541,11 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 #endif
 #ifdef TIM14
     case (uintptr_t)TIM14:
+#if defined(LL_APB2_GRP1_PERIPH_TIM14)
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM14);
+#elif defined(LL_APB1_GRP1_PERIPH_TIM14)
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM14);
+#endif
         dev->pwm_chan_count = 1;
         break;
 #endif
