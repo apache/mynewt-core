@@ -43,14 +43,14 @@
 
 #if MYNEWT_VAL(PWM_0)
 struct stm32_pwm_conf os_bsp_pwm0_cfg = {
-    .tim = TIM3,
-    .irq = TIM3_IRQn,
+    .tim = TIM2,
+    .irq = TIM2_IRQn,
 };
 #endif
 #if MYNEWT_VAL(PWM_1)
 struct stm32_pwm_conf os_bsp_pwm1_cfg = {
     .tim = TIM4,
-    .irq = TIM4_IRQn,
+    .irq = TIM3_TIM4_IRQn,
 };
 #endif
 #if MYNEWT_VAL(PWM_2)
