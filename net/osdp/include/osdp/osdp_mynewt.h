@@ -17,17 +17,19 @@
  * under the License.
  */
 
-#include "osdp/osdp_hooks.h"
-#include "modlog/modlog.h"
+#ifndef _OSDP_MYNEWT_H_
+#define _OSDP_MYNEWT_H_
 
-#if MYNEWT_VAL(OSDP_USE_CRYPTO_HOOK)
-/*
- * Stub function. Needs to be overridden to use correctly
+#include <osdp.h>
+
+/**
+ * @brief Initialize context for OSDP library.
  */
-size_t
-osdp_hook_crypto_random_bytes(uint8_t *out, size_t out_len)
-{
-    return 1;
-}
+struct osdp_t *osdp_init(osdp_pd_info_t *info);
 
-#endif /* OSDP_USE_CRYPTO_HOOK */
+/**
+ * @brief Stop OSDP library.
+ */
+void osdp_stop(void);
+
+#endif /* _OSDP_MYNEWT_H_ */

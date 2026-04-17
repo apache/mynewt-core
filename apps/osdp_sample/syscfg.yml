@@ -24,7 +24,6 @@ syscfg.vals:
   OSDP_MODE_PD: 1 # set in peripheral device mode
   OSDP_SC_ENABLED: 1 # enable secure channel
   OSDP_UART_DEV_NAME: '"uart0"' # set uart device for OSDP communication
-  TRNG: 1 # for SC mode
 
 # PD mode config
 syscfg.vals.OSDP_MODE_PD:

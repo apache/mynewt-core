@@ -35,10 +35,6 @@ syscfg.defs:
         value: 50
         description: 'Refresh interval factor for OSDP state update.'
 
-    OSDP_USE_CRYPTO_HOOK:
-        value: 0
-        description: 'Override crypto functions.'
-
     OSDP_SC_RETRY_WAIT_SEC:
         value: 600
         description: 'Time in seconds to wait after a secure channel failure, and before
@@ -295,3 +291,5 @@ syscfg.logs:
         level: MYNEWT_VAL(OSDP_LOG_LVL)
 
 syscfg.vals:
+    MBEDTLS_CIPHER_MODE_CBC: 1
+    MBEDTLS_CTR_DRBG_C: 1
