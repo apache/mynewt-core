@@ -26,9 +26,7 @@
 #include "bsp/bsp.h"
 #include "console/console.h"
 #include "hal/hal_gpio.h"
-#include "tinycrypt/aes.h"
-#include "osdp/osdp.h"
-#include "osdp/osdp_common.h"
+#include "osdp/osdp_mynewt.h"
 #ifdef ARCH_sim
 #include "mcu/mcu_sim.h"
 #endif
@@ -55,6 +53,8 @@ static int create_keypress_event(struct osdp_event *event);
 static int create_cardreader_event(struct osdp_event *event);
 static int create_mfgreply_event(struct osdp_cmd *oc);
 static int pd_command_handler(void *arg, struct osdp_cmd *cmd);
+
+static struct osdp_t *ctx;
 
 /* From osdp.h */
 static const char *const osdp_cmd_str[] = {
@@ -85,43 +85,24 @@ pd_command_handler(void *arg, struct osdp_cmd *cmd)
         break;
     case OSDP_CMD_BUZZER:
         LOG(INFO, "\n\trdr: %d,\n\tctrl_code: %d,\n\ton_ct: %d,\n\toff_ct: %d,\n\trep_count: %d\n",
-          cmd->buzzer.reader,
-          cmd->buzzer.control_code,
-          cmd->buzzer.on_count,
-          cmd->buzzer.off_count,
-          cmd->buzzer.rep_count
-            );
+            cmd->buzzer.reader, cmd->buzzer.control_code, cmd->buzzer.on_count,
+            cmd->buzzer.off_count, cmd->buzzer.rep_count);
         break;
     case OSDP_CMD_LED:
-        LOG(INFO,
-            "\n\trdr: %d,\n\tctrl_code: %d,\n\tled_num: %d,\n\ton_ct: %d,\n\toff_ct: %d,\n\ton_clr: %d,\n\toff_clr: %d,\n\ttmr_ct: %d\n",
-          cmd->led.reader,
-          cmd->led.temporary.control_code,
-          cmd->led.led_number,
-          cmd->led.temporary.on_count,
-          cmd->led.temporary.off_count,
-          cmd->led.temporary.on_color,
-          cmd->led.temporary.off_color,
-          cmd->led.temporary.timer_count
-            );
+        LOG(INFO, "\n\trdr: %d,\n\tctrl_code: %d,\n\tled_num: %d,\n\ton_ct: %d,\n\toff_ct: %d,\n\ton_clr: %d,\n\toff_clr: %d,\n\ttmr_ct: %d\n",
+            cmd->led.reader, cmd->led.temporary.control_code,
+            cmd->led.led_number, cmd->led.temporary.on_count,
+            cmd->led.temporary.off_count, cmd->led.temporary.on_color,
+            cmd->led.temporary.off_color, cmd->led.temporary.timer_count);
         break;
     case OSDP_CMD_TEXT:
-        LOG(INFO,
-            "\n\trdr: %d,\n\tctrl_code: %d,\n\ttemp_time: %d,\n\toffset_row: %d,\n\toffset_col: %d,\n\tdata: %s\n",
-          cmd->text.reader,
-          cmd->text.control_code,
-          cmd->text.temp_time,
-          cmd->text.offset_row,
-          cmd->text.offset_col,
-          cmd->text.data
-            );
+        LOG(INFO, "\n\trdr: %d,\n\tctrl_code: %d,\n\ttemp_time: %d,\n\toffset_row: %d,\n\toffset_col: %d,\n\tdata: %s\n",
+            cmd->text.reader, cmd->text.control_code, cmd->text.temp_time,
+            cmd->text.offset_row, cmd->text.offset_col, cmd->text.data);
         break;
     case OSDP_CMD_MFG:
-        LOG(INFO, "\n\tv_code: 0x%04x,\n\tcmd: %d,\n\tlen: %d,\n\tdata: ",
-          cmd->mfg.vendor_code,
-          cmd->mfg.command,
-          cmd->mfg.length
-            );
+        LOG(INFO, "\n\tv_code: 0x%04x,\n\tlen: %d,\n\tdata: ", cmd->mfg.vendor_code,
+            cmd->mfg.length);
         for (int i = 0; i < cmd->mfg.length; ++i) {
             printf("%02x ", cmd->mfg.data[i]);
         }
@@ -138,23 +119,18 @@ pd_command_handler(void *arg, struct osdp_cmd *cmd)
     return ret;
 }
 
-/*
- *
- */
 static int
 create_mfgreply_event(struct osdp_cmd *oc)
 {
-    int i, data_length, vendor_code, mfg_command;
+    int i, data_length, vendor_code;
     struct osdp_cmd_mfg *cmd = &oc->mfg;
 
     /* Sample reply */
     uint8_t data_bytes[] = {"ManufacturerReply"};
     data_length = sizeof(data_bytes);
     vendor_code = 0x00030201;
-    mfg_command = 14;
 
     cmd->vendor_code = (uint32_t)vendor_code;
-    cmd->command = mfg_command;
     cmd->length = data_length;
     for (i = 0; i < cmd->length; i++) {
         cmd->data[i] = data_bytes[i];
@@ -184,7 +160,7 @@ create_cardreader_event(struct osdp_event *event)
         len_bytes = data_length;
     }
 
-    if (len_bytes > OSDP_EVENT_MAX_DATALEN) {
+    if (len_bytes > OSDP_EVENT_CARDREAD_MAX_DATALEN) {
         return -1;
     }
 
@@ -227,10 +203,10 @@ static void
 cmd_handler(struct os_event *ev)
 {
     assert(ev != NULL);
-    struct osdp *ctx = osdp_get_ctx();
     static int cmd = 0;
+    uint8_t sc_active;
 
-    uint32_t sc_active = osdp_get_sc_status_mask(ctx);
+    osdp_get_sc_status_mask(ctx, &sc_active);
 
     if (sc_active) {
         struct osdp_event event;
@@ -241,7 +217,7 @@ cmd_handler(struct os_event *ev)
             LOG(INFO, "Sending Key Press\n");
             create_keypress_event(&event);
         }
-        osdp_pd_notify_event(ctx, &event);
+        osdp_pd_submit_event(ctx, &event);
         cmd++;
         if (cmd > 1) {
             cmd = 0;
@@ -262,56 +238,68 @@ static int
 timers_init(void)
 {
     /* Configure and reset timer */
-    os_callout_init(&cmd_timer, os_eventq_dflt_get(),
-      cmd_handler, NULL);
+    os_callout_init(&cmd_timer, os_eventq_dflt_get(), cmd_handler, NULL);
 
     os_callout_reset(&cmd_timer, COMMAND_HANDLER_INTERVAL);
 
     return 0;
 }
 
-/*
- * Simple test for OSDP encryption routine
- */
 static int
-test_encryption_wrappers(uint8_t *key, uint8_t len)
+char2hex(char c, uint8_t *x)
 {
-    int rc;
-    uint8_t plaintext_ref[TC_AES_BLOCK_SIZE] =
-    {0xff, 0x53, 0x65, 0x13, 0x00, 0x0e, 0x03, 0x11, 0x00, 0x01, 0x76, 0x3b, 0x24, 0xdf, 0x92, 0x5b};
-    uint8_t data_buffer[TC_AES_BLOCK_SIZE];
-    uint8_t iv_buffer[TC_AES_BLOCK_SIZE];
-
-    /* Test AES-CBC */
-    memcpy(data_buffer, plaintext_ref, TC_AES_BLOCK_SIZE);
-    osdp_get_rand(iv_buffer, TC_AES_BLOCK_SIZE); /* Create initial vector */
-    osdp_encrypt(key, iv_buffer, data_buffer,
-      TC_AES_BLOCK_SIZE); /* Encrypt using initial vector in CBC mode */
-    osdp_decrypt(key, iv_buffer, data_buffer, TC_AES_BLOCK_SIZE); /* Decrypt */
-
-    rc = memcmp(data_buffer, plaintext_ref, TC_AES_BLOCK_SIZE);
-    if (rc) {
-        return rc;
+    if (c >= '0' && c <= '9') {
+        *x = c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+        *x = c - 'a' + 10;
+    } else if (c >= 'A' && c <= 'F') {
+        *x = c - 'A' + 10;
+    } else {
+        return -OS_EINVAL;
     }
 
-    /* Test AES-ECB */
-    memcpy(data_buffer, plaintext_ref, TC_AES_BLOCK_SIZE);
-    osdp_encrypt(key, NULL, data_buffer,
-      TC_AES_BLOCK_SIZE); /* Encrypt without initial vector, i.e ECB mode */
-    osdp_decrypt(key, NULL, data_buffer, TC_AES_BLOCK_SIZE); /* Decrypt */
+    return 0;
+}
 
-    rc = memcmp(data_buffer, plaintext_ref, TC_AES_BLOCK_SIZE);
-    if (rc) {
-        return rc;
+static size_t
+hex2bin(const char *hex, size_t hexlen, uint8_t *buf, size_t buflen)
+{
+    uint8_t dec;
+
+    if (buflen < hexlen / 2 + hexlen % 2) {
+        return 0;
     }
 
-    return rc;
+    /* if hexlen is uneven, insert leading zero nibble */
+    if (hexlen % 2) {
+        if (char2hex(hex[0], &dec) < 0) {
+            return 0;
+        }
+        buf[0] = dec;
+        hex++;
+        buf++;
+    }
+
+    /* regular hex conversion */
+    for (size_t i = 0; i < hexlen / 2; i++) {
+        if (char2hex(hex[2 * i], &dec) < 0) {
+            return 0;
+        }
+        buf[i] = dec << 4;
+
+        if (char2hex(hex[2 * i + 1], &dec) < 0) {
+            return 0;
+        }
+        buf[i] += dec;
+    }
+
+    return hexlen / 2 + hexlen % 2;
 }
 
 int
 mynewt_main(int argc, char **argv)
 {
-    int rc, len;
+    int len;
     uint8_t key_buf[16];
     uint8_t *key = NULL;
 
@@ -346,6 +334,18 @@ mynewt_main(int argc, char **argv)
         { -1, 0, 0 }
     };
 
+    /* Validate and assign key */
+    if (MYNEWT_VAL(OSDP_SC_ENABLED) && strcmp(OSDP_KEY_STRING, "NONE") != 0) {
+
+        len = strlen(OSDP_KEY_STRING);
+        assert(len == 32);
+
+        len = hex2bin(OSDP_KEY_STRING, 32, key_buf, 16);
+        assert(len == 16);
+
+        key = key_buf;
+    }
+
     osdp_pd_info_t info_pd = {
         .address = MYNEWT_VAL(OSDP_PD_ADDRESS),
         .baud_rate = MYNEWT_VAL(OSDP_UART_BAUD_RATE),
@@ -362,26 +362,14 @@ mynewt_main(int argc, char **argv)
             .firmware_version = MYNEWT_VAL(OSDP_PD_ID_FIRMWARE_VERSION),
         },
         .cap = cap,
-        .pd_cb = pd_command_handler
+        .scbk = key,
     };
 
-    /* Validate and assign key */
-    if (MYNEWT_VAL(OSDP_SC_ENABLED) && strcmp(OSDP_KEY_STRING, "NONE") != 0) {
-
-        len = strlen(OSDP_KEY_STRING);
-        assert(len == 32);
-
-        len = hex2bin(OSDP_KEY_STRING, 32, key_buf, 16);
-        assert(len == 16);
-
-        rc = test_encryption_wrappers(key_buf, 16);
-        assert(rc == 0);
-
-        key = key_buf;
-    }
-
     /* Initialize the library module */
-    osdp_init(&info_pd, key);
+    ctx = osdp_init(&info_pd);
+    assert(ctx);
+
+    osdp_pd_set_command_callback(ctx, pd_command_handler, NULL);
 
     timers_init();
 

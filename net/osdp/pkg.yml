@@ -17,16 +17,52 @@
 #
 
 pkg.name: net/osdp
-pkg.description: >
-    This package is a mynewt port of libOSDP library
-    available at https://github.com/goToMain/libosdp
-    It is currently at par with commit hash
-    aaba129fe6ad71d61b8526bd8a9b3778b93c9b26
+pkg.description: OSDP (Open Supervised Device Protocol) library
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.homepage: "https://github.com/goToMain/libosdp"
 pkg.keywords:
     - osdp
 
+pkg.type: sdk
+
+pkg.include_dirs:
+    - "include"
+    - "@osdp/include"
+
+pkg.private_include_dirs:
+    - "@osdp/utils/include"
+    - "include/osdp"
+
+pkg.source_files:
+    - "src/osdp_mynewt.c"
+    - "src/osdp_mynewt_utils.c"
+    - "@osdp/src/osdp_common.c"
+    - "@osdp/src/osdp_phy.c"
+    - "@osdp/src/osdp_sc.c"
+    - "@osdp/src/osdp_file.c"
+    - "@osdp/src/crypto/mbedtls.c"
+    - "@osdp/utils/src/list.c"
+    - "@osdp/utils/src/queue.c"
+    - "@osdp/utils/src/utils.c"
+    - "@osdp/utils/src/disjoint_set.c"
+    - "@osdp/utils/src/slab.c"
+    - "@osdp/utils/src/crc16.c"
+    - "@osdp/utils/src/logger.c"
+
+pkg.source_files.OSDP_MODE_PD:
+    - "@osdp/src/osdp_pd.c"
+
+pkg.source_files.OSDP_MODE_CP:
+    - "@osdp/src/osdp_cp.c"
+
 pkg.deps:
-    - "@apache-mynewt-core/sys/log/modlog"
-    - "@apache-mynewt-core/util/crc"
+    - "@apache-mynewt-core/crypto/mbedtls"
+
+# allows to override settings from mbedtls
+pkg.subpriority: 1
+
+repository.osdp:
+    type: github
+    vers: v3.2.2-commit
+    user: goToMain
+    repo: libosdp

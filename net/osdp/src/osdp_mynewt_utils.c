@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,15 +17,10 @@
  * under the License.
  */
 
-#include <stddef.h>
-#include <stdint.h>
+#include "os/os_time.h"
 
-/**
- * @brief           Hook function to supply random bytes.
- *
- * @param out       Output buffer for random data.
- * @param out_len   Output buffer length.
- *
- *  @return number of bytes read, could be less than requested based on implementation.
- */
-__attribute__((weak)) size_t osdp_hook_crypto_random_bytes(uint8_t *out, size_t out_len);
+int64_t
+osdp_millis_now(void)
+{
+    return (os_get_uptime_usec() / 1000);
+}

@@ -1,14 +1,26 @@
-/*
- * Copyright (c) 2020 Siddharth Chandrasekaran <siddharth@embedjournal.com>
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * SPDX-License-Identifier: Apache-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 #include "modlog/modlog.h"
 #include "uart/uart.h"
-#include "tinycrypt/aes.h"
 
-#include "osdp/osdp_common.h"
+#include "osdp.h"
 
 /* Interval in ticks */
 #define OSDP_REFRESH_INTERVAL \
@@ -29,7 +41,7 @@ struct osdp_device {
     struct uart_dev *uart;
 };
 
-static struct osdp_ctx osdp_ctx;
+static struct osdp_t *ctx;
 static struct osdp_device osdp_device;
 static struct os_callout osdp_refresh_timer;
 
@@ -171,22 +183,16 @@ osdp_uart_flush(void *data)
 }
 
 /*
- * Get context handle
- */
-struct osdp *
-osdp_get_ctx()
-{
-    return &osdp_ctx.ctx;
-}
-
-/*
  * Timer handler
  */
-void
+static void
 osdp_refresh_handler(struct os_event *ev)
 {
-    struct osdp *ctx = osdp_get_ctx();
-    osdp_refresh(ctx);
+#if MYNEWT_VAL(OSDP_MODE_PD)
+    osdp_pd_refresh(ctx);
+#else
+    osdp_cp_refresh(ctx);
+#endif
 
     /* Restart */
     os_callout_reset(&osdp_refresh_timer, OSDP_REFRESH_INTERVAL);
@@ -199,11 +205,7 @@ void
 osdp_stop(void)
 {
     int rc;
-    struct osdp *ctx;
     struct osdp_device *od = &osdp_device;
-
-    ctx = osdp_get_ctx();
-    assert(ctx);
 
     /* Stop timer */
     os_callout_stop(&osdp_refresh_timer);
@@ -215,6 +217,9 @@ osdp_stop(void)
     osdp_cp_teardown(ctx);
 #endif
 
+    /* clear OSDP context */
+    ctx = NULL;
+
     /* Stop uart */
     assert(od->uart);
     rc = os_dev_close((struct os_dev *)od->uart);
@@ -222,18 +227,14 @@ osdp_stop(void)
 
     /* Flush circular buffers */
     osdp_uart_flush((void *)od);
-
-    /* Reset OSDP context */
-    memset(&osdp_ctx, 0, sizeof(struct osdp_ctx));
 }
 
 /*
  * Start OSDP. Called by application
  */
-void
-osdp_init(osdp_pd_info_t *info, uint8_t *scbk)
+struct osdp_t *
+osdp_init(osdp_pd_info_t *info)
 {
-    struct osdp *ctx;
     struct osdp_device *od = &osdp_device;
 
     /* Assign remaining function handlers not managed by the application layer */
@@ -264,18 +265,20 @@ osdp_init(osdp_pd_info_t *info, uint8_t *scbk)
 
     /* Setup OSDP */
 #if MYNEWT_VAL(OSDP_MODE_PD)
-    ctx = osdp_pd_setup(&osdp_ctx, info, scbk);
+    ctx = osdp_pd_setup(info);
     assert(ctx != NULL);
 #else
-    ctx = osdp_cp_setup(&osdp_ctx, MYNEWT_VAL(OSDP_NUM_CONNECTED_PD), info, scbk);
+    ctx = osdp_cp_setup(MYNEWT_VAL(OSDP_NUM_CONNECTED_PD), info);
     assert(ctx != NULL);
 #endif
 
     /* Configure and reset timer */
     os_callout_init(&osdp_refresh_timer, os_eventq_dflt_get(),
-      osdp_refresh_handler, NULL);
+                    osdp_refresh_handler, NULL);
 
     os_callout_reset(&osdp_refresh_timer, OSDP_REFRESH_INTERVAL);
 
     OSDP_LOG_INFO("osdp: init OK\n");
+
+    return ctx;
 }
