@@ -221,7 +221,7 @@ hal_bsp_deinit(void)
     RCC->APB1HENR = 0;
     RCC->APB2ENR = 0;
     RCC->APB3ENR = 0;
-    RCC->APB4ENR = 0x0001000;
+    RCC->APB4ENR = 0x00010000;
 
     RCC->AHB1RSTR = 0x06038203;
     RCC->AHB2RSTR = 0x60030271;
