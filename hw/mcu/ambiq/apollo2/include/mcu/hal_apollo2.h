@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#ifndef __HAL_APOLLO2_H_
+#ifndef __HAL_APOLLO2_H__
 #define __HAL_APOLLO2_H__
 
 #include "os/mynewt.h"
