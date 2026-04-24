@@ -23,6 +23,11 @@
 #include "mcu/stm32_hal.h"
 #include <hal/hal_bsp.h>
 
+#ifdef STM32H5
+#include <stm32h5xx_ll_dcache.h>
+#include <stm32h5xx_ll_icache.h>
+#endif
+
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))
 #endif
@@ -35,13 +40,40 @@ hal_bsp_hw_id_len(void)
     return STM32_HW_ID_LEN;
 }
 
+#ifndef DCACHE1
+/* H503 devices do not have DCACHE */
+#define LL_DCACHE_IsEnabled(dcache) 0
+#define LL_DCACHE_Enable(dcache)
+#define LL_DCACHE_Disable(dcache)
+#endif
+
 int
 hal_bsp_hw_id(uint8_t *id, int max_len)
 {
     int cnt;
+#ifdef STM32H5
+    uint32_t dcache_enabled = LL_DCACHE_IsEnabled(DCACHE1);
+    uint32_t icache_enabled = LL_ICACHE_IsEnabled();
+
+    if (dcache_enabled) {
+        LL_DCACHE_Disable(DCACHE1);
+    }
+    if (icache_enabled) {
+        LL_ICACHE_Disable();
+    }
+#endif
 
     cnt = min(STM32_HW_ID_LEN, max_len);
     memcpy(id, (void *)UID_BASE, cnt);
+
+#ifdef STM32H5
+    if (icache_enabled) {
+        LL_ICACHE_Enable();
+    }
+    if (dcache_enabled) {
+        LL_DCACHE_Enable(DCACHE1);
+    }
+#endif
 
     return cnt;
 }
