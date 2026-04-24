@@ -29,7 +29,7 @@ compiler.flags.base: [-mcpu=cortex-m7, -mthumb-interwork, -mthumb, -Wall, -Werro
 compiler.flags.default: [compiler.flags.base, -O1, -ggdb]
 compiler.flags.optimized: [compiler.flags.base, -Os, -ggdb]
 compiler.flags.speed: [compiler.flags.base, -O3, -ggdb]
-compiler.flags.debug: [compiler.flags.base, -O0, -ggdb]
+compiler.flags.debug: [compiler.flags.base, -Og, -ggdb]
 
 compiler.as.flags: [-x, assembler-with-cpp]
 
