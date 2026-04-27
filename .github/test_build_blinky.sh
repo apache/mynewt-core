@@ -19,7 +19,7 @@
 
 EXIT_CODE=0
 
-BSPS=$(ls repos/apache-mynewt-core/hw/bsp)
+BSPS=$(basename -a `find repos/apache-mynewt-core/hw/bsp/* -maxdepth 0 -type d`)
 IGNORED_BSPS="ci40 dialog_cmac embarc_emsk hifive1 native-armv7 native-mips\
               olimex-pic32-emz64 olimex-pic32-hmz144 pic32mx470_6lp_clicker\
               pic32mz2048_wi-fire"
