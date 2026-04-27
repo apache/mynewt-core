@@ -39,6 +39,10 @@
   <img src="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader.yml/badge.svg">
 <a/>
 
+<a href="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader_main.yml">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader_main.yml/badge.svg">
+<a/>
+
 <a href="https://github.com/apache/mynewt-core/actions/workflows/build_all_apps.yml">
   <img src="https://github.com/apache/mynewt-core/actions/workflows/build_all_apps.yml/badge.svg">
 <a/>
