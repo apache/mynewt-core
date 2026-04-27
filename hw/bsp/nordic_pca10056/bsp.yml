@@ -58,3 +58,35 @@ bsp.flash_map:
             device: 0
             offset: 0x000fc000
             size: 16kB
+
+bsp.flash_map.BSP_BOOTLOADER_48K:
+    areas:
+        # System areas.
+        FLASH_AREA_BOOTLOADER:
+            device: 0
+            offset: 0x00000000
+            size: 48kB
+        FLASH_AREA_IMAGE_0:
+            device: 0
+            offset: 0x0000c000
+            size: 464kB
+        FLASH_AREA_IMAGE_1:
+            device: 0
+            offset: 0x00080000
+            size: 464kB
+        FLASH_AREA_IMAGE_SCRATCH:
+            device: 0
+            offset: 0x000f8000
+            size: 16kB
+
+        # User areas.
+        FLASH_AREA_REBOOT_LOG:
+            user_id: 0
+            device: 0
+            offset: 0x000f4000
+            size: 16kB
+        FLASH_AREA_NFFS:
+            user_id: 1
+            device: 0
+            offset: 0x000fc000
+            size: 16kB
