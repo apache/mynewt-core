@@ -59,7 +59,7 @@ stm32_wfi_from_ram(void)
 #define SYNCH_PREDIV        (32768 / (ASYNCH_PREDIV + 1) - 1)
 #define SUB_SECONDS_BITS    12
 
-#if defined(STM32L0) || defined(STM32F0) || defined(STM32U5)
+#if defined(STM32L0) || defined(STM32F0) || defined(STM32U5) || defined(STM32H5)
 #define RTC_IRQ RTC_IRQn
 #elif defined(STM32G0)
 #define RTC_IRQ RTC_TAMP_IRQn
@@ -406,7 +406,7 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     /*
      * Keep clocking debug even when CPU is sleeping, stopped or in standby.
      */
-#if MYNEWT_VAL(MCU_STM32F0) || MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32F0) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32H5)
     DBGMCU->CR |= (DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY);
 #elif MYNEWT_VAL(MCU_STM32H7)
     DBGMCU->CR |= (DBGMCU_CR_DBG_SLEEPD1 | DBGMCU_CR_DBG_STOPD1 | DBGMCU_CR_DBG_STANDBYD1);

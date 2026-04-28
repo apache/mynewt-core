@@ -22,14 +22,31 @@
 #include <hal/hal_gpio.h>
 #include <hal/hal_timer.h>
 #include <mcu/cmsis_nvic.h>
+#include <stm32_common/stm32_hal.h>
 
 #if MYNEWT_VAL(MCU_STM32F4)
 #include <bsp/stm32f4xx_hal_conf.h>
 #include <mcu/stm32f4_bsp.h>
+
+#define ETH_CLK_ENABLE __HAL_RCC_ETH_CLK_ENABLE
+
 #endif
 #if MYNEWT_VAL(MCU_STM32F7)
 #include <bsp/stm32f7xx_hal_conf.h>
 #include <mcu/stm32f7_bsp.h>
+
+#define ETH_CLK_ENABLE __HAL_RCC_ETH_CLK_ENABLE
+
+#endif
+#if MYNEWT_VAL(MCU_STM32H5)
+
+#define ETH_CLK_ENABLE()                                                      \
+    do {                                                                      \
+        __HAL_RCC_ETH_CLK_ENABLE();                                           \
+        __HAL_RCC_ETHTX_CLK_ENABLE();                                         \
+        __HAL_RCC_ETHRX_CLK_ENABLE();                                         \
+    } while (0)
+
 #endif
 #if MYNEWT_VAL(MCU_STM32H7)
 #include <bsp/stm32h7xx_hal_conf.h>
@@ -39,11 +56,13 @@
 #define PHY_BSR                   ((uint16_t)0x0001U)
 #define PHY_LINKED_STATUS         ((uint16_t)0x0004U)
 
-#define __HAL_RCC_ETH_CLK_ENABLE()       do { \
-        __HAL_RCC_ETH1MAC_CLK_ENABLE();   \
-        __HAL_RCC_ETH1TX_CLK_ENABLE();    \
-        __HAL_RCC_ETH1RX_CLK_ENABLE();    \
-} while (0)
+#define ETH_CLK_ENABLE()                                                      \
+    do {                                                                      \
+        __HAL_RCC_ETH1MAC_CLK_ENABLE();                                       \
+        __HAL_RCC_ETH1TX_CLK_ENABLE();                                        \
+        __HAL_RCC_ETH1RX_CLK_ENABLE();                                        \
+    } while (0)
+
 #endif
 
 #include <netif/etharp.h>
@@ -346,7 +365,7 @@ stm32_lwip_init(struct netif *nif)
     }
 
     NVIC_SetVector(ETH_IRQn, (uint32_t)stm32_eth_isr);
-    __HAL_RCC_ETH_CLK_ENABLE();
+    ETH_CLK_ENABLE();
 
     ses->st_eth.Instance = ETH;
     ses->st_eth.Init.RxDesc = ses->st_rx_descs;

@@ -54,7 +54,7 @@ HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi, uint8_t *pData,
 #error "This MCU currently does not support SPI slave"
 #endif
 
-#if !MYNEWT_VAL(MCU_STM32H7) && !defined(STM32U5)
+#if !MYNEWT_VAL(MCU_STM32H7) && !defined(STM32U5) && !defined(STM32H5)
 #define RXDR DR
 #define TXDR DR
 #endif
@@ -128,7 +128,7 @@ HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
 }
 #endif
 
-#if ((!MYNEWT_VAL(MCU_STM32H7) && !defined(STM32U5)) || !SPI_HAS_FIFO)
+#if (!(MYNEWT_VAL(MCU_STM32H7) || defined(STM32U5) || defined(STM32H5)) || !SPI_HAS_FIFO)
 static HAL_StatusTypeDef
 SPI_WaitFlagStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, uint32_t State, uint32_t Timeout, uint32_t Tickstart)
 {
@@ -179,7 +179,7 @@ static HAL_StatusTypeDef SPI_WaitFifoStateUntilTimeout(SPI_HandleTypeDef *hspi, 
 
   while ((hspi->Instance->SR & Fifo) != State)
   {
-#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32H5)
     if ((Fifo == SPI_SR_RXPLVL) && (State == SPI_RX_FIFO_0PACKET))
     {
       tmpreg = *((__IO uint8_t *)&hspi->Instance->RXDR);
@@ -222,7 +222,7 @@ static HAL_StatusTypeDef SPI_WaitFifoStateUntilTimeout(SPI_HandleTypeDef *hspi, 
 
 static HAL_StatusTypeDef SPI_EndRxTxTransaction(SPI_HandleTypeDef *hspi, uint32_t Timeout, uint32_t Tickstart)
 {
-#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32H5)
   /* Control if the TX fifo is empty */
   if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_TXC, SPI_SR_TXC, Timeout, Tickstart) != HAL_OK)
   {
@@ -256,7 +256,7 @@ static HAL_StatusTypeDef SPI_EndRxTxTransaction(SPI_HandleTypeDef *hspi, uint32_
 
 static HAL_StatusTypeDef SPI_EndTxTransaction(SPI_HandleTypeDef *hspi, uint32_t Timeout, uint32_t Tickstart)
 {
-#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32H5)
   /* Control if the TX fifo is empty */
   if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_TXC, SPI_SR_TXC, Timeout, Tickstart) != HAL_OK)
   {
@@ -644,7 +644,7 @@ HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi, uint8_t *pData,
 #endif
 
   /* MYNEWT: in slave mode write 1st byte to DR */
-#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32H5)
   if ((hspi->Instance->CFG2 & SPI_CFG2_MASTER) == 0) {
       hspi->TxISR(hspi);
   }
@@ -757,7 +757,7 @@ HAL_StatusTypeDef HAL_SPI_Slave_Queue_TransmitReceive(SPI_HandleTypeDef *hspi, u
   //__HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR));
 
   /* MYNEWT: in slave mode write 1st byte to DR */
-#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5) || MYNEWT_VAL(MCU_STM32H5)
   if ((hspi->Instance->CFG2 & SPI_CFG2_MASTER) == 0) {
       hspi->TxISR(hspi);
   }
