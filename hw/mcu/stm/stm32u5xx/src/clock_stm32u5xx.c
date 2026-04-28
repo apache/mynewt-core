@@ -292,10 +292,7 @@ SystemClock_Config(void)
 
 #if TRNG_ENABLED
     pclk_init.PeriphClockSelection = RCC_PERIPHCLK_RNG;
-    /* Other clock sources are possible, but since right now we always
-     * configure the PLL, this should be ok
-     */
-    pclk_init.RngClockSelection = RCC_RNGCLKSOURCE_PLL;
+    pclk_init.RngClockSelection = RCC_RNGCLKSOURCE_HSI48;
     status = HAL_RCCEx_PeriphCLKConfig(&pclk_init);
     if (status != HAL_OK) {
         assert(0);
