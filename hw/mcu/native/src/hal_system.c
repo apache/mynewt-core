@@ -28,7 +28,7 @@
 #include "mcu/mcu_sim.h"
 #include "hal_native_priv.h"
 
-#if MYNEWT_VAL(BLE_SOCK_USE_LINUX_BLUE)
+#if MYNEWT_VAL_CHOICE(BLE_SOCK_TYPE, linux_blue)
 void ble_hci_sock_set_device(int dev);
 #endif
 
@@ -132,7 +132,7 @@ mcu_sim_parse_args(int argc, char **argv)
                 hal_bsp_set_hw_id((uint8_t *)optarg, strlen(optarg));
                 break;
             case 6:
-#if MYNEWT_VAL(BLE_SOCK_USE_LINUX_BLUE)
+#if MYNEWT_VAL_CHOICE(BLE_SOCK_TYPE, linux_blue)
                 ble_hci_sock_set_device(atoi(optarg));
 #endif
                 break;
