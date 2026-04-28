@@ -205,7 +205,7 @@ static void
 print_apb1_peripherals(struct streamer *streamer, bool all)
 {
     uint32_t pckl1 = HAL_RCC_GetPCLK1Freq();
-    uint32_t timmul = RCC->CFGR & RCC_CFGR_PPRE2_2 ? 2 : 1;
+    uint32_t timmul = RCC->CFGR & RCC_CFGR_PPRE1_2 ? 2 : 1;
     char freq_buf[20];
 
     streamer_printf(streamer, "  APB1 PCLK1: %s\n", freq_str(pckl1, freq_buf));
