@@ -95,6 +95,14 @@ hal_gpio_toggle(int pin)
     return (0);
 }
 
+int
+hal_gpio_deinit(int pin)
+{
+    am_hal_gpio_pin_config(pin, AM_HAL_PIN_DISABLE);
+
+    return 0;
+}
+
 /*
  * GPIO irq handler
  *
