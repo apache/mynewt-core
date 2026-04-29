@@ -28,42 +28,41 @@
 extern "C" {
 #endif
 
-enum system_device_id
-{
+enum system_device_id {
     /* NOTE: Some HALs use a virtual enumeration of the devices, while
      * other still use the actual pins (GPIO). For arduino this means
      * that the sysIDs for analog and digital pins are the actual pin
      * numbers */
 
-    ARDUINO_ZERO_D0 =     (11),
-    ARDUINO_ZERO_D1 =     (10),
-    ARDUINO_ZERO_D3 =     (9),
-    ARDUINO_ZERO_D5 =     (15),
-    ARDUINO_ZERO_D6 =     (20),
-    ARDUINO_ZERO_D7 =     (21),
-    ARDUINO_ZERO_D8 =     (6),
-    ARDUINO_ZERO_D9 =     (7),
-    ARDUINO_ZERO_D10 =    (18),
-    ARDUINO_ZERO_D11 =    (16),
-    ARDUINO_ZERO_D12 =    (19),
-    ARDUINO_ZERO_D13 =    (17),
+    ARDUINO_PIN_D0 = 11,
+    ARDUINO_PIN_D1 = 10,
+    ARDUINO_PIN_D3 = 9,
+    ARDUINO_PIN_D5 = 15,
+    ARDUINO_PIN_D6 = 20,
+    ARDUINO_PIN_D7 = 21,
+    ARDUINO_PIN_D8 = 6,
+    ARDUINO_PIN_D9 = 7,
+    ARDUINO_PIN_D10 = 18,
+    ARDUINO_PIN_D11 = 16,
+    ARDUINO_PIN_D12 = 19,
+    ARDUINO_PIN_D13 = 17,
 
 #if MYNEWT_VAL(BSP_ARDUINO_ZERO_PRO)
-    ARDUINO_ZERO_D2 =     (8),
-    ARDUINO_ZERO_D4 =     (14),
+    ARDUINO_PIN_D2 = 8,
+    ARDUINO_PIN_D4 = 14
 #else
-    ARDUINO_ZERO_D2 =     (14),
-    ARDUINO_ZERO_D4 =     (8),
+    ARDUINO_PIN_D2 = 14,
+    ARDUINO_PIN_D4 = 8,
 #endif
 
     /* Use SPI 2 */
-    ARDUINO_ZERO_SPI_ICSP = 0,
+    ARDUINO_PIN_SPI_ICSP = 0,
 
     /* Use SPI 3 */
-    ARDUINO_ZERO_SPI_ALT  = 1,
+    ARDUINO_PIN_SPI_ALT = 1,
 
     /* a I2c port on SCLK and SDA */
-    ARDUINO_ZERO_I2C      = 4,
+    ARDUINO_PIN_I2C = 4,
 };
 
 #define BSP_WINC1500_SPI_PORT   0
@@ -71,11 +70,11 @@ enum system_device_id
 extern uint8_t _ram_start;
 #define RAM_SIZE        0x00008000
 
-#define ARDUINO_ZERO_PIN_UART_RX (ARDUINO_ZERO_D0)
-#define ARDUINO_ZERO_PIN_UART_TX (ARDUINO_ZERO_D1)
+#define ARDUINO_ZERO_PIN_UART_RX (ARDUINO_PIN_D0)
+#define ARDUINO_ZERO_PIN_UART_TX (ARDUINO_PIN_D1)
 
-#define LED_BLINK_PIN   (ARDUINO_ZERO_D13)
-#define LED_2           (27)
+#define LED_BLINK_PIN ARDUINO_PIN_D13
+#define LED_2         27
 
 #define CONSOLE_UART_SPEED      115200
 
