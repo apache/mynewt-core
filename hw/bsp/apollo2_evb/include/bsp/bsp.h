@@ -35,7 +35,40 @@ extern "C" {
 
 extern uint8_t _ram_start;
 
-#define LED_BLINK_PIN   10
+/* Arduino pins */
+#define ARDUINO_PIN_D0  23
+#define ARDUINO_PIN_D1  22
+#define ARDUINO_PIN_D2  26
+#define ARDUINO_PIN_D3  49
+#define ARDUINO_PIN_D4  48
+#define ARDUINO_PIN_D5  47
+#define ARDUINO_PIN_D6  46
+#define ARDUINO_PIN_D7  45
+#define ARDUINO_PIN_D8  44
+#define ARDUINO_PIN_D9  43
+#define ARDUINO_PIN_D10 42
+#define ARDUINO_PIN_D11 7
+#define ARDUINO_PIN_D12 6
+#define ARDUINO_PIN_D13 5
+#define ARDUINO_PIN_A0  13
+#define ARDUINO_PIN_A1  29
+#define ARDUINO_PIN_A2  11
+#define ARDUINO_PIN_A3  31
+#define ARDUINO_PIN_A4  32
+#define ARDUINO_PIN_A5  33
+
+/* LED pins */
+#define LED1          10
+#define LED2          30
+#define LED3          15
+#define LED4          14
+#define LED5          17
+#define LED_BLINK_PIN LED1
+
+/* Buttons */
+#define BUTTON_1 16
+#define BUTTON_2 18
+#define BUTTON_3 19
 
 #define RAM_SIZE        (256 * 1024)
 
