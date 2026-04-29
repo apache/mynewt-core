@@ -103,6 +103,18 @@ hal_gpio_toggle(int pin)
     return (0);
 }
 
+int
+hal_gpio_deinit(int pin)
+{
+    am_hal_gpio_pincfg_t cfg = { .uFuncSel = 3,
+                                 .eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_DISABLE,
+                                 .eGPInput = AM_HAL_GPIO_PIN_INPUT_NONE,
+                                 .eGPRdZero = AM_HAL_GPIO_PIN_RDZERO_READPIN,
+                                 .ePullup = AM_HAL_GPIO_PIN_PULLUP_NONE };
+
+    return (int)am_hal_gpio_pinconfig(pin, cfg);
+}
+
 /*
  * GPIO irq handler
  *
