@@ -1,18 +1,19 @@
-# Skip those directories while doing style checks in the CI. Do not add '/' at
-# the beginning!
+# Skip those directories while doing style checks in the CI.
 
-apps/coremark
-crypto/mbedtls
 crypto/tinycrypt
 hw/drivers/rtt
 hw/drivers/semihosting
 libc/baselibc
-net/ip/lwip_base
 net/lora/node/src/mac
 net/mqtt/eclipse
+
+# NXP preserved code style
 hw/mcu/nxp/kinetis/MK64F12/src
 hw/mcu/nxp/kinetis/MK8xF/MK82F
+hw/mcu/nxp/lpc55xx/src/clock_config.c
 hw/bsp/frdm-k82f/src
+
+# ST preserved code style
 hw/bsp/ada_feather_stm32f405/include/bsp/stm32f4xx_hal_conf.h
 hw/bsp/b-l072z-lrwan1/include/bsp/stm32l0xx_hal_conf.h
 hw/bsp/b-l475e-iot01a/include/bsp/stm32l4xx_hal_conf.h
@@ -59,7 +60,6 @@ hw/mcu/stm/stm32_common/src/stm32_driver_mod_i2c_v2.c
 hw/mcu/stm/stm32_common/src/stm32_driver_mod_timer.c
 hw/mcu/stm/stm32_common/src/stm32_driver_mod_spi.c
 
-hw/mcu/nxp/lpc55xx/src/clock_config.c
 
 # Nordic preserved code style
 hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
