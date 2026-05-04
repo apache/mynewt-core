@@ -51,6 +51,7 @@
   <img src="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml/badge.svg">
 <a/>
 
+<!--HW_CI_START-->
 ## HW CI status
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/coremark.svg)
@@ -187,6 +188,7 @@
 ![](https://static.codecoup.pl/mynewt/run/latest/watchdog/reel_board.svg)
 
 </details>
+<!--HW_CI_END-->
 
 ## Overview
 
