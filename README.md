@@ -53,11 +53,13 @@
 
 <!--HW_CI_START-->
 ## HW CI status
+![](https://static.codecoup.pl/mynewt/run/latest/blinky.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/coremark.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/cputimer.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/datetime.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/image.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/trng.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc.svg)
@@ -67,6 +69,18 @@
 <details>
 <summary>Toggle for more informations</summary>
 
+## blinky
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/apollo3_evb.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/arduino_zero.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/nucleo-f411re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/blinky/nucleo-h753zi.svg)
+
 ## clockdrift
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/apollo3_evb.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/arduino_zero.svg)
@@ -75,8 +89,11 @@
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nordic_pca10090.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nucleo-f411re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/clockdrift/reel_board.svg)
 
 ## coremark
@@ -87,8 +104,11 @@
 ![](https://static.codecoup.pl/mynewt/run/latest/coremark/nordic_pca10090.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/coremark/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/coremark/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nucleo-f411re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/coremark/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/coremark/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/coremark/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/coremark/reel_board.svg)
 
 ## cputimer
@@ -99,8 +119,11 @@
 ![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nordic_pca10090.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nucleo-f411re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/cputimer/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/cputimer/reel_board.svg)
 
 ## datetime
@@ -111,8 +134,11 @@
 ![](https://static.codecoup.pl/mynewt/run/latest/datetime/nordic_pca10090.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/datetime/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/datetime/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nucleo-f411re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/datetime/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/datetime/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/datetime/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/datetime/reel_board.svg)
 
 ## image
@@ -123,56 +149,57 @@
 ![](https://static.codecoup.pl/mynewt/run/latest/image/nordic_pca10090.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/image/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/image/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nucleo-f411re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/image/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/image/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/image/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/image/reel_board.svg)
 
+## nvreg
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nordic_pca10040.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nordic_pca10090.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nordic_pca10095.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nucleo-f411re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nucleo-g491re.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/nucleo-u575zi-q.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/nvreg/reel_board.svg)
+
 ## pwm
-![](https://static.codecoup.pl/mynewt/run/latest/pwm/apollo3_evb.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/pwm/arduino_zero.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10040.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10056.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10090.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10095.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-f411re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-h723zg.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/pwm/reel_board.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-u575zi-q.svg)
 
 ## trng
-![](https://static.codecoup.pl/mynewt/run/latest/trng/apollo3_evb.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/trng/arduino_zero.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10040.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10056.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10090.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10095.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/trng/nordic_pca10121.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/trng/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/trng/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/trng/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/trng/reel_board.svg)
 
 ## usb-cdc
-![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/apollo3_evb.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/arduino_zero.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10040.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10056.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10090.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10121.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/reel_board.svg)
 
 ## usb-msc
-![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/apollo3_evb.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/arduino_zero.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10040.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10056.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10090.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10121.svg)
-![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/reel_board.svg)
 
 ## watchdog
@@ -183,8 +210,11 @@
 ![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nordic_pca10090.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nordic_pca10121.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nucleo-f411re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nucleo-h723zg.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nucleo-h753zi.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/watchdog/nucleo-u575zi-q.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/watchdog/reel_board.svg)
 
 </details>
