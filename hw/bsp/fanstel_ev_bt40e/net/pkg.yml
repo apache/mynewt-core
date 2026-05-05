@@ -36,3 +36,6 @@ pkg.deps:
     - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/hw/drivers/flash/ipc_nrf5340_flash"
+
+pkg.deps.'BLE_FEM_PA || BLE_FEM_LNA':
+    - "@apache-mynewt-nimble/nimble/drivers/fem/nrf21540"
