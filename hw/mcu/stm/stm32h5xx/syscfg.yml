@@ -1,0 +1,288 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 16
+
+    MCU_STM32H5:
+        description: MCUs are of STM32H5xx family
+        value: 1
+    MCU_TARGET:
+        description: Specifies target MCU, shall be set by BSP.
+        value:
+        restrictions: $notnull
+        choices:
+            - STM32H503
+            - STM32H523
+            - STM32H533
+            - STM32H562
+            - STM32H563
+            - STM32H573
+
+    STM32_CLOCK_VOLTAGESCALING_CONFIG:
+        description: Voltage scale
+        value: 0
+
+    STM32_CLOCK_LSI:
+        description: Enable low-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_LSE:
+        description: Enable low-speed external clock source (aka RTC xtal)
+        value: 0
+
+    STM32_CLOCK_LSE_BYPASS:
+        description: 0 for 32768 xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSE:
+        description: Enable high-speed external clock source
+        value: 0
+
+    STM32_CLOCK_HSE_BYPASS:
+        description: 0 for xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSI:
+        description: Enable high-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_HSIDIV:
+        description: HSI divider LL_RCC_HSI_DIV_x where x=(1,2,4,8)
+        value: LL_RCC_HSI_DIV_1
+
+    STM32_CLOCK_HSI_CALIBRATION:
+        description: HSI calibration value
+        value: 'RCC_HSICALIBRATION_DEFAULT'
+
+    STM32_CLOCK_HSI48:
+        description: Enable high-speed 48MHz internal clock source
+        value: 1
+
+    STM32_CLOCK_USBSEL:
+        description: >
+            Select USB clock source.
+            0 - disabled
+            Other acceptable values
+            RCC_USBCLKSOURCE_PLL1Q, RCC_USBCLKSOURCE_PLL2Q, RCC_USBCLKSOURCE_PLL3Q, RCC_USBCLKSOURCE_HSI48
+        value: RCC_USBCLKSOURCE_HSI48
+    STM32_CLOCK_SYSCLK_SOURCE:
+        description: >
+            System clock selection (LL_RCC_SYS_CLKSOURCE_HSI, LL_RCC_SYS_CLKSOURCE_CSI, LL_RCC_SYS_CLKSOURCE_HSE
+            LL_RCC_SYS_CLKSOURCE_PLL1)
+        value: LL_RCC_SYS_CLKSOURCE_HSI
+    STM32_CLOCK_PLL_PLLM:
+        description: PLL config M parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLN:
+        description: PLL config N parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLP:
+        description: PLL config P parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLQ:
+        description: PLL config Q parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLR:
+        description: PLL config R parameter
+        value: 0
+
+    STM32_CLOCK_PLL1:
+        description: Enable PLL1
+        value: 0
+
+    STM32_CLOCK_PLL1_SOURCE:
+        description: PLL1 source
+        value: LL_RCC_PLL1SOURCE_HSI
+
+    STM32_CLOCK_PLL1_PLLM:
+        description: PLL1 config M parameter
+        value: 1
+
+    STM32_CLOCK_PLL1_PLLN:
+        description: PLL1 config N parameter
+        value: 0
+
+    STM32_CLOCK_PLL1_PLLFRACN:
+        description: PLL1FRACN parameter
+        value: 0
+
+    STM32_CLOCK_PLL1_PLLP:
+        description: PLL1 config P parameter
+        value: 0
+
+    STM32_CLOCK_PLL1_PLLQ:
+        description: PLL1 config Q parameter
+        value: 0
+
+    STM32_CLOCK_PLL1_PLLR:
+        description: PLL1 config R parameter
+        value: 0
+
+    STM32_CLOCK_PLL1_RGE:
+        description: PLL input frequency range
+        value: RCC_PLL1_VCIRANGE_0
+
+    STM32_CLOCK_PLL2:
+        description: Enable PLL2
+        value: 0
+
+    STM32_CLOCK_PLL2_SOURCE:
+        description: PLL2 source
+        value: LL_RCC_PLL2SOURCE_HSI
+
+    STM32_CLOCK_PLL2_PLLM:
+        description: PLL2 config M parameter
+        value: 1
+
+    STM32_CLOCK_PLL2_PLLN:
+        description: PLL2 config N parameter
+        value: 0
+
+    STM32_CLOCK_PLL2_PLLFRACN:
+        description: PLL2FRACN parameter
+        value: 0
+
+    STM32_CLOCK_PLL2_PLLP:
+        description: PLL2 config P parameter
+        value: 0
+
+    STM32_CLOCK_PLL2_PLLQ:
+        description: PLL2 config Q parameter
+        value: 0
+
+    STM32_CLOCK_PLL2_PLLR:
+        description: PLL2 config R parameter
+        value: 0
+
+    STM32_CLOCK_PLL2_RGE:
+        description: PLL input frequency range
+        value: 0
+
+    STM32_CLOCK_PLL3:
+        description: Enable PLL3
+        value: 0
+
+    STM32_CLOCK_PLL3_SOURCE:
+        description: PLL3 source
+        value: LL_RCC_PLL3SOURCE_HSI
+
+    STM32_CLOCK_PLL3_PLLM:
+        description: PLL3 config M parameter
+        value: 1
+
+    STM32_CLOCK_PLL3_PLLN:
+        description: PLL3 config N parameter
+        value: 0
+
+    STM32_CLOCK_PLL3_PLLFRACN:
+        description: PLL3FRACN parameter
+        value: 0
+
+    STM32_CLOCK_PLL3_PLLP:
+        description: PLL3 config P parameter
+        value: 0
+
+    STM32_CLOCK_PLL3_PLLQ:
+        description: PLL3 config Q parameter
+        value: 0
+
+    STM32_CLOCK_PLL3_PLLR:
+        description: PLL3 config R parameter
+        value: 0
+
+    STM32_CLOCK_PLL3_RGE:
+        description: PLL input frequency range
+        value: 0
+
+    STM32_CLOCK_AHB_DIVIDER:
+        description: AHB prescaler
+        value: 0
+
+    STM32_CLOCK_APB1_DIVIDER:
+        description: APB low-speed prescaler
+        value: 0
+
+    STM32_CLOCK_APB2_DIVIDER:
+        description: APB high-speed prescaler
+        value: 0
+
+    STM32_CLOCK_APB3_DIVIDER:
+        description: APB low-speed prescaler
+        value: 0
+
+    STM32_CLOCK_APB4_DIVIDER:
+        description: APB high-speed prescaler
+        value: 0
+
+    STM32_FLASH_LATENCY:
+        description: Number of wait-states
+        value: 0
+
+    STM32_ENABLE_ICACHE:
+        description: Enable instruction caching
+        value: 1
+
+    STM32_ENABLE_DCACHE:
+        description: Enable instruction caching
+        value: 1
+
+    STM32_FLASH_PREFETCH_ENABLE:
+        description: Enable pre-fetch of instructions (when latency > 0)
+        value: 1
+
+    STM32_HAL_SPI_HAS_FIFO:
+        description: This MCU has a SPI with FIFO
+        value: 1
+
+    STM32_HAL_I2C_HAS_CLOCKSPEED:
+        description: This MCU's I2C has no clock speed register (has TIMINGR)
+        value: 0
+
+    STM32_HAL_UART_HAS_SR:
+        description: This MCU's UART uses ISR register (not SR) for status.
+        value: 0
+
+    MCU_FLASH_ERASED_VAL:
+        description: Value read from erased flash.
+        value: 0xff
+
+syscfg.vals:
+    MCU_RAM_START: 0x20000000
+
+syscfg.vals.'MCU_TARGET=="STM32H503"':
+    MCU_RAM_SIZE: 0x8000
+syscfg.vals.'MCU_TARGET=="STM32H523"':
+    MCU_RAM_SIZE: 0x2B000
+syscfg.vals.'MCU_TARGET=="STM32H533"':
+    MCU_RAM_SIZE: 0x2B000
+syscfg.vals.'MCU_TARGET=="STM32H562"':
+    MCU_RAM_SIZE: 0xA0000
+syscfg.vals.'MCU_TARGET=="STM32H563"':
+    MCU_RAM_SIZE: 0xA0000
+
+syscfg.vals.STM32_CLOCK_HSI48:
+    STM32_CLOCK_USBSEL: RCC_USBCLKSOURCE_HSI48
