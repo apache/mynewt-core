@@ -270,6 +270,31 @@ hal_gpio_toggle(int pin)
     return hal_gpio_read(pin);
 }
 
+int
+hal_gpio_deinit(int pin)
+{
+    struct port_config cfg;
+
+    int port = GPIO_PORT(pin);
+    int port_pin = GPIO_PIN(pin);
+
+    if (port > GPIO_MAX_PORT) {
+        return -1;
+    }
+
+    if ((port_pin & valid_pins[port]) == 0) {
+        return -1;
+    }
+
+    cfg.direction = PORT_PIN_DIR_INPUT;
+    cfg.input_pull = PORT_PIN_PULL_NONE;
+    cfg.powersave = true;
+
+    port_pin_set_config(pin, &cfg);
+
+    return 0;
+}
+
 /*
  * Interrupt handler for gpio.
  */
