@@ -133,7 +133,7 @@
     extern element_type const table_name[];                                   \
     extern element_type const LINK_TABLE_START(table_name)[];                 \
     extern element_type const LINK_TABLE_END(table_name)[];                   \
-    static inline size_t table_name##_size(void)                              \
+    static inline size_t __attribute__((unused)) table_name##_size(void)      \
     {                                                                         \
         return LINK_TABLE_END(table_name) - LINK_TABLE_START(table_name);     \
     }
