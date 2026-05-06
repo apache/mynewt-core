@@ -91,10 +91,12 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
 {
     uint64_t val[VAL_SIZE];
     uint32_t i;
-    int rc;
+    int rc = 0;
     uint8_t align;
     uint32_t num_words;
-
+#if defined(STM32H5)
+    bool icache_enabled = LL_ICACHE_IsEnabled();
+#endif
     align = dev->hf_align;
 
 #if MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 1
@@ -134,7 +136,7 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
         rc = HAL_FLASH_Program(FLASH_PROGRAM_TYPE, address, val[0]);
 #endif
         if (rc != HAL_OK) {
-            return rc;
+            break;
         }
 
         address += align;
@@ -151,7 +153,13 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
         }
     }
 
-    return 0;
+#ifdef STM32H5
+    if (icache_enabled) {
+        LL_ICACHE_Invalidate();
+    }
+#endif
+
+    return rc;
 }
 #endif
 
