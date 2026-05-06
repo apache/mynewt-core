@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
+#include <os/link_tables.h>
 
 #include "os/mynewt.h"
 #include "base64/base64.h"
@@ -48,7 +49,9 @@ conf_init(void)
 
     os_mutex_init(&conf_mtx);
 
-    SLIST_INIT(&conf_handlers);
+    if (MYNEWT_VAL(CONFIG_HANDLERS_DYNAMIC)) {
+        SLIST_INIT(&conf_handlers);
+    }
     conf_store_init();
 
     (void)rc;
@@ -104,9 +107,18 @@ conf_handler_lookup(char *name)
 {
     struct conf_handler *ch;
 
-    SLIST_FOREACH(ch, &conf_handlers, ch_list) {
-        if (!strcmp(name, ch->ch_name)) {
-            return ch;
+    if (MYNEWT_VAL(CONFIG_HANDLERS_STATIC)) {
+        LINK_TABLE_FOREACH(h, static_conf_handlers) {
+            if (!strcmp(name, (*h)->ch_name)) {
+                return *h;
+            }
+        }
+    }
+    if (MYNEWT_VAL(CONFIG_HANDLERS_DYNAMIC)) {
+        SLIST_FOREACH(ch, &conf_handlers, ch_list) {
+            if (!strcmp(name, ch->ch_name)) {
+                return ch;
+            }
         }
     }
     return NULL;
@@ -412,8 +424,15 @@ conf_export(conf_export_func_t export_func, enum conf_export_tgt tgt)
     struct conf_handler *ch;
 
     conf_lock();
-    SLIST_FOREACH(ch, &conf_handlers, ch_list) {
-        conf_export_cb(ch, export_func, tgt);
+    if (MYNEWT_VAL(CONFIG_HANDLERS_STATIC)) {
+        LINK_TABLE_FOREACH(h, static_conf_handlers) {
+            conf_export_cb(*h, export_func, tgt);
+        }
+    }
+    if (MYNEWT_VAL(CONFIG_HANDLERS_DYNAMIC)) {
+        SLIST_FOREACH(ch, &conf_handlers, ch_list) {
+            conf_export_cb(ch, export_func, tgt);
+        }
     }
     conf_unlock();
 }
@@ -487,11 +506,23 @@ conf_commit(char *name)
         rc = conf_commit_cb(ch);
     } else {
         rc = 0;
-        SLIST_FOREACH(ch, &conf_handlers, ch_list) {
-            if (ch->ch_commit) {
-                rc2 = conf_commit_cb(ch);
-                if (!rc) {
-                    rc = rc2;
+        if (MYNEWT_VAL(CONFIG_HANDLERS_STATIC)) {
+            LINK_TABLE_FOREACH(h, static_conf_handlers) {
+                if ((*h)->ch_commit) {
+                    rc2 = conf_commit_cb(*h);
+                    if (!rc) {
+                        rc = rc2;
+                    }
+                };
+            }
+        }
+        if (MYNEWT_VAL(CONFIG_HANDLERS_DYNAMIC)) {
+            SLIST_FOREACH(ch, &conf_handlers, ch_list) {
+                if (ch->ch_commit) {
+                    rc2 = conf_commit_cb(ch);
+                    if (!rc) {
+                        rc = rc2;
+                    }
                 }
             }
         }

@@ -125,6 +125,10 @@ config_pkg_init(void)
 #elif MYNEWT_VAL(CONFIG_FCB2)
     config_init_fcb2();
 #endif
+#if MYNEWT_VAL(CONFIG_AUTO_LOAD)
+    conf_load();
+#endif
+
 #endif
 }
 

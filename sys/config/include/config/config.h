@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <syscfg/syscfg.h>
+#include <os/link_tables.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -425,6 +426,12 @@ void conf_lock(void);
  * usage of the config API does not require manual locking.
  */
 void conf_unlock(void);
+
+typedef struct conf_handler *conf_handler_t;
+LINK_TABLE(struct conf_handler *, static_conf_handlers);
+
+#define STATIC_CONF_HANDLER(handler)                                          \
+    LINK_TABLE_ELEMENT_REF(static_conf_handlers, handler, handler);
 
 #ifdef __cplusplus
 }

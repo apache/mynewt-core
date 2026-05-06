@@ -83,6 +83,23 @@ syscfg.defs:
         description: 'Automatically configure a single config region at bootup'
         value: 1
 
+    CONFIG_AUTO_LOAD:
+        description: >
+            Load config values during config init stage. This could be enabled
+            if all config handlers are statically defined.
+        value: 0
+
+    CONFIG_HANDLERS_DYNAMIC:
+        description: >
+            Config handler can be registered in runtime via conf_register.
+        value: 1
+
+    CONFIG_HANDLERS_STATIC:
+        description: >
+            Config handler are configured during build. Reducing memory
+            footprint and package init dependency
+        value: 1
+
     CONFIG_SYSINIT_STAGE_1:
         description: >
             Primary sysinit stage for the config package.
