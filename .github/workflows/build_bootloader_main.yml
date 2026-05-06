@@ -68,3 +68,4 @@ jobs:
              git checkout main
              cd ../..
              bash ../.github/test_build_bootloader_main.sh
+             newt test @mcuboot/boot/boot_serial
