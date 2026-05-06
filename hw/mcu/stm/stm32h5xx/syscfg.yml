@@ -241,6 +241,12 @@ syscfg.defs:
     STM32_FLASH_LATENCY:
         description: Number of wait-states
         value: 0
+    STM32_FLASH_PROGRAM_DELAY:
+        description: >
+            Programmin delay:
+            FLASH_PROGRAMMING_DELAY_0 for system runnig <= 84 MHz
+            FLASH_PROGRAMMING_DELAY_1 for system runnig <= 168 MHz
+        value: FLASH_PROGRAMMING_DELAY_2
 
     STM32_ENABLE_ICACHE:
         description: Enable instruction caching
