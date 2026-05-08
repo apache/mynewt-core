@@ -90,6 +90,11 @@ syscfg.vals.BSP_nucleo_u575zi_q:
     PWM_TEST_CHANNEL: 1
     PWM_TEST_READ_PIN: ARDUINO_PIN_D7
 
+syscfg.vals.BSP_nucleo_f439zi:
+    BSP_IS_NUCLEO: 1
+    PWM_TEST_OUT_PIN_AF: 2
+    PWM_TEST_CHANNEL: 2
+
 syscfg.vals.BSP_dialog_da1469x_dk_pro:
     TIMER_0: 0
     TIMER_1: 1
