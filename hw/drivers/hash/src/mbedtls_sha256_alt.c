@@ -48,7 +48,7 @@ mbedtls_sha256_clone(mbedtls_sha256_context *dst,
 }
 
 int
-mbedtls_sha256_starts_ret(mbedtls_sha256_context *ctx, int is224)
+mbedtls_sha256_starts(mbedtls_sha256_context *ctx, int is224)
 {
     /* SHA-224 not supported */
     if (is224) {
@@ -58,45 +58,16 @@ mbedtls_sha256_starts_ret(mbedtls_sha256_context *ctx, int is224)
 }
 
 int
-mbedtls_sha256_update_ret(mbedtls_sha256_context *ctx,
-                          const unsigned char *input, size_t ilen)
+mbedtls_sha256_update(mbedtls_sha256_context *ctx, const unsigned char *input,
+                      size_t ilen)
 {
     return hash_sha256_update(&ctx->sha256ctx, input, ilen);
 }
 
 int
-mbedtls_sha256_finish_ret(mbedtls_sha256_context *ctx,
-                          unsigned char output[32])
+mbedtls_sha256_finish(mbedtls_sha256_context *ctx, unsigned char *output)
 {
     return hash_sha256_finish(&ctx->sha256ctx, output);
-}
-
-/*
- * XXX deprecated mbedTLS functions
- */
-
-void
-mbedtls_sha256_starts(mbedtls_sha256_context *ctx, int is224)
-{
-    /* SHA-224 not supported */
-    if (is224) {
-        return;
-    }
-    (void)hash_sha256_start(&ctx->sha256ctx, ctx->hash);
-}
-
-void
-mbedtls_sha256_update(mbedtls_sha256_context *ctx,
-                      const unsigned char *input, size_t ilen)
-{
-    (void)hash_sha256_update(&ctx->sha256ctx, input, ilen);
-}
-
-void
-mbedtls_sha256_finish(mbedtls_sha256_context *ctx,
-                      unsigned char output[32])
-{
-    (void)hash_sha256_finish(&ctx->sha256ctx, output);
 }
 
 int
