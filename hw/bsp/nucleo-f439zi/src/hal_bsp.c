@@ -38,6 +38,18 @@
 #include <pwm_stm32/pwm_stm32.h>
 #endif
 
+#if MYNEWT_VAL(PWM_0)
+struct stm32_pwm_conf os_bsp_pwm0_cfg = { .tim = TIM3, .irq = TIM3_IRQn };
+#endif
+
+#if MYNEWT_VAL(PWM_1)
+struct stm32_pwm_conf os_bsp_pwm1_cfg = { .tim = TIM4, .irq = TIM4_IRQn };
+#endif
+
+#if MYNEWT_VAL(PWM_2)
+struct stm32_pwm_conf os_bsp_pwm2_cfg = { .tim = TIM2, .irq = TIM2_IRQn };
+#endif
+
 const uint32_t stm32_flash_sectors[] = {
     /* Bank 1 */
     0x08000000,     /* 16kB */
