@@ -140,7 +140,8 @@ stm32_hash_finish(struct hash_dev *hash, void *ctx, uint16_t algo,
 
     __HAL_HASH_START_DIGEST();
 
-    while (HASH->SR & HASH_FLAG_BUSY) ;
+    while ((HASH->SR & HASH_FLAG_DCIS) == 0) {
+    }
 
     u32p = (uint32_t *)outbuf;
     for (i = 0; i < digestsz; i++) {
