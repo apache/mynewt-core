@@ -59,6 +59,13 @@ jobs:
              sed -i "s/0.0.0/$GITHUB_SHA-commit/g" project.yml
              newt upgrade --shallow=1
              cd ..
+      - name: Switch to main mcuboot
+        # This is temporary until next mcuboot release is available
+        shell: bash
+        run: |
+             cd build/repos/mcuboot
+             git fetch origin main:main
+             git checkout main
       - name: newt test all
         run: |
              cd build
