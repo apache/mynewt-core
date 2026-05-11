@@ -35,6 +35,14 @@ static uint32_t g_algos = 0;
 #else
 static uint32_t g_algos = HASH_ALGO_SHA224 | HASH_ALGO_SHA256;
 #endif
+#if defined(STM32H5)
+/* Missing defines */
+#define HASH_DATATYPE_8B HASH_BYTE_SWAP
+
+#define __HAL_HASH_SET_NBVALIDBITS(__SIZE__)                                  \
+    MODIFY_REG(HASH->STR, HASH_STR_NBLW, 8U * ((__SIZE__) % 4U))
+#define __HAL_HASH_START_DIGEST()            SET_BIT(HASH->STR, HASH_STR_DCAL)
+#endif
 
 static int
 stm32_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
