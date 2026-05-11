@@ -47,3 +47,6 @@ pkg.link_tables:
 
 pkg.init:
     shell_init: 'MYNEWT_VAL(SHELL_SYSINIT_STAGE)'
+
+pkg.init.SHELL_UPTIME_LOAD:
+    shell_load_monitor_init: 200

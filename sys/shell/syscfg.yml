@@ -93,6 +93,12 @@ syscfg.defs:
             printf call during processing of the `shell exec` newtmgr command.
         value: 128
 
+    SHELL_UPTIME_LOAD:
+        description: >
+            Add statistic of CPU usage to 'uptime' command.  Shows load in last
+            1, 5, 15 minutes plus total usage from boot time.
+        value: 0
+
 ## duplicated from boot/boot_serial
     BOOT_SERIAL_NVREG_MAGIC:
         description: >
