@@ -45,8 +45,6 @@ stm32_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
         return -1;
     }
 
-    os_mutex_pend(&gmtx, OS_TIMEOUT_NEVER);
-
     switch (algo) {
     case HASH_ALGO_SHA224:
         algomask = HASH_ALGOSELECTION_SHA224;
@@ -58,6 +56,10 @@ stm32_hash_start(struct hash_dev *hash, void *ctx, uint16_t algo)
         assert(0);
         return -1;
     }
+
+    os_mutex_pend(&gmtx, OS_TIMEOUT_NEVER);
+
+    __HAL_RCC_HASH_CLK_ENABLE();
 
     ((struct hash_sha2_context *)ctx)->remain = 0;
     HASH->CR = algomask | HASH_CR_INIT | HASH_DATATYPE_8B;
@@ -150,6 +152,8 @@ stm32_hash_finish(struct hash_dev *hash, void *ctx, uint16_t algo,
         u32p[i] = os_bswap_32(HASH_DIGEST->HR[i]);
     }
 
+    __HAL_RCC_HASH_CLK_DISABLE();
+
     os_mutex_release(&gmtx);
     return 0;
 }
@@ -162,12 +166,9 @@ stm32_hash_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
     hash = (struct hash_dev *)dev;
     assert(hash);
 
-    /* XXX Not reentrant? */
-    if (dev->od_flags & OS_DEV_F_STATUS_OPEN) {
-        return OS_EBUSY;
+    if ((dev->od_flags & OS_DEV_F_STATUS_READY) == 0) {
+        return OS_ERROR;
     }
-
-    __HAL_RCC_HASH_CLK_ENABLE();
 
     return 0;
 }
