@@ -452,20 +452,19 @@ static void
 mbed_sha256_start(void *data, void *arg)
 {
     (void)arg;
-    (void)mbedtls_sha256_starts_ret((mbedtls_sha256_context *)data, 0);
+    (void)mbedtls_sha256_starts((mbedtls_sha256_context *)data, 0);
 }
 
 static void
 mbed_sha256_update(void *data, const uint8_t *input, uint32_t inlen)
 {
-    (void)mbedtls_sha256_update_ret((mbedtls_sha256_context *)data, input,
-            (uint16_t)inlen);
+    (void)mbedtls_sha256_update((mbedtls_sha256_context *)data, input, (uint16_t)inlen);
 }
 
 static void
 mbed_sha256_finish(void *data, uint8_t *output)
 {
-    (void)mbedtls_sha256_finish_ret((mbedtls_sha256_context *)data, output);
+    (void)mbedtls_sha256_finish((mbedtls_sha256_context *)data, output);
 }
 
 static void
@@ -513,7 +512,7 @@ run_sha256_benchmark(char *name, hash_start_func_t start_fn,
         printf("fail\n");
         return;
     }
-    printf("done in %lu ticks\n", os_time_get() - t);
+    printf("done in %lu ms\n", os_time_ticks_to_ms32(os_time_get() - t));
 }
 
 static void
@@ -620,6 +619,8 @@ mynewt_main(int argc, char **argv)
                 tc_sha256_finish, &tc_sha256, NULL);
         os_time_delay(OS_TICKS_PER_SEC);
     }
+
+    mbedtls_sha256_free(&mbed_sha256);
 
     run_concurrency_test(hash);
 
