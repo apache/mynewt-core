@@ -84,6 +84,44 @@ shell_os_tasks_display_cmd(const struct shell_cmd *cmd, int argc, char **argv,
     return 0;
 }
 
+extern struct os_task g_idle_task;
+
+#define TICKS_PER_MIN (60 * OS_TICKS_PER_SEC)
+
+static uint32_t idle_task_ticks[16];
+static uint32_t last_snap_shot_minute;
+
+static struct os_callout load_monitor;
+
+static uint32_t
+load_in_last_minutes(int minutes)
+{
+    uint32_t ix1 = last_snap_shot_minute & 15;
+    uint32_t ix2 = (ix1 - minutes) & 15;
+    uint32_t idle_ticks = idle_task_ticks[ix1] - idle_task_ticks[ix2];
+
+    return 100 - idle_ticks * 100 / (minutes * TICKS_PER_MIN);
+}
+
+static void
+load_monitor_cb(struct os_event *e)
+{
+    uint32_t ix;
+
+    last_snap_shot_minute = os_time_get() / TICKS_PER_MIN;
+    ix = last_snap_shot_minute & 15;
+    idle_task_ticks[ix] = g_idle_task.t_run_time;
+
+    os_callout_reset(&load_monitor, TICKS_PER_MIN);
+}
+
+void
+shell_load_monitor_init(void)
+{
+    os_callout_init(&load_monitor, os_eventq_dflt_get(), load_monitor_cb, NULL);
+    os_callout_reset(&load_monitor, TICKS_PER_MIN);
+}
+
 static int
 uptime_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *streamer)
 {
@@ -112,8 +150,34 @@ uptime_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *
     } else if (days > 1) {
         sprintf(days_str, "%d days ", days);
     }
-    streamer_printf(streamer, "up %s%d:%02d:%02d.%03d\n", days_str, hours,
+    streamer_printf(streamer, "up %s%d:%02d:%02d.%03d", days_str, hours,
                     minutes, seconds, (int)(uptime.tv_usec / 1000));
+    if (MYNEWT_VAL(SHELL_UPTIME_LOAD)) {
+        int cpu_load[4];
+        os_time_t now = os_time_get();
+
+        cpu_load[3] = 100 - (int)(g_idle_task.t_run_time * 100ULL / now);
+        if (last_snap_shot_minute >= 1) {
+            cpu_load[0] = load_in_last_minutes(1);
+        } else {
+            cpu_load[0] = cpu_load[3];
+        }
+        if (last_snap_shot_minute >= 5) {
+            cpu_load[1] = load_in_last_minutes(5);
+        } else {
+            cpu_load[1] = cpu_load[3];
+        }
+        if (last_snap_shot_minute >= 15) {
+            cpu_load[2] = load_in_last_minutes(15);
+        } else {
+            cpu_load[2] = cpu_load[3];
+        }
+        streamer_write(streamer, ",  load average:", sizeof(",  load average:"));
+        for (int i = 0; i < 4; ++i) {
+            streamer_printf(streamer, " %d.%02d", cpu_load[i] / 100, cpu_load[i] % 100);
+        }
+    }
+    streamer_write(streamer, "\n", 1);
 
     return 0;
 }
