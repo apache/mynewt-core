@@ -26,6 +26,9 @@ on:
   schedule:
     - cron: 42 0 * * *
 
+permissions:
+  contents: read
+
 jobs:
   bootloader:
     name: Build bootloader (main)

@@ -23,6 +23,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
 
 jobs:
   style_check:

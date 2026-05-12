@@ -23,6 +23,10 @@ on:
   schedule:
     - cron: '0 5 * * *'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update-badges:
     runs-on: ubuntu-latest
