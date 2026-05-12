@@ -67,7 +67,7 @@
 ![](https://static.codecoup.pl/mynewt/run/latest/watchdog.svg)
 
 <details>
-<summary>Toggle for more informations</summary>
+<summary>Toggle for more information</summary>
 
 ## blinky
 ![](https://static.codecoup.pl/mynewt/run/latest/blinky/apollo3_evb.svg)
