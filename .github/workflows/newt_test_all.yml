@@ -21,6 +21,9 @@ name: Unit tests
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   newt_test:
     name: Run newt test all
