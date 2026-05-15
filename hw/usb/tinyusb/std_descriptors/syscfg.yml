@@ -41,8 +41,9 @@ syscfg.defs:
     USBD_CONFIGURATION_MAX_POWER:
         description: >
             Maximum power consumption of the USB device from the bus in this specific
-            configuration when the device is fully operational. Expressed in 2 mA units
-            (i.e., 50 = 100 mA).
+            configuration when the device is fully operational. Expressed in 1 mA units.
+            Value will be rounded down to next even number, specifying 101 is equivalent
+            to setting it to 100.
         value: 100
     USBD_CONFIGURATION_SELF_POWERED:
         description: >
