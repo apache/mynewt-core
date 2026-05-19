@@ -48,3 +48,7 @@ syscfg.defs:
                       useful when there are no images present, Eg: unit
                       tests'
         value: 0
+    IMGMGR_FRUGAL_LIST:
+        description: >
+            Include only true/non-zero attributes in image status list.
+        value: 0
