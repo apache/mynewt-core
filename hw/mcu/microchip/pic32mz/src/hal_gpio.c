@@ -213,7 +213,7 @@ hal_gpio_handle_isr(uint32_t port)
         }
 
         mask = GPIO_MASK(hal_gpio_irqs[index].pin);
-        if (CNFx(port) & mask != mask) {
+        if ((CNFx(port) & mask) != mask) {
             continue;
         }
 
@@ -360,6 +360,8 @@ hal_gpio_deinit(int pin)
 
     /* Configure pin direction as input */
     TRISxSET(port) = mask;
+
+    return 0;
 }
 
 void
@@ -405,8 +407,6 @@ int
 hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
                   hal_gpio_irq_trig_t trig, hal_gpio_pull_t pull)
 {
-    uint32_t port = GPIO_PORT(pin);
-    uint32_t mask = GPIO_MASK(pin);
     uint32_t ctx;
     int ret;
     uint8_t index;

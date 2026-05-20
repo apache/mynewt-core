@@ -374,7 +374,7 @@ hal_spi_disable_int(int spi_num)
     }
 }
 
-static void
+static void __attribute__((unused))
 hal_spi_handle_isr(int spi_num)
 {
     uint32_t rxdata;
@@ -594,8 +594,6 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int cnt)
 int
 hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int cnt)
 {
-    uint32_t ctx;
-
     /* Slave mode not supported */
     if (spis[spi_num].slave) {
         return -1;
