@@ -23,6 +23,12 @@
 #include "fcb_priv.h"
 #include "string.h"
 
+static int
+fcb_start_offset(struct fcb *fcb)
+{
+    return fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
+}
+
 int
 fcb_init(struct fcb *fcb)
 {
@@ -80,7 +86,7 @@ fcb_init(struct fcb *fcb)
     fcb->f_align = max_align;
     fcb->f_oldest = oldest_fap;
     fcb->f_active.fe_area = newest_fap;
-    fcb->f_active.fe_elem_off = fcb_len_in_flash(fcb, sizeof(struct fcb_disk_area));
+    fcb->f_active.fe_elem_off = fcb_start_offset(fcb);
     fcb->f_active_id = newest;
     fcb->f_active.fe_elem_ix = 0;
 
@@ -133,10 +139,11 @@ fcb_free_sector_cnt(struct fcb *fcb)
 int
 fcb_is_empty_nolock(struct fcb *fcb)
 {
-    bool ret = false;
+    bool ret;
+    uint32_t first_entry_offset = fcb_start_offset(fcb);
 
-    ret = (fcb->f_active.fe_area == fcb->f_oldest &&
-           fcb->f_active.fe_elem_off == sizeof(struct fcb_disk_area));
+    ret = fcb->f_active.fe_area == fcb->f_oldest &&
+          fcb->f_active.fe_elem_off == first_entry_offset;
 
     return ret;
 }
@@ -144,16 +151,17 @@ fcb_is_empty_nolock(struct fcb *fcb)
 int
 fcb_is_empty(struct fcb *fcb)
 {
-    int rc = 0;
-    bool ret = false;
+    int rc;
+    bool ret;
+    uint32_t first_entry_offset = fcb_start_offset(fcb);
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
     if (rc && rc != OS_NOT_STARTED) {
         return FCB_ERR_ARGS;
     }
 
-    ret = (fcb->f_active.fe_area == fcb->f_oldest &&
-      fcb->f_active.fe_elem_off == sizeof(struct fcb_disk_area));
+    ret = fcb->f_active.fe_area == fcb->f_oldest &&
+          fcb->f_active.fe_elem_off == first_entry_offset;
 
     os_mutex_release(&fcb->f_mtx);
 
