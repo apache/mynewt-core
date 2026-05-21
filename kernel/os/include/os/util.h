@@ -27,8 +27,10 @@
 #define INT_TO_POINTER(u) ((void *) ((intptr_t) (u)))
 
 /* Helper to retrieve pointer to "parent" object in structure */
+#ifndef CONTAINER_OF
 #define CONTAINER_OF(ptr, type, field) \
         ((type *)(((char *)(ptr)) - offsetof(type, field)))
+#endif
 
 /* Helper to calculate number of elements in array */
 #ifndef ARRAY_SIZE
