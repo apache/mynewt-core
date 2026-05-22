@@ -17,30 +17,16 @@
 #
 
 syscfg.defs:
-    LCD_ITF:
-        description: >
-            Selects built-in implementation of LCD interface
+    SSD1306_ADDRESSING_MODE:
+        description: Addressing mode.
         choices:
-            - custom
-            - spi
-            - i2c
-            - 8080_II_8_bit
-            - 8080_II_16_bit
-            - 8080_II_16_bit_stm32_fsmc
-        value: spi
-    LCD_CS_PIN:
-        description: LCD chip select pin for SPI.
-        value: -1
-    LCD_DC_PIN:
-        description: LCD command/data pin for SPI.
-        value:
-        restrictions: -1
-    LCD_BL_PIN:
-        description: LCD backlight pin.
-        value: -1
-    LCD_BL_PIN_ACTIVE_LEVEL:
-        description: Value for LCD_BL_PIN to turn backlight on.
-        value: 1
-    LCD_RESET_PIN:
-        description: LCD command/data pin for SPI or parallel port.
-        value: -1
+            - horizontal
+            - page
+        value: horizontal
+
+syscfg.vals:
+    LVGL_DISPLAY_HORIZONTAL_RESOLUTION: 128
+    LVGL_DISPLAY_VERTICAL_RESOLUTION: 64
+
+syscfg.restrictions:
+    - LV_DISP_Y_ALIGN == 3
