@@ -132,12 +132,6 @@ void
 hal_system_clock_start(void)
 {
 #if MYNEWT_VAL(MCU_LFCLK_SOURCE)
-    uint32_t regmsk;
-    uint32_t regval;
-    uint32_t clksrc;
-
-    regmsk = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSTAT_SRC_Msk;
-    regval = CLOCK_LFCLKSTAT_STATE_Running << CLOCK_LFCLKSTAT_STATE_Pos;
 
 #if MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFXO)
 
@@ -155,50 +149,15 @@ hal_system_clock_start(void)
     NRF_P0->PIN_CNF[0] = GPIO_PIN_CNF_MCUSEL_Peripheral << GPIO_PIN_CNF_MCUSEL_Pos;
     NRF_P0->PIN_CNF[1] = GPIO_PIN_CNF_MCUSEL_Peripheral << GPIO_PIN_CNF_MCUSEL_Pos;
 #endif
-    regval |= CLOCK_LFCLKSTAT_SRC_LFXO << CLOCK_LFCLKSTAT_SRC_Pos;
-    clksrc = CLOCK_LFCLKSTAT_SRC_LFXO;
+    nrf5340_set_lf_clock_source(CLOCK_LFCLKSTAT_SRC_LFXO);
 #elif MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFSYNTH)
-    regval |= CLOCK_LFCLKSTAT_SRC_LFSYNT << CLOCK_LFCLKSTAT_SRC_Pos;
-    clksrc = CLOCK_LFCLKSTAT_SRC_LFSYNT;
+    nrf5340_set_lf_clock_source(CLOCK_LFCLKSTAT_SRC_LFSYNT);
 #elif MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFRC)
-    regval |= CLOCK_LFCLKSTAT_SRC_LFRC << CLOCK_LFCLKSTAT_SRC_Pos;
-    clksrc = CLOCK_LFCLKSTAT_SRC_LFRC;
+    nrf5340_set_lf_clock_source(CLOCK_LFCLKSTAT_SRC_LFRC);
 #else
     #error Unknown LFCLK source selected
 #endif
 
-#if MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFSYNTH)
-    /* Must turn on HFLCK for synthesized 32768 crystal */
-    if ((NRF_CLOCK->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
-        (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) {
-        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-        nrf5340_clock_hfxo_request();
-        while (1) {
-            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
-                break;
-            }
-        }
-    } else {
-        nrf5340_clock_hfxo_request();
-    }
-#endif
-
-    /* Check if this clock source is already running */
-    if ((NRF_CLOCK->LFCLKSTAT & regmsk) != regval) {
-        NRF_CLOCK->TASKS_LFCLKSTOP = 1;
-        NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-        NRF_CLOCK->LFCLKSRC = clksrc;
-        NRF_CLOCK->TASKS_LFCLKSTART = 1;
-
-        /* Wait here till started! */
-        while (1) {
-            if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
-                if ((NRF_CLOCK->LFCLKSTAT & regmsk) == regval) {
-                    break;
-                }
-            }
-        }
-    }
 #endif
 
 #if MYNEWT_VAL(MCU_HFXO_INTCAP) > 0
