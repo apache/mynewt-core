@@ -33,7 +33,16 @@ hal_system_init(void)
     /* Update SystemCoreClock global variable */
     SystemCoreClockUpdate();
 
+    /* Enable the instruction cache */
+#if MYNEWT_VAL(STM32_ENABLE_ICACHE)
+    SCB_EnableICache();
+#endif
+
+    /* Enable the data cache */
+#if MYNEWT_VAL(STM32_ENABLE_DCACHE)
+    SCB_EnableDCache();
+#endif
+
     /* Relocate the vector table */
     NVIC_Relocate();
 }
-

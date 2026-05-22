@@ -50,11 +50,6 @@ SystemClock_Config(void)
     RCC_PeriphCLKInitTypeDef per_clk_init = {0};
     HAL_StatusTypeDef status;
 
-    /* Enable the MCU instruction cache */
-#if MYNEWT_VAL(STM32_ENABLE_ICACHE)
-    SCB_EnableICache();
-#endif
-
     /*
      *  Supply configuration update enable
      */
