@@ -28,8 +28,11 @@ pkg.keywords:
     - nordic
     - pca10056
 
-pkg.cflags:
+pkg.cflags.'MCU_TARGET=="nRF52840"':
     - '-DNRF52840_XXAA'
+
+pkg.cflags.'MCU_TARGET=="nRF52811"':
+    - '-DNRF52811_XXAA'
 
 pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
