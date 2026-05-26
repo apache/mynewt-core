@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <sysflash/sysflash.h>
 #include <msc_fat_view/msc_fat_view.h>
 #include <bootutil/image.h>
