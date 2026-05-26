@@ -264,61 +264,6 @@ static const file_entry_t drop_image_here = {
     .read_sector = empty_read,
 };
 
-static int write_status;
-static const char *write_result_text[] = {
-    "File that was written was not a valid image.",
-    "Current image not confirmed, new image rejected.",
-    "File write error.",
-};
-
-static uint32_t
-flash_result_create_content(struct MemFile *file)
-{
-    int ix = abs(write_status) - 1;
-    if (ix > 2) {
-        ix = 2;
-    }
-    fwrite(write_result_text[ix], 1, strlen(write_result_text[ix]), &file->file);
-
-    return file->bytes_written;
-}
-
-static uint32_t
-flash_result_size(const file_entry_t *file_entry)
-{
-    struct MemFile sector_file;
-
-    (void)file_entry;
-    fmemopen_w(&sector_file, (char *)NULL, 0);
-
-    flash_result_create_content(&sector_file);
-
-    return sector_file.bytes_written;
-}
-
-static void
-flash_result_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
-{
-    struct MemFile sector_file;
-    int written = 0;
-    (void)entry;
-
-    if (file_sector == 0) {
-        fmemopen_w(&sector_file, (char *)buffer, 512);
-        flash_result_create_content(&sector_file);
-        written = sector_file.bytes_written;
-    }
-
-    memset(buffer + written, 0, 512 - written);
-}
-
-const file_entry_t flash_result = {
-    .name = "Write error.txt",
-    .attributes = FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY,
-    .size = flash_result_size,
-    .read_sector = flash_result_read,
-};
-
 /*
  * Return number of directory entries required for given file_name.
  *
