@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
 #include <assert.h>
 #include <string.h>
 #include "mcu/mcu.h"
