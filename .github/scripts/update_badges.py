@@ -44,7 +44,7 @@ def _generate_markdown(results):
         md.append(f"![]({BASE_URL}/{test_name}.svg)")
 
     md.append("\n<details>")
-    md.append("<summary>Toggle for more informations</summary>\n")
+    md.append("<summary>Toggle for more information</summary>\n")
 
     for test_name in sorted(results.keys()):
         boards = results[test_name]
