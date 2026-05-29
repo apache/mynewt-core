@@ -26,6 +26,7 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/util/ring_buffer"
 pkg.deps.CONSOLE_UART:
     - "@apache-mynewt-core/hw/drivers/uart"
 pkg.deps.CONSOLE_RTT:
