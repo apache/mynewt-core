@@ -26,77 +26,36 @@
 #include "uart/uart.h"
 #include "bsp/bsp.h"
 
+#include "util/ring_buffer.h"
 #include "console/console.h"
 #include "console_priv.h"
 
-struct console_ring {
-    uint8_t head;
-    uint8_t tail;
-    uint16_t size;
-    uint8_t *buf;
-};
-
 static struct uart_dev *uart_dev;
-static struct console_ring cr_tx;
+static struct ring_buffer cr_tx;
 static uint8_t cr_tx_buf[MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE)];
 typedef void (*console_write_char)(struct uart_dev*, uint8_t);
 static console_write_char write_char_cb;
 
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
-static struct console_ring cr_rx;
+static struct ring_buffer cr_rx;
 static uint8_t cr_rx_buf[MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE)];
 static volatile bool uart_console_rx_stalled;
 
 struct os_event rx_ev;
 #endif
 
-static inline int
-inc_and_wrap(int i, int max)
-{
-    return (i + 1) & (max - 1);
-}
-
 static void
-uart_console_ring_add_char(struct console_ring *cr, char ch)
-{
-    cr->buf[cr->head] = ch;
-    cr->head = inc_and_wrap(cr->head, cr->size);
-}
-
-static uint8_t
-uart_console_ring_pull_char(struct console_ring *cr)
-{
-    uint8_t ch;
-
-    ch = cr->buf[cr->tail];
-    cr->tail = inc_and_wrap(cr->tail, cr->size);
-    return ch;
-}
-
-static bool
-uart_console_ring_is_full(const struct console_ring *cr)
-{
-    return inc_and_wrap(cr->head, cr->size) == cr->tail;
-}
-
-static bool
-uart_console_ring_is_empty(const struct console_ring *cr)
-{
-    return cr->head == cr->tail;
-}
-
-static void
-uart_console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
+uart_console_queue_char(struct uart_dev *uart, uint8_t ch)
 {
     int sr;
 
-    if (((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_OPEN) == 0) ||
-	((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_SUSPENDED) != 0)) {
+    if (((uart->ud_dev.od_flags & OS_DEV_F_STATUS_OPEN) == 0) ||
+        ((uart->ud_dev.od_flags & OS_DEV_F_STATUS_SUSPENDED) != 0)) {
         return;
     }
 
     OS_ENTER_CRITICAL(sr);
-    while (uart_console_ring_is_full(&cr_tx)) {
+    while (ring_buffer_is_full(&cr_tx)) {
         /* TX needs to drain */
         uart_start_tx(uart_dev);
         OS_EXIT_CRITICAL(sr);
@@ -105,7 +64,7 @@ uart_console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
         }
         OS_ENTER_CRITICAL(sr);
     }
-    uart_console_ring_add_char(&cr_tx, ch);
+    ring_buffer_push(&cr_tx, ch);
     OS_EXIT_CRITICAL(sr);
 }
 
@@ -119,10 +78,10 @@ uart_console_tx_flush(int cnt)
     uint8_t byte;
 
     for (i = 0; i < cnt; i++) {
-        if (uart_console_ring_is_empty(&cr_tx)) {
+        if (ring_buffer_is_empty(&cr_tx)) {
             break;
         }
-        byte = uart_console_ring_pull_char(&cr_tx);
+        byte = ring_buffer_pull(&cr_tx);
         uart_blocking_tx(uart_dev, byte);
     }
 }
@@ -189,10 +148,10 @@ console_rx_restart(void)
 static int
 uart_console_tx_char(void *arg)
 {
-    if (uart_console_ring_is_empty(&cr_tx)) {
+    if (ring_buffer_is_empty(&cr_tx)) {
         return -1;
     }
-    return uart_console_ring_pull_char(&cr_tx);
+    return ring_buffer_pull(&cr_tx);
 }
 
 /*
@@ -202,12 +161,12 @@ static int
 uart_console_rx_char(void *arg, uint8_t byte)
 {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
-    if (uart_console_ring_is_full(&cr_rx)) {
+    if (ring_buffer_is_full(&cr_rx)) {
         uart_console_rx_stalled = true;
         return -1;
     }
 
-    uart_console_ring_add_char(&cr_rx, byte);
+    ring_buffer_push(&cr_rx, byte);
 
     if (!rx_ev.ev_queued) {
         os_eventq_put(os_eventq_dflt_get(), &rx_ev);
@@ -235,9 +194,9 @@ uart_console_rx_char_event(struct os_event *ev)
         }
     }
 
-    while (!uart_console_ring_is_empty(&cr_rx)) {
+    while (!ring_buffer_is_empty(&cr_rx)) {
         OS_ENTER_CRITICAL(sr);
-        b = uart_console_ring_pull_char(&cr_rx);
+        b = ring_buffer_pull(&cr_rx);
         OS_EXIT_CRITICAL(sr);
 
         /* If UART RX was stalled due to a full receive buffer, restart RX now
