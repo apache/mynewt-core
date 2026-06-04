@@ -776,6 +776,18 @@ hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
 }
 
 /**
+ * gpio init af
+ *
+ * Configure the specified pin for AF.
+ */
+int
+hal_gpio_init_fun(uint32_t pin)
+{
+    return hal_gpio_init_af(pin & 0xFF, (pin >> 12) & 0xF, (pin >> 8) & 3,
+                            (pin >> 10) & 1);
+}
+
+/**
  * Deinitialize the specified pin to revert to default configuration
  *
  * @param pin Pin number to unset

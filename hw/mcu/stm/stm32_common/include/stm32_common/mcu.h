@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 #include <hal/hal_gpio.h>
 /*
  * Note that not all processors have support for all ports.
@@ -73,6 +74,8 @@ extern "C" {
  */
 #define MCU_GPIO_PIN_NONE       (0xFFFF)
 
+#define MCU_AFIO_GPIO_PP(pin, af, pu, od)                                     \
+    (((0x0F & af) << 12) | (0x00FF & pin) | ((3 & pu) << 8) | (1 & od) << 10)
 
 /*
  * Mapping of a GPIO pin to an alternate function.
@@ -120,6 +123,14 @@ void stm32_start_bootloader(void);
  * @return 0 on success -1 on failure
  */
 int hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od);
+
+/**
+ * Init alternate function on specified pin
+ * @param pin pin config created by MCU_AFIO_PORTx(pin, af) macro or
+ *            MCU_AFIO_GPIO_PP(pin, af, pull, od)
+ * @return 0 on success -1 on failure
+ */
+int hal_gpio_init_fun(uint32_t pin);
 
 #if MYNEWT_VAL_STM32_WFI_FROM_RAM
 extern void stm32_wfi_from_ram(void);
