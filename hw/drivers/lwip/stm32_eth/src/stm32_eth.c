@@ -23,6 +23,7 @@
 #include <hal/hal_timer.h>
 #include <mcu/cmsis_nvic.h>
 #include <stm32_common/stm32_hal.h>
+#include <mcu/mcu.h>
 
 #if MYNEWT_VAL(MCU_STM32F4)
 #include <bsp/stm32f4xx_hal_conf.h>
