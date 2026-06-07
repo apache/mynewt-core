@@ -83,7 +83,7 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
         const uint8_t *inbuf, uint8_t *outbuf, uint32_t len)
 {
     HAL_StatusTypeDef status;
-    CRYP_ConfigTypeDef conf;
+    CRYP_ConfigTypeDef conf = { 0 };
     uint32_t sz = 0;
     uint8_t i;
 #if MYNEWT_VAL(CRYPTO_HW_AES_CTR)
