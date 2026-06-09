@@ -37,5 +37,11 @@ pkg.cflags:
 pkg.cflags.BASELIBC_DEBUG_MALLOC:
     - -DDEBUG_MALLOC
 
+pkg.ign_files.BASELIBC_NO_MEMCPY:
+    - memcpy.c
+
+pkg.ign_files.BASELIBC_NO_MEMSET:
+    - memset.c
+
 pkg.lflags.!MCU_NATIVE:
     - -umain

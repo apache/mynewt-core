@@ -23,27 +23,38 @@ void *memcpy(void *dst, const void *src, size_t n)
         (void)p;
         (void)q;
 
-#if defined(__ARM_FEATURE_UNALIGNED)
-        /*
-         * We can speed up a bit by moving 32-bit words if unaligned access is
-         * supported (e.g. Cortex-M3/4/7/33).
-         */
         asm (".syntax unified           \n"
-             "       b    test1         \n"
-             "loop1: ldr  r3, [r1, r2]  \n"
-             "       str  r3, [r0, r2]  \n"
-             "test1: subs r2, #4        \n"
-             "       bpl  loop1         \n"
-             "       add  r2, #4        \n"
-            );
+             "       push {r0, r4}      \n"
+#if !defined(__ARM_FEATURE_UNALIGNED)
+             /*
+              * For Cortex-M0 check if copy by 32-bit is possible, if not
+              * copy everything by byte.
+              */
+             "       movs r3, r0        \n"
+             "       orrs r3, r1        \n"
+             "       lsls r3, #30       \n"
+             "       bne  2f            \n"
 #endif
-
-        asm (".syntax unified           \n"
-             "       b    test2         \n"
-             "loop2: ldrb r3, [r1, r2]  \n"
+             "       lsrs r3, r2, #2    \n"
+             "       beq  2f            \n"
+             "       lsls r4, r3, #2    \n"
+             "       subs r2, r2, r4    \n"
+             "       rsbs r4, #0        \n"
+             "       subs r0, r4        \n"
+             "       subs r1, r4        \n"
+             "1:     ldr  r3, [r1, r4]  \n"
+             "       str  r3, [r0, r4]  \n"
+             "       adds r4, #4        \n"
+             "       bmi  1b            \n"
+             "2:     rsbs r2, #0        \n"
+             "       beq  4f            \n"
+             "       subs r0, r2        \n"
+             "       subs r1, r2        \n"
+             "3:     ldrb r3, [r1, r2]  \n"
              "       strb r3, [r0, r2]  \n"
-             "test2: subs r2, #1        \n"
-             "       bpl  loop2         \n"
+             "       adds r2, #1        \n"
+             "       bmi  3b            \n"
+             "4:     pop  {r0, r4}      \n"
             );
 #else
 	while (n--) {

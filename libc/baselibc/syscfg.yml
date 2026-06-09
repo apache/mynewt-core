@@ -42,3 +42,17 @@ syscfg.defs:
             Set to 1 to enable extra debugging for malloc/free calls.
             This will e.g. assert on double-free.
         value: 0
+
+    BASELIBC_NO_MEMCPY:
+        description: >
+            Set to 1 to disable baselibc version of memcpy and let compiler
+            provide it's own which may be more efficient or user code
+            can have custom one.
+        value: 0
+
+    BASELIBC_NO_MEMSET:
+        description: >
+            Set to 1 to disable baselibc version of memset and let compiler
+            provide it's own which may be more efficient or user code
+            can have custom one.
+        value: 0
