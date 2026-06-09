@@ -28,6 +28,7 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_system.h"
 #include "mcu/nrf52_hal.h"
+#include "mcu/nrf52_hw_id.h"
 #include "mcu/nrf52_periph.h"
 #include "bsp/bsp.h"
 
@@ -94,6 +95,63 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
         cfg_pri = pri;
     }
     return cfg_pri;
+}
+
+static int
+prov_data_hw_id(void *data, uint16_t *length)
+{
+    uint16_t len = nrf52_hw_id_len();
+
+    if (*length < len) {
+        *length = len;
+        return SYS_ENOMEM;
+    }
+
+    *length = nrf52_hw_id(data, *length);
+
+    return 0;
+}
+
+static int
+prov_data_ble_public_addr(void *data, uint16_t *length)
+{
+    if ((NRF_FICR->DEVICEADDRTYPE & 1) != 0) {
+        return SYS_ENOENT;
+    }
+
+    memcpy(data, (void *)&NRF_FICR->DEVICEADDR[0], 6);
+
+    return 0;
+}
+
+static int
+prov_data_ble_static_addr(void *data, uint16_t *length)
+{
+    uint8_t *addr = data;
+
+    if ((NRF_FICR->DEVICEADDRTYPE & 1) == 0) {
+        return SYS_ENOENT;
+    }
+
+    memcpy(data, (void *)&NRF_FICR->DEVICEADDR[0], 6);
+    addr[5] |= 0xc0;
+
+    return 0;
+}
+
+int
+hal_bsp_prov_data_get_int(uint16_t id, void *data, uint16_t *length)
+{
+    switch (id) {
+    case HAL_BSP_PROV_HW_ID:
+        return prov_data_hw_id(data, length);
+    case HAL_BSP_PROV_BLE_PUBLIC_ADDR:
+        return prov_data_ble_public_addr(data, length);
+    case HAL_BSP_PROV_BLE_STATIC_ADDR:
+        return prov_data_ble_static_addr(data, length);
+    }
+
+    return SYS_ENOTSUP;
 }
 
 void
