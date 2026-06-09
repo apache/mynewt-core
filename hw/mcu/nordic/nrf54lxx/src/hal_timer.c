@@ -26,6 +26,7 @@
 #include <hal/hal_timer.h>
 #include <nrf.h>
 #include <mcu/nrf54l_hal.h>
+#include <nrf_grtc.h>
 
 /* IRQ prototype */
 typedef void (*hal_timer_irq_handler_t)(void);
@@ -34,8 +35,8 @@ typedef void (*hal_timer_irq_handler_t)(void);
 #define NRF_TIMER_CC_READ (2)
 #define NRF_TIMER_CC_INT  (3)
 
-/* Output compare 2 used for RTC timers */
-#define NRF_RTC_TIMER_CC_INT (2)
+#define NRF_GRTC_TIMER_CC_INT    (2)
+#define GRTC_COMPARE_INT_MASK(ccreg) (1UL << (ccreg))
 
 /* Maximum number of hal timers used */
 #define nrf54l_hal_timer_MAX (6)
@@ -46,6 +47,7 @@ typedef void (*hal_timer_irq_handler_t)(void);
 struct nrf54l_hal_timer {
     uint8_t tmr_enabled;
     uint16_t tmr_irq_num;
+    uint8_t tmr_grtc;
     uint8_t tmr_pad;
     uint32_t tmr_cntr;
     uint32_t timer_isrs;
@@ -68,6 +70,9 @@ struct nrf54l_hal_timer nrf54l_hal_timer3;
 #endif
 #if MYNEWT_VAL(TIMER_4)
 struct nrf54l_hal_timer nrf54l_hal_timer4;
+#endif
+#if MYNEWT_VAL(TIMER_5)
+struct nrf54l_hal_timer nrf54l_hal_timer5;
 #endif
 
 static const struct nrf54l_hal_timer *nrf54l_hal_timers[nrf54l_hal_timer_MAX] = {
@@ -93,6 +98,11 @@ static const struct nrf54l_hal_timer *nrf54l_hal_timers[nrf54l_hal_timer_MAX] = 
 #endif
 #if MYNEWT_VAL(TIMER_4)
     &nrf54l_hal_timer4,
+#else
+    NULL,
+#endif
+#if MYNEWT_VAL(TIMER_5)
+    &nrf54l_hal_timer5,
 #else
     NULL,
 #endif
@@ -126,6 +136,78 @@ nrf_read_timer_cntr(NRF_TIMER_Type *hwtimer)
     return tcntr;
 }
 
+uint64_t
+hal_grtc_counter_get(void)
+{
+    uint32_t counterl_val, counterh_val, counterh;
+    uint64_t counter;
+
+    nrf_grtc_sys_counter_active_set(NRF_GRTC, true);
+    do {
+        counterl_val = nrf_grtc_sys_counter_low_get(NRF_GRTC);
+        counterh = nrf_grtc_sys_counter_high_get(NRF_GRTC);
+    } while (counterh & NRF_GRTC_SYSCOUNTERH_BUSY_MASK);
+
+    do {
+        counterl_val = nrf_grtc_sys_counter_low_get(NRF_GRTC);
+        counterh = nrf_grtc_sys_counter_high_get(NRF_GRTC);
+        counterh_val = counterh & NRF_GRTC_SYSCOUNTERH_VALUE_MASK;
+    } while (counterh & NRF_GRTC_SYSCOUNTERH_BUSY_MASK);
+
+    if (counterh & NRF_GRTC_SYSCOUNTERH_OVERFLOW_MASK) {
+        --counterh_val;
+    }
+
+    counter = ((uint64_t)counterh_val << 32) | counterl_val;
+
+    return counter;
+}
+
+static void
+hal_grtc_set_ocmp(struct nrf54l_hal_timer *bsptimer, uint32_t expiry)
+{
+    uint64_t cntr;
+    uint64_t expiry64;
+    uint32_t now_rtc;
+    int64_t delta_ticks;
+
+    /* Disable OS tick interrupt */
+    NRF_GRTC->INTENCLR1 = GRTC_COMPARE_INT_MASK(NRF_GRTC_TIMER_CC_INT);
+
+    /* Current absolute GRTC time */
+    cntr = hal_grtc_counter_get();
+
+    /* Convert logical RTC-domain time (32768Hz, 24 bit-wide)
+     * to GRTC domain (1MHz resolution, 52 bit-wide).
+     */
+    expiry64 = (cntr & ~(((1 << (24 + 5))) - 1)) | ((expiry & 0xffffff) << 5);
+
+    delta_ticks = expiry64 - cntr;
+
+    if (delta_ticks <= 0) {
+        /* Force interrupt to occur as we may have missed it */
+        NVIC_SetPendingIRQ(bsptimer->tmr_irq_num);
+        return;
+    }
+
+    /* Set output compare register to timer expiration */
+    nrf_grtc_sys_counter_cc_set(NRF_GRTC, NRF_GRTC_TIMER_CC_INT, expiry64);
+
+    /* Clear interrupt flag */
+    NRF_GRTC->EVENTS_COMPARE[NRF_GRTC_TIMER_CC_INT] = 0;
+    /* Enable compare event */
+    nrf_grtc_sys_counter_compare_event_enable(NRF_GRTC, NRF_GRTC_TIMER_CC_INT);
+    /* Enable the output compare interrupt */
+    NRF_GRTC->INTENSET1 = GRTC_COMPARE_INT_MASK(NRF_GRTC_TIMER_CC_INT);
+
+    cntr = hal_grtc_counter_get();
+
+    if ((int64_t)(expiry64 - cntr) <= 0) {
+        /* Force interrupt to occur as we may have missed it */
+        NVIC_SetPendingIRQ(bsptimer->tmr_irq_num);
+    }
+}
+
 /**
  * Set the OCMP used by the timer to the desired expiration tick
  *
@@ -138,6 +220,11 @@ static void
 nrf_timer_set_ocmp(struct nrf54l_hal_timer *bsptimer, uint32_t expiry)
 {
     NRF_TIMER_Type *hwtimer;
+
+    if (bsptimer->tmr_grtc) {
+        hal_grtc_set_ocmp(bsptimer, expiry);
+        return;
+    }
 
     hwtimer = bsptimer->tmr_reg;
 
@@ -166,8 +253,25 @@ nrf_timer_disable_ocmp(NRF_TIMER_Type *hwtimer)
     hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
 }
 
+static void
+hal_grtc_disable_ocmp(void)
+{
+    NRF_GRTC->INTENCLR1 = GRTC_COMPARE_INT_MASK(NRF_GRTC_TIMER_CC_INT);
+    nrf_grtc_sys_counter_compare_event_disable(NRF_GRTC, NRF_GRTC_TIMER_CC_INT);
+}
+
+static uint32_t
+hal_grtc_cputime_get(void)
+{
+    uint64_t cntr;
+
+    cntr = hal_grtc_counter_get();
+
+    return (uint32_t)(cntr >> 5) & 0xffffff;
+}
+
 #if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) ||     \
-     MYNEWT_VAL(TIMER_3) || MYNEWT_VAL(TIMER_4))
+     MYNEWT_VAL(TIMER_3) || MYNEWT_VAL(TIMER_4) || MYNEWT_VAL(TIMER_5))
 static void
 hal_timer_chk_queue(struct nrf54l_hal_timer *bsptimer)
 {
@@ -178,7 +282,11 @@ hal_timer_chk_queue(struct nrf54l_hal_timer *bsptimer)
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
     while ((timer = TAILQ_FIRST(&bsptimer->hal_timer_q)) != NULL) {
-        tcntr = nrf_read_timer_cntr(bsptimer->tmr_reg);
+        if (bsptimer->tmr_grtc) {
+            tcntr = hal_grtc_cputime_get();
+        } else {
+            tcntr = nrf_read_timer_cntr(bsptimer->tmr_reg);
+        }
         if ((int32_t)(tcntr - timer->expiry) >= 0) {
             TAILQ_REMOVE(&bsptimer->hal_timer_q, timer, link);
             timer->link.tqe_prev = NULL;
@@ -193,7 +301,11 @@ hal_timer_chk_queue(struct nrf54l_hal_timer *bsptimer)
     if (timer) {
         nrf_timer_set_ocmp(bsptimer, timer->expiry);
     } else {
-        nrf_timer_disable_ocmp(bsptimer->tmr_reg);
+        if (bsptimer->tmr_grtc) {
+            hal_grtc_disable_ocmp();
+        } else {
+            nrf_timer_disable_ocmp(bsptimer->tmr_reg);
+        }
     }
     __HAL_ENABLE_INTERRUPTS(ctx);
 }
@@ -204,7 +316,7 @@ hal_timer_chk_queue(struct nrf54l_hal_timer *bsptimer)
  *
  * @param bsptimer Pointer to timer.
  */
-#if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) ||     \
+#if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) || \
      MYNEWT_VAL(TIMER_3) || MYNEWT_VAL(TIMER_4))
 static void
 hal_timer_irq_handler(struct nrf54l_hal_timer *bsptimer)
@@ -238,6 +350,26 @@ hal_timer_irq_handler(struct nrf54l_hal_timer *bsptimer)
         /* XXX: Recommended by nordic to make sure interrupts are cleared */
         compare = hwtimer->EVENTS_COMPARE[NRF_TIMER_CC_INT];
     }
+
+    os_trace_isr_exit();
+}
+#endif
+
+#if MYNEWT_VAL(TIMER_5)
+static void
+hal_grtc_timer_irq_handler(struct nrf54l_hal_timer *bsptimer)
+{
+    uint32_t overflow;
+    uint32_t compare;
+    uint32_t tick;
+
+    os_trace_isr_enter();
+
+    NRF_GRTC->EVENTS_COMPARE[NRF_GRTC_TIMER_CC_INT] = 0;
+
+    ++bsptimer->timer_isrs;
+
+    hal_timer_chk_queue(bsptimer);
 
     os_trace_isr_exit();
 }
@@ -280,6 +412,14 @@ void
 nrf54l_timer4_irq_handler(void)
 {
     hal_timer_irq_handler(&nrf54l_hal_timer4);
+}
+#endif
+
+#if MYNEWT_VAL(TIMER_5)
+void
+nrf54l_timer5_irq_handler(void)
+{
+    hal_grtc_timer_irq_handler(&nrf54l_hal_timer5);
 }
 #endif
 
@@ -344,6 +484,14 @@ hal_timer_init(int timer_num, void *cfg)
         irq_isr = nrf54l_timer4_irq_handler;
         break;
 #endif
+#if MYNEWT_VAL(TIMER_5)
+    case 5:
+        irq_num = GRTC_1_IRQn;
+        hwtimer = NRF_GRTC;
+        irq_isr = nrf54l_timer5_irq_handler;
+        bsptimer->tmr_grtc = 1;
+        break;
+#endif
     default:
         hwtimer = NULL;
         break;
@@ -389,6 +537,33 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     NRF_TIMER_Type *hwtimer;
 
     nrf54l_hal_timer_RESOLVE(timer_num, bsptimer);
+
+#if MYNEWT_VAL(TIMER_5)
+    if (timer_num == 5) {
+        if (bsptimer->tmr_enabled || (bsptimer->tmr_reg == NULL)) {
+            rc = EINVAL;
+            goto err;
+        }
+
+//        if (freq_hz != 32768) {
+//            /* Nimble LL timing is tuned for this cputime freq */
+//            rc = EINVAL;
+//            goto err;
+//        }
+
+        bsptimer->tmr_freq = freq_hz;
+        bsptimer->tmr_enabled = 1;
+
+        __HAL_DISABLE_INTERRUPTS(ctx);
+
+        NVIC_EnableIRQ(bsptimer->tmr_irq_num);
+        NRF_GRTC->INTENCLR1 = 0xffffffff;
+        NRF_GRTC->EVENTS_COMPARE[NRF_GRTC_TIMER_CC_INT] = 0;
+
+        __HAL_ENABLE_INTERRUPTS(ctx);
+        return 0;
+    }
+#endif
 
     /* Set timer to desired frequency */
     div = NRF54L_MAX_TIMER_FREQ / freq_hz;
@@ -484,10 +659,15 @@ hal_timer_deinit(int timer_num)
     nrf54l_hal_timer_RESOLVE(timer_num, bsptimer);
 
     __HAL_DISABLE_INTERRUPTS(ctx);
-    hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
-    hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
-    hwtimer->TASKS_STOP = 1;
-    hwtimer->TASKS_CLEAR = 1;
+
+    if (bsptimer->tmr_grtc) {
+        hal_grtc_disable_ocmp();
+    } else {
+        hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
+        hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
+        hwtimer->TASKS_STOP = 1;
+        hwtimer->TASKS_CLEAR = 1;
+    }
 
     bsptimer->tmr_enabled = 0;
     bsptimer->tmr_reg = NULL;
@@ -536,8 +716,11 @@ hal_timer_read(int timer_num)
     struct nrf54l_hal_timer *bsptimer;
 
     nrf54l_hal_timer_RESOLVE(timer_num, bsptimer);
-
-    tcntr = nrf_read_timer_cntr(bsptimer->tmr_reg);
+    if (bsptimer->tmr_grtc) {
+        tcntr = hal_grtc_cputime_get();
+    } else {
+        tcntr = nrf_read_timer_cntr(bsptimer->tmr_reg);
+    }
 
     return tcntr;
 
@@ -606,7 +789,11 @@ hal_timer_start(struct hal_timer *timer, uint32_t ticks)
 
     /* Set the tick value at which the timer should expire */
     bsptimer = (struct nrf54l_hal_timer *)timer->bsp_timer;
-    tick = nrf_read_timer_cntr(bsptimer->tmr_reg) + ticks;
+    if (bsptimer->tmr_grtc) {
+        tick = hal_grtc_cputime_get() + ticks;
+    } else {
+        tick = nrf_read_timer_cntr(bsptimer->tmr_reg) + ticks;
+    }
     rc = hal_timer_start_at(timer, tick);
     return rc;
 }
@@ -618,7 +805,8 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
     struct hal_timer *entry;
     struct nrf54l_hal_timer *bsptimer;
 
-    if (timer == NULL || timer->link.tqe_prev != NULL || timer->cb_func == NULL) {
+    if ((timer == NULL) || (timer->link.tqe_prev != NULL) ||
+        (timer->cb_func == NULL)) {
         return EINVAL;
     }
     bsptimer = (struct nrf54l_hal_timer *)timer->bsp_timer;
@@ -687,7 +875,11 @@ hal_timer_stop(struct hal_timer *timer)
                 nrf_timer_set_ocmp((struct nrf54l_hal_timer *)entry->bsp_timer,
                                    entry->expiry);
             } else {
-                nrf_timer_disable_ocmp(bsptimer->tmr_reg);
+                if (bsptimer->tmr_grtc) {
+                    hal_grtc_disable_ocmp();
+                } else {
+                    nrf_timer_disable_ocmp(bsptimer->tmr_reg);
+                }
             }
         }
     }
