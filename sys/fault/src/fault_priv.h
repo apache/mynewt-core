@@ -26,6 +26,5 @@
 extern uint8_t fault_chronic_counts[MYNEWT_VAL(FAULT_MAX_DOMAINS)];
 
 int fault_conf_persist_chronic_counts(void);
-int fault_conf_init(void);
 
 #endif

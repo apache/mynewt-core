@@ -24,6 +24,13 @@
 #include <mcu/cmsis_nvic.h>
 #include <stm32_common/stm32_hal.h>
 
+#if MYNEWT_VAL(STM32_ETH_SYS_CONFIG)
+#include <config/config.h>
+#endif
+
+#include <bsp/bsp.h>
+#include <lwip/dhcp.h>
+
 #if MYNEWT_VAL(MCU_STM32F4)
 #include <bsp/stm32f4xx_hal_conf.h>
 #include <mcu/stm32f4_bsp.h>
@@ -203,6 +210,149 @@ HAL_ETH_RxLinkCallback(void **p_start, void **p_end, uint8_t *buff, uint16_t len
         p->tot_len += len;
     }
 }
+
+#define _Args(...)             __VA_ARGS__
+#define STRIP_PARENS(X)        X
+#define UNMANGLE_MYNEWT_VAL(X) STRIP_PARENS(_Args X)
+
+static uint8_t stm32_eth_mac_address[6] = { UNMANGLE_MYNEWT_VAL(
+    MYNEWT_VAL_STM32_ETH_MAC_ADDR) };
+static uint8_t stm32_eth_auto_up;
+static uint8_t stm32_eth_dhcp;
+
+#if MYNEWT_VAL(STM32_ETH_SYS_CONFIG)
+#define equals(a, b) (strcmp(a, b) == 0)
+
+static uint8_t
+format_hex_digit(int v)
+{
+    v &= 0xF;
+
+    return (v < 10) ? (v + '0') : (v - 10 + 'A');
+}
+
+static char *
+format_mac_address(const uint8_t *mac, char *buf, size_t buf_len)
+{
+    if (buf_len < 18) {
+        buf = NULL;
+    } else {
+        for (int i = 0; i < 6; ++i) {
+            buf[i * 3] = format_hex_digit(stm32_eth_mac_address[i] >> 4);
+            buf[i * 3 + 1] = format_hex_digit(stm32_eth_mac_address[i]);
+            buf[i * 3 + 2] = i < 5 ? ':' : '\0';
+        }
+    }
+    return buf;
+}
+
+static char *
+stm32_eth_conf_get(int argc, char **argv, char *val, int val_len_max)
+{
+    char *ret = NULL;
+
+    if (argc == 1) {
+        if (equals(argv[0], "up")) {
+            ret = conf_str_from_value(CONF_BOOL, &stm32_eth_auto_up, val, val_len_max);
+        } else if (equals(argv[0], "dhcp")) {
+            ret = conf_str_from_value(CONF_BOOL, &stm32_eth_dhcp, val, val_len_max);
+        } else if (equals(argv[0], "mac") && val_len_max >= 18) {
+            ret = format_mac_address(stm32_eth_mac_address, val, val_len_max);
+        }
+    }
+    return ret;
+}
+
+static const char *
+byte_from_str(const char *str, uint8_t *out_byte)
+{
+    uint8_t b = 0;
+    char c;
+
+    for (int i = 0; i < 2; ++i) {
+        c = toupper(str[i]);
+        if (isdigit(c)) {
+            b = (b << 4) + c - '0';
+        } else if (isxdigit(c)) {
+            b = (b << 4) + c - 'A' + 10;
+        } else {
+            return NULL;
+        }
+    }
+    *out_byte = b;
+    return str + 2;
+}
+
+static int
+stm32_eth_conf_set(int argc, char **argv, char *val)
+{
+    uint8_t mac[6];
+    int i;
+    const char *buf = val;
+    const char *name = argv[0];
+
+    if (argc != 1) {
+        return 0;
+    }
+
+    if (equals(name, "mac")) {
+        for (i = 0; buf != NULL && i < 6; ++i) {
+            buf = byte_from_str(buf, &mac[i]);
+            if (buf == NULL) {
+                break;
+            }
+            if (i < 5 && buf[0] == ':') {
+                buf++;
+            }
+        }
+        if (i == 6) {
+            memcpy(stm32_eth_mac_address, mac, 6);
+        } else {
+            return -1;
+        }
+    } else if (equals(name, "up")) {
+        CONF_VALUE_SET(val, CONF_BOOL, stm32_eth_auto_up);
+    } else if (equals(name, "dhcp")) {
+        CONF_VALUE_SET(val, CONF_BOOL, stm32_eth_dhcp);
+    }
+
+    return 0;
+}
+
+static int
+stm32_eth_conf_commit(void)
+{
+    return OS_ENOENT;
+}
+
+static int
+stm32_eth_conf_export(void (*export_func)(char *name, char *val),
+                      enum conf_export_tgt tgt)
+{
+    char buf[20];
+
+    (void)tgt;
+
+    export_func("eth/mac",
+                format_mac_address(stm32_eth_mac_address, buf, sizeof(buf)));
+    export_func("eth/up", conf_str_from_value(CONF_BOOL, &stm32_eth_auto_up,
+                                              buf, sizeof(buf)));
+    export_func("eth/dhcp",
+                conf_str_from_value(CONF_BOOL, &stm32_eth_dhcp, buf, sizeof(buf)));
+
+    return 0;
+}
+
+struct conf_handler stm32_eth_conf = { .ch_name = "eth",
+                                       .ch_get = stm32_eth_conf_get,
+                                       .ch_commit = stm32_eth_conf_commit,
+                                       .ch_set = stm32_eth_conf_set,
+                                       .ch_export = stm32_eth_conf_export };
+
+/* Register conf handler statically */
+STATIC_CONF_HANDLER(stm32_eth_conf);
+
+#endif
 
 /*
  * Hardware configuration. Should be called from BSP init.
@@ -475,6 +625,10 @@ stm32_eth_open(void)
     struct netif *nif;
     struct ip4_addr addr;
     int rc;
+    bool up = MYNEWT_VAL(STM32_ETH_SYS_CONFIG) ? stm32_eth_auto_up
+                                               : MYNEWT_VAL(STM32_ETH_AUTO_UP);
+    bool dhcp = MYNEWT_VAL(STM32_ETH_SYS_CONFIG) ? stm32_eth_dhcp
+                                                 : MYNEWT_VAL(STM32_ETH_DHCP);
 
     if (ses->cfg == NULL) {
         /*
@@ -483,7 +637,7 @@ stm32_eth_open(void)
         return -1;
     }
 
-    stm32_eth_set_hwaddr(MYNEWT_VAL(STM32_MAC_ADDR));
+    stm32_eth_set_hwaddr(stm32_eth_mac_address);
 
     if (ses->cfg->sec_phy_irq >= 0) {
         rc = hal_gpio_irq_init(ses->cfg->sec_phy_irq, stm32_phy_isr, ses,
@@ -498,5 +652,14 @@ stm32_eth_open(void)
     nif = netif_add(&ses->st_nif, &addr, &addr, &addr, NULL, stm32_lwip_init,
                     tcpip_input);
     assert(nif);
+
+    if (up) {
+        netif_set_up(nif);
+        netif_set_default(nif);
+        if (dhcp) {
+            dhcp_start(nif);
+        }
+    }
+
     return 0;
 }

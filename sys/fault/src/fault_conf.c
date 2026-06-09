@@ -103,8 +103,4 @@ fault_conf_persist_chronic_counts(void)
     return conf_save_one("fault/chronfail", buf);
 }
 
-int
-fault_conf_init(void)
-{
-    return conf_register(&fault_conf_handler);
-}
+STATIC_CONF_HANDLER(fault_conf_handler)

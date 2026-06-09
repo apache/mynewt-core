@@ -29,6 +29,9 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/net/ip/lwip_mn"
 
+pkg.deps.STM32_ETH_SYS_CONFIG:
+    - "@apache-mynewt-core/sys/config"
+
 pkg.deps.MCU_STM32F4:
     - "@apache-mynewt-core/hw/mcu/stm/stm32f4xx"
 
@@ -46,6 +49,8 @@ app.cflags:
     - -DCHECKSUM_CHECK_TCP=0
     - -DCHECKSUM_CHECK_ICMP=0
     - -DCHECKSUM_CHECK_ICMP6=0
+
+pkg.whole_archive: true
 
 pkg.req_apis:
 

@@ -304,10 +304,20 @@ conf_save(void)
         cs->cs_itf->csi_save_start(cs);
     }
     rc = 0;
-    SLIST_FOREACH(ch, &conf_handlers, ch_list) {
-        rc2 = conf_export_cb(ch, conf_store_one, CONF_EXPORT_PERSIST);
-        if (!rc) {
-            rc = rc2;
+    if (MYNEWT_VAL(CONFIG_HANDLERS_STATIC)) {
+        LINK_TABLE_FOREACH(h, static_conf_handlers) {
+            rc2 = conf_export_cb(*h, conf_store_one, CONF_EXPORT_PERSIST);
+            if (!rc) {
+                rc = rc2;
+            }
+        }
+    }
+    if (MYNEWT_VAL(CONFIG_HANDLERS_DYNAMIC)) {
+        SLIST_FOREACH(ch, &conf_handlers, ch_list) {
+            rc2 = conf_export_cb(ch, conf_store_one, CONF_EXPORT_PERSIST);
+            if (!rc) {
+                rc = rc2;
+            }
         }
     }
     if (cs->cs_itf->csi_save_end) {
