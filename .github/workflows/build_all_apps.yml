@@ -21,6 +21,9 @@ name: Apps
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   targets:
     name: Build all apps
