@@ -32,7 +32,7 @@
 #include "mcu/mcu_hal.h"
 #include "hal/hal_i2c.h"
 #include "defs/sections.h"
-#include "ef_tinycrypt/ef_tinycrypt.h"
+#include "ef_mbedtls/ef_mbedtls.h"
 #include <trng_sw/trng_sw.h>
 
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
@@ -48,8 +48,8 @@ static struct trng_sw_dev_cfg os_bsp_trng_cfg = {
     .tsdc_entr = &mypid,
     .tsdc_len = sizeof(mypid)
 };
-static sec_data_secret struct eflash_tinycrypt_dev ef_dev0 = {
-    .etd_dev = {
+static sec_data_secret struct eflash_mbedtls_dev ef_dev0 = {
+    .dev = {
         .efd_hal = {
             .hf_itf = &enc_flash_funcs,
         },
@@ -64,7 +64,7 @@ hal_bsp_flash_dev(uint8_t id)
     case 0:
         return &native_flash_dev;
     case 1:
-        return &ef_dev0.etd_dev.efd_hal;
+        return &ef_dev0.dev.efd_hal;
     default:
         return NULL;
     }
