@@ -40,6 +40,15 @@ struct ring_buffer {
 };
 
 /**
+ * Initialize ring buffer
+ *
+ * @param rb - ring buffer to initialize
+ * @param buf - buffer to use for storing data
+ * @param size - size of ring buffer storage data, it must be power of 2
+ */
+void ring_buffer_init(struct ring_buffer *rb, uint8_t *buf, int size);
+
+/**
  * Push new element to ring buffer.
  * Ring buffer must have at least one empty space.
  * ring_buffer_is_full should be called before pushing element into
@@ -76,6 +85,61 @@ bool ring_buffer_is_full(const struct ring_buffer *rb);
  * @return true if ring buffer is empty
  */
 bool ring_buffer_is_empty(const struct ring_buffer *rb);
+
+/**
+ * Write data to ring buffer
+ *
+ * @param rb - ring buffer
+ * @param data - data to write
+ * @param len - number of bytes to write
+ * @return number of bytes written
+ */
+int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, int len);
+
+/**
+ * Read data from ring buffer
+ *
+ * @param rb - ring buffer
+ * @param data - buffer for output data
+ * @param len - number of bytes to read
+ * @return actuall bytes count read from ring buffer
+ */
+int ring_buffer_read(struct ring_buffer *rb, uint8_t *data, int len);
+
+/**
+ * Return number of bytes that can be writtne to ring buffer
+ *
+ * @param rb - ring buffer
+ * @return - number of bytes that can be put in ring buffer
+ */
+int ring_buffer_free_space(const struct ring_buffer *rb);
+
+/**
+ * Read number of bytes in ring buffer
+ *
+ * @param rb - ring buffer
+ * @return number of bytes available in ring buffer
+ */
+int ring_buffer_data_count(const struct ring_buffer *rb);
+
+/**
+ * Read number of bytes from ring buffer without removing them
+ *
+ * @param rb - ring buffer
+ * @param data - buffer for output data
+ * @param len - number of bytes to read
+ * @return number of bytes read from ring buffer
+ */
+int ring_buffer_peek(struct ring_buffer *rb, uint8_t *data, int len);
+
+/**
+ * Peek byte from ring buffer
+ *
+ * @param rb - ring buffer
+ * @return - byte that would be read with ring_buffer_pull or -1 if there
+ * is nothing that can be read
+ */
+int ring_buffer_peek_byte(struct ring_buffer *rb);
 
 #ifdef __cplusplus
 }
