@@ -261,9 +261,6 @@ encoding/json/src/json_decode.c
 kernel/os/src/os_mbuf.c
 encoding/base64/src/base64.c
 
-# tinycrypt - BSD License.
-crypto/tinycrypt
-
 # OIC - BSD License.
 net/oic/include/oic/port/oc_random.h
 net/oic/include/oic/messaging/coap
