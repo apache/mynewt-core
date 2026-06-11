@@ -251,13 +251,11 @@ uart_console_init(void)
         .uc_rx_char = uart_console_rx_char,
     };
 
-    cr_tx.size = MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE);
-    cr_tx.buf = cr_tx_buf;
+    ring_buffer_init(&cr_tx, cr_tx_buf, MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE));
     write_char_cb = uart_console_queue_char;
 
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
-    cr_rx.size = MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE);
-    cr_rx.buf = cr_rx_buf;
+    ring_buffer_init(&cr_rx, cr_rx_buf, MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE));
 
     rx_ev.ev_cb = uart_console_rx_char_event;
 #endif
