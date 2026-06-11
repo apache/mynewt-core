@@ -25,7 +25,6 @@
 #include "console/console.h"
 #include "hash/hash.h"
 #include "mbedtls/sha256.h"
-#include "tinycrypt/sha256.h"
 
 struct vector_data {
     char *in;
@@ -468,25 +467,6 @@ mbed_sha256_finish(void *data, uint8_t *output)
 }
 
 static void
-tc_sha256_start(void *data, void *arg)
-{
-    (void)arg;
-    (void)tc_sha256_init((TCSha256State_t)data);
-}
-
-static void
-_tc_sha256_update(void *data, const uint8_t *input, uint32_t inlen)
-{
-    (void)tc_sha256_update((TCSha256State_t)data, input, inlen);
-}
-
-static void
-tc_sha256_finish(void *data, uint8_t *output)
-{
-    (void)tc_sha256_final(output, (TCSha256State_t)data);
-}
-
-static void
 run_sha256_benchmark(char *name, hash_start_func_t start_fn,
         hash_update_func_t update_fn, hash_finish_func_t finish_fn,
         void *ctx, void *start_arg)
@@ -584,7 +564,6 @@ mynewt_main(int argc, char **argv)
     struct hash_dev *hash;
     struct hash_sha256_context hash_sha256;
     mbedtls_sha256_context mbed_sha256;
-    struct tc_sha256_state_struct tc_sha256;
     int i;
 
     sysinit();
@@ -607,7 +586,6 @@ mynewt_main(int argc, char **argv)
     run_bytewrite_test(hash);
 
     mbedtls_sha256_init(&mbed_sha256);
-    tc_sha256_init(&tc_sha256);
 
     for (i = 1; i <= 3; i++) {
         printf("\n=== Benchmarks - iteration %d ===\n", i);
@@ -615,8 +593,6 @@ mynewt_main(int argc, char **argv)
                 _hash_sha256_finish, &hash_sha256, hash);
         run_sha256_benchmark("MBEDTLS", mbed_sha256_start, mbed_sha256_update,
                 mbed_sha256_finish, &mbed_sha256, NULL);
-        run_sha256_benchmark("TINYCRYPT", tc_sha256_start, _tc_sha256_update,
-                tc_sha256_finish, &tc_sha256, NULL);
         os_time_delay(OS_TICKS_PER_SEC);
     }
 

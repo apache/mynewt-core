@@ -27,4 +27,3 @@ pkg.deps:
     - "@apache-mynewt-core/sys/console"
     - "@apache-mynewt-core/sys/log"
     - "@apache-mynewt-core/crypto/mbedtls"
-    - "@apache-mynewt-core/crypto/tinycrypt"
