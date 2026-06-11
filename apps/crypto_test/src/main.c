@@ -25,7 +25,6 @@
 #include "console/console.h"
 #include "crypto/crypto.h"
 #include "mbedtls/aes.h"
-#include "tinycrypt/aes.h"
 
 #include <mbedtls/gcm_mynewt.h>
 
@@ -362,12 +361,6 @@ mbed_enc_block(void *data, const uint8_t *input, uint8_t *output)
 {
     (void)mbedtls_aes_crypt_ecb((mbedtls_aes_context *)data,
             MBEDTLS_AES_ENCRYPT, input, output);
-}
-
-static void
-tc_enc_block(void *data, const uint8_t *input, uint8_t *output)
-{
-    (void)tc_aes_encrypt(output, input, (TCAesKeySched_t)data);
 }
 
 static void
@@ -948,7 +941,6 @@ mynewt_main(int argc, char **argv)
     struct crypto_dev *crypto;
 #if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
     mbedtls_aes_context mbed_aes;
-    struct tc_aes_key_sched_struct tc_aes;
     int iterations;
 #endif
 #if RUN_VECTOR_TESTS || MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
@@ -985,14 +977,11 @@ mynewt_main(int argc, char **argv)
     mbedtls_aes_init(&mbed_aes);
     mbedtls_aes_setkey_enc(&mbed_aes, aes_128_key, 128);
 
-    tc_aes128_set_encrypt_key(&tc_aes, aes_128_key);
-
     iterations = 30;
     for (i = 1; i <= 3; i++) {
         printf("\n=== Benchmarks - iteration %d ===\n", i);
         run_benchmark("CRYPTO", crypto_enc_block, crypto, iterations);
         run_benchmark("MBEDTLS", mbed_enc_block, &mbed_aes, iterations);
-        run_benchmark("TINYCRYPT", tc_enc_block, &tc_aes, iterations);
         os_time_delay(OS_TICKS_PER_SEC);
     }
 

@@ -40,7 +40,7 @@ syscfg.defs:
         description: Enable concurrency test
         value: 1
     CRYPTOTEST_BENCHMARK:
-        description: Enable benchmark against tinycrypt/mbedTLS
+        description: Enable benchmark against mbedTLS
         value: 1
 
 syscfg.vals:
