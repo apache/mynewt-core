@@ -19,14 +19,15 @@
 #include <assert.h>
 #include <string.h>
 
-#include <tinycrypt/constants.h>
+#include <mbedtls/hmac_drbg.h>
+#include <mbedtls/md.h>
 
 #include <trng/trng.h>
 #include <trng_sw/trng_sw.h>
 
 /*
  * SW implementation of a TRNG driver API.
- * Utilizes PRNG implementation from tinycrypt.
+ * Utilizes PRNG implementation from Mbed TLS.
  */
 static size_t
 trng_sw_read(struct trng_dev *dev, void *ptr, size_t size)
@@ -34,8 +35,8 @@ trng_sw_read(struct trng_dev *dev, void *ptr, size_t size)
     struct trng_sw_dev *tsd = (struct trng_sw_dev *)dev;
     int rc;
 
-    rc = tc_hmac_prng_generate(ptr, size, &tsd->tsd_prng);
-    assert(rc == TC_CRYPTO_SUCCESS);
+    rc = mbedtls_hmac_drbg_random(&tsd->tsd_prng, (unsigned char *)ptr, size);
+    assert(rc == 0);
 
     return size;
 }
@@ -47,8 +48,8 @@ trng_sw_get_u32(struct trng_dev *dev)
     uint32_t val;
     int rc;
 
-    rc = tc_hmac_prng_generate((void *)&val, sizeof(val), &tsd->tsd_prng);
-    assert(rc == TC_CRYPTO_SUCCESS);
+    rc = mbedtls_hmac_drbg_random(&tsd->tsd_prng, (unsigned char *)&val, sizeof(val));
+    assert(rc == 0);
 
     return val;
 }
@@ -70,9 +71,9 @@ trng_sw_dev_add_entropy(struct trng_sw_dev *tsd, void *entr, int entr_len)
     tsd->tsd_entr_len += blen;
 
     if (tsd->tsd_entr_len == sizeof(tsd->tsd_entr)) {
-        rc = tc_hmac_prng_reseed(&tsd->tsd_prng, tsd->tsd_entr,
-                                 sizeof(tsd->tsd_entr), NULL, 0);
-        assert(rc == TC_CRYPTO_SUCCESS);
+        rc = mbedtls_hmac_drbg_update(&tsd->tsd_prng, tsd->tsd_entr, sizeof(tsd->tsd_entr));
+        assert(rc == 0);
+
         tsd->tsd_entr_len = 0;
         if (blen != entr_len) {
             /*
@@ -106,8 +107,10 @@ trng_sw_dev_init(struct os_dev *odev, void *arg)
     tsd->tsd_dev.interface.get_u32 = trng_sw_get_u32;
     tsd->tsd_dev.interface.read = trng_sw_read;
 
-    rc = tc_hmac_prng_init(&tsd->tsd_prng, tsdc->tsdc_entr, tsdc->tsdc_len);
-    assert(rc == TC_CRYPTO_SUCCESS);
+    mbedtls_hmac_drbg_init(&tsd->tsd_prng);
+    rc = mbedtls_hmac_drbg_seed_buf(&tsd->tsd_prng, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
+                                    tsdc->tsdc_entr, tsdc->tsdc_len);
+    assert(rc == 0);
 
     return 0;
 }

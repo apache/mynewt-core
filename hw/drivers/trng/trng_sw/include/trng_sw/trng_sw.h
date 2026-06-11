@@ -22,7 +22,7 @@
 
 #include <os/os_dev.h>
 #include <trng/trng.h>
-#include <tinycrypt/hmac_prng.h>
+#include <mbedtls/hmac_drbg.h>
 
 
 #ifdef __cplusplus
@@ -31,7 +31,7 @@ extern "C" {
 
 struct trng_sw_dev {
     struct trng_dev tsd_dev;
-    struct tc_hmac_prng_struct tsd_prng;
+    mbedtls_hmac_drbg_context tsd_prng;
     uint8_t tsd_entr[32]; /* min entropy to reseed */
     uint8_t tsd_entr_len;
 };
