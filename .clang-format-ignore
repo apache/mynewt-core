@@ -1,6 +1,5 @@
 # Skip those directories while doing style checks in the CI.
 
-crypto/tinycrypt
 hw/drivers/rtt
 hw/drivers/semihosting
 libc/baselibc

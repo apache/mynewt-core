@@ -22,36 +22,39 @@
 
 #include <os/mynewt.h>
 
-#include <tinycrypt/aes.h>
+#include <mbedtls/aes.h>
 
 #include <enc_flash/enc_flash.h>
-#include "ef_tinycrypt/ef_tinycrypt.h"
+#include "ef_mbedtls/ef_mbedtls.h"
 
-#define EDEV_TO_TC(dev) (struct eflash_tinycrypt_dev *)(edev)
+#define EDEV_TO_TC(dev) (struct eflash_mbedtls_dev *)(edev)
 #define ENC_FLASH_NONCE "mynewtencfla"
 
 static void
-ef_tc_get_block(struct eflash_tinycrypt_dev *dev, uint32_t addr, uint8_t *blk)
+ef_mbedtls_get_block(struct eflash_mbedtls_dev *dev, uint32_t addr, uint8_t *blk)
 {
-    struct tc_aes_key_sched_struct ctx;
+    mbedtls_aes_context ctx;
+
+    mbedtls_aes_init(&ctx);
 
     memcpy(blk, ENC_FLASH_NONCE, 12);
     memcpy(blk + 12, &addr, sizeof(addr));
 
-    tc_aes128_set_encrypt_key(&ctx, dev->etd_key);
-    tc_aes_encrypt(blk, blk, &ctx);
+    mbedtls_aes_setkey_enc(&ctx, dev->etd_key, 128);
+    mbedtls_aes_crypt_ecb(&ctx, MBEDTLS_AES_ENCRYPT, blk, blk);
+    mbedtls_aes_free(&ctx);
 }
 
 void
 enc_flash_crypt_arch(struct enc_flash_dev *edev, uint32_t blk_addr,
                      const uint8_t *src, uint8_t *tgt, int off, int cnt)
 {
-    struct eflash_tinycrypt_dev *dev = EDEV_TO_TC(edev);
+    struct eflash_mbedtls_dev *dev = EDEV_TO_TC(edev);
     uint8_t blk[ENC_FLASH_BLK];
     uint8_t *b;
     int i;
 
-    ef_tc_get_block(dev, blk_addr, blk);
+    ef_mbedtls_get_block(dev, blk_addr, blk);
     b = &blk[off];
     for (i = 0 ; i < cnt; i++) {
         *tgt++ = *b++ ^ *src++;
@@ -61,13 +64,13 @@ enc_flash_crypt_arch(struct enc_flash_dev *edev, uint32_t blk_addr,
 void
 enc_flash_setkey_arch(struct enc_flash_dev *edev, uint8_t *key)
 {
-    struct eflash_tinycrypt_dev *dev = EDEV_TO_TC(edev);
+    struct eflash_mbedtls_dev *dev = EDEV_TO_TC(edev);
 
     memcpy(dev->etd_key, key, ENC_FLASH_BLK);
 }
 
 int
-enc_flash_init_arch(const struct enc_flash_dev *edev)
+enc_flash_init_arch(const struct eflash_mbedtls_dev *edev)
 {
     return 0;
 }

@@ -17,36 +17,28 @@
  * under the License.
  */
 
-#include "os/mynewt.h"
+#ifndef __EF_MBEDTLS_H__
+#define __EF_MBEDTLS_H__
 
-#if MYNEWT_VAL(TINYCRYPT_UECC_RNG_USE_TRNG)
+/*
+ * Encrypting flash driver using AES from Mbed TLS
+ */
+#include <enc_flash/enc_flash.h>
 
-#include "tinycrypt/ecc.h"
-#include "trng/trng.h"
-
-static struct trng_dev *g_trng;
-
-static int
-uecc_rng_trng(uint8_t *dst, unsigned int size)
-{
-    size_t num;
-
-    while (size) {
-        num = trng_read(g_trng, dst, size);
-        dst += num;
-        size -= num;
-    }
-
-    return 1;
-}
-
-void
-mynewt_tinycrypt_pkg_init(void)
-{
-    g_trng = (struct trng_dev *)os_dev_open(MYNEWT_VAL(TINYCRYPT_UECC_RNG_TRNG_DEV_NAME),
-                                            OS_WAIT_FOREVER, NULL);
-    assert(g_trng);
-    uECC_set_rng(uecc_rng_trng);
-}
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+/*
+ * MbedTLS specific version of the flash device.
+ */
+struct eflash_mbedtls_dev {
+    struct enc_flash_dev etd_dev;
+    uint8_t etd_key[ENC_FLASH_BLK];
+};
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __EF_MBEDTLS_H__ */

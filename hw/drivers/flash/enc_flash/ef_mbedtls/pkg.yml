@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/flash/enc_flash/ef_tinycrypt
-pkg.description: Encrypting flash driver using Tincrypt AES.
+pkg.name: hw/drivers/flash/enc_flash/ef_mbedtls
+pkg.description: Encrypting flash driver using Mbed TLS AES.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -28,5 +28,5 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/hw/drivers/flash/enc_flash"
-    - "@apache-mynewt-core/crypto/tinycrypt"
+    - "@apache-mynewt-core/crypto/mbedtls"
 
