@@ -624,7 +624,9 @@ run_inplace_test(struct crypto_dev *crypto)
          * assure vars are in RAM, and reinitialized from test data
          */
         memcpy(buf, inbuf, AES_BLOCK_LEN);
-        memcpy(ivcopy, data[i].iv, AES_BLOCK_LEN);
+        if (data[i].iv != NULL) {
+            memcpy(ivcopy, data[i].iv, AES_BLOCK_LEN);
+        }
 
         printf("%s enc: ", data[i].name);
         (void)crypto_encrypt_custom(crypto, CRYPTO_ALGO_AES, data[i].mode,
@@ -636,7 +638,9 @@ run_inplace_test(struct crypto_dev *crypto)
         }
 
         memcpy(buf, data[i].expected, AES_BLOCK_LEN);
-        memcpy(ivcopy, data[i].iv, AES_BLOCK_LEN);
+        if (data[i].iv != NULL) {
+            memcpy(ivcopy, data[i].iv, AES_BLOCK_LEN);
+        }
 
         printf("%s dec: ", data[i].name);
         (void)crypto_decrypt_custom(crypto, CRYPTO_ALGO_AES, data[i].mode,
@@ -868,7 +872,9 @@ run_iovec_test(struct crypto_dev *crypto)
         iov = malloc(sizeof(struct crypto_iovec) * iovp->iovlen);
         assert(iov);
 
-        memcpy(iv, iovp->iv, AES_BLOCK_LEN);
+        if (iovp->iv != NULL) {
+            memcpy(iv, iovp->iv, AES_BLOCK_LEN);
+        }
         for (i = 0; i < iovp->iovlen; i++) {
             iov[i].iov_base = malloc(iovp->iov[i].len);
             assert(iov[i].iov_base);
@@ -901,7 +907,9 @@ run_iovec_test(struct crypto_dev *crypto)
 
         printf("iov %s dec: ", iovp->name);
 
-        memcpy(iv, iovp->iv, AES_BLOCK_LEN);
+        if (iovp->iv != NULL) {
+            memcpy(iv, iovp->iv, AES_BLOCK_LEN);
+        }
         for (i = 0; i < iovp->iovlen; i++) {
             iov[i].iov_base = malloc(iovp->iov[i].len);
             assert(iov[i].iov_base);
