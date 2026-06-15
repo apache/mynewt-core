@@ -239,6 +239,9 @@ stm32_crypto_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
 #ifdef CRYP
         __HAL_RCC_CRYP_CLK_ENABLE();
         g_hcryp.Instance = CRYP;
+#elif defined(AES)
+        __HAL_RCC_AES_CLK_ENABLE();
+        g_hcryp.Instance = AES;
 #else
         __HAL_RCC_AES1_CLK_ENABLE();
         g_hcryp.Instance = AES1;
