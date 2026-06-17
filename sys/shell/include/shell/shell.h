@@ -210,13 +210,14 @@ LINK_TABLE(shell_mod_t, shell_modules)
  * @param func_ - function to execute
  * @param help_ - help structure for function
  */
-#define SHELL_MODULE_CMD_WITH_NAME(mod_, cmd_, name_, ext_, func_, help_)            \
-    const struct shell_cmd shell_cmd_##cmd_ SHELL_MODULE_CMD_SECTION(mod_, cmd_) = { \
-        .sc_ext = ext_,                                                              \
-        .sc_cmd_ext_func = (shell_cmd_ext_func_t)(func_),                            \
-        .sc_cmd = name_,                                                             \
-        .help = SHELL_HELP_(help_),                                                  \
-    };
+#define SHELL_MODULE_CMD_WITH_NAME(mod_, cmd_, name_, ext_, func_, help_)     \
+    const struct shell_cmd SHELL_MODULE_CMD_SECTION(mod_, cmd_)               \
+        shell_cmd_##mod_##_##cmd_ = {                                         \
+            .sc_ext = ext_,                                                   \
+            .sc_cmd_ext_func = (shell_cmd_ext_func_t)(func_),                 \
+            .sc_cmd = name_,                                                  \
+            .help = SHELL_HELP_(help_),                                       \
+        };
 
 /**
  * Create command for module
