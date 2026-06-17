@@ -448,11 +448,11 @@ shell_find_cmd(int argc, char *argv[], struct streamer *streamer)
     }
 
     if (!strcmp(first_string, "help")) {
-        return &shell_cmd_help;
+        return &shell_cmd_compat_help;
     }
 
     if (!strcmp(first_string, "select")) {
-        return &shell_cmd_select;
+        return &shell_cmd_compat_select;
     }
 
     if ((argc == 1) && (def_module == NULL)) {
@@ -501,7 +501,8 @@ shell_exec(int argc, char **argv, struct streamer *streamer)
     /* Allow invoking a cmd with module name as a prefix; a command should
      * not know how it was invoked (with or without prefix)
      */
-    if (def_module == NULL && cmd != &shell_cmd_select && cmd != &shell_cmd_help) {
+    if (def_module == NULL && cmd != &shell_cmd_compat_select &&
+        cmd != &shell_cmd_compat_help) {
         argc_offset = 1;
     }
 
