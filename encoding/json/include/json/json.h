@@ -46,7 +46,7 @@ struct json_value {
     union {
         uint64_t u;
         float fl;
-        char *str;
+        const char *str;
         struct {
             char **keys;
             struct json_value **values;
@@ -117,7 +117,7 @@ typedef enum {
 } json_type;
 
 struct json_enum_t {
-    char *name;
+    const char *name;
     long long int value;
 };
 
