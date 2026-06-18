@@ -42,8 +42,8 @@ extern int buf_index;
 struct test_jbuf {
     /* json_buffer must be first element in the structure */
     struct json_buffer json_buf;
-    char * start_buf;
-    char * end_buf;
+    const char *start_buf;
+    const char *end_buf;
     int current_position;
 };
 
@@ -51,7 +51,7 @@ char test_jbuf_read_next(struct json_buffer *jb);
 char test_jbuf_read_prev(struct json_buffer *jb);
 int test_jbuf_readn(struct json_buffer *jb, char *buf, int size);
 int test_write(void *buf, char* data, int len);
-void test_buf_init(struct test_jbuf *ptjb, char *string);
+void test_buf_init(struct test_jbuf *ptjb, const char *string);
 
 #ifdef __cplusplus
 }

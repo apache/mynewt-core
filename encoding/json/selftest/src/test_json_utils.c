@@ -94,7 +94,7 @@ test_jbuf_readn(struct json_buffer *jb, char *buf, int size)
 }
 
 void
-test_buf_init(struct test_jbuf *ptjb, char *string)
+test_buf_init(struct test_jbuf *ptjb, const char *string)
 {
     /* initialize the decode */
     ptjb->json_buf.jb_read_next = test_jbuf_read_next;
