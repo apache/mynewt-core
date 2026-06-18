@@ -265,7 +265,7 @@ json_internal_read_object(struct json_buffer *jb,
                     maxlen = 5; /* false */
                 }
                 pval = valbuf;
-            } else if (pattr >= attrbuf + JSON_ATTR_MAX - 1) {
+            } else if ((pattr - attrbuf) >= JSON_ATTR_MAX) {
                 /* don't update end here, leave at attribute start */
                 return JSON_ERR_ATTRLEN;
             } else {
@@ -308,8 +308,7 @@ json_internal_read_object(struct json_buffer *jb,
             } else if (c == '"') {
                 *pval++ = '\0';
                 state = post_val;
-            } else if (pval > valbuf + JSON_VAL_MAX - 1
-                       || pval > valbuf + maxlen) {
+            } else if ((pval - valbuf) >= JSON_VAL_MAX || (pval - valbuf) >= maxlen) {
                 /* don't update end here, leave at value start */
                 return JSON_ERR_STRLONG;        /*  */
             } else {
@@ -459,7 +458,6 @@ json_internal_read_object(struct json_buffer *jb,
                         return JSON_ERR_NOPARSTR;
                     }
                     (void)strncpy(lptr, valbuf, cursor->len);
-                    valbuf[sizeof(valbuf)-1] = '\0';
                     break;
                 case t_boolean: {
                         bool tmp = (strcmp(valbuf, "true") == 0);
