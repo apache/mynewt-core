@@ -23,6 +23,7 @@
 
 TEST_CASE_DECL(test_json_simple_encode);
 TEST_CASE_DECL(test_json_simple_decode);
+TEST_CASE_DECL(test_json_decode_errors);
 
 TEST_SUITE(test_json_suite)
 {
@@ -31,6 +32,7 @@ TEST_SUITE(test_json_suite)
 
     test_json_simple_encode();
     test_json_simple_decode();
+    test_json_decode_errors();
 
     free(bigbuf);
 }
