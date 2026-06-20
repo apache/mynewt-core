@@ -77,9 +77,15 @@ void *memset(void *dst, int c, size_t n)
                   :
                   :);
 #else
-	while (n--) {
-		*q++ = c;
-	}
+    while (n--) {
+        *q++ = c;
+        /*
+         * Blocks pattern matching, so this loop is not recognized
+         * as something that can be replaced by memset call
+         * that would result in recursion.
+         */
+        __asm__ volatile("" : : : "memory");
+    }
 #endif
 
 	return dst;
