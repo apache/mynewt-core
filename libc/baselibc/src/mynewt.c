@@ -18,6 +18,8 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
+#include <math.h>
 #include <console/console.h>
 #include <os/os_time.h>
 #include <os/os_mutex.h>
@@ -52,6 +54,164 @@ int __attribute__((weak))
 fflush(FILE *stream)
 {
     return 0;
+}
+
+static const char *
+eat_spaces(const char *p)
+{
+    while (isspace(*p)) {
+        ++p;
+    }
+
+    return p;
+}
+
+static const char *
+eat_sign(const char *p, int *sign)
+{
+    *sign = 1;
+
+    if (*p == '+' || *p == '-') {
+        *sign = ',' - *p;
+        ++p;
+    }
+
+    return p;
+}
+
+static const char *
+eat_base(const char *p, int *base)
+{
+    if (*p == '0' && (p[1] == 'x' || p[1] == 'X')) {
+        *base = 16;
+        p += 2;
+    } else {
+        *base = 10;
+    }
+    return p;
+}
+
+static const char *
+eat_leading_zeros(const char *p)
+{
+    while (*p == '0') {
+        ++p;
+    }
+
+    return p;
+}
+
+static const char *
+eat_digits(const char *p, unsigned int *n, bool frac, int *exp)
+{
+    unsigned int val = *n;
+
+    while (isdigit(*p)) {
+        if (val < 429496729) {
+            val = val * 10 + *p - '0';
+            if (frac) {
+                --*exp;
+            }
+        } else if (!frac && exp) {
+            ++*exp;
+        }
+        ++p;
+    }
+    *n = val;
+
+    return p;
+}
+
+static float
+fexp10(int mant, int n)
+{
+    float result = (float)mant;
+    float mul = 10.0f;
+    bool plus = n >= 0;
+
+    n = abs(n);
+
+    for (; n != 0; n >>= 1) {
+        if (n & 1) {
+            if (plus) {
+                result *= mul;
+            } else {
+                result /= mul;
+            }
+        }
+        mul = mul * mul;
+    }
+    return result;
+}
+
+static bool
+eat_dot(const char **s)
+{
+    if (**s == '.') {
+        ++*s;
+        return true;
+    }
+    return false;
+}
+
+static bool
+eat_e(const char **s)
+{
+    if (**s == 'E' || **s == 'e') {
+        ++*s;
+        return true;
+    }
+    return false;
+}
+
+float
+strtof(const char *str, char **strend)
+{
+    const char *p = str;
+    int sign;
+    int base;
+    unsigned int mant = 0;
+    int exp = 0;
+    int exp_sign = 1;
+    float f = 0;
+
+    p = eat_spaces(p);
+    p = eat_sign(p, &sign);
+    p = eat_base(p, &base);
+    p = eat_leading_zeros(p);
+    if (base == 10) {
+        p = eat_digits(p, &mant, false, &exp);
+        if (eat_dot(&p)) {
+            if (mant == 0) {
+                const char *s = p;
+                p = eat_leading_zeros(p);
+                exp = s - p;
+            }
+            p = eat_digits(p, &mant, true, &exp);
+        }
+        if (eat_e(&p)) {
+            unsigned int exp1 = 0;
+
+            p = eat_sign(p, &exp_sign);
+            p = eat_leading_zeros(p);
+            p = eat_digits(p, &exp1, false, NULL);
+            exp += exp_sign * exp1;
+        }
+        if (exp > 45) {
+            f = exp_sign == 1 ? INFINITY : 0.0f;
+        } else if (exp == 0) {
+            f = (float)mant;
+        } else {
+            f = fexp10(mant, exp);
+        }
+        f *= sign;
+    } else if (base == 16) {
+        /* Not implemented */
+    }
+    if (strend) {
+        *strend = (char *)p;
+    }
+    return f;
 }
 
 #if MYNEWT_VAL(BASELIBC_THREAD_SAFE_HEAP_ALLOCATION)
