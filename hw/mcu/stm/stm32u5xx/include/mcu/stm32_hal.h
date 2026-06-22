@@ -41,6 +41,7 @@ extern "C" {
 #include "stm32u5xx_hal_tim.h"
 #include "stm32u5xx_ll_bus.h"
 #include "stm32u5xx_ll_tim.h"
+#include "stm32u5xx_ll_icache.h"
 #include "stm32u5xx_hal_def.h"
 #include "stm32u5xx_hal_flash.h"
 #include "stm32u5xx_hal_flash_ex.h"

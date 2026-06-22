@@ -94,7 +94,7 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
     int rc = 0;
     uint8_t align;
     uint32_t num_words;
-#if defined(STM32H5)
+#if defined(STM32H5) || defined(STM32U5)
     bool icache_enabled = LL_ICACHE_IsEnabled();
 #endif
     align = dev->hf_align;
@@ -153,7 +153,7 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
         }
     }
 
-#ifdef STM32H5
+#if defined(STM32H5) || defined(STM32U5)
     if (icache_enabled) {
         LL_ICACHE_Invalidate();
     }
