@@ -242,14 +242,16 @@ log_cbmem_storage_info(struct log *log, struct log_storage_info *info)
 {
     struct cbmem *cbmem;
     uint32_t size;
-    uint32_t used;
+    uint32_t used = 0;
 
     cbmem = (struct cbmem *)log->l_arg;
 
     size = cbmem->c_buf_end - cbmem->c_buf;
 
-    used = (uintptr_t)cbmem->c_entry_end + cbmem->c_entry_end->ceh_len -
-           (uintptr_t)cbmem->c_entry_start;
+    if (cbmem->c_buf_cur_end) {
+        used = (uintptr_t)cbmem->c_entry_end + cbmem->c_entry_end->ceh_len -
+               (uintptr_t)cbmem->c_entry_start;
+    }
     if ((int32_t)used < 0) {
         used += size;
     }
