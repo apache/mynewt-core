@@ -47,67 +47,41 @@ extern "C" {
 #define MMC_ERASE_ERROR       (-11)
 #define MMC_ADDR_ERROR        (-12)
 
-extern struct disk_ops mmc_ops;
-
 struct mmc_spi_cfg {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    const char *bus_name;
+#endif
     uint32_t initial_freq_khz;
     uint32_t freq_khz;
+    int pin_cs;
     uint8_t clock_mode;
 };
 
-/**
- * Initialize the MMC driver
- *
- * @param spi_num Number of the SPI channel to be used by MMC
- * @param spi_cfg Low-level device specific SPI configuration
- * @param ss_pin GPIO number of the SS pin
- *
- * @return 0 on success, non-zero on failure
- */
-int
-mmc_init(int spi_num, struct mmc_spi_cfg *spi_cfg, int ss_pin);
-
-/**
- * Read data from MMC
- *
- * @param mmc_id Id of the MMC device (currently must be 0)
- * @param addr Disk address (in bytes) to be read from
- * @param buf Buffer where data should be copied to
- * @param len Amount of data to read/copy
- *
- * @return 0 on success, non-zero on failure
- */
-int
-mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len);
-
-/**
- * Write data to the MMC
- *
- * @param mmc_id Id of the MMC device (currently must be 0)
- * @param addr Disk address (in bytes) to be written to
- * @param buf Buffer where data should be copied from
- * @param len Amount of data to copy/write
- *
- * @return 0 on success, non-zero on failure
- */
-int
-mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len);
-
-/**
- * TODO
- */
-int
-mmc_ioctl(uint8_t mmc_id, uint32_t cmd, void *arg);
-
+struct mmc_spi {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-struct mmc_config {
-    struct bus_spi_node_cfg spi_cfg;
-};
-struct mmc {
     struct bus_spi_node node;
+#else
+    int spi_num;
+#endif
+    struct mmc_spi_cfg mmc_spi_cfg;
 };
 
-int mmc_create_dev(struct mmc *mmc, const char *name, struct mmc_config *mmc_cfg);
+typedef struct mmc_disk {
+    struct mmc_spi spi;
+    disk_t disk;
+    disk_info_t disk_info;
+    uint8_t ocr[4];
+    uint8_t csd[16];
+    uint8_t scr[8];
+    uint8_t cid[16];
+    uint8_t app_cmd : 1;
+    struct os_sem sem;
+} mmc_disk_t;
+
+#if MYNEWT_VAL_BUS_DRIVER_PRESENT
+int mmc_create_dev(mmc_disk_t *mmc, const char *name, struct mmc_spi_cfg *mmc_cfg);
+#else
+int mmc_create(mmc_disk_t *mmc, int spi_num, struct mmc_spi_cfg *mmc_cfg);
 #endif
 
 #ifdef __cplusplus

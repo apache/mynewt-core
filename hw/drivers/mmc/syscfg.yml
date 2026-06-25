@@ -29,12 +29,46 @@ syscfg.defs:
     MMC_SPI_CS_PIN:
         description: MMC SPI CS pin.
         value: -1
+    MMC_SPI_CLOCK_MODE:
+        description: >
+            MMC SPI clock mode. Mode 0 and 3 should work.
+            Mode 3 can be used in case of pullup on CLK line.
+        value: 0
     MMC_DEV_NAME:
         description: MMC SPI device name for bus driver build.
         value: '"mmc"'
+    MMC_LED_PIN:
+        description: Pin to use to indicate MMC access.
+        value: -1
+    MMC_LED_ON_VALUE:
+        description: Value of MSC_LED_PIN to turn LED on.
+        value: 1
+    MMC_SEND_EXTRA_CLOCKS:
+        description: >
+            Number of bytes to send AFTER CS is deactivated.
+            This can fix problem with some older cards that start
+            to send status with out of sync clock.
+        value: 0
+
     MMC_PKG_SYSINIT_STAGE:
         description: Sysinit stage for MMC package.
-        value: 5
+        value: 200
+    MMC_AUTO_INIT:
+        descritpion: >
+            Initialize disk during startup
+        value: 1
     MMC_AUTO_MOUNT:
         description: Try to mount disk at creation time.
         value: 1
+
+    MMC_LOG_MODULE:
+        description: 'Numeric module ID to use for MMC log messages.'
+        value: 11
+    MMC_LOG_LVL:
+        description: 'Minimum level for the MMC log.'
+        value: 1
+
+syscfg.logs:
+    MMC_LOG:
+        module: MYNEWT_VAL(MMC_LOG_MODULE)
+        level: MYNEWT_VAL(MMC_LOG_LVL)
