@@ -21,13 +21,13 @@
  * Memory regions placed in CCM
  * If stack or core data or other section should be place in RAM
  * <target_name>/link/include/target_config.ld.h should just do:
- *  #undef BSSNZ_RAM
+ *  #undef NOINIT_RAM
  *  #undef COREBSS_RAM
  *  #undef COREDATA_RAM
  *  #undef STACK_REGION
  */
 
-#define BSSNZ_RAM CCM
+#define NOINIT_RAM CCM
 #define COREBSS_RAM CCM
 #define COREDATA_RAM CCM
 #define STACK_REGION CCM

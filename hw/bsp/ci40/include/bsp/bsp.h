@@ -28,10 +28,10 @@ extern "C" {
 /* Define special stackos sections */
 #define sec_data_core   __attribute__((section(".data.core")))
 #define sec_bss_core    __attribute__((section(".bss.core")))
-#define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
+#define sec_noinit      __attribute__((section(".noinit")))
 
 /* More convenient section placement macros. */
-#define bssnz_t         sec_bss_nz_core
+#define bssnz_t sec_noinit
 
 extern uint8_t _ram_start;
 extern uint8_t _ccram_start;

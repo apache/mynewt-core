@@ -47,8 +47,8 @@ MEMORY
  *   __StackLimit
  *   __StackTop
  *   __stack
- *   __bssnz_start__
- *   __bssnz_end__
+ *   __noinit_start__
+ *   __noinit_end__
  */
 ENTRY(Reset_Handler_split)
 
@@ -158,15 +158,6 @@ INCLUDE "link_tables.ld.h"
      * caveats:
      *    1. It does not get zeroed at init-time.
      */
-    .bssnz :
-    {
-        . = ALIGN(4);
-        __bssnz_start__ = .;
-        *(.bss.core.nz*)
-        . = ALIGN(4);
-        __bssnz_end__ = .;
-    } > RAM
-
     .bss :
     {
         . = ALIGN(4);
@@ -176,6 +167,15 @@ INCLUDE "link_tables.ld.h"
         . = ALIGN(4);
         __bss_end__ = .;
     } > RAM
+
+    .noinit :
+     {
+         . = ALIGN(4);
+         __noinit_start__ = .;
+         *(.noinit*)
+         . = ALIGN(4);
+         __noinit_end__ = .;
+     } > RAM
 
     /* Heap starts after BSS */
     . = ALIGN(8);

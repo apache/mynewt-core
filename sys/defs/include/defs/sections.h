@@ -41,8 +41,8 @@ extern "C" {
 #ifndef sec_bss_core
 #define sec_bss_core
 #endif
-#ifndef sec_bss_nz_core
-#define sec_bss_nz_core
+#ifndef sec_noinit
+#define sec_noinit
 #endif
 
 /* Code which should be placed and executed from RAM */

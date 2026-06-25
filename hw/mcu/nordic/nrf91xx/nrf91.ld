@@ -41,8 +41,8 @@ OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
  *   __StackLimit
  *   __StackTop
  *   __stack
- *   __bssnz_start__
- *   __bssnz_end__
+ *   __noinit_start__
+ *   __noinit_end__
  */
 ENTRY(Reset_Handler)
 
@@ -160,15 +160,6 @@ INCLUDE "link_tables.ld.h"
      * This section exists because of a hardware defect; see errata 33 and 34
      * in nrf52 errata sheet.
      */
-    .bssnz :
-    {
-        . = ALIGN(4);
-        __bssnz_start__ = .;
-        *(.bss.core.nz*)
-        . = ALIGN(4);
-        __bssnz_end__ = .;
-    } > RAM
-
     .bss :
     {
         . = ALIGN(4);
@@ -178,6 +169,15 @@ INCLUDE "link_tables.ld.h"
         . = ALIGN(4);
         __bss_end__ = .;
     } > RAM
+
+    .noinit :
+     {
+         . = ALIGN(4);
+         __noinit_start__ = .;
+         *(.noinit*)
+         . = ALIGN(4);
+         __noinit_end__ = .;
+     } > RAM
 
     /* Heap starts after BSS */
     . = ALIGN(8);
