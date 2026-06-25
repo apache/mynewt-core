@@ -158,15 +158,6 @@ INCLUDE "link_tables.ld.h"
   PROVIDE( _edata = . );
   PROVIDE( edata = . );
 
-  .bssnz :
-  {
-      __bssnz_start__ = .;
-      *(.bss.core.nz*)
-      . = ALIGN(4);
-      __bssnz_end__ = .;
-      . = ALIGN(4);
-  } >ram
-
   PROVIDE( _fbss = . );
   PROVIDE( __bss_start = . );
   .bss            :
@@ -178,6 +169,15 @@ INCLUDE "link_tables.ld.h"
     *(COMMON)
     . = ALIGN(4);
   } >ram
+
+  .noinit :
+    {
+      __noinit_start__ = .;
+      *(.noinit*)
+      . = ALIGN(4);
+      __noinit_end__ = .;
+      . = ALIGN(4);
+    } >ram
 
   . = ALIGN(8);
   PROVIDE( _end = . );

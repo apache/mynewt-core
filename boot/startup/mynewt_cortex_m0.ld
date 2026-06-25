@@ -261,15 +261,6 @@ SECTIONS
     __data_image__ = LOADADDR(.data);
     _sidata = LOADADDR(.data);
 
-    .bssnz (NOLOAD) :
-    {
-        . = ALIGN(4);
-        __bssnz_start__ = .;
-        *(.bss.core.nz*)
-        . = ALIGN(4);
-        __bssnz_end__ = .;
-    } > BSSNZ_RAM
-
 #ifdef COREBSS_RAM
     .corebss (NOLOAD):
     {
@@ -295,6 +286,15 @@ SECTIONS
         _ebss = .;
         __bss_end__ = .;
     } > BSS_RAM
+
+    .noinit (NOLOAD) :
+    {
+        . = ALIGN(4);
+        __noinit_start__ = .;
+        *(.noinit*)
+        . = ALIGN(4);
+        __noinit_end__ = .;
+    } > NOINIT_RAM
 
     /* Heap starts after BSS */
     . = ALIGN(8);

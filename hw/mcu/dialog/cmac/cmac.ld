@@ -124,13 +124,13 @@ INCLUDE "link_tables.ld.h"
         _edata = ABSOLUTE(.);
     } > RAM AT > ROM
 
-    .bssnz (NOLOAD) :
+    .noinit (NOLOAD) :
     {
         . = ALIGN(4);
-        __bssnz_start__ = .;
-        *(.bss.core.nz*)
+        __noinit_start__ = .;
+        *(.noinit*)
         . = ALIGN(4);
-        __bssnz_end__ = .;
+        __noinit_end__ = .;
     } > RAM
 
     .bss (NOLOAD) :

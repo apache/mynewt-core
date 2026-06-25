@@ -65,12 +65,12 @@ SECTIONS
 
     } > RAM AT > FLASH
 
-    .bssnz :
+    .bss :
     {
 
     } > RAM
 
-    .bss :
+    .noinit :
     {
 
     } > RAM

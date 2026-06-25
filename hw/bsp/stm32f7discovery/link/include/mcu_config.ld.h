@@ -21,14 +21,14 @@
  * Memory regions placed in DTCM
  * If stack or core data or other section should be place in RAM
  * <target_name>/link/include/target_config.ld.h should just do:
- *  #undef BSSNZ_RAM
+ *  #undef NOINIT_RAM
  *  #undef COREBSS_RAM
  *  #undef COREDATA_RAM
  *  #undef STACK_REGION
  *  #undef VECTOR_RELOCATION_RAM DTCM
  */
 
-#define BSSNZ_RAM DTCM
+#define NOINIT_RAM DTCM
 #define COREBSS_RAM DTCM
 #define COREDATA_RAM DTCM
 #define STACK_REGION DTCM

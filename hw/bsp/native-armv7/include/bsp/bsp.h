@@ -27,7 +27,7 @@ extern "C" {
 /* Define special stackos sections */
 #define sec_data_core
 #define sec_bss_core
-#define sec_bss_nz_core
+#define sec_noinit
 
 /* More convenient section placement macros. */
 #define bssnz_t

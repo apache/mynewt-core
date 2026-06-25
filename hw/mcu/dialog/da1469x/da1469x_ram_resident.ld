@@ -120,15 +120,6 @@ INCLUDE "link_tables.ld.h"
         __data_end__ = .;
     } > RAM
 
-    .bssnz :
-    {
-        . = ALIGN(4);
-        __bssnz_start__ = .;
-        *(.bss.core.nz*)
-        . = ALIGN(4);
-        __bssnz_end__ = .;
-    } > RAM
-
     .bss :
     {
         . = ALIGN(4);
@@ -138,6 +129,15 @@ INCLUDE "link_tables.ld.h"
         . = ALIGN(4);
         __bss_end__ = .;
     } > RAM
+
+    .noinit :
+     {
+         . = ALIGN(4);
+         __noinit_start__ = .;
+         *(.noinit*)
+         . = ALIGN(4);
+         __noinit_end__ = .;
+     } > RAM
 
     /* Heap starts after BSS */
     . = ALIGN(8);
