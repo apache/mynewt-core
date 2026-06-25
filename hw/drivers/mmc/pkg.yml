@@ -25,6 +25,8 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/util/bit_set"
+    - "@apache-mynewt-core/fs/disk"
 
 pkg.deps.BUS_DRIVER_PRESENT:
     - "@apache-mynewt-core/hw/bus/drivers/spi_common"
