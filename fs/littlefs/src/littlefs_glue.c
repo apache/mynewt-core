@@ -60,6 +60,8 @@ static int littlefs_closedir(struct fs_dir *dir);
 static int littlefs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
                                 char *out_name, uint8_t *out_name_len);
 static int littlefs_dirent_is_dir(const struct fs_dirent *fs_dirent);
+static int _littlefs_mount(const file_system_t *fs);
+static int _littlefs_umount(const file_system_t *fs);
 
 struct littlefs_file {
     struct fs_ops *fops;
@@ -101,7 +103,8 @@ static struct fs_ops littlefs_ops = {
     .f_dirent_name = littlefs_dirent_name,
     .f_dirent_is_dir = littlefs_dirent_is_dir,
 
-    .f_name = "littlefs"
+    .f_mount = _littlefs_mount,
+    .f_umount = _littlefs_umount,
 };
 
 /* Min block size equired by littlefs implementation */
@@ -750,6 +753,22 @@ littlefs_mount(void)
     return FS_EOK;
 }
 
+static int
+_littlefs_mount(const file_system_t *fs)
+{
+    (void)fs;
+
+    return littlefs_mount();
+}
+
+static int
+_littlefs_umount(const file_system_t *fs)
+{
+    (void)fs;
+
+    return lfs_unmount(&g_littlefs);
+}
+
 int
 littlefs_init(void)
 {
@@ -803,6 +822,11 @@ littlefs_init(void)
     return FS_EOK;
 }
 
+static const file_system_t littlefs_fs0 = {
+    .ops = &littlefs_ops,
+    .name = "littlefs"
+};
+
 void
 littlefs_sysinit(void)
 {
@@ -813,8 +837,8 @@ littlefs_sysinit(void)
     rc = littlefs_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-#if MYNEWT_VAL(LITTLEFS_AUTO_MOUNT)
-    rc = littlefs_mount();
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
+    if (MYNEWT_VAL(LITTLEFS_AUTO_MOUNT)) {
+        rc = fs_mount(&littlefs_fs0, "lfs0:");
+        SYSINIT_PANIC_ASSERT(rc == 0);
+    }
 }
