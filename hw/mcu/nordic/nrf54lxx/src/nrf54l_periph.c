@@ -83,6 +83,10 @@ nrf54l_periph_create_timers(void)
     rc = hal_timer_init(4, NULL);
     assert(rc == 0);
 #endif
+#if MYNEWT_VAL(TIMER_5)
+    rc = hal_timer_init(5, NULL);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0
     rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
