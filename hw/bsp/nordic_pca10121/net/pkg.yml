@@ -34,5 +34,7 @@ pkg.deps:
     - "@apache-mynewt-core/hw/scripts"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340_net"
     - "@apache-mynewt-core/libc"
+
+pkg.deps.'BLE_TRANSPORT == 1 && BLE_TRANSPORT_HS != "ipc"':
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/hw/drivers/flash/ipc_nrf5340_flash"
