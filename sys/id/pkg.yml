@@ -33,5 +33,7 @@ pkg.deps:
     - "@apache-mynewt-core/sys/mfg"
     - "@apache-mynewt-core/encoding/base64"
 
+pkg.whole_archive: true
+
 pkg.init:
     id_init: 'MYNEWT_VAL(ID_SYSINIT_STAGE)'

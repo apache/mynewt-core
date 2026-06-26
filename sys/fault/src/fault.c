@@ -345,10 +345,6 @@ fault_register_domain_priv(int domain_id, uint8_t success_delta,
 void
 fault_init(void)
 {
-    int rc;
-
-    rc = fault_conf_init();
-    SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
 #endif /* !MYNEWT_VAL(FAULT_STUB) */

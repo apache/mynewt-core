@@ -32,5 +32,7 @@ pkg.deps:
 pkg.deps.FAULT_CLI:
     - "@apache-mynewt-core/sys/fault/fault_cli"
 
+pkg.whole_archive: true
+
 pkg.init:
     fault_init: MYNEWT_VAL(FAULT_SYSINIT_STAGE)
