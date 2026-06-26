@@ -639,7 +639,7 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
         dev->freq = node->freq;
         dev->data_order = node->data_order;
         dev->mode = node->mode;
-#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32U5)
+#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32H5) || MYNEWT_VAL(MCU_STM32U5)
         dd->hspi.Init.BaudRatePrescaler = prescaler << SPI_CFG1_MBR_Pos;
 #else
         dd->hspi.Init.BaudRatePrescaler = prescaler << SPI_CR1_BR_Pos;
@@ -966,10 +966,16 @@ bus_spi_stm32_dev_init_func(struct os_dev *odev, void *arg)
         __HAL_LINKDMA(&dd->hspi, hdmatx, dd->dmatx);
 
         if (spi_hw->dmarx_cfg->dma_ch <= DMA1_CH7) {
+#if defined(__HAL_RCC_DMA1_CLK_ENABLE)
             __HAL_RCC_DMA1_CLK_ENABLE();
+#elif defined(__HAL_RCC_GPDMA1_CLK_DISABLE)
+            __HAL_RCC_GPDMA1_CLK_DISABLE();
+#endif
         } else {
 #ifdef __HAL_RCC_DMA2_CLK_ENABLE
             __HAL_RCC_DMA2_CLK_ENABLE();
+#elif defined(__HAL_RCC_GPDMA2_CLK_DISABLE)
+            __HAL_RCC_GPDMA2_CLK_DISABLE();
 #endif
         }
 #ifdef __HAL_RCC_DMAMUX1_CLK_ENABLE
