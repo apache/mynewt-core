@@ -63,6 +63,9 @@ pkg.deps.MCU_STM32U5:
 pkg.deps.MCU_STM32WB:
     - hw/bus/drivers/spi_stm32/stm32wbxx
 
+pkg.deps.MCU_STM32H5:
+    - hw/bus/drivers/spi_stm32/stm32h5xx
+
 pkg.deps.MCU_STM32H7:
     - hw/bus/drivers/spi_stm32/stm32h7xx
     
