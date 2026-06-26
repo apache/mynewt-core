@@ -41,8 +41,8 @@
 #ifndef BSS_RAM
 #define BSS_RAM RAM
 #endif
-#ifndef BSSNZ_RAM
-#define BSSNZ_RAM RAM
+#ifndef NOINIT_RAM
+#define NOINIT_RAM RAM
 #endif
 
 #ifndef MYNEWT_VAL_RESET_HANDLER

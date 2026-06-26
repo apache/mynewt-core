@@ -47,8 +47,8 @@ MEMORY
  *   __StackLimit
  *   __StackTop
  *   __stack
- *   __bssnz_start__
- *   __bssnz_end__
+ *   __noinit_start__
+ *   __noinit_end__
  */
 ENTRY(Reset_Handler)
 
