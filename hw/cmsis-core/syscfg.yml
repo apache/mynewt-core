@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,26 +16,8 @@
 # under the License.
 #
 
-pkg.name: hw/cmsis-core
-pkg.description: CMSIS-CORE abstraction layer for Cortex-M processors.
-pkg.author: "Keil"
-pkg.homepage: "http://www.keil.com/pack/doc/CMSIS/Core/html/index.html"
-pkg.keywords:
-    - cmsis
-    - core
+syscfg.defs:
+    ARM_MPU:
+        description: ARM MPU is present
+        value:
 
-pkg.type: sdk
-
-pkg.include_dirs:
-    - "@arm-CMSIS_5/CMSIS/Core/Include"
-    - "@arm-CMSIS_5/CMSIS/DSP/Include"
-
-pkg.link_tables:
-    - mpu_regions
-
-repository.arm-CMSIS_5:
-    type: github
-    vers: 5.9.0-commit
-    branch: master
-    user: ARM-software
-    repo: CMSIS_5
