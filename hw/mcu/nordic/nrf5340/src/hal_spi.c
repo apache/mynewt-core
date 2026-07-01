@@ -27,6 +27,7 @@
 #include <nrf.h>
 #include <nrfx_config.h>
 #include <nrfx_common.h>
+#include <nrf_gpio.h>
 
 #define SPIM_TXD_MAXCNT_MAX 0xffff
 
@@ -329,6 +330,18 @@ hal_spi_stop_transfer(NRF_SPIM_Type *spim)
 }
 
 static int
+pin_from_psel(uint32_t psel)
+{
+    return psel & SPIM_PSEL_SCK_PIN_Msk;
+}
+
+static NRF_GPIO_Type *
+port_from_psel(uint32_t psel)
+{
+    return (psel & SPIM_PSEL_SCK_PORT_Msk) ? NRF_P1 : NRF_P0;
+}
+
+static int
 hal_spi_config_master(struct nrf5340_hal_spi *spi,
                       struct hal_spi_settings *settings)
 {
@@ -338,6 +351,9 @@ hal_spi_config_master(struct nrf5340_hal_spi *spi,
     NRF_SPIM_Type *spim;
     NRF_GPIO_Type *port;
     uint32_t pin;
+    uint32_t strength =
+        ((settings->baudrate >= 16000) ? NRF_GPIO_PIN_H0H1 : NRF_GPIO_PIN_S0S1)
+        << GPIO_PIN_CNF_DRIVE_Pos;
 
     spim = spi->nhs_spi.spim;
     memcpy(&spi->spi_cfg, settings, sizeof(*settings));
@@ -346,12 +362,8 @@ hal_spi_config_master(struct nrf5340_hal_spi *spi,
      * Configure SCK. NOTE: this is done here in the config API as the data
      * mode is not set at init time so we do it here when we configure the SPI.
      */
-    pin = spim->PSEL.SCK & SPIM_PSEL_SCK_PIN_Msk;
-    if (spim->PSEL.SCK & SPIM_PSEL_SCK_PORT_Msk) {
-        port = NRF_P1;
-    } else {
-        port = NRF_P0;
-    }
+    pin = pin_from_psel(spim->PSEL.SCK);
+    port = port_from_psel(spim->PSEL.SCK);
 
     if (settings->data_mode <= HAL_SPI_MODE1) {
         port->OUTCLR = (1UL << pin);
@@ -360,7 +372,13 @@ hal_spi_config_master(struct nrf5340_hal_spi *spi,
     }
     port->PIN_CNF[pin] =
         (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) |
-        (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos);
+        (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos) | strength;
+
+    pin = pin_from_psel(spim->PSEL.MOSI);
+    port = port_from_psel(spim->PSEL.MOSI);
+    port->PIN_CNF[pin] =
+        (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) |
+        (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos) | strength;
 
     /* Only 8-bit word sizes supported. */
     rc = 0;
