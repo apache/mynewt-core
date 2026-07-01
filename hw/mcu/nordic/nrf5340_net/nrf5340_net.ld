@@ -138,6 +138,22 @@ INCLUDE "link_tables.ld.h"
         *(.ipc)
     } > IPC
 
+    /* Section for IPC RX */
+    .ipc0_rx (NOLOAD):
+    {
+        . = ALIGN(4);
+        *(.ipc0_rx)
+        . = ALIGN(4);
+    } > sram_ipc0_rx
+
+    /* Section for IPC TX */
+    .ipc0_tx (NOLOAD):
+    {
+        . = ALIGN(4);
+        *(.ipc0_tx)
+        . = ALIGN(4);
+    } > sram_ipc0_tx
+
     /* This section will be zeroed by RTT package init */
     .rtt (NOLOAD):
     {
