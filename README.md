@@ -254,7 +254,6 @@ It currently supports the following hardware platforms:
 * NINA-B1 BLE module from u-blox (Cortex-M4)
 * 6LoWPAN clicker from MikroElectronika (PIC32MX470 microcontroller)
 * chipKIT Wi-FIRE (PIC32MZ microcontroller)
-* Creator Ci40 module (dual MIPS interAptiv CPU)
 * EE-02 board with Semtech Sx1276 chip from Telenor (Cortex-M4) 
 * DA1469x Pro DK from Dialog Semiconductor (Cortex-M33)
 * nRF5340 DK from Nordic Semiconductor (Cortex-M33)

@@ -270,12 +270,6 @@ net/oic/src/messaging/coap
 # FATFS ChaN License (BSD 1-clause alike)
 fs/fatfs
 
-# Imagination Technologies - BSD License
-hw/bsp/ci40/src/arch/mips/abiflags.S
-
-# Cygnus Support - MIT like License
-hw/bsp/ci40/src/arch/mips/gcc_startup_mips.S
-
 # HiFive1 - Apache License 2.0
 hw/mcu/sifive/src/ext/freedom-e-sdk_3235929
 
