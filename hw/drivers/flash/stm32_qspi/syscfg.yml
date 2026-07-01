@@ -1,0 +1,119 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    STM32_QSPI_FLASH:
+        description: QSPI driver is enabled.
+        value: 1
+
+    # QSPI definitions
+    STM32_QSPI_FLASH_BASE_ADDRESS:
+        description: >
+            Base address that QSPI is mapped to
+        value: 0x90000000
+    STM32_QSPI_FLASH_CMD_QUAD_IO_PAGE_PROGRAM:
+        description: >
+            Command to send data and address to flash in quad mode (usually 38H).
+        value: -1
+    STM32_QSPI_FLASH_CMD_QUAD_INPUT_PAGE_PROGRAM:
+        description: >
+            Command to send data to flash in quad mode  (usually 32H).
+        value: -1
+    STM32_QSPI_FLASH_CMD_DUAL_INPUT_PAGE_PROGRAM:
+        description: >
+            Command to send data to flash in dual mode  (usually A2H).
+        value: -1
+    STM32_QSPI_FLASH_ADDRESS_LENGTH:
+        description: >
+            Address length used by flash for read/write/erase
+        range: 1..4
+        value: 3
+        restrictions: $notnull
+    STM32_QSPI_FLASH_SECTOR_SIZE:
+        description: >
+            Sector size used by flash (usually 4096)
+        value: 4096
+        restrictions: $notnull
+    STM32_QSPI_FLASH_SECTOR_COUNT:
+        description: >
+            Number of sectors on flash
+        value:
+        restrictions: $notnull
+    STM32_QSPI_FLASH_PAGE_SIZE:
+        description: >
+            Page size used by flash (usually 256)
+        value: 256
+        restrictions: $notnull
+    STM32_QSPI_FLASH_READ_BUFFER_SIZE:
+        description: >
+            In order to write data located on flash to another location on flash
+            they have to be read first. This is the size of buffer used to read
+            data before writing, i.e. each such transfer will be split into
+            chunks of this size. Buffer is created on stack.
+        value: 128
+    STM32_QSPI_FLASH_MEMORY_MAPPED:
+        description: >
+            Enable memory mapped mode for QSPI. Flash can be read by reading
+            from system memory bus.
+        value: 0
+    STM32_QSPI_FLASH_READ_COMMAND:
+        description: >
+            Read command to be used for flash access.
+        value: CMD_EBh
+    STM32_QSPI_FLASH_ERASE_64K_COMMAND:
+        description: >
+            Read command to be used for flash access.
+        value: CMD_D8h
+    STM32_QSPI_FLASH_BUSY_BIT:
+        description: >
+            Bit number in status register-1 indicating that device is busy writing
+            or erasing.
+        value: 0
+    STM32_QSPI_FLASH_WE_BIT:
+        description: >
+            Bit number in status register-1 indicating that program or erase command
+            can be executed. This bit is set by executing command write enable (06h).
+        value: 1
+    STM32_QSPI_FLASH_QE_BIT:
+        description: >
+            Bit number in status register indicating that Quad mode is enabled.
+            If bit is in register-2 (Winbond) it probably should be 9 instead of 1.
+        value: 1
+    STM32_QSPI_FLASH_FREQ:
+        description: >
+            Maximum SPI clock frequency.
+        value: 50000000
+
+    STM32_QSPI_FLASH_PIN_CS:
+        description: 'CS pin for QSPI'
+        value: -1
+    STM32_QSPI_FLASH_PIN_SCK:
+        description: 'SCK pin for QSPI'
+        value: -1
+    STM32_QSPI_FLASH_PIN_DIO0:
+        description: 'DIO0 pin for QSPI'
+        value: -1
+    STM32_QSPI_FLASH_PIN_DIO1:
+        description: 'DIO1 pin for QSPI'
+        value: -1
+    STM32_QSPI_FLASH_PIN_DIO2:
+        description: 'DIO2 pin for QSPI'
+        value: -1
+    STM32_QSPI_FLASH_PIN_DIO3:
+        description: 'DIO3 pin for QSPI'
+        value: -1

@@ -29,6 +29,10 @@
 #include <stm32f746xx.h>
 #include <stm32_common/stm32_hal.h>
 
+#if MYNEWT_PKG_apache_mynewt_core__hw_drivers_flash_stm32_qspi
+#include <stm32_qspi.h>
+#endif
+
 #if MYNEWT_VAL(ETH_0)
 #include <stm32_eth/stm32_eth.h>
 #include <stm32_eth/stm32_eth_cfg.h>
@@ -89,6 +93,51 @@ const struct stm32_uart_cfg os_bsp_uart0_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_1)
+/*
+ * NOTE: The PB8 and PB9 pins are connected through jumpers in the board to
+ * both AIN and I2C pins. To enable I2C functionality SB51/SB56 need to
+ * be removed (they are the default connections) and SB46/SB52 need to
+ * be added.
+ */
+const struct stm32_hal_i2c_cfg os_bsp_i2c1_cfg = {
+    .hic_i2c = I2C1,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_pin_sda = MYNEWT_VAL(I2C_1_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_1_PIN_SCL),
+    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_10bit = 0,
+    .hic_speed = 100000,
+};
+#endif
+
+#if MYNEWT_VAL(I2C_2)
+const struct stm32_hal_i2c_cfg os_bsp_i2c2_cfg = {
+    .hic_i2c = I2C2,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C2EN,
+    .hic_pin_sda = MYNEWT_VAL(I2C_2_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_2_PIN_SCL),
+    .hic_pin_af = GPIO_AF4_I2C2,
+    .hic_10bit = 0,
+    .hic_speed = 100000,
+};
+#endif
+
+#if MYNEWT_VAL(I2C_3)
+const struct stm32_hal_i2c_cfg os_bsp_i2c3_cfg = {
+    .hic_i2c = I2C3,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C3EN,
+    .hic_pin_sda = MYNEWT_VAL(I2C_3_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_3_PIN_SCL),
+    .hic_pin_af = GPIO_AF4_I2C3,
+    .hic_10bit = 0,
+    .hic_speed = 100000,
+};
+#endif
+
 #if MYNEWT_VAL(ETH_0)
 const struct stm32_eth_cfg os_bsp_eth0_cfg = {
     /*
@@ -142,10 +191,13 @@ hal_bsp_flash_dev(uint8_t id)
     /*
      * Internal flash mapped to id 0.
      */
-    if (id != 0) {
-        return NULL;
+    if (id == 0) {
+        return &stm32_flash_dev;
     }
-    return &stm32_flash_dev;
+    if (id == 1) {
+        return qspi_flash_0;
+    }
+    return NULL;
 }
 
 const struct hal_bsp_mem_dump *
@@ -158,6 +210,9 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
+    /* Turn off LCD back light */
+    hal_gpio_init_out(LCD_BL_CTRL_PIN, 0);
+
     stm32_periph_create();
 }
 

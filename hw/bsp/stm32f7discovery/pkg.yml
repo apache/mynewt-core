@@ -37,3 +37,4 @@ pkg.deps:
     - "@apache-mynewt-core/libc"
     - "@apache-mynewt-core/hw/scripts"
     - "@apache-mynewt-core/boot/startup"
+    - "@apache-mynewt-core/hw/drivers/flash/stm32_qspi"

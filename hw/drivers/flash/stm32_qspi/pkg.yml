@@ -17,26 +17,13 @@
 # under the License.
 #
 
-pkg.name: hw/cmsis-core
-pkg.description: CMSIS-CORE abstraction layer for Cortex-M processors.
-pkg.author: "Keil"
-pkg.homepage: "http://www.keil.com/pack/doc/CMSIS/Core/html/index.html"
+pkg.name: hw/drivers/flash/stm32_qspi
+pkg.description:
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - cmsis
-    - core
 
-pkg.type: sdk
+pkg.deps:
+    - "@apache-mynewt-core/hw/hal"
 
-pkg.include_dirs:
-    - "@arm-CMSIS_5/CMSIS/Core/Include"
-    - "@arm-CMSIS_5/CMSIS/DSP/Include"
-
-pkg.link_tables:
-    - mpu_regions
-
-repository.arm-CMSIS_5:
-    type: github
-    vers: 5.9.0-commit
-    branch: master
-    user: ARM-software
-    repo: CMSIS_5
+pkg.whole_archive: true

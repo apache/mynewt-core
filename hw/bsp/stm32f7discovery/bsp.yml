@@ -36,11 +36,11 @@ bsp.flash_map:
         FLASH_AREA_IMAGE_0:
             device: 0
             offset: 0x08020000
-            size: 384kB
+            size: 768kB
         FLASH_AREA_IMAGE_1:
-            device: 0
-            offset: 0x08080000
-            size: 384kB
+            device: 1
+            offset: 0x90000000
+            size: 768kB
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
             offset: 0x080E0000
@@ -52,8 +52,13 @@ bsp.flash_map:
             device: 0
             offset: 0x08008000
             size: 32kB
-        FLASH_AREA_NFFS:
+        FLASH_AREA_LITTLEFS:
             user_id: 1
-            device: 0
-            offset: 0x08010000
+            device: 1
+            offset: 0x900E0000
+            size: 64kB
+        FLASH_AREA_FCB:
+            user_id: 2
+            device: 1
+            offset: 0x900F0000
             size: 64kB
