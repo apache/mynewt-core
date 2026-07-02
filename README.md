@@ -172,6 +172,7 @@
 ## pwm
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10040.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/pwm/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-f411re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-g491re.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/pwm/nucleo-h723zg.svg)
@@ -188,6 +189,7 @@
 
 ## usb-cdc
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nordic_pca10121.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nucleo-h723zg.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-cdc/nucleo-h753zi.svg)
@@ -196,6 +198,7 @@
 
 ## usb-msc
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10056.svg)
+![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10095.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nordic_pca10121.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nucleo-h723zg.svg)
 ![](https://static.codecoup.pl/mynewt/run/latest/usb-msc/nucleo-h753zi.svg)
