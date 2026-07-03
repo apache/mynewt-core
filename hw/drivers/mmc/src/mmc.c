@@ -360,6 +360,7 @@ mmc_cmd_receive_data(mmc_disk_t *mmc, uint8_t cmd, uint32_t payload,
 {
     int status;
     uint8_t res;
+    uint8_t crc[2];
 
     mmc_spi_set_cs(mmc, 0);
 
@@ -371,6 +372,8 @@ mmc_cmd_receive_data(mmc_disk_t *mmc, uint8_t cmd, uint32_t payload,
             mmc_spi_rx(mmc, buffer, count);
         }
     }
+
+    mmc_spi_rx(mmc, crc, 2);
 
     mmc_spi_set_cs(mmc, 1);
 
