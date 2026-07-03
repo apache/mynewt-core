@@ -250,7 +250,7 @@ send_mmc_cmd(mmc_disk_t *mmc, sd_cmd_t cmd, uint32_t payload)
     uint16_t status;
     uint8_t crc;
     uint8_t buf[6];
-    char strbuf[30];
+    char strbuf[90];
 
     mmc_led_on();
 
