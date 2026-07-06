@@ -296,11 +296,13 @@ SECTIONS
         __noinit_end__ = .;
     } > NOINIT_RAM
 
-    /* Heap starts after BSS */
-    . = ALIGN(8);
-    __HeapBase = .;
-    /* Top of head is the bottom of the stack */
-    __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
+    .heap :
+    {
+        . = ALIGN(8);
+        __HeapBase = .;
+         /* Top of head is the bottom of the stack */
+        __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
+    } > RAM
 
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__HeapBase <= __HeapLimit, "No space for MCU heap")
