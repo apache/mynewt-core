@@ -20,12 +20,14 @@
 #include "hal/hal_nvreg.h"
 #include "mtest_nvreg/mtest_nvreg.h"
 
-extern int reset_count;
+volatile extern int reset_count;
 
 void
 nvregs_reset(void)
 {
     reset_count++;
+    /* Readback required by STM32H723ZG to ensure data reaches DTCM */
+    (void)reset_count;
     /* Ensure logs are flushed before reset */
     os_time_delay(OS_TICKS_PER_SEC / 30);
     hal_system_reset();

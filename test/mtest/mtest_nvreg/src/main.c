@@ -23,14 +23,16 @@
 #include "mtest_nvreg/mtest_nvreg.h"
 
 #define FIRST_BOOT_DONE 0xC001B007
-int reset_count __attribute__((section(".noinit")));
-int boot_status __attribute__((section(".noinit")));
+volatile int reset_count __attribute__((section(".noinit")));
+volatile int boot_status __attribute__((section(".noinit")));
 
 MTEST_INIT(nvreg_test)
 {
     if (boot_status != FIRST_BOOT_DONE) {
         reset_count = 0;
         boot_status = FIRST_BOOT_DONE;
+        /* Readback required by STM32H723ZG to ensure data reaches DTCM */
+        (void)boot_status;
     }
 }
 
