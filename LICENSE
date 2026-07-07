@@ -591,15 +591,6 @@ This product bundles tinycbor by Intel Corporation, which is available under
 the MIT license. For details see:
     * encoding/tinycbor
 
-This product bundles part of embARC BSP SDK by Synopsys, which is available
-under the "3-clause BSD" license. Bundled files are:
-    * hw/mcu/arc/src/ext/sdk
-    * hw/mcu/arc/snps/src/arch/arc/arc_startup.S
-    * hw/bsp/embarc_emsk/arc_core.ld
-    * hw/bsp/embarc_emsk/include/bsp/arc_core_config.h
-    * hw/bsp/embarc_emsk/include/bsp/embARC_BSP_config.h
-    * hw/bsp/embarc_emsk/src/board.c
-
 This product bundles part of IoTivity-Constrained, which is partially available
 under the "3-clause BSD" license. Bundled files are:
     * net/oic/include/oic/messaging/coap/

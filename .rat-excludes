@@ -329,14 +329,6 @@ hw/mcu/ambiq/apollo3/src/ext/AmbiqSuite
 hw/bsp/apollo2_evb/src/arch/cortex_m4/gcc_startup.s
 hw/bsp/apollo3_evb/src/system_apollo3.c
 
-# ARC - BSD License
-hw/mcu/arc/src/ext/sdk
-hw/mcu/arc/snps/src/arch/arc/arc_startup.S
-hw/bsp/embarc_emsk/arc_core.ld
-hw/bsp/embarc_emsk/include/bsp/arc_core_config.h
-hw/bsp/embarc_emsk/include/bsp/embARC_BSP_config.h
-hw/bsp/embarc_emsk/src/board.c
-
 # bluepill BSP - BSD License
 hw/bsp/bluepill/boot-bluepill.ld
 
