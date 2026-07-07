@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
-
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +37,18 @@ extern "C" {
 #define JSON_VALUE_TYPE_STRING (3)
 #define JSON_VALUE_TYPE_ARRAY  (4)
 #define JSON_VALUE_TYPE_OBJECT (5)
+
+#if MYNEWT_VAL_JSON_FLOAT_SUPPORT
+#define FLOAT_SUPPORT 1
+#endif
+
+#if MYNEWT_VAL_JSON_REAL_IS_FLOAT
+typedef float json_real_t;
+#define strtoreal strtof
+#else
+typedef double json_real_t;
+#define strtoreal strtod
+#endif
 
 struct json_value {
     uint8_t jv_pad1;
@@ -141,7 +153,7 @@ struct json_array_t {
             long long unsigned int *store;
         } uintegers;
         struct {
-            double *store;
+            json_real_t *store;
         } reals;
         struct {
             bool *store;
@@ -157,7 +169,7 @@ struct json_attr_t {
     union {
         long long int *integer;
         long long unsigned int *uinteger;
-        double *real;
+        json_real_t *real;
         char *string;
         bool *boolean;
         char *character;
@@ -167,7 +179,7 @@ struct json_attr_t {
     union {
         long long int integer;
         long long unsigned int uinteger;
-        double real;
+        json_real_t real;
         bool boolean;
         char character;
         char *check;

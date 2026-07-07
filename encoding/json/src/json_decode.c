@@ -185,7 +185,7 @@ json_internal_read_object(struct json_buffer *jb,
                            sizeof(long long unsigned int));
                     break;
                 case t_real:
-                    memcpy(lptr, &cursor->dflt.real, sizeof(double));
+                    memcpy(lptr, &cursor->dflt.real, sizeof(json_real_t));
                     break;
                 case t_string:
                     if (parent != NULL
@@ -444,8 +444,8 @@ json_internal_read_object(struct json_buffer *jb,
                     break;
                 case t_real: {
 #ifdef FLOAT_SUPPORT
-                        double tmp = atof(valbuf);
-                        memcpy(lptr, &tmp, sizeof(double));
+                        json_real_t tmp = strtoreal(valbuf, NULL);
+                        memcpy(lptr, &tmp, sizeof(json_real_t));
 #else
                         return JSON_ERR_MISC;
 #endif
@@ -597,7 +597,7 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
             n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
             valbuf[n] = '\0';
 
-            arr->arr.reals.store[offset] = strtod(valbuf, &ep);
+            arr->arr.reals.store[offset] = strtoreal(valbuf, &ep);
             if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {
