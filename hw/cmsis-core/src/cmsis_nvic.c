@@ -3,7 +3,8 @@
  *
  * CMSIS-style functionality to support dynamic vectors
  */
-#include "mcu/cmsis_nvic.h"
+
+#include <mynewt_nvic.h>
 
 #ifndef __CORTEX_M
     #error "Macro __CORTEX_M not defined; must define cortex-m type!"
@@ -18,6 +19,16 @@
 
 extern char __isr_vector[];
 extern char __vector_tbl_reloc__[];
+
+void
+NVIC_ConfigVector(IRQn_Type IRQn, void (*vector)(void), uint8_t priority, bool enable)
+{
+    NVIC_SetPriority(IRQn, priority);
+    NVIC_SetVector(IRQn, (uint32_t)vector);
+    if (enable) {
+        NVIC_EnableIRQ(IRQn);
+    }
+}
 
 void
 NVIC_Relocate(void)

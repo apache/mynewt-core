@@ -20,12 +20,16 @@
 #ifndef MYNEWT_NVIC_H
 #define MYNEWT_NVIC_H
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <mcu/cmsis_nvic.h>
 #include <os/util.h>
 
 void NVIC_Relocate(void);
 void NVIC_SetVector(IRQn_Type IRQn, uint32_t vector);
 uint32_t NVIC_GetVector(IRQn_Type IRQn);
+void NVIC_ConfigVector(IRQn_Type IRQn, void (*vector)(void), uint8_t priority,
+                       bool enable);
 
 static inline void
 NVIC_DisableAll(void)
