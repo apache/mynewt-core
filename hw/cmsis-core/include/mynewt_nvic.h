@@ -22,8 +22,13 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <mcu/cmsis_nvic.h>
 #include <os/util.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void NVIC_Relocate(void);
 void NVIC_SetVector(IRQn_Type IRQn, uint32_t vector);
@@ -34,12 +39,16 @@ void NVIC_ConfigVector(IRQn_Type IRQn, void (*vector)(void), uint8_t priority,
 static inline void
 NVIC_DisableAll(void)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < ARRAY_SIZE(NVIC->ICER); ++i) {
         NVIC->ICER[i] = 0xffffffff;
         NVIC->ICPR[i] = 0xffffffff;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
