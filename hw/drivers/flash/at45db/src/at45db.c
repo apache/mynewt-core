@@ -416,7 +416,7 @@ int
 at45db_init(const struct hal_flash *hal_flash_dev)
 {
     int rc;
-    struct hal_spi_settings *settings;
+    struct hal_spi_settings *settings = NULL;
     struct at45db_dev *dev;
 
     dev = (struct at45db_dev *) hal_flash_dev;
@@ -430,18 +430,21 @@ at45db_init(const struct hal_flash *hal_flash_dev)
             return -1;
         }
         memcpy(settings, &at45db_default_settings, sizeof(at45db_default_settings));
-        at45db_default_settings.baudrate = dev->baudrate;
+        settings->baudrate = dev->baudrate;
+        dev->settings = settings;
     }
 
     hal_gpio_init_out(dev->ss_pin, 1);
 
     rc = hal_spi_init(dev->spi_num, dev->spi_cfg, HAL_SPI_TYPE_MASTER);
     if (rc) {
+        free(settings);
         return (rc);
     }
 
     rc = hal_spi_config(dev->spi_num, dev->settings);
     if (rc) {
+        free(settings);
         return (rc);
     }
 
