@@ -48,6 +48,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
             Update HW CI badges in README
+
+            Automated update of hardware CI status badges.
+            This commit fetches the latest test results from the Codecoup lab.
           branch: update-hw-ci-badges
           title: "Update HW CI status badges"
           body: |
