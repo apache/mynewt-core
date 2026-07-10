@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-15 December 2025 - Apache Mynewt v1.14.0
+10 July 2026 - Apache Mynewt v1.15.0
 
 For full release notes, please visit the
 [Apache Mynewt Wiki](https://cwiki.apache.org/confluence/display/MYNEWT/Release+Notes).
