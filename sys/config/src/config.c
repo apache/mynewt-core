@@ -139,6 +139,9 @@ conf_parse_name(char *name, int *name_argc, char *name_argv[])
 
     i = 0;
     while (tok) {
+        if (i >= CONF_MAX_DIR_DEPTH) {
+            return -1;
+        }
         name_argv[i++] = tok;
         tok = strtok_r(NULL, sep, &tok_ptr);
     }
