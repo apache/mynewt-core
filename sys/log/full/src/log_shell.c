@@ -128,7 +128,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
             console_printf("[ih=0x%02x%02x%02x%02x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
                            ueh->ue_imghash[2], ueh->ue_imghash[3]);
         }
-        console_printf(" [%llu] ", ueh->ue_ts);
+        console_printf(" [%llu] ", (unsigned long long)ueh->ue_ts);
     }
 
 #if MYNEWT_VAL(LOG_SHELL_SHOW_INDEX)
