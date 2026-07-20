@@ -288,6 +288,7 @@ uart_pty(int port)
         goto err;
     }
 
+    close(loop_slave);
     snprintf(msg, sizeof(msg), "uart%d at %s\n", port, pty_name);
     write(1, msg, strlen(msg));
     return fd;
