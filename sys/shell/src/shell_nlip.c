@@ -103,7 +103,7 @@ shell_nlip_process(char *data, int len)
                 crc = crc16_ccitt(crc, m->om_data, m->om_len);
             }
             if (crc == 0 && g_nlip_expected_len >= sizeof(crc)) {
-                os_mbuf_adj(g_nlip_mbuf, -sizeof(crc));
+                os_mbuf_adj(g_nlip_mbuf, -(int)sizeof(crc));
                 g_shell_nlip_in_func(g_nlip_mbuf, g_shell_nlip_in_arg);
             } else {
                 os_mbuf_free_chain(g_nlip_mbuf);
