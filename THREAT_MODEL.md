@@ -71,38 +71,53 @@ happens when they do.
 | **Kernel** | `kernel/os` (scheduler, mempool, mbuf, mutex/sem, callout), `kernel/sim` | only *indirectly*, via input flowing up from net/mgmt | trusted core; a kernel memory bug reachable from untrusted input is critical (§8.1) |
 | **Network stacks** | `net/ip`, `net/oic` (OIC/CoAP), `net/lora` (LoRaWAN), `net/mqtt`, `net/wifi`, `net/cellular`, `net/osdp` | **yes — primary remote surface** | each is an untrusted-wire/radio parser (§6) |
 | **Management** | `mgmt/{newtmgr,smp,oicmgr,imgmgr,mgmt,image_header}` | **yes** | same family as `apache/mynewt-mcumgr`; **see that model** for the SMP trust analysis. No authn/authz by design (§9) |
-| **Crypto** | `crypto/mbedtls` (**vendored upstream**), `crypto/tinycrypt` | as a library, by the code above | primitives; mbedtls security is upstream's (§3, §11a) |
+| **Crypto** | `crypto/mbedtls` (**vendored upstream**) | as a library, by the code above | primitives; mbedtls security is upstream's (§3, §11a). tinycrypt was **removed** from core before the 1.15 releases *(maintainer)* |
 | **Boot / image** | `boot/{split,split_app,startup,stub}`, `mgmt/image_header` | at boot, over the staged image | image *authenticity* gate is the signature-verifying bootloader (MCUboot); see §9/§10 |
 | **Sys / local mgmt** | `sys/{console,shell,config,log,coredump,fault,reboot,mfg,flash_map,stats,id}` | `console`/`shell` = local serial surface; also reachable remotely via `shell_mgmt` over SMP | local management surface (§6, §11) |
 | **Filesystems** | `fs/*` (nffs, fatfs, littlefs ports) | via on-flash structures / file content | on-flash parser robustness (§6) |
 | **Encoding** | `encoding/*` (tinycbor, json, base64, …) | by every layer that decodes untrusted data | untrusted-deserialization primitives (§6) |
-| **HAL / BSP / drivers** | `hw/*` | sensor/peripheral input | per-driver; mostly the integrator's board choice (§3) |
+| **HAL / BSP / drivers** | `hw/*` | sensor/peripheral input | per-driver. **Upstream-supported in-tree BSPs/drivers are in scope**; board hardware itself and out-of-tree BSPs are not (§3.3) *(maintainer)* |
 | **Ships-but-context-dependent** | `apps/`, `test/`, `targets/`, demos | — | the integrator's / test code, not the library's runtime surface (§3) |
 
 ### What Mynewt is *not*
 
 - Not a multi-tenant or process-isolated OS. There is generally **no MMU
   protection between components**; all firmware shares one address space
-  and one trust level. *(inferred — §14 Q1)*
+  and one trust level. *(maintainer — §14 Q1, confirmed)*
 - Not the owner of image authenticity — that is the signature-verifying
   bootloader's (MCUboot). `boot/` here is the integration/split-image
-  glue. *(inferred — §14 Q2)*
-- Not the vendor of `crypto/mbedtls` — that is upstream Mbed-TLS, vendored
-  in-tree (§3, §11a).
+  glue. *(maintainer — §14 Q2, confirmed)*
+- Not the vendor of the third-party code it **vendors in-tree**. That is
+  far wider than crypto: any package whose `pkg.yml` carries a
+  `repository.<name>` stanza pulls its source from an upstream repo at
+  `newt upgrade` time. Examples across families: `crypto/mbedtls`,
+  networking (`blues-note-c`, `lwip`, `wiznet`, `osdp`), filesystems
+  (`littlefs`), encoding (`nanopb`), plus a range of vendor SDKs and
+  drivers (e.g. `lvgl`). *(maintainer)*
 
 ## §3 Out of scope (explicit non-goals)
 
-1. **Vendored third-party crypto (`crypto/mbedtls`).** Upstream Mbed-TLS.
-   A CVE in mbedtls itself is upstream's, surfaced through Mynewt's
-   dependency-update process — **not** a Mynewt threat-model finding,
-   *unless* Mynewt **misconfigures** it (weak cipher defaults, disabled
-   verification) — that misconfiguration **is** in model. *(inferred —
-   §14 Q3)*
+1. **Vendored third-party code — all of it, not only crypto.** A package
+   vendors upstream source when its `pkg.yml` declares a
+   `repository.<name>` stanza; `newt upgrade` then fetches that source
+   from the upstream repo. This covers `crypto/mbedtls`, networking
+   (`blues-note-c`, `lwip`, `wiznet`, `osdp`), filesystems (`littlefs`),
+   encoding (`nanopb`), and a range of vendor SDKs and drivers (e.g.
+   `lvgl`). A CVE **inside** any such vendored component is upstream's,
+   surfaced through Mynewt's dependency-update process — **not** a Mynewt
+   threat-model finding, *unless* Mynewt **misconfigures** it (weak cipher
+   defaults, disabled verification, an unsafe build-time option) — that
+   misconfiguration **is** in model. *(maintainer — §14 Q3)*
 2. **The application firmware and its choices** — which network services
    it exposes, which management transports it enables, whether it requires
    a secure bootloader. Trusted/owned by the integrator (§10).
-3. **HAL / BSP / board hardware** under `hw/*` — the integrator selects
-   the board; physical and electrical characteristics are out.
+3. **Board *hardware* characteristics** — the integrator selects the
+   board; physical and electrical properties are out, as are
+   out-of-tree/vendor BSPs the project does not carry.
+   **In scope, however: the upstream-supported BSPs and drivers carried
+   in-tree under `hw/`.** A memory-safety or bounds failure in an in-tree
+   driver that parses sensor/peripheral input is a VALID finding on the
+   same footing as a `net/` parser. *(maintainer — §14 Q16)*
 4. **`apps/`, `test/`, demo targets** — example and test code, not the
    library's production runtime.
 5. **The SMP/management *protocol* trust analysis** — fully covered in
@@ -164,14 +179,20 @@ selection. Load-bearing variants:
   per-package `syscfg.yml`)*
 - **Which `mgmt/` transports/groups are enabled** (newtmgr vs SMP vs
   oicmgr; `shell_mgmt` reachable remotely). Inherits mcumgr's §5a.
-- **Crypto backend** (mbedtls vs tinycrypt) and its cipher/verification
-  configuration. *(inferred — §14 Q3)*
+- **Crypto backend** (`crypto/mbedtls`) and its cipher/verification
+  configuration. *(maintainer — §14 Q3; tinycrypt is gone from core)*
+- **RNG source.** Mynewt provides **no unified random API**. Consumers use
+  either libc's, or — where the platform has one — a TRNG driver under
+  `hw/drivers/trng/`. CSPRNG quality is therefore a **per-platform /
+  integrator** property, not something core guarantees.
+  *(maintainer — §14 Q4)*
 - **Secure-boot integration** (`boot/` split/stub) and whether image
-  signature verification is enabled. *(inferred — §14 Q2)*
+  signature verification is enabled. *(maintainer — §14 Q2, confirmed)*
 - **`sys/shell` over console and/or over mgmt** — a powerful local/remote
   surface when enabled. *(documented: `sys/shell`, `cmd/shell_mgmt`)*
-- **`sys/coredump` / `sys/fault`** may expose memory state. *(inferred —
-  §14 Q5)*
+- **`sys/coredump` / `sys/fault`** may expose memory state; they are
+  intentional diagnostics for the integrator to gate.
+  *(maintainer — §14 Q5, confirmed)*
 
 ## §6 Assumptions about inputs
 
@@ -198,6 +219,11 @@ this v0 cannot have read every parser).
 - Allocation in the constrained device is bounded by mempool/mbuf pool
   sizing (`kernel/os`); a parser that lets a lying length field exceed a
   pool or a stack buffer is the canonical embedded bug. *(inferred — §14 Q13)*
+- **Heap allocation is also available** — via the system's `os_malloc` or
+  libc's `malloc` directly — so mempool/mbuf sizing is not the only bound
+  in play. Heap exhaustion and heap-overflow reachable from untrusted
+  input are in scope on the same footing as the pool cases.
+  *(maintainer — §14 Q13)*
 - No general rate-limit/DoS guarantee against a peer who can reach a
   network/mgmt surface. *(inferred — §14 Q14)*
 
@@ -287,8 +313,14 @@ plumbing, so the properties are mostly *robustness* properties; the
    bonding via nimble) per §10 of the relevant sibling model.
 3. **Keep `sys/shell` / `shell_mgmt` / `coredump` out of production**
    unless required and access-gated.
-4. **Track upstream mbedtls advisories** and update the vendored copy.
-5. **Provide a CSPRNG-quality RNG** from the BSP for any crypto/mgmt use.
+4. **Track upstream advisories for every vendored component** — not just
+   mbedtls, but each package pulled in through a `repository.<name>`
+   stanza (`lwip`, `littlefs`, `nanopb`, `wiznet`, `osdp`, vendor SDKs
+   and drivers …) — and update the vendored copies. *(maintainer)*
+5. **Provide a CSPRNG-quality RNG** for any crypto/mgmt use. Core exposes
+   **no unified random API** — you are choosing between libc's and a
+   platform TRNG driver (`hw/drivers/trng/`), so the quality of what your
+   crypto consumes is your decision. *(maintainer — §14 Q4)*
 6. **Size mempool/mbuf pools** so an input flood degrades gracefully.
 
 ## §11 Known misuse patterns
@@ -298,7 +330,10 @@ plumbing, so the properties are mostly *robustness* properties; the
 - Exposing an OIC/CoAP or MQTT service on an open network and assuming the
   protocol authenticates the peer.
 - Treating `boot/` as if it were the signature check.
-- Carrying a stale vendored mbedtls with known CVEs.
+- Carrying stale vendored code with known CVEs — mbedtls, but equally
+  `lwip`, `littlefs`, `nanopb`, `wiznet`, `osdp`, `blues-note-c` or a
+  vendor SDK/driver pulled in via a `repository.<name>` stanza.
+  *(maintainer)*
 - Enabling `sys/coredump` in production and leaking memory to whoever can
   pull it.
 
@@ -306,7 +341,7 @@ plumbing, so the properties are mostly *robustness* properties; the
 
 | Reported as | Why it is a non-finding | Cite |
 | --- | --- | --- |
-| "CVE-XXXX in `crypto/mbedtls`" | Vendored upstream Mbed-TLS; tracked via dependency update, not a Mynewt design finding — *unless* Mynewt misconfigures mbedtls. | §3.1, §10.4 |
+| "CVE-XXXX in a vendored component" (`crypto/mbedtls`, `lwip`, `littlefs`, `nanopb`, `wiznet`, `osdp`, `blues-note-c`, a vendor SDK/driver …) | Vendored upstream source — any package with a `repository.<name>` stanza in its `pkg.yml`. Tracked via dependency update, not a Mynewt design finding — *unless* Mynewt misconfigures it. | §3.1, §10.4 |
 | "`mgmt/smp` / `newtmgr` has no authentication" | By design — same as mcumgr; the transport + bootloader are the gates. | §9, mcumgr §9 |
 | "Unauthenticated firmware update" | Intended; execution gated by MCUboot signature verification. | §9, §10.1 |
 | "`sys/shell` allows arbitrary commands" | Powerful by design; build-gated; intended for trusted/local or dev contexts. | §5a, §11 |
@@ -334,27 +369,33 @@ object**, or a **Mynewt-level crypto *misconfiguration***, is VALID.
 | Disposition | Use when |
 | --- | --- |
 | **VALID** | Memory-unsafety / bounds / unbounded-resource / concurrency failure in any externally-reachable parser (`net/`, `mgmt/`, `fs/`, `encoding/`, image header) or kernel object reachable from input; a Mynewt-level crypto misconfiguration. |
-| **OUT-OF-MODEL** | Depends on the absence of mgmt/network auth, on a protocol-spec weakness, on a vendored-mbedtls internal flaw, or on a malicious-but-well-formed management command. |
-| **DOWNSTREAM** | Fix is the integrator's: enable secure boot, gate/disable a surface, update mbedtls, size pools, provide a CSPRNG. |
+| **OUT-OF-MODEL** | Depends on the absence of mgmt/network auth, on a protocol-spec weakness, on an internal flaw in **any vendored component** (§3.1), or on a malicious-but-well-formed management command. |
+| **DOWNSTREAM** | Fix is the integrator's: enable secure boot, gate/disable a surface, update a vendored component, size pools, supply a CSPRNG-quality RNG (core provides no unified random API — §5a). |
 | **NON-FINDING** | Matches a §11a row. |
 | **MODEL-GAP** | Real, in-scope in spirit, no §8/§9 item covers it → §14. |
 
 ## §14 Open questions for the maintainers
 
-**Architecture / trust (highest priority)**
-- **Q1.** Confirm the no-MMU single-address-space / no-inter-component
-  isolation assumption (sets the §7 severity amplifier).
-- **Q2.** Confirm the boot/image responsibility split: Mynewt stages an
-  image and parses its header; MCUboot's signature verification is the
-  sole execution gate. Does `boot/` here ever verify signatures itself?
-- **Q4.** What RNG do crypto/management paths consume, and is its CSPRNG
-  quality a BSP assumption or a Mynewt property?
+Answered by Szymon Janc (Mynewt PMC) on 2026-07-27, in review of the PR
+that introduced this document. Answered items are folded into the body
+above and retained here with their answers; the remainder stay open.
 
-**Crypto**
-- **Q3.** Is `crypto/mbedtls` a vendored upstream copy (so its internal
-  CVEs are upstream's), and does Mynewt set any cipher/verification
-  *defaults* that could themselves be a misconfiguration? When is
-  tinycrypt used instead?
+**Architecture / trust — ANSWERED**
+- **Q1.** No-MMU single-address-space / no-inter-component isolation.
+  → **Confirmed.** Sets the §7 severity amplifier.
+- **Q2.** Boot/image responsibility split — MCUboot's signature
+  verification is the sole execution gate. → **Confirmed.**
+- **Q4.** RNG consumed by crypto/management paths.
+  → **There is no unified random API in the OS.** Consumers use libc's,
+  or a platform TRNG driver under `hw/drivers/trng/`. CSPRNG quality is a
+  per-platform / integrator property (§5a, §10).
+
+**Crypto — ANSWERED**
+- **Q3.** `crypto/mbedtls` vendoring and defaults; when is tinycrypt used?
+  → **tinycrypt has been removed** from core (before the 1.15 releases),
+  so the question is moot for it. mbedtls is vendored upstream, and the
+  vendoring rule generalises to every package with a `repository.<name>`
+  stanza in its `pkg.yml` (§3.1).
 
 **Per-subsystem parser robustness** (each: what is the robustness target
 against a fully-malicious peer, and has it been fuzzed?)
@@ -369,24 +410,30 @@ against a fully-malicious peer, and has it been fuzzed?)
   input path.
 - **Q14.** Any intended DoS/rate-limit posture, or wholly the integrator's.
 
-**Sys surfaces**
-- **Q5.** Are `sys/coredump`/`sys/fault` considered intentional
-  diagnostics to be gated by the integrator?
+**Sys surfaces — ANSWERED**
+- **Q5.** Are `sys/coredump`/`sys/fault` intentional diagnostics for the
+  integrator to gate? → **Yes** (§5a, §11a).
 
-**Scope confirmation**
-- **Q16.** Confirm `apps/`, `test/`, demo `targets/`, and `hw/bsp/*` are
-  out of model (integrator/test code), and that the in-tree `mgmt/`
-  surface should be read against the `apache/mynewt-mcumgr` model rather
-  than re-analysed here.
+**Scope confirmation — ANSWERED**
+- **Q16.** `apps/`, `test/`, demo `targets/`, `hw/bsp/*` out of model?
+  → **Partly.** `apps/`, `test/` and demo `targets/` are out, but
+  **upstream-supported BSPs and in-tree drivers under `hw/` are IN
+  scope** (§3.3). The in-tree `mgmt/` surface is read against the
+  `apache/mynewt-mcumgr` model rather than re-analysed here.
 
-**Meta**
-- **Q17.** This repo has **no `SECURITY.md`/`AGENTS.md`** today. OK for
-  this `THREAT_MODEL.md` to be the canonical model, reached via a new
-  `AGENTS.md → SECURITY.md → THREAT_MODEL.md` chain (the discoverability
-  PR we will open alongside)?
-- **Q18.** Given the breadth, would the PMC prefer this single umbrella
-  model, or per-`net/`-stack sub-models for the highest-criticality
-  protocols (e.g. a dedicated OIC/CoAP or LoRaWAN model)?
+**Meta — ANSWERED**
+- **Q17.** OK for this `THREAT_MODEL.md` to be the canonical model,
+  reached via `AGENTS.md → SECURITY.md → THREAT_MODEL.md`?
+  → **Yes** — that chain lands in this same PR.
+- **Q18.** Single umbrella model, or per-`net/`-stack sub-models?
+  → **"For now lets do single umbrella."** Revisit per §12 if a
+  particular stack warrants its own model later.
+
+**Still open** — the per-subsystem parser-robustness questions (Q6–Q13)
+and the kernel/resource questions (Q14, Q15) above. Szymon noted some
+touch very low-level details; they are not blocking, and the model is
+usable without them. They stay listed so a future reader knows which
+claims are still *(inferred)*.
 
 ## Appendix: existing security-policy artefacts → §x back-map
 
@@ -394,7 +441,12 @@ At `master @ 1dcb119ed885`, `apache/mynewt-core` contains **no
 `SECURITY.md`, `AGENTS.md`, or prior threat-model document** at the root.
 `CODING_STANDARDS.md` is a style guide, not a security policy. This is a
 greenfield v0; there is nothing to supersede or back-map. Repository-
-layout facts are cited inline as *(documented)*; everything about
-per-subsystem behaviour is *(inferred)* pending the §14 answers, because a
+layout facts are cited inline as *(documented)*.
+
+Claims about per-subsystem behaviour started as *(inferred)*, because a
 light orient pass cannot responsibly assert the internals of a codebase
-this size.
+this size. Szymon Janc (Mynewt PMC) answered the architecture, crypto,
+RNG, sys-surface, scope and meta questions on 2026-07-27; those claims are
+now marked *(maintainer)* and, where his answer corrected the draft, the
+body has been rewritten rather than annotated. The per-parser questions
+(Q6–Q13, Q14, Q15) remain *(inferred)*.
