@@ -48,7 +48,7 @@ def _generate_markdown(results):
 
     for test_name in sorted(results.keys()):
         boards = results[test_name]
-        valid_boards = sorted([b for b, status in boards.items() if status in ("passing", "failing")])
+        valid_boards = sorted([b for b, status in boards.items() if status in ("passing", "failing", "n/a")])
 
         if valid_boards:
             md.append(f"## {test_name}")
