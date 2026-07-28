@@ -55,6 +55,9 @@ mtest_case_complete(void)
 void
 mtest_suite_init(const char *name)
 {
+    if (MYNEWT_VAL(MTEST_START_DELAY) > 0) {
+        os_time_delay(MYNEWT_VAL(MTEST_START_DELAY) * OS_TICKS_PER_SEC);
+    }
     printf("MTEST test=%s \n", MYNEWT_VAL(APP_NAME));
     printf("MTEST bsp=%s \n", MYNEWT_VAL(BSP_NAME));
     printf("MTEST core=%s\n\n", MYNEWT_VAL(REPO_HASH_APACHE_MYNEWT_CORE));

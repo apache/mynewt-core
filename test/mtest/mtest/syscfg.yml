@@ -18,3 +18,6 @@
 #
 
 syscfg.defs:
+    MTEST_START_DELAY:
+        description: 'Time before test will be executed in seconds'
+        value: 0
