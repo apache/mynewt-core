@@ -2160,6 +2160,7 @@ sensor_trigger_init(struct sensor *sensor, sensor_type_t type,
 
     rc = sensor_register_listener(sensor, sensor_trig_lner);
     if (rc) {
+        free(sensor_trig_lner);
         return;
     }
 }
