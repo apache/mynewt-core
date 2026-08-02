@@ -229,7 +229,14 @@ os_dev_open(const char *devname, uint32_t timo, void *arg)
     }
 
     OS_ENTER_CRITICAL(sr);
-    ++dev->od_open_ref;
+    /*
+     * Do not let od_open_ref wrap back to 0: that would make the device
+     * look closed (see os_dev_close()) even though it is still held open
+     * by at least one caller.
+     */
+    if (dev->od_open_ref < UINT8_MAX) {
+        ++dev->od_open_ref;
+    }
     dev->od_flags |= OS_DEV_F_STATUS_OPEN;
     OS_EXIT_CRITICAL(sr);
 
@@ -248,6 +255,14 @@ os_dev_close(struct os_dev *dev)
         rc = OS_EINVAL;
         goto err;
     }
+
+    OS_ENTER_CRITICAL(sr);
+    if (dev->od_open_ref == 0) {
+        OS_EXIT_CRITICAL(sr);
+        rc = OS_EINVAL;
+        goto err;
+    }
+    OS_EXIT_CRITICAL(sr);
 
     if (dev->od_handlers.od_close) {
         rc = dev->od_handlers.od_close(dev);
