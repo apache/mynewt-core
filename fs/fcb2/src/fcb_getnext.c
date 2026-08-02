@@ -22,12 +22,22 @@
 #include "fcb_priv.h"
 
 int
-fcb2_getnext_in_area(struct fcb2 *fcb, struct fcb2_entry *loc)
+fcb2_getnext_in_area(struct fcb2 *fcb, struct flash_sector_range *range,
+                     struct fcb2_entry *loc)
 {
     int rc = FCB2_ERR_CRC;
     int len;
     int next_data_offset;
     int next_entry_offset;
+
+    /* If a flash range is specified, find first entry in that area */
+    if (range) {
+        loc->fe_range = range;
+        loc->fe_data_off = fcb2_len_in_flash(range, sizeof(struct fcb2_disk_area));
+        loc->fe_entry_num = 0;
+        loc->fe_data_len = 0;
+        loc->fe_sector = 0;
+    }
 
     while (rc == FCB2_ERR_CRC) {
         len = loc->fe_data_len;
@@ -52,6 +62,17 @@ fcb2_getnext_in_area(struct fcb2 *fcb, struct fcb2_entry *loc)
     return rc;
 }
 
+struct flash_sector_range *
+fcb2_getnext_range(struct fcb2 *fcb, struct fcb2_entry *loc)
+{
+    loc->fe_entry_num = 0;
+    loc->fe_data_len = 0;
+    loc->fe_sector = fcb2_getnext_sector(fcb, loc->fe_sector);
+    loc->fe_range = fcb2_get_sector_range(fcb, loc->fe_sector);
+
+    return loc->fe_range;
+}
+
 int
 fcb2_getnext_nolock(struct fcb2 *fcb, struct fcb2_entry *loc)
 {
@@ -71,7 +92,7 @@ fcb2_getnext_nolock(struct fcb2 *fcb, struct fcb2_entry *loc)
         loc->fe_entry_num = 1;
         rc = fcb2_elem_info(loc);
     } else {
-        rc = fcb2_getnext_in_area(fcb, loc);
+        rc = fcb2_getnext_in_area(fcb, NULL, loc);
     }
     switch (rc) {
     case 0:
@@ -82,7 +103,7 @@ fcb2_getnext_nolock(struct fcb2 *fcb, struct fcb2_entry *loc)
         goto next_sector;
     }
     while (rc == FCB2_ERR_CRC) {
-        rc = fcb2_getnext_in_area(fcb, loc);
+        rc = fcb2_getnext_in_area(fcb, NULL, loc);
         if (rc == 0) {
             return 0;
         }
