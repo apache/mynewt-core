@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,7 +16,6 @@
 # under the License.
 #
 
-syscfg.defs:
-    MTEST_START_DELAY:
-        description: 'Time before test will be executed in seconds'
-        value: 0
+syscfg.vals:
+    WATCHDOG_INTERVAL: 2000
+    SANITY_INTERVAL: 500
