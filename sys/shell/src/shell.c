@@ -31,30 +31,19 @@
 
 #define SHELL_PROMPT "shell"
 
-static const struct shell_cmd *
-shell_mod_std_commands(const struct shell_mod_std *std_mod)
-{
-    uintptr_t addr = (uintptr_t)std_mod->commands;
-    uintptr_t aligned = (addr + sizeof(struct shell_cmd) - 1) &
-                        ~(uintptr_t)(sizeof(struct shell_cmd) - 1);
-
-    return (const struct shell_cmd *)aligned;
-}
-
 static size_t
 shell_mod_std_count(shell_mod_t mod)
 {
     const struct shell_mod_std *std_mod = (const struct shell_mod_std *)mod;
-    return std_mod->commands_end - shell_mod_std_commands(std_mod);
+    return std_mod->commands_end - std_mod->commands;
 }
 
 static shell_cmd_t
 shell_mod_std_get(shell_mod_t mod, size_t ix)
 {
     const struct shell_mod_std *std_mod = (const struct shell_mod_std *)mod;
-    const struct shell_cmd *commands = shell_mod_std_commands(std_mod);
-    size_t limit = std_mod->commands_end - commands;
-    return ix < limit ? &commands[ix] : NULL;
+    size_t limit = std_mod->commands_end - std_mod->commands;
+    return ix < limit ? &std_mod->commands[ix] : NULL;
 }
 
 const struct shell_mod_ops shell_mod_std_ops = {
