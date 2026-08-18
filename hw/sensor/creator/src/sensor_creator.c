@@ -2158,11 +2158,11 @@ sensor_dev_create(void)
 #if MYNEWT_VAL(LIS2DW12_OFB)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #if MYNEWT_VAL(LIS2DW12_OFB_I2C_NUM) >= 0
-    rc = lis2dw12_create_i2c_sensor_dev((struct bus_i2c_node *)&lis2dw12, "lis2dw12_0",
+    rc = lis2dw12_create_i2c_sensor_dev(&lis2dw12.i2c_node, "lis2dw12_0",
                                         &lis2dw12_node_cfg, &lis2dw12_itf);
     assert(rc == 0);
 #elif MYNEWT_VAL(LIS2DW12_OFB_SPI_NUM) >= 0
-    rc = lis2dw12_create_spi_sensor_dev((struct bus_spi_node *)&lis2dw12, "lis2dw12_0",
+    rc = lis2dw12_create_spi_sensor_dev(&lis2dw12.spi_node, "lis2dw12_0",
                                         &lis2dw12_node_cfg, &lis2dw12_itf);
     assert(rc == 0);
 #endif
