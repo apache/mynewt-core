@@ -706,14 +706,16 @@ int dps368_soft_reset(struct sensor *sensor)
     uint8_t ready;
 
     struct sensor_itf *itf;
+    struct dps368 *dps368;
 
+    dps368 = CONTAINER_OF(sensor, struct dps368, sensor);
     itf = SENSOR_GET_ITF(sensor);
 
     rc = dps368_write_reg(itf, IFX_DPS368_SOFT_RESET_REG_ADDR,
             IFX_DPS368_SOFT_RESET_REG_DATA);
 
     if (rc) {
-        STATS_INC(((struct dps368 *)sensor)->stats, write_errors);
+        STATS_INC(dps368->stats, write_errors);
         return rc;
     }
 
@@ -722,7 +724,7 @@ int dps368_soft_reset(struct sensor *sensor)
 
     /*Check if sensor is back */
     if ((rc = dps368_is_init_complete(itf, &ready))) {
-        STATS_INC(((struct dps368 *)sensor)->stats, read_errors);
+        STATS_INC(dps368->stats, read_errors);
         return rc;
     }
 
@@ -734,7 +736,7 @@ int dps368_soft_reset(struct sensor *sensor)
 
     /*perform post init sequence*/
     if ((rc = dps368_set_oem_parameters(itf))) {
-        STATS_INC(((struct dps368 *)sensor)->stats, write_errors);
+        STATS_INC(dps368->stats, write_errors);
         return rc;
     }
 
