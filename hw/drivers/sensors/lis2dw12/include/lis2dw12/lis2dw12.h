@@ -276,7 +276,10 @@ struct lis2dw12_pdd {
 
 struct lis2dw12 {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    struct bus_i2c_node i2c_node;
+    union {
+        struct bus_i2c_node i2c_node;
+        struct bus_spi_node spi_node;
+    };
 #else
     struct os_dev dev;
 #endif
