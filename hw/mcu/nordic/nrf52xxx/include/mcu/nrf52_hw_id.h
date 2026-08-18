@@ -17,49 +17,20 @@
  * under the License.
  */
 
-#include <inttypes.h>
-#include <string.h>
-#include <hal/hal_bsp.h>
-#include "mcu/nrf52_hw_id.h"
-#include "nrf.h"
+#ifndef H_NRF52_HW_ID_
+#define H_NRF52_HW_ID_
 
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-int
-nrf52_hw_id_len(void)
-{
-    return sizeof(NRF_FICR->DEVICEID) + sizeof(NRF_FICR->DEVICEADDR);
+#include <stdint.h>
+
+int nrf52_hw_id_len(void);
+int nrf52_hw_id(uint8_t *id, int max_len);
+
+#ifdef __cplusplus
 }
+#endif
 
-/*
- * These values are generated at random.
- * DEVICEID[0-1] and DEVICEADDR[0-1].
- */
-int
-nrf52_hw_id(uint8_t *id, int max_len)
-{
-    int len, cnt;
-
-    cnt = min(sizeof(NRF_FICR->DEVICEID), max_len);
-    memcpy(id, (void *)NRF_FICR->DEVICEID, cnt);
-    len = cnt;
-
-    cnt = min(sizeof(NRF_FICR->DEVICEADDR), max_len - len);
-    memcpy(id + len, (void *)NRF_FICR->DEVICEADDR, cnt);
-
-    return len + cnt;
-}
-
-int
-hal_bsp_hw_id_len(void)
-{
-    return nrf52_hw_id_len();
-}
-
-int
-hal_bsp_hw_id(uint8_t *id, int max_len)
-{
-    return nrf52_hw_id(id, max_len);
-}
+#endif  /* H_NRF52_HW_ID_ */
