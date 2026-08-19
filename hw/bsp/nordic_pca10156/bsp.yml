@@ -18,7 +18,7 @@
 #
 
 bsp.name: "nRF54L15 PDK"
-bsp.url:
+bsp.url: https://www.nordicsemi.com/Products/Development-hardware/nRF54L15-DK/Hardware-files
 bsp.maker: "Nordic Semiconductor"
 bsp.arch: cortex_m33
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m33"
