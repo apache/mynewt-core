@@ -134,6 +134,7 @@ SystemClock_Config(void)
         LL_RCC_PLL1_SetR(MYNEWT_VAL_STM32_CLOCK_PLL1_PLLR);
         if (MYNEWT_VAL_STM32_CLOCK_PLL1_PLLFRACN) {
             LL_RCC_PLL1_SetFRACN(MYNEWT_VAL_STM32_CLOCK_PLL1_PLLFRACN);
+            LL_RCC_PLL1FRACN_Enable();
         }
         LL_RCC_PLL1_SetVCOInputRange(MYNEWT_VAL_STM32_CLOCK_PLL1_RGE);
         LL_RCC_PLL1_Enable();
@@ -153,6 +154,7 @@ SystemClock_Config(void)
         LL_RCC_PLL2_SetR(MYNEWT_VAL_STM32_CLOCK_PLL2_PLLR);
         if (MYNEWT_VAL_STM32_CLOCK_PLL2_PLLFRACN) {
             LL_RCC_PLL2_SetFRACN(MYNEWT_VAL_STM32_CLOCK_PLL2_PLLFRACN);
+            LL_RCC_PLL2FRACN_Enable();
         }
         LL_RCC_PLL2_SetVCOInputRange(MYNEWT_VAL_STM32_CLOCK_PLL2_RGE);
         LL_RCC_PLL2_Enable();
@@ -173,6 +175,7 @@ SystemClock_Config(void)
         LL_RCC_PLL3_SetR(MYNEWT_VAL_STM32_CLOCK_PLL3_PLLR);
         if (MYNEWT_VAL_STM32_CLOCK_PLL3_PLLFRACN) {
             LL_RCC_PLL3_SetFRACN(MYNEWT_VAL_STM32_CLOCK_PLL3_PLLFRACN);
+            LL_RCC_PLL3FRACN_Enable();
         }
         LL_RCC_PLL3_SetVCOInputRange(MYNEWT_VAL_STM32_CLOCK_PLL3_RGE);
         LL_RCC_PLL3_Enable();
