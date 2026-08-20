@@ -17,7 +17,16 @@
 # under the License.
 #
 
-syscfg.defs:
-    MTEST_START_DELAY:
-        description: 'Time before test will be executed in seconds'
-        value: 0
+pkg.name: test/mtest/mtest_watchdog
+pkg.type: app
+pkg.description: "Tests watchdog"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+
+pkg.deps:
+  - "@apache-mynewt-core/kernel/os"
+  - "@apache-mynewt-core/hw/hal"
+  - "@apache-mynewt-core/sys/console"
+  - "@apache-mynewt-core/sys/log"
+  - "@apache-mynewt-core/test/mtest/mtest"
