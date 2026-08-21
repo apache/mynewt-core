@@ -34,7 +34,7 @@ fcb2_sector_find_last(struct fcb2 *fcb, struct fcb2_entry *loc)
         if (rc == 0) {
             last_valid = loc->fe_entry_num;
         }
-        if (rc == FCB2_ERR_NOVAR) {
+        else if (rc == FCB2_ERR_NOVAR) {
             /*
              * Out entries in this sector
              */
@@ -52,7 +52,7 @@ fcb2_sector_find_last(struct fcb2 *fcb, struct fcb2_entry *loc)
             }
         }
         loc->fe_entry_num++;
-    } while (1);
+    } while (rc == 0);
     return rc;
 }
 
