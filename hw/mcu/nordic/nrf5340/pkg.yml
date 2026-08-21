@@ -30,6 +30,12 @@ pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf_common"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf5340/tfm"
 
+pkg.deps.'BLE_TRANSPORT_LL == "nrf5340"':
+    - "@apache-mynewt-core/hw/drivers/ipc_nrf5340"
+
+pkg.deps.'BLE_TRANSPORT_LL == "ipc"':
+    - "@apache-mynewt-core/hw/drivers/ipc"
+
 pkg.deps.BUS_DRIVER_PRESENT:
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
     - "@apache-mynewt-core/hw/bus/drivers/i2c_common"
