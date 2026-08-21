@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,31 +17,13 @@
 # under the License.
 #
 
-syscfg.defs:
-    LCD_ITF:
-        description: >
-            Selects built-in implementation of LCD interface
-        choices:
-            - custom
-            - spi
-            - i2c
-            - 8080_II_8_bit
-            - 8080_II_16_bit
-            - 8080_II_16_bit_stm32_fsmc
-        value: spi
-    LCD_CS_PIN:
-        description: LCD chip select pin for SPI.
-        value: -1
-    LCD_DC_PIN:
-        description: LCD command/data pin for SPI.
-        value:
-        restrictions: -1
-    LCD_BL_PIN:
-        description: LCD backlight pin.
-        value: -1
-    LCD_BL_PIN_ACTIVE_LEVEL:
-        description: Value for LCD_BL_PIN to turn backlight on.
-        value: 1
-    LCD_RESET_PIN:
-        description: LCD command/data pin for SPI or parallel port.
-        value: -1
+pkg.name: hw/drivers/display/lcd_itf/itf_i2c
+pkg.description: LCD Standard I2C interface
+pkg.keywords:
+    - display
+
+pkg.apis:
+    - lcd_interface
+
+pkg.deps:
+#    - "@apache-mynewt-core/hw/bus/drivers/i2c_common"
