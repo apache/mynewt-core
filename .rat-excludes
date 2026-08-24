@@ -310,16 +310,11 @@ kernel/os/include/os/arch/pic32/os/cp0defs.h
 kernel/os/src/arch/pic32/startup
 kernel/os/src/arch/pic32/stubs/pic32_init_cache.S
 kernel/os/src/arch/pic32/stubs/pic32_init_tlb_ebi_sqi.S
-hw/mcu/microchip/pic32mx470f512h/include/mcu/p32mx470f512h.h
-hw/mcu/microchip/pic32mx470f512h/include/mcu/ppic32mx.h
 hw/mcu/microchip/pic32mz/p32mz_app.ld
 hw/mcu/microchip/pic32mz/p32mz_boot.ld
 
 # Calliope SDK - BSD Licence
 hw/bsp/calliope_mini/split-calliope_mini.ld
-
-# pic32mx470_6lp_clicker BSP - BSD License
-hw/bsp/pic32mx470_6lp_clicker/src/sbrk.c
 
 # BSP for Ambiq Apollo2/Apollo3 - BSD License
 hw/mcu/ambiq/apollo3/include/mcu/apollo3.h
