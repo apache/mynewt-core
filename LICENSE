@@ -561,9 +561,6 @@ This products bundles Amiq Micro Apollo 3, which is available under the
 
 This product bundles processor headers for PIC32 by Microchip Technology
 Inc., which is available under the "3-clause BSD" license. Bundled files are:
-    * hw/mcu/microchip/pic32mx470f512h/include/mcu/p32mx470f512h.h
-    * hw/mcu/microchip/pic32mx470f512h/include/mcu/ppic32mx.h
-    * hw/bsp/pic32mx470_6lp_clicker/src/sbrk.c
     * kernel/os/include/os/arch/pic32/os/cp0defs.h
     * kernel/os/src/arch/pic32/startup/cache-err-exception.S
     * kernel/os/src/arch/pic32/startup/crt0.S
