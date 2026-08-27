@@ -668,6 +668,12 @@ i2s_transmit_start_dma(I2S_HandleTypeDef *hi2s, uint16_t *buf0, uint16_t *buf1, 
 }
 
 #if I2S_FULLDUPLEX_SUPPORT
+
+static void
+i2s_dma_mx_complete_ignore(DMA_HandleTypeDef *hdma)
+{
+}
+
 static HAL_StatusTypeDef
 i2s_transmit_receive_dma(I2S_HandleTypeDef *hi2s, uint16_t *buf0, uint16_t *buf1, uint16_t sample_count)
 {
@@ -724,8 +730,8 @@ i2s_transmit_receive_dma(I2S_HandleTypeDef *hi2s, uint16_t *buf0, uint16_t *buf1
     hi2s->hdmarx->Instance->CR &= ~DMA_SxCR_CT_Msk;
 
     /* Set the I2S Tx DMA transfer complete callback */
-    hi2s->hdmatx->XferCpltCallback = i2s_dma_m0_complete;
-    hi2s->hdmatx->XferM1CpltCallback = i2s_dma_m1_complete;
+    hi2s->hdmatx->XferCpltCallback = i2s_dma_mx_complete_ignore;
+    hi2s->hdmatx->XferM1CpltCallback = i2s_dma_mx_complete_ignore;
 
     /* Set the I2S Tx DMA error callback */
     hi2s->hdmatx->XferErrorCallback = i2s_dma_error;
