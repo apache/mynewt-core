@@ -34,3 +34,4 @@ pkg.deps:
     - "@apache-mynewt-core/hw/mcu/ambiq/apollo3"
     - "@apache-mynewt-core/libc"
     - '@apache-mynewt-core/sys/flash_map'
+    - '@apache-mynewt-core/boot/startup'
