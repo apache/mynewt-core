@@ -9,8 +9,12 @@
 
 #include <stdint.h>
 
-#define NVIC_NUM_VECTORS      (16 + 26)   // CORE + MCU Peripherals
-#define NVIC_USER_IRQ_OFFSET  16
+extern uint32_t __isr_vector_start[];
+extern uint32_t __isr_vector_end[];
+
+/* Extract number of vectors from .interrupt section size */
+#define NVIC_NUM_VECTORS     (__isr_vector_end - __isr_vector_start)
+#define NVIC_USER_IRQ_OFFSET 16
 
 #include "mcu/apollo3.h"
 
