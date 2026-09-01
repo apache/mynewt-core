@@ -34,6 +34,18 @@ syscfg.defs:
             chunks of this size. Buffer is created on stack.
         value: 128
 
+    MCU_PATH:
+      value: '"repos/apache-mynewt-core/hw/mcu/ambiq/apollo3"'
+
+    APOLLO3_SRAM_RESV:
+      description: Must match INFO0 SECURITY.SRAM_RESV (top SRAM not cleared by SBL)
+      value: 0
+
+    APOLLO3_SBL_STACK_MARGIN:
+      description: >
+        Extra bytes below usable top SRAM (prevents SBL crash)
+      value: 8
+
     UART_0:
         description: 'Whether to enable UART0'
         value: 1
@@ -479,4 +491,6 @@ syscfg.defs:
         value: APOLLO3_TIMER_SOURCE_HFRC
 
 syscfg.vals:
+    MCU_RAM_START: 0x10000000
+    MCU_RAM_SIZE: 0x60000
     OS_TICKS_PER_SEC: 128

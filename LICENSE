@@ -495,8 +495,6 @@ which is available under the "modified Tcl/Tk" license.  Bundled files are:
     * hw/bsp/vbluno52/split-vbluno52.ld
     * hw/bsp/vbluno52/vbluno52_no_boot.ld
     * hw/bsp/pinetime/boot-pinetime.ld
-    * hw/bsp/apollo3_evb/apollo3.ld
-    * hw/bsp/apollo3_evb/boot-apollo3.ld
     * hw/bsp/apollo3_evb/src/system_apollo3.c
     * hw/bsp/nordic_pca10059/nordic_pca10059_no_boot.ld
     * hw/bsp/nordic_pca10059/split-nordic_pca10059.ld
