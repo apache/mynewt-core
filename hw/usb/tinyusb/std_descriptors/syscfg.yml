@@ -134,6 +134,16 @@ syscfg.defs:
         description: CDC endpoint IN FIFO size
         value:
 
+    USBD_CDC_CONSOLE_DATA_OUT_EP:
+        description: CDC CONSOLE data out endpoint number
+        value:
+    USBD_CDC_CONSOLE_DATA_IN_EP:
+        description: CDC CONSOLE data out endpoint number
+        value:
+    USBD_CDC_CONSOLE_NOTIFY_EP:
+        description: CDC CONSOLE notify endpoint number
+        value:
+
     USBD_CDC_DESCRIPTOR_STRING:
         description: String for CDC interface
         value:
