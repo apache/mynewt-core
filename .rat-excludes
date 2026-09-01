@@ -32,8 +32,6 @@ hw/bsp/ada_feather_nrf52/nrf52xxaa.ld
 hw/bsp/ada_feather_nrf52/split_ada_feather_nrf52.ld
 hw/bsp/apollo2_evb/apollo2.ld
 hw/bsp/apollo2_evb/boot-apollo2.ld
-hw/bsp/apollo3_evb/apollo3.ld
-hw/bsp/apollo3_evb/boot-apollo3.ld
 hw/bsp/arduino_primo_nrf52/boot-nrf52xxaa.ld
 hw/bsp/arduino_primo_nrf52/nrf52xxaa.ld
 hw/bsp/arduino_primo_nrf52/primo_no_boot.ld
@@ -152,7 +150,6 @@ hw/bsp/vbluno52/nrf52xxaa.ld
 hw/bsp/vbluno52/split-vbluno52.ld
 hw/bsp/vbluno52/vbluno52_no_boot.ld
 hw/mcu/ambiq/apollo2/apollo2.ld
-hw/mcu/ambiq/apollo3/apollo3.ld
 hw/mcu/nordic/nrf51xxx/nrf51.ld
 hw/mcu/nordic/nrf52xxx/nrf52.ld
 hw/mcu/nordic/nrf52xxx/nrf52_ram_resident.ld
