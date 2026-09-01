@@ -404,14 +404,16 @@ print_apb1_peripherals(struct streamer *streamer, bool all)
         streamer_printf(streamer, "    CEC     %s\n", on_off_state(RCC->APB1LENR & RCC_APB1LENR_CECEN));
     }
 #endif
-#if defined(RCC_APB1LENR_USART7EN)
-    if (all || RCC->APB1LENR & RCC_APB1LENR_USART7EN) {
-        streamer_printf(streamer, "    USART7  %s\n", on_off_state(RCC->APB1LENR & RCC_APB1LENR_USART7EN));
+#if defined(RCC_APB1LENR_UART7EN)
+    if (all || RCC->APB1LENR & RCC_APB1LENR_UART7EN) {
+        streamer_printf(streamer, "    UART7   %s\n",
+                        on_off_state(RCC->APB1LENR & RCC_APB1LENR_UART7EN));
     }
 #endif
-#if defined(RCC_APB1LENR_USART8EN)
-    if (all || RCC->APB1LENR & RCC_APB1LENR_USART8EN) {
-        streamer_printf(streamer, "    USART8  %s\n", on_off_state(RCC->APB1LENR & RCC_APB1LENR_USART8EN));
+#if defined(RCC_APB1LENR_UART8EN)
+    if (all || RCC->APB1LENR & RCC_APB1LENR_UART8EN) {
+        streamer_printf(streamer, "    UART8  %s\n",
+                        on_off_state(RCC->APB1LENR & RCC_APB1LENR_UART8EN));
     }
 #endif
 #if defined(RCC_APB1HENR_UART9EN)
