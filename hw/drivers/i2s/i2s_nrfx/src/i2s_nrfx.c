@@ -226,10 +226,10 @@ static const struct i2s_clock_cfg mck_for_24_bit_samples[] = {
     { NRF_I2S_MCK_32MDIV15, NRF_I2S_RATIO_48X}   /* 48000: 44444.444 LRCK error -7.4% */
 };
 
+#if NRF_I2S_HAS_CLKCONFIG
 static void
 set_mck_setup_for_bypass(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
 {
-#if NRF_I2S_HAS_CLKCONFIG
     static const struct {
         uint16_t ratio_val;
         nrf_i2s_ratio_t ratio_enum;
@@ -265,8 +265,8 @@ set_mck_setup_for_bypass(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
         /* Anything, needed by NRFX */
         cfg->mck_setup = NRF_I2S_MCK_32MDIV8;
     }
-#endif
 }
+#endif
 
 static void
 i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
