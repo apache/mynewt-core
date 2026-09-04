@@ -20,6 +20,7 @@
 #include <string.h>
 #include "mcu/cmsis_nvic.h"
 #include <os/mynewt.h>
+#include <nrf_ecb.h>
 #include "crypto/crypto.h"
 #include "crypto_nrf/crypto_nrf.h"
 

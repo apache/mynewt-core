@@ -46,6 +46,9 @@ pkg.deps.SPI_0_MASTER:
 pkg.deps.I2C_0:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
 
+pkg.deps.CRYPTO:
+    - "@apache-mynewt-core/hw/drivers/crypto/crypto_nrf"
+
 pkg.deps.TRNG:
     - "@apache-mynewt-core/hw/drivers/trng/trng_nrf52"
 
