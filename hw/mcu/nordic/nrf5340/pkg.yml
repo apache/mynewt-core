@@ -92,16 +92,16 @@ pkg.deps.SPI_4_MASTER:
     - "@apache-mynewt-core/hw/bus"
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
 
-pkg.deps.I2C_0':
+pkg.deps.I2C_0:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
 
-pkg.deps.I2C_1':
+pkg.deps.I2C_1:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
 
-pkg.deps.I2C_2':
+pkg.deps.I2C_2:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
 
-pkg.deps.I2C_3':
+pkg.deps.I2C_3:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
 
 pkg.deps.NRF5340_EMBED_NET_CORE:
