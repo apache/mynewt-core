@@ -43,7 +43,7 @@ pkg.deps.SPI_0_MASTER:
     - "@apache-mynewt-core/hw/bus"
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
 
-pkg.deps.I2C_0':
+pkg.deps.I2C_0:
     - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf5340"
 
 pkg.deps.TRNG:
