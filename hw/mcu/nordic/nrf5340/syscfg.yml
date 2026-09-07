@@ -594,6 +594,9 @@ syscfg.defs:
 syscfg.vals:
     OS_TICKS_PER_SEC: 128
 
+syscfg.vals.QSPI_ENABLE:
+    NRFX_QSPI_ENABLED: 1
+
 syscfg.vals.CORTEX_DEFAULT_STARTUP:
     MCU_RAM_START: 0x20000400
     MCU_RAM_SIZE: 0x7FC00

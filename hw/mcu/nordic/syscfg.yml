@@ -1,0 +1,199 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    NRFX_ADC_ENABLED:
+        description: Enable NRFX ADC driver
+        value: 0
+
+    NRFX_BELLBOARD_ENABLED:
+        description: Enable NRFX BELLBOARD driver
+        value: 0
+
+    NRFX_CLOCK_ENABLED:
+        description: Enable NRFX CLOCK driver
+        value: 0
+
+    NRFX_COMP_ENABLED:
+        description: Enable NRFX COMP driver
+        value: 0
+
+    NRFX_CRACEN_ENABLED:
+        description: Enable NRFX CRACEN driver
+        value: 0
+
+    NRFX_DPPI_ENABLED:
+        description: Enable NRFX DPPI driver
+        value: 0
+
+    NRFX_EGU_ENABLED:
+        description: Enable NRFX EGU driver
+        value: 0
+
+    NRFX_GPIOTE_ENABLED:
+        description: Enable NRFX GPIOTE driver
+        value: 0
+
+    NRFX_GRTC_ENABLED:
+        description: Enable NRFX GRTC driver
+        value: 0
+
+    NRFX_I2S_ENABLED:
+        description: Enable NRFX I2S driver
+        value: 0
+
+    NRFX_IPC_ENABLED:
+        description: Enable NRFX IPC driver
+        value: 0
+
+    NRFX_KMU_ENABLED:
+        description: Enable NRFX KMU driver
+        value: 0
+
+    NRFX_LPCOMP_ENABLED:
+        description: Enable NRFX LPCOMP driver
+        value: 0
+
+    NRFX_MRAMC_ENABLED:
+        description: Enable NRFX MRAMC driver
+        value: 0
+
+    NRFX_NFCT_ENABLED:
+        description: Enable NRFX NFCT driver
+        value: 0
+
+    NRFX_NVMC_ENABLED:
+        description: Enable NRFX NVMC driver
+        value: 0
+
+    NRFX_PDM_ENABLED:
+        description: Enable NRFX PDM driver
+        value: 0
+
+    NRFX_POWER_ENABLED:
+        description: Enable NRFX POWER driver
+        value: 0
+
+    NRFX_PPI_ENABLED:
+        description: Enable NRFX PPI driver
+        value: 0
+
+    NRFX_PPIB_ENABLED:
+        description: Enable NRFX PPIB driver
+        value: 0
+
+    NRFX_PRS_ENABLED:
+        description: Enable NRFX Peripheral Resource Sharing (PRS)
+        value: 0
+
+    NRFX_PWM_ENABLED:
+        description: Enable NRFX PWM driver
+        value: 0
+
+    NRFX_QDEC_ENABLED:
+        description: Enable NRFX QDEC driver
+        value: 0
+
+    NRFX_QSPI_ENABLED:
+        description: Enable NRFX QSPI driver
+        value: 0
+
+    NRFX_RNG_ENABLED:
+        description: Enable NRFX RNG driver
+        value: 0
+
+    NRFX_RRAMC_ENABLED:
+        description: Enable NRFX RRAMC driver
+        value: 0
+
+    NRFX_RTC_ENABLED:
+        description: Enable NRFX RTC driver
+        value: 0
+
+    NRFX_SAADC_ENABLED:
+        description: Enable NRFX SAADC driver
+        value: 0
+
+    NRFX_SPI_ENABLED:
+        description: Enable NRFX SPI driver
+        value: 0
+
+    NRFX_SPIM_ENABLED:
+        description: Enable NRFX SPIM driver
+        value: 0
+
+    NRFX_SPIS_ENABLED:
+        description: Enable NRFX SPIS driver
+        value: 0
+
+    NRFX_SYSTICK_ENABLED:
+        description: Enable NRFX SYSTICK driver
+        value: 0
+
+    NRFX_TBM_ENABLED:
+        description: Enable NRFX TBM driver
+        value: 0
+
+    NRFX_TDM_ENABLED:
+        description: Enable NRFX TDM driver
+        value: 0
+
+    NRFX_TEMP_ENABLED:
+        description: Enable NRFX TEMP driver
+        value: 0
+
+    NRFX_TIMER_ENABLED:
+        description: Enable NRFX TIMER driver
+        value: 0
+
+    NRFX_TWI_ENABLED:
+        description: Enable NRFX TWI driver
+        value: 0
+
+    NRFX_TWIM_ENABLED:
+        description: Enable NRFX TWIM driver
+        value: 0
+
+    NRFX_TWIS_ENABLED:
+        description: Enable NRFX TWIS driver
+        value: 0
+
+    NRFX_UART_ENABLED:
+        description: Enable NRFX UART driver
+        value: 0
+
+    NRFX_UARTE_ENABLED:
+        description: Enable NRFX UARTE driver
+        value: 0
+
+    NRFX_USBD_ENABLED:
+        description: Enable NRFX USBD driver
+        value: 0
+
+    NRFX_USBREG_ENABLED:
+        description: Enable NRFX USBREG driver
+        value: 0
+
+    NRFX_VEVIF_ENABLED:
+        description: Enable NRFX VEVIF driver
+        value: 0
+
+    NRFX_WDT_ENABLED:
+        description: Enable NRFX WDT driver
+        value: 0

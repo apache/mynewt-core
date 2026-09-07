@@ -29,6 +29,15 @@ pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf_common"
 
+pkg.include_dirs:
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52840"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52833"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52820"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52811"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52810"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52805"
+
 pkg.ign_files.'!MCU_COMMON_STARTUP || SPLIT_LOADER':
     - gcc_startup_cm4.s
 pkg.ign_files.'!MCU_COMMON_STARTUP || !SPLIT_LOADER':
