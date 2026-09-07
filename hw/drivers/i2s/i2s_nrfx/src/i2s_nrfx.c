@@ -25,6 +25,12 @@
 #include <drivers/include/nrfx_i2s.h>
 #include <nrfx_clock.h>
 
+#if defined(NRF_I2S0)
+#define I2S_NRFX_DEV NRF_I2S0
+#elif defined(NRF_I2S)
+#define I2S_NRFX_DEV NRF_I2S
+#endif
+
 struct i2s_nrfx {
     nrfx_i2s_t inst;
     nrfx_i2s_config_t nrfx_i2s_cfg;
@@ -35,7 +41,7 @@ struct i2s_nrfx {
 };
 
 static struct i2s_nrfx i2s_nrfx = {
-    NRFX_I2S_INSTANCE(0),
+    NRFX_I2S_INSTANCE(I2S_NRFX_DEV),
 };
 
 static void
@@ -80,7 +86,7 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
         err = nrfx_i2s_next_buffers_set(&i2s_nrfx.inst, &nrfx_buffers);
     }
 
-    assert(err == NRFX_SUCCESS);
+    assert(err == 0);
 }
 
 static void
@@ -117,6 +123,12 @@ i2s_nrfx_data_handler(const nrfx_i2s_buffers_t *p_released, uint32_t status)
     }
 }
 
+static void
+i2s_nrfx_irq_handler(void)
+{
+    nrfx_i2s_irq_handler(&i2s_nrfx.inst);
+}
+
 static int
 i2s_nrfx_init(struct i2s *i2s, const struct i2s_cfg *cfg)
 {
@@ -124,7 +136,7 @@ i2s_nrfx_init(struct i2s *i2s, const struct i2s_cfg *cfg)
 
     i2s_nrfx.i2s = i2s;
 
-    NVIC_SetVector(nrfx_get_irq_number(NRF_I2S0), (uint32_t)nrfx_i2s_0_irq_handler);
+    NVIC_SetVector(nrfx_get_irq_number(I2S_NRFX_DEV), (uint32_t)i2s_nrfx_irq_handler);
 
     i2s_nrfx.nrfx_i2s_cfg = cfg->nrfx_i2s_cfg;
     switch (cfg->nrfx_i2s_cfg.sample_width) {
@@ -248,14 +260,14 @@ set_mck_setup_for_bypass(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
     uint16_t mclk_div;
     size_t i;
 
-    if (cfg->enable_bypass) {
+    if (cfg->prescalers.enable_bypass) {
         mclk = cfg->clksrc == NRF_I2S_CLKSRC_PCLK32M ? 32000000UL : 12288000UL;
         mclk_div = mclk / sample_rate;
 
         for (i = 0; i < ARRAY_SIZE(ratios); i++) {
             if (mclk_div == ratios[i].ratio_val) {
                 /* Ratio for bit clock */
-                cfg->ratio = ratios[i].ratio_enum;
+                cfg->prescalers.ratio = ratios[i].ratio_enum;
                 break;
             }
         }
@@ -263,7 +275,7 @@ set_mck_setup_for_bypass(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
         assert(i < ARRAY_SIZE(ratios));
 
         /* Anything, needed by NRFX */
-        cfg->mck_setup = NRF_I2S_MCK_32MDIV8;
+        cfg->prescalers.mck_setup = NRF_I2S_MCK_32MDIV8;
     }
 }
 #endif
@@ -288,27 +300,27 @@ i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
             nrfx_clock_hfclkaudio_config_set(39854);
         }
         NRF_CLOCK->TASKS_HFCLKAUDIOSTART = 1;
-        if (cfg->mck_setup != 0) {
+        if (cfg->prescalers.mck_setup != 0) {
             /* User provided custom clock setup, no need to compute values */
             return;
         }
 
         src_frq = (32000000 * (4 + nrfx_clock_hfclkaudio_config_get() * 0.000015259f) / 12);
         if (cfg->sample_width == NRF_I2S_SWIDTH_24BIT) {
-            cfg->ratio = NRF_I2S_RATIO_48X;
+            cfg->prescalers.ratio = NRF_I2S_RATIO_48X;
             ratio = 48;
         } else if (cfg->sample_width == NRF_I2S_SWIDTH_32BIT || cfg->sample_width == NRF_I2S_SWIDTH_16BIT_IN32BIT ||
             cfg->sample_width == NRF_I2S_SWIDTH_24BIT_IN32BIT || cfg->sample_width == NRF_I2S_SWIDTH_8BIT_IN32BIT) {
-            cfg->ratio = NRF_I2S_RATIO_64X;
+            cfg->prescalers.ratio = NRF_I2S_RATIO_64X;
             ratio = 64;
         } else {
-            cfg->ratio = NRF_I2S_RATIO_32X;
+            cfg->prescalers.ratio = NRF_I2S_RATIO_32X;
             ratio = 32;
         }
         mck = sample_rate * ratio;
-        cfg->mck_setup = 4096 * (mck * 1048576ull / (src_frq + mck / 2));
+        cfg->prescalers.mck_setup = 4096 * (mck * 1048576ull / (src_frq + mck / 2));
         return;
-    } else if (cfg->mck_setup != 0) {
+    } else if (cfg->prescalers.mck_setup != 0) {
         /* User provided custom clock setup, no need to use stock values */
         return;
     }
@@ -316,16 +328,16 @@ i2s_nrfx_select_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
     for (i = 0; i < ARRAY_SIZE(sample_rates); ++i) {
         if (sample_rates[i] == sample_rate) {
             if (cfg->sample_width == NRF_I2S_SWIDTH_24BIT) {
-                cfg->ratio = mck_for_24_bit_samples[i].ratio;
-                cfg->mck_setup = mck_for_24_bit_samples[i].mck_setup;
+                cfg->prescalers.ratio = mck_for_24_bit_samples[i].ratio;
+                cfg->prescalers.mck_setup = mck_for_24_bit_samples[i].mck_setup;
             } else {
-                cfg->ratio = mck_for_8_16_bit_samples[i].ratio;
-                cfg->mck_setup = mck_for_8_16_bit_samples[i].mck_setup;
+                cfg->prescalers.ratio = mck_for_8_16_bit_samples[i].ratio;
+                cfg->prescalers.mck_setup = mck_for_8_16_bit_samples[i].mck_setup;
             }
             break;
         }
     }
-    assert(cfg->mck_setup);
+    assert(cfg->prescalers.mck_setup);
 }
 
 int
