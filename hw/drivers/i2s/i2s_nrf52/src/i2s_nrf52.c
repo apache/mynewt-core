@@ -24,6 +24,12 @@
 #include <i2s_nrf52/i2s_nrf52.h>
 #include <drivers/include/nrfx_i2s.h>
 
+#if defined(NRF_I2S0)
+#define I2S_NRF52_DEV NRF_I2S0
+#elif defined(NRF_I2S)
+#define I2S_NRF52_DEV NRF_I2S
+#endif
+
 struct nrf52_i2s {
     nrfx_i2s_t inst;
     nrfx_i2s_config_t nrfx_i2s_cfg;
@@ -34,7 +40,7 @@ struct nrf52_i2s {
 };
 
 static struct nrf52_i2s nrf52_i2s = {
-    NRFX_I2S_INSTANCE(0),
+    NRFX_I2S_INSTANCE(I2S_NRF52_DEV),
 };
 
 static void
@@ -59,6 +65,8 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
         nrfx_buffers.p_rx_buffer = buffer->sample_data;
     }
 
+    nrfx_buffers.buffer_size = buffer_size;
+
     assert(nrf52_i2s.nrfx_queued_count < 2);
     assert(nrf52_i2s.nrfx_buffers[nrf52_i2s.nrfx_queued_count] == NULL);
 
@@ -66,7 +74,7 @@ nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
     nrf52_i2s.nrfx_queued_count++;
     if (nrf52_i2s.nrfx_queued_count == 1) {
         i2s_driver_state_changed (i2s, I2S_STATE_RUNNING);
-        err = nrfx_i2s_start(&nrf52_i2s.inst, &nrfx_buffers, buffer_size, 0);
+        err = nrfx_i2s_start(&nrf52_i2s.inst, &nrfx_buffers, 0);
     } else {
         err = nrfx_i2s_next_buffers_set(&nrf52_i2s.inst, &nrfx_buffers);
     }
@@ -108,6 +116,12 @@ nrf52_i2s_data_handler(const nrfx_i2s_buffers_t *p_released, uint32_t status)
     }
 }
 
+static void
+nrf52_i2s_irq_handler(void)
+{
+    nrfx_i2s_irq_handler(&nrf52_i2s.inst);
+}
+
 static int
 nrf52_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
 {
@@ -115,7 +129,7 @@ nrf52_i2s_init(struct i2s *i2s, const struct i2s_cfg *cfg)
 
     nrf52_i2s.i2s = i2s;
 
-    NVIC_SetVector(nrfx_get_irq_number(NRF_I2S), (uint32_t)nrfx_i2s_0_irq_handler);
+    NVIC_SetVector(nrfx_get_irq_number(I2S_NRF52_DEV), (uint32_t)nrf52_i2s_irq_handler);
 
     nrf52_i2s.nrfx_i2s_cfg = cfg->nrfx_i2s_cfg;
     switch (cfg->nrfx_i2s_cfg.sample_width) {
@@ -207,7 +221,7 @@ nrf52_select_i2s_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
 {
     int i;
 
-    if (cfg->ratio != 0 || cfg->mck_setup != 0) {
+    if (cfg->prescalers.ratio != 0 || cfg->prescalers.mck_setup != 0) {
         /* User provided custom clock setup, no need to use stock values */
         return;
     }
@@ -215,11 +229,11 @@ nrf52_select_i2s_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
         if (sample_rates[i] == sample_rate) {
             if (cfg->sample_width == NRF_I2S_SWIDTH_8BIT ||
                 cfg->sample_width == NRF_I2S_SWIDTH_16BIT) {
-                cfg->ratio = mck_for_8_16_bit_samples[i].ratio;
-                cfg->mck_setup = mck_for_8_16_bit_samples[i].mck_setup;
+                cfg->prescalers.ratio = mck_for_8_16_bit_samples[i].ratio;
+                cfg->prescalers.mck_setup = mck_for_8_16_bit_samples[i].mck_setup;
             } else if (cfg->sample_width == NRF_I2S_SWIDTH_24BIT) {
-                cfg->ratio = mck_for_24_bit_samples[i].ratio;
-                cfg->mck_setup = mck_for_24_bit_samples[i].mck_setup;
+                cfg->prescalers.ratio = mck_for_24_bit_samples[i].ratio;
+                cfg->prescalers.mck_setup = mck_for_24_bit_samples[i].mck_setup;
             } else {
                 /* Invalid value of sample_width */
                 assert(0);
@@ -227,7 +241,7 @@ nrf52_select_i2s_clock_cfg(nrfx_i2s_config_t *cfg, uint32_t sample_rate)
             break;
         }
     }
-    assert(cfg->mck_setup);
+    assert(cfg->prescalers.mck_setup);
 }
 
 int
