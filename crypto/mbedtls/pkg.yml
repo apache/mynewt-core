@@ -33,6 +33,7 @@ app.cflags.TEST:
 
 pkg.cflags:
     - -Wno-maybe-uninitialized
+    - -Wno-array-bounds
     - -Wno-unknown-warning-option
 
 pkg.include_dirs:
