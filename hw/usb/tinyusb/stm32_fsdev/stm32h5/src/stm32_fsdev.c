@@ -44,8 +44,10 @@ tinyusb_hardware_init(void)
         RCC->CCIPR4 = RCC->CCIPR4 | RCC_USBCLKSOURCE_HSI48;
     } else if (MYNEWT_VAL_CHOICE(USB_CLOCK_SOURCE, pll1_q_ck)) {
         RCC->CCIPR4 = (RCC->CCIPR4 & ~RCC_CCIPR4_USBSEL) | RCC_USBCLKSOURCE_PLL1Q;
+#ifdef RCC_CR_PLL3ON
     } else if (MYNEWT_VAL_CHOICE(USB_CLOCK_SOURCE, pll3_q_ck)) {
         RCC->CCIPR4 = (RCC->CCIPR4 & ~RCC_CCIPR4_USBSEL) | RCC_USBCLKSOURCE_PLL3Q;
+#endif
     }
 
     /*
