@@ -221,20 +221,27 @@ print_ahb2_peripherals(struct streamer *streamer, bool all)
 #endif
 }
 
+#if defined(RCC_AHB4ENR_SDMMC1EN)
+static const char bus_width[4] = "148?";
+
 uint32_t sdmmc_sck_freq(uint32_t f, SDMMC_TypeDef *sdmmc)
 {
     uint32_t div = ((sdmmc->CLKCR & SDMMC_CLKCR_CLKDIV_Msk) >> SDMMC_CLKCR_CLKDIV_Pos) * 2;
     if (div == 0) div = 1;
     return f / div;
 }
+#endif
 
 static void
 print_ahb4_peripherals(struct streamer *streamer, bool all)
 {
     char buf[20];
     char buf1[20];
-    static const char bus_width[4] = "148?";
     uint32_t freq;
+
+    (void)freq;
+    (void)buf;
+    (void)buf1;
 
 #if defined(RCC_AHB4ENR_OTFDEC1EN)
     if (all || RCC->AHB4ENR & RCC_AHB4ENR_OTFDEC1EN) {
@@ -448,7 +455,10 @@ print_apb1_peripherals(struct streamer *streamer, bool all)
 #endif
 }
 
+#ifdef RCC_APB2ENR_SAI1EN
 static const char *sai_clk_src[] = {"pll1_q_ck", "pll2_p_ck", "pll3_p_ck", "AUDIOCLK", "per_ck"};
+#endif
+
 static const char *usb_clk_src[] = {"---", "pll1_q_ck", "pll3_q_ck", "hsi48_ker_ck"};
 
 static void
