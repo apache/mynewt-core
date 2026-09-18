@@ -47,8 +47,8 @@ JLINK_LOG_FILE=.jlink_log
 
 # flash_loader build for this BSP
 if [ -z $FLASH_LOADER ]; then
-    FL_TGT=da1469x_flash_loader
-    FLASH_LOADER=$BIN_ROOT/targets/$FL_TGT/app/@apache-mynewt-core/apps/flash_loader/flash_loader.elf
+    FL_TGT=${MYNEWT_VAL_FLASH_LOADER_TARGET}
+    FLASH_LOADER=$BIN_ROOT/$FL_TGT/app/@apache-mynewt-core/apps/flash_loader/flash_loader.elf
 fi
 if [ ! -f $FLASH_LOADER ]; then
     FILE=${FLASH_LOADER##$(pwd)/}
