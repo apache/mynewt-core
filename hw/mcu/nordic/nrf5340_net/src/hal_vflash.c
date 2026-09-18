@@ -27,7 +27,9 @@
 #include <nrfx_ipc.h>
 #include <bootutil/bootutil.h>
 #include <bootutil/image.h>
+#if MYNEWT_PKG_apache_mynewt_core__hw_drivers_ipc_nrf5340
 #include <ipc_nrf5340/ipc_nrf5340.h>
+#endif
 
 #define NRF5340_NET_VFLASH_SECTOR_SZ 2048
 
@@ -218,7 +220,12 @@ nrf5340_net_vflash_init(const struct hal_flash *dev)
     const void *img_addr;
     uint32_t image_size;
 
+#if MYNEWT_PKG_apache_mynewt_core__hw_drivers_ipc_nrf5340
     img_addr = ipc_nrf5340_net_image_get(&image_size);
+#else
+    img_addr = 0;
+    image_size = 0;
+#endif
 
     /*
      * Application side IPC will set ipc_share data

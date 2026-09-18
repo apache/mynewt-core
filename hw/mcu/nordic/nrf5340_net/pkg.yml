@@ -28,7 +28,12 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf_common"
+
+pkg.deps.'BLE_TRANSPORT_HS == "nrf5340"':
     - "@apache-mynewt-core/hw/drivers/ipc_nrf5340"
+
+pkg.deps.'BLE_TRANSPORT_HS == "ipc"':
+    - "@apache-mynewt-core/hw/drivers/ipc"
 
 pkg.cflags.NFC_PINS_AS_GPIO:
     - '-DCONFIG_NFCT_PINS_AS_GPIOS=1'
