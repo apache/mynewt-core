@@ -173,7 +173,7 @@ log_fcb2_start_append(struct log *log, int len, struct fcb2_entry *loc)
         }
 #endif
 
-#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS) && !MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
         /* The FCB needs to be rotated. */
         log_fcb_rotate_bmarks(fcb_log);
 #endif
@@ -182,6 +182,18 @@ log_fcb2_start_append(struct log *log, int len, struct fcb2_entry *loc)
         if (rc) {
             goto err;
         }
+
+#if MYNEWT_VAL(LOG_FCB_SECTOR_BOOKMARKS)
+        /* The FCB needs to be rotated, reinit previously allocated
+         * bookmarks
+         */
+        rc = log_fcb_init_bmarks(fcb_log, fcb_log->fl_bset.lfs_bmarks,
+                                 fcb_log->fl_bset.lfs_cap,
+                                 fcb_log->fl_bset.lfs_en_sect_bmarks);
+        if (rc) {
+            goto err;
+        }
+#endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
         /*
