@@ -18,4 +18,4 @@
 #
 
 syscfg.vals:
-    NRFX_I2S_ENABLED: 1
+    NRFX_PWM_ENABLED: 1

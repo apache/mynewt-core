@@ -444,6 +444,7 @@ syscfg.defs:
 
 syscfg.vals:
     OS_TICKS_PER_SEC: 128
+    NRFX_NVMC_ENABLED: 1
 
 syscfg.vals.'(MCU_TARGET == "nRF52832" || MCU_TARGET == "nRF52840")':
     MCU_ICACHE_ENABLED: 1

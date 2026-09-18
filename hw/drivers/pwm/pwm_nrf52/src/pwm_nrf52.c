@@ -37,6 +37,8 @@
 /* Max number on PWM instances on existing nRF52xxx MCUs */
 #define NRF52_PWM_MAX_INSTANCES     4
 
+#define NRF52_PWM_INST(_id)         NRFX_PWM_INSTANCE(NRF_PWM##_id)
+
 struct nrf52_pwm_dev_global {
     bool in_use;
     bool playing;
@@ -45,7 +47,7 @@ struct nrf52_pwm_dev_global {
     nrf_pwm_values_individual_t duty_cycles;
     uint32_t n_cycles;
     nrfx_pwm_flag_t flags;
-    nrfx_pwm_handler_t internal_handler;
+    nrfx_pwm_event_handler_t internal_handler;
     user_handler_t cycle_handler;
     user_handler_t seq_end_handler;
     void* cycle_data;
@@ -57,7 +59,7 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_0)
     [0].in_use = false,
     [0].playing = false,
-    [0].drv_instance = NRFX_PWM_INSTANCE(0),
+    [0].drv_instance = NRF52_PWM_INST(0),
     [0].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
@@ -74,7 +76,7 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_1)
     [1].in_use = false,
     [1].playing = false,
-    [1].drv_instance = NRFX_PWM_INSTANCE(1),
+    [1].drv_instance = NRF52_PWM_INST(1),
     [1].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
@@ -91,7 +93,7 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_2)
     [2].in_use = false,
     [2].playing = false,
-    [2].drv_instance = NRFX_PWM_INSTANCE(2),
+    [2].drv_instance = NRF52_PWM_INST(2),
     [2].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
@@ -108,7 +110,7 @@ static struct nrf52_pwm_dev_global instances[] =
 #if MYNEWT_VAL(PWM_3)
     [3].in_use = false,
     [3].playing = false,
-    [3].drv_instance = NRFX_PWM_INSTANCE(3),
+    [3].drv_instance = NRF52_PWM_INST(3),
     [3].config = NRFX_PWM_DEFAULT_CONFIG(NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
                                          NRF_PWM_PIN_NOT_CONNECTED,
@@ -126,19 +128,19 @@ static struct nrf52_pwm_dev_global instances[] =
 
 #if MYNEWT_VAL(PWM_0)
 static void
-handler_0(nrfx_pwm_evt_type_t event_type, void *unused)
+handler_0(nrfx_pwm_event_type_t event_type, void *unused)
 {
     switch (event_type) {
-    case NRFX_PWM_EVT_END_SEQ0:
-    case NRFX_PWM_EVT_END_SEQ1:
+    case NRFX_PWM_EVENT_END_SEQ0:
+    case NRFX_PWM_EVENT_END_SEQ1:
         instances[0].cycle_handler(instances[0].cycle_data);
         break;
 
-    case NRFX_PWM_EVT_FINISHED:
+    case NRFX_PWM_EVENT_FINISHED:
         instances[0].seq_end_handler(instances[0].seq_end_data);
         break;
 
-    case NRFX_PWM_EVT_STOPPED:
+    case NRFX_PWM_EVENT_STOPPED:
         break;
 
     default:
@@ -149,19 +151,19 @@ handler_0(nrfx_pwm_evt_type_t event_type, void *unused)
 
 #if MYNEWT_VAL(PWM_1)
 static void
-handler_1(nrfx_pwm_evt_type_t event_type, void *unused)
+handler_1(nrfx_pwm_event_type_t event_type, void *unused)
 {
     switch (event_type) {
-    case NRFX_PWM_EVT_END_SEQ0:
-    case NRFX_PWM_EVT_END_SEQ1:
+    case NRFX_PWM_EVENT_END_SEQ0:
+    case NRFX_PWM_EVENT_END_SEQ1:
         instances[1].cycle_handler(instances[1].cycle_data);
         break;
 
-    case NRFX_PWM_EVT_FINISHED:
+    case NRFX_PWM_EVENT_FINISHED:
         instances[1].seq_end_handler(instances[1].seq_end_data);
         break;
 
-    case NRFX_PWM_EVT_STOPPED:
+    case NRFX_PWM_EVENT_STOPPED:
         break;
 
     default:
@@ -172,19 +174,19 @@ handler_1(nrfx_pwm_evt_type_t event_type, void *unused)
 
 #if MYNEWT_VAL(PWM_2)
 static void
-handler_2(nrfx_pwm_evt_type_t event_type, void *unused)
+handler_2(nrfx_pwm_event_type_t event_type, void *unused)
 {
     switch (event_type) {
-    case NRFX_PWM_EVT_END_SEQ0:
-    case NRFX_PWM_EVT_END_SEQ1:
+    case NRFX_PWM_EVENT_END_SEQ0:
+    case NRFX_PWM_EVENT_END_SEQ1:
         instances[2].cycle_handler(instances[2].cycle_data);
         break;
 
-    case NRFX_PWM_EVT_FINISHED:
+    case NRFX_PWM_EVENT_FINISHED:
         instances[2].seq_end_handler(instances[2].seq_end_data);
         break;
 
-    case NRFX_PWM_EVT_STOPPED:
+    case NRFX_PWM_EVENT_STOPPED:
         break;
 
     default:
@@ -196,19 +198,19 @@ handler_2(nrfx_pwm_evt_type_t event_type, void *unused)
 
 #if MYNEWT_VAL(PWM_3)
 static void
-handler_3(nrfx_pwm_evt_type_t event_type, void *unused)
+handler_3(nrfx_pwm_event_type_t event_type, void *unused)
 {
     switch (event_type) {
-    case NRFX_PWM_EVT_END_SEQ0:
-    case NRFX_PWM_EVT_END_SEQ1:
+    case NRFX_PWM_EVENT_END_SEQ0:
+    case NRFX_PWM_EVENT_END_SEQ1:
         instances[3].cycle_handler(instances[3].cycle_data);
         break;
 
-    case NRFX_PWM_EVT_FINISHED:
+    case NRFX_PWM_EVENT_FINISHED:
         instances[3].seq_end_handler(instances[3].seq_end_data);
         break;
 
-    case NRFX_PWM_EVT_STOPPED:
+    case NRFX_PWM_EVENT_STOPPED:
         break;
 
     default:
@@ -217,7 +219,7 @@ handler_3(nrfx_pwm_evt_type_t event_type, void *unused)
 }
 #endif
 
-static nrfx_pwm_handler_t internal_handlers[] = {
+static nrfx_pwm_event_handler_t internal_handlers[] = {
 #if MYNEWT_VAL(PWM_0)
 handler_0,
 #else
@@ -754,14 +756,17 @@ nrf52_pwm_get_resolution_bits(struct pwm_dev *dev)
     return (-EINVAL);
 }
 
-#if MYNEWT_VAL(OS_SYSVIEW)
 #if MYNEWT_VAL(PWM_0)
 static void
 pwm_0_irq_handler(void)
 {
+#if MYNEWT_VAL(OS_SYSVIEW)
     os_trace_isr_enter();
-    nrfx_pwm_0_irq_handler();
+#endif
+    nrfx_pwm_irq_handler(&instances[0].drv_instance);
+#if MYNEWT_VAL(OS_SYSVIEW)
     os_trace_isr_exit();
+#endif
 }
 #endif
 
@@ -769,9 +774,13 @@ pwm_0_irq_handler(void)
 static void
 pwm_1_irq_handler(void)
 {
+#if MYNEWT_VAL(OS_SYSVIEW)
     os_trace_isr_enter();
-    nrfx_pwm_1_irq_handler();
+#endif
+    nrfx_pwm_irq_handler(&instances[1].drv_instance);
+#if MYNEWT_VAL(OS_SYSVIEW)
     os_trace_isr_exit();
+#endif
 }
 #endif
 
@@ -779,9 +788,13 @@ pwm_1_irq_handler(void)
 static void
 pwm_2_irq_handler(void)
 {
+#if MYNEWT_VAL(OS_SYSVIEW)
     os_trace_isr_enter();
-    nrfx_pwm_2_irq_handler();
+#endif
+    nrfx_pwm_irq_handler(&instances[2].drv_instance);
+#if MYNEWT_VAL(OS_SYSVIEW)
     os_trace_isr_exit();
+#endif
 }
 #endif
 
@@ -789,18 +802,18 @@ pwm_2_irq_handler(void)
 static void
 pwm_3_irq_handler(void)
 {
+#if MYNEWT_VAL(OS_SYSVIEW)
     os_trace_isr_enter();
-    nrfx_pwm_3_irq_handler();
+#endif
+    nrfx_pwm_irq_handler(&instances[3].drv_instance);
+#if MYNEWT_VAL(OS_SYSVIEW)
     os_trace_isr_exit();
+#endif
 }
 #endif
 
 #define PWM_IRQ_HANDLER(_pwm_no) \
                             (uint32_t) pwm_ ## _pwm_no ## _irq_handler
-#else
-#define PWM_IRQ_HANDLER(_pwm_no) \
-                            (uint32_t) nrfx_pwm_ ## _pwm_no ## _irq_handler
-#endif
 
 /**
  * Callback to initialize an adc_dev structure from the os device

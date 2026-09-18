@@ -36,7 +36,19 @@
 
 #include <assert.h>
 #include <stdatomic.h>
+#include <drivers/nrfx_utils.h>
+#include <drivers/nrfx_errors.h>
 #include "os/mynewt.h"
+
+#ifndef NRF_STATIC_INLINE
+#define NRF_STATIC_INLINE __STATIC_INLINE
+#endif
+#ifndef NRFX_STATIC_INLINE
+#define NRFX_STATIC_INLINE __STATIC_INLINE
+#endif
+#ifndef NRFY_STATIC_INLINE
+#define NRFY_STATIC_INLINE __STATIC_INLINE
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -326,6 +338,15 @@ extern "C" {
 
 /** @brief Bitmask that defines TIMER instances that are reserved for use outside of the nrfx library. */
 #define NRFX_TIMERS_USED          0
+
+#ifndef nrf_clock_hf_is_running
+#define nrf_clock_hf_is_running(p_reg, clk_src)                               \
+    ({                                                                        \
+        uint32_t _src = 0;                                                    \
+        nrf_clock_is_running((p_reg), NRF_CLOCK_DOMAIN_HFCLK, &_src) &&       \
+            (_src == (uint32_t)(clk_src));                                    \
+    })
+#endif
 
 /** @} */
 

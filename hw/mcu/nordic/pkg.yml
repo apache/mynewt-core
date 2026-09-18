@@ -31,22 +31,273 @@ pkg.keywords:
 pkg.type: sdk
 
 pkg.ign_dirs:
-    - "soc"
+    - "bsp"
     - "templates"
-    - "mdk"
+    - "lib"
+    - "doc"
 
 pkg.include_dirs:
     - "@nordic-nrfx/drivers/include"
     - "@nordic-nrfx/drivers"
     - "@nordic-nrfx/drivers/src"
     - "@nordic-nrfx/hal"
+    - "@nordic-nrfx/haly"
     - "@nordic-nrfx/helpers"
-    - "@nordic-nrfx/mdk"
+    - "@nordic-nrfx/bsp/stable"
+    - "@nordic-nrfx/bsp/stable/mdk"
+    - "@nordic-nrfx/bsp/stable/mdk/common"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf51"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52840"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52833"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52832"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52820"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52811"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52810"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf52/nrf52805"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf53"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf53/nrf5340"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf54h"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf54h/nrf54h20"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf54l"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf54l/nrf54l15"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf91"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf91/nrf9160"
+    - "@nordic-nrfx/bsp/stable/mdk/nrf91/nrf9120"
+    - "@nordic-nrfx/bsp/stable/soc"
     - "@nordic-nrfx/."
     - "include"
 
-pkg.src_dirs:
-    - "@nordic-nrfx/drivers/src"
+pkg.source_files.NRFX_ADC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_adc.c"
+app.cflags.NRFX_ADC_ENABLED:
+    - -DNRFX_ADC_ENABLED=1
+
+pkg.source_files.NRFX_BELLBOARD_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_bellboard.c"
+app.cflags.NRFX_BELLBOARD_ENABLED:
+    - -DNRFX_BELLBOARD_ENABLED=1
+
+pkg.source_files.NRFX_CLOCK_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_clock.c"
+    - "@nordic-nrfx/drivers/src/nrfx_clock_hfclk.c"
+    - "@nordic-nrfx/drivers/src/nrfx_clock_hfclk192m.c"
+    - "@nordic-nrfx/drivers/src/nrfx_clock_hfclkaudio.c"
+    - "@nordic-nrfx/drivers/src/nrfx_clock_lfclk.c"
+    - "@nordic-nrfx/drivers/src/nrfx_clock_xo.c"
+    - "@nordic-nrfx/drivers/src/nrfx_clock_xo24m.c"
+app.cflags.NRFX_CLOCK_ENABLED:
+    - -DNRFX_CLOCK_ENABLED=1
+
+pkg.source_files.NRFX_COMP_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_comp.c"
+app.cflags.NRFX_COMP_ENABLED:
+    - -DNRFX_COMP_ENABLED=1
+
+pkg.source_files.NRFX_CRACEN_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_cracen.c"
+app.cflags.NRFX_CRACEN_ENABLED:
+    - -DNRFX_CRACEN_ENABLED=1
+
+pkg.source_files.NRFX_DPPI_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_dppi.c"
+app.cflags.NRFX_DPPI_ENABLED:
+    - -DNRFX_DPPI_ENABLED=1
+
+pkg.source_files.NRFX_EGU_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_egu.c"
+app.cflags.NRFX_EGU_ENABLED:
+    - -DNRFX_EGU_ENABLED=1
+
+pkg.source_files.NRFX_GPIOTE_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_gpiote.c"
+app.cflags.NRFX_GPIOTE_ENABLED:
+    - -DNRFX_GPIOTE_ENABLED=1
+
+pkg.source_files.NRFX_GRTC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_grtc.c"
+app.cflags.NRFX_GRTC_ENABLED:
+    - -DNRFX_GRTC_ENABLED=1
+
+pkg.source_files.NRFX_I2S_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_i2s.c"
+app.cflags.NRFX_I2S_ENABLED:
+    - -DNRFX_I2S_ENABLED=1
+
+pkg.source_files.NRFX_IPC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_ipc.c"
+app.cflags.NRFX_IPC_ENABLED:
+    - -DNRFX_IPC_ENABLED=1
+
+pkg.source_files.NRFX_KMU_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_kmu.c"
+app.cflags.NRFX_KMU_ENABLED:
+    - -DNRFX_KMU_ENABLED=1
+
+pkg.source_files.NRFX_LPCOMP_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_lpcomp.c"
+app.cflags.NRFX_LPCOMP_ENABLED:
+    - -DNRFX_LPCOMP_ENABLED=1
+
+pkg.source_files.NRFX_MRAMC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_mramc.c"
+app.cflags.NRFX_MRAMC_ENABLED:
+    - -DNRFX_MRAMC_ENABLED=1
+
+pkg.source_files.NRFX_NFCT_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_nfct.c"
+app.cflags.NRFX_NFCT_ENABLED:
+    - -DNRFX_NFCT_ENABLED=1
+
+pkg.source_files.NRFX_NVMC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_nvmc.c"
+app.cflags.NRFX_NVMC_ENABLED:
+    - -DNRFX_NVMC_ENABLED=1
+
+pkg.source_files.NRFX_PDM_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_pdm.c"
+app.cflags.NRFX_PDM_ENABLED:
+    - -DNRFX_PDM_ENABLED=1
+
+pkg.source_files.NRFX_POWER_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_power.c"
+app.cflags.NRFX_POWER_ENABLED:
+    - -DNRFX_POWER_ENABLED=1
+
+pkg.source_files.NRFX_PPI_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_ppi.c"
+app.cflags.NRFX_PPI_ENABLED:
+    - -DNRFX_PPI_ENABLED=1
+
+pkg.source_files.NRFX_PPIB_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_ppib.c"
+app.cflags.NRFX_PPIB_ENABLED:
+    - -DNRFX_PPIB_ENABLED=1
+
+pkg.source_files.NRFX_PRS_ENABLED:
+    - "@nordic-nrfx/drivers/src/prs/nrfx_prs.c"
+app.cflags.NRFX_PRS_ENABLED:
+    - -DNRFX_PRS_ENABLED=1
+
+pkg.source_files.NRFX_PWM_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_pwm.c"
+app.cflags.NRFX_PWM_ENABLED:
+    - -DNRFX_PWM_ENABLED=1
+
+pkg.source_files.NRFX_QDEC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_qdec.c"
+app.cflags.NRFX_QDEC_ENABLED:
+    - -DNRFX_QDEC_ENABLED=1
+
+pkg.source_files.NRFX_QSPI_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_qspi.c"
+app.cflags.NRFX_QSPI_ENABLED:
+    - -DNRFX_QSPI_ENABLED=1
+
+pkg.source_files.NRFX_RNG_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_rng.c"
+app.cflags.NRFX_RNG_ENABLED:
+    - -DNRFX_RNG_ENABLED=1
+
+pkg.source_files.NRFX_RRAMC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_rramc.c"
+app.cflags.NRFX_RRAMC_ENABLED:
+    - -DNRFX_RRAMC_ENABLED=1
+
+pkg.source_files.NRFX_RTC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_rtc.c"
+app.cflags.NRFX_RTC_ENABLED:
+    - -DNRFX_RTC_ENABLED=1
+
+pkg.source_files.NRFX_SAADC_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_saadc.c"
+app.cflags.NRFX_SAADC_ENABLED:
+    - -DNRFX_SAADC_ENABLED=1
+
+pkg.source_files.NRFX_SPI_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_spi.c"
+app.cflags.NRFX_SPI_ENABLED:
+    - -DNRFX_SPI_ENABLED=1
+
+pkg.source_files.NRFX_SPIM_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_spim.c"
+app.cflags.NRFX_SPIM_ENABLED:
+    - -DNRFX_SPIM_ENABLED=1
+
+pkg.source_files.NRFX_SPIS_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_spis.c"
+app.cflags.NRFX_SPIS_ENABLED:
+    - -DNRFX_SPIS_ENABLED=1
+
+pkg.source_files.NRFX_SYSTICK_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_systick.c"
+app.cflags.NRFX_SYSTICK_ENABLED:
+    - -DNRFX_SYSTICK_ENABLED=1
+
+pkg.source_files.NRFX_TBM_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_tbm.c"
+app.cflags.NRFX_TBM_ENABLED:
+    - -DNRFX_TBM_ENABLED=1
+
+pkg.source_files.NRFX_TDM_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_tdm.c"
+app.cflags.NRFX_TDM_ENABLED:
+    - -DNRFX_TDM_ENABLED=1
+
+pkg.source_files.NRFX_TEMP_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_temp.c"
+app.cflags.NRFX_TEMP_ENABLED:
+    - -DNRFX_TEMP_ENABLED=1
+
+pkg.source_files.NRFX_TIMER_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_timer.c"
+app.cflags.NRFX_TIMER_ENABLED:
+    - -DNRFX_TIMER_ENABLED=1
+
+pkg.source_files.NRFX_TWI_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_twi.c"
+app.cflags.NRFX_TWI_ENABLED:
+    - -DNRFX_TWI_ENABLED=1
+
+pkg.source_files.NRFX_TWIM_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_twim.c"
+app.cflags.NRFX_TWIM_ENABLED:
+    - -DNRFX_TWIM_ENABLED=1
+
+pkg.source_files.NRFX_TWIS_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_twis.c"
+app.cflags.NRFX_TWIS_ENABLED:
+    - -DNRFX_TWIS_ENABLED=1
+
+pkg.source_files.NRFX_UART_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_uart.c"
+app.cflags.NRFX_UART_ENABLED:
+    - -DNRFX_UART_ENABLED=1
+
+pkg.source_files.NRFX_UARTE_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_uarte.c"
+app.cflags.NRFX_UARTE_ENABLED:
+    - -DNRFX_UARTE_ENABLED=1
+
+pkg.source_files.NRFX_USBD_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_usbd.c"
+app.cflags.NRFX_USBD_ENABLED:
+    - -DNRFX_USBD_ENABLED=1
+
+pkg.source_files.NRFX_USBREG_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_usbreg.c"
+app.cflags.NRFX_USBREG_ENABLED:
+    - -DNRFX_USBREG_ENABLED=1
+
+pkg.source_files.NRFX_VEVIF_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_vevif.c"
+app.cflags.NRFX_VEVIF_ENABLED:
+    - -DNRFX_VEVIF_ENABLED=1
+
+pkg.source_files.NRFX_WDT_ENABLED:
+    - "@nordic-nrfx/drivers/src/nrfx_wdt.c"
+app.cflags.NRFX_WDT_ENABLED:
+    - -DNRFX_WDT_ENABLED=1
 
 pkg.cflags:
     - -std=gnu99
@@ -58,7 +309,7 @@ pkg.deps:
 
 repository.nordic-nrfx:
     type: github
-    vers: v3.14.0-commit
+    vers: v4.5.0-commit
     branch: master
     user: NordicSemiconductor
     repo: nrfx

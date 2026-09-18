@@ -513,7 +513,7 @@ nrf52_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
 {
     int rc;
     int unlock = 0;
-    uint16_t adc_value;
+    nrf_saadc_value_t adc_value;
 
     if (nrf_saadc_busy_check(NRF_SAADC)) {
         return OS_EBUSY;
