@@ -70,6 +70,9 @@ syscfg.defs:
         description: 'Priority of native HAL timer task.'
         type: task_priority
         value: 0
+    MCU_LINK_TABLES_ALIGNMENT:
+        description: 'Alignment value to use in link tables linker entries'
+        value: 32
 
 syscfg.vals:
     OS_TICKS_PER_SEC: 100
