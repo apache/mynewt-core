@@ -22,6 +22,9 @@ syscfg.defs:
             LV_COLOR_16_SWAP changes order of 16 bit RGB value to
             better match 8 bit SPI protocol.
         value: 0
+    LVGL_SSD1306:
+        description: Enable SSD1306 display driver.
+        value:
     LVGL_GC9A01:
         description: Enable GC9A01 display driver.
         value:
