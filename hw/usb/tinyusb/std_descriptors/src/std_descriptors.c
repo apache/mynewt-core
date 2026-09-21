@@ -290,6 +290,10 @@ enum {
     ITF_NUM_DFU,
 #endif
 
+#if CFG_TUD_DFU_RUNTIME
+    ITF_NUM_DFU_RUNTIME,
+#endif
+
     ITF_NUM_TOTAL
 };
 
@@ -301,6 +305,7 @@ enum {
                              CFG_TUD_HID * TUD_HID_DESC_LEN + \
                              CFG_TUD_BTH * TUD_BTH_DESC_LEN + \
                              CFG_TUD_DFU * TUD_DFU_DESC_LEN(1) + \
+                             CFG_TUD_DFU_RUNTIME * TUD_DFU_RT_DESC_LEN + \
                              0)
 
 const uint8_t desc_configuration[] = {
@@ -346,6 +351,11 @@ const uint8_t desc_configuration[] = {
 #if CFG_TUD_DFU
     TUD_DFU_DESCRIPTOR(ITF_NUM_DFU, 1, DFU_SLOT_NAME_IF_STR_IX, DFU_ATTR_CAN_DOWNLOAD,
                        CFG_TUD_DFU_DETACH_TIMEOUT, CFG_TUD_DFU_XFER_BUFSIZE),
+#endif
+
+#if CFG_TUD_DFU_RUNTIME
+    TUD_DFU_RT_DESCRIPTOR(ITF_NUM_DFU_RUNTIME, 0, DFU_ATTR_CAN_DOWNLOAD,
+                          CFG_TUD_DFU_DETACH_TIMEOUT, CFG_TUD_DFU_XFER_BUFSIZE),
 #endif
 };
 
