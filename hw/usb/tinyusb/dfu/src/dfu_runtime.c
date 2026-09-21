@@ -30,12 +30,24 @@
  * partitions like FLASH, EEPROM, etc.
  */
 
+static struct os_callout delayed_reboot_callout;
+
+static void
+delayed_reboot_cb(struct os_event *event)
+{
+    /* Write magic value to NVReg so bootloader will start in USB DFU mode */
+    hal_nvreg_write(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG, MYNEWT_VAL_USBD_DFU_MAGIC_VALUE);
+
+    hal_system_reset();
+}
+
 /* Invoked when a DFU_DETACH request is received and bitWillDetach is set */
 void
 tud_dfu_runtime_reboot_to_dfu_cb(void)
 {
     _Static_assert(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG >= 0, "No NVReg specified");
-    /* Write magic value to NVReg so bootloader will start in USB DFU mode */
-    hal_nvreg_write(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG, MYNEWT_VAL_USBD_DFU_MAGIC_VALUE);
-    hal_system_reset();
+
+    os_callout_init(&delayed_reboot_callout, os_eventq_dflt_get(),
+                    delayed_reboot_cb, NULL);
+    os_callout_reset(&delayed_reboot_callout, os_time_ms_to_ticks32(10));
 }
