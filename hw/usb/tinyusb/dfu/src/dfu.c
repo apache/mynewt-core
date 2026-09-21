@@ -167,7 +167,7 @@ tud_dfu_manifest_cb(uint8_t alt)
 void
 tud_dfu_detach_cb(void)
 {
-    /* TODO: implement detach if needed */
+    // hal_system_reset();
 }
 
 /**
@@ -188,7 +188,8 @@ boot_preboot(void)
             start_dfu = true;
         }
         hal_gpio_deinit(MYNEWT_VAL(USBD_DFU_BOOT_PIN));
-    } else if (MYNEWT_VAL_USBD_DFU_RESET_COUNT_NVREG >= 0) {
+    }
+    if (MYNEWT_VAL_USBD_DFU_RESET_COUNT_NVREG >= 0 && !start_dfu) {
         uint32_t counter = hal_nvreg_read(MYNEWT_VAL_USBD_DFU_RESET_COUNT_NVREG);
         uint32_t new_counter = 0;
 
@@ -206,9 +207,10 @@ boot_preboot(void)
             /* Write if value changed */
             hal_nvreg_write(MYNEWT_VAL_USBD_DFU_RESET_COUNT_NVREG, new_counter);
         }
-    } else if (MYNEWT_VAL_USBD_DFU_MAGIC_NVREG >= 0 &&
-               (hal_nvreg_read(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG) ==
-                MYNEWT_VAL_USBD_DFU_MAGIC_VALUE)) {
+    }
+    if (!start_dfu && MYNEWT_VAL_USBD_DFU_MAGIC_NVREG >= 0 &&
+        (hal_nvreg_read(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG) ==
+         MYNEWT_VAL_USBD_DFU_MAGIC_VALUE)) {
         /* Reset flag in NVReg */
         hal_nvreg_write(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG, 0);
         start_dfu = true;
