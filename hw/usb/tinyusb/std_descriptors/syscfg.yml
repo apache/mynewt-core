@@ -105,6 +105,11 @@ syscfg.defs:
             if standard implementation exposing SLOT1 is required USB_DFU_STD can
             be additionally specified.
         value:
+    USBD_DFU_RUNTIME:
+        description: >
+            Enable DFU_RUNTIME interface in TinyUSB.  This adds USB descriptor to
+            USB configuration.  It does not add TinyUSB callbacks implementation.
+        value:
     USBD_DFU_STD:
         description: >
             Add Mynewt standard DFU interface implementation.

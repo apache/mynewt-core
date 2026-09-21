@@ -191,11 +191,15 @@ extern "C" {
 #define CFG_TUD_MIDI             0
 #define CFG_TUD_VENDOR           0
 #define CFG_TUD_USBTMC           0
-#define CFG_TUD_DFU_RT           0
 #if MYNEWT_VAL(USBD_DFU)
 #define CFG_TUD_DFU              MYNEWT_VAL(USBD_DFU)
 #else
 #define CFG_TUD_DFU              0
+#endif
+#if MYNEWT_VAL(USBD_DFU_RUNTIME)
+#define CFG_TUD_DFU_RUNTIME      MYNEWT_VAL(USBD_DFU_RUNTIME)
+#else
+#define CFG_TUD_DFU_RUNTIME      0
 #endif
 #if MYNEWT_VAL(USBD_BTH)
 #define CFG_TUD_BTH              MYNEWT_VAL(USBD_BTH)
