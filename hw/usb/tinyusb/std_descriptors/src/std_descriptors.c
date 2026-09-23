@@ -437,12 +437,65 @@ struct {
     .compatible_id = MYNEWT_VAL(USBD_WINDOWS_COMP_ID_STRING),
 };
 
+struct __PACKED {
+    uint32_t len;
+    uint16_t version;
+    uint16_t index;
+    uint16_t count;
+    uint32_t size;
+    uint32_t property_data_type;
+    uint16_t property_name_len;
+    uint16_t property_name[21];
+    uint32_t property_data_len;
+    uint16_t property[40];
+} static interface_guid = {
+    .len = tu_htole32(146),
+    .version = tu_htole16(0x100),
+    .index = tu_htole16(5),
+    .count = tu_htole16(1),
+    .size = tu_htole32(136),
+    .property_data_type = tu_htole32(7),
+    .property_name_len = tu_htole16(42),
+    .property_name = {},
+    .property_data_len = tu_htole32(80),
+    .property = {},
+};
+
+static const char guid_name[] = "DeviceInterfaceGUIDs";
+static const char if_guid[] = "{02f5f07d-abac-4c80-96ac-2f67f695e3e5}";
+
+static void
+ascii_to_utf16le(void *dst, const char *src, size_t buf_size)
+{
+    int str_len = strlen(src);
+    uint8_t *ptr = dst;
+
+    for (size_t i = 0; i < buf_size; ++i) {
+        *ptr++ = i < str_len ? src[i] : 0;
+        *ptr++ = 0;
+    }
+}
+
 bool
 tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, const tusb_control_request_t *request)
 {
     if (request->wIndex == 0x04 && request->bRequest == COMPATIBILITY_FEATURE_REQUEST) {
         if (stage == CONTROL_STAGE_SETUP) {
             return tud_control_xfer(rhport, request, (void *)&windows_compat_id, 40);
+        } else {
+            return true;
+        }
+    } else if (request->wIndex == 0x05 &&
+               request->bRequest == COMPATIBILITY_FEATURE_REQUEST) {
+        if (stage == CONTROL_STAGE_SETUP) {
+            ascii_to_utf16le(interface_guid.property_name, guid_name,
+                             ARRAY_SIZE(interface_guid.property_name));
+            ascii_to_utf16le(interface_guid.property, if_guid,
+                             ARRAY_SIZE(interface_guid.property));
+            /* Change one character so each guid is different */
+            interface_guid.property[1] = tu_htole16(request->wValue + '0');
+            return tud_control_xfer(rhport, request, &interface_guid,
+                                    sizeof(interface_guid));
         } else {
             return true;
         }
