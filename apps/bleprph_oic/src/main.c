@@ -382,7 +382,7 @@ mynewt_main(int argc, char **argv)
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("c5");
+    rc = ble_svc_gap_device_name_set(MYNEWT_VAL(BLE_SVC_GAP_DEVICE_NAME));
     assert(rc == 0);
 
     /* Our light resource */
