@@ -32,6 +32,8 @@ syscfg.vals:
     # Use INFO log level to reduce code size.  DEBUG is too large for nRF51.
     LOG_LEVEL: 0
 
+    BLE_SVC_GAP_DEVICE_NAME: '"nimble-bleprph-oic"'
+
     BLE_GATT_WRITE_MAX_ATTRS: 6
     BLE_TRANSPORT_EVT_COUNT: 4
     BLE_TRANSPORT_EVT_DISCARDABLE_COUNT: 3
@@ -69,7 +71,7 @@ syscfg.vals:
     STATS_NAMES: 1
 
     # Default task settings
-    OS_MAIN_STACK_SIZE: 568
+    OS_MAIN_STACK_SIZE: 1024
 
     # Lots of smaller mbufs are required for smp-over-OIC using typical BLE
     # ATT MTU values.
