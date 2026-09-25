@@ -41,5 +41,4 @@ syscfg.vals:
     STATS_MGMT: 1
     LOG_MGMT: 1
     OC_SERVER: 1
-    OC_TRANSPORT_IP: 1
     OC_TRANSPORT_SERIAL: 1
