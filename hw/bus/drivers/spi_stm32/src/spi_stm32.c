@@ -952,6 +952,9 @@ bus_spi_stm32_dev_init_func(struct os_dev *odev, void *arg)
     dd->hspi.Init.NSS = SPI_NSS_SOFT;
     dd->hspi.Init.TIMode = SPI_TIMODE_DISABLE;
     dd->hspi.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+#if SPI_MASTER_RX_AUTOSUSP_ENABLE
+    dd->hspi.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_ENABLE;
+#endif
 #ifdef SPI_MASTER_KEEP_IO_STATE_ENABLE
     dd->hspi.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_ENABLE;
 #endif
