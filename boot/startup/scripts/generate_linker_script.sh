@@ -27,7 +27,6 @@ touch ${MYNEWT_BUILD_GENERATED_DIR}/link/include/bsp_config.ld.h
 touch ${MYNEWT_BUILD_GENERATED_DIR}/link/include/mcu_config.ld.h
 touch ${MYNEWT_BUILD_GENERATED_DIR}/link/include/user_sections.ld.h
 
-set >env.txt
 ${MYNEWT_CC_PATH} -xc -DMYNEWT_SYSFLASH_ONLY_CONST -P -E \
   -I${MYNEWT_TARGET_PATH}/link/include \
   -I${MYNEWT_APP_PATH}/link/include \
@@ -38,4 +37,3 @@ ${MYNEWT_CC_PATH} -xc -DMYNEWT_SYSFLASH_ONLY_CONST -P -E \
   -I${MYNEWT_BUILD_GENERATED_DIR}/link/include \
   $LINK_TEMPLATE \
   >${MYNEWT_BUILD_GENERATED_DIR}/link/mynewt.ld
-
