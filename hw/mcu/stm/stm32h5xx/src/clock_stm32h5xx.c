@@ -99,7 +99,9 @@ SystemClock_Config(void)
         LL_RCC_LSE_EnableBypass();
     }
     if (MYNEWT_VAL_STM32_CLOCK_LSE && !LL_RCC_LSE_IsReady()) {
+        LL_RCC_LSE_Disable();
         LL_PWR_EnableBkUpAccess();
+        LL_RCC_LSE_SetDriveCapability(MYNEWT_VAL_STM32_CLOCK_LSE_DRIVE_CAPABILITY);
         LL_RCC_LSE_Enable();
     }
     if (MYNEWT_VAL_STM32_CLOCK_HSE_BYPASS) {
@@ -206,6 +208,8 @@ SystemClock_Config(void)
     LL_RCC_SetSPIClockSource(LL_RCC_SPI1_CLKSOURCE_CLKP);
     LL_RCC_SetSPIClockSource(LL_RCC_SPI2_CLKSOURCE_CLKP);
     LL_RCC_SetSPIClockSource(LL_RCC_SPI3_CLKSOURCE_CLKP);
+
+    BUSY_LOOP(MYNEWT_VAL_STM32_CLOCK_LSE && !LL_RCC_LSE_IsReady());
 }
 
 #endif
