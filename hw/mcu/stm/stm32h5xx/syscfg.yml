@@ -54,6 +54,10 @@ syscfg.defs:
         description: 0 for 32768 xtal; 1 for input clock
         value: 0
 
+    STM32_CLOCK_LSE_DRIVE_CAPABILITY:
+        description: LSE drive capability.
+        value: LL_RCC_LSEDRIVE_MEDIUMLOW
+
     STM32_CLOCK_HSE:
         description: Enable high-speed external clock source
         value: 0
