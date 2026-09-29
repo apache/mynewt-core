@@ -1051,9 +1051,11 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
 
     MSC_FAT_VIEW_LOG_INFO("Write root dir sector %d\n", sector);
 
-    for (i = 0; i < root_dir_entry_count; ++i) {
-        if (root_dir[i].deleted == 0) {
-            root_dir[i].deleted = 1;
+    if (sector == 0) {
+        for (i = 0; i < root_dir_entry_count; ++i) {
+            if (root_dir[i].deleted == 0) {
+                root_dir[i].deleted = 1;
+            }
         }
     }
 
@@ -1061,10 +1063,17 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
         if (entry->bytes[0] == 0xe5) {
             continue;
         }
+        if (entry->bytes[0] == 0x00) {
+            break;
+        }
         if (entry->attr == 0xF) {
             /* Long file name */
             if (entry->sequence & 0x40) {
                 n = (entry->sequence & 0xF);
+                if (entry + n > limit) {
+                    MSC_FAT_VIEW_LOG_DEBUG("Entry accross sectors\n");
+                    break;
+                }
                 checksum = entry->checksum;
 
                 while (n) {
