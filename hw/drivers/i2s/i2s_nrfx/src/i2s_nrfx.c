@@ -48,7 +48,7 @@ static void
 nrfx_add_buffer(struct i2s *i2s, struct i2s_sample_buffer *buffer)
 {
     nrfx_i2s_buffers_t nrfx_buffers = {0};
-    nrfx_err_t err;
+    int err;
     uint16_t buffer_size;
 
     assert(i2s != NULL);

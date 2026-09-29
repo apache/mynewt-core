@@ -282,12 +282,12 @@ nrf_qspi_init(const struct hal_flash *dev)
     };
 
     rc = nrfx_qspi_init(&config, NULL, NULL);
-    if (rc != NRFX_SUCCESS) {
+    if (rc != 0) {
         return -1;
     }
 
     rc = nrfx_qspi_activate(true);
-    if (rc != NRFX_SUCCESS) {
+    if (rc != 0) {
         return -1;
     }
 
