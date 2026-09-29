@@ -119,7 +119,7 @@ nrf51_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
     /* Initialize the device */
     cfg = (nrfx_adc_config_t *)arg;
     rc = nrfx_adc_init(cfg, nrf51_adc_event_handler);
-    if (rc != NRFX_SUCCESS) {
+    if (rc != 0) {
         goto err;
     }
 
@@ -284,7 +284,7 @@ nrf51_adc_set_buffer(struct adc_dev *dev, void *buf1, void *buf2,
     buf_len /= sizeof(nrf_adc_value_t);
 
     rc = nrfx_adc_buffer_convert((nrf_adc_value_t *) buf1, buf_len);
-    if (rc != NRFX_SUCCESS) {
+    if (rc != 0) {
         goto err;
     }
 
@@ -302,7 +302,7 @@ nrf51_adc_release_buffer(struct adc_dev *dev, void *buf, int buf_len)
     buf_len /= sizeof(nrf_adc_value_t);
 
     rc = nrfx_adc_buffer_convert((nrf_adc_value_t *) buf, buf_len);
-    if (rc != NRFX_SUCCESS) {
+    if (rc != 0) {
         goto err;
     }
 
@@ -334,7 +334,7 @@ nrf51_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
     int rc;
 
     rc = nrfx_adc_sample_convert(nrf_adc_chan, &adc_value);
-    if (rc != NRFX_SUCCESS) {
+    if (rc != 0) {
         rc = OS_EBUSY;
         goto err;
     }

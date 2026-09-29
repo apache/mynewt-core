@@ -94,7 +94,7 @@ nrf_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
     rc = nrfx_nvmc_page_erase(sector_address);
     __HAL_ENABLE_INTERRUPTS(sr);
 
-    if (rc != NRFX_SUCCESS) {
+    if (rc != 0) {
         return -1;
     } else {
         return 0;
