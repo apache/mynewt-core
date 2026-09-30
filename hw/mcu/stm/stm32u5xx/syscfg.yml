@@ -159,3 +159,5 @@ syscfg.defs:
         description: Value read from erased flash.
         value: 0xff
 
+syscfg.vals.TINYUSB:
+    STM32_CLOCK_HSI48: 1
