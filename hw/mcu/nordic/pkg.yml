@@ -68,6 +68,9 @@ pkg.include_dirs:
     - "@nordic-nrfx/."
     - "include"
 
+pkg.source_files:
+    - "@nordic-nrfx/helpers/nrfx_flag32_allocator.c"
+
 pkg.source_files.NRFX_ADC_ENABLED:
     - "@nordic-nrfx/drivers/src/nrfx_adc.c"
 app.cflags.NRFX_ADC_ENABLED:
@@ -100,7 +103,7 @@ app.cflags.NRFX_CRACEN_ENABLED:
     - -DNRFX_CRACEN_ENABLED=1
 
 pkg.source_files.NRFX_DPPI_ENABLED:
-    - "@nordic-nrfx/drivers/src/nrfx_dppi.c"
+    - "@nordic-nrfx/helpers/nrfx_gppi_dppi.c"
 app.cflags.NRFX_DPPI_ENABLED:
     - -DNRFX_DPPI_ENABLED=1
 
@@ -165,7 +168,7 @@ app.cflags.NRFX_POWER_ENABLED:
     - -DNRFX_POWER_ENABLED=1
 
 pkg.source_files.NRFX_PPI_ENABLED:
-    - "@nordic-nrfx/drivers/src/nrfx_ppi.c"
+    - "@nordic-nrfx/helpers/nrfx_gppi_ppi.c"
 app.cflags.NRFX_PPI_ENABLED:
     - -DNRFX_PPI_ENABLED=1
 
