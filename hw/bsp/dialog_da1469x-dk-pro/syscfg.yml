@@ -51,6 +51,12 @@ syscfg.defs:
             - 331_O7_B
             - 331_O7_C
 
+    FLASH_LOADER_TARGET:
+        description: >
+            Flash loader target name. Used when da1469x bootloader is placed
+            in other folder than /targets.
+        value: 'targets/da1469x_flash_loader'
+
 syscfg.defs.BUS_DRIVER_PRESENT:
     BSP_FLASH_SPI_NAME:
         description: 'SPIFLASH device name'
