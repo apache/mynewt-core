@@ -28,6 +28,16 @@
 #include <hal/nrf_oscillators.h>
 #include <tfm/tfm.h>
 
+#if MYNEWT_VAL(NRFX_DPPI_ENABLED)
+#include <helpers/nrfx_gppi.h>
+
+/* Resources available to GPPI helper (single DPPIC instance) */
+static nrfx_gppi_t nrf5340_gppi = {
+    .ch_mask = NRFX_BIT_MASK(DPPIC_CH_NUM) & ~NRFX_DPPI_CHANNELS_USED,
+    .group_mask = NRFX_BIT_MASK(DPPIC_GROUP_NUM) & ~NRFX_DPPI_GROUPS_USED,
+};
+#endif
+
 /**
  * Function called at startup. Called after BSS and .data initialized but
  * prior to the _start function.
@@ -42,6 +52,10 @@ void
 hal_system_init(void)
 {
     NVIC_Relocate();
+
+#if MYNEWT_VAL(NRFX_DPPI_ENABLED)
+    nrfx_gppi_init(&nrf5340_gppi);
+#endif
 
 #if MYNEWT_VAL(MCU_CACHE_ENABLED)
 #if MYNEWT_VAL(MCU_APP_SECURE) || MYNEWT_VAL(BOOT_LOADER)
