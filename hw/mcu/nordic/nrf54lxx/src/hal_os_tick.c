@@ -48,24 +48,12 @@ struct hal_os_tick {
 };
 struct hal_os_tick g_hal_os_tick;
 
+uint64_t hal_grtc_counter_get(void);
+
 static inline uint64_t
 nrf54l_os_tick_counter(void)
 {
-    uint32_t counterl_val, counterh_val, counterh;
-    uint64_t counter;
-
-    do {
-        counterl_val = nrf_grtc_sys_counter_low_get(NRF_GRTC);
-        counterh = nrf_grtc_sys_counter_high_get(NRF_GRTC);
-        counterh_val = counterh & NRF_GRTC_SYSCOUNTERH_VALUE_MASK;
-    } while (counterh & NRF_GRTC_SYSCOUNTERH_BUSY_MASK);
-
-    if (counterh & NRF_GRTC_SYSCOUNTERH_OVERFLOW_MASK) {
-        --counterh_val;
-    }
-
-    counter = ((uint64_t)counterh_val << 32) | counterl_val;
-    return counter;
+    return hal_grtc_counter_get();
 }
 
 static inline void
@@ -137,6 +125,9 @@ os_tick_idle(os_time_t ticks)
         /* Set ocmp for wake up */
         ocmp = g_hal_os_tick.lastocmp + (ticks * g_hal_os_tick.ticks_per_ostick);
         nrf54l_os_idle_set_ocmp(ocmp);
+        nrf_grtc_event_clear(NRF_GRTC, OS_IDLE_CMPEV);
+        nrf_grtc_sys_counter_compare_event_enable(NRF_GRTC, OS_IDLE_CMPREG);
+        nrf_grtc_int_enable(NRF_GRTC, GRTC_COMPARE_INT_MASK(OS_IDLE_CMPREG));
     }
 
     __DSB();
@@ -147,8 +138,9 @@ os_tick_idle(os_time_t ticks)
          * Update OS time and re-enable OS tick interrupt before anything else
          * when coming out of the tickless regime.
          */
-        nrf_grtc_int_enable(NRF_GRTC, GRTC_COMPARE_INT_MASK(OS_TICK_CMPREG));
         nrf54l_timer_handler();
+        nrf_grtc_int_disable(NRF_GRTC, GRTC_COMPARE_INT_MASK(OS_IDLE_CMPREG));
+        nrf_grtc_int_enable(NRF_GRTC, GRTC_COMPARE_INT_MASK(OS_TICK_CMPREG));
     }
 }
 
@@ -185,14 +177,12 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
 
     nrf_grtc_int_disable(NRF_GRTC, 0xffffffff);
     nrf_grtc_int_enable(NRF_GRTC, GRTC_COMPARE_INT_MASK(OS_TICK_CMPREG));
-    nrf_grtc_int_enable(NRF_GRTC, GRTC_COMPARE_INT_MASK(OS_IDLE_CMPREG));
 
     nrf_grtc_clksel_set(NRF_GRTC, NRF_GRTC_CLKSEL_LFXO);
 
     nrf_grtc_event_clear(NRF_GRTC, OS_TICK_CMPEV);
     nrf_grtc_event_clear(NRF_GRTC, OS_IDLE_CMPEV);
     nrf_grtc_sys_counter_compare_event_enable(NRF_GRTC, OS_TICK_CMPREG);
-    nrf_grtc_sys_counter_compare_event_enable(NRF_GRTC, OS_IDLE_CMPREG);
 
     nrf_grtc_sys_counter_interval_set(NRF_GRTC, g_hal_os_tick.ticks_per_ostick);
     nrf_grtc_sys_counter_set(NRF_GRTC, true);
