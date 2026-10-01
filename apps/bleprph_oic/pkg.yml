@@ -40,3 +40,4 @@ pkg.deps:
     - "@apache-mynewt-core/sys/sysinit"
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/sys/id"
+    - "@apache-mynewt-nimble/nimble/host/util"

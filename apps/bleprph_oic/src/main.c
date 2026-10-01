@@ -34,6 +34,7 @@
 /* BLE */
 #include <nimble/ble.h>
 #include <host/ble_hs.h>
+#include "host/util/util.h"
 #include <services/gap/ble_svc_gap.h>
 
 /* Application-specified header. */
@@ -76,10 +77,17 @@ bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 static void
 bleprph_advertise(void)
 {
+    uint8_t own_addr_type;
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
     const char *name;
     int rc;
+
+    rc = ble_hs_id_infer_auto(0, &own_addr_type);
+    if (rc != 0) {
+        MODLOG_DFLT(ERROR, "error determining address type; rc=%d\n", rc);
+        return;
+    }
 
     /**
      *  Set the advertisement data included in our advertisements:
@@ -136,8 +144,8 @@ bleprph_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
-                           &adv_params, bleprph_gap_event, NULL);
+    rc = ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER, &adv_params,
+                           bleprph_gap_event, NULL);
     if (rc != 0) {
         DFLT_LOG_ERROR("error enabling advertisement; rc=%d\n", rc);
         return;
@@ -271,6 +279,9 @@ bleprph_on_reset(int reason)
 static void
 bleprph_on_sync(void)
 {
+    int rc = ble_hs_util_ensure_addr(0);
+    assert(rc == 0);
+
     /* Begin advertising. */
     bleprph_advertise();
 }
@@ -365,9 +376,6 @@ int
 mynewt_main(int argc, char **argv)
 {
     int rc;
-
-    /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
 
     /* Initialize OS */
     sysinit();
