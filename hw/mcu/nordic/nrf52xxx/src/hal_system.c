@@ -25,6 +25,16 @@
 #include "nrf.h"
 #include "mcu/nrf52_clock.h"
 
+#if MYNEWT_VAL(NRFX_PPI_ENABLED)
+#include <helpers/nrfx_gppi.h>
+
+/* Resources available to GPPI helper (single PPI instance) */
+static nrfx_gppi_t nrf52_gppi = {
+    .ch_mask = NRFX_BIT_MASK(PPI_CH_NUM) & ~NRFX_PPI_CHANNELS_USED,
+    .group_mask = NRFX_BIT_MASK(PPI_GROUP_NUM) & ~NRFX_PPI_GROUPS_USED,
+};
+#endif
+
 /**
  * Function called at startup. Called after BSS and .data initialized but
  * prior to the _start function.
@@ -39,6 +49,10 @@ void
 hal_system_init(void)
 {
     NVIC_Relocate();
+
+#if MYNEWT_VAL(NRFX_PPI_ENABLED)
+    nrfx_gppi_init(&nrf52_gppi);
+#endif
 
 #if MYNEWT_VAL(MCU_ICACHE_ENABLED)
     NRF_NVMC->ICACHECNF = 1;
