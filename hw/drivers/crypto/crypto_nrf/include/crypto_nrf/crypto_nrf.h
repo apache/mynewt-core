@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef __CRYPTO_NRF52_H__
-#define __CRYPTO_NRF52_H__
+#ifndef __CRYPTO_NRF_H__
+#define __CRYPTO_NRF_H__
 
 #include "crypto/crypto.h"
 
@@ -26,10 +26,10 @@
 extern "C" {
 #endif
 
-int nrf52_crypto_dev_init(struct os_dev *dev, void *arg);
+int nrf_crypto_dev_init(struct os_dev *dev, void *arg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CRYPTO_NRF52_H__ */
+#endif /* __CRYPTO_NRF_H__ */

@@ -92,6 +92,10 @@ syscfg.defs:
         description: 'Enable nRF5340 TRNG'
         value: 0
 
+    CRYPTO:
+        description: 'Enable nRF5340 CRYPTO'
+        value: 0
+
     UART_0:
         description: 'Enable nRF5340 net UART0'
         value: 1

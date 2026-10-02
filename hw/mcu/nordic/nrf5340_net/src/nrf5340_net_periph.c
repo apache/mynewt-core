@@ -44,6 +44,11 @@
 #include "trng_nrf52/trng_nrf52.h"
 #endif
 
+#if MYNEWT_VAL(CRYPTO)
+#include "crypto/crypto.h"
+#include "crypto_nrf/crypto_nrf.h"
+#endif
+
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
 static const struct nrf5340_net_uart_cfg os_bsp_uart0_cfg = {
@@ -83,6 +88,10 @@ static struct bus_i2c_dev i2c0_bus;
 
 #if MYNEWT_VAL(TRNG)
 static struct trng_dev os_bsp_trng;
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+static struct crypto_dev os_bsp_crypto;
 #endif
 
 static void
@@ -177,6 +186,21 @@ nrf5340_net_periph_create_trng(void)
 #endif
 }
 
+static void
+nrf5340_net_periph_create_crypto(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(CRYPTO)
+    rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
+                       OS_DEV_INIT_PRIMARY, OS_DEV_INIT_PRIO_DEFAULT,
+                       nrf_crypto_dev_init, NULL);
+    assert(rc == 0);
+#endif
+}
+
 void
 nrf5340_net_periph_create(void)
 {
@@ -185,4 +209,5 @@ nrf5340_net_periph_create(void)
     nrf5340_net_periph_create_spi();
     nrf5340_net_periph_create_i2c();
     nrf5340_net_periph_create_trng();
+    nrf5340_net_periph_create_crypto();
 }
