@@ -18,6 +18,7 @@
 #
 
 syscfg.defs:
+    COREDUMP: 1
     COREDUMP_FLASH_AREA:
         description: 'Flash area to write core files to.'
         type: 'flash_owner'
