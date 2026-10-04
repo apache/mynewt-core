@@ -43,9 +43,11 @@ syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
-    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
 
     # Console history happens at interrupts and arduino is not fast
     # enough to do this and to perform simultaneous transmit and
     # receive at 115200 for large frames.  Disable history by default
     CONSOLE_HISTORY: none
+
+syscfg.vals.COREDUMP:
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
