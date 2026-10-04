@@ -22,6 +22,7 @@
 #include <hal/hal_os_tick.h>
 #include <nrf.h>
 #include <nrf_grtc.h>
+#include <mcu/nrf54l15_rtc.h>
 
 /* The OS scheduler requires a low-frequency timer. */
 #if MYNEWT_VAL(OS_SCHEDULING) && !MYNEWT_VAL(MCU_LFCLK_SOURCE)
