@@ -19,7 +19,7 @@
 
 pkg.name: apps/osdp_sample
 pkg.type: app
-pkg.description: Sample app for OSDP in PD mode
+pkg.description: Sample app for OSDP in PD or CP mode
 pkg.author: ""
 pkg.homepage: ""
 pkg.keywords:
