@@ -49,12 +49,13 @@ struct log g_logger;
 
 static struct os_callout cmd_timer;
 
+static struct osdp_t *ctx;
+
+#if MYNEWT_VAL(OSDP_MODE_PD)
 static int create_keypress_event(struct osdp_event *event);
 static int create_cardreader_event(struct osdp_event *event);
 static int create_mfgreply_event(struct osdp_cmd *oc);
 static int pd_command_handler(void *arg, struct osdp_cmd *cmd);
-
-static struct osdp_t *ctx;
 
 /* From osdp.h */
 static const char *const osdp_cmd_str[] = {
@@ -195,6 +196,66 @@ create_keypress_event(struct osdp_event *event)
 
     return 0;
 }
+#else
+/*
+ * Callback function registered with the library
+ * Events received from PD will be reflected here
+ */
+static int
+cp_event_handler(void *arg, int pd, struct osdp_event *ev)
+{
+    (void)(arg);
+
+    switch (ev->type) {
+    case OSDP_EVENT_CARDREAD:
+        LOG(INFO, "PD %d: card read, rdr: %d, fmt: %d, len: %d\n", pd,
+            ev->cardread.reader_no, ev->cardread.format, ev->cardread.length);
+        break;
+    case OSDP_EVENT_KEYPRESS:
+        LOG(INFO, "PD %d: key press, rdr: %d, len: %d\n", pd,
+            ev->keypress.reader_no, ev->keypress.length);
+        break;
+    case OSDP_EVENT_MFGREP:
+        LOG(INFO, "PD %d: manufacturer reply, v_code: 0x%06x, len: %d\n", pd,
+            (unsigned int)ev->mfgrep.vendor_code, ev->mfgrep.length);
+        break;
+    default:
+        LOG(INFO, "PD %d: event %d\n", pd, ev->type);
+        break;
+    }
+
+    return 0;
+}
+
+static void
+create_led_command(struct osdp_cmd *cmd)
+{
+    memset(cmd, 0, sizeof(*cmd));
+    cmd->id = OSDP_CMD_LED;
+    cmd->led.reader = 0;
+    cmd->led.led_number = 0;
+    /* Blink green 3 times (100ms on, 100ms off) */
+    cmd->led.temporary.control_code = 2;
+    cmd->led.temporary.on_count = 1;
+    cmd->led.temporary.off_count = 1;
+    cmd->led.temporary.on_color = OSDP_LED_COLOR_GREEN;
+    cmd->led.temporary.off_color = OSDP_LED_COLOR_NONE;
+    cmd->led.temporary.timer_count = 6;
+}
+
+static void
+create_buzzer_command(struct osdp_cmd *cmd)
+{
+    memset(cmd, 0, sizeof(*cmd));
+    cmd->id = OSDP_CMD_BUZZER;
+    cmd->buzzer.reader = 0;
+    /* Default tone, beep twice (200ms on, 200ms off) */
+    cmd->buzzer.control_code = 2;
+    cmd->buzzer.on_count = 2;
+    cmd->buzzer.off_count = 2;
+    cmd->buzzer.rep_count = 2;
+}
+#endif
 
 /*
  * Handler called after cmd_handler timer timeout
@@ -208,6 +269,7 @@ cmd_handler(struct os_event *ev)
 
     osdp_get_sc_status_mask(ctx, &sc_active);
 
+#if MYNEWT_VAL(OSDP_MODE_PD)
     if (sc_active) {
         struct osdp_event event;
         if (cmd == 0) {
@@ -223,6 +285,24 @@ cmd_handler(struct os_event *ev)
             cmd = 0;
         }
     }
+#else
+    /* Send commands to the first (and only) PD once secure channel is up */
+    if (sc_active & 0x01) {
+        struct osdp_cmd osdp_cmd;
+        if (cmd == 0) {
+            LOG(INFO, "Sending LED command\n");
+            create_led_command(&osdp_cmd);
+        } else if (cmd == 1) {
+            LOG(INFO, "Sending Buzzer command\n");
+            create_buzzer_command(&osdp_cmd);
+        }
+        osdp_cp_submit_command(ctx, 0, &osdp_cmd);
+        cmd++;
+        if (cmd > 1) {
+            cmd = 0;
+        }
+    }
+#endif
 
     /* Heartbeat blink */
     hal_gpio_toggle(LED_BLINK_PIN);
@@ -309,6 +389,7 @@ mynewt_main(int argc, char **argv)
 
     hal_gpio_init_out(LED_BLINK_PIN, 1);
 
+#if MYNEWT_VAL(OSDP_MODE_PD)
     /* List capabilities of this PD */
     struct osdp_pd_cap cap[] = {
         {
@@ -333,6 +414,10 @@ mynewt_main(int argc, char **argv)
         },
         { -1, 0, 0 }
     };
+#else
+    /* Capabilities are reported by the PD, not needed in CP mode */
+    struct osdp_pd_cap *cap = NULL;
+#endif
 
     /* Validate and assign key */
     if (MYNEWT_VAL(OSDP_SC_ENABLED) && strcmp(OSDP_KEY_STRING, "NONE") != 0) {
@@ -369,7 +454,11 @@ mynewt_main(int argc, char **argv)
     ctx = osdp_init(&info_pd);
     assert(ctx);
 
+#if MYNEWT_VAL(OSDP_MODE_PD)
     osdp_pd_set_command_callback(ctx, pd_command_handler, NULL);
+#else
+    osdp_cp_set_event_callback(ctx, cp_event_handler, NULL);
+#endif
 
     timers_init();
 
