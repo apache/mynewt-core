@@ -19,7 +19,7 @@
 pkg.name: net/osdp
 pkg.description: OSDP (Open Supervised Device Protocol) library
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "https://github.com/goToMain/libosdp"
+pkg.homepage: "https://github.com/osdp-dev/libosdp"
 pkg.keywords:
     - osdp
 
@@ -63,6 +63,6 @@ pkg.subpriority: 1
 
 repository.osdp:
     type: github
-    vers: v3.2.2-commit
-    user: goToMain
+    vers: v3.2.7-commit
+    user: osdp-dev
     repo: libosdp
