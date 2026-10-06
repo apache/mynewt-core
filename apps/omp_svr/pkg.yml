@@ -44,9 +44,9 @@ pkg.deps:
     - "@apache-mynewt-core/sys/sysinit"
     - "@apache-mynewt-core/mgmt/smp/smp_os"
     - "@apache-mynewt-core/net/oic"
+    - '@mcuboot/boot/bootutil'
 
 pkg.deps.!BSP_SIMULATED:
-    - '@mcuboot/boot/bootutil'
     - '@apache-mynewt-core/mgmt/smp/transport/ble'
     - '@apache-mynewt-nimble/nimble/controller'
     - '@apache-mynewt-nimble/nimble/host'
@@ -55,8 +55,6 @@ pkg.deps.!BSP_SIMULATED:
     - '@apache-mynewt-nimble/nimble/host/services/gatt'
     - '@apache-mynewt-nimble/nimble/host/store/config'
 
-pkg.deps.BSP_SIMULATED:
-    - '@apache-mynewt-core/boot/stub'
 
 pkg.ign_files.BSP_SIMULATED:
     - "misc.c"

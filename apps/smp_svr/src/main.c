@@ -38,8 +38,6 @@
 #include "smp_svr.h"
 #include "host/util/util.h"
 
-#else
-#include <mcu/mcu_sim.h>
 #endif  /* !ARCH_sim */
 
 /* smp_svr uses the first "peruser" log module. */
@@ -291,13 +289,12 @@ smp_svr_on_sync(void)
  * @return int NOTE: this function should never return!
  */
 int
-main(int argc, char **argv)
+mynewt_main(int argc, char **argv)
 {
 #ifndef ARCH_sim
     int rc;
-#else
-    mcu_sim_parse_args(argc, argv);
 #endif
+
     /* Initialize OS */
     sysinit();
 

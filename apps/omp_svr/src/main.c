@@ -49,8 +49,6 @@
 /* Application-specified header. */
 #include "omp_svr.h"
 
-#else
-#include <mcu/mcu_sim.h>
 #endif /* !ARCH_sim */
 
 /* Task 1 */
@@ -497,13 +495,10 @@ init_tasks(void)
  * @return int NOTE: this function should never return!
  */
 int
-main(int argc, char **argv)
+mynewt_main(int argc, char **argv)
 {
     int rc;
 
-#ifdef ARCH_sim
-    mcu_sim_parse_args(argc, argv);
-#endif
     sysinit();
 
 #ifndef ARCH_sim
