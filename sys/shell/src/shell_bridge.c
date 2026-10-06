@@ -49,7 +49,7 @@ static int
 shell_bridge_exec(struct mgmt_ctxt *cb)
 {
     char line[MYNEWT_VAL(SHELL_BRIDGE_MAX_IN_LEN)];
-    char *argv[MYNEWT_VAL(SHELL_CMD_ARGC_MAX)];
+    char *argv[MYNEWT_VAL(SHELL_CMD_ARGC_MAX) + 1];
     struct shell_bridge_streamer sbs;
     CborEncoder str_encoder;
     CborError err;
@@ -66,7 +66,7 @@ shell_bridge_exec(struct mgmt_ctxt *cb)
                 .arr.strings.store = line,
                 .arr.strings.storelen = sizeof line,
                 .count = &argc,
-                .maxlen = sizeof argv / sizeof argv[0],
+                .maxlen = MYNEWT_VAL(SHELL_CMD_ARGC_MAX),
             },
         },
         { 0 },
@@ -76,6 +76,9 @@ shell_bridge_exec(struct mgmt_ctxt *cb)
     if (err != 0) {
         return MGMT_ERR_EINVAL;
     }
+
+    /* Shell commands expect argv to be NULL terminated */
+    argv[argc] = NULL;
 
     /* Key="o"; value=<command-output> */
     err |= cbor_encode_text_stringz(&cb->encoder, "o");
