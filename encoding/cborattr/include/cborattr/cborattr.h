@@ -27,9 +27,7 @@
 #include <sys/types.h>
 #include "tinycbor/cbor.h"
 
-#ifdef MYNEWT
 #include <os/os_mbuf.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -126,7 +124,6 @@ struct cbor_attr_t {
     bool nodefault;
 };
 
-#ifndef __ZEPHYR__
 /** An array value to be encoded as CBOR. */
 struct cbor_out_arr_val_t {
     struct cbor_out_val_t *elems;
@@ -162,7 +159,6 @@ struct cbor_out_attr_t {
     struct cbor_out_val_t val; /** The attribute value. */
     bool omit;                 /** Attribute ignored if true. */
 };
-#endif
 
 /*
  * Use the following macros to declare template initializers for
@@ -189,7 +185,6 @@ int cbor_read_object(struct CborValue *, const struct cbor_attr_t *);
 int cbor_read_array(struct CborValue *, const struct cbor_array_t *);
 
 int cbor_read_flat_attrs(const uint8_t *data, int len, const struct cbor_attr_t *attrs);
-#ifdef MYNEWT
 int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
                          const struct cbor_attr_t *attrs);
 
@@ -214,7 +209,6 @@ int cbor_write_object(struct CborEncoder *enc, const struct cbor_out_attr_t *att
  */
 int cbor_write_object_msys(const struct cbor_out_attr_t *attrs,
                            struct os_mbuf **out_om);
-#endif
 #ifdef __cplusplus
 }
 #endif
