@@ -20,11 +20,95 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "os/mynewt.h"
+#include "stats/stats.h"
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
 #include "stat_mgmt/stat_mgmt.h"
-#include "stat_mgmt/stat_mgmt_impl.h"
-#include "stat_mgmt/stat_mgmt_config.h"
+
+typedef int stat_mgmt_foreach_entry_fn(struct stat_mgmt_entry *entry,
+                                       void *arg);
+
+struct stat_mgmt_walk_arg {
+    stat_mgmt_foreach_entry_fn *cb;
+    void *arg;
+};
+
+static int
+stat_mgmt_get_group(int idx, const char **out_name)
+{
+    const struct stats_hdr *cur;
+    int i;
+    int rc;
+
+    rc = MGMT_ERR_ENOENT;
+
+    cur = NULL;
+    i = 0;
+    STAILQ_FOREACH(cur, &g_stats_registry, s_next) {
+        if (i == idx) {
+            rc = 0;
+            break;
+        }
+        i++;
+    }
+
+    if (!rc) {
+        *out_name = cur->s_name;
+    }
+
+    return rc;
+}
+
+static int
+stat_mgmt_walk_cb(struct stats_hdr *hdr, void *arg,
+                         char *name, uint16_t off)
+{
+    struct stat_mgmt_walk_arg *walk_arg;
+    struct stat_mgmt_entry entry;
+    void *stat_val;
+
+    walk_arg = arg;
+
+    stat_val = (uint8_t *)hdr + off;
+    switch (hdr->s_size) {
+    case sizeof (uint16_t):
+        entry.value = *(uint16_t *) stat_val;
+        break;
+    case sizeof (uint32_t):
+        entry.value = *(uint32_t *) stat_val;
+        break;
+    case sizeof (uint64_t):
+        entry.value = *(uint64_t *) stat_val;
+        break;
+    default:
+        return MGMT_ERR_EUNKNOWN;
+    }
+    entry.name = name;
+
+    return walk_arg->cb(&entry, walk_arg->arg);
+}
+
+static int
+stat_mgmt_foreach_entry(const char *group_name,
+                             stat_mgmt_foreach_entry_fn *cb,
+                             void *arg)
+{
+    struct stat_mgmt_walk_arg walk_arg;
+    struct stats_hdr *hdr;
+
+    hdr = stats_group_find(group_name);
+    if (hdr == NULL) {
+        return MGMT_ERR_ENOENT;
+    }
+
+    walk_arg = (struct stat_mgmt_walk_arg) {
+        .cb = cb,
+        .arg = arg,
+    };
+
+    return stats_walk(hdr, stat_mgmt_walk_cb, &walk_arg);
+}
 
 static mgmt_handler_fn stat_mgmt_show;
 static mgmt_handler_fn stat_mgmt_list;
@@ -68,7 +152,7 @@ stat_mgmt_cb_encode(struct stat_mgmt_entry *entry, void *arg)
 static int
 stat_mgmt_show(struct mgmt_ctxt *ctxt)
 {
-    char stat_name[STAT_MGMT_MAX_NAME_LEN];
+    char stat_name[MYNEWT_VAL(STAT_MGMT_MAX_NAME_LEN)];
     CborEncoder map_enc;
     CborError err;
     int rc;
@@ -98,7 +182,7 @@ stat_mgmt_show(struct mgmt_ctxt *ctxt)
     err |= cbor_encoder_create_map(&ctxt->encoder, &map_enc,
                                    CborIndefiniteLength);
 
-    rc = stat_mgmt_impl_foreach_entry(stat_name, stat_mgmt_cb_encode,
+    rc = stat_mgmt_foreach_entry(stat_name, stat_mgmt_cb_encode,
                                       &map_enc);
 
     err |= cbor_encoder_close_container(&ctxt->encoder, &map_enc);
@@ -132,7 +216,7 @@ stat_mgmt_list(struct mgmt_ctxt *ctxt)
      * array.
      */
     for (i = 0; ; i++) {
-        rc = stat_mgmt_impl_get_group(i, &group_name);
+        rc = stat_mgmt_get_group(i, &group_name);
         if (rc == MGMT_ERR_ENOENT) {
             /* No more stat groups. */
             break;
@@ -156,4 +240,13 @@ void
 stat_mgmt_register_group(void)
 {
     mgmt_register_group(&stat_mgmt_group);
+}
+
+void
+stat_mgmt_module_init(void)
+{
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    stat_mgmt_register_group();
 }

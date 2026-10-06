@@ -25,5 +25,7 @@ pkg.keywords:
 
 pkg.deps:
     - '@apache-mynewt-core/kernel/os'
-    - '@apache-mynewt-core/mgmt/mcumgr/cmd/stat_mgmt/port/mynewt'
     - '@apache-mynewt-core/mgmt/mcumgr/mgmt'
+
+pkg.init:
+    stat_mgmt_module_init: 'MYNEWT_VAL(STAT_MGMT_SYSINIT_STAGE)'
