@@ -19,7 +19,7 @@
 
 #include "sysinit/sysinit.h"
 #include "mgmt/mgmt.h"
-#include "img_mgmt/img_mgmt_impl.h"
+#include "img_mgmt_priv.h"
 #include "img_mgmt/img_mgmt.h"
 #include "split/split.h"
 #include "flash_map/flash_map.h"
@@ -113,8 +113,8 @@ img_mgmt_vercmp(const struct image_version *a, const struct image_version *b)
  *                                  sent instead.
  */
 int
-img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
-                             struct img_mgmt_upload_action *action, const char **errstr)
+img_mgmt_upload_inspect(const struct img_mgmt_upload_req *req,
+                        struct img_mgmt_upload_action *action, const char **errstr)
 {
     const struct image_header *hdr;
     const struct flash_area *fa;
@@ -271,7 +271,7 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
 }
 
 int
-img_mgmt_impl_erase_slot(void)
+img_mgmt_erase_slot(void)
 {
 #ifndef FLASH_AREA_IMAGE_1
     return MGMT_ERR_ENOTSUP;
@@ -302,7 +302,7 @@ img_mgmt_impl_erase_slot(void)
 }
 
 int
-img_mgmt_impl_write_pending(int slot, bool permanent)
+img_mgmt_write_pending(int slot, bool permanent)
 {
     uint32_t image_flags;
     uint8_t state_flags;
@@ -360,7 +360,7 @@ img_mgmt_impl_write_pending(int slot, bool permanent)
 }
 
 int
-img_mgmt_impl_write_confirmed(void)
+img_mgmt_write_confirmed(void)
 {
     int rc;
 
@@ -387,7 +387,7 @@ img_mgmt_impl_write_confirmed(void)
 }
 
 int
-img_mgmt_impl_read(int slot, unsigned int offset, void *dst, unsigned int num_bytes)
+img_mgmt_read(int slot, unsigned int offset, void *dst, unsigned int num_bytes)
 {
     const struct flash_area *fa;
     int area_id;
@@ -410,8 +410,8 @@ img_mgmt_impl_read(int slot, unsigned int offset, void *dst, unsigned int num_by
 
 #if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
 int
-img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
-                               unsigned int num_bytes, bool last)
+img_mgmt_write_image_data(unsigned int offset, const void *data,
+                          unsigned int num_bytes, bool last)
 {
 #ifndef FLASH_AREA_IMAGE_1
     return MGMT_ERR_ENOTSUP;
@@ -460,8 +460,8 @@ err:
 
 #else
 int
-img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
-                               unsigned int num_bytes, bool last)
+img_mgmt_write_image_data(unsigned int offset, const void *data,
+                          unsigned int num_bytes, bool last)
 {
 #ifndef FLASH_AREA_IMAGE_1
     return MGMT_ERR_ENOTSUP;
@@ -486,7 +486,7 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 #endif
 
 int
-img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
+img_mgmt_erase_image_data(unsigned int off, unsigned int num_bytes)
 {
 #ifndef FLASH_AREA_IMAGE_1
     return MGMT_ERR_ENOTSUP;
@@ -511,7 +511,7 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
 
 #if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
 int
-img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
+img_mgmt_erase_if_needed(uint32_t off, uint32_t len)
 {
 #ifndef FLASH_AREA_IMAGE_1
     return MGMT_ERR_ENOTSUP;
@@ -546,7 +546,7 @@ done:
 #endif
 
 int
-img_mgmt_impl_swap_type(int slot)
+img_mgmt_swap_type(int slot)
 {
     assert(slot == 0 || slot == 1);
 
@@ -566,7 +566,7 @@ img_mgmt_impl_swap_type(int slot)
 }
 
 int
-img_mgmt_impl_erased_val(int slot, uint8_t *erased_val)
+img_mgmt_erased_val(int slot, uint8_t *erased_val)
 {
     const struct flash_area *fa;
     int rc;
