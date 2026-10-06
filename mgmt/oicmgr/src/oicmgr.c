@@ -221,7 +221,7 @@ omgr_process_request(oc_request_t *req, oc_interface_mask_t mask)
         /* Fallthrough */
 
     case OC_IF_RW:
-        rc = omp_impl_process_request_packet(&omgr_state, m_req);
+        rc = omp_process_request_packet(&omgr_state, m_req);
         break;
 
     default:
