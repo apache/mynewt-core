@@ -39,13 +39,14 @@
   billions of devices") *(documented: README)*.
 - **Repository / commit:** `apache/mynewt-core`, `master` @ `1dcb119ed885` (2026-06-09).
 - **Drafted:** 2026-06-13, ASF Security team (v0 draft from public artefacts).
-- **Companion repos this round:** `apache/mynewt-nimble` (the BLE stack —
-  its own model covers the radio surface) and `apache/mynewt-mcumgr` (the
-  SMP management library — its own model covers the SMP surface).
-  `mynewt-core` **hosts both**: it runs NimBLE and it ships its *own*
-  management stack under `mgmt/` (`newtmgr`, `smp`, `oicmgr`, `imgmgr`)
-  that is the same family as mcumgr. Where a surface is fully modelled in
-  a sibling document, this model points there rather than duplicating.
+- **Companion models:** `apache/mynewt-nimble` (the BLE stack — its own
+  model covers the radio surface) and mcumgr (the SMP management library,
+  `mgmt/mcumgr/THREAT_MODEL.md` — its own model covers the SMP surface).
+  mcumgr was moved into `mynewt-core` (`mgmt/mcumgr/`) from the former
+  `apache/mynewt-mcumgr` repository; the rest of the management stack
+  under `mgmt/` (`smp`, `oicmgr`, `imgmgr`) is the Mynewt glue around it.
+  Where a surface is fully modelled in a sibling document, this model
+  points there rather than duplicating.
 - **What triggers a revision:** a new network stack or protocol under
   `net/`; a new management transport or command group under `mgmt/`; a
   change to the boot/image-validation integration under `boot/`; a change
@@ -70,10 +71,10 @@ happens when they do.
 | --- | --- | --- | --- |
 | **Kernel** | `kernel/os` (scheduler, mempool, mbuf, mutex/sem, callout), `kernel/sim` | only *indirectly*, via input flowing up from net/mgmt | trusted core; a kernel memory bug reachable from untrusted input is critical (§8.1) |
 | **Network stacks** | `net/ip`, `net/oic` (OIC/CoAP), `net/lora` (LoRaWAN), `net/mqtt`, `net/wifi`, `net/cellular`, `net/osdp` | **yes — primary remote surface** | each is an untrusted-wire/radio parser (§6) |
-| **Management** | `mgmt/{newtmgr,smp,oicmgr,imgmgr,mgmt,image_header}` | **yes** | same family as `apache/mynewt-mcumgr`; **see that model** for the SMP trust analysis. No authn/authz by design (§9) |
+| **Management** | `mgmt/{mcumgr,newtmgr,smp,oicmgr,imgmgr,mgmt,image_header}` | **yes** | mcumgr; **see `mgmt/mcumgr/THREAT_MODEL.md`** for the SMP trust analysis. No authn/authz by design (§9) |
 | **Crypto** | `crypto/mbedtls` (**vendored upstream**) | as a library, by the code above | primitives; mbedtls security is upstream's (§3, §11a). tinycrypt was **removed** from core before the 1.15 releases *(maintainer)* |
 | **Boot / image** | `boot/{split,split_app,startup,stub}`, `mgmt/image_header` | at boot, over the staged image | image *authenticity* gate is the signature-verifying bootloader (MCUboot); see §9/§10 |
-| **Sys / local mgmt** | `sys/{console,shell,config,log,coredump,fault,reboot,mfg,flash_map,stats,id}` | `console`/`shell` = local serial surface; also reachable remotely via `shell_mgmt` over SMP | local management surface (§6, §11) |
+| **Sys / local mgmt** | `sys/{console,shell,config,log,coredump,fault,reboot,mfg,flash_map,stats,id}` | `console`/`shell` = local serial surface; also reachable remotely via `SHELL_BRIDGE` over SMP | local management surface (§6, §11) |
 | **Filesystems** | `fs/*` (nffs, fatfs, littlefs ports) | via on-flash structures / file content | on-flash parser robustness (§6) |
 | **Encoding** | `encoding/*` (tinycbor, json, base64, …) | by every layer that decodes untrusted data | untrusted-deserialization primitives (§6) |
 | **HAL / BSP / drivers** | `hw/*` | sensor/peripheral input | per-driver. **Upstream-supported in-tree BSPs/drivers are in scope**; board hardware itself and out-of-tree BSPs are not (§3.3) *(maintainer)* |
@@ -121,8 +122,8 @@ happens when they do.
 4. **`apps/`, `test/`, demo targets** — example and test code, not the
    library's production runtime.
 5. **The SMP/management *protocol* trust analysis** — fully covered in
-   `apache/mynewt-mcumgr`'s model; not duplicated here (this model only
-   notes that `mgmt/` is the same family and inherits its §9).
+   mcumgr's model (`mgmt/mcumgr/THREAT_MODEL.md`); not duplicated here
+   (this model only notes that `mgmt/` inherits its §9).
 6. **The BLE radio surface** — covered in `apache/mynewt-nimble`'s model.
 7. **Physical / invasive / side-channel and supply-chain** concerns.
 
@@ -178,7 +179,8 @@ selection. Load-bearing variants:
   IP attack surface; an OIC/CoAP or LoRaWAN build does). *(documented:
   per-package `syscfg.yml`)*
 - **Which `mgmt/` transports/groups are enabled** (newtmgr vs SMP vs
-  oicmgr; `shell_mgmt` reachable remotely). Inherits mcumgr's §5a.
+  oicmgr; shell exec via `SHELL_BRIDGE` reachable remotely). Inherits
+  mcumgr's §5a.
 - **Crypto backend** (`crypto/mbedtls`) and its cipher/verification
   configuration. *(maintainer — §14 Q3; tinycrypt is gone from core)*
 - **RNG source.** Mynewt provides **no unified random API**. Consumers use
@@ -189,7 +191,7 @@ selection. Load-bearing variants:
 - **Secure-boot integration** (`boot/` split/stub) and whether image
   signature verification is enabled. *(maintainer — §14 Q2, confirmed)*
 - **`sys/shell` over console and/or over mgmt** — a powerful local/remote
-  surface when enabled. *(documented: `sys/shell`, `cmd/shell_mgmt`)*
+  surface when enabled. *(documented: `sys/shell` `SHELL_BRIDGE`)*
 - **`sys/coredump` / `sys/fault`** may expose memory state; they are
   intentional diagnostics for the integrator to gate.
   *(maintainer — §14 Q5, confirmed)*
@@ -208,8 +210,8 @@ this v0 cannot have read every parser).
 | **LoRaWAN** join/data | `net/lora` | anyone in radio range | MIC/join-nonce handling; safe MAC-command parse; replay posture per spec *(inferred — §14 Q8)* |
 | MQTT broker responses | `net/mqtt` | the broker / a MITM | safe CONNACK/PUBLISH/variable-length parse *(inferred — §14 Q9)* |
 | **OSDP** messages | `net/osdp` | a peer on the RS-485/serial bus (physical-access-control context!) | safe message parse; SCBK/secure-channel correctness *(inferred — §14 Q10)* |
-| SMP / newtmgr / oic mgmt frames | `mgmt/*` | a peer on the mgmt transport | **see `apache/mynewt-mcumgr` §6**; no authn/authz by design |
-| Console / shell input | `sys/console`, `sys/shell` | local serial (or remote via `shell_mgmt`) | bounded line handling; shell is powerful-by-design (§11) |
+| SMP / newtmgr / oic mgmt frames | `mgmt/*` | a peer on the mgmt transport | **see `mgmt/mcumgr/THREAT_MODEL.md` §6**; no authn/authz by design |
+| Console / shell input | `sys/console`, `sys/shell` | local serial (or remote via `SHELL_BRIDGE`) | bounded line handling; shell is powerful-by-design (§11) |
 | On-flash filesystem structures | `fs/*` | whoever can write flash / supply an image | safe parse of corrupt/hostile on-flash metadata *(inferred — §14 Q11)* |
 | CBOR / JSON / base64 payloads | `encoding/*` | every caller above | bounded, memory-safe decode of malicious encodings *(inferred — §14 Q12)* |
 | Staged firmware image | `mgmt/image_header`, `boot/` | the mgmt peer | safe image-header parse; **execution gated by MCUboot signature check, not by Mynewt** *(inferred — §14 Q2)* |
@@ -311,7 +313,7 @@ plumbing, so the properties are mostly *robustness* properties; the
 2. **Expose only the `net/` stacks and `mgmt/` transports the product
    needs**, and gate each (link encryption, network segmentation, BLE
    bonding via nimble) per §10 of the relevant sibling model.
-3. **Keep `sys/shell` / `shell_mgmt` / `coredump` out of production**
+3. **Keep `sys/shell` / `SHELL_BRIDGE` / `coredump` out of production**
    unless required and access-gated.
 4. **Track upstream advisories for every vendored component** — not just
    mbedtls, but each package pulled in through a `repository.<name>`
@@ -325,7 +327,7 @@ plumbing, so the properties are mostly *robustness* properties; the
 
 ## §11 Known misuse patterns
 
-- Shipping with `shell_mgmt`/`sys/shell` reachable over an open transport.
+- Shipping with `SHELL_BRIDGE`/`sys/shell` reachable over an open transport.
 - Leaving image-signature verification off "to make updates easier".
 - Exposing an OIC/CoAP or MQTT service on an open network and assuming the
   protocol authenticates the peer.
@@ -419,7 +421,8 @@ against a fully-malicious peer, and has it been fuzzed?)
   → **Partly.** `apps/`, `test/` and demo `targets/` are out, but
   **upstream-supported BSPs and in-tree drivers under `hw/` are IN
   scope** (§3.3). The in-tree `mgmt/` surface is read against the
-  `apache/mynewt-mcumgr` model rather than re-analysed here.
+  mcumgr model (`mgmt/mcumgr/THREAT_MODEL.md`) rather than re-analysed
+  here.
 
 **Meta — ANSWERED**
 - **Q17.** OK for this `THREAT_MODEL.md` to be the canonical model,
