@@ -30,7 +30,7 @@ pkg.type: sdk
 
 repository.littlefs:
     type: github
-    vers: v2.11.2-commit
+    vers: v2.11.3-commit
     branch: master
     user: littlefs-project
     repo: littlefs
