@@ -41,6 +41,6 @@ pkg.ignore_dirs:
 repository.nanopb:
   type: github
   branch: master
-  vers: nanopb-0.4.9.1-commit
+  vers: nanopb-0.4.9.2-commit
   user: nanopb
   repo: nanopb
