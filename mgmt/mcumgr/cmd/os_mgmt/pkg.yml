@@ -25,15 +25,14 @@ pkg.keywords:
 
 pkg.deps:
     - '@apache-mynewt-core/kernel/os'
-    - '@apache-mynewt-core/mgmt/mcumgr/cmd/os_mgmt/port/mynewt'
     - '@apache-mynewt-core/mgmt/mcumgr/mgmt'
     - '@apache-mynewt-core/encoding/cborattr'
 
 pkg.deps.OS_MGMT_DATETIME:
     - "@apache-mynewt-core/time/datetime"
 
-pkg.ign_files:
-    - "stubs.c"
+pkg.deps.LOG_SOFT_RESET:
+    - "@apache-mynewt-core/sys/reboot"
 
 pkg.init:
     os_mgmt_module_init: 'MYNEWT_VAL(OS_MGMT_SYSINIT_STAGE)'

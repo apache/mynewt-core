@@ -44,3 +44,8 @@ syscfg.defs:
         description: >
             System Initialization stage for OS_MGMT package
         value: 501
+
+    LOG_SOFT_RESET:
+        description: >
+            Log soft resets.
+        value: 1
