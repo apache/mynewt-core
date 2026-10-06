@@ -30,6 +30,10 @@
 
 struct mount_point mount_points[MAX_MOUNT_POINTS];
 
+#if MYNEWT_VAL(FS_MGMT)
+static uint8_t g_mgmt_initialized;
+#endif
+
 int
 fs_mount(const file_system_t *fs, const char *mount_point)
 {
@@ -54,6 +58,12 @@ fs_mount(const file_system_t *fs, const char *mount_point)
             mount_points[free_slot].mount_point = NULL;
             mount_points[free_slot].fs = NULL;
         }
+#if MYNEWT_VAL(FS_MGMT)
+        else if (!g_mgmt_initialized) {
+            fs_mgmt_register_group();
+            g_mgmt_initialized = 1;
+        }
+#endif
     } else {
         rc = FS_ENOMEM;
     }
@@ -94,10 +104,6 @@ fs_unmount_file_system(const file_system_t *fs)
 
     return rc;
 }
-
-#if MYNEWT_VAL(FS_MGMT)
-static uint8_t g_mgmt_initialized;
-#endif
 
 int
 fs_register(struct fs_ops *fops)
