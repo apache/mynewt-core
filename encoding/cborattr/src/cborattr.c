@@ -20,28 +20,12 @@
 #include "cborattr/cborattr.h"
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_buf_reader.h"
-
-#ifdef __ZEPHYR__
-#include <zephyr/kernel.h>
-#ifdef CONFIG_MGMT_CBORATTR_MAX_SIZE
-#define CBORATTR_MAX_SIZE CONFIG_MGMT_CBORATTR_MAX_SIZE
-#else
-#define CBORATTR_MAX_SIZE 512
-#endif
-#endif
-
-#ifdef MYNEWT
 #include "syscfg/syscfg.h"
 #include "tinycbor/cbor_mbuf_reader.h"
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "os/os_mbuf.h"
 #define CBORATTR_MAX_SIZE MYNEWT_VAL(CBORATTR_MAX_SIZE)
 #define CBORATTR_MAX_NESTING MYNEWT_VAL(CBORATTR_MAX_NESTING)
-#endif
-
-#ifndef CBORATTR_MAX_NESTING
-#define CBORATTR_MAX_NESTING 16
-#endif
 
 /* this maps a CborType to a matching CborAtter Type. The mapping is not
  * one-to-one because of signedness of integers
@@ -533,7 +517,6 @@ cbor_read_flat_attrs(const uint8_t *data, int len,
     return cbor_read_object(&value, attrs);
 }
 
-#ifdef MYNEWT
 static int cbor_write_val(struct CborEncoder *enc,
                           const struct cbor_out_val_t *val);
 
@@ -750,4 +733,3 @@ cbor_write_object_msys(const struct cbor_out_attr_t *attrs,
 
     return 0;
 }
-#endif

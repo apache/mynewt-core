@@ -467,11 +467,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
          */
 
         cbor_cnt_writer_init(&cnt_writer);
-#ifdef __ZEPHYR__
-        cbor_encoder_cust_writer_init(&cnt_encoder, &cnt_writer.enc, 0);
-#else
         cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
-#endif
         rc = log_mgmt_encode_entry(&cnt_encoder, entry, &entry_len, lmec);
         if (rc != 0) {
             return rc;

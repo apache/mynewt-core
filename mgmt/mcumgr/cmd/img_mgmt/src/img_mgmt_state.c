@@ -214,10 +214,6 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
         err |= cbor_encoder_create_map(&images, &image,
                                          CborIndefiniteLength);
 
-#if IMG_MGMT_UPDATABLE_IMAGE_NUMBER > 1
-        err |= cbor_encode_text_stringz(&image, "image");
-        err |= cbor_encode_int(&image, i >> 1);
-#endif
         err |= cbor_encode_text_stringz(&image, "slot");
         err |= cbor_encode_int(&image, i % 2);
 
