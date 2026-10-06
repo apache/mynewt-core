@@ -24,3 +24,8 @@ syscfg.defs:
             stat read commands.  If a stat group's name exceeds this limit, it will
             be impossible to retrieve its values with a stat show command.
         value: 32
+
+    STAT_MGMT_SYSINIT_STAGE:
+        description: >
+            System Initialization stage for STAT_MGMT package
+        value: 501
