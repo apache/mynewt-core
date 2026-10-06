@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#include "log_mgmt_config.h"
+#include "syscfg/syscfg.h"
 
 /**
  * LOG MGMT specific error codes, 0 -> 6, 8 are same as mcumgr,
@@ -69,12 +69,15 @@ extern "C" {
 #define LOG_MGMT_ETYPE_CBOR           1
 #define LOG_MGMT_ETYPE_BINARY         2
 
+/* Length of image hash included in log entries */
+#define LOG_MGMT_IMG_HASHLEN          4
+
 
 /** @brief Generic descriptor for an OS-specific log. */
 struct log_mgmt_log {
     const char *name;
     int type;
-#if !LOG_MGMT_GLOBAL_IDX
+#if !MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t index;
 #endif
 };

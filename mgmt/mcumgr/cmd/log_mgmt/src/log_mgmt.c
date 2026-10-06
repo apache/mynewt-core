@@ -20,12 +20,11 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "os/mynewt.h"
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
 #include "tinycbor/cbor_cnt_writer.h"
 #include "log_mgmt/log_mgmt.h"
-#include "log_mgmt/log_mgmt_impl.h"
-#include "log_mgmt/log_mgmt_config.h"
 #include "log/log.h"
 
 /* Log mgmt encoder context used for multiple calls of the
@@ -51,6 +50,273 @@ struct log_walk_ctxt {
     /* Log management encode context containing map and msg encoder */
     struct log_mgmt_enc_ctxt lmec;
 };
+
+typedef int log_mgmt_foreach_entry_fn(struct log_mgmt_entry *entry,
+                                      void *arg);
+
+struct log_mgmt_walk_arg {
+    log_mgmt_foreach_entry_fn *cb;
+    uint8_t chunk[MYNEWT_VAL(LOG_MGMT_CHUNK_LEN)];
+    void *arg;
+};
+
+static struct log *
+log_mgmt_find_log(const char *log_name)
+{
+    struct log *log;
+
+    log = NULL;
+    while (1) {
+        log = log_list_get_next(log);
+        if (log == NULL) {
+            return NULL;
+        }
+
+        if (strcmp(log->l_name, log_name) == 0) {
+            return log;
+        }
+    }
+}
+
+__attribute__((__unused__)) static int
+log_mgmt_err_map(int mynewt_os_err)
+{
+    switch (mynewt_os_err) {
+        case OS_ENOENT:
+            /* no break */
+        case SYS_ENOENT:
+            return LOG_MGMT_ERR_ENOENT;
+        case OS_ENOMEM:
+            /* no break */
+        case SYS_ENOMEM:
+            return LOG_MGMT_ERR_ENOMEM;
+        case OS_OK:
+            return LOG_MGMT_ERR_EOK;
+        case OS_EINVAL:
+            /* no break */
+        case OS_INVALID_PARM:
+            /* no break */
+        case SYS_EINVAL:
+            return LOG_MGMT_ERR_EINVAL;
+        case SYS_ENOTSUP:
+            return LOG_MGMT_ERR_ENOTSUP;
+        default:
+            return LOG_MGMT_ERR_EUNKNOWN;
+    }
+}
+
+#if MYNEWT_VAL(LOG_READ_WATERMARK_UPDATE)
+static int
+log_mgmt_set_watermark(const struct log_mgmt_log *log, int index)
+{
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    struct log *tmplog;
+
+    tmplog = log_mgmt_find_log(log->name);
+    if (tmplog) {
+        return log_mgmt_err_map(log_set_watermark(tmplog, index));
+    } else {
+        return LOG_MGMT_ERR_ENOENT;
+    }
+#else
+    return LOG_MGMT_ERR_ENOTSUP;
+#endif
+}
+#endif
+
+static int
+log_mgmt_get_log(int idx, struct log_mgmt_log *out_log)
+{
+    struct log *log;
+    int i;
+
+    log = NULL;
+    for (i = 0; i <= idx; i++) {
+        log = log_list_get_next(log);
+        if (log == NULL) {
+            return LOG_MGMT_ERR_ENOENT;
+        }
+    }
+
+    out_log->name = log->l_name;
+    out_log->type = log->l_log->log_type;
+#if !MYNEWT_VAL(LOG_GLOBAL_IDX)
+    out_log->index = log->l_idx;
+#endif
+    return 0;
+}
+
+static int
+log_mgmt_get_module(int idx, const char **out_module_name)
+{
+    const char *name;
+
+    name = LOG_MODULE_STR(idx);
+    if (name == NULL) {
+        return LOG_MGMT_ERR_ENOENT;
+    } else {
+        *out_module_name = name;
+        return 0;
+    }
+}
+
+static int
+log_mgmt_get_level(int idx, const char **out_level_name)
+{
+    const char *name;
+
+    if (idx >= LOG_LEVEL_MAX) {
+        return LOG_MGMT_ERR_ENOENT;
+    }
+
+    name = LOG_LEVEL_STR(idx);
+    if (!strcmp(name, "UNKNOWN")) {
+        return LOG_MGMT_ERR_ENOENT;
+    } else {
+        *out_level_name = name;
+        return 0;
+    }
+}
+
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
+static int
+log_mgmt_get_next_idx(uint32_t *out_idx)
+{
+    *out_idx = g_log_info.li_next_index;
+    return 0;
+}
+#endif
+
+static int
+log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
+                        const struct log_entry_hdr *leh,
+                        const void *dptr, uint16_t len)
+{
+    struct log_mgmt_walk_arg *log_mgmt_walk_arg;
+    struct log_mgmt_entry entry;
+    uint16_t trailer_len = 0;
+    int read_len;
+    int offset;
+    int rc;
+
+    rc = 0;
+    log_mgmt_walk_arg = log_offset->lo_arg;
+
+    (void)trailer_len;
+
+    /* If specified timestamp is nonzero, it is the primary criterion, and the
+     * specified index is the secondary criterion.  If specified timetsamp is
+     * zero, specified index is the only criterion.
+     *
+     * If specified timestamp == 0: encode entries whose index >=
+     *     specified index.
+     * Else: encode entries whose timestamp >= specified timestamp and whose
+     *      index >= specified index
+     */
+    if (log_offset->lo_ts == 0) {
+        if (log_offset->lo_index > leh->ue_index) {
+            return 0;
+        }
+    } else if (leh->ue_ts < log_offset->lo_ts   ||
+               (leh->ue_ts == log_offset->lo_ts &&
+                leh->ue_index < log_offset->lo_index)) {
+        return 0;
+    }
+
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER)
+    trailer_len = log_read_trailer_len(log, dptr);
+    if (trailer_len) {
+        /* If trailer is present, so is the length of the trailer */
+        trailer_len += LOG_TRAILER_LEN_SIZE;
+    }
+
+    len -= trailer_len;
+#endif
+
+    entry.ts = leh->ue_ts;
+    entry.index = leh->ue_index;
+    entry.module = leh->ue_module;
+    entry.level = leh->ue_level;
+
+    entry.type = leh->ue_etype;
+    entry.flags = leh->ue_flags;
+    entry.imghash = (leh->ue_flags & LOG_FLAGS_IMG_HASH) ?
+        leh->ue_imghash : NULL;
+    entry.len = len;
+    entry.data = log_mgmt_walk_arg->chunk;
+
+    for (offset = 0; offset < len; offset += MYNEWT_VAL(LOG_MGMT_CHUNK_LEN)) {
+        if (len - offset < MYNEWT_VAL(LOG_MGMT_CHUNK_LEN)) {
+            read_len = len - offset;
+        } else {
+            read_len = MYNEWT_VAL(LOG_MGMT_CHUNK_LEN);
+        }
+        entry.offset = offset;
+        entry.chunklen = read_len;
+
+        rc = log_read_body(log, dptr, log_mgmt_walk_arg->chunk, offset,
+                           read_len);
+        if (rc < 0) {
+            return LOG_MGMT_ERR_EUNKNOWN;
+        }
+        rc = log_mgmt_walk_arg->cb(&entry, log_mgmt_walk_arg->arg);
+        if (rc) {
+            break;
+        }
+    }
+
+    return rc;
+}
+
+static int
+log_mgmt_foreach_entry(const char *log_name,
+                            const struct log_mgmt_filter *filter,
+                            log_mgmt_foreach_entry_fn *cb, void *arg)
+{
+    struct log_mgmt_walk_arg walk_arg;
+    struct log_offset offset = {};
+    struct log *log;
+
+    walk_arg = (struct log_mgmt_walk_arg) {
+        .cb = cb,
+        .arg = arg,
+    };
+
+    log = log_mgmt_find_log(log_name);
+    if (log == NULL) {
+        return LOG_MGMT_ERR_ENOENT;
+    }
+
+    if (strcmp(log->l_name, log_name) == 0) {
+        offset.lo_arg = &walk_arg;
+        offset.lo_ts = filter->min_timestamp;
+        offset.lo_index = filter->min_index;
+        offset.lo_data_len = 0;
+
+        return log_walk_body(log, log_mgmt_walk_cb, &offset);
+    }
+
+    return LOG_MGMT_ERR_ENOENT;
+}
+
+static int
+log_mgmt_flush_log(const char *log_name)
+{
+    struct log *log;
+    int rc;
+
+    log = log_mgmt_find_log(log_name);
+    if (log == NULL) {
+        return LOG_MGMT_ERR_ENOENT;
+    }
+
+    rc = log_flush(log);
+    if (rc != 0) {
+        return LOG_MGMT_ERR_EUNKNOWN;
+    }
+
+    return 0;
+}
 
 static mgmt_handler_fn log_mgmt_show;
 static mgmt_handler_fn log_mgmt_clear;
@@ -217,14 +483,14 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
          * is just a single entry we add the generic too long message text.
          */
         /* `+ 1` to account for the CBOR array terminator. */
-        if (ctxt->rsp_len + entry_len + 1 > LOG_MGMT_MAX_RSP_LEN) {
+        if (ctxt->rsp_len + entry_len + 1 > MYNEWT_VAL(LOG_MGMT_MAX_RSP_LEN)) {
             /*
              * Is this just a single entry? If so, encode the generic error
              * message in the "msg" field of the response
              */
             if (ctxt->counter == 0) {
                 entry->type = LOG_ETYPE_STRING;
-                snprintf((char *)entry->data, LOG_MGMT_CHUNK_LEN,
+                snprintf((char *)entry->data, MYNEWT_VAL(LOG_MGMT_CHUNK_LEN),
                          "error: entry too large (%zu bytes)", entry_len);
             }
 
@@ -271,7 +537,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     err |= cbor_encoder_close_container(&cnt_encoder, &entries);
     rsp_len = cbor_encode_bytes_written(enc) +
               cbor_encode_bytes_written(&cnt_encoder);
-    if (rsp_len > LOG_MGMT_MAX_RSP_LEN) {
+    if (rsp_len > MYNEWT_VAL(LOG_MGMT_MAX_RSP_LEN)) {
         /* No entries were processed, don't update watermark */
         return LOG_MGMT_ERR_EUNKNOWN;
     }
@@ -288,7 +554,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
         .rsp_len = cbor_encode_bytes_written(enc),
     };
 
-    rc = log_mgmt_impl_foreach_entry(log->name, &filter,
+    rc = log_mgmt_foreach_entry(log->name, &filter,
                                      log_mgmt_cb_encode, &ctxt);
     if (rc < 0) {
         /*
@@ -304,9 +570,9 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
         return LOG_MGMT_ERR_ENOMEM;
     }
 
-#if LOG_MGMT_READ_WATERMARK_UPDATE
+#if MYNEWT_VAL(LOG_READ_WATERMARK_UPDATE)
     if (!rc || rc == LOG_MGMT_ERR_EUNKNOWN) {
-        log_mgmt_impl_set_watermark(log, ctxt.last_enc_index);
+        log_mgmt_set_watermark(log, ctxt.last_enc_index);
     }
 #endif
     return rc;
@@ -348,7 +614,7 @@ log_encode(const struct log_mgmt_log *log, CborEncoder *ctxt,
 static int
 log_mgmt_show(struct mgmt_ctxt *ctxt)
 {
-    char name[LOG_MGMT_NAME_LEN];
+    char name[MYNEWT_VAL(LOG_MGMT_NAME_LEN)];
     struct log_mgmt_log log;
     CborEncoder logs;
     CborError err;
@@ -389,9 +655,9 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     name_len = strlen(name);
 
     err = 0;
-#if LOG_MGMT_GLOBAL_IDX
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
     /* Determine the index that the next log entry would use. */
-    rc = log_mgmt_impl_get_next_idx(&next_idx);
+    rc = log_mgmt_get_next_idx(&next_idx);
     if (rc != 0) {
         return LOG_MGMT_ERR_EUNKNOWN;
     }
@@ -409,7 +675,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
 
     /* Iterate list of logs, encoding each that matches the client request. */
     for (log_idx = 0; ; log_idx++) {
-        rc = log_mgmt_impl_get_log(log_idx, &log);
+        rc = log_mgmt_get_log(log_idx, &log);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             /* Log list fully iterated. */
             if (name_len != 0) {
@@ -473,7 +739,7 @@ log_mgmt_module_list(struct mgmt_ctxt *ctxt)
                                    CborIndefiniteLength);
 
     for (module = 0; ; module++) {
-        rc = log_mgmt_impl_get_module(module, &module_name);
+        rc = log_mgmt_get_module(module, &module_name);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
         }
@@ -517,7 +783,7 @@ log_mgmt_logs_list(struct mgmt_ctxt *ctxt)
                                      CborIndefiniteLength);
 
     for (log_idx = 0; ; log_idx++) {
-        rc = log_mgmt_impl_get_log(log_idx, &log);
+        rc = log_mgmt_get_log(log_idx, &log);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
         }
@@ -560,7 +826,7 @@ log_mgmt_level_list(struct mgmt_ctxt *ctxt)
                                    CborIndefiniteLength);
 
     for (level = 0; ; level++) {
-        rc = log_mgmt_impl_get_level(level, &level_name);
+        rc = log_mgmt_get_level(level, &level_name);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
         }
@@ -591,7 +857,7 @@ static int
 log_mgmt_clear(struct mgmt_ctxt *ctxt)
 {
     struct log_mgmt_log log;
-    char name[LOG_MGMT_NAME_LEN] = {0};
+    char name[MYNEWT_VAL(LOG_MGMT_NAME_LEN)] = {0};
     int name_len;
     int log_idx;
     int rc;
@@ -616,7 +882,7 @@ log_mgmt_clear(struct mgmt_ctxt *ctxt)
     name_len = strlen(name);
 
     for (log_idx = 0; ; log_idx++) {
-        rc = log_mgmt_impl_get_log(log_idx, &log);
+        rc = log_mgmt_get_log(log_idx, &log);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             return 0;
         }
@@ -626,7 +892,7 @@ log_mgmt_clear(struct mgmt_ctxt *ctxt)
 
         if (log.type != LOG_MGMT_TYPE_STREAM) {
             if (name_len == 0 || strcmp(log.name, name) == 0) {
-                rc = log_mgmt_impl_clear(log.name);
+                rc = log_mgmt_flush_log(log.name);
                 if (rc != 0) {
                     return rc;
                 }
@@ -649,4 +915,13 @@ void
 log_mgmt_register_group(void)
 {
     mgmt_register_group(&log_mgmt_group);
+}
+
+void
+log_mgmt_module_init(void)
+{
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    log_mgmt_register_group();
 }
