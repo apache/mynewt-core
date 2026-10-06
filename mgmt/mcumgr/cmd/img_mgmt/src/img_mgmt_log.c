@@ -116,25 +116,25 @@ img_mgmt_log_gen(const char *ev, int status, const uint8_t *hash)
 }
 
 int
-img_mgmt_impl_log_upload_start(int status)
+img_mgmt_log_upload_start(int status)
 {
     return img_mgmt_log_gen(IMG_MGMT_LOG_EV_UPSTART, status, NULL);
 }
 
 int
-img_mgmt_impl_log_upload_done(int status, const uint8_t *hash)
+img_mgmt_log_upload_done(int status, const uint8_t *hash)
 {
     return img_mgmt_log_gen(IMG_MGMT_LOG_EV_UPDONE, 0, hash);
 }
 
 int
-img_mgmt_impl_log_pending(int status, const uint8_t *hash)
+img_mgmt_log_pending(int status, const uint8_t *hash)
 {
     return img_mgmt_log_gen(IMG_MGMT_LOG_EV_PEND, status, hash);
 }
 
 int
-img_mgmt_impl_log_confirm(int status, const uint8_t *hash)
+img_mgmt_log_confirm(int status, const uint8_t *hash)
 {
     return img_mgmt_log_gen(IMG_MGMT_LOG_EV_CONF, status, hash);
 }

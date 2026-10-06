@@ -24,10 +24,13 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - '@apache-mynewt-core/mgmt/mcumgr/cmd/img_mgmt/port/mynewt'
     - '@apache-mynewt-core/boot/split'
     - '@apache-mynewt-core/encoding/base64'
     - '@apache-mynewt-core/sys/flash_map'
     - '@apache-mynewt-core/mgmt/mcumgr/mgmt'
     - '@apache-mynewt-core/encoding/cborattr'
     - '@apache-mynewt-core/mgmt/mcumgr/util'
+    - '@apache-mynewt-core/sys/log/modlog'
+
+pkg.init:
+    img_mgmt_module_init: 'MYNEWT_VAL(IMG_MGMT_SYSINIT_STAGE)'

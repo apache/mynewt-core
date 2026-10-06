@@ -25,7 +25,6 @@
 #include "img_mgmt/img_mgmt.h"
 #include "img_mgmt/image.h"
 #include "img_mgmt_priv.h"
-#include "img_mgmt/img_mgmt_impl.h"
 
 /**
  * Collects information about the specified image slot.
@@ -41,7 +40,7 @@ img_mgmt_state_flags(int query_slot)
     /* Determine if this is is pending or confirmed (only applicable for
      * unified images and loaders.
      */
-    swap_type = img_mgmt_impl_swap_type(query_slot);
+    swap_type = img_mgmt_swap_type(query_slot);
     switch (swap_type) {
     case IMG_MGMT_SWAP_TYPE_NONE:
         if (query_slot == IMG_MGMT_BOOT_CURR_SLOT) {
@@ -134,7 +133,7 @@ img_mgmt_state_set_pending(int slot, int permanent)
         goto done;
     }
 
-    rc = img_mgmt_impl_write_pending(slot, permanent);
+    rc = img_mgmt_write_pending(slot, permanent);
     if (rc != 0) {
         rc = MGMT_ERR_EUNKNOWN;
     }
@@ -148,9 +147,9 @@ done:
     }
 
     if (permanent) {
-        (void) img_mgmt_impl_log_confirm(rc, hashp);
+        (void) img_mgmt_log_confirm(rc, hashp);
     } else {
-        (void) img_mgmt_impl_log_pending(rc, hashp);
+        (void) img_mgmt_log_pending(rc, hashp);
     }
 
     return rc;
@@ -171,14 +170,14 @@ img_mgmt_state_confirm(void)
         goto err;
     }
 
-    rc = img_mgmt_impl_write_confirmed();
+    rc = img_mgmt_write_confirmed();
     if (rc != 0) {
         rc = MGMT_ERR_EUNKNOWN;
     }
 
      img_mgmt_dfu_confirmed();
 err:
-    return img_mgmt_impl_log_confirm(rc, NULL);
+    return img_mgmt_log_confirm(rc, NULL);
 }
 
 /**
@@ -229,31 +228,31 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
         err |= cbor_encode_text_stringz(&image, "hash");
         err |= cbor_encode_byte_string(&image, hash, IMAGE_HASH_LEN);
 
-        if (!IMG_MGMT_FRUGAL_LIST || !(flags & IMAGE_F_NON_BOOTABLE)) {
+        if (!MYNEWT_VAL(IMG_MGMT_FRUGAL_LIST) || !(flags & IMAGE_F_NON_BOOTABLE)) {
             err |= cbor_encode_text_stringz(&image, "bootable");
             err |= cbor_encode_boolean(&image, !(flags & IMAGE_F_NON_BOOTABLE));
         }
 
-        if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_PENDING)) {
+        if (!MYNEWT_VAL(IMG_MGMT_FRUGAL_LIST) || (state_flags & IMG_MGMT_STATE_F_PENDING)) {
             err |= cbor_encode_text_stringz(&image, "pending");
             err |= cbor_encode_boolean(&image,
                                     state_flags & IMG_MGMT_STATE_F_PENDING);
         }
 
-        if (!IMG_MGMT_FRUGAL_LIST ||
+        if (!MYNEWT_VAL(IMG_MGMT_FRUGAL_LIST) ||
             (state_flags & IMG_MGMT_STATE_F_CONFIRMED)) {
             err |= cbor_encode_text_stringz(&image, "confirmed");
             err |= cbor_encode_boolean(&image,
                                     state_flags & IMG_MGMT_STATE_F_CONFIRMED);
         }
 
-        if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_ACTIVE)) {
+        if (!MYNEWT_VAL(IMG_MGMT_FRUGAL_LIST) || (state_flags & IMG_MGMT_STATE_F_ACTIVE)) {
             err |= cbor_encode_text_stringz(&image, "active");
             err |= cbor_encode_boolean(&image,
                                     state_flags & IMG_MGMT_STATE_F_ACTIVE);
         }
 
-        if (!IMG_MGMT_FRUGAL_LIST ||
+        if (!MYNEWT_VAL(IMG_MGMT_FRUGAL_LIST) ||
             (state_flags & IMG_MGMT_STATE_F_PERMANENT)) {
             err |= cbor_encode_text_stringz(&image, "permanent");
             err |= cbor_encode_boolean(&image,
@@ -266,7 +265,7 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
     err |= cbor_encoder_close_container(&ctxt->encoder, &images);
 
     /* splitStatus is always 0 so in frugal list it is not present at all */
-    if (!IMG_MGMT_FRUGAL_LIST) {
+    if (!MYNEWT_VAL(IMG_MGMT_FRUGAL_LIST)) {
         err |= cbor_encode_text_stringz(&ctxt->encoder, "splitStatus");
         err |= cbor_encode_int(&ctxt->encoder, 0);
     }

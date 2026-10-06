@@ -21,7 +21,7 @@
 #define H_IMG_MGMT_
 
 #include <inttypes.h>
-#include "img_mgmt_config.h"
+#include "syscfg/syscfg.h"
 #include "mgmt/mgmt.h"
 
 struct image_version;
@@ -29,6 +29,12 @@ struct image_version;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Number of updatable images */
+#define IMG_MGMT_UPDATABLE_IMAGE_NUMBER 1
+
+/* Slot of currently running image */
+#define IMG_MGMT_BOOT_CURR_SLOT         0
 
 #define IMG_MGMT_HASH_STR         48
 #define IMG_MGMT_HASH_LEN         32
@@ -80,7 +86,7 @@ struct img_mgmt_upload_req {
     unsigned long long int size;    /* -1 if unspecified */
     size_t data_len;
     size_t data_sha_len;
-    uint8_t img_data[IMG_MGMT_UL_CHUNK_SIZE];
+    uint8_t img_data[MYNEWT_VAL(IMG_MGMT_UL_CHUNK_SIZE)];
     uint8_t data_sha[IMG_MGMT_DATA_SHA_LEN];
     bool upgrade;                   /* Only allow greater version numbers. */
 };
@@ -96,7 +102,7 @@ struct img_mgmt_state {
     /** Hash of image data; used for resumption of a partial upload. */
     uint8_t data_sha_len;
     uint8_t data_sha[IMG_MGMT_DATA_SHA_LEN];
-#if IMG_MGMT_LAZY_ERASE
+#if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
     int sector_id;
     uint32_t sector_end;
 #endif
@@ -256,7 +262,7 @@ void img_mgmt_dfu_started(void);
 void img_mgmt_dfu_pending(void);
 void img_mgmt_dfu_confirmed(void);
 
-#if IMG_MGMT_VERBOSE_ERR
+#if MYNEWT_VAL(IMG_MGMT_VERBOSE_ERR)
 int img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn);
 extern const char *img_mgmt_err_str_app_reject;
 extern const char *img_mgmt_err_str_hdr_malformed;

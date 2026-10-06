@@ -26,9 +26,7 @@
 
 #include "img_mgmt/image.h"
 #include "img_mgmt/img_mgmt.h"
-#include "img_mgmt/img_mgmt_impl.h"
 #include "img_mgmt_priv.h"
-#include "img_mgmt/img_mgmt_config.h"
 
 static mgmt_handler_fn img_mgmt_upload;
 static mgmt_handler_fn img_mgmt_erase;
@@ -63,7 +61,7 @@ static struct mgmt_group img_mgmt_group = {
     .mg_group_id = MGMT_GROUP_ID_IMAGE,
 };
 
-#if IMG_MGMT_VERBOSE_ERR
+#if MYNEWT_VAL(IMG_MGMT_VERBOSE_ERR)
 const char *img_mgmt_err_str_app_reject = "app reject";
 const char *img_mgmt_err_str_hdr_malformed = "header malformed";
 const char *img_mgmt_err_str_magic_mismatch = "magic mismatch";
@@ -85,7 +83,7 @@ img_mgmt_find_tlvs(int slot, size_t *start_off, size_t *end_off,
     struct image_tlv_info tlv_info;
     int rc;
 
-    rc = img_mgmt_impl_read(slot, *start_off, &tlv_info, sizeof tlv_info);
+    rc = img_mgmt_read(slot, *start_off, &tlv_info, sizeof tlv_info);
     if (rc != 0) {
         /* Read error. */
         return MGMT_ERR_EUNKNOWN;
@@ -113,7 +111,7 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
                    uint32_t *flags)
 {
 
-#if IMG_MGMT_DUMMY_HDR
+#if MYNEWT_VAL(IMG_MGMT_DUMMY_HDR)
     uint8_t dummy_hash[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
@@ -147,12 +145,12 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     uint32_t erased_val_32;
     int rc;
 
-    rc = img_mgmt_impl_erased_val(image_slot, &erased_val);
+    rc = img_mgmt_erased_val(image_slot, &erased_val);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
 
-    rc = img_mgmt_impl_read(image_slot, 0, &hdr, sizeof hdr);
+    rc = img_mgmt_read(image_slot, 0, &hdr, sizeof hdr);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
@@ -200,7 +198,7 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
 
     hash_found = false;
     while (data_off + sizeof tlv <= data_end) {
-        rc = img_mgmt_impl_read(image_slot, data_off, &tlv, sizeof tlv);
+        rc = img_mgmt_read(image_slot, data_off, &tlv, sizeof tlv);
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
@@ -224,7 +222,7 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
             if (data_off + IMAGE_HASH_LEN > data_end) {
                 return MGMT_ERR_EUNKNOWN;
             }
-            rc = img_mgmt_impl_read(image_slot, data_off, hash,
+            rc = img_mgmt_read(image_slot, data_off, hash,
                                     IMAGE_HASH_LEN);
             if (rc != 0) {
                 return MGMT_ERR_EUNKNOWN;
@@ -281,7 +279,7 @@ img_mgmt_find_by_hash(uint8_t *find, struct image_version *ver)
     return -1;
 }
 
-#if IMG_MGMT_VERBOSE_ERR
+#if MYNEWT_VAL(IMG_MGMT_VERBOSE_ERR)
 int
 img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn)
 {
@@ -320,7 +318,7 @@ img_mgmt_erase(struct mgmt_ctxt *ctxt)
         }
     }
     
-    rc = img_mgmt_impl_erase_slot();
+    rc = img_mgmt_erase_slot();
 
     if (!rc) {
         img_mgmt_dfu_stopped();
@@ -374,7 +372,7 @@ img_mgmt_upload_log(bool is_first, bool is_last, int status)
     int rc;
 
     if (is_first) {
-        return img_mgmt_impl_log_upload_start(status);
+        return img_mgmt_log_upload_start(status);
     }
 
     if (is_last || status != 0) {
@@ -386,7 +384,7 @@ img_mgmt_upload_log(bool is_first, bool is_last, int status)
             hashp = hash;
         }
 
-        return img_mgmt_impl_log_upload_done(status, hashp);
+        return img_mgmt_log_upload_done(status, hashp);
     }
 
     /* Nothing to log. */
@@ -463,7 +461,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
     }
 
     /* Determine what actions to take as a result of this request. */
-    rc = img_mgmt_impl_upload_inspect(&req, &action, &errstr);
+    rc = img_mgmt_upload_inspect(&req, &action, &errstr);
     if (rc != 0) {
         img_mgmt_dfu_stopped();
         return rc;
@@ -510,14 +508,14 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
         memset(&g_img_mgmt_state.data_sha[req.data_sha_len], 0,
                IMG_MGMT_DATA_SHA_LEN - req.data_sha_len);
 
-#if IMG_MGMT_LAZY_ERASE
+#if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
         /* setup for lazy sector by sector erase */
         g_img_mgmt_state.sector_id = -1;
         g_img_mgmt_state.sector_end = 0;
 #else
         /* erase the entire req.size all at once */
         if (action.erase) {
-            rc = img_mgmt_impl_erase_image_data(0, req.size);
+            rc = img_mgmt_erase_image_data(0, req.size);
             if (rc != 0) {
                 rc = MGMT_ERR_EUNKNOWN;
                 errstr = img_mgmt_err_str_flash_erase_failed;
@@ -531,9 +529,9 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
 
     /* Write the image data to flash. */
     if (req.data_len != 0) {
-#if IMG_MGMT_LAZY_ERASE
+#if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
         /* erase as we cross sector boundaries */
-        if (img_mgmt_impl_erase_if_needed(req.off, action.write_bytes) != 0) {
+        if (img_mgmt_erase_if_needed(req.off, action.write_bytes) != 0) {
             rc = MGMT_ERR_EUNKNOWN;
             errstr = img_mgmt_err_str_flash_erase_failed;
             goto end;
@@ -544,7 +542,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             last = true;
         }
 
-        rc = img_mgmt_impl_write_image_data(req.off, req.img_data, action.write_bytes, last);
+        rc = img_mgmt_write_image_data(req.off, req.img_data, action.write_bytes, last);
         if (rc != 0) {
             rc = MGMT_ERR_EUNKNOWN;
             errstr = img_mgmt_err_str_flash_write_failed;
