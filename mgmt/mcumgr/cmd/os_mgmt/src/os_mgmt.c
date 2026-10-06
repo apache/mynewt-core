@@ -19,43 +19,185 @@
 
 #include <string.h>
 
+#include "os/mynewt.h"
+#include "hal/hal_system.h"
+#include "hal/hal_watchdog.h"
 #include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "os_mgmt/os_mgmt.h"
-#include "os_mgmt/os_mgmt_impl.h"
-#include "os_mgmt/os_mgmt_config.h"
-#if OS_MGMT_DATETIME
+#if MYNEWT_VAL(LOG_SOFT_RESET)
+#include "reboot/log_reboot.h"
+#include "img_mgmt/img_mgmt.h"
+#endif
+#if MYNEWT_VAL(OS_MGMT_DATETIME)
 #include "datetime/datetime.h"
 #endif
 
-#if OS_MGMT_ECHO
+static struct os_callout os_mgmt_reset_callout;
+
+static void
+os_mgmt_reset_tmo(struct os_event *ev)
+{
+    /* Tickle watchdog just before re-entering bootloader.  Depending on what
+     * the system has been doing lately, the watchdog timer might be close to
+     * firing.
+     */
+    hal_watchdog_tickle();
+    hal_system_reset();
+}
+
+#if MYNEWT_VAL(OS_MGMT_TASKSTAT)
+static uint16_t
+os_mgmt_stack_usage(const struct os_task *task)
+{
+    struct os_task_info oti;
+
+    os_task_info_get(task, &oti);
+
+    return oti.oti_stkusage;
+}
+
+static const struct os_task *
+os_mgmt_task_at(int idx)
+{
+    const struct os_task *task;
+    int i;
+
+    task = STAILQ_FIRST(&g_os_task_list);
+    for (i = 0; i < idx; i++) {
+        if (task == NULL) {
+            break;
+        }
+
+        task = STAILQ_NEXT(task, t_os_task_list);
+    }
+
+    return task;
+}
+
+static int
+os_mgmt_task_info_get(int idx, struct os_mgmt_task_info *out_info)
+{
+    const struct os_task *task;
+
+    task = os_mgmt_task_at(idx);
+    if (task == NULL) {
+        return MGMT_ERR_ENOENT;
+    }
+
+    out_info->oti_prio = task->t_prio;
+    out_info->oti_taskid = task->t_taskid;
+    out_info->oti_state = task->t_state;
+    out_info->oti_stkusage = os_mgmt_stack_usage(task);
+    out_info->oti_stksize = task->t_stacksize;
+    out_info->oti_cswcnt = task->t_ctx_sw_cnt;
+    out_info->oti_runtime = task->t_run_time;
+    out_info->oti_last_checkin = task->t_sanity_check.sc_checkin_last;
+    out_info->oti_next_checkin = task->t_sanity_check.sc_checkin_last +
+                                 task->t_sanity_check.sc_checkin_itvl;
+    strncpy(out_info->oti_name, task->t_name, sizeof out_info->oti_name - 1);
+    out_info->oti_name[sizeof out_info->oti_name - 1] = '\0';
+
+    return 0;
+}
+#endif
+
+#if MYNEWT_VAL(OS_MGMT_DATETIME)
+static int
+os_mgmt_datetime_get(char *datetime, size_t size)
+{
+    struct os_timeval tv;
+    struct os_timezone tz;
+    int rc;
+
+    if (size < DATETIME_BUFSIZE) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    rc = os_gettimeofday(&tv, &tz);
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    rc = datetime_format(&tv, &tz, datetime, size);
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    return MGMT_ERR_EOK;
+}
+
+static int
+os_mgmt_datetime_set(char *datetime)
+{
+    struct os_timeval tv;
+    struct os_timezone tz;
+    int rc = 0;
+
+    rc = datetime_parse(datetime, &tv, &tz);
+    if (rc != 0) {
+        return MGMT_ERR_ECORRUPT;
+    }
+
+    return os_settimeofday(&tv, &tz);
+}
+#endif
+
+static int
+os_mgmt_reset_schedule(unsigned int delay_ms)
+{
+#if MYNEWT_VAL(LOG_SOFT_RESET)
+    struct log_reboot_info info = {
+        .reason = HAL_RESET_REQUESTED,
+        .file = NULL,
+        .line = 0,
+        .pc = 0,
+    };
+
+    if (img_mgmt_state_any_pending()) {
+        info.reason = HAL_RESET_DFU;
+    }
+#endif
+    os_callout_init(&os_mgmt_reset_callout, os_eventq_dflt_get(),
+                    os_mgmt_reset_tmo, NULL);
+
+#if MYNEWT_VAL(LOG_SOFT_RESET)
+    log_reboot(&info);
+#endif
+    os_callout_reset(&os_mgmt_reset_callout,
+                     delay_ms * OS_TICKS_PER_SEC / 1000);
+
+    return 0;
+}
+
+#if MYNEWT_VAL(OS_MGMT_ECHO)
 static mgmt_handler_fn os_mgmt_echo;
 #endif
 
 static mgmt_handler_fn os_mgmt_reset;
 
-#if OS_MGMT_TASKSTAT
+#if MYNEWT_VAL(OS_MGMT_TASKSTAT)
 static mgmt_handler_fn os_mgmt_taskstat_read;
 #endif
 
-#if OS_MGMT_DATETIME
+#if MYNEWT_VAL(OS_MGMT_DATETIME)
 static mgmt_handler_fn os_mgmt_datetime_read;
 static mgmt_handler_fn os_mgmt_datetime_write;
 #endif
 
 static const struct mgmt_handler os_mgmt_group_handlers[] = {
-#if OS_MGMT_ECHO
+#if MYNEWT_VAL(OS_MGMT_ECHO)
     [OS_MGMT_ID_ECHO] = {
         os_mgmt_echo, os_mgmt_echo
     },
 #endif
-#if OS_MGMT_TASKSTAT
+#if MYNEWT_VAL(OS_MGMT_TASKSTAT)
     [OS_MGMT_ID_TASKSTAT] = {
         os_mgmt_taskstat_read, NULL
     },
 #endif
-#if OS_MGMT_DATETIME
+#if MYNEWT_VAL(OS_MGMT_DATETIME)
     [OS_MGMT_ID_DATETIME_STR] = {
         os_mgmt_datetime_read, os_mgmt_datetime_write
     },
@@ -77,7 +219,7 @@ static struct mgmt_group os_mgmt_group = {
 /**
  * Command handler: os echo
  */
-#if OS_MGMT_ECHO
+#if MYNEWT_VAL(OS_MGMT_ECHO)
 static int
 os_mgmt_echo(struct mgmt_ctxt *ctxt)
 {
@@ -115,7 +257,7 @@ os_mgmt_echo(struct mgmt_ctxt *ctxt)
 }
 #endif
 
-#if OS_MGMT_TASKSTAT
+#if MYNEWT_VAL(OS_MGMT_TASKSTAT)
 /**
  * Encodes a single taskstat entry.
  */
@@ -178,7 +320,7 @@ os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
 
     /* Iterate the list of tasks, encoding each. */
     for (task_idx = 0; ; task_idx++) {
-        rc = os_mgmt_impl_task_info(task_idx, &task_info);
+        rc = os_mgmt_task_info_get(task_idx, &task_info);
         if (rc == MGMT_ERR_ENOENT) {
             /* No more tasks to encode. */
             break;
@@ -202,7 +344,7 @@ os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
 }
 #endif
 
-#if OS_MGMT_DATETIME
+#if MYNEWT_VAL(OS_MGMT_DATETIME)
 /**
  * Command handler: os datetime
  */
@@ -217,7 +359,7 @@ os_mgmt_datetime_read(struct mgmt_ctxt *ctxt)
         return MGMT_ERR_ENOMEM;
     }
 
-    err = os_mgmt_impl_datetime_info(buf, sizeof(buf));
+    err = os_mgmt_datetime_get(buf, sizeof(buf));
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
     }
@@ -257,7 +399,7 @@ os_mgmt_datetime_write(struct mgmt_ctxt *ctxt)
         return MGMT_ERR_EINVAL;
     }
 
-    err = os_mgmt_impl_datetime_set(datetime_buf);
+    err = os_mgmt_datetime_set(datetime_buf);
     if (err != 0) {
         return MGMT_ERR_ECORRUPT;
     }
@@ -272,7 +414,7 @@ os_mgmt_datetime_write(struct mgmt_ctxt *ctxt)
 static int
 os_mgmt_reset(struct mgmt_ctxt *ctxt)
 {
-    return os_mgmt_impl_reset(OS_MGMT_RESET_MS);
+    return os_mgmt_reset_schedule(MYNEWT_VAL(OS_MGMT_RESET_MS));
 }
 
 void
