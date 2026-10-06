@@ -159,6 +159,14 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
     return mgmt_err_from_cbor(rc);
 }
 
+static void
+omp_init_reader(struct omp_streamer *streamer, struct os_mbuf *m,
+                struct mgmt_ctxt *ctxt)
+{
+    cbor_mbuf_reader_init(streamer->reader, m, streamer->req_off);
+    cbor_parser_init(&streamer->reader->r, 0, &ctxt->parser, &ctxt->it);
+}
+
 int
 omp_process_request_packet(struct omp_state *omgr_st, void *req_buf)
 {
@@ -172,16 +180,10 @@ omp_process_request_packet(struct omp_state *omgr_st, void *req_buf)
     assert(req_buf);
 
     streamer = &omgr_st->omp_stmr;
-    omgr_st->m_ctxt = &ctxt;
 
     req_m = (struct os_mbuf *) req_buf;
 
-    rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, req_m);
-    if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
-        return rc;
-
-    }
+    omp_init_reader(streamer, req_m, &ctxt);
 
     rc = omp_read_hdr(&ctxt.it, &req_hdr);
     if (rc != 0) {
@@ -192,12 +194,7 @@ omp_process_request_packet(struct omp_state *omgr_st, void *req_buf)
 
     memcpy(&rsp_hdr, &req_hdr, sizeof(struct mgmt_hdr));
 
-    rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, req_m);
-    if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
-        return rc;
-
-    }
+    omp_init_reader(streamer, req_m, &ctxt);
 
     rc = cbor_encoder_create_map(streamer->rsp_encoder,
                                  &ctxt.encoder,

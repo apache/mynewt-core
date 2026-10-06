@@ -58,12 +58,9 @@ smp_shell_in(struct os_mbuf *m, void *arg)
     struct cbor_mbuf_writer cmw;
 
     g_smp_shell_transport.st_streamer = (struct smp_streamer) {
-        .mgmt_stmr = {
-            .cfg = &g_smp_cbor_cfg,
-            .reader = &cmr.r,
-            .writer = &cmw.enc,
-            .cb_arg = &g_smp_shell_transport,
-        },
+        .reader = &cmr,
+        .writer = &cmw,
+        .cb_arg = &g_smp_shell_transport,
         .tx_rsp_cb = smp_tx_rsp,
     };
 

@@ -38,6 +38,9 @@
 #ifndef H_SMP_
 #define H_SMP_
 
+#include "os/os_mbuf.h"
+#include "tinycbor/cbor_mbuf_reader.h"
+#include "tinycbor/cbor_mbuf_writer.h"
 #include "mgmt/mgmt.h"
 
 #ifdef __cplusplus
@@ -51,18 +54,24 @@ struct mgmt_hdr;
  * @brief Transmits an SMP response packet.
  *
  * @param ss                    The streamer to transmit via.
- * @param buf                   Buffer containing the response packet.
+ * @param rsp                   Buffer containing the response packet.
  * @param arg                   Optional streamer argument.
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-typedef int smp_tx_rsp_fn(struct smp_streamer *ss, void *buf, void *arg);
+typedef int smp_tx_rsp_fn(struct smp_streamer *ss, struct os_mbuf *rsp,
+                          void *arg);
 
 /**
  * @brief Decodes, encodes, and transmits SMP packets.
  */
 struct smp_streamer {
-    struct mgmt_streamer mgmt_stmr;
+    /** CBOR reader used for decoding requests. */
+    struct cbor_mbuf_reader *reader;
+    /** CBOR writer used for encoding responses. */
+    struct cbor_mbuf_writer *writer;
+    /** Optional argument passed to tx_rsp_cb. */
+    void *cb_arg;
     smp_tx_rsp_fn *tx_rsp_cb;
 };
 
@@ -76,13 +85,13 @@ struct smp_streamer {
  * processing of the packet is aborted.  This function consumes the supplied
  * request buffer regardless of the outcome.
  *
- * @param streamer              The streamer providing the required SMP
- *                                  callbacks.
+ * @param streamer              The streamer used for processing request.
  * @param req                   The request packet to process.
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-int smp_process_request_packet(struct smp_streamer *streamer, void *req);
+int smp_process_request_packet(struct smp_streamer *streamer,
+                               struct os_mbuf *req);
 
 #ifdef __cplusplus
 }

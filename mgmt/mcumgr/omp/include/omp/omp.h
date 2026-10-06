@@ -38,6 +38,7 @@
 #ifndef H_OMP_
 #define H_OMP_
 
+#include "tinycbor/cbor_mbuf_reader.h"
 #include "mgmt/mgmt.h"
 
 #ifdef __cplusplus
@@ -62,7 +63,10 @@ typedef void omp_tx_rsp_fn(struct omp_streamer *stmr, int retval, void* arg);
  *        underlying OIC implementation.
  */
 struct omp_streamer {
-    struct mgmt_streamer mgmt_stmr;
+    /** CBOR reader used for decoding requests. */
+    struct cbor_mbuf_reader *reader;
+    /** Offset of request payload in request buffer. */
+    uint16_t req_off;
     struct CborEncoder *rsp_encoder;
     omp_tx_rsp_fn *tx_rsp_cb;
 };
@@ -72,7 +76,6 @@ struct omp_streamer {
  */
 struct omp_state {
     struct omp_streamer omp_stmr;
-    struct mgmt_ctxt *m_ctxt;
     void *request;
 };
 

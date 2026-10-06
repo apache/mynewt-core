@@ -121,114 +121,6 @@ struct mgmt_evt_op_cmd_done_arg {
 typedef void mgmt_on_evt_cb(uint8_t opcode, uint16_t group, uint8_t id,
                             void *arg);
 
-/** @typedef mgmt_alloc_rsp_fn
- * @brief Allocates a buffer suitable for holding a response.
- *
- * If a source buf is provided, its user data is copied into the new buffer.
- *
- * @param src_buf               An optional source buffer to copy user data
- *                                  from.
- * @param arg                   Optional streamer argument.
- *
- * @return                      Newly-allocated buffer on success
- *                              NULL on failure.
- */
-typedef void *mgmt_alloc_rsp_fn(const void *src_buf, void *arg);
-
-/** @typedef mgmt_trim_front_fn
- * @brief Trims data from the front of a buffer.
- *
- * If the amount to trim exceeds the size of the buffer, the buffer is
- * truncated to a length of 0.
- *
- * @param buf                   The buffer to trim.
- * @param len                   The number of bytes to remove.
- * @param arg                   Optional streamer argument.
- */
-typedef void mgmt_trim_front_fn(void *buf, size_t len, void *arg);
-
-/** @typedef mgmt_reset_buf_fn
- * @brief Resets a buffer to a length of 0.
- *
- * The buffer's user data remains, but its payload is cleared.
- *
- * @param buf                   The buffer to reset.
- * @param arg                   Optional streamer argument.
- */
-typedef void mgmt_reset_buf_fn(void *buf, void *arg);
-
-/** @typedef mgmt_write_at_fn
- * @brief Writes data to a CBOR encoder.
- *
- * Any existing data at the specified offset is overwritten by the new data.
- * Any new data that extends past the buffer's current length is appended.
- *
- * @param writer                The encoder to write to.
- * @param offset                The byte offset to write to,
- * @param data                  The data to write.
- * @param len                   The number of bytes to write.
- * @param arg                   Optional streamer argument.
- *
- * @return                      0 on success, MGMT_ERR_[...] code on failure.
- */
-typedef int mgmt_write_at_fn(struct cbor_encoder_writer *writer, size_t offset,
-                             const void *data, size_t len, void *arg);
-
-/** @typedef mgmt_init_reader_fn
- * @brief Initializes a CBOR reader with the specified buffer.
- *
- * @param reader                The reader to initialize.
- * @param buf                   The buffer to configure the reader with.
- * @param arg                   Optional streamer argument.
- *
- * @return                      0 on success, MGMT_ERR_[...] code on failure.
- */
-typedef int mgmt_init_reader_fn(struct cbor_decoder_reader *reader, void *buf,
-                                void *arg);
-
-/** @typedef mgmt_init_writer_fn
- * @brief Initializes a CBOR writer with the specified buffer.
- *
- * @param writer                The writer to initialize.
- * @param buf                   The buffer to configure the writer with.
- * @param arg                   Optional streamer argument.
- *
- * @return                      0 on success, MGMT_ERR_[...] code on failure.
- */
-typedef int mgmt_init_writer_fn(struct cbor_encoder_writer *writer, void *buf,
-                                void *arg);
-
-/** @typedef mgmt_init_writer_fn
- * @brief Frees the specified buffer.
- *
- * @param buf                   The buffer to free.
- * @param arg                   Optional streamer argument.
- */
-typedef void mgmt_free_buf_fn(void *buf, void *arg);
-
-/**
- * @brief Configuration for constructing a mgmt_streamer object.
- */
-struct mgmt_streamer_cfg {
-    mgmt_alloc_rsp_fn *alloc_rsp;
-    mgmt_trim_front_fn *trim_front;
-    mgmt_reset_buf_fn *reset_buf;
-    mgmt_write_at_fn *write_at;
-    mgmt_init_reader_fn *init_reader;
-    mgmt_init_writer_fn *init_writer;
-    mgmt_free_buf_fn *free_buf;
-};
-
-/**
- * @brief Decodes requests and encodes responses for any mcumgr protocol.
- */
-struct mgmt_streamer {
-    const struct mgmt_streamer_cfg *cfg;
-    void *cb_arg;
-    struct cbor_decoder_reader *reader;
-    struct cbor_encoder_writer *writer;
-};
-
 /**
  * @brief Context required by command handlers for parsing requests and writing
  *        responses.
@@ -275,91 +167,6 @@ struct mgmt_group {
 };
 
 /**
- * @brief Uses the specified streamer to allocates a response buffer.
- *
- * If a source buf is provided, its user data is copied into the new buffer.
- *
- * @param streamer              The streamer providing the callback.
- * @param src_buf               An optional source buffer to copy user data
- *                                  from.
- *
- * @return                      Newly-allocated buffer on success
- *                              NULL on failure.
- */
-void *mgmt_streamer_alloc_rsp(struct mgmt_streamer *streamer,
-                              const void *src_buf);
-
-/**
- * @brief Uses the specified streamer to trim data from the front of a buffer.
- *
- * If the amount to trim exceeds the size of the buffer, the buffer is
- * truncated to a length of 0.
- *
- * @param streamer              The streamer providing the callback.
- * @param buf                   The buffer to trim.
- * @param len                   The number of bytes to remove.
- */
-void mgmt_streamer_trim_front(struct mgmt_streamer *streamer, void *buf,
-                              size_t len);
-
-/**
- * @brief Uses the specified streamer to reset a buffer to a length of 0.
- *
- * The buffer's user data remains, but its payload is cleared.
- *
- * @param streamer              The streamer providing the callback.
- * @param buf                   The buffer to reset.
- */
-void mgmt_streamer_reset_buf(struct mgmt_streamer *streamer, void *buf);
-
-/**
- * @brief Uses the specified streamer to write data to a CBOR encoder.
- *
- * Any existing data at the specified offset is overwritten by the new data.
- * Any new data that extends past the buffer's current length is appended.
- *
- * @param streamer              The streamer providing the callback.
- * @param writer                The encoder to write to.
- * @param offset                The byte offset to write to,
- * @param data                  The data to write.
- * @param len                   The number of bytes to write.
- *
- * @return                      0 on success, MGMT_ERR_[...] code on failure.
- */
-int mgmt_streamer_write_at(struct mgmt_streamer *streamer, size_t offset,
-                           const void *data, int len);
-
-/**
- * @brief Uses the specified streamer to initialize a CBOR reader.
- *
- * @param streamer              The streamer providing the callback.
- * @param reader                The reader to initialize.
- * @param buf                   The buffer to configure the reader with.
- *
- * @return                      0 on success, MGMT_ERR_[...] code on failure.
- */
-int mgmt_streamer_init_reader(struct mgmt_streamer *streamer, void *buf);
-
-/**
- * @brief Uses the specified streamer to initializes a CBOR writer.
- *
- * @param streamer              The streamer providing the callback.
- * @param writer                The writer to initialize.
- * @param buf                   The buffer to configure the writer with.
- *
- * @return                      0 on success, MGMT_ERR_[...] code on failure.
- */
-int mgmt_streamer_init_writer(struct mgmt_streamer *streamer, void *buf);
-
-/**
- * @brief Uses the specified streamer to free a buffer.
- *
- * @param streamer              The streamer providing the callback.
- * @param buf                   The buffer to free.
- */
-void mgmt_streamer_free_buf(struct mgmt_streamer *streamer, void *buf);
-
-/**
  * @brief Registers a full command group.
  *
  * @param group                 The group to register.
@@ -397,15 +204,17 @@ const struct mgmt_handler *mgmt_find_handler(uint16_t group_id,
 int mgmt_write_rsp_status(struct mgmt_ctxt *ctxt, int status);
 
 /**
- * @brief Initializes a management context object with the specified streamer.
+ * @brief Initializes a management context object with the specified reader
+ *        and writer.
  *
  * @param ctxt                  The context object to initialize.
- * @param streamer              The streamer that will be used with the
- *                                  context.
+ * @param reader                The CBOR reader for request payload.
+ * @param writer                The CBOR writer for response payload.
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-int mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct mgmt_streamer *streamer);
+int mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct cbor_decoder_reader *reader,
+                   struct cbor_encoder_writer *writer);
 
 /**
  * @brief Converts a CBOR status code to a MGMT_ERR_[...] code.

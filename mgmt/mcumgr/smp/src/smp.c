@@ -66,12 +66,78 @@ smp_init_rsp_hdr(const struct mgmt_hdr *req_hdr, struct mgmt_hdr *rsp_hdr)
     };
 }
 
+static struct os_mbuf *
+smp_alloc_rsp(struct os_mbuf *req)
+{
+    struct os_mbuf *rsp;
+
+    if (!req) {
+        return NULL;
+    }
+
+    rsp = os_msys_get_pkthdr(0, OS_MBUF_USRHDR_LEN(req));
+    if (!rsp) {
+        return NULL;
+    }
+
+    memcpy(OS_MBUF_USRHDR(rsp), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));
+
+    return rsp;
+}
+
+static void
+smp_reset_buf(struct os_mbuf *m)
+{
+    if (!m) {
+        return;
+    }
+
+    /* We need to trim from the back because the head
+     * contains useful information which we do not want
+     * to get rid of
+     */
+    os_mbuf_adj(m, -1 * OS_MBUF_PKTLEN(m));
+}
+
+static void
+smp_free_buf(struct os_mbuf *m)
+{
+    if (!m) {
+        return;
+    }
+
+    os_mbuf_free_chain(m);
+}
+
+static int
+smp_write_at(struct cbor_mbuf_writer *cmw, size_t offset, const void *data,
+             size_t len)
+{
+    struct os_mbuf *m;
+    int rc;
+
+    m = cmw->m;
+
+    if (offset > OS_MBUF_PKTLEN(m)) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    rc = os_mbuf_copyinto(m, offset, data, len);
+    if (rc) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    cmw->enc.bytes_written = OS_MBUF_PKTLEN(m);
+
+    return 0;
+}
+
 static int
 smp_read_hdr(struct smp_streamer *streamer, struct mgmt_hdr *dst_hdr)
 {
     struct cbor_decoder_reader *reader;
 
-    reader = streamer->mgmt_stmr.reader;
+    reader = &streamer->reader->r;
 
     if (reader->message_size < sizeof *dst_hdr) {
         return MGMT_ERR_EINVAL;
@@ -86,8 +152,7 @@ smp_write_hdr(struct smp_streamer *streamer, const struct mgmt_hdr *src_hdr)
 {
     int rc;
 
-    rc = mgmt_streamer_write_at(&streamer->mgmt_stmr, 0, src_hdr,
-                                sizeof *src_hdr);
+    rc = smp_write_at(streamer->writer, 0, src_hdr, sizeof *src_hdr);
     return mgmt_err_from_cbor(rc);
 }
 
@@ -101,7 +166,7 @@ smp_build_err_rsp(struct smp_streamer *streamer,
     struct mgmt_hdr rsp_hdr;
     int rc;
 
-    rc = mgmt_ctxt_init(&cbuf, &streamer->mgmt_stmr);
+    rc = mgmt_ctxt_init(&cbuf, &streamer->reader->r, &streamer->writer->enc);
     if (rc != 0) {
         return rc;
     }
@@ -227,7 +292,7 @@ smp_handle_single_req(struct smp_streamer *streamer,
     struct mgmt_hdr rsp_hdr;
     int rc;
 
-    rc = mgmt_ctxt_init(&cbuf, &streamer->mgmt_stmr);
+    rc = mgmt_ctxt_init(&cbuf, &streamer->reader->r, &streamer->writer->enc);
     if (rc != 0) {
         return rc;
     }
@@ -273,7 +338,7 @@ smp_handle_single_req(struct smp_streamer *streamer,
  */
 static void
 smp_on_err(struct smp_streamer *streamer, const struct mgmt_hdr *req_hdr,
-           void *req, void *rsp, int status)
+           struct os_mbuf *req, struct os_mbuf *rsp, int status)
 {
     int rc;
 
@@ -286,19 +351,19 @@ smp_on_err(struct smp_streamer *streamer, const struct mgmt_hdr *req_hdr,
     }
 
     /* Clear the partial response from the buffer, if any. */
-    mgmt_streamer_reset_buf(&streamer->mgmt_stmr, rsp);
-    mgmt_streamer_init_writer(&streamer->mgmt_stmr, rsp);
+    smp_reset_buf(rsp);
+    cbor_mbuf_writer_init(streamer->writer, rsp);
 
     /* Build and transmit the error response. */
     rc = smp_build_err_rsp(streamer, req_hdr, status);
     if (rc == 0) {
-        streamer->tx_rsp_cb(streamer, rsp, streamer->mgmt_stmr.cb_arg);
+        streamer->tx_rsp_cb(streamer, rsp, streamer->cb_arg);
         rsp = NULL;
     }
 
     /* Free any extra buffers. */
-    mgmt_streamer_free_buf(&streamer->mgmt_stmr, req);
-    mgmt_streamer_free_buf(&streamer->mgmt_stmr, rsp);
+    smp_free_buf(req);
+    smp_free_buf(rsp);
 }
 
 /**
@@ -315,11 +380,11 @@ smp_on_err(struct smp_streamer *streamer, const struct mgmt_hdr *req_hdr,
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
 int
-smp_process_request_packet(struct smp_streamer *streamer, void *req)
+smp_process_request_packet(struct smp_streamer *streamer, struct os_mbuf *req)
 {
     struct mgmt_hdr req_hdr;
     struct mgmt_evt_op_cmd_done_arg cmd_done_arg;
-    void *rsp;
+    struct os_mbuf *rsp;
     bool valid_hdr, handler_found;
     int rc;
 
@@ -329,11 +394,7 @@ smp_process_request_packet(struct smp_streamer *streamer, void *req)
     while (1) {
         handler_found = false;
 
-        rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, req);
-        if (rc != 0) {
-            valid_hdr = false;
-            break;
-        }
+        cbor_mbuf_reader_init(streamer->reader, req, 0);
 
         /* Read the management header and strip it from the request. */
         rc = smp_read_hdr(streamer, &req_hdr);
@@ -342,18 +403,15 @@ smp_process_request_packet(struct smp_streamer *streamer, void *req)
             break;
         }
         mgmt_ntoh_hdr(&req_hdr);
-        mgmt_streamer_trim_front(&streamer->mgmt_stmr, req, MGMT_HDR_SIZE);
+        os_mbuf_adj(req, MGMT_HDR_SIZE);
 
-        rsp = mgmt_streamer_alloc_rsp(&streamer->mgmt_stmr, req);
+        rsp = smp_alloc_rsp(req);
         if (rsp == NULL) {
             rc = MGMT_ERR_ENOMEM;
             break;
         }
 
-        rc = mgmt_streamer_init_writer(&streamer->mgmt_stmr, rsp);
-        if (rc != 0) {
-            break;
-        }
+        cbor_mbuf_writer_init(streamer->writer, rsp);
 
         /* Process the request payload and build the response. */
         rc = smp_handle_single_req(streamer, &req_hdr, &handler_found);
@@ -362,15 +420,14 @@ smp_process_request_packet(struct smp_streamer *streamer, void *req)
         }
 
         /* Send the response. */
-        rc = streamer->tx_rsp_cb(streamer, rsp, streamer->mgmt_stmr.cb_arg);
+        rc = streamer->tx_rsp_cb(streamer, rsp, streamer->cb_arg);
         rsp = NULL;
         if (rc != 0) {
             break;
         }
 
         /* Trim processed request to free up space for subsequent responses. */
-        mgmt_streamer_trim_front(&streamer->mgmt_stmr, req,
-                                 smp_align4(req_hdr.nh_len));
+        os_mbuf_adj(req, smp_align4(req_hdr.nh_len));
 
         cmd_done_arg.err = MGMT_ERR_EOK;
         mgmt_evt(MGMT_EVT_OP_CMD_DONE, req_hdr.nh_group, req_hdr.nh_id,
@@ -389,7 +446,7 @@ smp_process_request_packet(struct smp_streamer *streamer, void *req)
         return rc;
     }
 
-    mgmt_streamer_free_buf(&streamer->mgmt_stmr, req);
-    mgmt_streamer_free_buf(&streamer->mgmt_stmr, rsp);
+    smp_free_buf(req);
+    smp_free_buf(rsp);
     return 0;
 }
