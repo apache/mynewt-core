@@ -19,11 +19,98 @@
 
 #include <limits.h>
 #include <string.h>
+#include "os/mynewt.h"
+#include "fs/fs.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "fs_mgmt/fs_mgmt.h"
-#include "fs_mgmt/fs_mgmt_impl.h"
-#include "fs_mgmt/fs_mgmt_config.h"
+
+static int
+fs_mgmt_filelen(const char *path, size_t *out_len)
+{
+    struct fs_file *file;
+    uint32_t file_size;
+    int rc;
+
+    rc = fs_open(path, FS_ACCESS_READ, &file);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    rc = fs_filelen(file, &file_size);
+    fs_close(file);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    *out_len = file_size;
+
+    return 0;
+}
+
+static int
+fs_mgmt_read(const char *path, size_t offset, size_t len,
+                  void *out_data, size_t *out_len)
+{
+    struct fs_file *file;
+    uint32_t bytes_read;
+    int rc;
+
+    rc = fs_open(path, FS_ACCESS_READ, &file);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    rc = fs_seek(file, offset);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = fs_read(file, len, out_data, &bytes_read);
+    if (rc != 0) {
+        goto done;
+    }
+
+    *out_len = bytes_read;
+
+done:
+    fs_close(file);
+
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    return 0;
+}
+
+static int
+fs_mgmt_write(const char *path, size_t offset, const void *data,
+                   size_t len)
+{
+    struct fs_file *file;
+    uint8_t access;
+    int rc;
+ 
+    access = FS_ACCESS_WRITE;
+    if (offset == 0) {
+        access |= FS_ACCESS_TRUNCATE;
+    } else {
+        access |= FS_ACCESS_APPEND;
+    }
+
+    rc = fs_open(path, access, &file);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    rc = fs_write(file, data, len);
+    fs_close(file);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    return 0;
+}
 
 static mgmt_handler_fn fs_mgmt_file_download;
 static mgmt_handler_fn fs_mgmt_file_upload;
@@ -61,12 +148,12 @@ static struct mgmt_group fs_mgmt_group = {
 static int
 fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
 {
-    uint8_t file_data[FS_MGMT_DL_CHUNK_SIZE];
-    char path[FS_MGMT_PATH_SIZE + 1];
+    uint8_t file_data[MYNEWT_VAL(FS_MGMT_DL_CHUNK_SIZE)];
+    char path[MYNEWT_VAL(FS_MGMT_PATH_SIZE) + 1];
     unsigned long long off;
     CborError err;
-    size_t bytes_read;
-    size_t file_len;
+    size_t bytes_read = 0;
+    size_t file_len = 0;
     int rc;
 
     const struct cbor_attr_t dload_attr[] = {
@@ -94,14 +181,14 @@ fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
      * length.
      */
     if (off == 0) {
-        rc = fs_mgmt_impl_filelen(path, &file_len);
+        rc = fs_mgmt_filelen(path, &file_len);
         if (rc != 0) {
             return rc;
         }
     }
 
     /* Read the requested chunk from the file. */
-    rc = fs_mgmt_impl_read(path, off, FS_MGMT_DL_CHUNK_SIZE,
+    rc = fs_mgmt_read(path, off, MYNEWT_VAL(FS_MGMT_DL_CHUNK_SIZE),
                            file_data, &bytes_read);
     if (rc != 0) {
         return rc;
@@ -154,8 +241,8 @@ fs_mgmt_file_upload_rsp(struct mgmt_ctxt *ctxt, int rc, unsigned long long off)
 static int
 fs_mgmt_file_upload(struct mgmt_ctxt *ctxt)
 {
-    uint8_t file_data[FS_MGMT_UL_CHUNK_SIZE];
-    char file_name[FS_MGMT_PATH_SIZE + 1];
+    uint8_t file_data[MYNEWT_VAL(FS_MGMT_UL_CHUNK_SIZE)];
+    char file_name[MYNEWT_VAL(FS_MGMT_PATH_SIZE) + 1];
     unsigned long long len;
     unsigned long long off;
     size_t data_len;
@@ -231,7 +318,7 @@ fs_mgmt_file_upload(struct mgmt_ctxt *ctxt)
 
     if (data_len > 0) {
         /* Write the data chunk to the file. */
-        rc = fs_mgmt_impl_write(file_name, off, file_data, data_len);
+        rc = fs_mgmt_write(file_name, off, file_data, data_len);
         if (rc != 0) {
             return rc;
         }
