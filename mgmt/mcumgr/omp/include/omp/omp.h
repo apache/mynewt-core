@@ -92,7 +92,7 @@ struct omp_state {
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-int omp_impl_process_request_packet(struct omp_state *omgr_st, void *req);
+int omp_process_request_packet(struct omp_state *omgr_st, void *req);
 
 /**
  * @brief Read the management header out from a cbor value

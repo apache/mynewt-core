@@ -26,6 +26,7 @@
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
 
+#include "omp/omp.h"
 #include "omp/omp_priv.h"
 
 int
@@ -156,4 +157,65 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
     }
 
     return mgmt_err_from_cbor(rc);
+}
+
+int
+omp_process_request_packet(struct omp_state *omgr_st, void *req_buf)
+{
+    struct mgmt_ctxt ctxt;
+    struct omp_streamer *streamer;
+    struct mgmt_hdr req_hdr, rsp_hdr;
+    struct os_mbuf *req_m;
+    int rc = 0;
+
+    assert(omgr_st);
+    assert(req_buf);
+
+    streamer = &omgr_st->omp_stmr;
+    omgr_st->m_ctxt = &ctxt;
+
+    req_m = (struct os_mbuf *) req_buf;
+
+    rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, req_m);
+    if (rc != 0) {
+        rc = MGMT_ERR_EINVAL;
+        return rc;
+
+    }
+
+    rc = omp_read_hdr(&ctxt.it, &req_hdr);
+    if (rc != 0) {
+        rc = MGMT_ERR_EINVAL;
+        return rc;
+
+    }
+
+    memcpy(&rsp_hdr, &req_hdr, sizeof(struct mgmt_hdr));
+
+    rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, req_m);
+    if (rc != 0) {
+        rc = MGMT_ERR_EINVAL;
+        return rc;
+
+    }
+
+    rc = cbor_encoder_create_map(streamer->rsp_encoder,
+                                 &ctxt.encoder,
+                                 CborIndefiniteLength);
+    if (rc != 0) {
+        rc = MGMT_ERR_EINVAL;
+        return rc;
+    }
+
+    rc = omp_process_mgmt_hdr(&req_hdr, &rsp_hdr, &ctxt);
+
+    cbor_encoder_close_container(streamer->rsp_encoder, &ctxt.encoder);
+    if (rc != 0) {
+        rc = MGMT_ERR_EINVAL;
+        return rc;
+
+    }
+
+    streamer->tx_rsp_cb(streamer, rc, NULL);
+    return 0;
 }
