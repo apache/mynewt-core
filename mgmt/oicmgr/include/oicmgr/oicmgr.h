@@ -27,7 +27,6 @@
 extern "C" {
 #endif
 
-extern const struct mgmt_streamer_cfg g_omp_cbor_cfg;
 
 /**
  * Process an oicmgr request.  On completion, an oicmgr response is sent back

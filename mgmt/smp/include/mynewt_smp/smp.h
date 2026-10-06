@@ -35,7 +35,6 @@ extern "C" {
 #endif
 
 struct smp_transport;
-extern const struct mgmt_streamer_cfg g_smp_cbor_cfg;
 smp_tx_rsp_fn smp_tx_rsp;
 
 /**
