@@ -80,24 +80,26 @@ mgmt_unregister_group(struct mgmt_group *group)
         return;
     }
 
-    if (curr == group) {
-        mgmt_group_list = curr->mg_next;
-        return;
-    }
-
     while (curr && curr != group) {
         prev = curr;
         curr = curr->mg_next;
     }
 
-    if (!prev || !curr) {
+    if (!curr) {
         return;
     }
 
-    prev->mg_next = curr->mg_next;
-    if (curr->mg_next == NULL) {
-        mgmt_group_list_end = curr;
+    if (prev) {
+        prev->mg_next = curr->mg_next;
+    } else {
+        mgmt_group_list = curr->mg_next;
     }
+
+    if (mgmt_group_list_end == curr) {
+        mgmt_group_list_end = prev;
+    }
+
+    curr->mg_next = NULL;
 }
 
 static struct mgmt_group *
