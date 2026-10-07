@@ -98,7 +98,7 @@ Image management requires the MCUboot boot loader.
 - [SMP protocol](docs/protocol.md)
 - [SMP over console](docs/smp-console.md)
 - [SMP over Bluetooth](docs/smp-bluetooth.md)
-- [Security threat model](THREAT_MODEL.md)
+- Security threat model: top-level `THREAT_MODEL.md` of this repository
 
 ## Command line tool
 
