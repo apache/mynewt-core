@@ -25,12 +25,12 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-mcumgr/mgmt"
-    - "@apache-mynewt-mcumgr/cmd/stat_mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/cmd/stat_mgmt"
     - "@apache-mynewt-core/mgmt/oicmgr"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-mcumgr/cmd/os_mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/cmd/os_mgmt"
     - "@mcuboot/boot/bootutil"
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/sys/config"

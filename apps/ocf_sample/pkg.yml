@@ -27,7 +27,7 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/net/oic"
-    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/encoding/cborattr"
     - "@apache-mynewt-core/sys/console"
     - "@apache-mynewt-core/sys/log"
     - "@apache-mynewt-core/sys/log/modlog"

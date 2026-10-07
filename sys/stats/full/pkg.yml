@@ -31,7 +31,7 @@ pkg.apis:
 pkg.deps.STATS_CLI:
     - "@apache-mynewt-core/sys/shell"
 pkg.deps.STATS_MGMT:
-    - "@apache-mynewt-mcumgr/cmd/stat_mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/cmd/stat_mgmt"
 
 pkg.whole_archive: true
 

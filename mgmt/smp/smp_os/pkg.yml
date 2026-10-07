@@ -27,10 +27,10 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/time/datetime"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-mcumgr/cmd/os_mgmt"
-    - "@apache-mynewt-mcumgr/mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/cmd/os_mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/mgmt"
     - "@apache-mynewt-core/encoding/tinycbor"
-    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/encoding/cborattr"
 
 pkg.deps.TIMEPERSIST:
     - "@apache-mynewt-core/time/timepersist"
