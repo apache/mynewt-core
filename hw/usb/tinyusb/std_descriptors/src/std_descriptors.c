@@ -32,6 +32,7 @@
 #include <os/util.h>
 #include <console/console.h>
 #include <hal/hal_gpio.h>
+#include <usbd_audio_desc.h>
 
 #define USBD_PRODUCT_RELEASE_NUMBER MYNEWT_VAL(USBD_PRODUCT_RELEASE_NUMBER)
 
@@ -72,6 +73,11 @@ enum usb_desc_ix {
     BTH_IF_STR_IX,
 #else
 #define BTH_IF_STR_IX   0
+#endif
+#if defined MYNEWT_VAL_USBD_AUDIO_DESCRIPTOR_STRING
+    AUDIO_IF_STR_IX,
+#else
+#define AUDIO_IF_STR_IX 0
 #endif
 #if defined MYNEWT_VAL_USBD_DFU_SLOT_NAME
     DFU_SLOT_NAME_IF_STR_IX,
@@ -208,9 +214,9 @@ tusb_desc_device_qualifier_t const desc_device_qualifier = {
     .bDeviceClass       = TUD_BT_APP_CLASS,
     .bDeviceSubClass    = TUD_BT_APP_SUBCLASS,
     .bDeviceProtocol    = TUD_BT_PROTOCOL_PRIMARY_CONTROLLER,
-#elif CFG_TUD_CDC
+#elif CFG_TUD_CDC || CFG_TUD_AUDIO
     /*
-     * Use Interface Association Descriptor (IAD) for CDC
+     * Use Interface Association Descriptor (IAD) for CDC and Audio
      * As required by USB Specs IAD's subclass must be common class (2) and protocol must be IAD (1)
      */
     .bDeviceClass       = TUSB_CLASS_MISC,
@@ -286,6 +292,16 @@ enum {
     ITF_NUM_HID,
 #endif
 
+#if CFG_TUD_AUDIO
+    ITF_NUM_AUDIO_CONTROL,
+#if CFG_TUD_AUDIO_ENABLE_EP_OUT
+    ITF_NUM_AUDIO_STREAMING_OUT,
+#endif
+#if CFG_TUD_AUDIO_ENABLE_EP_IN
+    ITF_NUM_AUDIO_STREAMING_IN,
+#endif
+#endif
+
 #if CFG_TUD_DFU
     ITF_NUM_DFU,
 #endif
@@ -304,6 +320,7 @@ enum {
                              CFG_TUD_MSC * TUD_MSC_DESC_LEN + \
                              CFG_TUD_HID * TUD_HID_DESC_LEN + \
                              CFG_TUD_BTH * TUD_BTH_DESC_LEN + \
+                             USBD_AUDIO_DESC_LEN + \
                              CFG_TUD_DFU * TUD_DFU_DESC_LEN(1) + \
                              CFG_TUD_DFU_RUNTIME * TUD_DFU_RT_DESC_LEN + \
                              0)
@@ -348,6 +365,10 @@ const uint8_t desc_configuration[] = {
                        USBD_HID_REPORT_EP, USBD_HID_REPORT_EP_SIZE, USBD_HID_REPORT_EP_INTERVAL),
 #endif
 
+#if CFG_TUD_AUDIO
+    USBD_AUDIO20_DESCRIPTOR(ITF_NUM_AUDIO_CONTROL, AUDIO_IF_STR_IX),
+#endif
+
 #if CFG_TUD_DFU
     TUD_DFU_DESCRIPTOR(ITF_NUM_DFU, 1, DFU_SLOT_NAME_IF_STR_IX, DFU_ATTR_CAN_DOWNLOAD,
                        CFG_TUD_DFU_DETACH_TIMEOUT, CFG_TUD_DFU_XFER_BUFSIZE),
@@ -358,6 +379,12 @@ const uint8_t desc_configuration[] = {
                           CFG_TUD_DFU_DETACH_TIMEOUT, CFG_TUD_DFU_XFER_BUFSIZE),
 #endif
 };
+
+#if CFG_TUD_AUDIO
+/* Audio descriptor has many parts, make sure declared length matches. */
+TU_VERIFY_STATIC(sizeof(desc_configuration) == CONFIG_TOTAL_LEN,
+                 "Configuration descriptor length mismatch");
+#endif
 
 /**
  * Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -392,6 +419,9 @@ const char *string_desc_arr[] = {
 #endif
 #if defined MYNEWT_VAL_USBD_BTH_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_BTH_DESCRIPTOR_STRING),
+#endif
+#if defined MYNEWT_VAL_USBD_AUDIO_DESCRIPTOR_STRING
+    MYNEWT_VAL(USBD_AUDIO_DESCRIPTOR_STRING),
 #endif
 #if defined MYNEWT_VAL_USBD_DFU_SLOT_NAME
     MYNEWT_VAL(USBD_DFU_SLOT_NAME),

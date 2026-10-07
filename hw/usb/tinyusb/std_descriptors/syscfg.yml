@@ -223,6 +223,121 @@ syscfg.defs:
         description: MSC data endpoint buffer size
         value:
 
+    USBD_AUDIO:
+        description: >
+            Enable USB Audio Class 2.0 function in TinyUSB stack.
+            IN - microphone (device sends audio to host),
+            OUT - speaker (host sends audio to device),
+            IN_OUT - headset (both directions, single clock source),
+            NONE - no audio function.
+            This adds descriptors to USB configuration, application has to
+            implement TinyUSB audio class callbacks (tud_audio_*_cb).
+            Entity IDs used in descriptors are defined in usbd_audio_desc.h.
+        value: NONE
+        choices:
+            - NONE
+            - IN
+            - OUT
+            - IN_OUT
+    USBD_AUDIO_DESCRIPTOR_STRING:
+        description: String for Audio Control interface
+        value:
+    USBD_AUDIO_SAMPLE_RATE:
+        description: >
+            Audio sampling frequency in Hz, same for microphone and speaker.
+        value: 48000
+    USBD_AUDIO_SAMPLE_SIZE:
+        description: >
+            Number of valid bits in each audio sample (bit resolution).
+        value: 16
+        range: 8..32
+    USBD_AUDIO_BYTES_PER_SAMPLE:
+        description: >
+            Number of bytes each sample occupies in USB packet (subslot size,
+            1-4).  Leave empty to use smallest size that fits
+            USBD_AUDIO_SAMPLE_SIZE.  Set to 4 for 24 bit samples in 32 bit
+            slots.
+        value:
+    USBD_AUDIO_IN_CHANNELS:
+        description: >
+            Number of microphone (IN) channels.  Values 1 and 2 are reported
+            to host as mono and stereo, other values as channels without
+            spatial location.
+        value: 1
+        range: 1..32
+    USBD_AUDIO_OUT_CHANNELS:
+        description: >
+            Number of speaker (OUT) channels.  Values 1 and 2 are reported
+            to host as mono and stereo, other values as channels without
+            spatial location.
+        value: 2
+        range: 1..32
+    USBD_AUDIO_IN_TERMINAL_TYPE:
+        description: >
+            Terminal type of microphone input terminal, as AUDIO_TERM_TYPE_IN_*
+            constant from TinyUSB audio.h or numeric value from USB Audio
+            Terminal Types specification (0x0201 - generic microphone,
+            0x0202 - desktop, 0x0203 - personal, 0x0204 - omni-directional,
+            0x0205 - microphone array).
+            Empty for AUDIO_TERM_TYPE_IN_GENERIC_MIC.
+        value:
+    USBD_AUDIO_OUT_TERMINAL_TYPE:
+        description: >
+            Terminal type of speaker output terminal, as AUDIO_TERM_TYPE_OUT_*
+            constant from TinyUSB audio.h or numeric value from USB Audio
+            Terminal Types specification (0x0301 - generic speaker,
+            0x0302 - headphones, 0x0304 - desktop speaker, 0x0305 - room
+            speaker, 0x0306 - communication speaker, 0x0307 - LFE speaker).
+            Empty for AUDIO_TERM_TYPE_OUT_HEADPHONES when USBD_AUDIO is IN_OUT
+            and AUDIO_TERM_TYPE_OUT_DESKTOP_SPEAKER otherwise.
+        value:
+    USBD_AUDIO_VOLUME_CONTROL:
+        description: >
+            Add feature unit with mute and volume controls (master and per
+            channel) to microphone and speaker path.  Application has to
+            handle requests for USBD_AUDIO_ENTITY_SPK_FEATURE_UNIT and
+            USBD_AUDIO_ENTITY_MIC_FEATURE_UNIT.  Supports up to 8 channels.
+        value: 1
+    USBD_AUDIO_FEEDBACK:
+        description: >
+            Add feedback endpoint to speaker path.  Speaker endpoint is then
+            asynchronous and device reports its actual sampling rate to host
+            (see tud_audio_feedback_params_cb()).  Without feedback endpoint
+            speaker endpoint is adaptive and device has to follow host's rate.
+        value: 0
+    USBD_AUDIO_OUT_EP:
+        description: >
+            Speaker (OUT) isochronous endpoint number.
+            Empty for default: 8 on nRF5x (only isochronous endpoint),
+            1 otherwise.
+        value:
+    USBD_AUDIO_IN_EP:
+        description: >
+            Microphone (IN) isochronous endpoint number.
+            Empty for default: 8 on nRF5x (only isochronous endpoint),
+            1 otherwise.
+        value:
+    USBD_AUDIO_FEEDBACK_EP:
+        description: >
+            Feedback (IN) isochronous endpoint number, must differ from
+            USBD_AUDIO_IN_EP when both are used.
+            Empty for default: 8 on nRF5x, 2 otherwise.
+        value:
+    USBD_AUDIO_INT_EP:
+        description: >
+            Audio Control interrupt (IN) endpoint number used to notify host
+            about control changes.  Empty for no interrupt endpoint.
+        value:
+    USBD_AUDIO_IN_BUFFER_PACKETS:
+        description: >
+            Size of TinyUSB software FIFO for microphone data in 1 ms
+            packets.  TinyUSB flow control for IN endpoint requires at least 4.
+        value: 4
+    USBD_AUDIO_OUT_BUFFER_PACKETS:
+        description: >
+            Size of TinyUSB software FIFO for speaker data in 1 ms packets.
+        value: 4
+
     USBD_WINDOWS_COMP_ID:
         description: >
             Add Windows compatibility descriptor.
