@@ -7,47 +7,31 @@
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#  KIND, either express or implied.  See the License for the
+# KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
 #
 
-.app.db
-.app
-bin
-obj
-tags
-.gdb_history
-.gdb_out
-.gdb_cmds
-.gdbinit
-*~
-.DS_Store
-*.swp
-*.swo
-*.bak
-docs/html
-docs/latex
-cscope.*
-*.tags
-stlink.log
-openocd.log
-*.pem
+"""
+mynewt_style - the engine behind tools/mynewt_format.py.
 
-# Prevent accidental checkins of personal targets.  If you need to commit a
-# target, specify the -f option for "git add".
-targets
+Rule plugins (tools/rules/*.py) only need what is re-exported here:
 
-# Generated directories - pubkey sources, coverity data, etc
-/keys/
-/repos/
-/cov-int/
+    from mynewt_style import Rule, FileContext, register_rule
+"""
 
-# Python bytecode
-__pycache__/
-*.pyc
+from .core import FileContext, Rule, RuleError, Violation, register_rule, registry
+
+__all__ = [
+    "FileContext",
+    "Rule",
+    "RuleError",
+    "Violation",
+    "register_rule",
+    "registry",
+]
