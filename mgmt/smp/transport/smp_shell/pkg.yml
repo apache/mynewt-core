@@ -29,7 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/mgmt/smp"
-    - "@apache-mynewt-mcumgr/mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/mgmt"
     - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.init:

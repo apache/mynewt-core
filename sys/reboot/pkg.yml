@@ -31,7 +31,7 @@ pkg.deps:
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/sys/log/modlog"
     - "@apache-mynewt-core/encoding/tinycbor"
-    - "@apache-mynewt-mcumgr/cmd/img_mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/cmd/img_mgmt"
     - "@mcuboot/boot/bootutil"
 
 pkg.deps.(REBOOT_LOG_FCB && LOG_FCB):
