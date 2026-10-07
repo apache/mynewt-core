@@ -1,0 +1,112 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Checks the lines changed by a pull request with mynewt-format and uploads
+# the problems for mynewt-format-comments.yml. Informational: never fails.
+#
+# mynewt-format lives only in apache-mynewt-core. Other Mynewt repositories
+# (e.g. NimBLE) call this workflow from a pull_request workflow:
+#
+#   style_check_mynewt_format:
+#     uses: apache/mynewt-core/.github/workflows/mynewt-format-check.yml@master
+#
+# and are checked with core's tool and their own .mynewt-format config.
+
+name: mynewt-format check
+
+on:
+  workflow_call:
+    inputs:
+      core-ref:
+        description: apache-mynewt-core ref to take mynewt-format from
+        type: string
+        default: master
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Coding style (mynewt-format, informational)
+    runs-on: ubuntu-slim
+    # Informational only: reports problems but never fails the PR.
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # Required to get full history for diff
+
+      # In mynewt-core the PR's own copy of the tool is used, so changes to it
+      # are checked too; other repositories get it from mynewt-core.
+      - name: Checkout mynewt-format from apache-mynewt-core
+        if: hashFiles('tools/mynewt-format.py') == ''
+        uses: actions/checkout@v7
+        with:
+          repository: apache/mynewt-core
+          ref: ${{ inputs.core-ref }}
+          path: .mynewt-core
+          sparse-checkout: tools
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Check style with mynewt-format (report only)
+        shell: bash
+        run: |
+          TOOL=tools/mynewt-format.py
+          [ -f "$TOOL" ] || TOOL=.mynewt-core/tools/mynewt-format.py
+          echo "TOOL=$TOOL" >> "$GITHUB_ENV"
+          # Only lines changed by this PR are checked.
+          ARGS="--git-diff origin/${{ github.base_ref }} --changed-lines --no-color"
+          python3 "$TOOL" $ARGS || true
+          echo ""
+          echo "Proposed fixes (apply with 'git apply'):"
+          python3 "$TOOL" $ARGS -d 2>/dev/null || true
+          echo ""
+          echo "This check is informational and does not fail the PR."
+          echo "mynewt-format is in apache-mynewt-core (tools/mynewt-format.py);"
+          echo "tools/mynewt-format-setup.sh there installs it as a 'mynewt-format' command."
+          echo "Review fixes locally: mynewt-format -i --git-diff origin/master"
+          echo "Rules: mynewt-format --list-rules (--explain RULE)"
+          exit 0
+
+      # Fork PRs get a read-only token here, so the problems are handed over
+      # to mynewt-format-comments.yml, which posts them as review comments.
+      - name: Save results for PR comments
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/mynewt-format-results"
+          cd "$RUNNER_TEMP/mynewt-format-results"
+          echo "${{ github.event.pull_request.number }}" > pr-number
+          cd "$GITHUB_WORKSPACE"
+          python3 "$TOOL" --git-diff origin/${{ github.base_ref }} --changed-lines \
+            --format json > "$RUNNER_TEMP/mynewt-format-results/problems.jsonl" || true
+
+      - name: Upload results for PR comments
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mynewt-format-results
+          path: ${{ runner.temp }}/mynewt-format-results/
+          retention-days: 3

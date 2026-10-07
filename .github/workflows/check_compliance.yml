@@ -92,6 +92,10 @@ jobs:
             echo "All good, no formatting issues."
           fi
 
+  style_check_mynewt_format:
+    # Shared with other Mynewt repositories; see the workflow for details.
+    uses: ./.github/workflows/mynewt-format-check.yml
+
   license_check:
     name: Licensing
     runs-on: ubuntu-slim
