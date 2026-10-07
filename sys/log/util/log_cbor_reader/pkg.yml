@@ -27,7 +27,7 @@ pkg.keywords:
     - reader
 
 pkg.deps:
-    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/encoding/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
     - "@apache-mynewt-core/sys/log/common"
 
