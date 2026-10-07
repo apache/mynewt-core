@@ -35,6 +35,7 @@ pkg.deps.SHELL_MGMT:
 
 pkg.deps.SHELL_BRIDGE:
     - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/encoding/cborattr"
 
 pkg.req_apis:
     - console
