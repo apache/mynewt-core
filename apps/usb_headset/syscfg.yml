@@ -1,0 +1,48 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# USBD_VID, USBD_PID, USBD_VENDOR_STRING and USBD_PRODUCT_STRING are left
+# to the target.
+syscfg.vals:
+    USBD_STD_DESCRIPTORS: 1
+    # Audio function uses Interface Association Descriptor, device descriptor
+    # has to use composite device class (MISC/COMMON/IAD).
+    USBD_COMPOSITE_DEVICE: 1
+    # USB stack is started from main() after application is initialized.
+    TINYUSB_AUTO_START: 0
+
+    USBD_AUDIO: IN_OUT
+    USBD_AUDIO_DESCRIPTOR_STRING: '"Headset"'
+    USBD_AUDIO_SAMPLE_RATE: 48000
+    USBD_AUDIO_SAMPLE_SIZE: 16
+    USBD_AUDIO_OUT_CHANNELS: 2
+    USBD_AUDIO_IN_CHANNELS: 1
+    USBD_AUDIO_OUT_TERMINAL_TYPE: AUDIO_TERM_TYPE_OUT_HEADPHONES
+    USBD_AUDIO_IN_TERMINAL_TYPE: AUDIO_TERM_TYPE_IN_PERSONAL_MIC
+    USBD_AUDIO_VOLUME_CONTROL: 1
+    USBD_AUDIO_FEEDBACK: 0
+    # TinyUSB IN flow control needs FIFO of at least 4 packets, 8 gives
+    # headroom for event queue latency.
+    USBD_AUDIO_IN_BUFFER_PACKETS: 8
+    USBD_AUDIO_OUT_BUFFER_PACKETS: 4
+
+    USBD_STACK_SIZE: 600
+
+    # Application does not log, satisfy log API with stub.
+    LOG_IMPLEMENTATION: stub
