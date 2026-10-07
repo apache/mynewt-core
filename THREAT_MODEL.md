@@ -626,13 +626,39 @@ space) are the same as Q2 and Q1 above.
   toggles do? → **They are used in unit tests.** Not a production
   security surface.
 - **Q25.** How are reserved `nh_flags` bits and server-side receipt of
-  `*_RSP` opcodes handled? *(still open)*
+  `*_RSP` opcodes handled? → **Request `nh_flags` are ignored.** SMP
+  responses always carry `nh_flags = 0`; OMP echoes the request header
+  (including flags) back. Only `MGMT_OP_READ` and `MGMT_OP_WRITE` are
+  dispatched; any other opcode (including `*_RSP`) fails with
+  `MGMT_ERR_EINVAL` in SMP (an error response is sent) and is rejected
+  without calling a handler in OMP. *(code review of
+  `mgmt/mcumgr/smp/src/smp.c`, `mgmt/mcumgr/omp/src/omp.c` — pending
+  maintainer confirmation)*
 - **Q26.** Is `nh_len` ever used as a copy size before being validated
-  against the actually-received byte count? *(still open)*
+  against the actually-received byte count? → **No.** In SMP the CBOR
+  reader is bounded by the actually received data (`message_size` is the
+  remaining mbuf packet length) and `nh_len` is only used, after the
+  request was processed, to trim it from the packet with
+  `os_mbuf_adj()`, which never trims more than the packet holds. Response
+  `nh_len` is computed from the encoded bytes. Note that the payload
+  decode is not limited to `nh_len`, so a request whose `nh_len` is
+  shorter than its CBOR payload is decoded past `nh_len` (still within the
+  received packet). In OMP the header is a CBOR byte string whose length
+  must equal `sizeof(struct mgmt_hdr)` and `nh_len` is not used.
+  *(code review — pending maintainer confirmation)*
 - **Q27.** Behaviour on unknown `(group,id)` — guaranteed clean error?
-  *(still open)*
+  → **Yes.** `mgmt_find_handler()` returns `NULL` for an unregistered
+  group, for a command id at or beyond the group's handler count, and for
+  a command with neither read nor write handler; SMP then returns
+  `MGMT_ERR_ENOTSUP` and OMP `MGMT_ERR_ENOENT`. A registered command
+  without a handler for the requested op returns `MGMT_ERR_ENOTSUP`. Note
+  that when several groups share a group id, lookup stops at the first
+  such group if the command id is beyond its handler count. *(code
+  review — pending maintainer confirmation)*
 - **Q28.** Confirm `nh_seq` carries no security/ordering guarantee.
-  *(still open)*
+  → **Confirmed by code.** `nh_seq` is only copied from request to
+  response header; it is not checked or tracked. *(code review — pending
+  maintainer confirmation)*
 - **Q29.** Are `os_mgmt` diagnostics (taskstat/mpstat) intentional
   information disclosure to any transport peer? → **Yes.**
 - **Q30.** Is remote shell execution intended strictly for development?
@@ -648,8 +674,9 @@ space) are the same as Q2 and Q1 above.
   by management. → **Confirmed.**
 
 **Still open** — the per-subsystem parser-robustness questions (Q6–Q13),
-the kernel/resource questions (Q14, Q15) and the management questions
-Q23 and Q25–Q28 above. Szymon noted some
+the kernel/resource questions (Q14, Q15) and the management question Q23
+above. Q25–Q28 are answered from code review and await maintainer
+confirmation. Szymon noted some
 touch very low-level details; they are not blocking, and the model is
 usable without them. They stay listed so a future reader knows which
 claims are still *(inferred)*.
