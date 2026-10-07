@@ -1,0 +1,71 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: Check style with mynewt-format
+description: >
+  Check lines changed by pull request with mynewt-format from the same
+  apache-mynewt-core as this action, using configuration of checked out
+  repository. Problems are uploaded as mynewt-format-results artifact for
+  mynewt-format-comments action. Requires pull request head (not merge
+  commit, as review comments use lines of head) checked out with full
+  history. Informational only, never fails.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.x'
+
+    - name: Check style with mynewt-format (report only)
+      shell: bash
+      run: |
+        TOOL="$GITHUB_ACTION_PATH/../../../tools/mynewt-format.py"
+        ARGS="--git-diff origin/$GITHUB_BASE_REF --changed-lines --no-color"
+        python3 "$TOOL" $ARGS || true
+        echo ""
+        echo "Proposed fixes (apply with 'git apply'):"
+        python3 "$TOOL" $ARGS -d 2>/dev/null || true
+        echo ""
+        echo "This check is informational and does not fail the PR."
+        echo "mynewt-format is in apache-mynewt-core (tools/mynewt-format.py);"
+        echo "tools/mynewt-format-setup.sh there installs it as a 'mynewt-format' command."
+        echo "Review fixes locally: mynewt-format -i --git-diff origin/master"
+        echo "Rules: mynewt-format --list-rules (--explain RULE)"
+
+    # Fork pull requests get read-only token, so problems are handed over
+    # to mynewt-format-comments action run from workflow_run
+    - name: Save results for PR comments
+      shell: bash
+      env:
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        TOOL="$GITHUB_ACTION_PATH/../../../tools/mynewt-format.py"
+        mkdir -p "$RUNNER_TEMP/mynewt-format-results"
+        echo "$PR_NUMBER" > "$RUNNER_TEMP/mynewt-format-results/pr-number"
+        python3 "$TOOL" --git-diff "origin/$GITHUB_BASE_REF" --changed-lines \
+          --format json > "$RUNNER_TEMP/mynewt-format-results/problems.jsonl" || true
+
+    - name: Upload results for PR comments
+      uses: actions/upload-artifact@v7
+      with:
+        name: mynewt-format-results
+        path: ${{ runner.temp }}/mynewt-format-results/
+        retention-days: 3
