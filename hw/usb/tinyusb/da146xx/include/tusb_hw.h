@@ -126,4 +126,27 @@ void tusb_vbus_changed(bool present);
 #define USBD_BTH_DATA_EP_SIZE   0x40
 #endif
 
+/*
+ * Audio class isochronous endpoints.  Controller has four endpoints,
+ * 3 is the last one free when CDC is present.  Feedback endpoint shares
+ * the IN endpoint, so it can not be used together with microphone.
+ */
+#if defined(MYNEWT_VAL_USBD_AUDIO_OUT_EP)
+#define USBD_AUDIO_OUT_EP       MYNEWT_VAL(USBD_AUDIO_OUT_EP)
+#else
+#define USBD_AUDIO_OUT_EP       0x03
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_IN_EP)
+#define USBD_AUDIO_IN_EP        MYNEWT_VAL(USBD_AUDIO_IN_EP)
+#else
+#define USBD_AUDIO_IN_EP        0x83
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_FEEDBACK_EP)
+#define USBD_AUDIO_FEEDBACK_EP  MYNEWT_VAL(USBD_AUDIO_FEEDBACK_EP)
+#else
+#define USBD_AUDIO_FEEDBACK_EP  0x83
+#endif
+
 #endif
