@@ -89,4 +89,26 @@
 #define USBD_MSC_DATA_OUT_EP     0x04
 #endif
 
+/*
+ * Audio class isochronous endpoints.  Full speed controller has five
+ * endpoints, defaults are shared with HID (0x83) and MSC (0x84).
+ */
+#if defined(MYNEWT_VAL_USBD_AUDIO_OUT_EP)
+#define USBD_AUDIO_OUT_EP       MYNEWT_VAL(USBD_AUDIO_OUT_EP)
+#else
+#define USBD_AUDIO_OUT_EP       0x03
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_IN_EP)
+#define USBD_AUDIO_IN_EP        MYNEWT_VAL(USBD_AUDIO_IN_EP)
+#else
+#define USBD_AUDIO_IN_EP        0x83
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_FEEDBACK_EP)
+#define USBD_AUDIO_FEEDBACK_EP  MYNEWT_VAL(USBD_AUDIO_FEEDBACK_EP)
+#else
+#define USBD_AUDIO_FEEDBACK_EP  0x84
+#endif
+
 #endif

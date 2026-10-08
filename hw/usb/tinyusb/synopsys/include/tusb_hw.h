@@ -100,4 +100,28 @@
 #define USBD_MSC_DATA_OUT_EP     0x03
 #endif
 
+/*
+ * Audio class isochronous endpoints.  OTG_FS cores have only four
+ * endpoints, 3 is the last one free when CDC is present and IN endpoint
+ * is shared with HID and MSC defaults.  Feedback endpoint default
+ * requires OTG_HS core.
+ */
+#if defined(MYNEWT_VAL_USBD_AUDIO_OUT_EP)
+#define USBD_AUDIO_OUT_EP       MYNEWT_VAL(USBD_AUDIO_OUT_EP)
+#else
+#define USBD_AUDIO_OUT_EP       0x03
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_IN_EP)
+#define USBD_AUDIO_IN_EP        MYNEWT_VAL(USBD_AUDIO_IN_EP)
+#else
+#define USBD_AUDIO_IN_EP        0x83
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_FEEDBACK_EP)
+#define USBD_AUDIO_FEEDBACK_EP  MYNEWT_VAL(USBD_AUDIO_FEEDBACK_EP)
+#else
+#define USBD_AUDIO_FEEDBACK_EP  0x84
+#endif
+
 #endif

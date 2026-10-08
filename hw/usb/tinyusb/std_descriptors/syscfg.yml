@@ -307,26 +307,25 @@ syscfg.defs:
         value: 0
     USBD_AUDIO_OUT_EP:
         description: >
-            Speaker (OUT) isochronous endpoint number.
-            Empty for default: 8 on nRF5x (only isochronous endpoint),
-            1 otherwise.
+            Speaker (OUT) isochronous endpoint address (e.g. 0x04).
+            Empty for USB port default from tusb_hw.h.
         value:
     USBD_AUDIO_IN_EP:
         description: >
-            Microphone (IN) isochronous endpoint number.
-            Empty for default: 8 on nRF5x (only isochronous endpoint),
-            1 otherwise.
+            Microphone (IN) isochronous endpoint address (e.g. 0x84).
+            Empty for USB port default from tusb_hw.h.
         value:
     USBD_AUDIO_FEEDBACK_EP:
         description: >
-            Feedback (IN) isochronous endpoint number, must differ from
-            USBD_AUDIO_IN_EP when both are used.
-            Empty for default: 8 on nRF5x, 2 otherwise.
+            Feedback (IN) isochronous endpoint address (e.g. 0x85), must
+            differ from USBD_AUDIO_IN_EP when both are used.
+            Empty for USB port default from tusb_hw.h.
         value:
     USBD_AUDIO_INT_EP:
         description: >
-            Audio Control interrupt (IN) endpoint number used to notify host
-            about control changes.  Empty for no interrupt endpoint.
+            Audio Control interrupt (IN) endpoint address (e.g. 0x86) used
+            to notify host about control changes.  Empty for no interrupt
+            endpoint.
         value:
     USBD_AUDIO_IN_BUFFER_PACKETS:
         description: >

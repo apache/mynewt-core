@@ -86,4 +86,26 @@
 #define USBD_MSC_DATA_OUT_EP     0x06
 #endif
 
+/*
+ * Audio class isochronous endpoints, default numbers do not collide
+ * with CDC, HID and MSC defaults.
+ */
+#if defined(MYNEWT_VAL_USBD_AUDIO_OUT_EP)
+#define USBD_AUDIO_OUT_EP       MYNEWT_VAL(USBD_AUDIO_OUT_EP)
+#else
+#define USBD_AUDIO_OUT_EP       0x04
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_IN_EP)
+#define USBD_AUDIO_IN_EP        MYNEWT_VAL(USBD_AUDIO_IN_EP)
+#else
+#define USBD_AUDIO_IN_EP        0x84
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_FEEDBACK_EP)
+#define USBD_AUDIO_FEEDBACK_EP  MYNEWT_VAL(USBD_AUDIO_FEEDBACK_EP)
+#else
+#define USBD_AUDIO_FEEDBACK_EP  0x85
+#endif
+
 #endif

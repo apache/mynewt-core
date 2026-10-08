@@ -273,30 +273,13 @@ extern "C" {
 #define USBD_AUDIO_IN_CHANNELS          MYNEWT_VAL(USBD_AUDIO_IN_CHANNELS)
 #define USBD_AUDIO_OUT_CHANNELS         MYNEWT_VAL(USBD_AUDIO_OUT_CHANNELS)
 
-/* Endpoint addresses, isochronous endpoints on nRF5x are fixed to 8 */
-#if MYNEWT_VAL(USBD_AUDIO_OUT_EP)
-#define USBD_AUDIO_OUT_EP               MYNEWT_VAL(USBD_AUDIO_OUT_EP)
-#elif CFG_TUSB_MCU == OPT_MCU_NRF5X
-#define USBD_AUDIO_OUT_EP               8
-#else
-#define USBD_AUDIO_OUT_EP               1
-#endif
-
-#if MYNEWT_VAL(USBD_AUDIO_IN_EP)
-#define USBD_AUDIO_IN_EP                (0x80 | MYNEWT_VAL(USBD_AUDIO_IN_EP))
-#elif CFG_TUSB_MCU == OPT_MCU_NRF5X
-#define USBD_AUDIO_IN_EP                (0x80 | 8)
-#else
-#define USBD_AUDIO_IN_EP                (0x80 | 1)
-#endif
-
-#if MYNEWT_VAL(USBD_AUDIO_FEEDBACK_EP)
-#define USBD_AUDIO_FEEDBACK_EP          \
-    (0x80 | MYNEWT_VAL(USBD_AUDIO_FEEDBACK_EP))
-#elif CFG_TUSB_MCU == OPT_MCU_NRF5X
-#define USBD_AUDIO_FEEDBACK_EP          (0x80 | 8)
-#else
-#define USBD_AUDIO_FEEDBACK_EP          (0x80 | 2)
+/*
+ * Isochronous endpoint addresses are selected in port specific tusb_hw.h,
+ * where they can be kept apart from other classes' defaults.
+ */
+#if !defined(USBD_AUDIO_OUT_EP) || !defined(USBD_AUDIO_IN_EP) || \
+    !defined(USBD_AUDIO_FEEDBACK_EP)
+#error "USB port tusb_hw.h does not define audio endpoints"
 #endif
 
 #if MYNEWT_VAL(USBD_AUDIO_FEEDBACK) && CFG_TUD_AUDIO_ENABLE_EP_OUT
@@ -305,9 +288,9 @@ extern "C" {
 #define CFG_TUD_AUDIO_ENABLE_FEEDBACK_EP    0
 #endif
 
-#if MYNEWT_VAL(USBD_AUDIO_INT_EP)
+#if defined(MYNEWT_VAL_USBD_AUDIO_INT_EP)
 #define CFG_TUD_AUDIO_ENABLE_INTERRUPT_EP   1
-#define USBD_AUDIO_INT_EP               (0x80 | MYNEWT_VAL(USBD_AUDIO_INT_EP))
+#define USBD_AUDIO_INT_EP               MYNEWT_VAL(USBD_AUDIO_INT_EP)
 #else
 #define CFG_TUD_AUDIO_ENABLE_INTERRUPT_EP   0
 #endif
