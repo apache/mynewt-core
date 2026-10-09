@@ -53,6 +53,7 @@ TEST_CASE_DECL(test_cborattr_decode_substring_key);
 TEST_CASE_DECL(test_cborattr_decode_nesting);
 TEST_CASE_DECL(test_cborattr_decode_string_bounds);
 TEST_CASE_DECL(test_cborattr_decode_string_array_bounds);
+TEST_CASE_DECL(test_cborattr_decode_mbuf);
 
 #ifdef __cplusplus
 }
