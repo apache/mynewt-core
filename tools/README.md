@@ -26,6 +26,8 @@
   [`newt-coding-rules-ignore`](../newt-coding-rules-ignore).
 - **`mynewt_style/`**: the engine, its rules (`mynewt_style/rules/`, see the
   [rules README](mynewt_style/rules/README.md)) and unit tests.
+- **[`mynewt_style/CODING_STANDARDS.md`](mynewt_style/CODING_STANDARDS.md)**: the
+  coding standard the tool checks, rule by rule.
 
 This is the canonical copy of the tool. apache-mynewt-nimble carries an
 identical copy of `mynewt_format.py` and `mynewt_style/`, refreshed by its
