@@ -27,6 +27,7 @@ pkg.deps:
     - '@apache-mynewt-core/kernel/os'
     - '@apache-mynewt-core/sys/log/full'
     - '@apache-mynewt-core/mgmt/mcumgr/mgmt'
+    - '@apache-mynewt-core/encoding/cborattr'
 
 pkg.init:
     log_mgmt_module_init: 'MYNEWT_VAL(LOG_MGMT_SYSINIT_STAGE)'
