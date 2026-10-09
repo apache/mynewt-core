@@ -38,7 +38,7 @@
 #ifndef H_OMP_
 #define H_OMP_
 
-#include "tinycbor/cbor_mbuf_reader.h"
+#include "tinycbor7/cbor_mbuf_reader.h"
 #include "mgmt/mgmt.h"
 
 #ifdef __cplusplus

@@ -27,18 +27,16 @@ static int test_cbor_len;
 /*
  * CBOR encoder data structures.
  */
-static int test_cbor_wr(struct cbor_encoder_writer *, const char *, int);
+static CborError test_cbor_wr(void *, const void *, size_t, CborEncoderAppendType);
 static CborEncoder test_encoder;
-static struct cbor_encoder_writer test_writer = { .write = test_cbor_wr };
-
-static int
-test_cbor_wr(struct cbor_encoder_writer *cew, const char *data, int len)
+static CborError
+test_cbor_wr(void *token, const void *data, size_t len, CborEncoderAppendType append)
 {
     memcpy(test_cbor_buf + test_cbor_len, data, len);
     test_cbor_len += len;
 
     assert(test_cbor_len < sizeof(test_cbor_buf));
-    return 0;
+    return CborNoError;
 }
 
 static void
@@ -49,7 +47,7 @@ test_encode_object_array(void)
     CborEncoder sub_obj;
 
     test_cbor_len = 0;
-    cbor_encoder_init(&test_encoder, &test_writer, 0);
+    cbor_encoder_init_writer(&test_encoder, test_cbor_wr, NULL);
 
     cbor_encoder_create_map(&test_encoder, &data, CborIndefiniteLength);
 

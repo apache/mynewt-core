@@ -22,7 +22,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "tinycbor/cbor.h"
+#include "tinycbor7/cbor.h"
 #include "mgmt/endian.h"
 #include "mgmt/mgmt.h"
 #include "smp/smp.h"
@@ -134,15 +134,15 @@ smp_write_at(struct cbor_mbuf_writer *cmw, size_t offset, const void *data, size
 static int
 smp_read_hdr(struct smp_streamer *streamer, struct mgmt_hdr *dst_hdr)
 {
-    struct cbor_decoder_reader *reader;
+    struct cbor_reader *reader;
 
     reader = &streamer->reader->r;
 
-    if (reader->message_size < sizeof *dst_hdr) {
+    if (!reader->ops->can_read(reader, 0, sizeof(*dst_hdr)) ||
+        !reader->ops->read(reader, dst_hdr, 0, sizeof(*dst_hdr))) {
         return MGMT_ERR_EINVAL;
     }
 
-    reader->cpy(reader, (char *)dst_hdr, 0, sizeof *dst_hdr);
     return 0;
 }
 

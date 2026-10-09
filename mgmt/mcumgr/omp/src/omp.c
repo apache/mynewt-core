@@ -24,7 +24,7 @@
 
 #include <mgmt/mgmt.h>
 #include <cborattr/cborattr.h>
-#include <tinycbor/cbor.h>
+#include <tinycbor7/cbor.h>
 
 #include "omp/omp.h"
 #include "omp/omp_priv.h"
@@ -160,7 +160,7 @@ static void
 omp_init_reader(struct omp_streamer *streamer, struct os_mbuf *m, struct mgmt_ctxt *ctxt)
 {
     cbor_mbuf_reader_init(streamer->reader, m, streamer->req_off);
-    cbor_parser_init(&streamer->reader->r, 0, &ctxt->parser, &ctxt->it);
+    cbor_reader_parser_init(&streamer->reader->r, &ctxt->parser, &ctxt->it);
 }
 
 int

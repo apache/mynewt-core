@@ -23,7 +23,7 @@
 #include "os/mynewt.h"
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
-#include "tinycbor/cbor_cnt_writer.h"
+#include "tinycbor7/cbor_cnt_writer.h"
 #include "log_mgmt/log_mgmt.h"
 #include "log/log.h"
 
@@ -444,7 +444,7 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
 static int
 log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
 {
-    struct CborCntWriter cnt_writer;
+    struct cbor_cnt_writer cnt_writer;
     struct log_mgmt_enc_ctxt *lmec;
     struct log_walk_ctxt *ctxt;
     CborEncoder cnt_encoder;
@@ -461,7 +461,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
          */
 
         cbor_cnt_writer_init(&cnt_writer);
-        cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
+        cbor_writer_encoder_init(&cnt_writer.enc, &cnt_encoder);
         rc = log_mgmt_encode_entry(&cnt_encoder, entry, &entry_len, lmec);
         if (rc != 0) {
             return rc;
@@ -506,7 +506,7 @@ static int
 log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
                    int64_t timestamp, uint32_t index)
 {
-    struct CborCntWriter cnt_writer;
+    struct cbor_cnt_writer cnt_writer;
     struct log_mgmt_filter filter;
     struct log_walk_ctxt ctxt = { 0 };
     CborEncoder cnt_encoder;
@@ -520,7 +520,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     /* this code counts how long the message would be if we encoded
      * this outer structure using cbor. */
     cbor_cnt_writer_init(&cnt_writer);
-    cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
+    cbor_writer_encoder_init(&cnt_writer.enc, &cnt_encoder);
     err |= cbor_encode_text_stringz(&cnt_encoder, "entries");
     err |= cbor_encoder_create_array(&cnt_encoder, &entries, CborIndefiniteLength);
     err |= cbor_encoder_close_container(&cnt_encoder, &entries);

@@ -24,7 +24,7 @@
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
 #include "streamer/streamer.h"
-#include "tinycbor/cbor_mbuf_writer.h"
+#include "tinycbor7/cbor_mbuf_writer.h"
 #include "shell_priv.h"
 
 static int shell_bridge_exec(struct mgmt_ctxt *cb);

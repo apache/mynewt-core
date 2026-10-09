@@ -22,25 +22,24 @@
 static uint8_t test_str_buf[64];
 static int test_str_len;
 
-static int
-test_str_wr(struct cbor_encoder_writer *cew, const char *data, int len)
+static CborError
+test_str_wr(void *token, const void *data, size_t len, CborEncoderAppendType append)
 {
     memcpy(test_str_buf + test_str_len, data, len);
     test_str_len += len;
     assert(test_str_len < sizeof(test_str_buf));
-    return 0;
+    return CborNoError;
 }
 
 /* Encodes {"s": <text>, "b": <bytes>, "i": 1}, omitting NULL members. */
 static void
 test_str_encode(const char *s, const uint8_t *b, size_t b_len)
 {
-    struct cbor_encoder_writer writer = { .write = test_str_wr };
     CborEncoder enc;
     CborEncoder map;
 
     test_str_len = 0;
-    cbor_encoder_init(&enc, &writer, 0);
+    cbor_encoder_init_writer(&enc, test_str_wr, NULL);
     cbor_encoder_create_map(&enc, &map, CborIndefiniteLength);
     if (s) {
         cbor_encode_text_stringz(&map, "s");

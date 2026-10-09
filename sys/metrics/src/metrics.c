@@ -25,8 +25,8 @@
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "metrics/metrics.h"
-#include "tinycbor/cbor.h"
-#include "tinycbor/cbor_mbuf_writer.h"
+#include "tinycbor7/cbor.h"
+#include "tinycbor7/cbor_mbuf_writer.h"
 #include "log/log.h"
 #include "metrics_priv.h"
 
@@ -444,7 +444,7 @@ metrics_event_to_cbor(struct metrics_event_hdr *hdr, struct os_mbuf *om)
     int rc;
 
     cbor_mbuf_writer_init(&writer, om);
-    cbor_encoder_init(&encoder, &writer.enc, 0);
+    cbor_writer_encoder_init(&writer.enc, &encoder);
 
     rc = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
     if (rc != 0) {

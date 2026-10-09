@@ -29,8 +29,7 @@
 #include "reboot/log_reboot.h"
 #include "bsp/bsp.h"
 #include "flash_map/flash_map.h"
-#include "tinycbor/cbor.h"
-#include "tinycbor/cbor_buf_writer.h"
+#include "tinycbor7/cbor.h"
 
 uint16_t reboot_cnt;
 static int8_t log_reboot_written;
@@ -176,7 +175,6 @@ log_reboot_write(const struct log_reboot_info *info)
     int off;
     int rc;
     int i;
-    struct cbor_buf_writer writer;
     struct CborEncoder enc;
     struct CborEncoder map;
     size_t cbor_buf_len;
@@ -199,8 +197,7 @@ log_reboot_write(const struct log_reboot_info *info)
 
     memset(cbor_enc_buf, 0, sizeof cbor_enc_buf);
 
-    cbor_buf_writer_init(&writer, cbor_enc_buf, sizeof cbor_enc_buf);
-    cbor_encoder_init(&enc, &writer.enc, 0);
+    cbor_encoder_init(&enc, cbor_enc_buf, sizeof(cbor_enc_buf), 0);
     rc = cbor_encoder_create_map(&enc, &map, CborIndefiniteLength);
     if (rc != 0) {
         return rc;
@@ -267,13 +264,13 @@ log_reboot_write(const struct log_reboot_info *info)
     }
     cbor_encode_text_stringz(&map, buf);
 
-    /* Find length of the CBOR encoded log entry. */
-    cbor_buf_len = cbor_buf_writer_buffer_size(&writer, cbor_enc_buf) + 1;
-
     rc = cbor_encoder_close_container(&enc, &map);
     if (rc != 0) {
         return SYS_ENOMEM;
     }
+
+    /* Find length of the CBOR encoded log entry. */
+    cbor_buf_len = cbor_encoder_get_buffer_size(&enc, cbor_enc_buf);
 
     /* Log a CBOR encoded reboot record. */
     modlog_append(LOG_MODULE_REBOOT, LOG_LEVEL_CRITICAL, LOG_ETYPE_CBOR,

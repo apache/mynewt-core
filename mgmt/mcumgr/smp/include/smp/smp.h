@@ -39,8 +39,8 @@
 #define H_SMP_
 
 #include "os/os_mbuf.h"
-#include "tinycbor/cbor_mbuf_reader.h"
-#include "tinycbor/cbor_mbuf_writer.h"
+#include "tinycbor7/cbor_mbuf_reader.h"
+#include "tinycbor7/cbor_mbuf_writer.h"
 #include "mgmt/mgmt.h"
 
 #ifdef __cplusplus

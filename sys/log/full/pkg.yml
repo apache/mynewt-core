@@ -40,15 +40,15 @@ pkg.deps.LOG_CLI:
     - "@apache-mynewt-core/sys/log/util/log_cbor_reader"
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/encoding/base64"
-    - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/encoding/tinycbor7"
     - "@apache-mynewt-core/util/parse"
 
 pkg.deps.LOG_CONSOLE:
-    - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/encoding/tinycbor7"
 
 pkg.deps.LOG_MGMT:
     - "@apache-mynewt-core/mgmt/mcumgr/cmd/log_mgmt"
-    - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/encoding/tinycbor7"
 
 pkg.deps.LOG_FLAGS_IMAGE_HASH:
     - "@apache-mynewt-core/mgmt/imgmgr"

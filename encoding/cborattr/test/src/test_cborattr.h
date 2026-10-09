@@ -23,7 +23,7 @@
 #include <string.h>
 #include "testutil/testutil.h"
 #include "test_cborattr.h"
-#include "tinycbor/cbor.h"
+#include "tinycbor7/cbor.h"
 #include "cborattr/cborattr.h"
 
 #ifdef __cplusplus

@@ -22,7 +22,7 @@
 #include "os/mynewt.h"
 #include "hal/hal_system.h"
 #include "hal/hal_watchdog.h"
-#include "tinycbor/cbor.h"
+#include "tinycbor7/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "os_mgmt/os_mgmt.h"

@@ -21,7 +21,8 @@
 #define H_MGMT_MGMT_
 
 #include <inttypes.h>
-#include "tinycbor/cbor.h"
+#include "tinycbor7/cbor.h"
+#include "tinycbor7/cbor_reader.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -210,8 +211,8 @@ int mgmt_write_rsp_status(struct mgmt_ctxt *ctxt, int status);
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-int mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct cbor_decoder_reader *reader,
-                   struct cbor_encoder_writer *writer);
+int mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct cbor_reader *reader,
+                   struct cbor_writer *writer);
 
 /**
  * @brief Converts a CBOR status code to a MGMT_ERR_[...] code.
