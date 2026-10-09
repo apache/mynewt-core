@@ -135,9 +135,6 @@ happens when they do.
    the BLE SMP transport. Link security of other management transports
    (serial physical access, IP reachability) is the integrator's (§10).
 7. **Physical / invasive / side-channel and supply-chain** concerns.
-8. **Zephyr's fork of mcumgr.** Zephyr maintains its own fork of mcumgr in
-   the Zephyr tree; Zephyr-only features and divergences are out of model.
-   *(maintainer — §14 Q20)*
 
 ## §4 Trust boundaries and data flow
 
@@ -598,19 +595,14 @@ against a fully-malicious peer, and has it been fuzzed?)
   → **"For now lets do single umbrella."** Revisit per §12 if a
   particular stack warrants its own model later.
 
-**Management (mcumgr / SMP)** — from the former `apache/mynewt-mcumgr`
-model (its Q1–Q19); answered by Szymon Janc (Mynewt PMC) on 2026-07-27.
-mcumgr's Q2 (MCUboot is the sole execution gate) and Q3 (single address
-space) are the same as Q2 and Q1 above.
+**Management (mcumgr / SMP)** — answered by Szymon Janc (Mynewt PMC) on
+2026-07-27. MCUboot being the sole execution gate and the single address
+space are covered by Q2 and Q1 above.
 - **Q19.** SMP provides no authentication, authorization,
   confidentiality, integrity or replay protection of its own; all
   delegated to the transport/integrator. → **Confirmed.**
-- **Q20.** Scope of the mcumgr model. → **Mynewt only.** Zephyr forked
-  mcumgr into its own tree and no longer used the `apache/mynewt-mcumgr`
-  repository; the PMC planned to move mcumgr back into `mynewt-core`,
-  which has since been done (`mgmt/mcumgr/`, OS porting layer removed).
-- **Q21.** Which command groups are default-on? → **On Mynewt there is no
-  clear "default".** What is compiled in depends on which packages the
+- **Q21.** Which command groups are default-on? → **There is no clear
+  "default".** What is compiled in depends on which packages the
   application or a system component pulls in; a group must be
   **explicitly enabled by the user**, directly or transitively (e.g.
   enabling USB may pull `img_mgmt`).
@@ -662,8 +654,7 @@ space) are the same as Q2 and Q1 above.
 - **Q29.** Are `os_mgmt` diagnostics (taskstat/mpstat) intentional
   information disclosure to any transport peer? → **Yes.**
 - **Q30.** Is remote shell execution intended strictly for development?
-  → **Believed so.** The answer was given for mcumgr's Zephyr-only
-  `shell_mgmt`; on Mynewt the same capability is provided by `sys/shell`
+  → **Believed so.** Remote shell execution is provided by `sys/shell`
   when `SHELL_BRIDGE` is enabled (disabled by default).
 - **Q31.** Does mcumgr bound CBOR nesting/size before handing the payload
   to tinycbor? → **No — that is up to the decoder.** Robustness against
