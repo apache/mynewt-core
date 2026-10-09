@@ -17,30 +17,7 @@
 # under the License.
 #
 
-pkg.name: hw/usb/tinyusb/tinyusb_sdk
-pkg.description: Package including TinyUSB sdk
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "https://mynewt.apache.org/"
-pkg.keywords:
-    - usb
-
-pkg.type: sdk
-
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-
-pkg.cflags:
-    - -Wno-unused-variable
-
-pkg.include_dirs:
-    - "@tinyusb/src"
-
-pkg.source_dirs:
-    - "@tinyusb/src"
-
-repository.tinyusb:
-    type: github
-    branch: master
-    vers: 0.21.0-commit
-    user: hathach
-    repo: tinyusb
+# TinyUSB nRF5x device driver includes nrfx_clock.h, which nrfx accepts
+# only when its CLOCK (or POWER) driver is enabled.
+syscfg.vals:
+    NRFX_CLOCK_ENABLED: 1

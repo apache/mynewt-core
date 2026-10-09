@@ -242,6 +242,88 @@ extern "C" {
 #define CFG_TUD_DFU_DETACH_TIMEOUT  1000
 #endif
 
+/* ------------- Audio (USB Audio Class 2.0) ------------- */
+#if MYNEWT_VAL_CHOICE(USBD_AUDIO, IN)
+#define CFG_TUD_AUDIO_ENABLE_EP_IN      1
+#define CFG_TUD_AUDIO_ENABLE_EP_OUT     0
+#elif MYNEWT_VAL_CHOICE(USBD_AUDIO, OUT)
+#define CFG_TUD_AUDIO_ENABLE_EP_IN      0
+#define CFG_TUD_AUDIO_ENABLE_EP_OUT     1
+#elif MYNEWT_VAL_CHOICE(USBD_AUDIO, IN_OUT)
+#define CFG_TUD_AUDIO_ENABLE_EP_IN      1
+#define CFG_TUD_AUDIO_ENABLE_EP_OUT     1
+#else
+#define CFG_TUD_AUDIO_ENABLE_EP_IN      0
+#define CFG_TUD_AUDIO_ENABLE_EP_OUT     0
+#endif
+#define CFG_TUD_AUDIO \
+    (CFG_TUD_AUDIO_ENABLE_EP_IN || CFG_TUD_AUDIO_ENABLE_EP_OUT)
+
+#if CFG_TUD_AUDIO
+#define USBD_AUDIO_SAMPLE_RATE          MYNEWT_VAL(USBD_AUDIO_SAMPLE_RATE)
+/* Valid bits in sample (bit resolution) */
+#define USBD_AUDIO_SAMPLE_SIZE          MYNEWT_VAL(USBD_AUDIO_SAMPLE_SIZE)
+/* Bytes used by sample in USB packet (subslot size) */
+#if MYNEWT_VAL(USBD_AUDIO_BYTES_PER_SAMPLE)
+#define USBD_AUDIO_BYTES_PER_SAMPLE     MYNEWT_VAL(USBD_AUDIO_BYTES_PER_SAMPLE)
+#else
+#define USBD_AUDIO_BYTES_PER_SAMPLE     ((USBD_AUDIO_SAMPLE_SIZE + 7) / 8)
+#endif
+
+#define USBD_AUDIO_IN_CHANNELS          MYNEWT_VAL(USBD_AUDIO_IN_CHANNELS)
+#define USBD_AUDIO_OUT_CHANNELS         MYNEWT_VAL(USBD_AUDIO_OUT_CHANNELS)
+
+/*
+ * Isochronous endpoint addresses are selected in port specific tusb_hw.h,
+ * where they can be kept apart from other classes' defaults.
+ */
+#if !defined(USBD_AUDIO_OUT_EP) || !defined(USBD_AUDIO_IN_EP) || \
+    !defined(USBD_AUDIO_FEEDBACK_EP)
+#error "USB port tusb_hw.h does not define audio endpoints"
+#endif
+
+#if MYNEWT_VAL(USBD_AUDIO_FEEDBACK) && CFG_TUD_AUDIO_ENABLE_EP_OUT
+#define CFG_TUD_AUDIO_ENABLE_FEEDBACK_EP    1
+#else
+#define CFG_TUD_AUDIO_ENABLE_FEEDBACK_EP    0
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_INT_EP)
+#define CFG_TUD_AUDIO_ENABLE_INTERRUPT_EP   1
+#define USBD_AUDIO_INT_EP               MYNEWT_VAL(USBD_AUDIO_INT_EP)
+#else
+#define CFG_TUD_AUDIO_ENABLE_INTERRUPT_EP   0
+#endif
+
+/*
+ * Endpoint sizes for 1 ms packets (one extra sample for rates that are not
+ * multiple of 1 kHz and for asynchronous streams).  Same packet size is used
+ * for full and high speed, high speed endpoints use interval of 8
+ * microframes.
+ * Same formula as TUD_AUDIO_EP_SIZE(false, ...), written out here because
+ * TinyUSB evaluates these values in #if before usbd.h is included.
+ */
+#define USBD_AUDIO_EP_SIZE(_rate, _bytes, _nch) \
+    (((((_rate) + 999) / 1000) + 1) * (_bytes) * (_nch))
+#define USBD_AUDIO_EP_IN_SZ \
+    USBD_AUDIO_EP_SIZE(USBD_AUDIO_SAMPLE_RATE, USBD_AUDIO_BYTES_PER_SAMPLE, \
+                       USBD_AUDIO_IN_CHANNELS)
+#define USBD_AUDIO_EP_OUT_SZ \
+    USBD_AUDIO_EP_SIZE(USBD_AUDIO_SAMPLE_RATE, USBD_AUDIO_BYTES_PER_SAMPLE, \
+                       USBD_AUDIO_OUT_CHANNELS)
+
+#if CFG_TUD_AUDIO_ENABLE_EP_IN
+#define CFG_TUD_AUDIO_FUNC_1_EP_IN_SZ_MAX       USBD_AUDIO_EP_IN_SZ
+#define CFG_TUD_AUDIO_FUNC_1_EP_IN_SW_BUF_SZ \
+    (MYNEWT_VAL(USBD_AUDIO_IN_BUFFER_PACKETS) * USBD_AUDIO_EP_IN_SZ)
+#endif
+#if CFG_TUD_AUDIO_ENABLE_EP_OUT
+#define CFG_TUD_AUDIO_FUNC_1_EP_OUT_SZ_MAX      USBD_AUDIO_EP_OUT_SZ
+#define CFG_TUD_AUDIO_FUNC_1_EP_OUT_SW_BUF_SZ \
+    (MYNEWT_VAL(USBD_AUDIO_OUT_BUFFER_PACKETS) * USBD_AUDIO_EP_OUT_SZ)
+#endif
+#endif /* CFG_TUD_AUDIO */
+
 #ifdef __cplusplus
 }
 #endif

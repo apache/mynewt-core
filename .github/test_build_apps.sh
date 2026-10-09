@@ -25,6 +25,12 @@ APPS=$(basename -a `ls -d repos/apache-mynewt-core/apps/*/`)
 IGNORED_APPS="ffs2native fs_test hash_test lora_app_shell loraping lorashell\
               pwm_test rust_blinky lvgl_demo"
 
+# Apps that deliberately leave some settings to the target.  Values used
+# here are placeholders good enough for a build check.
+declare -A APP_SYSCFG=(
+    [usb_headset]="USBD_VID=0xFFFF:USBD_PID=0xFFFF"
+)
+
 for app in ${APPS}; do
     # NOTE: do not remove the spaces around IGNORED_APPS; it's required to
     #       match against the first and last entries
@@ -42,6 +48,9 @@ for app in ${APPS}; do
     newt target create -s $target
     newt target set -s $target bsp="@apache-mynewt-core/hw/bsp/nordic_pca10056"
     newt target set -s $target app="@apache-mynewt-core/apps/$app"
+    if [[ -n "${APP_SYSCFG[$app]}" ]]; then
+        newt target set -s $target syscfg="${APP_SYSCFG[$app]}"
+    fi
     newt build -q $target
 
     rc=$?

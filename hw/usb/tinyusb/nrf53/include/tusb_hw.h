@@ -122,4 +122,27 @@
 #define USBD_BTH_DATA_EP_SIZE   0x40
 #endif
 
+/*
+ * Audio class isochronous endpoints, 8 is the only isochronous
+ * endpoint pair.  Feedback endpoint shares the IN endpoint, so it can
+ * not be used together with microphone.
+ */
+#if defined(MYNEWT_VAL_USBD_AUDIO_OUT_EP)
+#define USBD_AUDIO_OUT_EP       MYNEWT_VAL(USBD_AUDIO_OUT_EP)
+#else
+#define USBD_AUDIO_OUT_EP       0x08
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_IN_EP)
+#define USBD_AUDIO_IN_EP        MYNEWT_VAL(USBD_AUDIO_IN_EP)
+#else
+#define USBD_AUDIO_IN_EP        0x88
+#endif
+
+#if defined(MYNEWT_VAL_USBD_AUDIO_FEEDBACK_EP)
+#define USBD_AUDIO_FEEDBACK_EP  MYNEWT_VAL(USBD_AUDIO_FEEDBACK_EP)
+#else
+#define USBD_AUDIO_FEEDBACK_EP  0x88
+#endif
+
 #endif

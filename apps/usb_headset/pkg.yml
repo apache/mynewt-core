@@ -17,30 +17,27 @@
 # under the License.
 #
 
-pkg.name: hw/usb/tinyusb/tinyusb_sdk
-pkg.description: Package including TinyUSB sdk
+pkg.name: apps/usb_headset
+pkg.type: app
+pkg.description: >
+    USB Audio Class 2.0 headset example.  Stereo audio received from host
+    (speaker) is mixed to mono and sent back to host (microphone).
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "https://mynewt.apache.org/"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - usb
+    - audio
+    - uac2
+    - headset
 
-pkg.type: sdk
+# Application overrides weak TinyUSB audio callbacks, make sure its objects
+# are always linked in.
+pkg.whole_archive: true
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-
-pkg.cflags:
-    - -Wno-unused-variable
-
-pkg.include_dirs:
-    - "@tinyusb/src"
-
-pkg.source_dirs:
-    - "@tinyusb/src"
-
-repository.tinyusb:
-    type: github
-    branch: master
-    vers: 0.21.0-commit
-    user: hathach
-    repo: tinyusb
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/sys/console"
+    - "@apache-mynewt-core/sys/log"
+    - "@apache-mynewt-core/hw/usb/tinyusb"
+    - "@apache-mynewt-core/hw/usb/tinyusb/std_descriptors"
