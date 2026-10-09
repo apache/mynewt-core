@@ -25,11 +25,10 @@ Every rule of `tools/mynewt-format.py` lives in this directory. Each `*.py`
 file is imported automatically and every class decorated with
 `@register_rule` becomes available, with no other registration needed.
 
-The tool is shared by apache-mynewt-core (where it is maintained) and
-apache-mynewt-nimble (which syncs `tools/mynewt-format.py` and
-`tools/mynewt_style/` from core). Rules must therefore stay repository
-neutral: anything specific to one code base (paths, name prefixes, ignored
-files) belongs in that repository's `.mynewt-format`.
+The tool lives in apache-mynewt-core and is also used, from core, to check
+apache-mynewt-nimble. Rules must therefore stay repository neutral: anything
+specific to one code base (paths, name prefixes, ignored files) belongs in
+that repository's `.mynewt-format`.
 
 | File                   | Rules                                                                    |
 |------------------------|--------------------------------------------------------------------------|
@@ -43,7 +42,7 @@ files) belongs in that repository's `.mynewt-format`.
 | `safety.py`            | banned-functions, octal-literal, bool-compare, assign-in-condition, switch-default, implicit-fallthrough, empty-body |
 | `preprocessor.py`      | directive-format, define-alignment, macro-continuation, macro-multi-statement, macro-arg-parens, duplicate-include, no-if-0 |
 | `declarations.py`      | declarations-at-top, blank-line-after-declarations, function-naming, typedef-suffix |
-| `structure.py`         | license-header, header-guard, extern-c                                   |
+| `structure.py`         | header-guard, extern-c                                                   |
 | `no_struct_typedef.py` | no-struct-typedef (minimal example, a good template)                     |
 
 Rules that only *edit text* can derive from `mynewt_style.helpers.EditRule`
@@ -51,6 +50,9 @@ and just yield `Edit(start, end, text, message)` objects; see `expressions.py`.
 
 `python3 tools/mynewt-format.py --list-rules` prints them all and
 `--explain RULE` prints the full description of one.
+The standard they implement is described in
+[`../CODING_STANDARDS.md`](../CODING_STANDARDS.md); keep it in sync when adding or
+changing a rule.
 
 ## Design principles
 
@@ -152,7 +154,7 @@ severity = "error"
 label = "out"
 
 [rulesets]
-paranoid = ["*", "no-goto-fail", "-license-header"]
+paranoid = ["*", "no-goto-fail", "-extern-c"]
 ```
 
 Rule directories outside this one can be added with `rule_dirs` in
