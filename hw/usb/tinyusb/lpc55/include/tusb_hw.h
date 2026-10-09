@@ -44,7 +44,7 @@
 #if defined(MYNEWT_VAL_USBD_CDC_DATA_OUT_EP)
 #define USBD_CDC_DATA_OUT_EP    MYNEWT_VAL(USBD_CDC_DATA_OUT_EP)
 #else
-#define USBD_CDC_DATA_OUT_EP    0x01
+#define USBD_CDC_DATA_OUT_EP    0x02
 #endif
 
 #if defined(MYNEWT_VAL_USBD_CDC_DATA_IN_EP)
