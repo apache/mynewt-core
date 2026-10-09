@@ -52,7 +52,7 @@
 #endif
 #if MYNEWT_VAL(CRYPTO)
 #include "crypto/crypto.h"
-#include "crypto_nrf52/crypto_nrf52.h"
+#include "crypto_nrf/crypto_nrf.h"
 #endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
@@ -355,7 +355,7 @@ nrf52_periph_create_crypto(void)
 #if MYNEWT_VAL(CRYPTO)
     rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
                        OS_DEV_INIT_PRIMARY, OS_DEV_INIT_PRIO_DEFAULT,
-                       nrf52_crypto_dev_init, NULL);
+                       nrf_crypto_dev_init, NULL);
     assert(rc == 0);
 #endif
 }
