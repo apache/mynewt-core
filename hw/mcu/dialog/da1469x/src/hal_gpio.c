@@ -93,6 +93,7 @@ static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
 static uint32_t g_mcu_gpio_latch_state[2];
 static uint32_t g_mcu_gpio_data_latch_state[2];
 static uint8_t g_mcu_gpio_retained_num;
+static uint32_t g_mcu_gpio_can_sleep;
 static struct da1469x_retreg g_mcu_gpio_retained[MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM)];
 #endif
 
@@ -112,6 +113,10 @@ static struct da1469x_retreg g_mcu_gpio_retained[MYNEWT_VAL(MCU_GPIO_RETAINABLE_
  *
  * Once pin is restored to default configuration it shall be latched again by
  * calling mcu_gpio_latch().
+ *
+ * If all unlatched pins are configured as GPIO, we can then latch them all and
+ * disable PD_COM in sleep. Otherwise, we should not do this to keep mux active
+ * to make sure all pins are driven by proper peripheral.
  */
 
 #if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
@@ -131,6 +136,11 @@ mcu_gpio_retained_add_port(uint32_t latch_val, volatile uint32_t *base_reg)
 
         da1469x_retreg_assign(retreg, &base_reg[pin]);
 
+        if (base_reg[pin] & GPIO_P0_00_MODE_REG_PID_Msk) {
+            /* Prevent disabling PD_COM if any pin has non_GPIO function */
+            g_mcu_gpio_can_sleep = 0;
+        }
+
         g_mcu_gpio_retained_num++;
         retreg++;
     }
@@ -142,6 +152,7 @@ mcu_gpio_retained_refresh(void)
 {
 #if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
     g_mcu_gpio_retained_num = 0;
+    g_mcu_gpio_can_sleep = 1;
 
     mcu_gpio_retained_add_port(CRG_TOP->P0_PAD_LATCH_REG, &GPIO->P0_00_MODE_REG);
     mcu_gpio_retained_add_port(CRG_TOP->P1_PAD_LATCH_REG, &GPIO->P1_00_MODE_REG);
@@ -504,7 +515,7 @@ void
 mcu_gpio_enter_sleep(void)
 {
 #if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
-    if (g_mcu_gpio_retained_num == 0) {
+    if (!g_mcu_gpio_can_sleep || (g_mcu_gpio_retained_num == 0)) {
         return;
     }
 
@@ -530,7 +541,7 @@ void
 mcu_gpio_exit_sleep(void)
 {
 #if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
-    if (g_mcu_gpio_retained_num == 0) {
+    if (!g_mcu_gpio_can_sleep || (g_mcu_gpio_retained_num == 0)) {
         return;
     }
 
