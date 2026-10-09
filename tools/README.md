@@ -26,12 +26,17 @@
   [`.mynewt-format-ignore`](../.mynewt-format-ignore).
 - **`mynewt_style/`**: the engine, its rules (`mynewt_style/rules/`, see the
   [rules README](mynewt_style/rules/README.md)) and unit tests.
+- **[`mynewt_style/CODING_STANDARDS.md`](mynewt_style/CODING_STANDARDS.md)**: the
+  coding standard the tool checks, rule by rule.
 
-This is the canonical copy of the tool. apache-mynewt-nimble carries an
-identical copy of `mynewt-format.py` and `mynewt_style/`, refreshed by its
-daily "Sync mynewt-format" workflow, so changes made here reach NimBLE
-automatically. Keep the rules repository neutral; anything specific to one
-code base belongs in that repository's `.mynewt-format`.
+- **`mynewt-format-setup.sh`**: installs the tool as a `mynewt-format`
+  command, for use in other Mynewt repositories (see below).
+
+mynewt-format lives only here. Other Mynewt repositories, such as
+apache-mynewt-nimble, do not carry a copy: they keep just their own
+`.mynewt-format` and `.mynewt-format-ignore`, and both developers and CI use
+the tool from mynewt-core. Keep the rules repository neutral; anything
+specific to one code base belongs in that repository's `.mynewt-format`.
 
 ## mynewt-format.py
 
@@ -63,8 +68,10 @@ way; `--whole-files` or `--all` check everything. Each problem is shown with
 its source line and, when it can be fixed, the proposed fix right below it;
 `--report list` prints one `file:line:col` line per problem instead. CI runs it the same way on
 every pull request as an informational check: it prints problems and proposed
-fixes but does not fail the build (clang-format remains the blocking style
-check for now). To silence a rule locally, use a comment:
+fixes, and leaves a review comment on each changed line that breaks a rule,
+naming the rule (`.github/workflows/mynewt-format-check.yml` and
+`mynewt-format-comments.yml`). It does not
+fail the build (clang-format remains the blocking style check for now). To silence a rule locally, use a comment:
 
 ```c
 x = foo;       /* mynewt-format: ignore line-length */
@@ -77,6 +84,45 @@ honoured too.
 
 The exit status is 0 when clean, 1 when problems were found (or `-d` proposes
 changes), and 2 on usage or configuration errors. `--format github` prints
-GitHub Actions annotations.
+GitHub Actions annotations; `--format json` prints one JSON object per problem
+(path, line, column, rule, severity, message, fixable, source).
+
+### Using it in other repositories (NimBLE)
+
+The tool picks up the `.mynewt-format` of the repository you run it in, so
+one copy serves every repository. In a newt project mynewt-core is already
+checked out next to NimBLE:
+
+```bash
+cd repos/apache-mynewt-nimble
+python3 ../apache-mynewt-core/tools/mynewt-format.py
+```
+
+To get a `mynewt-format` command (a link in `~/.local/bin` to this checkout,
+so it follows `git pull`) and, optionally, a pre-commit hook in NimBLE:
+
+```bash
+/path/to/mynewt-core/tools/mynewt-format-setup.sh --hook /path/to/mynewt-nimble
+mynewt-format -i                                # in any Mynewt repository
+```
+
+Or just add an alias to `~/.bashrc`:
+
+```bash
+alias mynewt-format='python3 /path/to/mynewt-core/tools/mynewt-format.py'
+```
+
+In CI, other repositories call the reusable workflows of mynewt-core, which
+fetch the tool from mynewt-core's `master`:
+
+```yaml
+# in the pull_request workflow (e.g. compliance_check.yml)
+jobs:
+  style_check_mynewt_format:
+    uses: apache/mynewt-core/.github/workflows/mynewt-format-check.yml@master
+```
+
+and a separate workflow posts the review comments; see the header of
+`.github/workflows/mynewt-format-comments.yml`.
 
 Tests: `python3 -m unittest discover -s tools/mynewt_style/tests`

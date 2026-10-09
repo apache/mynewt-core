@@ -25,11 +25,10 @@ Every rule of `tools/mynewt-format.py` lives in this directory. Each `*.py`
 file is imported automatically and every class decorated with
 `@register_rule` becomes available, with no other registration needed.
 
-The tool is shared by apache-mynewt-core (where it is maintained) and
-apache-mynewt-nimble (which syncs `tools/mynewt-format.py` and
-`tools/mynewt_style/` from core). Rules must therefore stay repository
-neutral: anything specific to one code base (paths, name prefixes, ignored
-files) belongs in that repository's `.mynewt-format`.
+The tool lives in apache-mynewt-core and is also used, from core, to check
+apache-mynewt-nimble. Rules must therefore stay repository neutral: anything
+specific to one code base (paths, name prefixes, ignored files) belongs in
+that repository's `.mynewt-format`.
 
 | File                   | Rules                                                                    |
 |------------------------|--------------------------------------------------------------------------|
@@ -51,6 +50,9 @@ and just yield `Edit(start, end, text, message)` objects; see `expressions.py`.
 
 `python3 tools/mynewt-format.py --list-rules` prints them all and
 `--explain RULE` prints the full description of one.
+The standard they implement is described in
+[`../CODING_STANDARDS.md`](../CODING_STANDARDS.md); keep it in sync when adding or
+changing a rule.
 
 ## Design principles
 
