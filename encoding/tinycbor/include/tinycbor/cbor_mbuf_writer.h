@@ -17,22 +17,37 @@
  * under the License.
  */
 
-#ifndef H_TINYCBOR_CBOR_READER_PRIV_
-#define H_TINYCBOR_CBOR_READER_PRIV_
+#ifndef H_TINYCBOR_CBOR_MBUF_WRITER_
+#define H_TINYCBOR_CBOR_MBUF_WRITER_
 
-#include <tinycbor7/cbor.h>
+#include "os/mynewt.h"
+#include <tinycbor/cbor.h>
 
-/*
- * Copies (or calculates length of if buffer is NULL) string from value parsed
- * with Mynewt CBOR reader, regardless of string layout in source data.
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/** CBOR writer appending encoded data to mbuf chain */
+struct cbor_mbuf_writer {
+    struct cbor_writer enc;
+    struct os_mbuf *m;
+};
+
+/**
+ * Initializes mbuf writer. Encoder is initialized with
+ * cbor_writer_encoder_init(&writer->enc, encoder).
+ *
+ * @param cb            Writer to initialize.
+ * @param m             Mbuf to append encoded data to.
  */
-CborError cbor_reader_copy_string(const CborValue *value, void *buffer,
-                                  size_t *buflen, CborValue *next);
+void cbor_mbuf_writer_init(struct cbor_mbuf_writer *cb, struct os_mbuf *m);
 
-static inline bool
-cbor_reader_is_used(const CborValue *value)
-{
-    return value->parser->flags & CborParserFlag_ExternalSource;
+/** Write function for cbor_encoder_init_writer() */
+CborError cbor_mbuf_writer(void *token, const void *data, size_t len,
+                           CborEncoderAppendType append);
+
+#ifdef __cplusplus
 }
+#endif
 
 #endif

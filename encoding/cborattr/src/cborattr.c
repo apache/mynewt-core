@@ -18,10 +18,10 @@
  */
 
 #include "cborattr/cborattr.h"
-#include "tinycbor7/cbor.h"
-#include "tinycbor7/cbor_mbuf_reader.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_mbuf_reader.h"
 #include "syscfg/syscfg.h"
-#include "tinycbor7/cbor_mbuf_writer.h"
+#include "tinycbor/cbor_mbuf_writer.h"
 #include "os/os_mbuf.h"
 #define CBORATTR_MAX_SIZE    MYNEWT_VAL(CBORATTR_MAX_SIZE)
 #define CBORATTR_MAX_NESTING MYNEWT_VAL(CBORATTR_MAX_NESTING)

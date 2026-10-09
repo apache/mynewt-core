@@ -50,7 +50,7 @@
 
 /*
  * Parser with external source (cbor_parser_init_reader()) is used with Mynewt
- * readers only (see tinycbor7/cbor_reader.h). TinyCBOR reader API keeps reading
+ * readers only (see tinycbor/cbor_reader.h). TinyCBOR reader API keeps reading
  * position in reader, shared by all iterators, while Mynewt users expect
  * iterators to be independent (e.g. copy of iterator can be advanced without
  * affecting original). To achieve that TinyCBOR reader functions are replaced

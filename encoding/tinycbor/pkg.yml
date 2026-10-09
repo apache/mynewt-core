@@ -18,7 +18,7 @@
 #
 
 
-pkg.name: encoding/tinycbor7
+pkg.name: encoding/tinycbor
 pkg.description: CBOR encoding/decoding library (Intel TinyCBOR) with Mynewt extensions
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "https://github.com/intel/tinycbor"

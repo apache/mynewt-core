@@ -29,7 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/mgmt/mcumgr/cmd/os_mgmt"
     - "@apache-mynewt-core/mgmt/mcumgr/mgmt"
-    - "@apache-mynewt-core/encoding/tinycbor7"
+    - "@apache-mynewt-core/encoding/tinycbor"
     - "@apache-mynewt-core/encoding/cborattr"
 
 pkg.deps.TIMEPERSIST:

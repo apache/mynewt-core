@@ -17,24 +17,19 @@
  * under the License.
  */
 
-#include <tinycbor7/cbor_mbuf_writer.h>
+#include <tinycbor/cbor_cnt_writer.h>
 
 void
-cbor_mbuf_writer_init(struct cbor_mbuf_writer *cb, struct os_mbuf *m)
+cbor_cnt_writer_init(struct cbor_cnt_writer *cb)
 {
-    cb->enc.write = cbor_mbuf_writer;
+    cb->enc.write = cbor_cnt_writer;
     cb->enc.bytes_written = 0;
-    cb->m = m;
 }
 
 CborError
-cbor_mbuf_writer(void *token, const void *data, size_t len, CborEncoderAppendType append)
+cbor_cnt_writer(void *token, const void *data, size_t len, CborEncoderAppendType append)
 {
-    struct cbor_mbuf_writer *cb = token;
-
-    if (len > UINT16_MAX || os_mbuf_append(cb->m, data, len)) {
-        return CborErrorOutOfMemory;
-    }
+    struct cbor_cnt_writer *cb = token;
 
     cb->enc.bytes_written += len;
 

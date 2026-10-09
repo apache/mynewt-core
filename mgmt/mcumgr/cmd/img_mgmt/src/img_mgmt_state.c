@@ -19,7 +19,7 @@
 
 #include <assert.h>
 
-#include "tinycbor7/cbor.h"
+#include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "img_mgmt/img_mgmt.h"

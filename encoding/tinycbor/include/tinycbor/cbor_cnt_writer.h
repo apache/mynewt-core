@@ -17,11 +17,37 @@
  * under the License.
  */
 
-#ifndef H_TINYCBOR_CBOR_
-#define H_TINYCBOR_CBOR_
+#ifndef H_TINYCBOR_CBOR_CNT_WRITER_
+#define H_TINYCBOR_CBOR_CNT_WRITER_
 
-/* TinyCBOR main header, provided by @tinycbor repository */
-#include <cbor.h>
-#include "tinycbor7/cbor_mynewt.h"
+#include <tinycbor/cbor.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * CBOR writer that only counts encoded bytes, can be used to check encoded
+ * data length before encoding it to destination.
+ */
+struct cbor_cnt_writer {
+    struct cbor_writer enc;
+};
+
+/**
+ * Initializes counting writer. Encoder is initialized with
+ * cbor_writer_encoder_init(&writer->enc, encoder).
+ *
+ * @param cb            Writer to initialize.
+ */
+void cbor_cnt_writer_init(struct cbor_cnt_writer *cb);
+
+/** Write function for cbor_encoder_init_writer() */
+CborError cbor_cnt_writer(void *token, const void *data, size_t len,
+                          CborEncoderAppendType append);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

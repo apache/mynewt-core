@@ -24,9 +24,9 @@
 #include "mgmt/mgmt.h"
 #include "os_mgmt/os_mgmt.h"
 #include "mynewt_smp/smp.h"
-#include "tinycbor7/cbor.h"
-#include "tinycbor7/cbor_mbuf_writer.h"
-#include "tinycbor7/cbor_mbuf_reader.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_mbuf_writer.h"
+#include "tinycbor/cbor_mbuf_reader.h"
 
 /* Shared queue that SMP uses for work items. */
 struct os_eventq *g_smp_evq;

@@ -27,7 +27,7 @@ pkg.keywords:
     - reader
 
 pkg.deps:
-    - "@apache-mynewt-core/encoding/tinycbor7"
+    - "@apache-mynewt-core/encoding/tinycbor"
     - "@apache-mynewt-core/sys/log/common"
 
 pkg.req_apis:

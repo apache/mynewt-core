@@ -35,7 +35,7 @@
 #include "shell/shell.h"
 #include "console/console.h"
 #include "base64/hex.h"
-#include "tinycbor7/cbor.h"
+#include "tinycbor/cbor.h"
 #include "log_cbor_reader/log_cbor_reader.h"
 
 void log_console_print_hdr(const struct log_entry_hdr *hdr);

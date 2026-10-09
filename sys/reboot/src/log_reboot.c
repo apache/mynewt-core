@@ -29,7 +29,7 @@
 #include "reboot/log_reboot.h"
 #include "bsp/bsp.h"
 #include "flash_map/flash_map.h"
-#include "tinycbor7/cbor.h"
+#include "tinycbor/cbor.h"
 
 uint16_t reboot_cnt;
 static int8_t log_reboot_written;

@@ -25,7 +25,7 @@
  * @{
  */
 
-#include <tinycbor7/cbor.h>
+#include <tinycbor/cbor.h>
 #include <inttypes.h>
 #include "os/mynewt.h"
 #include "smp/smp.h"

@@ -17,37 +17,26 @@
  * under the License.
  */
 
-#ifndef H_TINYCBOR_CBOR_CNT_WRITER_
-#define H_TINYCBOR_CBOR_CNT_WRITER_
+#include <tinycbor/cbor_mbuf_writer.h>
 
-#include <tinycbor7/cbor.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * CBOR writer that only counts encoded bytes, can be used to check encoded
- * data length before encoding it to destination.
- */
-struct cbor_cnt_writer {
-    struct cbor_writer enc;
-};
-
-/**
- * Initializes counting writer. Encoder is initialized with
- * cbor_writer_encoder_init(&writer->enc, encoder).
- *
- * @param cb            Writer to initialize.
- */
-void cbor_cnt_writer_init(struct cbor_cnt_writer *cb);
-
-/** Write function for cbor_encoder_init_writer() */
-CborError cbor_cnt_writer(void *token, const void *data, size_t len,
-                          CborEncoderAppendType append);
-
-#ifdef __cplusplus
+void
+cbor_mbuf_writer_init(struct cbor_mbuf_writer *cb, struct os_mbuf *m)
+{
+    cb->enc.write = cbor_mbuf_writer;
+    cb->enc.bytes_written = 0;
+    cb->m = m;
 }
-#endif
 
-#endif
+CborError
+cbor_mbuf_writer(void *token, const void *data, size_t len, CborEncoderAppendType append)
+{
+    struct cbor_mbuf_writer *cb = token;
+
+    if (len > UINT16_MAX || os_mbuf_append(cb->m, data, len)) {
+        return CborErrorOutOfMemory;
+    }
+
+    cb->enc.bytes_written += len;
+
+    return CborNoError;
+}

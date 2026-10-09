@@ -21,7 +21,7 @@
 
 #if MYNEWT_VAL(SHELL_BRIDGE)
 
-#include "tinycbor7/cbor.h"
+#include "tinycbor/cbor.h"
 #include "shell_priv.h"
 
 static int

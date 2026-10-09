@@ -22,7 +22,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "tinycbor7/cbor.h"
+#include "tinycbor/cbor.h"
 #include "mgmt/endian.h"
 #include "mgmt/mgmt.h"
 #include "smp/smp.h"

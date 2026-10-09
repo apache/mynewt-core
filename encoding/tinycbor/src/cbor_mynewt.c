@@ -18,7 +18,7 @@
  */
 
 #include <assert.h>
-#include <tinycbor7/cbor.h>
+#include <tinycbor/cbor.h>
 
 #define CBOR_MAJOR_TYPE_BYTE_STRING (2 << 5)
 #define CBOR_MAJOR_TYPE_TEXT_STRING (3 << 5)

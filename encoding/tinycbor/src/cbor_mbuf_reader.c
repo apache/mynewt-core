@@ -18,7 +18,7 @@
  */
 
 #include <assert.h>
-#include <tinycbor7/cbor_mbuf_reader.h>
+#include <tinycbor/cbor_mbuf_reader.h>
 #include "cbor_reader_priv.h"
 
 static size_t
