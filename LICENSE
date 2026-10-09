@@ -582,10 +582,6 @@ This product bundles SEGGER SystemView, which is available under the
 "3-clause BSD" license. For details, see:
     * sys/sysview/vendor
 
-This product bundles tinycbor by Intel Corporation, which is available under
-the MIT license. For details see:
-    * encoding/tinycbor
-
 This product bundles part of IoTivity-Constrained, which is partially available
 under the "3-clause BSD" license. Bundled files are:
     * net/oic/include/oic/messaging/coap/
