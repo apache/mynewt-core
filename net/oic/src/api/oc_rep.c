@@ -18,8 +18,8 @@
 
 #include "os/mynewt.h"
 
-#include <tinycbor/cbor_mbuf_writer.h>
-#include <tinycbor/cbor_mbuf_reader.h>
+#include <tinycbor7/cbor_mbuf_writer.h>
+#include <tinycbor7/cbor_mbuf_reader.h>
 
 #include "oic/port/mynewt/config.h"
 #include "oic/oc_rep.h"
@@ -44,7 +44,7 @@ oc_rep_new(struct os_mbuf *m)
     g_err = CborNoError;
     g_outm = m;
     cbor_mbuf_writer_init(&g_buf_writer, m);
-    cbor_encoder_init(&g_encoder, &g_buf_writer.enc, 0);
+    cbor_writer_encoder_init(&g_buf_writer.enc, &g_encoder);
 }
 
 int
@@ -145,11 +145,12 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
   cur->next = 0;
   cur->value_object_array = 0;
   /* key */
-  *err |= cbor_value_calculate_string_length(value, &len);
+  *err |= cbor_mbuf_value_calculate_string_length(value, &len);
   len++;
   oc_alloc_string(&cur->name, len);
-  *err |= cbor_value_copy_text_string(value, oc_string(cur->name), &len, NULL);
-  *err |= cbor_value_advance(value);
+  *err |= cbor_mbuf_value_copy_text_string(value, oc_string(cur->name), &len,
+                                           NULL);
+  *err |= cbor_mbuf_value_advance(value);
   /* value */
   switch (value->type) {
   case CborIntegerType:
@@ -165,20 +166,19 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
     cur->type = DOUBLE;
     break;
   case CborByteStringType:
-    *err |= cbor_value_calculate_string_length(value, &len);
+    *err |= cbor_mbuf_value_calculate_string_length(value, &len);
     len++;
     oc_alloc_string(&cur->value_string, len);
-    *err |= cbor_value_copy_byte_string(value,
-                                        (uint8_t *)oc_string(cur->value_string),
-                                        &len, NULL);
+    *err |= cbor_mbuf_value_copy_byte_string(
+      value, (uint8_t *)oc_string(cur->value_string), &len, NULL);
     cur->type = BYTE_STRING;
     break;
   case CborTextStringType:
-    *err |= cbor_value_calculate_string_length(value, &len);
+    *err |= cbor_mbuf_value_calculate_string_length(value, &len);
     len++;
     oc_alloc_string(&cur->value_string, len);
-    *err |= cbor_value_copy_text_string(value, oc_string(cur->value_string),
-                                        &len, NULL);
+    *err |= cbor_mbuf_value_copy_text_string(
+      value, oc_string(cur->value_string), &len, NULL);
     cur->type = STRING;
     break;
   case CborMapType: /* when value is a map/object */ {
@@ -188,7 +188,7 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
       oc_parse_rep_value(&map, obj, err);
       (*obj)->next = 0;
       obj = &(*obj)->next;
-      *err |= cbor_value_advance(&map);
+      *err |= cbor_mbuf_value_advance(&map);
     }
     cur->type = OBJECT;
   } break;
@@ -200,7 +200,7 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
       CborValue t = array;
       while (!cbor_value_at_end(&t)) {
         len++;
-        cbor_value_advance(&t);
+        cbor_mbuf_value_advance(&t);
       }
     }
     k = 0;
@@ -235,9 +235,9 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
           oc_new_string_array(&cur->value_array, len);
           cur->type = BYTE_STRING | ARRAY;
         }
-        *err |= cbor_value_calculate_string_length(&array, &len);
+        *err |= cbor_mbuf_value_calculate_string_length(&array, &len);
         len++;
-        *err |= cbor_value_copy_byte_string(
+        *err |= cbor_mbuf_value_copy_byte_string(
           &array, (uint8_t *)oc_string_array_get_item(cur->value_array, k),
           &len, NULL);
         break;
@@ -246,9 +246,9 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
           oc_new_string_array(&cur->value_array, len);
           cur->type = STRING | ARRAY;
         }
-        *err |= cbor_value_calculate_string_length(&array, &len);
+        *err |= cbor_mbuf_value_calculate_string_length(&array, &len);
         len++;
-        *err |= cbor_value_copy_text_string(
+        *err |= cbor_mbuf_value_copy_text_string(
           &array, (char *)oc_string_array_get_item(cur->value_array, k), &len,
           NULL);
         break;
@@ -269,14 +269,14 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
         while (!cbor_value_at_end(&map)) {
           oc_parse_rep_value(&map, obj, err);
           obj = &(*obj)->next;
-          *err |= cbor_value_advance(&map);
+          *err |= cbor_mbuf_value_advance(&map);
         }
         break;
       default:
         break;
       }
       k++;
-      *err |= cbor_value_advance(&array);
+      *err |= cbor_mbuf_value_advance(&array);
     }
     break;
   default:
@@ -294,14 +294,14 @@ oc_parse_rep(struct os_mbuf *m, uint16_t payload_off,
   struct cbor_mbuf_reader br;
 
   cbor_mbuf_reader_init(&br, m, payload_off);
-  err |= cbor_parser_init(&br.r, 0, &parser, &root_value);
+  err |= cbor_reader_parser_init(&br.r, &parser, &root_value);
   if (cbor_value_is_map(&root_value)) {
     err |= cbor_value_enter_container(&root_value, &cur_value);
     *out_rep = 0;
     oc_rep_t **cur = out_rep;
     while (cbor_value_is_valid(&cur_value)) {
       oc_parse_rep_value(&cur_value, cur, &err);
-      err |= cbor_value_advance(&cur_value);
+      err |= cbor_mbuf_value_advance(&cur_value);
       cur = &(*cur)->next;
     }
   } else if (cbor_value_is_array(&root_value)) {
@@ -313,7 +313,7 @@ oc_parse_rep(struct os_mbuf *m, uint16_t payload_off,
       *cur = _alloc_rep();
       (*cur)->type = OBJECT;
       oc_parse_rep_value(&cur_value, &(*cur)->value_object, &err);
-      err |= cbor_value_advance(&cur_value);
+      err |= cbor_mbuf_value_advance(&cur_value);
       (*cur)->next = 0;
       cur = &(*cur)->next;
     }

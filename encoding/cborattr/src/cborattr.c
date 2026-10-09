@@ -18,11 +18,10 @@
  */
 
 #include "cborattr/cborattr.h"
-#include "tinycbor/cbor.h"
-#include "tinycbor/cbor_buf_reader.h"
+#include "tinycbor7/cbor.h"
+#include "tinycbor7/cbor_mbuf_reader.h"
 #include "syscfg/syscfg.h"
-#include "tinycbor/cbor_mbuf_reader.h"
-#include "tinycbor/cbor_mbuf_writer.h"
+#include "tinycbor7/cbor_mbuf_writer.h"
 #include "os/os_mbuf.h"
 #define CBORATTR_MAX_SIZE    MYNEWT_VAL(CBORATTR_MAX_SIZE)
 #define CBORATTR_MAX_NESTING MYNEWT_VAL(CBORATTR_MAX_NESTING)
@@ -108,7 +107,7 @@ cborattr_advance(CborValue *it)
     int depth;
 
     if (!cbor_value_is_container(it)) {
-        return cbor_value_advance(it);
+        return cbor_mbuf_value_advance(it);
     }
 
     err = cbor_value_enter_container(it, &stack[0]);
@@ -136,7 +135,7 @@ cborattr_advance(CborValue *it)
             }
             depth++;
         } else {
-            err = cbor_value_advance(cur);
+            err = cbor_mbuf_value_advance(cur);
             if (err) {
                 return err;
             }
@@ -265,7 +264,7 @@ cbor_internal_read_object(CborValue *root_value, const struct cbor_attr_t *attrs
     while (cbor_value_is_valid(&cur_value) && !err) {
         /* get the attribute */
         if (cbor_value_is_text_string(&cur_value)) {
-            err |= cbor_value_calculate_string_length(&cur_value, &len);
+            err |= cbor_mbuf_value_calculate_string_length(&cur_value, &len);
             if (err) {
                 break;
             }
@@ -273,7 +272,7 @@ cbor_internal_read_object(CborValue *root_value, const struct cbor_attr_t *attrs
                 err |= CborErrorDataTooLarge;
                 break;
             }
-            err |= cbor_value_copy_text_string(&cur_value, attrbuf, &len, NULL);
+            err |= cbor_mbuf_value_copy_text_string(&cur_value, attrbuf, &len, NULL);
 
             /* at least get the type of the next value so we can match the
              * attribute name and type for a perfect match */
@@ -335,7 +334,8 @@ cbor_internal_read_object(CborValue *root_value, const struct cbor_attr_t *attrs
                 size_t len = cursor->len;
                 CborError copy_err;
 
-                copy_err = cbor_value_copy_byte_string(&cur_value, lptr, &len, NULL);
+                copy_err =
+                    cbor_mbuf_value_copy_byte_string(&cur_value, lptr, &len, NULL);
                 err |= copy_err;
                 /* On error len is set to string length, not copied length */
                 *cursor->addr.bytestring.len = copy_err ? 0 : len;
@@ -351,7 +351,8 @@ cbor_internal_read_object(CborValue *root_value, const struct cbor_attr_t *attrs
                 }
                 /* Reserve space for terminating NUL */
                 len = cursor->len - 1;
-                copy_err = cbor_value_copy_text_string(&cur_value, lptr, &len, NULL);
+                copy_err =
+                    cbor_mbuf_value_copy_text_string(&cur_value, lptr, &len, NULL);
                 err |= copy_err;
                 ((char *)lptr)[copy_err ? 0 : len] = '\0';
                 break;
@@ -426,7 +427,7 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
             }
             /* Reserve space for terminating NUL */
             len--;
-            err |= cbor_value_copy_text_string(&elem, tp, &len, NULL);
+            err |= cbor_mbuf_value_copy_text_string(&elem, tp, &len, NULL);
             if (err) {
                 break;
             }
@@ -496,13 +497,11 @@ cbor_read_object(struct CborValue *value, const struct cbor_attr_t *attrs)
 int
 cbor_read_flat_attrs(const uint8_t *data, int len, const struct cbor_attr_t *attrs)
 {
-    struct cbor_buf_reader reader;
     struct CborParser parser;
     struct CborValue value;
     CborError err;
 
-    cbor_buf_reader_init(&reader, data, len);
-    err = cbor_parser_init(&reader.r, 0, &parser, &value);
+    err = cbor_parser_init(data, len, 0, &parser, &value);
     if (err != CborNoError) {
         return -1;
     }
@@ -532,7 +531,7 @@ cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
     CborError err;
 
     cbor_mbuf_reader_init(&cmr, m, off);
-    err = cbor_parser_init(&cmr.r, 0, &parser, &value);
+    err = cbor_reader_parser_init(&cmr.r, &parser, &value);
     if (err != CborNoError) {
         return -1;
     }
@@ -709,7 +708,7 @@ cbor_write_object_msys(const struct cbor_out_attr_t *attrs, struct os_mbuf **out
     }
 
     cbor_mbuf_writer_init(&writer, *out_om);
-    cbor_encoder_init(&encoder, &writer.enc, 0);
+    cbor_writer_encoder_init(&writer.enc, &encoder);
 
     rc = cbor_write_object(&encoder, attrs);
     if (rc != 0) {

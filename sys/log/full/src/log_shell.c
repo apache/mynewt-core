@@ -35,8 +35,7 @@
 #include "shell/shell.h"
 #include "console/console.h"
 #include "base64/hex.h"
-#include "tinycbor/cbor.h"
-#include "tinycbor/compilersupport_p.h"
+#include "tinycbor7/cbor.h"
 #include "log_cbor_reader/log_cbor_reader.h"
 
 void log_console_print_hdr(const struct log_entry_hdr *hdr);
@@ -143,7 +142,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         break;
     case LOG_ETYPE_CBOR:
         log_cbor_reader_init(&cbor_reader, log, dptr, len);
-        cbor_parser_init(&cbor_reader.r, 0, &cbor_parser, &cbor_value);
+        cbor_reader_parser_init(&cbor_reader.r, &cbor_parser, &cbor_value);
         cbor_value_to_pretty(stdout, &cbor_value);
         break;
     default:

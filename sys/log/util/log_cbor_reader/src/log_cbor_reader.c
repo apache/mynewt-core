@@ -19,104 +19,48 @@
 
 #include "os/mynewt.h"
 #include "log/log.h"
-#include "tinycbor/cbor.h"
 #include "log_cbor_reader/log_cbor_reader.h"
-#include "tinycbor/compilersupport_p.h"
 
-static uint8_t
-log_cbor_reader_get8(struct cbor_decoder_reader *d, int offset)
+static bool
+log_cbor_reader_can_read(const struct cbor_reader *r, size_t offset, size_t len)
 {
-    struct log_cbor_reader *cbr = (struct log_cbor_reader *)d;
-    uint8_t val = 0;
+    const struct log_cbor_reader *cbr = (const struct log_cbor_reader *)r;
 
-    (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
-
-    return val;
+    return offset <= cbr->len && len <= cbr->len - offset;
 }
 
-static uint16_t
-log_cbor_reader_get16(struct cbor_decoder_reader *d, int offset)
+static void *
+log_cbor_reader_read(const struct cbor_reader *r, void *dst, size_t offset, size_t len)
 {
-    struct log_cbor_reader *cbr = (struct log_cbor_reader *)d;
-    uint16_t val = 0;
-
-    (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
-
-    return cbor_ntohs(val);
-}
-
-static uint32_t
-log_cbor_reader_get32(struct cbor_decoder_reader *d, int offset)
-{
-    struct log_cbor_reader *cbr = (struct log_cbor_reader *)d;
-    uint32_t val = 0;
-
-    (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
-
-    return cbor_ntohl(val);
-}
-
-static uint64_t
-log_cbor_reader_get64(struct cbor_decoder_reader *d, int offset)
-{
-    struct log_cbor_reader *cbr = (struct log_cbor_reader *)d;
-    uint64_t val = 0;
-
-    (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
-
-    return cbor_ntohll(val);
-}
-
-static uintptr_t
-log_cbor_reader_cmp(struct cbor_decoder_reader *d, char *dst,
-                    int src_offset, size_t len)
-{
-    struct log_cbor_reader *cbr = (struct log_cbor_reader *)d;
-    uint8_t buf[16];
-    int chunk_len;
-    int offset;
+    const struct log_cbor_reader *cbr = (const struct log_cbor_reader *)r;
     int rc;
 
-    offset = 0;
-
-    while (offset < len) {
-        chunk_len = min(len - offset, sizeof(buf));
-
-        log_read_body(cbr->log, cbr->dptr, buf, src_offset + offset, chunk_len);
-
-        rc = memcmp(&dst[offset], buf, chunk_len);
-        if (rc) {
-            return rc;
-        }
-
-        offset += chunk_len;
+    if (!log_cbor_reader_can_read(r, offset, len)) {
+        return NULL;
     }
 
-    return 0;
+    rc = log_read_body(cbr->log, cbr->dptr, dst, offset, len);
+    if (rc != len) {
+        return NULL;
+    }
+
+    return dst;
 }
 
-static uintptr_t
-log_cbor_reader_cpy(struct cbor_decoder_reader *d, char *dst,
-                    int src_offset, size_t len)
-{
-    struct log_cbor_reader *cbr = (struct log_cbor_reader *)d;
-
-    log_read_body(cbr->log, cbr->dptr, dst, src_offset, len);
-
-    return (uintptr_t)dst;
-}
+static const struct cbor_reader_ops log_cbor_reader_ops = {
+    .can_read = log_cbor_reader_can_read,
+    .read = log_cbor_reader_read,
+};
 
 void
 log_cbor_reader_init(struct log_cbor_reader *cbr, struct log *log,
                      const void *dptr, uint16_t len)
 {
-    cbr->r.get8 = &log_cbor_reader_get8;
-    cbr->r.get16 = &log_cbor_reader_get16;
-    cbr->r.get32 = &log_cbor_reader_get32;
-    cbr->r.get64 = &log_cbor_reader_get64;
-    cbr->r.cmp = &log_cbor_reader_cmp;
-    cbr->r.cpy = &log_cbor_reader_cpy;
-    cbr->r.message_size = len;
+    memset(&cbr->r, 0, sizeof(cbr->r));
+    cbr->r.ops = &log_cbor_reader_ops;
+    cbr->r.scratch = cbr->str_buf;
+    cbr->r.scratch_size = sizeof(cbr->str_buf);
     cbr->log = log;
     cbr->dptr = dptr;
+    cbr->len = len;
 }

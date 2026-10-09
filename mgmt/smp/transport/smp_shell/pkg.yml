@@ -30,7 +30,7 @@ pkg.deps:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/mgmt/smp"
     - "@apache-mynewt-core/mgmt/mcumgr/mgmt"
-    - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/encoding/tinycbor7"
 
 pkg.init:
     smp_shell_pkg_init: 'MYNEWT_VAL(SMP_SHELL_SYSINIT_STAGE)'

@@ -27,8 +27,8 @@
 #include "shell/shell.h"
 #include "console/console.h"
 #include "metrics/metrics.h"
-#include "tinycbor/cbor.h"
-#include "tinycbor/cbor_mbuf_reader.h"
+#include "tinycbor7/cbor.h"
+#include "tinycbor7/cbor_mbuf_reader.h"
 
 static STAILQ_HEAD(, metrics_event_hdr) g_event_list =
                                         STAILQ_HEAD_INITIALIZER(g_event_list);
@@ -172,6 +172,7 @@ static int
 cmd_event_dump(int argc, char **argv)
 {
     struct cbor_mbuf_reader reader;
+    uint8_t str_buf[64];
     struct CborParser parser;
     struct CborValue value;
     struct metrics_event_hdr *hdr;
@@ -192,7 +193,10 @@ cmd_event_dump(int argc, char **argv)
     om = os_msys_get_pkthdr(50, 0);
     metrics_event_to_cbor(hdr, om);
     cbor_mbuf_reader_init(&reader, om, 0);
-    cbor_parser_init(&reader.r, 0, &parser, &value);
+    /* Strings may span multiple mbufs, pretty printer needs them contiguous */
+    reader.r.scratch = str_buf;
+    reader.r.scratch_size = sizeof(str_buf);
+    cbor_reader_parser_init(&reader.r, &parser, &value);
     cbor_value_to_pretty(stdout, &value);
     os_mbuf_free_chain(om);
 

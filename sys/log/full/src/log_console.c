@@ -24,8 +24,7 @@
 #include <cbmem/cbmem.h>
 #include <console/console.h>
 #include "log/log.h"
-#include "tinycbor/cbor.h"
-#include "tinycbor/cbor_buf_reader.h"
+#include "tinycbor7/cbor.h"
 #include "datetime/datetime.h"
 
 static int
@@ -33,10 +32,8 @@ log_console_dump_cbor_entry(const void *dptr, uint16_t len)
 {
     struct CborParser cbor_parser;
     struct CborValue cbor_value;
-    struct cbor_buf_reader cbor_buf_reader;
 
-    cbor_buf_reader_init(&cbor_buf_reader, dptr, len);
-    cbor_parser_init(&cbor_buf_reader.r, 0, &cbor_parser, &cbor_value);
+    cbor_parser_init(dptr, len, 0, &cbor_parser, &cbor_value);
     cbor_value_to_pretty(stdout, &cbor_value);
 
     console_write("\n", 1);

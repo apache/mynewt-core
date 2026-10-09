@@ -17,17 +17,39 @@
  * under the License.
  */
 
+#ifndef H_LOG_CBOR_READER_
+#define H_LOG_CBOR_READER_
+
 #include "os/mynewt.h"
 #include "log/log.h"
-#include "tinycbor/cbor.h"
-#include "tinycbor/compilersupport_p.h"
+#include "tinycbor7/cbor.h"
+#include "tinycbor7/cbor_reader.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * CBOR reader for log entry body. Parser is initialized with
+ * cbor_reader_parser_init(&reader->r, ...).
+ *
+ * Strings are not contiguous in memory so TinyCBOR string functions (used
+ * e.g. by cbor_value_to_pretty()) can only access strings that fit in reader
+ * string buffer.
+ */
 struct log_cbor_reader {
-    struct cbor_decoder_reader r;
+    struct cbor_reader r;
     struct log *log;
     const void *dptr;
+    uint16_t len;
+    uint8_t str_buf[MYNEWT_VAL(LOG_CBOR_READER_STRING_BUF_SIZE)];
 };
 
-void
-log_cbor_reader_init(struct log_cbor_reader *cbr, struct log *log,
-                     const void *dptr, uint16_t len);
+void log_cbor_reader_init(struct log_cbor_reader *cbr, struct log *log,
+                          const void *dptr, uint16_t len);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

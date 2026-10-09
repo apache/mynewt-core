@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include "tinycbor/cbor.h"
+#include "tinycbor7/cbor.h"
 
 #include <os/os_mbuf.h>
 

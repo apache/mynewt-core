@@ -22,27 +22,26 @@
 static uint8_t test_arr_buf[64];
 static int test_arr_len;
 
-static int
-test_arr_wr(struct cbor_encoder_writer *cew, const char *data, int len)
+static CborError
+test_arr_wr(void *token, const void *data, size_t len, CborEncoderAppendType append)
 {
     memcpy(test_arr_buf + test_arr_len, data, len);
     test_arr_len += len;
     assert(test_arr_len < sizeof(test_arr_buf));
-    return 0;
+    return CborNoError;
 }
 
 /* Encodes {"a": [strs...]} */
 static void
 test_arr_encode(const char **strs, int cnt)
 {
-    struct cbor_encoder_writer writer = { .write = test_arr_wr };
     CborEncoder enc;
     CborEncoder map;
     CborEncoder arr;
     int i;
 
     test_arr_len = 0;
-    cbor_encoder_init(&enc, &writer, 0);
+    cbor_encoder_init_writer(&enc, test_arr_wr, NULL);
     cbor_encoder_create_map(&enc, &map, CborIndefiniteLength);
     cbor_encode_text_stringz(&map, "a");
     cbor_encoder_create_array(&map, &arr, CborIndefiniteLength);

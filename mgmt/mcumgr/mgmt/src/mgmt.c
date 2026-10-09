@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-#include "tinycbor/cbor.h"
+#include "tinycbor7/cbor.h"
 #include "mgmt/endian.h"
 #include "mgmt/mgmt.h"
 
@@ -143,17 +143,17 @@ mgmt_err_from_cbor(int cbor_status)
 }
 
 int
-mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct cbor_decoder_reader *reader,
-               struct cbor_encoder_writer *writer)
+mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct cbor_reader *reader,
+               struct cbor_writer *writer)
 {
     int rc;
 
-    rc = cbor_parser_init(reader, 0, &ctxt->parser, &ctxt->it);
+    rc = cbor_reader_parser_init(reader, &ctxt->parser, &ctxt->it);
     if (rc != CborNoError) {
         return mgmt_err_from_cbor(rc);
     }
 
-    cbor_encoder_init(&ctxt->encoder, writer, 0);
+    cbor_writer_encoder_init(writer, &ctxt->encoder);
 
     return 0;
 }
