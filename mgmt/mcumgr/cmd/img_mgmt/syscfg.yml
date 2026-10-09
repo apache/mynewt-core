@@ -1,0 +1,78 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    IMG_MGMT_LOG_MOD:
+        description: 'Module ID for the image management structured log.'
+        value: 176
+    IMG_MGMT_LOG_LVL:
+        description: 'Minimum level for the image management structured log.'
+        value: 15  # Log disabled by default.
+    IMG_MGMT_SYSINIT_STAGE:
+        description: System initalization stage for IMG_MGMT package
+        value: 501
+
+    IMG_MGMT_UL_CHUNK_SIZE:
+        description: >
+            Limits the maximum chunk size in image uploads.  A buffer of this
+            size gets allocated on the stack during handling of a image upload
+            command.
+        value: 512
+
+    IMG_MGMT_LAZY_ERASE:
+        description: >
+            During a firmware upgrade, erase flash a sector at a time
+            prior to writing to it, rather than all at once at start
+        value: 0
+
+    IMG_MGMT_VERBOSE_ERR:
+        description: >
+            Enable verbose logging during a firmware upgrade
+        value: 0
+
+    IMG_MGMT_DUMMY_HDR:
+        description: 'Returns dummy image header data for imgr functions,
+                      useful when there are no images present, Eg: unit
+                      tests'
+        value: 0
+
+    IMG_MGMT_FRUGAL_LIST:
+        description: >
+            Include only true/non-zero attributes in image status list.
+        value: 0
+
+syscfg.vals.IMGMGR_MAX_CHUNK_SIZE:
+    IMG_MGMT_UL_CHUNK_SIZE: MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)
+
+syscfg.vals.IMGMGR_LAZY_ERASE:
+    IMG_MGMT_LAZY_ERASE: MYNEWT_VAL(IMGMGR_LAZY_ERASE)
+
+syscfg.vals.IMGMGR_VERBOSE_ERR:
+    IMG_MGMT_VERBOSE_ERR: MYNEWT_VAL(IMGMGR_VERBOSE_ERR)
+
+syscfg.vals.IMGMGR_DUMMY_HDR:
+    IMG_MGMT_DUMMY_HDR: MYNEWT_VAL(IMGMGR_DUMMY_HDR)
+
+syscfg.vals.IMGMGR_FRUGAL_LIST:
+    IMG_MGMT_FRUGAL_LIST: MYNEWT_VAL(IMGMGR_FRUGAL_LIST)
+
+syscfg.logs:
+    IMG_MGMT_LOG:
+        module: MYNEWT_VAL(IMG_MGMT_LOG_MOD)
+        level: MYNEWT_VAL(IMG_MGMT_LOG_LVL)

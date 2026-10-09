@@ -163,7 +163,6 @@ repo.deps:
         user: apache
         repo: mynewt-mcumgr
         vers:
-            master: 0-dev
             mynewt_1_8_0_tag: 0.1.0
             mynewt_1_9_0_tag: 0.2.0
             mynewt_1_10_0_tag: 0.3.0

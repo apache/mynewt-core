@@ -1,0 +1,67 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+pkg.name: apps/omp_svr
+pkg.type: app
+pkg.description: Simple BLE peripheral running an mcumgr OMP server.
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+
+pkg.deps: 
+    - '@apache-mynewt-core/mgmt/smp/transport/smp_shell'
+    - '@apache-mynewt-core/sys/console/full'
+    - '@apache-mynewt-core/sys/log/full'
+    - '@apache-mynewt-core/sys/stats/full'
+    - '@apache-mynewt-core/mgmt/mcumgr/cmd/fs_mgmt'
+    - '@apache-mynewt-core/mgmt/mcumgr/cmd/img_mgmt'
+    - '@apache-mynewt-core/mgmt/mcumgr/cmd/os_mgmt'
+    - "@apache-mynewt-core/mgmt/mcumgr/cmd/stat_mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/mgmt"
+    - '@apache-mynewt-core/mgmt/mcumgr/smp'
+    - "@apache-mynewt-core/sys/reboot"
+    # - "@apache-mynewt-core/boot/split"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/id"
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/mgmt/oicmgr"
+    - "@apache-mynewt-core/sys/sysinit"
+    - "@apache-mynewt-core/mgmt/smp/smp_os"
+    - "@apache-mynewt-core/net/oic"
+    - '@mcuboot/boot/bootutil'
+
+pkg.deps.!BSP_SIMULATED:
+    - '@apache-mynewt-core/mgmt/smp/transport/ble'
+    - '@apache-mynewt-nimble/nimble/controller'
+    - '@apache-mynewt-nimble/nimble/host'
+    - '@apache-mynewt-nimble/nimble/host/util'
+    - '@apache-mynewt-nimble/nimble/host/services/gap'
+    - '@apache-mynewt-nimble/nimble/host/services/gatt'
+    - '@apache-mynewt-nimble/nimble/host/store/config'
+
+
+pkg.ign_files.BSP_SIMULATED:
+    - "misc.c"
+    - "gatt_svr.c"
+
+pkg.deps.CONFIG_NFFS:
+    - "@apache-mynewt-core/fs/nffs"
+
+pkg.deps.CONFIG_FCB:
+    - "@apache-mynewt-core/fs/fcb"

@@ -39,13 +39,15 @@
   billions of devices") *(documented: README)*.
 - **Repository / commit:** `apache/mynewt-core`, `master` @ `1dcb119ed885` (2026-06-09).
 - **Drafted:** 2026-06-13, ASF Security team (v0 draft from public artefacts).
-- **Companion repos this round:** `apache/mynewt-nimble` (the BLE stack —
-  its own model covers the radio surface) and `apache/mynewt-mcumgr` (the
-  SMP management library — its own model covers the SMP surface).
-  `mynewt-core` **hosts both**: it runs NimBLE and it ships its *own*
-  management stack under `mgmt/` (`newtmgr`, `smp`, `oicmgr`, `imgmgr`)
-  that is the same family as mcumgr. Where a surface is fully modelled in
-  a sibling document, this model points there rather than duplicating.
+- **Companion models:** `apache/mynewt-nimble` (the BLE stack — its own
+  model covers the radio surface). Where a surface is fully modelled in a
+  sibling document, this model points there rather than duplicating.
+- **Management (mcumgr):** mcumgr, the SMP management library, was moved
+  into `mynewt-core` (`mgmt/mcumgr/`) from the former
+  `apache/mynewt-mcumgr` repository and is treated as any other core
+  subsystem. Its threat model (drafted by the ASF Security team and
+  reviewed by Szymon Janc, Mynewt PMC, on 2026-07-27) is merged into this
+  document: §2, §5a, §6.1, §7–§13, and §14 Q19–Q33.
 - **What triggers a revision:** a new network stack or protocol under
   `net/`; a new management transport or command group under `mgmt/`; a
   change to the boot/image-validation integration under `boot/`; a change
@@ -70,10 +72,10 @@ happens when they do.
 | --- | --- | --- | --- |
 | **Kernel** | `kernel/os` (scheduler, mempool, mbuf, mutex/sem, callout), `kernel/sim` | only *indirectly*, via input flowing up from net/mgmt | trusted core; a kernel memory bug reachable from untrusted input is critical (§8.1) |
 | **Network stacks** | `net/ip`, `net/oic` (OIC/CoAP), `net/lora` (LoRaWAN), `net/mqtt`, `net/wifi`, `net/cellular`, `net/osdp` | **yes — primary remote surface** | each is an untrusted-wire/radio parser (§6) |
-| **Management** | `mgmt/{newtmgr,smp,oicmgr,imgmgr,mgmt,image_header}` | **yes** | same family as `apache/mynewt-mcumgr`; **see that model** for the SMP trust analysis. No authn/authz by design (§9) |
+| **Management** | `mgmt/mcumgr` (SMP core: `mgmt`, `smp`, `omp`; command groups `cmd/{img,fs,os,log,stat}_mgmt`), Mynewt glue and transports `mgmt/smp` (`transport/{ble,smp_shell,smp_uart}`), `mgmt/oicmgr` (OMP over `net/oic`), `mgmt/{imgmgr,newtmgr,mgmt,image_header}`; other groups in `sys/config`, `sys/shell` (`SHELL_BRIDGE`), `test/{crash_test,runtest}` | **yes** | untrusted SMP/OMP frame parse + dispatch + CBOR decode, and command handlers with **very different** privilege footprints (firmware write vs. read a stat) (§6.1). No authn/authz by design (§9) |
 | **Crypto** | `crypto/mbedtls` (**vendored upstream**) | as a library, by the code above | primitives; mbedtls security is upstream's (§3, §11a). tinycrypt was **removed** from core before the 1.15 releases *(maintainer)* |
 | **Boot / image** | `boot/{split,split_app,startup,stub}`, `mgmt/image_header` | at boot, over the staged image | image *authenticity* gate is the signature-verifying bootloader (MCUboot); see §9/§10 |
-| **Sys / local mgmt** | `sys/{console,shell,config,log,coredump,fault,reboot,mfg,flash_map,stats,id}` | `console`/`shell` = local serial surface; also reachable remotely via `shell_mgmt` over SMP | local management surface (§6, §11) |
+| **Sys / local mgmt** | `sys/{console,shell,config,log,coredump,fault,reboot,mfg,flash_map,stats,id}` | `console`/`shell` = local serial surface; also reachable remotely via `SHELL_BRIDGE` over SMP | local management surface (§6, §11) |
 | **Filesystems** | `fs/*` (nffs, fatfs, littlefs ports) | via on-flash structures / file content | on-flash parser robustness (§6) |
 | **Encoding** | `encoding/*` (tinycbor, json, base64, …) | by every layer that decodes untrusted data | untrusted-deserialization primitives (§6) |
 | **HAL / BSP / drivers** | `hw/*` | sensor/peripheral input | per-driver. **Upstream-supported in-tree BSPs/drivers are in scope**; board hardware itself and out-of-tree BSPs are not (§3.3) *(maintainer)* |
@@ -86,7 +88,11 @@ happens when they do.
   and one trust level. *(maintainer — §14 Q1, confirmed)*
 - Not the owner of image authenticity — that is the signature-verifying
   bootloader's (MCUboot). `boot/` here is the integration/split-image
-  glue. *(maintainer — §14 Q2, confirmed)*
+  glue; `img_mgmt` only **stages** an uploaded image into the secondary
+  slot. *(maintainer — §14 Q2, confirmed)*
+- Not a secure management channel. mcumgr/SMP provides **no**
+  authentication, authorization, confidentiality, integrity, or replay
+  protection of its own (§9). *(maintainer — §14 Q19, confirmed)*
 - Not the vendor of the third-party code it **vendors in-tree**. That is
   far wider than crypto: any package whose `pkg.yml` carries a
   `repository.<name>` stanza pulls its source from an upstream repo at
@@ -120,10 +126,14 @@ happens when they do.
    same footing as a `net/` parser. *(maintainer — §14 Q16)*
 4. **`apps/`, `test/`, demo targets** — example and test code, not the
    library's production runtime.
-5. **The SMP/management *protocol* trust analysis** — fully covered in
-   `apache/mynewt-mcumgr`'s model; not duplicated here (this model only
-   notes that `mgmt/` is the same family and inherits its §9).
-6. **The BLE radio surface** — covered in `apache/mynewt-nimble`'s model.
+5. **The SMP client** (`mcumgr-cli`, `newtmgr`, mobile/desktop apps) —
+   separate repos. A finding that requires a malicious *client* is in
+   model only insofar as it is the device-side server mishandling a
+   crafted frame (§6.1).
+6. **The BLE radio surface** — covered in `apache/mynewt-nimble`'s model,
+   including the link security (pairing/bonding/encryption) that may gate
+   the BLE SMP transport. Link security of other management transports
+   (serial physical access, IP reachability) is the integrator's (§10).
 7. **Physical / invasive / side-channel and supply-chain** concerns.
 
 ## §4 Trust boundaries and data flow
@@ -152,7 +162,16 @@ Because there is no internal isolation, **the robustness of every
 front-line parser is the whole device's robustness**. The security of a
 *deployed* device is the union of: Mynewt's parser/kernel correctness
 (this model) + the integrator's choices about which doors to open and how
-to gate them (§10) + the sibling models for BLE (nimble) and SMP (mcumgr).
+to gate them (§10) + the sibling model for BLE (nimble).
+
+For the management surface the trust transition is **SMP/OMP frame
+ingress**: the point where a transport hands a frame up to the SMP core.
+After that point there is no further internal boundary — a command handler
+that the integrator compiled in can do whatever that command does (flash
+write to the image slot, file read/write, reset, stats read, shell exec),
+to whoever can send the frame. The security of management therefore rests
+almost entirely on **who can put a frame on an enabled transport** (§7,
+§10), not on anything SMP itself checks.
 
 ## §5 Assumptions about the environment
 
@@ -177,8 +196,34 @@ selection. Load-bearing variants:
 - **Which `net/` stacks are linked in** (an IP-less BLE-only build has no
   IP attack surface; an OIC/CoAP or LoRaWAN build does). *(documented:
   per-package `syscfg.yml`)*
-- **Which `mgmt/` transports/groups are enabled** (newtmgr vs SMP vs
-  oicmgr; `shell_mgmt` reachable remotely). Inherits mcumgr's §5a.
+- **Which `mgmt/` transports and command groups are compiled in** (SMP
+  over BLE / console / UART, OMP over `net/oic`; `img_mgmt`, `fs_mgmt`,
+  `os_mgmt`, `log_mgmt`, `stat_mgmt`, config, shell exec via
+  `SHELL_BRIDGE`). Remote shell execution and `fs_mgmt` (arbitrary file
+  read/write) are the highest-power groups and should be off in most
+  production builds. **There is no meaningful "default" set**: what is
+  compiled in follows from which packages the application — or a system
+  component — pulls in. A group must be **explicitly enabled by the
+  user**, either directly in the app or transitively by pulling a package
+  that depends on it (enabling USB, for instance, may pull `img_mgmt`).
+  *(maintainer — §14 Q21)*
+- **Management upload chunk buffers are stack-allocated.**
+  `IMG_MGMT_UL_CHUNK_SIZE` and `FS_MGMT_UL_CHUNK_SIZE` default to **512**
+  and a buffer of this size is allocated **on the stack** while handling
+  an upload; the attacker-supplied chunk length must be bounded before the
+  copy. The bound is enforced by `cbor_read_object()` via `cbor_attr_t`
+  rather than by an explicit pre-copy check in the handler.
+  *(documented: `mgmt/mcumgr/cmd/{img,fs}_mgmt/syscfg.yml`; maintainer —
+  §14 Q22)*
+- **`FS_MGMT_PATH_SIZE` (default 64)** bounds the file-path buffer for
+  `fs_mgmt`; path handling against this bound, and any path-traversal
+  containment, is a per-build concern. *(documented:
+  `mgmt/mcumgr/cmd/fs_mgmt/syscfg.yml`; §14 Q23)*
+- **SMP frame endianness.** SMP adds optional little-endian support on top
+  of NMP's mandatory big-endian header; both decode paths are reachable.
+  *(documented: `mgmt/mcumgr/docs/protocol.md`)*
+- **`img_mgmt` "dummy header" / direct-upload toggles** are used in unit
+  tests; not a production security surface. *(maintainer — §14 Q24)*
 - **Crypto backend** (`crypto/mbedtls`) and its cipher/verification
   configuration. *(maintainer — §14 Q3; tinycrypt is gone from core)*
 - **RNG source.** Mynewt provides **no unified random API**. Consumers use
@@ -189,7 +234,7 @@ selection. Load-bearing variants:
 - **Secure-boot integration** (`boot/` split/stub) and whether image
   signature verification is enabled. *(maintainer — §14 Q2, confirmed)*
 - **`sys/shell` over console and/or over mgmt** — a powerful local/remote
-  surface when enabled. *(documented: `sys/shell`, `cmd/shell_mgmt`)*
+  surface when enabled. *(documented: `sys/shell` `SHELL_BRIDGE`)*
 - **`sys/coredump` / `sys/fault`** may expose memory state; they are
   intentional diagnostics for the integrator to gate.
   *(maintainer — §14 Q5, confirmed)*
@@ -208,8 +253,8 @@ this v0 cannot have read every parser).
 | **LoRaWAN** join/data | `net/lora` | anyone in radio range | MIC/join-nonce handling; safe MAC-command parse; replay posture per spec *(inferred — §14 Q8)* |
 | MQTT broker responses | `net/mqtt` | the broker / a MITM | safe CONNACK/PUBLISH/variable-length parse *(inferred — §14 Q9)* |
 | **OSDP** messages | `net/osdp` | a peer on the RS-485/serial bus (physical-access-control context!) | safe message parse; SCBK/secure-channel correctness *(inferred — §14 Q10)* |
-| SMP / newtmgr / oic mgmt frames | `mgmt/*` | a peer on the mgmt transport | **see `apache/mynewt-mcumgr` §6**; no authn/authz by design |
-| Console / shell input | `sys/console`, `sys/shell` | local serial (or remote via `shell_mgmt`) | bounded line handling; shell is powerful-by-design (§11) |
+| SMP / newtmgr / OMP mgmt frames | `mgmt/*` | a peer on the mgmt transport | memory-safe frame parse, dispatch and CBOR decode (§6.1); no authn/authz by design |
+| Console / shell input | `sys/console`, `sys/shell` | local serial (or remote via `SHELL_BRIDGE`) | bounded line handling; shell is powerful-by-design (§11) |
 | On-flash filesystem structures | `fs/*` | whoever can write flash / supply an image | safe parse of corrupt/hostile on-flash metadata *(inferred — §14 Q11)* |
 | CBOR / JSON / base64 payloads | `encoding/*` | every caller above | bounded, memory-safe decode of malicious encodings *(inferred — §14 Q12)* |
 | Staged firmware image | `mgmt/image_header`, `boot/` | the mgmt peer | safe image-header parse; **execution gated by MCUboot signature check, not by Mynewt** *(inferred — §14 Q2)* |
@@ -225,14 +270,52 @@ this v0 cannot have read every parser).
   input are in scope on the same footing as the pool cases.
   *(maintainer — §14 Q13)*
 - No general rate-limit/DoS guarantee against a peer who can reach a
-  network/mgmt surface. *(inferred — §14 Q14)*
+  network/mgmt surface. *(inferred — §14 Q14)* For management, mcumgr does
+  not rate-limit inbound frames; backpressure is the transport's.
+  *(maintainer — §14 Q32)*
+
+### §6.1 Management (SMP) frames
+
+If the attacker can reach an enabled management transport, **every byte
+of the SMP frame is attacker-controlled** — header and payload alike. OMP
+carries the same header (as a CBOR byte string) and payload over CoAP.
+
+#### SMP frame header trust table (`struct mgmt_hdr`)
+
+| Field | Meaning | Attacker-controllable? | Core/handler must enforce |
+| --- | --- | --- | --- |
+| `nh_op` (3 bits) | READ / WRITE / *_RSP | **yes** | reject/ignore response opcodes arriving at a server; route only valid ops *(inferred — §14 Q25)* |
+| `nh_flags` | reserved | **yes** | defined-bit validation; ignore reserved bits safely *(documented: "TBD"; §14 Q25)* |
+| `nh_len` | **claimed** payload length | **yes** | the claimed length must be validated against the *actually received* byte count and against buffer bounds before use — never trusted as the copy size *(inferred — §14 Q26)* |
+| `nh_group` | command group selector | **yes** | dispatch only to a registered group; unknown group → clean error, not UB *(inferred — §14 Q27)* |
+| `nh_seq` | sequence number | **yes** | no replay/ordering guarantee is claimed (§9); used only to correlate response *(documented: "TBD"; §14 Q28)* |
+| `nh_id` | command within group | **yes** | dispatch only to a registered handler; unknown id → clean error *(inferred — §14 Q27)* |
+
+#### CBOR payload trust table (per high-value command)
+
+| Command group → command | Attacker-supplied fields | What the handler does with them | Must enforce |
+| --- | --- | --- | --- |
+| `img_mgmt` upload | image `data` chunk, `off`(set), `len`, `sha` | copies `data` into a **stack** buffer, writes it to the staging flash slot at `off` | chunk length bounded vs `IMG_MGMT_UL_CHUNK_SIZE` *before* copy (§14 Q22); `off` monotonic / bounded to slot size; **never** treat acceptance as "this image is trusted" (that is MCUboot, §9) *(documented + inferred)* |
+| `fs_mgmt` upload/download | file `name`/path, `off`, `data`, `len` | opens a file at `name`, reads/writes at `off` | path bounded to `FS_MGMT_PATH_SIZE`; **path-traversal containment** to an intended directory (or the integrator accepts full-FS access); chunk bound as above *(inferred — §14 Q23)* |
+| `os_mgmt` taskstat / mpstat / datetime / reset | command params | returns task/memory diagnostics; performs a device reset | bounded output encoding; reset only after the documented delay *(documented: `OS_MGMT_RESET_MS`)* — these **leak internal state** and **reboot the device** to anyone on the transport, by design *(maintainer — §14 Q29)* |
+| shell exec (`sys/shell`, `SHELL_BRIDGE`) | a shell command line | executes it in the device shell | **this is arbitrary command execution by design** when enabled; intended for trusted/dev contexts only *(§14 Q21, Q30)* |
+
+#### Size / shape / rate
+
+- **CBOR depth/size.** The payload is decoded by `encoding/tinycbor` /
+  `encoding/cborattr`. mcumgr does **not** bound CBOR nesting/size before
+  decode — robustness against deeply-nested, truncated, or oversized CBOR
+  is the decoder's, which makes that path a first-order review target.
+  *(maintainer — §14 Q31; see also Q12)*
 
 ## §7 Adversary model
 
 | Actor | In scope? | Capabilities |
 | --- | --- | --- |
 | **Network/radio peer reachable by an enabled `net/` stack** | **yes — primary remote** | craft arbitrary protocol frames (IP/CoAP/LoRa/MQTT/OSDP/Wi-Fi); fuzz; replay; flood. |
-| **Peer on an enabled `mgmt/` transport** | **yes** | full SMP/newtmgr/oic mgmt surface — see mcumgr model; no auth by design. |
+| **Peer on an enabled `mgmt/` transport** | **yes** | craft arbitrary SMP/OMP frames (any group/id/len, any CBOR), replay, flood, fuzz. For BLE: in radio range (bounded by whatever link security the integrator enabled in nimble — possibly none). For serial: physical/console access. For IP (OMP over CoAP): network reachability. No auth by design (§9). |
+| **A malformed-but-deliverable mgmt frame from an otherwise "legitimate" client** (buggy or compromised management tool) | **yes — parser robustness must hold** | drives the parse/dispatch/decode path with adversarial bytes; in model for memory safety, hang, unbounded stack/heap use. |
+| **The mgmt transport's link-layer peer** (e.g. a paired BLE central) | **conditionally** | if the integrator required BLE bonding+encryption, the adversary is reduced to a *bonded* peer; if not, it is anyone in range. The reduction is the integrator's doing, not Mynewt's (§10). |
 | **Local operator at the console / shell** | **yes for robustness; powerful by design** | the shell is intended to be powerful; the question is parser safety, not "the shell can do things". |
 | **Supplier of on-flash data / a staged image** | **yes for parser robustness** | corrupt FS metadata or a malformed image header → the parsers must not be exploitable; image *execution* is MCUboot-gated. |
 | **A compromised in-firmware component** | **out of scope** | all firmware is one trust domain; Mynewt does not defend a component from another. |
@@ -247,6 +330,19 @@ The **no-MMU single-address-space** property (§5) means there is no
 candidate for full device control (subject only to the absence of an
 exploit mitigation the platform may or may not provide). This raises the
 severity floor for every §6 parser finding.
+
+### Management asymmetry
+
+Because SMP performs **no authentication or authorization** (§9), a
+management adversary's power is **entirely determined by transport
+reachability and the set of enabled command groups** — not by anything
+mcumgr checks. A device that exposes `img_mgmt` + `fs_mgmt` + shell exec
+over an unencrypted, un-bonded BLE connection is, by design, **fully
+controllable by anyone in radio range**. This is not a Mynewt
+vulnerability; it is the integrator operating management outside its
+intended trust assumptions (§10, §11). Conversely, a memory-safety bug in
+the frame parser **is** Mynewt's, because it breaks even when the
+transport is perfectly secured.
 
 ## §8 Security properties the project provides
 
@@ -277,24 +373,62 @@ plumbing, so the properties are mostly *robustness* properties; the
    it. *(inferred — §14 Q2)*
    - *Violation:* image-header parse overflow.
    - *Severity:* **high**.
+5. **Memory-safe parsing and dispatch of SMP frames on the compiled-in
+   management command groups.** A special case of property 1, called out
+   because it is the whole management attack surface. *(inferred — §14
+   Q26/Q27)*
+   - *Violation:* a crafted frame (bad `nh_len`, oversized upload chunk,
+     malformed CBOR, unknown group/id) causes out-of-bounds read/write,
+     stack overflow, or controlled corruption.
+   - *Severity:* **high**.
+6. **Bounded stack use during management uploads**, with chunk length
+   validated against `*_UL_CHUNK_SIZE`. *(documented config; maintainer —
+   §14 Q22)*
+   - *Violation:* an upload chunk larger than the configured bound overruns
+     the stack buffer.
+   - *Severity:* **high**.
+7. **Faithful implementation of the SMP wire format** (header layout,
+   op/group/id semantics, CBOR encoding of responses). *(documented:
+   `mgmt/mcumgr/docs/protocol.md`)*
+   - *Violation:* a response that misencodes lengths/IDs such that a
+     conforming client mis-parses it.
+   - *Severity:* **low–medium** (interop / client-side, mostly).
+8. **Clean rejection of unknown management groups/commands** (no dispatch
+   into unregistered handlers). *(inferred — §14 Q27)*
+   - *Violation:* an unknown `(group,id)` reaches uninitialised function
+     state.
+   - *Severity:* **medium–high**.
+
+Management makes no claim of graceful behaviour under *resource
+exhaustion* (flooding) or about *malicious but well-formed* commands
+(those are §9/§10, by design).
 
 ## §9 Security properties the project does *not* provide
 
 - **No process / memory isolation between firmware components.** *(inferred
   — §14 Q1)*
-- **No authentication/authorization at the management layer** (`mgmt/`) —
-  identical to mcumgr; the transport and bootloader are the gates. *(see
-  mcumgr §9)*
+- **No authentication or authorization at the management layer**
+  (`mgmt/`). SMP carries no credential and the server does not verify
+  *who* sent a frame; there is no per-command permission model — if a
+  group is compiled in, every command in it is available to every peer
+  that can reach the transport. The transport and bootloader are the
+  gates. *(maintainer — §14 Q19)*
+- **No confidentiality, integrity, anti-tamper or replay protection at
+  the SMP layer.** Frames are plaintext (secrecy is the transport's, e.g.
+  BLE link encryption); `nh_seq` correlates responses, it is not a nonce.
+  *(maintainer — §14 Q19, Q28)*
 - **No image authenticity guarantee** — that is the signature-verifying
   bootloader's (MCUboot). Mynewt stages bytes. *(inferred — §14 Q2)*
 - **No guarantee for vendored-mbedtls internal correctness** — upstream's
   (§3.1, §11a).
 - **No availability/DoS guarantee** against a peer who can reach a
-  network/mgmt surface. *(inferred — §14 Q14)*
+  network/mgmt surface. *(inferred — §14 Q14)* A management peer can
+  flood, reset (`os_mgmt`), or wedge the device. *(maintainer — §14 Q32)*
 - **No protection of secrets against a local operator with shell/console
   or coredump access**, when those are enabled. *(inferred — §14 Q5)*
 - **No constant-time / side-channel guarantee** beyond what the chosen
-  crypto backend provides. *(inferred)*
+  crypto backend provides; management claims none. *(maintainer — §14
+  Q33)*
 
 ### False friends
 
@@ -302,7 +436,11 @@ plumbing, so the properties are mostly *robustness* properties; the
   bootloader's; `boot/` here is split-image/startup glue.
 - **A `net/` stack accepting a connection is not authorization** — the
   service the app exposed is the app's policy choice.
-- **`mgmt/smp` looks like secure management; it is not** — see mcumgr.
+- **"SMP" / "management protocol" sounds authenticated; it is not** — it
+  is a transport-agnostic RPC with no security layer of its own.
+- **`img_mgmt` image hash (`sha`) is an integrity/identification aid, not
+  an authenticity check.** The cryptographic authenticity gate is
+  MCUboot's signature verification, separately.
 
 ## §10 Downstream responsibilities
 
@@ -310,9 +448,14 @@ plumbing, so the properties are mostly *robustness* properties; the
    verification on, so a staged image cannot execute unless signed.
 2. **Expose only the `net/` stacks and `mgmt/` transports the product
    needs**, and gate each (link encryption, network segmentation, BLE
-   bonding via nimble) per §10 of the relevant sibling model.
-3. **Keep `sys/shell` / `shell_mgmt` / `coredump` out of production**
-   unless required and access-gated.
+   bonding via nimble). For management: require BLE bonding + LE Secure
+   Connections encryption (configured in nimble), restrict serial to
+   physically-trusted access, firewall/authenticate any IP transport. An
+   open management transport = full device control to anyone who can
+   reach it.
+3. **Keep `sys/shell` / `SHELL_BRIDGE` / `coredump` out of production**
+   unless required and access-gated, and **compile in only the management
+   groups you need** — treat shell exec and `fs_mgmt` as debug-only.
 4. **Track upstream advisories for every vendored component** — not just
    mbedtls, but each package pulled in through a `repository.<name>`
    stanza (`lwip`, `littlefs`, `nanopb`, `wiznet`, `osdp`, vendor SDKs
@@ -321,11 +464,22 @@ plumbing, so the properties are mostly *robustness* properties; the
    **no unified random API** — you are choosing between libc's and a
    platform TRNG driver (`hw/drivers/trng/`), so the quality of what your
    crypto consumes is your decision. *(maintainer — §14 Q4)*
-6. **Size mempool/mbuf pools** so an input flood degrades gracefully.
+6. **Size mempool/mbuf pools** so an input flood degrades gracefully, and
+   bound/rate-limit at the transport if availability matters.
+7. **Assume any reachable, enabled management command is fully exercised
+   by an adversary**, and threat-model the *product* on that basis.
 
 ## §11 Known misuse patterns
 
-- Shipping with `shell_mgmt`/`sys/shell` reachable over an open transport.
+- Shipping with `SHELL_BRIDGE`/`sys/shell` reachable over an open transport.
+- Exposing `img_mgmt`/`fs_mgmt`/shell exec over an **unencrypted,
+  un-bonded BLE** connection in a shipped product.
+- **Relying on SMP for access control** ("only our app speaks SMP") — any
+  peer on the transport can speak SMP.
+- **Assuming firmware upload needs a credential** — it does not; only
+  MCUboot's signature check stands between an uploaded image and boot,
+  and only if enabled.
+- Treating the image `sha` in an upload as an authenticity guarantee.
 - Leaving image-signature verification off "to make updates easier".
 - Exposing an OIC/CoAP or MQTT service on an open network and assuming the
   protocol authenticates the peer.
@@ -342,8 +496,14 @@ plumbing, so the properties are mostly *robustness* properties; the
 | Reported as | Why it is a non-finding | Cite |
 | --- | --- | --- |
 | "CVE-XXXX in a vendored component" (`crypto/mbedtls`, `lwip`, `littlefs`, `nanopb`, `wiznet`, `osdp`, `blues-note-c`, a vendor SDK/driver …) | Vendored upstream source — any package with a `repository.<name>` stanza in its `pkg.yml`. Tracked via dependency update, not a Mynewt design finding — *unless* Mynewt misconfigures it. | §3.1, §10.4 |
-| "`mgmt/smp` / `newtmgr` has no authentication" | By design — same as mcumgr; the transport + bootloader are the gates. | §9, mcumgr §9 |
-| "Unauthenticated firmware update" | Intended; execution gated by MCUboot signature verification. | §9, §10.1 |
+| "SMP / `mgmt/` endpoint has no authentication / authorization" | By design — authn/authz is not a management property; the integrator gates the transport. | §9, §10.2 |
+| "Unauthenticated firmware update / DFU over BLE/serial" | Intended; image *execution* is gated by MCUboot signature verification, which is separate. | §9, §10.1 |
+| "shell exec (`SHELL_BRIDGE`) allows arbitrary command execution" | Opt-in (disabled by default), build-time-gated debug feature for trusted contexts. | §5a, §6.1, §10.3 |
+| "`os_mgmt` taskstat/mpstat leaks internal memory/task layout" | Diagnostic by design; same transport-trust assumption as every other command. | §6.1, §9 |
+| "`os_mgmt` reset lets a peer reboot the device (DoS)" | No availability guarantee against an on-transport adversary is claimed. | §9 |
+| "No replay protection — SMP frames can be replayed" | Correct; `nh_seq` is a correlator, not a nonce; not claimed. | §9 |
+| "SMP frames are sent in cleartext" | Confidentiality is the transport's job (e.g. BLE link encryption), not SMP's. | §9, §10.2 |
+| "Image `sha` is not a real signature" | Correct — it is an identifier/integrity aid; authenticity is MCUboot's. | §9 false-friends |
 | "`sys/shell` allows arbitrary commands" | Powerful by design; build-gated; intended for trusted/local or dev contexts. | §5a, §11 |
 | "A `net/` service is reachable without auth" | The app's service-exposure/policy choice, not a Mynewt-core bug — unless a parser is memory-unsafe (then VALID). | §9 false-friends |
 | "LoRaWAN/OSDP/CoAP spec-level weakness" | A property of the protocol spec; in model only if Mynewt's *implementation* is memory-unsafe or deviates from the spec's security-relevant requirements. | §3, §6 |
@@ -363,13 +523,20 @@ object**, or a **Mynewt-level crypto *misconfiguration***, is VALID.
 - Introducing MMU/MPU-backed isolation between components (would weaken
   the §7 amplifier and change severities).
 - A new externally-reachable parser anywhere in-tree.
+- Adding an authentication or authorization layer to SMP (would create
+  real §8 properties and move several §9 items).
+- A management transport whose default reachability differs (e.g. an
+  always-on IP transport), or making a currently-opt-in management group
+  (shell exec, `fs_mgmt`) default-on.
+- A change to where management upload buffers live (stack → heap) or how
+  chunk bounds are enforced.
 
 ## §13 Triage dispositions
 
 | Disposition | Use when |
 | --- | --- |
-| **VALID** | Memory-unsafety / bounds / unbounded-resource / concurrency failure in any externally-reachable parser (`net/`, `mgmt/`, `fs/`, `encoding/`, image header) or kernel object reachable from input; a Mynewt-level crypto misconfiguration. |
-| **OUT-OF-MODEL** | Depends on the absence of mgmt/network auth, on a protocol-spec weakness, on an internal flaw in **any vendored component** (§3.1), or on a malicious-but-well-formed management command. |
+| **VALID** | Memory-unsafety / bounds / unbounded-resource / concurrency failure in any externally-reachable parser (`net/`, `mgmt/`, `fs/`, `encoding/`, image header) or kernel object reachable from input — for management, reachable by a crafted SMP/OMP frame on a compiled-in handler, i.e. it breaks *even with the transport perfectly secured*; a Mynewt-level crypto misconfiguration. |
+| **OUT-OF-MODEL** | Depends on the absence of mgmt/network authn/authz/encryption/replay protection, on a protocol-spec weakness, on an internal flaw in **any vendored component** (§3.1), or on a malicious-but-well-formed management command. |
 | **DOWNSTREAM** | Fix is the integrator's: enable secure boot, gate/disable a surface, update a vendored component, size pools, supply a CSPRNG-quality RNG (core provides no unified random API — §5a). |
 | **NON-FINDING** | Matches a §11a row. |
 | **MODEL-GAP** | Real, in-scope in spirit, no §8/§9 item covers it → §14. |
@@ -418,8 +585,7 @@ against a fully-malicious peer, and has it been fuzzed?)
 - **Q16.** `apps/`, `test/`, demo `targets/`, `hw/bsp/*` out of model?
   → **Partly.** `apps/`, `test/` and demo `targets/` are out, but
   **upstream-supported BSPs and in-tree drivers under `hw/` are IN
-  scope** (§3.3). The in-tree `mgmt/` surface is read against the
-  `apache/mynewt-mcumgr` model rather than re-analysed here.
+  scope** (§3.3).
 
 **Meta — ANSWERED**
 - **Q17.** OK for this `THREAT_MODEL.md` to be the canonical model,
@@ -429,8 +595,79 @@ against a fully-malicious peer, and has it been fuzzed?)
   → **"For now lets do single umbrella."** Revisit per §12 if a
   particular stack warrants its own model later.
 
-**Still open** — the per-subsystem parser-robustness questions (Q6–Q13)
-and the kernel/resource questions (Q14, Q15) above. Szymon noted some
+**Management (mcumgr / SMP)** — answered by Szymon Janc (Mynewt PMC) on
+2026-07-27. MCUboot being the sole execution gate and the single address
+space are covered by Q2 and Q1 above.
+- **Q19.** SMP provides no authentication, authorization,
+  confidentiality, integrity or replay protection of its own; all
+  delegated to the transport/integrator. → **Confirmed.**
+- **Q21.** Which command groups are default-on? → **There is no clear
+  "default".** What is compiled in depends on which packages the
+  application or a system component pulls in; a group must be
+  **explicitly enabled by the user**, directly or transitively (e.g.
+  enabling USB may pull `img_mgmt`).
+- **Q22.** Where is the attacker-supplied upload chunk length validated
+  relative to the stack copy? → **Handed to `cbor_read_object()` via
+  `cbor_attr_t`** — the bound is enforced by the cborattr layer rather than
+  by an explicit pre-copy check in the handler. The robustness of that
+  path is still worth a scan's attention (§6.1).
+- **Q23.** Does `fs_mgmt` constrain paths to an intended directory, or is
+  full-filesystem read/write the intended (integrator-gated) behaviour?
+  *(still open)*
+- **Q24.** What do the `img_mgmt` "dummy header" / direct-upload syscfg
+  toggles do? → **They are used in unit tests.** Not a production
+  security surface.
+- **Q25.** How are reserved `nh_flags` bits and server-side receipt of
+  `*_RSP` opcodes handled? → **Request `nh_flags` are ignored.** SMP
+  responses always carry `nh_flags = 0`; OMP echoes the request header
+  (including flags) back. Only `MGMT_OP_READ` and `MGMT_OP_WRITE` are
+  dispatched; any other opcode (including `*_RSP`) fails with
+  `MGMT_ERR_EINVAL` in SMP (an error response is sent) and is rejected
+  without calling a handler in OMP. *(code review of
+  `mgmt/mcumgr/smp/src/smp.c`, `mgmt/mcumgr/omp/src/omp.c` — pending
+  maintainer confirmation)*
+- **Q26.** Is `nh_len` ever used as a copy size before being validated
+  against the actually-received byte count? → **No.** In SMP the CBOR
+  reader is bounded by the actually received data (`message_size` is the
+  remaining mbuf packet length) and `nh_len` is only used, after the
+  request was processed, to trim it from the packet with
+  `os_mbuf_adj()`, which never trims more than the packet holds. Response
+  `nh_len` is computed from the encoded bytes. Note that the payload
+  decode is not limited to `nh_len`, so a request whose `nh_len` is
+  shorter than its CBOR payload is decoded past `nh_len` (still within the
+  received packet). In OMP the header is a CBOR byte string whose length
+  must equal `sizeof(struct mgmt_hdr)` and `nh_len` is not used.
+  *(code review — pending maintainer confirmation)*
+- **Q27.** Behaviour on unknown `(group,id)` — guaranteed clean error?
+  → **Yes.** `mgmt_find_handler()` returns `NULL` for an unregistered
+  group, for a command id at or beyond the group's handler count, and for
+  a command with neither read nor write handler; SMP then returns
+  `MGMT_ERR_ENOTSUP` and OMP `MGMT_ERR_ENOENT`. A registered command
+  without a handler for the requested op returns `MGMT_ERR_ENOTSUP`. Note
+  that when several groups share a group id, lookup stops at the first
+  such group if the command id is beyond its handler count. *(code
+  review — pending maintainer confirmation)*
+- **Q28.** Confirm `nh_seq` carries no security/ordering guarantee.
+  → **Confirmed by code.** `nh_seq` is only copied from request to
+  response header; it is not checked or tracked. *(code review — pending
+  maintainer confirmation)*
+- **Q29.** Are `os_mgmt` diagnostics (taskstat/mpstat) intentional
+  information disclosure to any transport peer? → **Yes.**
+- **Q30.** Is remote shell execution intended strictly for development?
+  → **Believed so.** Remote shell execution is provided by `sys/shell`
+  when `SHELL_BRIDGE` is enabled (disabled by default).
+- **Q31.** Does mcumgr bound CBOR nesting/size before handing the payload
+  to tinycbor? → **No — that is up to the decoder.** Robustness against
+  hostile CBOR is tinycbor's/cborattr's (Q12).
+- **Q32.** Any intended DoS/rate-limit posture for management? → **It is
+  on the transport.** mcumgr claims none of its own.
+- **Q33.** Confirm no constant-time / side-channel guarantees are claimed
+  by management. → **Confirmed.**
+
+**Still open** — the per-subsystem parser-robustness questions (Q6–Q13),
+the kernel/resource questions (Q14, Q15) and the management question Q23
+above. Q25–Q28 are answered from code review and await maintainer
+confirmation. Szymon noted some
 touch very low-level details; they are not blocking, and the model is
 usable without them. They stay listed so a future reader knows which
 claims are still *(inferred)*.
@@ -450,3 +687,11 @@ RNG, sys-surface, scope and meta questions on 2026-07-27; those claims are
 now marked *(maintainer)* and, where his answer corrected the draft, the
 body has been rewritten rather than annotated. The per-parser questions
 (Q6–Q13, Q14, Q15) remain *(inferred)*.
+
+The management (mcumgr) content was originally a separate model in the
+`apache/mynewt-mcumgr` repository (`master @ 0b63bc54308b`), drafted from
+that repository's README, `protocol.md`, `transport/*.md` and
+`cmd/*/syscfg.yml`, and reviewed by Szymon Janc on 2026-07-27. When
+mcumgr was moved into `mynewt-core` (`mgmt/mcumgr/`) it was merged into
+this document; paths were updated and its questions renumbered as
+Q19–Q33.

@@ -24,12 +24,12 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/encoding/cborattr"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-mcumgr/mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/mgmt"
     - "@apache-mynewt-core/util/mem"
-    - "@apache-mynewt-mcumgr/smp"
-    - "@apache-mynewt-mcumgr/cmd/os_mgmt"
+    - "@apache-mynewt-core/mgmt/mcumgr/smp"
+    - "@apache-mynewt-core/mgmt/mcumgr/cmd/os_mgmt"
 
 pkg.deps.TIMEPERSIST:
     - "@apache-mynewt-core/time/timepersist"

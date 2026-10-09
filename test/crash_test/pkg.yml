@@ -29,7 +29,7 @@ pkg.req_apis.CRASH_TEST_CLI:
 pkg.deps.CRASH_TEST_MGMT:
     - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/encoding/json"
-    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/encoding/cborattr"
 
 pkg.whole_archive: true
 

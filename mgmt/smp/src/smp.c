@@ -31,24 +31,6 @@
 /* Shared queue that SMP uses for work items. */
 struct os_eventq *g_smp_evq;
 
-static mgmt_alloc_rsp_fn smp_alloc_rsp;
-static mgmt_trim_front_fn smp_trim_front;
-static mgmt_reset_buf_fn smp_reset_buf;
-static mgmt_write_at_fn smp_write_at;
-static mgmt_init_reader_fn smp_init_reader;
-static mgmt_init_writer_fn smp_init_writer;
-static mgmt_free_buf_fn smp_free_buf;
-
-const struct mgmt_streamer_cfg g_smp_cbor_cfg = {
-    .alloc_rsp = smp_alloc_rsp,
-    .trim_front = smp_trim_front,
-    .reset_buf = smp_reset_buf,
-    .write_at = smp_write_at,
-    .init_reader = smp_init_reader,
-    .init_writer = smp_init_writer,
-    .free_buf = smp_free_buf,
-};
-
 void
 mgmt_evq_set(struct os_eventq *evq)
 {
@@ -61,122 +43,6 @@ mgmt_evq_get(void)
     return g_smp_evq;
 }
 
-static void *
-smp_alloc_rsp(const void *req, void *arg)
-{
-   struct os_mbuf *m;
-   struct os_mbuf *rsp;
- 
-   if (!req) {
-       return NULL;
-   }
-
-   m = (struct os_mbuf *)req;
-
-   rsp = os_msys_get_pkthdr(0, OS_MBUF_USRHDR_LEN(m));
-   if (!rsp) {
-       return NULL;
-   }
-
-   memcpy(OS_MBUF_USRHDR(rsp), OS_MBUF_USRHDR(m), OS_MBUF_USRHDR_LEN(m));
-
-   return rsp;
-}
-
-static void
-smp_trim_front(void *m, size_t len, void *arg)
-{
-    os_mbuf_adj(m, len);
-}
-
-static void
-smp_reset_buf(void *m, void *arg)
-{
-    if (!m) {
-        return;
-    }
-
-    /* We need to trim from the back because the head
-     * contains useful information which we do not want
-     * to get rid of
-     */
-    os_mbuf_adj(m, -1 * OS_MBUF_PKTLEN((struct os_mbuf *)m));
-}
-
-static int
-smp_write_at(struct cbor_encoder_writer *writer, size_t offset,
-              const void *data, size_t len, void *arg)
-{
-    struct cbor_mbuf_writer *cmw;
-    struct os_mbuf *m;
-    int rc;
-
-    if (!writer) {
-        return MGMT_ERR_EINVAL;
-    }
-
-    cmw = (struct cbor_mbuf_writer *)writer;
-    m = cmw->m;
-
-    if (offset > OS_MBUF_PKTLEN(m)) {
-        return MGMT_ERR_EINVAL;
-    }
-    
-    rc = os_mbuf_copyinto(m, offset, data, len);
-    if (rc) {
-        return MGMT_ERR_ENOMEM;
-    }
-
-    writer->bytes_written = OS_MBUF_PKTLEN(m);
-
-    return 0;
-}
-
-static void
-smp_free_buf(void *m, void *arg)
-{
-    if (!m) {
-        return;
-    }
-
-    os_mbuf_free_chain(m);
-}
-
-static int
-smp_init_reader(struct cbor_decoder_reader *reader, void *m,
-		void *arg)
-{
-    struct cbor_mbuf_reader *cmr;
-    
-    if (!reader) {
-        return MGMT_ERR_EINVAL;
-    }
-
-    cmr = (struct cbor_mbuf_reader *)reader;
-    cbor_mbuf_reader_init(cmr, m, 0);
-
-    return 0;
-}
-
-static int
-smp_init_writer(struct cbor_encoder_writer *writer, void *m,
-		void *arg)
-{
-    struct cbor_mbuf_writer *cmw;
-     
-    if (!writer) {
-        return MGMT_ERR_EINVAL;
-    }
-
-    cmw = (struct cbor_mbuf_writer *)writer;
-    cbor_mbuf_writer_init(cmw, m);
-
-    return 0;
-}
-
-/**
- * Allocates an mbuf to costain an outgoing response fragment.
- */
 static struct os_mbuf *
 smp_rsp_frag_alloc(uint16_t frag_size, void *arg)
 {
@@ -199,7 +65,7 @@ smp_rsp_frag_alloc(uint16_t frag_size, void *arg)
 }
 
 int
-smp_tx_rsp(struct smp_streamer *ns, void *rsp, void *arg)
+smp_tx_rsp(struct smp_streamer *ns, struct os_mbuf *rsp, void *arg)
 {
     struct smp_transport *st;
     struct os_mbuf *frag;
@@ -247,12 +113,9 @@ smp_process_packet(struct smp_transport *st)
     }
 
     st->st_streamer = (struct smp_streamer) {
-        .mgmt_stmr = {
-            .cfg = &g_smp_cbor_cfg,
-            .reader = &reader.r,
-            .writer = &writer.enc,
-            .cb_arg = st,
-        },
+        .reader = &reader,
+        .writer = &writer,
+        .cb_arg = st,
         .tx_rsp_cb = smp_tx_rsp,
     };
 

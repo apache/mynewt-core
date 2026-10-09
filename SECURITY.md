@@ -40,7 +40,6 @@ with no inter-component isolation, so the in-model surface is memory safety
 in the externally-reachable parsers (`net/`, `mgmt/`, `fs/`, `encoding/`)
 and kernel objects. Out of model are vendored Mbed-TLS internal CVEs
 (tracked via upstream), protocol-specification weaknesses, the
-no-authentication management surface (see the `apache/mynewt-mcumgr` model),
-and firmware-image authenticity (enforced by the signature-verifying
-bootloader). The BLE radio surface is modelled in `apache/mynewt-nimble`.
+no-authentication management surface (mcumgr/SMP), and firmware-image
+authenticity (enforced by the signature-verifying bootloader). The BLE radio surface is modelled in `apache/mynewt-nimble`.
 See `THREAT_MODEL.md` §9 and §11a.

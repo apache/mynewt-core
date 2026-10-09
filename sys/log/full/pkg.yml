@@ -44,12 +44,10 @@ pkg.deps.LOG_CLI:
     - "@apache-mynewt-core/util/parse"
 
 pkg.deps.LOG_CONSOLE:
-    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.deps.LOG_MGMT:
-    - "@apache-mynewt-mcumgr/cmd/log_mgmt"
-    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/mgmt/mcumgr/cmd/log_mgmt"
     - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.deps.LOG_FLAGS_IMAGE_HASH:
