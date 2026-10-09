@@ -18,7 +18,7 @@
 #
 
 
-pkg.name: encoding/tinycbor7/test
+pkg.name: encoding/tinycbor/test
 pkg.type: unittest
 pkg.description: "TinyCBOR unit tests."
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
@@ -26,7 +26,7 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - '@apache-mynewt-core/encoding/tinycbor7'
+    - '@apache-mynewt-core/encoding/tinycbor'
     - '@apache-mynewt-core/test/testutil'
 
 pkg.deps.SELFTEST:

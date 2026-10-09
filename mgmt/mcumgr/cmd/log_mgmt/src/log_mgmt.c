@@ -23,7 +23,7 @@
 #include "os/mynewt.h"
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
-#include "tinycbor7/cbor_cnt_writer.h"
+#include "tinycbor/cbor_cnt_writer.h"
 #include "log_mgmt/log_mgmt.h"
 #include "log/log.h"
 

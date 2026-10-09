@@ -36,7 +36,7 @@
 
 #include "smp_os/smp_os.h"
 
-#include <tinycbor7/cbor.h>
+#include <tinycbor/cbor.h>
 #include <cborattr/cborattr.h>
 
 static int smp_def_console_echo(struct mgmt_ctxt *cb);

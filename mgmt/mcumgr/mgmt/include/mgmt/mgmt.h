@@ -21,8 +21,8 @@
 #define H_MGMT_MGMT_
 
 #include <inttypes.h>
-#include "tinycbor7/cbor.h"
-#include "tinycbor7/cbor_reader.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_reader.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -18,8 +18,8 @@
 
 #include "os/mynewt.h"
 
-#include <tinycbor7/cbor_mbuf_writer.h>
-#include <tinycbor7/cbor_mbuf_reader.h>
+#include <tinycbor/cbor_mbuf_writer.h>
+#include <tinycbor/cbor_mbuf_reader.h>
 
 #include "oic/port/mynewt/config.h"
 #include "oic/oc_rep.h"

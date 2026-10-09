@@ -24,9 +24,9 @@
 #include "mgmt/mgmt.h"
 #include "omp/omp.h"
 
-#include "tinycbor7/cbor.h"
-#include "tinycbor7/cbor_mbuf_writer.h"
-#include "tinycbor7/cbor_mbuf_reader.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_mbuf_writer.h"
+#include "tinycbor/cbor_mbuf_reader.h"
 #include "cborattr/cborattr.h"
 #include "omp/omp.h"
 

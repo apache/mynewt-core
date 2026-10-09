@@ -21,10 +21,10 @@
 #include "os/mynewt.h"
 #include "sysinit/sysinit.h"
 #include "testutil/testutil.h"
-#include "tinycbor7/cbor.h"
-#include "tinycbor7/cbor_cnt_writer.h"
-#include "tinycbor7/cbor_mbuf_reader.h"
-#include "tinycbor7/cbor_mbuf_writer.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_cnt_writer.h"
+#include "tinycbor/cbor_mbuf_reader.h"
+#include "tinycbor/cbor_mbuf_writer.h"
 
 /* Small mbuf blocks so that encoded data spans many mbufs */
 #define TEST_MBUF_BUF_SIZE 24

@@ -24,8 +24,8 @@
 #include <shell/shell.h>
 #include <mgmt/mgmt.h>
 #include <mynewt_smp/smp.h>
-#include "tinycbor7/cbor_mbuf_reader.h"
-#include "tinycbor7/cbor_mbuf_writer.h"
+#include "tinycbor/cbor_mbuf_reader.h"
+#include "tinycbor/cbor_mbuf_writer.h"
 
 static struct smp_transport g_smp_shell_transport;
 

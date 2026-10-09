@@ -17,37 +17,11 @@
  * under the License.
  */
 
-#ifndef H_TINYCBOR_CBOR_MBUF_WRITER_
-#define H_TINYCBOR_CBOR_MBUF_WRITER_
+#ifndef H_TINYCBOR_CBOR_
+#define H_TINYCBOR_CBOR_
 
-#include "os/mynewt.h"
-#include <tinycbor7/cbor.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/** CBOR writer appending encoded data to mbuf chain */
-struct cbor_mbuf_writer {
-    struct cbor_writer enc;
-    struct os_mbuf *m;
-};
-
-/**
- * Initializes mbuf writer. Encoder is initialized with
- * cbor_writer_encoder_init(&writer->enc, encoder).
- *
- * @param cb            Writer to initialize.
- * @param m             Mbuf to append encoded data to.
- */
-void cbor_mbuf_writer_init(struct cbor_mbuf_writer *cb, struct os_mbuf *m);
-
-/** Write function for cbor_encoder_init_writer() */
-CborError cbor_mbuf_writer(void *token, const void *data, size_t len,
-                           CborEncoderAppendType append);
-
-#ifdef __cplusplus
-}
-#endif
+/* TinyCBOR main header, provided by @tinycbor repository */
+#include <cbor.h>
+#include "tinycbor/cbor_mynewt.h"
 
 #endif

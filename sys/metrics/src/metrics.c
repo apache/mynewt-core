@@ -25,8 +25,8 @@
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "metrics/metrics.h"
-#include "tinycbor7/cbor.h"
-#include "tinycbor7/cbor_mbuf_writer.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_mbuf_writer.h"
 #include "log/log.h"
 #include "metrics_priv.h"
 

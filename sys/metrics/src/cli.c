@@ -27,8 +27,8 @@
 #include "shell/shell.h"
 #include "console/console.h"
 #include "metrics/metrics.h"
-#include "tinycbor7/cbor.h"
-#include "tinycbor7/cbor_mbuf_reader.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_mbuf_reader.h"
 
 static STAILQ_HEAD(, metrics_event_hdr) g_event_list =
                                         STAILQ_HEAD_INITIALIZER(g_event_list);

@@ -24,7 +24,7 @@
 #include <cbmem/cbmem.h>
 #include <console/console.h>
 #include "log/log.h"
-#include "tinycbor7/cbor.h"
+#include "tinycbor/cbor.h"
 #include "datetime/datetime.h"
 
 static int

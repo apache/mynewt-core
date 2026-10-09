@@ -17,21 +17,22 @@
  * under the License.
  */
 
-#include <tinycbor7/cbor_cnt_writer.h>
+#ifndef H_TINYCBOR_CBOR_READER_PRIV_
+#define H_TINYCBOR_CBOR_READER_PRIV_
 
-void
-cbor_cnt_writer_init(struct cbor_cnt_writer *cb)
+#include <tinycbor/cbor.h>
+
+/*
+ * Copies (or calculates length of if buffer is NULL) string from value parsed
+ * with Mynewt CBOR reader, regardless of string layout in source data.
+ */
+CborError cbor_reader_copy_string(const CborValue *value, void *buffer,
+                                  size_t *buflen, CborValue *next);
+
+static inline bool
+cbor_reader_is_used(const CborValue *value)
 {
-    cb->enc.write = cbor_cnt_writer;
-    cb->enc.bytes_written = 0;
+    return value->parser->flags & CborParserFlag_ExternalSource;
 }
 
-CborError
-cbor_cnt_writer(void *token, const void *data, size_t len, CborEncoderAppendType append)
-{
-    struct cbor_cnt_writer *cb = token;
-
-    cb->enc.bytes_written += len;
-
-    return CborNoError;
-}
+#endif
