@@ -19,7 +19,7 @@
 
 name: Remove informative CI status
 
-on: [push, pull_request]
+on: [pull_request]
 
 permissions:
   contents: read
