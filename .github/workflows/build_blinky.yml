@@ -42,10 +42,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version: 'stable'
-          cache: false
       - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0
         with:
           release: '15.2.Rel1'
@@ -60,9 +56,7 @@ jobs:
              brew install gnu-sed
              echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
       - name: Install newt
-        run: |
-             go version
-             go install mynewt.apache.org/newt/newt@latest
+        uses: ./.github/actions/newt-install
       - name: Setup Blinky project
         shell: bash
         run: |
