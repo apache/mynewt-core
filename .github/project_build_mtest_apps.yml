@@ -42,3 +42,4 @@ project.repositories.allowed:
   - stm-stm32h7xx_hal_driver
   - nordic-nrfx
   - mbedtls
+  - tinycbor
