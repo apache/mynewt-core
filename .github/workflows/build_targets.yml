@@ -59,6 +59,10 @@ jobs:
       - name: Remove project targets
         shell: bash
         run: rm -rf build/targets
+      - name: Restore ccache
+        uses: ./.github/actions/ccache-restore
+        with:
+          key: targets
       - name: Build targets
         shell: bash
         run: |
@@ -76,3 +80,8 @@ jobs:
              ls targets | xargs -n1 sh -c 'echo "Testing $0"; newt build -q  $0'
              rm -rf targets
              cd ..
+      - name: Save ccache
+        if: always()
+        uses: ./.github/actions/ccache-save
+        with:
+          key: targets

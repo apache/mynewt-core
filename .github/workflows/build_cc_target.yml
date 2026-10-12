@@ -51,9 +51,18 @@ jobs:
         uses: ./.github/actions/newt-project
         with:
           project: .github/project_build_cc_target.yml
+      - name: Restore ccache
+        uses: ./.github/actions/ccache-restore
+        with:
+          key: gcc-target-${{ matrix.gcc }}
       - name: Build targets
         shell: bash
         run: |
              cd build
              newt build @apache-mynewt-core/targets/coverity/btshell_nrf52840_coverity
              newt build @apache-mynewt-core/targets/coverity/btshell_nrf52840_coverity2
+      - name: Save ccache
+        if: always()
+        uses: ./.github/actions/ccache-save
+        with:
+          key: gcc-target-${{ matrix.gcc }}

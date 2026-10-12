@@ -44,7 +44,7 @@ jobs:
       - name: Install Dependencies
         run: |
              sudo apt-get update
-             sudo apt-get install -y gcc-multilib
+             sudo apt-get install -y gcc-multilib ccache
       - name: Install newt
         uses: ./.github/actions/newt-install
       - name: Set up project
@@ -52,8 +52,17 @@ jobs:
         with:
           project: .github/project.yml
           save-cache: true
+      - name: Restore ccache
+        uses: ./.github/actions/ccache-restore
+        with:
+          key: bootloader
       - name: Build bootloader
         shell: bash
         run: |
              cd build
              bash ../.github/test_build_bootloader.sh
+      - name: Save ccache
+        if: always()
+        uses: ./.github/actions/ccache-save
+        with:
+          key: bootloader
