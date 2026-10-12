@@ -49,7 +49,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
              sudo apt-get update
-             sudo apt-get install -y gcc-multilib
+             sudo apt-get install -y gcc-multilib ccache
       - name: Install GNU sed
         if: matrix.os == 'macos-latest'
         run: |
@@ -61,8 +61,17 @@ jobs:
         uses: ./.github/actions/newt-project
         with:
           project: .github/project.yml
+      - name: Restore ccache
+        uses: ./.github/actions/ccache-restore
+        with:
+          key: blinky
       - name: Build Blinky
         shell: bash
         run: |
              cd build
              bash ../.github/test_build_blinky.sh
+      - name: Save ccache
+        if: always()
+        uses: ./.github/actions/ccache-save
+        with:
+          key: blinky
