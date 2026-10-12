@@ -23,32 +23,12 @@
 
 ## CI status
 
-<a href="https://github.com/apache/mynewt-core/actions/workflows/build_blinky.yml">
-  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_blinky.yml/badge.svg">
-<a/>
-
-<a href="https://github.com/apache/mynewt-core/actions/workflows/build_targets.yml">
-  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_targets.yml/badge.svg">
-<a/>
-
-<a href="https://github.com/apache/mynewt-core/actions/workflows/build_cc_target.yml">
-  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_cc_target.yml/badge.svg">
-<a/>
-
-<a href="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader.yml">
-  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader.yml/badge.svg">
+<a href="https://github.com/apache/mynewt-core/actions/workflows/build.yml">
+  <img src="https://github.com/apache/mynewt-core/actions/workflows/build.yml/badge.svg">
 <a/>
 
 <a href="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader_main.yml">
   <img src="https://github.com/apache/mynewt-core/actions/workflows/build_bootloader_main.yml/badge.svg">
-<a/>
-
-<a href="https://github.com/apache/mynewt-core/actions/workflows/build_all_apps.yml">
-  <img src="https://github.com/apache/mynewt-core/actions/workflows/build_all_apps.yml/badge.svg">
-<a/>
-
-<a href="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml">
-  <img src="https://github.com/apache/mynewt-core/actions/workflows/newt_test_all.yml/badge.svg">
 <a/>
 
 <!--HW_CI_START-->
