@@ -17,6 +17,7 @@
 #
 
 syscfg.defs:
+    NFFS: 1
     NFFS_FLASH_AREA:
         description: 'Flash area to use for NFFS.'
         type: flash_owner
