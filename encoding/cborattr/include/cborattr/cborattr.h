@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 #ifndef CBORATTR_H
 #define CBORATTR_H
 
@@ -86,7 +85,7 @@ struct cbor_array_t {
         struct {
             double *store;
         } reals;
-        struct{
+        struct {
             uint16_t *store;
         } halffloats;
         struct {
@@ -159,9 +158,9 @@ struct cbor_out_val_t {
 
 /** An object key-value pair to be encoded as CBOR. */
 struct cbor_out_attr_t {
-    const char *attribute;      /** The attribute name (key). */
-    struct cbor_out_val_t val;  /** The attribute value. */
-    bool omit;                  /** Attribute ignored if true. */
+    const char *attribute;     /** The attribute name (key). */
+    struct cbor_out_val_t val; /** The attribute value. */
+    bool omit;                 /** Attribute ignored if true. */
 };
 #endif
 
@@ -176,22 +175,20 @@ struct cbor_out_attr_t {
  * initializer defining the subobject type, and the address of an integer to
  * store the length in.
  */
-#define CBORATTR_STRUCT_OBJECT(s, f)        .addr.offset = offsetof(s, f)
-#define CBORATTR_STRUCT_ARRAY(a, e, n)                                  \
-    .addr.array.element_type = CborAttrStructObjectType,                \
-    .addr.array.arr.objects.subtype = e,                                \
-    .addr.array.arr.objects.base = (char*)a,                            \
-    .addr.array.arr.objects.stride = sizeof(a[0]),                      \
-    .addr.array.count = n,                                              \
-    .addr.array.maxlen = (int)(sizeof(a)/sizeof(a[0]))
+#define CBORATTR_STRUCT_OBJECT(s, f) .addr.offset = offsetof(s, f)
+#define CBORATTR_STRUCT_ARRAY(a, e, n)                                        \
+    .addr.array.element_type = CborAttrStructObjectType,                      \
+    .addr.array.arr.objects.subtype = e,                                      \
+    .addr.array.arr.objects.base = (char *)a,                                 \
+    .addr.array.arr.objects.stride = sizeof(a[0]), .addr.array.count = n,     \
+    .addr.array.maxlen = (int)(sizeof(a) / sizeof(a[0]))
 
 #define CBORATTR_ATTR_UNNAMED (char *)(-1)
 
 int cbor_read_object(struct CborValue *, const struct cbor_attr_t *);
 int cbor_read_array(struct CborValue *, const struct cbor_array_t *);
 
-int cbor_read_flat_attrs(const uint8_t *data, int len,
-                         const struct cbor_attr_t *attrs);
+int cbor_read_flat_attrs(const uint8_t *data, int len, const struct cbor_attr_t *attrs);
 #ifdef MYNEWT
 int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
                          const struct cbor_attr_t *attrs);
@@ -204,8 +201,7 @@ int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
  *
  * @return                      0 on success; SYS_E[...] error on failure.
  */
-int cbor_write_object(struct CborEncoder *enc,
-                      const struct cbor_out_attr_t *attrs);
+int cbor_write_object(struct CborEncoder *enc, const struct cbor_out_attr_t *attrs);
 
 /**
  * @brief Encodes a CBOR representation of the specified key-value map into an
@@ -224,4 +220,3 @@ int cbor_write_object_msys(const struct cbor_out_attr_t *attrs,
 #endif
 
 #endif /* CBORATTR_H */
-

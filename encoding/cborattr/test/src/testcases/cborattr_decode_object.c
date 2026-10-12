@@ -29,9 +29,7 @@ static int test_cbor_len;
  */
 static int test_cbor_wr(struct cbor_encoder_writer *, const char *, int);
 static CborEncoder test_encoder;
-static struct cbor_encoder_writer test_writer = {
-    .write = test_cbor_wr
-};
+static struct cbor_encoder_writer test_writer = { .write = test_cbor_wr };
 
 static int
 test_cbor_wr(struct cbor_encoder_writer *cew, const char *data, int len)
@@ -112,73 +110,49 @@ TEST_CASE(test_cborattr_decode_object)
     int rc;
     long long int bm_val = 0;
     struct cbor_attr_t test_sub_attr_bm[] = {
-        [0] = {
-            .attribute = "bm",
-            .type = CborAttrIntegerType,
-            .addr.integer = &bm_val,
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "bm",
+               .type = CborAttrIntegerType,
+               .addr.integer = &bm_val,
+               .nodefault = true },
+        [1] = { .attribute = NULL }
     };
     struct cbor_attr_t test_attrs[] = {
-        [0] = {
-            .attribute = "p",
-            .type = CborAttrObjectType,
-            .addr.obj = test_sub_attr_bm,
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "p",
+               .type = CborAttrObjectType,
+               .addr.obj = test_sub_attr_bm,
+               .nodefault = true },
+        [1] = { .attribute = NULL }
     };
     long long int a_val = 0;
     long long int i_val = 0;
     struct cbor_attr_t test_sub_sub_attr[] = {
-        [0] = {
-            .attribute = "i",
-            .type = CborAttrIntegerType,
-            .addr.integer = &i_val,
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "i",
+               .type = CborAttrIntegerType,
+               .addr.integer = &i_val,
+               .nodefault = true },
+        [1] = { .attribute = NULL }
     };
     struct cbor_attr_t test_sub_attr_d[] = {
-        [0] = {
-            .attribute = "d",
-            .type = CborAttrObjectType,
-            .addr.obj = test_sub_sub_attr,
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "d",
+               .type = CborAttrObjectType,
+               .addr.obj = test_sub_sub_attr,
+               .nodefault = true },
+        [1] = { .attribute = NULL }
     };
     struct cbor_attr_t test_attr_complex[] = {
-        [0] = {
-            .attribute = "c",
-            .type = CborAttrObjectType,
-            .addr.obj = test_sub_attr_d,
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = "a",
-            .type = CborAttrIntegerType,
-            .addr.integer = &a_val,
-            .nodefault = true
-        },
-        [2] = {
-            .attribute = "p",
-            .type = CborAttrObjectType,
-            .addr.obj = test_sub_attr_bm,
-            .nodefault = true
-        },
-        [3] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "c",
+               .type = CborAttrObjectType,
+               .addr.obj = test_sub_attr_d,
+               .nodefault = true },
+        [1] = { .attribute = "a",
+               .type = CborAttrIntegerType,
+               .addr.integer = &a_val,
+               .nodefault = true },
+        [2] = { .attribute = "p",
+               .type = CborAttrObjectType,
+               .addr.obj = test_sub_attr_bm,
+               .nodefault = true },
+        [3] = { .attribute = NULL }
     };
 
     test_encode_data();

@@ -35,7 +35,7 @@
 #include "tinycbor/cbor_mbuf_reader.h"
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "os/os_mbuf.h"
-#define CBORATTR_MAX_SIZE MYNEWT_VAL(CBORATTR_MAX_SIZE)
+#define CBORATTR_MAX_SIZE    MYNEWT_VAL(CBORATTR_MAX_SIZE)
 #define CBORATTR_MAX_NESTING MYNEWT_VAL(CBORATTR_MAX_NESTING)
 #endif
 
@@ -70,7 +70,7 @@ valid_attr_type(CborType ct, CborAttrType at)
         if (ct == CborBooleanType) {
             return 1;
         }
-	break;
+        break;
 #if FLOAT_SUPPORT
     case CborAttrHalfFloatType:
         if (ct == CborHalfFloatType) {
@@ -163,7 +163,7 @@ cborattr_advance(CborValue *it)
 }
 
 /* this function find the pointer to the memory location to
-  * write or read and attribute from the cbor_attr_r structure */
+ * write or read and attribute from the cbor_attr_r structure */
 static char *
 cbor_target_address(const struct cbor_attr_t *cursor,
                     const struct cbor_array_t *parent, int offset)
@@ -194,7 +194,7 @@ cbor_target_address(const struct cbor_attr_t *cursor,
             break;
 #endif
         case CborAttrByteStringType:
-            targetaddr = (char *) cursor->addr.bytestring.data;
+            targetaddr = (char *)cursor->addr.bytestring.data;
             break;
         case CborAttrTextStringType:
             targetaddr = cursor->addr.string;
@@ -208,18 +208,15 @@ cbor_target_address(const struct cbor_attr_t *cursor,
         }
     } else {
         /* tricky case - hacking a member in an array of structures */
-        targetaddr =
-            parent->arr.objects.base + (offset * parent->arr.objects.stride) +
-            cursor->addr.offset;
+        targetaddr = parent->arr.objects.base +
+                     (offset * parent->arr.objects.stride) + cursor->addr.offset;
     }
     return targetaddr;
 }
 
 static int
-cbor_internal_read_object(CborValue *root_value,
-                          const struct cbor_attr_t *attrs,
-                          const struct cbor_array_t *parent,
-                          int offset)
+cbor_internal_read_object(CborValue *root_value, const struct cbor_attr_t *attrs,
+                          const struct cbor_array_t *parent, int offset)
 {
     const struct cbor_attr_t *cursor, *best_match;
     char attrbuf[CBORATTR_MAX_SIZE + 1];
@@ -292,8 +289,7 @@ cbor_internal_read_object(CborValue *root_value,
                 err |= CborErrorDataTooLarge;
                 break;
             }
-            err |= cbor_value_copy_text_string(&cur_value, attrbuf, &len,
-                                               NULL);
+            err |= cbor_value_copy_text_string(&cur_value, attrbuf, &len, NULL);
 
             /* at least get the type of the next value so we can match the
              * attribute name and type for a perfect match */
@@ -313,11 +309,10 @@ cbor_internal_read_object(CborValue *root_value,
         best_match = NULL;
         for (cursor = attrs; cursor->attribute != NULL; cursor++) {
             if (valid_attr_type(type, cursor->type)) {
-                if (cursor->attribute == CBORATTR_ATTR_UNNAMED &&
-                    attrbuf[0] == '\0') {
+                if (cursor->attribute == CBORATTR_ATTR_UNNAMED && attrbuf[0] == '\0') {
                     best_match = cursor;
                 } else if (strlen(cursor->attribute) == len &&
-                    !memcmp(cursor->attribute, attrbuf, len)) {
+                           !memcmp(cursor->attribute, attrbuf, len)) {
                     break;
                 }
             }
@@ -356,8 +351,7 @@ cbor_internal_read_object(CborValue *root_value,
                 size_t len = cursor->len;
                 CborError copy_err;
 
-                copy_err = cbor_value_copy_byte_string(&cur_value, lptr,
-                                                       &len, NULL);
+                copy_err = cbor_value_copy_byte_string(&cur_value, lptr, &len, NULL);
                 err |= copy_err;
                 /* On error len is set to string length, not copied length */
                 *cursor->addr.bytestring.len = copy_err ? 0 : len;
@@ -373,8 +367,7 @@ cbor_internal_read_object(CborValue *root_value,
                 }
                 /* Reserve space for terminating NUL */
                 len = cursor->len - 1;
-                copy_err = cbor_value_copy_text_string(&cur_value, lptr,
-                                                       &len, NULL);
+                copy_err = cbor_value_copy_text_string(&cur_value, lptr, &len, NULL);
                 err |= copy_err;
                 ((char *)lptr)[copy_err ? 0 : len] = '\0';
                 break;
@@ -517,8 +510,7 @@ cbor_read_object(struct CborValue *value, const struct cbor_attr_t *attrs)
  * @return		0 on success; non-zero on failure.
  */
 int
-cbor_read_flat_attrs(const uint8_t *data, int len,
-                     const struct cbor_attr_t *attrs)
+cbor_read_flat_attrs(const uint8_t *data, int len, const struct cbor_attr_t *attrs)
 {
     struct cbor_buf_reader reader;
     struct CborParser parser;
@@ -534,8 +526,7 @@ cbor_read_flat_attrs(const uint8_t *data, int len,
 }
 
 #ifdef MYNEWT
-static int cbor_write_val(struct CborEncoder *enc,
-                          const struct cbor_out_val_t *val);
+static int cbor_write_val(struct CborEncoder *enc, const struct cbor_out_val_t *val);
 
 /*
  * Read in cbor key/values from os_mbuf pointed by m, and fill them
@@ -566,8 +557,7 @@ cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
 }
 
 static int
-cbor_write_arr_val(struct CborEncoder *enc,
-                   const struct cbor_out_arr_val_t *arr)
+cbor_write_arr_val(struct CborEncoder *enc, const struct cbor_out_arr_val_t *arr)
 {
     struct CborEncoder arr_enc;
     size_t i;
@@ -631,14 +621,12 @@ cbor_write_val(struct CborEncoder *enc, const struct cbor_out_val_t *val)
 #endif
 
     case CborAttrByteStringType:
-        if (val->bytestring.data == NULL &&
-            val->bytestring.len != 0) {
+        if (val->bytestring.data == NULL && val->bytestring.len != 0) {
 
             return SYS_EINVAL;
         }
 
-        rc = cbor_encode_byte_string(enc, val->bytestring.data,
-                                     val->bytestring.len);
+        rc = cbor_encode_byte_string(enc, val->bytestring.data, val->bytestring.len);
         break;
 
     case CborAttrTextStringType:
@@ -688,12 +676,12 @@ cbor_write_attr(struct CborEncoder *enc, const struct cbor_out_attr_t *attr)
     rc = cbor_encode_text_string(enc, attr->attribute, len);
     if (rc != 0) {
         return rc;
-    } 
+    }
 
     rc = cbor_write_val(enc, &attr->val);
     if (rc != 0) {
         return rc;
-    } 
+    }
 
     return 0;
 }
@@ -726,8 +714,7 @@ cbor_write_object(struct CborEncoder *enc, const struct cbor_out_attr_t *attrs)
 }
 
 int
-cbor_write_object_msys(const struct cbor_out_attr_t *attrs,
-                       struct os_mbuf **out_om)
+cbor_write_object_msys(const struct cbor_out_attr_t *attrs, struct os_mbuf **out_om)
 {
     struct cbor_mbuf_writer writer;
     struct CborEncoder encoder;

@@ -66,23 +66,23 @@ TEST_CASE_SELF(test_cborattr_decode_string_bounds)
 
     const struct cbor_attr_t attrs[] = {
         {
-            .attribute = "s",
-            .type = CborAttrTextStringType,
-            .addr.string = s,
-            .len = sizeof(s),
-        },
+         .attribute = "s",
+         .type = CborAttrTextStringType,
+         .addr.string = s,
+         .len = sizeof(s),
+         },
         {
-            .attribute = "b",
-            .type = CborAttrByteStringType,
-            .addr.bytestring.data = b,
-            .addr.bytestring.len = &b_len,
-            .len = sizeof(b),
-        },
+         .attribute = "b",
+         .type = CborAttrByteStringType,
+         .addr.bytestring.data = b,
+         .addr.bytestring.len = &b_len,
+         .len = sizeof(b),
+         },
         {
-            .attribute = "i",
-            .type = CborAttrIntegerType,
-            .addr.integer = &i,
-        },
+         .attribute = "i",
+         .type = CborAttrIntegerType,
+         .addr.integer = &i,
+         },
         { 0 },
     };
 

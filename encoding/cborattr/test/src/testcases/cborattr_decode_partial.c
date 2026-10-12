@@ -28,16 +28,12 @@ TEST_CASE(test_cborattr_decode_partial)
     int rc;
     char test_str_b[4] = { '\0' };
     struct cbor_attr_t test_attrs[] = {
-        [0] = {
-            .attribute = "b",
-            .type = CborAttrTextStringType,
-            .addr.string = test_str_b,
-            .len = sizeof(test_str_b),
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "b",
+               .type = CborAttrTextStringType,
+               .addr.string = test_str_b,
+               .len = sizeof(test_str_b),
+               .nodefault = true },
+        [1] = { .attribute = NULL }
     };
 
     data = test_str1(&len);

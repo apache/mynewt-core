@@ -68,15 +68,15 @@ TEST_CASE_SELF(test_cborattr_decode_string_array_bounds)
 
     const struct cbor_attr_t attrs[] = {
         {
-            .attribute = "a",
-            .type = CborAttrArrayType,
-            .addr.array.element_type = CborAttrTextStringType,
-            .addr.array.arr.strings.ptrs = ptrs,
-            .addr.array.arr.strings.store = buf.store,
-            .addr.array.arr.strings.storelen = sizeof(buf.store),
-            .addr.array.count = &cnt,
-            .addr.array.maxlen = 3,
-        },
+         .attribute = "a",
+         .type = CborAttrArrayType,
+         .addr.array.element_type = CborAttrTextStringType,
+         .addr.array.arr.strings.ptrs = ptrs,
+         .addr.array.arr.strings.store = buf.store,
+         .addr.array.arr.strings.storelen = sizeof(buf.store),
+         .addr.array.count = &cnt,
+         .addr.array.maxlen = 3,
+         },
         { 0 },
     };
 

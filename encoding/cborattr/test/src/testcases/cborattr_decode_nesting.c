@@ -19,7 +19,7 @@
 
 #include "test_cborattr.h"
 
-#define TEST_NESTING_DEEP   200
+#define TEST_NESTING_DEEP 200
 
 static uint8_t test_nesting_buf[TEST_NESTING_DEEP + 32];
 
@@ -62,21 +62,21 @@ TEST_CASE_SELF(test_cborattr_decode_nesting)
 
     const struct cbor_attr_t attrs[] = {
         {
-            .attribute = "a",
-            .type = CborAttrIntegerType,
-            .addr.integer = &a,
-        },
+         .attribute = "a",
+         .type = CborAttrIntegerType,
+         .addr.integer = &a,
+         },
         { 0 },
     };
     const struct cbor_attr_t arr_attrs[] = {
         {
-            .attribute = "a",
-            .type = CborAttrArrayType,
-            .addr.array.element_type = CborAttrIntegerType,
-            .addr.array.arr.integers.store = arr,
-            .addr.array.count = &arr_cnt,
-            .addr.array.maxlen = 1,
-        },
+         .attribute = "a",
+         .type = CborAttrArrayType,
+         .addr.array.element_type = CborAttrIntegerType,
+         .addr.array.arr.integers.store = arr,
+         .addr.array.count = &arr_cnt,
+         .addr.array.maxlen = 1,
+         },
         { 0 },
     };
 
