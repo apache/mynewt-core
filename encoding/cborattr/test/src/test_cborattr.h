@@ -59,4 +59,3 @@ TEST_CASE_DECL(test_cborattr_decode_string_array_bounds);
 #endif
 
 #endif /* TEST_CBORATTR_H */
-

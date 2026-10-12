@@ -29,9 +29,7 @@ static int test_cbor_len;
  */
 static int test_cbor_wr(struct cbor_encoder_writer *, const char *, int);
 static CborEncoder test_encoder;
-static struct cbor_encoder_writer test_writer = {
-    .write = test_cbor_wr
-};
+static struct cbor_encoder_writer test_writer = { .write = test_cbor_wr };
 
 static int
 test_cbor_wr(struct cbor_encoder_writer *cew, const char *data, int len)
@@ -75,30 +73,22 @@ TEST_CASE(test_cborattr_decode_substring_key)
     char test_str_2a[4] = { '\0' };
     char test_str_3a[4] = { '\0' };
     struct cbor_attr_t test_attrs[] = {
-        [0] = {
-            .attribute = "aaa",
-            .type = CborAttrTextStringType,
-            .addr.string = test_str_3a,
-            .len = sizeof(test_str_3a),
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = "aa",
-            .type = CborAttrTextStringType,
-            .addr.string = test_str_2a,
-            .len = sizeof(test_str_2a),
-            .nodefault = true
-            },
-        [2] = {
-            .attribute = "a",
-            .type = CborAttrTextStringType,
-            .addr.string = test_str_1a,
-            .len = sizeof(test_str_1a),
-            .nodefault = true
-            },
-        [3] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "aaa",
+               .type = CborAttrTextStringType,
+               .addr.string = test_str_3a,
+               .len = sizeof(test_str_3a),
+               .nodefault = true },
+        [1] = { .attribute = "aa",
+               .type = CborAttrTextStringType,
+               .addr.string = test_str_2a,
+               .len = sizeof(test_str_2a),
+               .nodefault = true },
+        [2] = { .attribute = "a",
+               .type = CborAttrTextStringType,
+               .addr.string = test_str_1a,
+               .len = sizeof(test_str_1a),
+               .nodefault = true },
+        [3] = { .attribute = NULL }
     };
 
     test_encode_substring_key();

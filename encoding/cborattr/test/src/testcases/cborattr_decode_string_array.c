@@ -29,9 +29,7 @@ static int test_cbor_len;
  */
 static int test_cbor_wr(struct cbor_encoder_writer *, const char *, int);
 static CborEncoder test_encoder;
-static struct cbor_encoder_writer test_writer = {
-    .write = test_cbor_wr
-};
+static struct cbor_encoder_writer test_writer = { .write = test_cbor_wr };
 
 static int
 test_cbor_wr(struct cbor_encoder_writer *cew, const char *data, int len)
@@ -101,20 +99,16 @@ TEST_CASE(test_cborattr_decode_string_array)
     char arr_data[256];
     int arr_cnt = 0;
     struct cbor_attr_t test_attrs[] = {
-        [0] = {
-            .attribute = "a",
-            .type = CborAttrArrayType,
-            .addr.array.element_type = CborAttrTextStringType,
-            .addr.array.arr.strings.ptrs = str_ptrs,
-            .addr.array.arr.strings.store = arr_data,
-            .addr.array.arr.strings.storelen = sizeof(arr_data),
-            .addr.array.count = &arr_cnt,
-            .addr.array.maxlen = sizeof(arr_data) / sizeof(arr_data[0]),
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "a",
+               .type = CborAttrArrayType,
+               .addr.array.element_type = CborAttrTextStringType,
+               .addr.array.arr.strings.ptrs = str_ptrs,
+               .addr.array.arr.strings.store = arr_data,
+               .addr.array.arr.strings.storelen = sizeof(arr_data),
+               .addr.array.count = &arr_cnt,
+               .addr.array.maxlen = sizeof(arr_data) / sizeof(arr_data[0]),
+               .nodefault = true },
+        [1] = { .attribute = NULL }
     };
 
     test_encode_string_array_one();

@@ -29,9 +29,7 @@ static int test_cbor_len;
  */
 static int test_cbor_wr(struct cbor_encoder_writer *, const char *, int);
 static CborEncoder test_encoder;
-static struct cbor_encoder_writer test_writer = {
-    .write = test_cbor_wr
-};
+static struct cbor_encoder_writer test_writer = { .write = test_cbor_wr };
 
 static int
 test_cbor_wr(struct cbor_encoder_writer *cew, const char *data, int len)
@@ -74,7 +72,6 @@ test_encode_data(void)
     /*
      * XXX add other data types to encode here.
      */
-
 }
 
 /*
@@ -88,28 +85,20 @@ TEST_CASE(test_cborattr_decode_simple)
     uint8_t c_data[4];
     size_t c_len;
     struct cbor_attr_t test_attrs[] = {
-        [0] = {
-            .attribute = "a",
-            .type = CborAttrIntegerType,
-            .addr.uinteger = &a_val,
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = "b",
-            .type = CborAttrIntegerType,
-            .addr.integer = &b_val,
-            .nodefault = true
-        },
-        [2] = {
-            .attribute = "c",
-            .type = CborAttrByteStringType,
-            .addr.bytestring.data = c_data,
-            .addr.bytestring.len = &c_len,
-            .len = sizeof(c_data)
-        },
-        [3] = {
-            .attribute = NULL
-        }
+        [0] = { .attribute = "a",
+               .type = CborAttrIntegerType,
+               .addr.uinteger = &a_val,
+               .nodefault = true },
+        [1] = { .attribute = "b",
+               .type = CborAttrIntegerType,
+               .addr.integer = &b_val,
+               .nodefault = true },
+        [2] = { .attribute = "c",
+               .type = CborAttrByteStringType,
+               .addr.bytestring.data = c_data,
+               .addr.bytestring.len = &c_len,
+               .len = sizeof(c_data) },
+        [3] = { .attribute = NULL }
     };
 
     test_encode_data();
