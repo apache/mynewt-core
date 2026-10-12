@@ -105,8 +105,8 @@ img_mgmt_slot_in_use(int slot)
     uint8_t state_flags;
 
     state_flags = img_mgmt_state_flags(slot);
-    return state_flags & IMG_MGMT_STATE_F_ACTIVE       ||
-           state_flags & IMG_MGMT_STATE_F_CONFIRMED    ||
+    return state_flags & IMG_MGMT_STATE_F_ACTIVE ||
+           state_flags & IMG_MGMT_STATE_F_CONFIRMED ||
            state_flags & IMG_MGMT_STATE_F_PENDING;
 }
 
@@ -148,9 +148,9 @@ done:
     }
 
     if (permanent) {
-        (void) img_mgmt_impl_log_confirm(rc, hashp);
+        (void)img_mgmt_impl_log_confirm(rc, hashp);
     } else {
-        (void) img_mgmt_impl_log_pending(rc, hashp);
+        (void)img_mgmt_impl_log_pending(rc, hashp);
     }
 
     return rc;
@@ -176,7 +176,7 @@ img_mgmt_state_confirm(void)
         rc = MGMT_ERR_EUNKNOWN;
     }
 
-     img_mgmt_dfu_confirmed();
+    img_mgmt_dfu_confirmed();
 err:
     return img_mgmt_impl_log_confirm(rc, NULL);
 }
@@ -201,8 +201,7 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
     err = 0;
     err |= cbor_encode_text_stringz(&ctxt->encoder, "images");
 
-    err |= cbor_encoder_create_array(&ctxt->encoder, &images,
-                                       CborIndefiniteLength);
+    err |= cbor_encoder_create_array(&ctxt->encoder, &images, CborIndefiniteLength);
 
     for (i = 0; i < 2 * IMG_MGMT_UPDATABLE_IMAGE_NUMBER; i++) {
         rc = img_mgmt_read_info(i, &ver, hash, &flags);
@@ -212,8 +211,7 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
 
         state_flags = img_mgmt_state_flags(i);
 
-        err |= cbor_encoder_create_map(&images, &image,
-                                         CborIndefiniteLength);
+        err |= cbor_encoder_create_map(&images, &image, CborIndefiniteLength);
 
 #if IMG_MGMT_UPDATABLE_IMAGE_NUMBER > 1
         err |= cbor_encode_text_stringz(&image, "image");
@@ -236,28 +234,22 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
 
         if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_PENDING)) {
             err |= cbor_encode_text_stringz(&image, "pending");
-            err |= cbor_encode_boolean(&image,
-                                    state_flags & IMG_MGMT_STATE_F_PENDING);
+            err |= cbor_encode_boolean(&image, state_flags & IMG_MGMT_STATE_F_PENDING);
         }
 
-        if (!IMG_MGMT_FRUGAL_LIST ||
-            (state_flags & IMG_MGMT_STATE_F_CONFIRMED)) {
+        if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_CONFIRMED)) {
             err |= cbor_encode_text_stringz(&image, "confirmed");
-            err |= cbor_encode_boolean(&image,
-                                    state_flags & IMG_MGMT_STATE_F_CONFIRMED);
+            err |= cbor_encode_boolean(&image, state_flags & IMG_MGMT_STATE_F_CONFIRMED);
         }
 
         if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_ACTIVE)) {
             err |= cbor_encode_text_stringz(&image, "active");
-            err |= cbor_encode_boolean(&image,
-                                    state_flags & IMG_MGMT_STATE_F_ACTIVE);
+            err |= cbor_encode_boolean(&image, state_flags & IMG_MGMT_STATE_F_ACTIVE);
         }
 
-        if (!IMG_MGMT_FRUGAL_LIST ||
-            (state_flags & IMG_MGMT_STATE_F_PERMANENT)) {
+        if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_PERMANENT)) {
             err |= cbor_encode_text_stringz(&image, "permanent");
-            err |= cbor_encode_boolean(&image,
-                                    state_flags & IMG_MGMT_STATE_F_PERMANENT);
+            err |= cbor_encode_boolean(&image, state_flags & IMG_MGMT_STATE_F_PERMANENT);
         }
 
         err |= cbor_encoder_close_container(&images, &image);

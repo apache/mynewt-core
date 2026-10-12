@@ -34,7 +34,7 @@ static struct mgmt_handler stat_mgmt_handlers[] = {
     [STAT_MGMT_ID_LIST] = { stat_mgmt_list, NULL },
 };
 
-#define STAT_MGMT_HANDLER_CNT \
+#define STAT_MGMT_HANDLER_CNT                                                 \
     sizeof stat_mgmt_handlers / sizeof stat_mgmt_handlers[0]
 
 static struct mgmt_group stat_mgmt_group = {
@@ -74,12 +74,10 @@ stat_mgmt_show(struct mgmt_ctxt *ctxt)
     int rc;
 
     struct cbor_attr_t attrs[] = {
-        {
-            .attribute = "name",
-            .type = CborAttrTextStringType,
-            .addr.string = stat_name,
-            .len = sizeof(stat_name)
-        },
+        { .attribute = "name",
+         .type = CborAttrTextStringType,
+         .addr.string = stat_name,
+         .len = sizeof(stat_name) },
         { NULL },
     };
 
@@ -95,11 +93,9 @@ stat_mgmt_show(struct mgmt_ctxt *ctxt)
     err |= cbor_encode_text_stringz(&ctxt->encoder, stat_name);
 
     err |= cbor_encode_text_stringz(&ctxt->encoder, "fields");
-    err |= cbor_encoder_create_map(&ctxt->encoder, &map_enc,
-                                   CborIndefiniteLength);
+    err |= cbor_encoder_create_map(&ctxt->encoder, &map_enc, CborIndefiniteLength);
 
-    rc = stat_mgmt_impl_foreach_entry(stat_name, stat_mgmt_cb_encode,
-                                      &map_enc);
+    rc = stat_mgmt_impl_foreach_entry(stat_name, stat_mgmt_cb_encode, &map_enc);
 
     err |= cbor_encoder_close_container(&ctxt->encoder, &map_enc);
     if (err != 0) {
@@ -125,13 +121,12 @@ stat_mgmt_list(struct mgmt_ctxt *ctxt)
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
     err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "stat_list");
-    err |= cbor_encoder_create_array(&ctxt->encoder, &arr_enc,
-                                     CborIndefiniteLength);
+    err |= cbor_encoder_create_array(&ctxt->encoder, &arr_enc, CborIndefiniteLength);
 
     /* Iterate the list of stat groups, encoding each group's name in the CBOR
      * array.
      */
-    for (i = 0; ; i++) {
+    for (i = 0;; i++) {
         rc = stat_mgmt_impl_get_group(i, &group_name);
         if (rc == MGMT_ERR_ENOENT) {
             /* No more stat groups. */

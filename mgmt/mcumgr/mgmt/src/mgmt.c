@@ -175,9 +175,12 @@ int
 mgmt_err_from_cbor(int cbor_status)
 {
     switch (cbor_status) {
-        case CborNoError:           return MGMT_ERR_EOK;
-        case CborErrorOutOfMemory:  return MGMT_ERR_ENOMEM;
-        default:                    return MGMT_ERR_EUNKNOWN;
+    case CborNoError:
+        return MGMT_ERR_EOK;
+    case CborErrorOutOfMemory:
+        return MGMT_ERR_ENOMEM;
+    default:
+        return MGMT_ERR_EUNKNOWN;
     }
 }
 

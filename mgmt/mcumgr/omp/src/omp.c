@@ -51,9 +51,7 @@ omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr)
 }
 
 int
-omp_send_err_rsp(struct CborEncoder *enc,
-                 const struct mgmt_hdr *hdr,
-                 int mgmt_status)
+omp_send_err_rsp(struct CborEncoder *enc, const struct mgmt_hdr *hdr, int mgmt_status)
 {
     int rc;
 
@@ -107,8 +105,7 @@ omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr)
 }
 
 int
-omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
-                     struct mgmt_hdr *rsp_hdr,
+omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr, struct mgmt_hdr *rsp_hdr,
                      struct mgmt_ctxt *ctxt)
 {
     int rc = 0;

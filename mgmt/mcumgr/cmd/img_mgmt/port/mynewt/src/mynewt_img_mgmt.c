@@ -98,7 +98,6 @@ img_mgmt_vercmp(const struct image_version *a, const struct image_version *b)
     return 0;
 }
 
-
 /**
  * Verifies an upload request and indicates the actions that should be taken
  * during processing of the request.  This is a "read only" function in the
@@ -115,8 +114,7 @@ img_mgmt_vercmp(const struct image_version *a, const struct image_version *b)
  */
 int
 img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
-                             struct img_mgmt_upload_action *action,
-                             const char **errstr)
+                             struct img_mgmt_upload_action *action, const char **errstr)
 {
     const struct image_header *hdr;
     const struct flash_area *fa;
@@ -172,8 +170,7 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
          */
         if ((req->data_sha_len > 0) && (g_img_mgmt_state.area_id != -1)) {
             if ((g_img_mgmt_state.data_sha_len == req->data_sha_len) &&
-                            !memcmp(g_img_mgmt_state.data_sha, req->data_sha,
-                                                        req->data_sha_len)) {
+                !memcmp(g_img_mgmt_state.data_sha, req->data_sha, req->data_sha_len)) {
                 return 0;
             }
         }
@@ -214,7 +211,7 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
         }
 
 #if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
-        (void) empty;
+        (void)empty;
 #else
         rc = flash_area_open(action->area_id, &fa);
         if (rc) {
@@ -318,8 +315,7 @@ img_mgmt_impl_write_pending(int slot, bool permanent)
     /* Unconfirmed slots are always runable.  A confirmed slot can only be
      * run if it is a loader in a split image setup.
      */
-    if (state_flags & IMG_MGMT_STATE_F_CONFIRMED &&
-        (slot != 0 || !split_app_active)) {
+    if (state_flags & IMG_MGMT_STATE_F_CONFIRMED && (slot != 0 || !split_app_active)) {
 
         return MGMT_ERR_EBADSTATE;
     }
@@ -391,8 +387,7 @@ img_mgmt_impl_write_confirmed(void)
 }
 
 int
-img_mgmt_impl_read(int slot, unsigned int offset, void *dst,
-                   unsigned int num_bytes)
+img_mgmt_impl_read(int slot, unsigned int offset, void *dst, unsigned int num_bytes)
 {
     const struct flash_area *fa;
     int area_id;
@@ -432,8 +427,7 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 
     /* Check if there any unerased target sectors, if not clean them. */
     while ((fa->fa_off + offset + num_bytes) > g_img_mgmt_state.sector_end) {
-        rc = flash_area_getnext_sector(fa->fa_id, &g_img_mgmt_state.sector_id,
-                                       &sector);
+        rc = flash_area_getnext_sector(fa->fa_id, &g_img_mgmt_state.sector_id, &sector);
         if (rc) {
             goto err;
         }
@@ -532,8 +526,8 @@ img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
     }
 
     while ((cfa->fa_off + off + len) > g_img_mgmt_state.sector_end) {
-        rc = flash_area_getnext_sector(cfa->fa_id,
-                                       &g_img_mgmt_state.sector_id, &sector);
+        rc = flash_area_getnext_sector(cfa->fa_id, &g_img_mgmt_state.sector_id,
+                                       &sector);
         if (rc) {
             goto done;
         }
@@ -579,7 +573,7 @@ img_mgmt_impl_erased_val(int slot, uint8_t *erased_val)
 
     rc = flash_area_open(flash_area_id_from_image_slot(slot), &fa);
     if (rc != 0) {
-      return MGMT_ERR_EUNKNOWN;
+        return MGMT_ERR_EUNKNOWN;
     }
 
     *erased_val = flash_area_erased_val(fa);

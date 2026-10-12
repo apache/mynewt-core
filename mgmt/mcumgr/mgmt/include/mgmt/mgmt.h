@@ -28,68 +28,68 @@ extern "C" {
 #endif
 
 /* MTU for newtmgr responses */
-#define MGMT_MAX_MTU            1024
+#define MGMT_MAX_MTU           1024
 
 /** Opcodes; encoded in first byte of header. */
-#define MGMT_OP_READ            0
-#define MGMT_OP_READ_RSP        1
-#define MGMT_OP_WRITE           2
-#define MGMT_OP_WRITE_RSP       3
+#define MGMT_OP_READ           0
+#define MGMT_OP_READ_RSP       1
+#define MGMT_OP_WRITE          2
+#define MGMT_OP_WRITE_RSP      3
 
 /**
  * The first 64 groups are reserved for system level mcumgr commands.
  * Per-user commands are then defined after group 64.
  */
-#define MGMT_GROUP_ID_OS        0
-#define MGMT_GROUP_ID_IMAGE     1
-#define MGMT_GROUP_ID_STAT      2
-#define MGMT_GROUP_ID_CONFIG    3
-#define MGMT_GROUP_ID_LOG       4
-#define MGMT_GROUP_ID_CRASH     5
-#define MGMT_GROUP_ID_SPLIT     6
-#define MGMT_GROUP_ID_RUN       7
-#define MGMT_GROUP_ID_FS        8
-#define MGMT_GROUP_ID_SHELL     9
-#define MGMT_GROUP_ID_PERUSER   64
+#define MGMT_GROUP_ID_OS       0
+#define MGMT_GROUP_ID_IMAGE    1
+#define MGMT_GROUP_ID_STAT     2
+#define MGMT_GROUP_ID_CONFIG   3
+#define MGMT_GROUP_ID_LOG      4
+#define MGMT_GROUP_ID_CRASH    5
+#define MGMT_GROUP_ID_SPLIT    6
+#define MGMT_GROUP_ID_RUN      7
+#define MGMT_GROUP_ID_FS       8
+#define MGMT_GROUP_ID_SHELL    9
+#define MGMT_GROUP_ID_PERUSER  64
 
 /**
  * mcumgr error codes.
  */
-#define MGMT_ERR_EOK            0
-#define MGMT_ERR_EUNKNOWN       1
-#define MGMT_ERR_ENOMEM         2
-#define MGMT_ERR_EINVAL         3
-#define MGMT_ERR_ETIMEOUT       4
-#define MGMT_ERR_ENOENT         5
-#define MGMT_ERR_EBADSTATE      6       /* Current state disallows command. */
-#define MGMT_ERR_EMSGSIZE       7       /* Response too large. */
-#define MGMT_ERR_ENOTSUP        8       /* Command not supported. */
-#define MGMT_ERR_ECORRUPT       9       /* Corrupt */
-#define MGMT_ERR_EPERUSER       256
+#define MGMT_ERR_EOK           0
+#define MGMT_ERR_EUNKNOWN      1
+#define MGMT_ERR_ENOMEM        2
+#define MGMT_ERR_EINVAL        3
+#define MGMT_ERR_ETIMEOUT      4
+#define MGMT_ERR_ENOENT        5
+#define MGMT_ERR_EBADSTATE     6 /* Current state disallows command. */
+#define MGMT_ERR_EMSGSIZE      7 /* Response too large. */
+#define MGMT_ERR_ENOTSUP       8 /* Command not supported. */
+#define MGMT_ERR_ECORRUPT      9 /* Corrupt */
+#define MGMT_ERR_EPERUSER      256
 
-#define MGMT_HDR_SIZE           8
+#define MGMT_HDR_SIZE          8
 
 /*
  * MGMT event opcodes.
  */
-#define MGMT_EVT_OP_CMD_RECV            0x01
-#define MGMT_EVT_OP_CMD_STATUS          0x02
-#define MGMT_EVT_OP_CMD_DONE            0x03
+#define MGMT_EVT_OP_CMD_RECV   0x01
+#define MGMT_EVT_OP_CMD_STATUS 0x02
+#define MGMT_EVT_OP_CMD_DONE   0x03
 
 struct mgmt_hdr {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    uint8_t  nh_op:3;           /* MGMT_OP_[...] */
-    uint8_t  _res1:5;
+    uint8_t nh_op : 3; /* MGMT_OP_[...] */
+    uint8_t _res1 : 5;
 #endif
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    uint8_t  _res1:5;
-    uint8_t  nh_op:3;           /* MGMT_OP_[...] */
+    uint8_t _res1 : 5;
+    uint8_t nh_op : 3; /* MGMT_OP_[...] */
 #endif
-    uint8_t  nh_flags;          /* Reserved for future flags */
-    uint16_t nh_len;            /* Length of the payload */
-    uint16_t nh_group;          /* MGMT_GROUP_ID_[...] */
-    uint8_t  nh_seq;            /* Sequence number */
-    uint8_t  nh_id;             /* Message ID within group */
+    uint8_t nh_flags;  /* Reserved for future flags */
+    uint16_t nh_len;   /* Length of the payload */
+    uint16_t nh_group; /* MGMT_GROUP_ID_[...] */
+    uint8_t nh_seq;    /* Sequence number */
+    uint8_t nh_id;     /* Message ID within group */
 };
 
 #define nmgr_hdr mgmt_hdr
@@ -105,7 +105,7 @@ struct mgmt_evt_op_cmd_status_arg {
  * MGMT_EVT_OP_CMD_DONE argument
  */
 struct mgmt_evt_op_cmd_done_arg {
-    int err;                    /* MGMT_ERR_[...] */
+    int err; /* MGMT_ERR_[...] */
 };
 
 /** @typedef mgmt_on_evt_cb
@@ -118,8 +118,7 @@ struct mgmt_evt_op_cmd_done_arg {
  * @param id                    Message ID within group.
  * @param arg                   Optional event argument.
  */
-typedef void mgmt_on_evt_cb(uint8_t opcode, uint16_t group, uint8_t id,
-                            void *arg);
+typedef void mgmt_on_evt_cb(uint8_t opcode, uint16_t group, uint8_t id, void *arg);
 
 /** @typedef mgmt_alloc_rsp_fn
  * @brief Allocates a buffer suitable for holding a response.
@@ -286,8 +285,7 @@ struct mgmt_group {
  * @return                      Newly-allocated buffer on success
  *                              NULL on failure.
  */
-void *mgmt_streamer_alloc_rsp(struct mgmt_streamer *streamer,
-                              const void *src_buf);
+void *mgmt_streamer_alloc_rsp(struct mgmt_streamer *streamer, const void *src_buf);
 
 /**
  * @brief Uses the specified streamer to trim data from the front of a buffer.
@@ -299,8 +297,7 @@ void *mgmt_streamer_alloc_rsp(struct mgmt_streamer *streamer,
  * @param buf                   The buffer to trim.
  * @param len                   The number of bytes to remove.
  */
-void mgmt_streamer_trim_front(struct mgmt_streamer *streamer, void *buf,
-                              size_t len);
+void mgmt_streamer_trim_front(struct mgmt_streamer *streamer, void *buf, size_t len);
 
 /**
  * @brief Uses the specified streamer to reset a buffer to a length of 0.
@@ -371,8 +368,7 @@ void mgmt_register_group(struct mgmt_group *group);
  *
  * @param group                 The group to register.
  */
-void
-mgmt_unregister_group(struct mgmt_group *group);
+void mgmt_unregister_group(struct mgmt_group *group);
 
 /**
  * @brief Finds a registered command handler.
@@ -383,8 +379,7 @@ mgmt_unregister_group(struct mgmt_group *group);
  * @return                      The requested command handler on success;
  *                              NULL on failure.
  */
-const struct mgmt_handler *mgmt_find_handler(uint16_t group_id,
-                                             uint16_t command_id);
+const struct mgmt_handler *mgmt_find_handler(uint16_t group_id, uint16_t command_id);
 
 /**
  * @brief Encodes a response status into the specified management context.

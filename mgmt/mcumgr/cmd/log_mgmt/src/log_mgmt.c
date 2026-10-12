@@ -59,14 +59,14 @@ static mgmt_handler_fn log_mgmt_level_list;
 static mgmt_handler_fn log_mgmt_logs_list;
 
 static struct mgmt_handler log_mgmt_handlers[] = {
-    [LOG_MGMT_ID_SHOW] =        { log_mgmt_show, NULL },
-    [LOG_MGMT_ID_CLEAR] =       { NULL, log_mgmt_clear },
-    [LOG_MGMT_ID_MODULE_LIST] = { log_mgmt_module_list, NULL },
-    [LOG_MGMT_ID_LEVEL_LIST] =  { log_mgmt_level_list, NULL },
-    [LOG_MGMT_ID_LOGS_LIST] =   { log_mgmt_logs_list, NULL },
+    [LOG_MGMT_ID_SHOW] = { log_mgmt_show,        NULL           },
+    [LOG_MGMT_ID_CLEAR] = { NULL,                 log_mgmt_clear },
+    [LOG_MGMT_ID_MODULE_LIST] = { log_mgmt_module_list, NULL           },
+    [LOG_MGMT_ID_LEVEL_LIST] = { log_mgmt_level_list,  NULL           },
+    [LOG_MGMT_ID_LOGS_LIST] = { log_mgmt_logs_list,   NULL           },
 };
 
-#define LOG_MGMT_HANDLER_CNT \
+#define LOG_MGMT_HANDLER_CNT                                                  \
     sizeof log_mgmt_handlers / sizeof log_mgmt_handlers[0]
 
 static struct mgmt_group log_mgmt_group = {
@@ -129,9 +129,9 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
 
         /*
          * Write entry data as byte string. Since this may not fit into single
-         * chunk of data we will write as indefinite-length byte string which is
-         * basically a indefinite-length container with definite-length strings
-         * inside.
+         * chunk of data we will write as indefinite-length byte string which
+         * is basically a indefinite-length container with definite-length
+         * strings inside.
          */
         err |= cbor_encoder_create_indef_byte_string(&lmec->mapenc, &lmec->msgenc);
         if (out_len != NULL) {
@@ -152,33 +152,33 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
          * The else case is executed for non-first chunks of data to be encoded
          *
          * Write entry data as byte string. Since this may not fit into single
-         * chunk of data we will write as indefinite-length byte string which is
-         * basically a indefinite-length container with definite-length strings
-         * inside.
+         * chunk of data we will write as indefinite-length byte string which
+         * is basically a indefinite-length container with definite-length
+         * strings inside.
          */
         err |= cbor_encode_byte_string(&lmec->msgenc, entry->data, entry->chunklen);
         bytes_encoded = entry->chunklen;
-   }
+    }
 
-   /*
-    * Containers need to get closed when encoding is done, the only way to know at
-    * this point in the code that encoding is done is using the number of bytes
-    * that got encoded and comparing it to the length of the entry
-    */
-   if (entry->offset + bytes_encoded >= entry->len) {
-       err |= cbor_encoder_close_container(&lmec->mapenc, &lmec->msgenc);
-       err |= cbor_encoder_close_container(enc, &lmec->mapenc);
-   }
+    /*
+     * Containers need to get closed when encoding is done, the only way to
+     * know at this point in the code that encoding is done is using the number
+     * of bytes that got encoded and comparing it to the length of the entry
+     */
+    if (entry->offset + bytes_encoded >= entry->len) {
+        err |= cbor_encoder_close_container(&lmec->mapenc, &lmec->msgenc);
+        err |= cbor_encoder_close_container(enc, &lmec->mapenc);
+    }
 
-   if (out_len) {
-       *out_len = cbor_encode_bytes_written(enc) - len;
-   }
+    if (out_len) {
+        *out_len = cbor_encode_bytes_written(enc) - len;
+    }
 
-   if (err != 0) {
-       return LOG_MGMT_ERR_ENOMEM;
-   }
+    if (err != 0) {
+        return LOG_MGMT_ERR_ENOMEM;
+    }
 
-   return LOG_MGMT_ERR_EOK;
+    return LOG_MGMT_ERR_EOK;
 }
 
 static int
@@ -266,11 +266,9 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     cbor_cnt_writer_init(&cnt_writer);
     cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
     err |= cbor_encode_text_stringz(&cnt_encoder, "entries");
-    err |= cbor_encoder_create_array(&cnt_encoder, &entries,
-                                       CborIndefiniteLength);
+    err |= cbor_encoder_create_array(&cnt_encoder, &entries, CborIndefiniteLength);
     err |= cbor_encoder_close_container(&cnt_encoder, &entries);
-    rsp_len = cbor_encode_bytes_written(enc) +
-              cbor_encode_bytes_written(&cnt_encoder);
+    rsp_len = cbor_encode_bytes_written(enc) + cbor_encode_bytes_written(&cnt_encoder);
     if (rsp_len > LOG_MGMT_MAX_RSP_LEN) {
         /* No entries were processed, don't update watermark */
         return LOG_MGMT_ERR_EUNKNOWN;
@@ -279,17 +277,16 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     err |= cbor_encode_text_stringz(enc, "entries");
     err |= cbor_encoder_create_array(enc, &entries, CborIndefiniteLength);
 
-    filter = (struct log_mgmt_filter) {
+    filter = (struct log_mgmt_filter){
         .min_timestamp = timestamp,
         .min_index = index,
     };
-    ctxt = (struct log_walk_ctxt) {
+    ctxt = (struct log_walk_ctxt){
         .enc = &entries,
         .rsp_len = cbor_encode_bytes_written(enc),
     };
 
-    rc = log_mgmt_impl_foreach_entry(log->name, &filter,
-                                     log_mgmt_cb_encode, &ctxt);
+    rc = log_mgmt_impl_foreach_entry(log->name, &filter, log_mgmt_cb_encode, &ctxt);
     if (rc < 0) {
         /*
          * If we receive negative error code from the walk function,
@@ -361,24 +358,24 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
 
     const struct cbor_attr_t attr[] = {
         {
-            .attribute = "log_name",
-            .type = CborAttrTextStringType,
-            .addr.string = name,
-            .len = sizeof(name),
-        },
+         .attribute = "log_name",
+         .type = CborAttrTextStringType,
+         .addr.string = name,
+         .len = sizeof(name),
+         },
         {
-            .attribute = "ts",
-            .type = CborAttrIntegerType,
-            .addr.integer = &timestamp,
-        },
+         .attribute = "ts",
+         .type = CborAttrIntegerType,
+         .addr.integer = &timestamp,
+         },
         {
-            .attribute = "index",
-            .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &index,
-        },
+         .attribute = "index",
+         .type = CborAttrUnsignedIntegerType,
+         .addr.uinteger = &index,
+         },
         {
-            .attribute = NULL,
-        },
+         .attribute = NULL,
+         },
     };
 
     name[0] = '\0';
@@ -404,11 +401,10 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     err |= cbor_encode_uint(&ctxt->encoder, next_idx);
 
     err |= cbor_encode_text_stringz(&ctxt->encoder, "logs");
-    err |= cbor_encoder_create_array(&ctxt->encoder, &logs,
-                                     CborIndefiniteLength);
+    err |= cbor_encoder_create_array(&ctxt->encoder, &logs, CborIndefiniteLength);
 
     /* Iterate list of logs, encoding each that matches the client request. */
-    for (log_idx = 0; ; log_idx++) {
+    for (log_idx = 0;; log_idx++) {
         rc = log_mgmt_impl_get_log(log_idx, &log);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             /* Log list fully iterated. */
@@ -469,10 +465,9 @@ log_mgmt_module_list(struct mgmt_ctxt *ctxt)
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
     err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "module_map");
-    err |= cbor_encoder_create_map(&ctxt->encoder, &modules,
-                                   CborIndefiniteLength);
+    err |= cbor_encoder_create_map(&ctxt->encoder, &modules, CborIndefiniteLength);
 
-    for (module = 0; ; module++) {
+    for (module = 0;; module++) {
         rc = log_mgmt_impl_get_module(module, &module_name);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
@@ -513,10 +508,9 @@ log_mgmt_logs_list(struct mgmt_ctxt *ctxt)
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
     err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "log_list");
-    err |= cbor_encoder_create_array(&ctxt->encoder, &log_list,
-                                     CborIndefiniteLength);
+    err |= cbor_encoder_create_array(&ctxt->encoder, &log_list, CborIndefiniteLength);
 
-    for (log_idx = 0; ; log_idx++) {
+    for (log_idx = 0;; log_idx++) {
         rc = log_mgmt_impl_get_log(log_idx, &log);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
@@ -556,10 +550,9 @@ log_mgmt_level_list(struct mgmt_ctxt *ctxt)
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
     err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "level_map");
-    err |= cbor_encoder_create_map(&ctxt->encoder, &level_map,
-                                   CborIndefiniteLength);
+    err |= cbor_encoder_create_map(&ctxt->encoder, &level_map, CborIndefiniteLength);
 
-    for (level = 0; ; level++) {
+    for (level = 0;; level++) {
         rc = log_mgmt_impl_get_level(level, &level_name);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
@@ -591,21 +584,17 @@ static int
 log_mgmt_clear(struct mgmt_ctxt *ctxt)
 {
     struct log_mgmt_log log;
-    char name[LOG_MGMT_NAME_LEN] = {0};
+    char name[LOG_MGMT_NAME_LEN] = { 0 };
     int name_len;
     int log_idx;
     int rc;
 
     const struct cbor_attr_t attr[] = {
-        {
-            .attribute = "log_name",
-            .type = CborAttrTextStringType,
-            .addr.string = name,
-            .len = sizeof(name)
-        },
-        {
-            .attribute = NULL
-        },
+        { .attribute = "log_name",
+         .type = CborAttrTextStringType,
+         .addr.string = name,
+         .len = sizeof(name) },
+        { .attribute = NULL },
     };
 
     name[0] = '\0';
@@ -615,7 +604,7 @@ log_mgmt_clear(struct mgmt_ctxt *ctxt)
     }
     name_len = strlen(name);
 
-    for (log_idx = 0; ; log_idx++) {
+    for (log_idx = 0;; log_idx++) {
         rc = log_mgmt_impl_get_log(log_idx, &log);
         if (rc == LOG_MGMT_ERR_ENOENT) {
             return 0;

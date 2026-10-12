@@ -27,14 +27,14 @@ extern "C" {
 /**
  * Command IDs for OS management group.
  */
-#define OS_MGMT_ID_ECHO             0
-#define OS_MGMT_ID_CONS_ECHO_CTRL   1
-#define OS_MGMT_ID_TASKSTAT         2
-#define OS_MGMT_ID_MPSTAT           3
-#define OS_MGMT_ID_DATETIME_STR     4
-#define OS_MGMT_ID_RESET            5
+#define OS_MGMT_ID_ECHO           0
+#define OS_MGMT_ID_CONS_ECHO_CTRL 1
+#define OS_MGMT_ID_TASKSTAT       2
+#define OS_MGMT_ID_MPSTAT         3
+#define OS_MGMT_ID_DATETIME_STR   4
+#define OS_MGMT_ID_RESET          5
 
-#define OS_MGMT_TASK_NAME_LEN       32
+#define OS_MGMT_TASK_NAME_LEN     32
 
 struct os_mgmt_task_info {
     uint8_t oti_prio;
@@ -52,7 +52,7 @@ struct os_mgmt_task_info {
 
 /**
  * @brief Registers the OS management command handler group.
- */ 
+ */
 void os_mgmt_register_group(void);
 
 #ifdef __cplusplus

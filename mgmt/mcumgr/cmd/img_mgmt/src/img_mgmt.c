@@ -54,7 +54,7 @@ static const struct mgmt_handler img_mgmt_handlers[] = {
     },
 };
 
-#define IMG_MGMT_HANDLER_CNT \
+#define IMG_MGMT_HANDLER_CNT                                                  \
     sizeof(img_mgmt_handlers) / sizeof(img_mgmt_handlers[0])
 
 static struct mgmt_group img_mgmt_group = {
@@ -79,8 +79,7 @@ const char *img_mgmt_err_str_image_bad_flash_addr = "img addr mismatch";
  * Finds the TLVs in the specified image slot, if any.
  */
 static int
-img_mgmt_find_tlvs(int slot, size_t *start_off, size_t *end_off,
-                   uint16_t magic)
+img_mgmt_find_tlvs(int slot, size_t *start_off, size_t *end_off, uint16_t magic)
 {
     struct image_tlv_info tlv_info;
     int rc;
@@ -114,10 +113,10 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
 {
 
 #if IMG_MGMT_DUMMY_HDR
-    uint8_t dummy_hash[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+    uint8_t dummy_hash[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 };
 
     if (!hash && !ver && !flags) {
         return 0;
@@ -175,10 +174,10 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
         *flags = hdr.ih_flags;
     }
 
-    /* Read the image's TLVs. We first try to find the protected TLVs, if the protected
-     * TLV does not exist, we try to find non-protected TLV which also contains the hash
-     * TLV. All images are required to have a hash TLV.  If the hash is missing, the image
-     * is considered invalid.
+    /* Read the image's TLVs. We first try to find the protected TLVs, if the
+     * protected TLV does not exist, we try to find non-protected TLV which
+     * also contains the hash TLV. All images are required to have a hash TLV.
+     * If the hash is missing, the image is considered invalid.
      */
     data_off = hdr.ih_hdr_size + hdr.ih_img_size;
     if (data_off < hdr.ih_img_size) {
@@ -187,8 +186,8 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
 
     rc = img_mgmt_find_tlvs(image_slot, &data_off, &data_end, IMAGE_TLV_PROT_INFO_MAGIC);
     if (!rc) {
-        /* The data offset should start after the header bytes after the end of the protected TLV,
-         * if one exists.
+        /* The data offset should start after the header bytes after the end of
+         * the protected TLV, if one exists.
          */
         data_off = data_end - sizeof(struct image_tlv_info);
     }
@@ -224,8 +223,7 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
             if (data_off + IMAGE_HASH_LEN > data_end) {
                 return MGMT_ERR_EUNKNOWN;
             }
-            rc = img_mgmt_impl_read(image_slot, data_off, hash,
-                                    IMAGE_HASH_LEN);
+            rc = img_mgmt_impl_read(image_slot, data_off, hash, IMAGE_HASH_LEN);
             if (rc != 0) {
                 return MGMT_ERR_EUNKNOWN;
             }
@@ -287,8 +285,8 @@ img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn)
 {
     /*
      * This is an error response so returning a different error when failed to
-     * encode other error probably does not make much sense - just ignore errors
-     * here.
+     * encode other error probably does not make much sense - just ignore
+     * errors here.
      */
     cbor_encode_text_stringz(&ctxt->encoder, "rsn");
     cbor_encode_text_stringz(&ctxt->encoder, rsn);
@@ -319,7 +317,7 @@ img_mgmt_erase(struct mgmt_ctxt *ctxt)
             return MGMT_ERR_EBADSTATE;
         }
     }
-    
+
     rc = img_mgmt_impl_erase_slot();
 
     if (!rc) {
@@ -501,9 +499,9 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
         cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_START;
 
         /*
-         * We accept SHA trimmed to any length by client since it's up to client
-         * to make sure provided data are good enough to avoid collisions when
-         * resuming upload.
+         * We accept SHA trimmed to any length by client since it's up to
+         * client to make sure provided data are good enough to avoid
+         * collisions when resuming upload.
          */
         g_img_mgmt_state.data_sha_len = req.data_sha_len;
         memcpy(g_img_mgmt_state.data_sha, req.data_sha, req.data_sha_len);
@@ -544,7 +542,8 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             last = true;
         }
 
-        rc = img_mgmt_impl_write_image_data(req.off, req.img_data, action.write_bytes, last);
+        rc = img_mgmt_impl_write_image_data(req.off, req.img_data,
+                                            action.write_bytes, last);
         if (rc != 0) {
             rc = MGMT_ERR_EUNKNOWN;
             errstr = img_mgmt_err_str_flash_write_failed;
@@ -562,7 +561,8 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
 
 end:
 
-    img_mgmt_upload_log(req.off == 0, g_img_mgmt_state.off == g_img_mgmt_state.size, rc);
+    img_mgmt_upload_log(req.off == 0,
+                        g_img_mgmt_state.off == g_img_mgmt_state.size, rc);
     mgmt_evt(MGMT_EVT_OP_CMD_STATUS, MGMT_GROUP_ID_IMAGE, IMG_MGMT_ID_UPLOAD,
              &cmd_status_arg);
 
@@ -618,7 +618,6 @@ img_mgmt_register_callbacks(const img_mgmt_dfu_callbacks_t *cb_struct)
 {
     img_mgmt_dfu_callbacks_fn = cb_struct;
 }
-
 
 int
 img_mgmt_my_version(struct image_version *ver)

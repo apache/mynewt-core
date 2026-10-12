@@ -30,59 +30,59 @@ struct image_version;
 extern "C" {
 #endif
 
-#define IMG_MGMT_HASH_STR         48
-#define IMG_MGMT_HASH_LEN         32
-#define IMG_MGMT_DATA_SHA_LEN     32 /* SHA256 */
+#define IMG_MGMT_HASH_STR                  48
+#define IMG_MGMT_HASH_LEN                  32
+#define IMG_MGMT_DATA_SHA_LEN              32 /* SHA256 */
 
 /*
  * Image state flags
  */
-#define IMG_MGMT_STATE_F_PENDING    0x01
-#define IMG_MGMT_STATE_F_CONFIRMED  0x02
-#define IMG_MGMT_STATE_F_ACTIVE     0x04
-#define IMG_MGMT_STATE_F_PERMANENT  0x08
+#define IMG_MGMT_STATE_F_PENDING           0x01
+#define IMG_MGMT_STATE_F_CONFIRMED         0x02
+#define IMG_MGMT_STATE_F_ACTIVE            0x04
+#define IMG_MGMT_STATE_F_PERMANENT         0x08
 
-#define IMG_MGMT_VER_MAX_STR_LEN    25  /* 255.255.65535.4294967295\0 */
+#define IMG_MGMT_VER_MAX_STR_LEN           25 /* 255.255.65535.4294967295\0 */
 
 /*
  * Swap Types for image management state machine
  */
-#define IMG_MGMT_SWAP_TYPE_NONE     0
-#define IMG_MGMT_SWAP_TYPE_TEST     1
-#define IMG_MGMT_SWAP_TYPE_PERM     2
-#define IMG_MGMT_SWAP_TYPE_REVERT   3
+#define IMG_MGMT_SWAP_TYPE_NONE            0
+#define IMG_MGMT_SWAP_TYPE_TEST            1
+#define IMG_MGMT_SWAP_TYPE_PERM            2
+#define IMG_MGMT_SWAP_TYPE_REVERT          3
 
 /**
  * Command IDs for image management group.
  */
-#define IMG_MGMT_ID_STATE           0
-#define IMG_MGMT_ID_UPLOAD          1
-#define IMG_MGMT_ID_FILE            2
-#define IMG_MGMT_ID_CORELIST        3
-#define IMG_MGMT_ID_CORELOAD        4
-#define IMG_MGMT_ID_ERASE           5
+#define IMG_MGMT_ID_STATE                  0
+#define IMG_MGMT_ID_UPLOAD                 1
+#define IMG_MGMT_ID_FILE                   2
+#define IMG_MGMT_ID_CORELIST               3
+#define IMG_MGMT_ID_CORELOAD               4
+#define IMG_MGMT_ID_ERASE                  5
 
 /*
  * IMG_MGMT_ID_UPLOAD statuses.
  */
-#define IMG_MGMT_ID_UPLOAD_STATUS_START         0
-#define IMG_MGMT_ID_UPLOAD_STATUS_ONGOING       1
-#define IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE      2
+#define IMG_MGMT_ID_UPLOAD_STATUS_START    0
+#define IMG_MGMT_ID_UPLOAD_STATUS_ONGOING  1
+#define IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE 2
 /** No status determined (e.g., request rejected before processing). */
-#define IMG_MGMT_ID_UPLOAD_STATUS_NONE          (-1)
+#define IMG_MGMT_ID_UPLOAD_STATUS_NONE     (-1)
 
 extern struct img_mgmt_state g_img_mgmt_state;
 
 /** Represents an individual upload request. */
 struct img_mgmt_upload_req {
-    unsigned long long int image;   /* 0 by default */
-    unsigned long long int off;     /* -1 if unspecified */
-    unsigned long long int size;    /* -1 if unspecified */
+    unsigned long long int image; /* 0 by default */
+    unsigned long long int off;   /* -1 if unspecified */
+    unsigned long long int size;  /* -1 if unspecified */
     size_t data_len;
     size_t data_sha_len;
     uint8_t img_data[IMG_MGMT_UL_CHUNK_SIZE];
     uint8_t data_sha[IMG_MGMT_DATA_SHA_LEN];
-    bool upgrade;                   /* Only allow greater version numbers. */
+    bool upgrade; /* Only allow greater version numbers. */
 };
 
 /** Global state for upload in progress. */
@@ -118,12 +118,12 @@ struct img_mgmt_upload_action {
 
 /**
  * @brief Registers the image management command handler group.
- */ 
+ */
 void img_mgmt_register_group(void);
 
 /**
  * @brief Unregisters the image management command handler group.
- */ 
+ */
 void img_mgmt_unregister_group(void);
 
 /*
@@ -184,10 +184,10 @@ int img_mgmt_state_any_pending(void);
 uint8_t img_mgmt_state_flags(int query_slot);
 
 /**
- * @brief Sets the pending flag for the specified image slot.  That is, the system
- * will swap to the specified image on the next reboot.  If the permanent
- * argument is specified, the system doesn't require a confirm after the swap
- * occurs.
+ * @brief Sets the pending flag for the specified image slot.  That is, the
+ * system will swap to the specified image on the next reboot.  If the
+ * permanent argument is specified, the system doesn't require a confirm after
+ * the swap occurs.
  *
  * @param slot       Image slot to set pending
  * @param permanent  If set no confirm is required after image swap
@@ -268,16 +268,16 @@ extern const char *img_mgmt_err_str_flash_write_failed;
 extern const char *img_mgmt_err_str_downgrade;
 extern const char *img_mgmt_err_str_image_bad_flash_addr;
 #else
-#define img_mgmt_error_rsp(ctxt, rc, rsn)             (rc)
-#define img_mgmt_err_str_app_reject                   NULL
-#define img_mgmt_err_str_hdr_malformed                NULL
-#define img_mgmt_err_str_magic_mismatch               NULL
-#define img_mgmt_err_str_no_slot                      NULL
-#define img_mgmt_err_str_flash_open_failed            NULL
-#define img_mgmt_err_str_flash_erase_failed           NULL
-#define img_mgmt_err_str_flash_write_failed           NULL
-#define img_mgmt_err_str_downgrade                    NULL
-#define img_mgmt_err_str_image_bad_flash_addr         NULL
+#define img_mgmt_error_rsp(ctxt, rc, rsn)     (rc)
+#define img_mgmt_err_str_app_reject           NULL
+#define img_mgmt_err_str_hdr_malformed        NULL
+#define img_mgmt_err_str_magic_mismatch       NULL
+#define img_mgmt_err_str_no_slot              NULL
+#define img_mgmt_err_str_flash_open_failed    NULL
+#define img_mgmt_err_str_flash_erase_failed   NULL
+#define img_mgmt_err_str_flash_write_failed   NULL
+#define img_mgmt_err_str_downgrade            NULL
+#define img_mgmt_err_str_image_bad_flash_addr NULL
 #endif
 
 #ifdef __cplusplus
