@@ -19,6 +19,12 @@
 
 EXIT_CODE=0
 
+# Build only items assigned to this shard (for splitting build between
+# CI jobs), by default everything is built.
+SHARD_INDEX=${SHARD_INDEX:-0}
+SHARD_TOTAL=${SHARD_TOTAL:-1}
+ITEM_INDEX=0
+
 BSPS=$(basename -a `find repos/apache-mynewt-core/hw/bsp/* -maxdepth 0 -type d`)
 IGNORED_BSPS="dialog_cmac hifive1 native native-armv7\
               nucleo-f030r8 nucleo-f072rb\
@@ -34,6 +40,11 @@ for bsp in ${BSPS}; do
     #       match against the first and last entries
     if [[ " ${IGNORED_BSPS} " =~ [[:blank:]]${bsp}[[:blank:]] ]]; then
         echo "Skipping bsp=$bsp"
+        continue
+    fi
+
+    ITEM_INDEX=$((ITEM_INDEX + 1))
+    if [ $(( (ITEM_INDEX - 1) % SHARD_TOTAL )) -ne $SHARD_INDEX ]; then
         continue
     fi
 
