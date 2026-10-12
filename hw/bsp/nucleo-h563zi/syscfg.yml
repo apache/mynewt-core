@@ -63,9 +63,6 @@ syscfg.vals:
     TIMER_2_TIM: 'TIM14'
 
     # Configure flash areas
-    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
-    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
-    NFFS_FLASH_AREA: FLASH_AREA_NFFS
 
     # Flasher parameters
     MYNEWT_DOWNLOADER: stm32_programmer_cli
@@ -74,3 +71,12 @@ syscfg.vals:
 
 syscfg.vals.COREDUMP:
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+
+syscfg.vals.NFFS:
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+
+syscfg.vals.'(CONFIG_FCB || CONFIG_FCB2)':
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+
+syscfg.vals.REBOOT_LOG_FCB:
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

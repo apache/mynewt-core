@@ -23,8 +23,6 @@ syscfg.vals:
     TIMER_0: 1
     TIMER_1: 1
     TIMER_2: 1
-    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
-    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
 
 syscfg.defs.BUS_DRIVER_PRESENT:
     BSP_FLASH_SPI_NAME:
@@ -33,3 +31,9 @@ syscfg.defs.BUS_DRIVER_PRESENT:
     BSP_FLASH_SPI_BUS:
         description: 'bus name SPIFLASH is connected to'
         value:
+
+syscfg.vals.'(CONFIG_FCB || CONFIG_FCB2)':
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+
+syscfg.vals.REBOOT_LOG_FCB:
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
