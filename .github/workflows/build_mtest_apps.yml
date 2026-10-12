@@ -35,11 +35,7 @@ permissions:
 jobs:
   targets:
     name: Build all apps
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-    runs-on: '${{ matrix.os }}'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -50,7 +46,6 @@ jobs:
           release: 15.2.Rel1
       - name: Install Dependencies
         shell: bash
-        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-multilib
@@ -73,7 +68,6 @@ jobs:
           cd ..
       - name: Build mtest apps
         shell: bash
-        if: matrix.os == 'ubuntu-latest'
         run: |
           cd build_mtest
           bash ../.github/test_build_mtest_apps.sh

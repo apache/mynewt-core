@@ -35,11 +35,7 @@ permissions:
 jobs:
   bootloader:
     name: Build bootloader
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -49,15 +45,9 @@ jobs:
         with:
           release: '15.2.Rel1'
       - name: Install Dependencies
-        if: matrix.os == 'ubuntu-latest'
         run: |
              sudo apt-get update
              sudo apt-get install -y gcc-multilib
-      - name: Install GNU sed
-        if: matrix.os == 'macos-latest'
-        run: |
-             brew install gnu-sed
-             echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
       - name: Install newt
         run: |
              go version
