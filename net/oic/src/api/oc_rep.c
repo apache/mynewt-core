@@ -148,8 +148,7 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
   *err |= cbor_mbuf_value_calculate_string_length(value, &len);
   len++;
   oc_alloc_string(&cur->name, len);
-  *err |= cbor_mbuf_value_copy_text_string(value, oc_string(cur->name), &len,
-                                           NULL);
+  *err |= cbor_mbuf_value_copy_text_string(value, oc_string(cur->name), &len, NULL);
   *err |= cbor_mbuf_value_advance(value);
   /* value */
   switch (value->type) {
@@ -166,21 +165,21 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
     cur->type = DOUBLE;
     break;
   case CborByteStringType:
-    *err |= cbor_mbuf_value_calculate_string_length(value, &len);
-    len++;
-    oc_alloc_string(&cur->value_string, len);
-    *err |= cbor_mbuf_value_copy_byte_string(
-      value, (uint8_t *)oc_string(cur->value_string), &len, NULL);
-    cur->type = BYTE_STRING;
-    break;
+      *err |= cbor_mbuf_value_calculate_string_length(value, &len);
+      len++;
+      oc_alloc_string(&cur->value_string, len);
+      *err |= cbor_mbuf_value_copy_byte_string(
+          value, (uint8_t *)oc_string(cur->value_string), &len, NULL);
+      cur->type = BYTE_STRING;
+      break;
   case CborTextStringType:
-    *err |= cbor_mbuf_value_calculate_string_length(value, &len);
-    len++;
-    oc_alloc_string(&cur->value_string, len);
-    *err |= cbor_mbuf_value_copy_text_string(
-      value, oc_string(cur->value_string), &len, NULL);
-    cur->type = STRING;
-    break;
+      *err |= cbor_mbuf_value_calculate_string_length(value, &len);
+      len++;
+      oc_alloc_string(&cur->value_string, len);
+      *err |= cbor_mbuf_value_copy_text_string(value, oc_string(cur->value_string),
+                                               &len, NULL);
+      cur->type = STRING;
+      break;
   case CborMapType: /* when value is a map/object */ {
     oc_rep_t **obj = &cur->value_object; // object points to list of properties
     *err |= cbor_value_enter_container(value, &map);
@@ -238,8 +237,8 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
         *err |= cbor_mbuf_value_calculate_string_length(&array, &len);
         len++;
         *err |= cbor_mbuf_value_copy_byte_string(
-          &array, (uint8_t *)oc_string_array_get_item(cur->value_array, k),
-          &len, NULL);
+            &array, (uint8_t *)oc_string_array_get_item(cur->value_array, k),
+            &len, NULL);
         break;
       case CborTextStringType:
         if (k == 0) {
@@ -249,8 +248,7 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
         *err |= cbor_mbuf_value_calculate_string_length(&array, &len);
         len++;
         *err |= cbor_mbuf_value_copy_text_string(
-          &array, (char *)oc_string_array_get_item(cur->value_array, k), &len,
-          NULL);
+            &array, (char *)oc_string_array_get_item(cur->value_array, k), &len, NULL);
         break;
       case CborMapType:
         if (k == 0) {
