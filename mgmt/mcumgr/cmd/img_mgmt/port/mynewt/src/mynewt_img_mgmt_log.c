@@ -63,10 +63,10 @@
  *     }
  */
 
-#define IMG_MGMT_LOG_EV_UPSTART   "upstart"
-#define IMG_MGMT_LOG_EV_UPDONE    "updone"
-#define IMG_MGMT_LOG_EV_PEND      "pend"
-#define IMG_MGMT_LOG_EV_CONF      "conf"
+#define IMG_MGMT_LOG_EV_UPSTART "upstart"
+#define IMG_MGMT_LOG_EV_UPDONE  "updone"
+#define IMG_MGMT_LOG_EV_PEND    "pend"
+#define IMG_MGMT_LOG_EV_CONF    "conf"
 
 static int
 img_mgmt_log_gen(const char *ev, int status, const uint8_t *hash)

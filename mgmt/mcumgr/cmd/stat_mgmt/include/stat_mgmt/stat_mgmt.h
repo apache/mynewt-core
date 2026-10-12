@@ -27,8 +27,8 @@ extern "C" {
 /**
  * Command IDs for statistics management group.
  */
-#define STAT_MGMT_ID_SHOW   0
-#define STAT_MGMT_ID_LIST   1
+#define STAT_MGMT_ID_SHOW 0
+#define STAT_MGMT_ID_LIST 1
 
 /**
  * @brief Represents a single value in a statistics group.
@@ -40,7 +40,7 @@ struct stat_mgmt_entry {
 
 /**
  * @brief Registers the statistics management command handler group.
- */ 
+ */
 void stat_mgmt_register_group(void);
 
 #ifdef __cplusplus

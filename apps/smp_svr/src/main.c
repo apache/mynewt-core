@@ -40,14 +40,14 @@
 
 #else
 #include <mcu/mcu_sim.h>
-#endif  /* !ARCH_sim */
+#endif /* !ARCH_sim */
 
 /* smp_svr uses the first "peruser" log module. */
-#define SMP_SVR_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
+#define SMP_SVR_LOG_MODULE (LOG_MODULE_PERUSER + 0)
 
 /* Convenience macro for logging to the smp_svr module. */
-#define SMP_SVR_LOG(lvl, ...) \
-    LOG_ ## lvl(&smp_svr_log, SMP_SVR_LOG_MODULE, __VA_ARGS__)
+#define SMP_SVR_LOG(lvl, ...)                                                 \
+    LOG_##lvl(&smp_svr_log, SMP_SVR_LOG_MODULE, __VA_ARGS__)
 
 /** Log data. */
 struct log smp_svr_log;
@@ -61,8 +61,8 @@ print_addr(const void *addr)
     const uint8_t *u8p;
 
     u8p = addr;
-    SMP_SVR_LOG(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",
-                u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
+    SMP_SVR_LOG(INFO, "%02x:%02x:%02x:%02x:%02x:%02x", u8p[5], u8p[4], u8p[3],
+                u8p[2], u8p[1], u8p[0]);
 }
 
 /**
@@ -71,24 +71,21 @@ print_addr(const void *addr)
 static void
 smp_svr_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    SMP_SVR_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
-                desc->conn_handle, desc->our_ota_addr.type);
+    SMP_SVR_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=", desc->conn_handle,
+                desc->our_ota_addr.type);
     print_addr(desc->our_ota_addr.val);
-    SMP_SVR_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
-                desc->our_id_addr.type);
+    SMP_SVR_LOG(INFO, " our_id_addr_type=%d our_id_addr=", desc->our_id_addr.type);
     print_addr(desc->our_id_addr.val);
-    SMP_SVR_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
-                desc->peer_ota_addr.type);
+    SMP_SVR_LOG(INFO,
+                " peer_ota_addr_type=%d peer_ota_addr=", desc->peer_ota_addr.type);
     print_addr(desc->peer_ota_addr.val);
-    SMP_SVR_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
-                desc->peer_id_addr.type);
+    SMP_SVR_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=", desc->peer_id_addr.type);
     print_addr(desc->peer_id_addr.val);
-    SMP_SVR_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
+    SMP_SVR_LOG(INFO,
+                " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d\n",
-                desc->conn_itvl, desc->conn_latency,
-                desc->supervision_timeout,
-                desc->sec_state.encrypted,
-                desc->sec_state.authenticated,
+                desc->conn_itvl, desc->conn_latency, desc->supervision_timeout,
+                desc->sec_state.encrypted, desc->sec_state.authenticated,
                 desc->sec_state.bonded);
 }
 
@@ -105,7 +102,6 @@ smp_svr_advertise(void)
     struct ble_hs_adv_fields fields;
     const char *name;
     int rc;
-
 
     /* Figure out address to use while advertising (no privacy for now) */
     rc = ble_hs_id_infer_auto(0, &own_addr_type);
@@ -127,8 +123,7 @@ smp_svr_advertise(void)
      *     o Discoverability in forthcoming advertisement (general)
      *     o BLE-only (BR/EDR unsupported).
      */
-    fields.flags = BLE_HS_ADV_F_DISC_GEN |
-                   BLE_HS_ADV_F_BREDR_UNSUP;
+    fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
 
     /* Indicate that the TX power level field should be included; have the
      * stack fill this value automatically.  This is done by assiging the
@@ -152,8 +147,8 @@ smp_svr_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER,
-                           &adv_params, smp_svr_gap_event, NULL);
+    rc = ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER, &adv_params,
+                           smp_svr_gap_event, NULL);
     if (rc != 0) {
         SMP_SVR_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
@@ -185,8 +180,8 @@ smp_svr_gap_event(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
         SMP_SVR_LOG(INFO, "connection %s; status=%d ",
-                       event->connect.status == 0 ? "established" : "failed",
-                       event->connect.status);
+                    event->connect.status == 0 ? "established" : "failed",
+                    event->connect.status);
         if (event->connect.status == 0) {
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
@@ -211,8 +206,7 @@ smp_svr_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
-        SMP_SVR_LOG(INFO, "connection updated; status=%d ",
-                    event->conn_update.status);
+        SMP_SVR_LOG(INFO, "connection updated; status=%d ", event->conn_update.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         smp_svr_print_conn_desc(&desc);
@@ -220,8 +214,7 @@ smp_svr_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        SMP_SVR_LOG(INFO, "advertise complete; reason=%d",
-                    event->adv_complete.reason);
+        SMP_SVR_LOG(INFO, "advertise complete; reason=%d", event->adv_complete.reason);
         smp_svr_advertise();
         return 0;
 
@@ -237,9 +230,7 @@ smp_svr_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_MTU:
         SMP_SVR_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
-                    event->mtu.conn_handle,
-                    event->mtu.channel_id,
-                    event->mtu.value);
+                    event->mtu.conn_handle, event->mtu.channel_id, event->mtu.value);
         return 0;
 
     case BLE_GAP_EVENT_REPEAT_PAIRING:
@@ -302,8 +293,7 @@ main(int argc, char **argv)
     sysinit();
 
     /* Initialize the smp_svr log. */
-    log_register("smp_svr", &smp_svr_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
+    log_register("smp_svr", &smp_svr_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
 #ifndef ARCH_sim
     /* Initialize the NimBLE host configuration. */

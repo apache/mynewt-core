@@ -26,21 +26,21 @@
 extern "C" {
 #endif
 
-#define IMAGE_MAGIC                 0x96f3b83d
-#define IMAGE_TLV_INFO_MAGIC        0x6907
-#define IMAGE_TLV_PROT_INFO_MAGIC   0x6908
+#define IMAGE_MAGIC               0x96f3b83d
+#define IMAGE_TLV_INFO_MAGIC      0x6907
+#define IMAGE_TLV_PROT_INFO_MAGIC 0x6908
 
-#define IMAGE_HEADER_SIZE           32
+#define IMAGE_HEADER_SIZE         32
 
 /** Image header flags. */
-#define IMAGE_F_NON_BOOTABLE        0x00000010 /* Split image app. */
-#define IMAGE_F_ROM_FIXED_ADDR      0x00000100
+#define IMAGE_F_NON_BOOTABLE      0x00000010 /* Split image app. */
+#define IMAGE_F_ROM_FIXED_ADDR    0x00000100
 
 /** Image trailer TLV types. */
-#define IMAGE_TLV_SHA256            0x10   /* SHA256 of image hdr and body */
+#define IMAGE_TLV_SHA256          0x10 /* SHA256 of image hdr and body */
 
 /** Image TLV-specific definitions. */
-#define IMAGE_HASH_LEN              32
+#define IMAGE_HASH_LEN            32
 
 struct image_version {
     uint8_t iv_major;
@@ -64,14 +64,14 @@ struct image_header {
 /** Image TLV header.  All fields in little endian. */
 struct image_tlv_info {
     uint16_t it_magic;
-    uint16_t it_tlv_tot;  /* size of TLV area (including tlv_info header) */
+    uint16_t it_tlv_tot; /* size of TLV area (including tlv_info header) */
 };
 
 /** Image trailer TLV format. All fields in little endian. */
 struct image_tlv {
-    uint8_t  it_type;   /* IMAGE_TLV_[...]. */
-    uint8_t  _pad;
-    uint16_t it_len;    /* Data length (not including TLV header). */
+    uint8_t it_type; /* IMAGE_TLV_[...]. */
+    uint8_t _pad;
+    uint16_t it_len; /* Data length (not including TLV header). */
 };
 
 _Static_assert(sizeof(struct image_header) == IMAGE_HEADER_SIZE,

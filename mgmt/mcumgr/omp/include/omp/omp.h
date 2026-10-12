@@ -54,7 +54,7 @@ struct mgmt_hdr;
  * @param retval                The return value for the request.
  * @param arg                   Optional streamer argument.
  */
-typedef void omp_tx_rsp_fn(struct omp_streamer *stmr, int retval, void* arg);
+typedef void omp_tx_rsp_fn(struct omp_streamer *stmr, int retval, void *arg);
 
 /**
  * @brief Decodes, encodes, and transmits OMP requests and responses.
@@ -75,7 +75,6 @@ struct omp_state {
     struct mgmt_ctxt *m_ctxt;
     void *request;
 };
-
 
 /**
  * @brief Processes a single OMP request packet and sends all corresponding
@@ -99,7 +98,7 @@ int omp_impl_process_request_packet(struct omp_state *omgr_st, void *req);
  *
  * @param cv      Ptr to CoberValue
  * @param out_hdr Ptr to management header to be filled in
- */ 
+ */
 int omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr);
 
 #ifdef __cplusplus

@@ -65,7 +65,7 @@ static const struct mgmt_handler os_mgmt_group_handlers[] = {
     },
 };
 
-#define OS_MGMT_GROUP_SZ    \
+#define OS_MGMT_GROUP_SZ                                                      \
     (sizeof os_mgmt_group_handlers / sizeof os_mgmt_group_handlers[0])
 
 static struct mgmt_group os_mgmt_group = {
@@ -170,14 +170,13 @@ os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
 
     err = 0;
     err |= cbor_encode_text_stringz(&ctxt->encoder, "tasks");
-    err |= cbor_encoder_create_map(&ctxt->encoder, &tasks_map,
-                                   CborIndefiniteLength);
+    err |= cbor_encoder_create_map(&ctxt->encoder, &tasks_map, CborIndefiniteLength);
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
     }
 
     /* Iterate the list of tasks, encoding each. */
-    for (task_idx = 0; ; task_idx++) {
+    for (task_idx = 0;; task_idx++) {
         rc = os_mgmt_impl_task_info(task_idx, &task_info);
         if (rc == MGMT_ERR_ENOENT) {
             /* No more tasks to encode. */

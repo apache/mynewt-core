@@ -46,7 +46,7 @@ static const struct mgmt_handler fs_mgmt_handlers[] = {
     },
 };
 
-#define FS_MGMT_HANDLER_CNT \
+#define FS_MGMT_HANDLER_CNT                                                   \
     (sizeof fs_mgmt_handlers / sizeof fs_mgmt_handlers[0])
 
 static struct mgmt_group fs_mgmt_group = {
@@ -71,16 +71,16 @@ fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
 
     const struct cbor_attr_t dload_attr[] = {
         {
-            .attribute = "off",
-            .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &off,
-        },
+         .attribute = "off",
+         .type = CborAttrUnsignedIntegerType,
+         .addr.uinteger = &off,
+         },
         {
-            .attribute = "name",
-            .type = CborAttrTextStringType,
-            .addr.string = path,
-            .len = sizeof path,
-        },
+         .attribute = "name",
+         .type = CborAttrTextStringType,
+         .addr.string = path,
+         .len = sizeof path,
+         },
         { 0 },
     };
 
@@ -101,8 +101,7 @@ fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
     }
 
     /* Read the requested chunk from the file. */
-    rc = fs_mgmt_impl_read(path, off, FS_MGMT_DL_CHUNK_SIZE,
-                           file_data, &bytes_read);
+    rc = fs_mgmt_impl_read(path, off, FS_MGMT_DL_CHUNK_SIZE, file_data, &bytes_read);
     if (rc != 0) {
         return rc;
     }
@@ -163,31 +162,23 @@ fs_mgmt_file_upload(struct mgmt_ctxt *ctxt)
     int rc;
 
     const struct cbor_attr_t uload_attr[5] = {
-        [0] = {
-            .attribute = "off",
-            .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &off,
-            .nodefault = true
-        },
-        [1] = {
-            .attribute = "data",
-            .type = CborAttrByteStringType,
-            .addr.bytestring.data = file_data,
-            .addr.bytestring.len = &data_len,
-            .len = sizeof(file_data)
-        },
-        [2] = {
-            .attribute = "len",
-            .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &len,
-            .nodefault = true
-        },
-        [3] = {
-            .attribute = "name",
-            .type = CborAttrTextStringType,
-            .addr.string = file_name,
-            .len = sizeof(file_name)
-        },
+        [0] = { .attribute = "off",
+               .type = CborAttrUnsignedIntegerType,
+               .addr.uinteger = &off,
+               .nodefault = true },
+        [1] = { .attribute = "data",
+               .type = CborAttrByteStringType,
+               .addr.bytestring.data = file_data,
+               .addr.bytestring.len = &data_len,
+               .len = sizeof(file_data) },
+        [2] = { .attribute = "len",
+               .type = CborAttrUnsignedIntegerType,
+               .addr.uinteger = &len,
+               .nodefault = true },
+        [3] = { .attribute = "name",
+               .type = CborAttrTextStringType,
+               .addr.string = file_name,
+               .len = sizeof(file_name) },
         [4] = { 0 },
     };
 
@@ -211,11 +202,10 @@ fs_mgmt_file_upload(struct mgmt_ctxt *ctxt)
         if (!fs_mgmt_ctxt.uploading) {
             return MGMT_ERR_EINVAL;
         }
-        
+
         if (off != fs_mgmt_ctxt.off) {
             /* Invalid offset.  Drop the data and send the expected offset. */
-            return fs_mgmt_file_upload_rsp(ctxt, MGMT_ERR_EINVAL,
-                                           fs_mgmt_ctxt.off);
+            return fs_mgmt_file_upload_rsp(ctxt, MGMT_ERR_EINVAL, fs_mgmt_ctxt.off);
         }
     }
 
