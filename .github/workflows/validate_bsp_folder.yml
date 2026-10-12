@@ -35,7 +35,7 @@ permissions:
 jobs:
   validate_bsp_folder:
     name: Validate hw/bsp folder
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v7
       - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0

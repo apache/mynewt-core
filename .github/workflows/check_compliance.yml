@@ -36,7 +36,7 @@ permissions:
 jobs:
   style_check:
     name: Coding style
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -92,7 +92,7 @@ jobs:
 
   license_check:
     name: Licensing
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v7
         with:
@@ -113,7 +113,7 @@ jobs:
 
   doxygen_check:
     name: Doxygen Check
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v7
         with:
@@ -130,7 +130,7 @@ jobs:
 
   commits-check:
     name: Check commit messages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v7
         with:
