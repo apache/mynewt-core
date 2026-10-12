@@ -69,5 +69,5 @@ jobs:
         shell: bash
         run: |
              cd build
-             newt build -j 1 @apache-mynewt-core/targets/coverity/btshell_nrf52840_coverity
-             newt build -j 1 @apache-mynewt-core/targets/coverity/btshell_nrf52840_coverity2
+             newt build @apache-mynewt-core/targets/coverity/btshell_nrf52840_coverity
+             newt build @apache-mynewt-core/targets/coverity/btshell_nrf52840_coverity2
