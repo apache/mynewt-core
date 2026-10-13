@@ -17,7 +17,17 @@
 # under the License.
 #
 
+syscfg.defs:
+    BOOT_LOADER:
+        description: 'Build everything as bootloader'
+        value: 1
+
 syscfg.vals:
+    MYNEWT_DOWNLOADER: openocd
+    MYNEWT_DOWNLOADER_OPENOCD_CFG: olimex_p103.cfg
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
+    JLINK_TARGET: STM32F103RB
+
     STM32_FLASH_SIZE_KB: 128
     MCU_RAM_START: 0x20000000
     MCU_RAM_SIZE: 20K

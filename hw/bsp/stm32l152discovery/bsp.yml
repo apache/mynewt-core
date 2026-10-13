@@ -28,7 +28,7 @@ bsp.linkerscript:
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/stm32l152discovery/boot-stm32l152discovery.ld"
     - "@apache-mynewt-core/hw/mcu/stm/stm32l1xx/stm32l152.ld"
-bsp.downloadscript: "hw/bsp/stm32l152discovery/stm32l152discovery_download.sh"
+bsp.downloadscript: "hw/scripts/download.sh"
 bsp.debugscript: "hw/bsp/stm32l152discovery/stm32l152discovery_debug.sh"
 
 bsp.flash_map:
