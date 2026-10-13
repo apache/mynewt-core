@@ -1,0 +1,100 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: Cache cleanup
+
+on:
+  # Remove caches superseded by master build right after it completes,
+  # daily run handles caches saved by other workflows
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  cleanup:
+    name: Remove superseded caches
+    # Build runs on push only for master, pull request runs are ignored
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            // Caches created by master branch builds are saved with
+            // unique keys (e.g. ccache-<job>-<run_id>-<attempt>), only
+            // newest entry of each kind is used by later runs. Remove
+            // older entries to keep total cache size below limit.
+            const families = [
+              { re: /^(ccache-.+)-\d+-\d+$/ },
+              { re: /^(newt-repos-[^-]+)-[0-9a-f]+$/ },
+              { re: /^(newt-[^-]+-[^-]+)-[0-9a-f]{40}$/ },
+            ];
+
+            const caches = await github.paginate(
+              github.rest.actions.getActionsCacheList,
+              { ...context.repo, ref: 'refs/heads/master', per_page: 100 },
+              (response) => response.data.actions_caches);
+
+            const newest = new Map();
+            const stale = [];
+            for (const cache of caches) {
+              const family = families
+                .map((f) => cache.key.match(f.re))
+                .find((m) => m);
+              if (!family) {
+                continue;
+              }
+              const name = family[1];
+              const current = newest.get(name);
+              if (!current) {
+                newest.set(name, cache);
+              } else if (new Date(cache.created_at) > new Date(current.created_at)) {
+                stale.push(current);
+                newest.set(name, cache);
+              } else {
+                stale.push(cache);
+              }
+            }
+
+            for (const cache of stale) {
+              core.info(`Removing ${cache.key} (${cache.size_in_bytes} bytes)`);
+              try {
+                await github.rest.actions.deleteActionsCacheById({
+                  ...context.repo,
+                  cache_id: cache.id,
+                });
+              } catch (e) {
+                // Cache may be already evicted by GitHub
+                if (e.status !== 404) {
+                  throw e;
+                }
+              }
+            }
+            core.info(`Kept ${newest.size} caches, removed ${stale.length}`);
