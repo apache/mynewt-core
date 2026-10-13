@@ -50,11 +50,12 @@ jobs:
             // Caches created by master branch builds are saved with
             // unique keys (e.g. ccache-<job>-<run_id>-<attempt>), only
             // newest entry of each kind is used by later runs. Remove
-            // older entries to keep total cache size below limit.
+            // older entries to keep total cache size below limit. Kind
+            // is identified by all capture groups of matching pattern.
             const families = [
               { re: /^(ccache-.+)-\d+-\d+$/ },
               { re: /^(newt-repos-[^-]+)-[0-9a-f]+$/ },
-              { re: /^(newt-[^-]+-[^-]+)-[0-9a-f]{40}$/ },
+              { re: /^(newt-[^-]+)-[0-9a-f]{40}-(.+)$/ },
             ];
 
             const caches = await github.paginate(
@@ -71,7 +72,7 @@ jobs:
               if (!family) {
                 continue;
               }
-              const name = family[1];
+              const name = family.slice(1).join('-');
               const current = newest.get(name);
               if (!current) {
                 newest.set(name, cache);

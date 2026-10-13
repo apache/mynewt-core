@@ -33,15 +33,39 @@ permissions:
   contents: read
 
 jobs:
+  # Builds newt once per run for all platforms used by jobs of this
+  # workflow, other jobs take newt from artifact uploaded by this job.
+  newt:
+    name: Build newt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build newt
+        id: newt
+        uses: ./.github/actions/newt-install
+        with:
+          platforms: windows/amd64 darwin/arm64
+      - name: Upload newt
+        uses: actions/upload-artifact@v7
+        with:
+          name: newt
+          path: ${{ steps.newt.outputs.dist }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
   # Downloads external repositories once per run, all Linux jobs use
   # project prepared by this job.
   prepare:
     name: Prepare project
+    needs: newt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - name: Install newt
         uses: ./.github/actions/newt-install
+        with:
+          artifact: newt
       - name: Set up project
         uses: ./.github/actions/newt-project
         with:
@@ -102,6 +126,7 @@ jobs:
 
   blinky-other-os:
     name: Build blinky
+    needs: newt
     strategy:
       fail-fast: false
       matrix:
@@ -119,6 +144,8 @@ jobs:
              echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
       - name: Install newt
         uses: ./.github/actions/newt-install
+        with:
+          artifact: newt
       - name: Set up project
         uses: ./.github/actions/newt-project
         with:
@@ -252,6 +279,7 @@ jobs:
 
   targets-other-os:
     name: Build all test targets
+    needs: newt
     strategy:
       fail-fast: false
       matrix:
@@ -269,6 +297,8 @@ jobs:
              echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
       - name: Install newt
         uses: ./.github/actions/newt-install
+        with:
+          artifact: newt
       - name: Set up project
         uses: ./.github/actions/newt-project
         with:
