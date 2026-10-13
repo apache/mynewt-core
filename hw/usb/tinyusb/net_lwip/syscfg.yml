@@ -37,6 +37,26 @@ syscfg.defs:
         description: >
             Number of outgoing frames lwIP can queue for USB transmission.
         value: 8
+    USBD_NET_DHCP_SERVER:
+        description: >
+            Run DHCP server on USB network interface so the host gets its
+            address automatically.  Server answers only on USB interface
+            and does not offer router or DNS server.
+        value: 1
+    USBD_NET_DHCP_POOL_START:
+        description: >
+            Host part of first address leased by DHCP server, e.g. 2 gives
+            192.168.7.2 with default address and mask.
+        value: 2
+    USBD_NET_DHCP_POOL_SIZE:
+        description: >
+            Number of addresses DHCP server can lease, at most
+            DHCP_SERVER_MAX_LEASES.
+        value: 4
+        range: 1..64
+    USBD_NET_DHCP_LEASE_TIME:
+        description: DHCP lease time in seconds.
+        value: 86400
     USBD_NET_SYSINIT_STAGE:
         description: >
             Sysinit stage of USB network interface.  Must be after lwIP
