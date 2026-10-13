@@ -206,8 +206,8 @@ const tusb_desc_device_t desc_device = {
  * device qualifier is mostly similar to device descriptor since we don't change configuration based on speed.
  */
 tusb_desc_device_qualifier_t const desc_device_qualifier = {
-    .bLength            = sizeof(tusb_desc_device_t),
-    .bDescriptorType    = TUSB_DESC_DEVICE,
+    .bLength            = sizeof(tusb_desc_device_qualifier_t),
+    .bDescriptorType    = TUSB_DESC_DEVICE_QUALIFIER,
     .bcdUSB             = USB_BCD,
 
 #if CFG_TUD_BTH
