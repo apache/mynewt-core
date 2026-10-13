@@ -30,7 +30,3 @@ repository.apache-mynewt-core:
     vers: 0.0.0
     user: apache
     repo: mynewt-core
-
-project.repositories.ignored:
-       - stm-*
-       - atmel-samd21xx
