@@ -86,7 +86,7 @@ extern "C" {
 #define MEMP_NUM_PBUF                   20
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
-#define MEMP_NUM_UDP_PCB                4
+#define MEMP_NUM_UDP_PCB                MYNEWT_VAL_LWIP_NUM_UDP_PCB
 
 /* MEMP_NUM_TCP_PCB: the number of simulatenously active TCP
    connections. */
