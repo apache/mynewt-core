@@ -29,14 +29,16 @@ bsp.debugscript: "hw/bsp/nucleo-f303k8/nucleo-f303k8_debug.sh"
 bsp.flash_map:
     areas:
         # System areas.
+        # Only one flash area for code
         FLASH_AREA_BOOTLOADER:
-            device: 0
-            offset: 0x08100000
-            size:   0kB
-        FLASH_AREA_IMAGE_0:
             device: 0
             offset: 0x08000000
             size:   64kB
+        # Empty flash area to allow build
+        FLASH_AREA_IMAGE_0:
+            device: 0
+            offset: 0x08100000
+            size:   0kB
         FLASH_AREA_IMAGE_1:
             device: 0
             offset: 0x08200000
