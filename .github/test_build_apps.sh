@@ -35,6 +35,7 @@ IGNORED_APPS="ffs2native fs_test hash_test lora_app_shell loraping lorashell\
 # here are placeholders good enough for a build check.
 declare -A APP_SYSCFG=(
     [usb_headset]="USBD_VID=0xFFFF:USBD_PID=0xFFFF"
+    [usb_net]="USBD_VID=0xFFFF:USBD_PID=0xFFFF"
 )
 
 for app in ${APPS}; do
