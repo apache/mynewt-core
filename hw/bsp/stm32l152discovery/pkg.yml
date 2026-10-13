@@ -32,3 +32,4 @@ pkg.cflags: -DSTM32L152xC
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32l1xx"
     - "@apache-mynewt-core/libc"
+    - "@apache-mynewt-core/hw/scripts"
