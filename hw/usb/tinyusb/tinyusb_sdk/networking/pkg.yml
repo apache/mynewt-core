@@ -1,0 +1,41 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/usb/tinyusb/tinyusb_sdk/networking
+pkg.description: >
+    TinyUSB networking library: RNDIS message handling needed by TinyUSB
+    CDC-ECM/RNDIS device driver (CFG_TUD_ECM_RNDIS).
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "https://mynewt.apache.org/"
+pkg.keywords:
+    - usb
+    - rndis
+
+pkg.type: sdk
+
+pkg.deps:
+    - "@apache-mynewt-core/hw/usb/tinyusb/tinyusb_sdk"
+    # rndis_reports.c includes lwIP netif/ethernet.h (needs lwipopts.h)
+    - "@apache-mynewt-core/net/ip/lwip_mn"
+
+pkg.include_dirs:
+    - "@tinyusb/lib/networking"
+
+pkg.source_files:
+    - "@tinyusb/lib/networking/rndis_reports.c"
