@@ -27,7 +27,9 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-    runs-on: ubuntu-slim
+    # pr-size-labeler is Docker action which is not supported by
+    # ubuntu-slim runner
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
