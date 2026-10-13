@@ -31,8 +31,6 @@ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
 bsp.part2linkerscript: hw/bsp/calliope_mini/split-calliope_mini.ld
 bsp.downloadscript: hw/bsp/calliope_mini/calliope_mini_download.sh
 bsp.debugscript: hw/bsp/calliope_mini/calliope_mini_debug.sh
-bsp.downloadscript.WINDOWS.OVERWRITE: hw/bsp/calliope_mini/calliope_mini_download.cmd
-bsp.debugscript.WINDOWS.OVERWRITE: hw/bsp/calliope_mini/calliope_mini_debug.cmd
 
 bsp.flash_map:
     areas:
