@@ -31,3 +31,8 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/usb/tinyusb"
+
+# TinyUSB CDC-ECM/RNDIS driver needs RNDIS message handling from its
+# networking library.
+pkg.deps.'(USBD_NET == "ECM") || (USBD_NET == "RNDIS")':
+    - "@apache-mynewt-core/hw/usb/tinyusb/tinyusb_sdk/networking"
