@@ -29,6 +29,14 @@ extern "C" {
 #define LWIP_NETIF_TX_SINGLE_PBUF 	1
 #define LWIP_NETIF_LOOPBACK		1	/* yes loopback interface */
 
+/*
+ * Allow checksum generation and checking to be disabled per interface,
+ * e.g. for Ethernet controllers with hardware checksum offload.
+ */
+#ifndef LWIP_CHECKSUM_CTRL_PER_NETIF
+#define LWIP_CHECKSUM_CTRL_PER_NETIF    1
+#endif
+
 #define TCPIP_THREAD_PRIO		5
 #define TCPIP_THREAD_STACKSIZE	((6 * 1024) / sizeof(portSTACK_TYPE))
 #define TCPIP_MBOX_SIZE			10
