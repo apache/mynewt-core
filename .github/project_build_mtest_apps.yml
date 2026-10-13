@@ -30,16 +30,3 @@ repository.apache-mynewt-core:
   vers: 0.0.0
   user: apache
   repo: mynewt-core
-
-
-project.repositories.allowed:
-  - apache-mynewt-core
-  - apache-mynewt-nimble
-  - mcuboot
-  - tinyusb
-  - arm-CMSIS_5
-  - stm-cmsis_device_h7
-  - stm-stm32h7xx_hal_driver
-  - nordic-nrfx
-  - mbedtls
-  - tinycbor
