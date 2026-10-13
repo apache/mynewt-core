@@ -50,6 +50,9 @@
 #include <device/usbd_pvt.h>
 
 #include <net_lwip/net_lwip.h>
+#if MYNEWT_VAL(USBD_NET_DHCP_SERVER)
+#include <dhcp_server/dhcp_server.h>
+#endif
 
 #define USB_NET_TXQ_LEN     MYNEWT_VAL(USBD_NET_TX_QUEUE_LEN)
 /* ECM opens data endpoints only when host selects data alternate setting */
@@ -93,6 +96,18 @@ static const uint8_t usb_net_cfg_mac[ETHARP_HWADDR_LEN] = {
 #endif
 
 static void usb_net_service(void *arg);
+
+#if MYNEWT_VAL(USBD_NET_DHCP_SERVER)
+#if MYNEWT_VAL(USBD_NET_DHCP_POOL_SIZE) > MYNEWT_VAL(DHCP_SERVER_MAX_LEASES)
+#error "USBD_NET_DHCP_POOL_SIZE exceeds DHCP_SERVER_MAX_LEASES"
+#endif
+
+static const struct dhcp_server_cfg usb_net_dhcps_cfg = {
+    .pool_start = MYNEWT_VAL(USBD_NET_DHCP_POOL_START),
+    .pool_size = MYNEWT_VAL(USBD_NET_DHCP_POOL_SIZE),
+    .lease_time = MYNEWT_VAL(USBD_NET_DHCP_LEASE_TIME),
+};
+#endif
 
 struct netif *
 usb_net_lwip_netif(void)
@@ -425,7 +440,14 @@ usb_net_lwip_init(void)
         if (netif_default == NULL) {
             netif_set_default(nif);
         }
+#if MYNEWT_VAL(USBD_NET_DHCP_SERVER)
+        rc = dhcp_server_start(nif, &usb_net_dhcps_cfg);
+#endif
     }
     UNLOCK_TCPIP_CORE();
     SYSINIT_PANIC_ASSERT(nif != NULL);
+#if MYNEWT_VAL(USBD_NET_DHCP_SERVER)
+    /* Check USBD_NET_DHCP_POOL_* against interface address */
+    SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
 }

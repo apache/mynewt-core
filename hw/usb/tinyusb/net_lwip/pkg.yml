@@ -42,5 +42,8 @@ pkg.deps:
     - "@apache-mynewt-core/hw/usb/tinyusb"
     - "@apache-mynewt-core/hw/usb/tinyusb/std_descriptors"
 
+pkg.deps.USBD_NET_DHCP_SERVER:
+    - "@apache-mynewt-core/net/ip/dhcp_server"
+
 pkg.init:
     usb_net_lwip_init: 'MYNEWT_VAL(USBD_NET_SYSINIT_STAGE)'
