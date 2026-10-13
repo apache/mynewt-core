@@ -187,7 +187,14 @@ tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_t
 }
 #endif /* CFG_TUD_HID */
 
+/* Microsoft OS 2.0 descriptors for NCM, they need BOS (USB 2.01) */
+#define USBD_MS_OS20    (CFG_TUD_NCM && MYNEWT_VAL(USBD_NET_MS_OS20))
+
+#if USBD_MS_OS20
+#define USB_BCD     tu_htole16(0x201)
+#else
 #define USB_BCD     tu_htole16(0x200)
+#endif
 
 const tusb_desc_device_t desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
@@ -483,6 +490,74 @@ const char *string_desc_arr[] = {
 };
 
 static uint16_t desc_string[MYNEWT_VAL(USBD_STRING_DESCRIPTOR_MAX_LENGTH) + 1];
+
+#if USBD_MS_OS20
+
+#if MYNEWT_VAL(USBD_WINDOWS_COMP_ID)
+#error "USBD_NET_MS_OS20 can not be used with USBD_WINDOWS_COMP_ID"
+#endif
+
+#define MS_OS_20_VENDOR_CODE    0x01
+/* wIndex of GET_MS_OS_20_DESCRIPTOR vendor request */
+#define MS_OS_20_DESCRIPTOR_INDEX   0x07
+#define MS_OS_20_DESC_LEN       (0x0A + 0x08 + 0x08 + 0x14)
+#define BOS_TOTAL_LEN           (TUD_BOS_DESC_LEN + \
+                                 TUD_BOS_MICROSOFT_OS_DESC_LEN)
+
+static const uint8_t desc_bos[] = {
+    TUD_BOS_DESCRIPTOR(BOS_TOTAL_LEN, 1),
+    TUD_BOS_MS_OS_20_DESCRIPTOR(MS_OS_20_DESC_LEN, MS_OS_20_VENDOR_CODE),
+};
+
+/*
+ * Microsoft OS 2.0 descriptor set: NCM function gets WINNCM compatible ID
+ * so Windows binds its inbox NCM driver (UsbNcm) automatically.
+ */
+static const uint8_t desc_ms_os_20[] = {
+    /* Set header: length, type, Windows version (8.1+), total length */
+    U16_TO_U8S_LE(0x000A), U16_TO_U8S_LE(MS_OS_20_SET_HEADER_DESCRIPTOR),
+    U32_TO_U8S_LE(0x06030000), U16_TO_U8S_LE(MS_OS_20_DESC_LEN),
+    /* Configuration subset: length, type, config index, reserved, length */
+    U16_TO_U8S_LE(0x0008), U16_TO_U8S_LE(MS_OS_20_SUBSET_HEADER_CONFIGURATION),
+    0, 0, U16_TO_U8S_LE(MS_OS_20_DESC_LEN - 0x0A),
+    /* Function subset: length, type, first interface, reserved, length */
+    U16_TO_U8S_LE(0x0008), U16_TO_U8S_LE(MS_OS_20_SUBSET_HEADER_FUNCTION),
+    ITF_NUM_NET, 0, U16_TO_U8S_LE(MS_OS_20_DESC_LEN - 0x0A - 0x08),
+    /* Compatible ID: length, type, compatible ID, sub-compatible ID */
+    U16_TO_U8S_LE(0x0014), U16_TO_U8S_LE(MS_OS_20_FEATURE_COMPATBLE_ID),
+    'W', 'I', 'N', 'N', 'C', 'M', 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+TU_VERIFY_STATIC(sizeof(desc_ms_os_20) == MS_OS_20_DESC_LEN,
+                 "MS OS 2.0 descriptor length mismatch");
+
+/*
+ * Invoked when received GET BOS DESCRIPTOR request
+ */
+const uint8_t *
+tud_descriptor_bos_cb(void)
+{
+    return desc_bos;
+}
+
+bool
+tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage,
+                           const tusb_control_request_t *request)
+{
+    if (request->bmRequestType_bit.type != TUSB_REQ_TYPE_VENDOR ||
+        request->bRequest != MS_OS_20_VENDOR_CODE ||
+        request->wIndex != MS_OS_20_DESCRIPTOR_INDEX) {
+        return false;
+    }
+    if (stage != CONTROL_STAGE_SETUP) {
+        return true;
+    }
+
+    return tud_control_xfer(rhport, request, (void *)(uintptr_t)desc_ms_os_20,
+                            sizeof(desc_ms_os_20));
+}
+#endif /* USBD_MS_OS20 */
 
 #if MYNEWT_VAL(USBD_WINDOWS_COMP_ID)
 

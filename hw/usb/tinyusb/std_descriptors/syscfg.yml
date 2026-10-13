@@ -386,6 +386,13 @@ syscfg.defs:
             Number of NCM transfer block buffers in each direction.  On full
             speed 2 can improve throughput at the cost of RAM.
         value: 1
+    USBD_NET_MS_OS20:
+        description: >
+            Add BOS and Microsoft OS 2.0 descriptors with WINNCM compatible
+            ID for NCM function, so Windows loads its NCM driver without
+            manual installation.  Can not be used with USBD_WINDOWS_COMP_ID
+            (Windows ignores MS OS 1.0 descriptors when 2.0 are present).
+        value: 1
 
     USBD_WINDOWS_COMP_ID:
         description: >
@@ -411,6 +418,7 @@ syscfg.restrictions:
     - '(CFG_TUSB_DEBUG == 0) || (USBD_STACK_SIZE >= 400)'
     - '((USBD_NET != "NCM") && (USBD_NET != "ECM") && (USBD_NET != "RNDIS")) ||
        USBD_COMPOSITE_DEVICE'
+    - '(USBD_NET != "NCM") || !USBD_NET_MS_OS20 || !USBD_WINDOWS_COMP_ID'
 
 syscfg.vals.USBD_COMPOSITE_DEVICE:
     USBD_DEVICE_CLASS: TUSB_CLASS_MISC
