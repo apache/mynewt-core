@@ -46,8 +46,6 @@ jobs:
         uses: ./.github/actions/newt-install
       - name: Set up project
         uses: ./.github/actions/newt-project
-        with:
-          project: .github/project.yml
       - name: Restore ccache
         uses: ./.github/actions/ccache-restore
         with:

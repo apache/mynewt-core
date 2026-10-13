@@ -21,16 +21,15 @@ name: Set up newt project
 description: >
   Create newt project for testing current commit. External repositories
   are restored from cache and then upgraded by newt, so only changes
-  since cache was created are downloaded. Single cache is shared by all
-  projects since newt skips repositories not used by project. Cache
-  should be saved only by job using project with all repositories and
-  only from master branch, since only caches from default branch are
-  available to pull requests.
+  since cache was created are downloaded. Cache should be saved only by
+  one job and only from master branch, since only caches from default
+  branch are available to pull requests.
 
 inputs:
   project:
     description: Project file to use (relative to repository root)
-    required: true
+    required: false
+    default: .github/project.yml
   path:
     description: Directory to create project in
     required: false
