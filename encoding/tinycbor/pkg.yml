@@ -59,9 +59,12 @@ pkg.source_files.TINYCBOR_PRETTY_API:
 pkg.source_files.TINYCBOR_VALIDATION_API:
     - "@tinycbor/src/cborvalidation.c"
 
+# Pinned to commit past v7.0 to get 76d7a29 ("compilersupport: fix build
+# with GCC < 11"). v7.0 uses [[fallthrough]] in C, which fails to build
+# with GCC 8 and 9. Switch back to a release tag once one includes it.
 repository.tinycbor:
     type: github
-    vers: v7.0-commit
+    vers: 76d7a29cead0f8c1c72a6b4fb2ecbc8a9885ed89-commit
     branch: main
     user: intel
     repo: tinycbor
