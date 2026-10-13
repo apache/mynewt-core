@@ -21,12 +21,9 @@ name: Restore newt project
 description: >
   Restore newt and newt project prepared by prepare job of the same
   workflow run, so that external repositories are downloaded only once
-  per run. Project file is replaced with one provided by job.
+  per run.
 
 inputs:
-  project:
-    description: Project file to use (relative to repository root)
-    required: true
   path:
     description: Directory to restore project to
     required: false
@@ -50,12 +47,9 @@ runs:
         mv "${{ inputs.path }}/.newt-bin" "$GITHUB_WORKSPACE/.newt-bin"
         echo "$GITHUB_WORKSPACE/.newt-bin" >> "$GITHUB_PATH"
 
-    # Repositories were upgraded by prepare job for tested commit, so
-    # only project file needs to be updated.
-    - name: Set up project file
+    # Project was set up and upgraded by prepare job for tested commit
+    - name: Show project info
       shell: bash
       run: |
-        cp -f "${{ inputs.project }}" "${{ inputs.path }}/project.yml"
-        sed -i "s/0.0.0/$GITHUB_SHA-commit/g" "${{ inputs.path }}/project.yml"
         cd "${{ inputs.path }}"
         newt info

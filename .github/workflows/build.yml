@@ -69,7 +69,6 @@ jobs:
       - name: Set up project
         uses: ./.github/actions/newt-project
         with:
-          project: .github/project.yml
           save-cache: true
       - name: Pack project
         shell: bash
@@ -104,8 +103,6 @@ jobs:
              sudo apt-get install -y gcc-multilib ccache
       - name: Restore project
         uses: ./.github/actions/newt-project-restore
-        with:
-          project: .github/project.yml
       - name: Restore ccache
         uses: ./.github/actions/ccache-restore
         with:
@@ -148,8 +145,6 @@ jobs:
           artifact: newt
       - name: Set up project
         uses: ./.github/actions/newt-project
-        with:
-          project: .github/project.yml
       - name: Build Blinky
         shell: bash
         run: |
@@ -175,8 +170,6 @@ jobs:
              sudo apt-get install -y gcc-multilib ccache
       - name: Restore project
         uses: ./.github/actions/newt-project-restore
-        with:
-          project: .github/project.yml
       - name: Restore ccache
         uses: ./.github/actions/ccache-restore
         with:
@@ -214,8 +207,6 @@ jobs:
              sudo apt-get install -y gcc-multilib ccache
       - name: Restore project
         uses: ./.github/actions/newt-project-restore
-        with:
-          project: .github/project_build_all_apps.yml
       - name: Remove project targets
         shell: bash
         run: rm -rf build/targets
@@ -248,8 +239,6 @@ jobs:
           release: '15.2.Rel1'
       - name: Restore project
         uses: ./.github/actions/newt-project-restore
-        with:
-          project: .github/project.yml
       - name: Remove project targets
         shell: bash
         run: rm -rf build/targets
@@ -301,8 +290,6 @@ jobs:
           artifact: newt
       - name: Set up project
         uses: ./.github/actions/newt-project
-        with:
-          project: .github/project.yml
       - name: Remove project targets
         shell: bash
         run: rm -rf build/targets
@@ -329,8 +316,6 @@ jobs:
              sudo apt-get install -y gcc-multilib ccache
       - name: Restore project
         uses: ./.github/actions/newt-project-restore
-        with:
-          project: .github/project_build_mtest_apps.yml
       - name: Remove project targets
         shell: bash
         run: rm -rf build/targets
@@ -367,8 +352,6 @@ jobs:
           release: ${{ matrix.gcc }}
       - name: Restore project
         uses: ./.github/actions/newt-project-restore
-        with:
-          project: .github/project_build_cc_target.yml
       - name: Restore ccache
         uses: ./.github/actions/ccache-restore
         with:
@@ -397,8 +380,6 @@ jobs:
              sudo apt-get install -y gcc-multilib ccache
       - name: Restore project
         uses: ./.github/actions/newt-project-restore
-        with:
-          project: .github/project_newt_test_all.yml
       - name: Restore ccache
         uses: ./.github/actions/ccache-restore
         with:
