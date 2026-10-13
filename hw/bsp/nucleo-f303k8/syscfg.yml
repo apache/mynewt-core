@@ -17,6 +17,11 @@
 # under the License.
 #
 
+syscfg.defs:
+    BOOT_LOADER:
+        description: 'Build everything as bootloader'
+        value: 1
+
 syscfg.vals:
     STM32_FLASH_SIZE_KB: 64
     MCU_RAM_START: 0x20000000
