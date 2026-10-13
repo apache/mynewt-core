@@ -337,6 +337,56 @@ syscfg.defs:
             Size of TinyUSB software FIFO for speaker data in 1 ms packets.
         value: 4
 
+    USBD_NET:
+        description: >
+            Enable USB network function in TinyUSB stack.
+            NCM - CDC Network Control Model (Linux, macOS, Windows 10+),
+            ECM - CDC Ethernet Control Model (Linux, macOS),
+            RNDIS - Remote NDIS (Windows, Linux),
+            empty or NONE - no network function.
+            Only one network function can be present.  The function uses
+            Interface Association Descriptor so USBD_COMPOSITE_DEVICE has
+            to be set.  Application (e.g. hw/usb/tinyusb/net_lwip) provides
+            TinyUSB network callbacks (tud_network_*) and
+            tud_network_mac_address.
+        value:
+        choices:
+            - NONE
+            - NCM
+            - ECM
+            - RNDIS
+    USBD_NET_DESCRIPTOR_STRING:
+        description: String for network control interface
+        value:
+    USBD_NET_NOTIFY_EP:
+        description: >
+            Network notification (interrupt IN) endpoint address
+            (e.g. 0x85).  Empty for USB port default from tusb_hw.h.
+        value:
+    USBD_NET_NOTIFY_EP_SIZE:
+        description: Network notification endpoint size
+        value: 16
+    USBD_NET_DATA_OUT_EP:
+        description: >
+            Network data (bulk OUT) endpoint address (e.g. 0x07).
+            Empty for USB port default from tusb_hw.h.
+        value:
+    USBD_NET_DATA_IN_EP:
+        description: >
+            Network data (bulk IN) endpoint address (e.g. 0x87).
+            Empty for USB port default from tusb_hw.h.
+        value:
+    USBD_NET_NCM_NTB_SIZE:
+        description: >
+            Size of NCM transfer block buffers (NTB) in both directions.
+            CDC-NCM requires at least 2048.
+        value: 2048
+    USBD_NET_NCM_NTB_COUNT:
+        description: >
+            Number of NCM transfer block buffers in each direction.  On full
+            speed 2 can improve throughput at the cost of RAM.
+        value: 1
+
     USBD_WINDOWS_COMP_ID:
         description: >
             Add Windows compatibility descriptor.
@@ -359,6 +409,8 @@ syscfg.defs:
 
 syscfg.restrictions:
     - '(CFG_TUSB_DEBUG == 0) || (USBD_STACK_SIZE >= 400)'
+    - '((USBD_NET != "NCM") && (USBD_NET != "ECM") && (USBD_NET != "RNDIS")) ||
+       USBD_COMPOSITE_DEVICE'
 
 syscfg.vals.USBD_COMPOSITE_DEVICE:
     USBD_DEVICE_CLASS: TUSB_CLASS_MISC
