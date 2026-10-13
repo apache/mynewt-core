@@ -42,6 +42,11 @@ syscfg.defs:
     LWIP_IPV6:
         description: Enable IPV6 support
         value: 1
+    LWIP_NUM_UDP_PCB:
+        description: >
+            Number of UDP protocol control blocks, one per active UDP
+            socket (DHCP client and DHCP server use one each).
+        value: 4
 
 syscfg.restrictions:
     # As long as MEM_LIBC_MALLOC is 1 this restriction applies
