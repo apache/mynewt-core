@@ -24,6 +24,7 @@
 #include <mcu/cmsis_nvic.h>
 #include <stm32_common/stm32_hal.h>
 #include <mcu/mcu.h>
+#include <arm_mpu.h>
 
 #if MYNEWT_VAL(STM32_ETH_SYS_CONFIG)
 #include <config/config.h>
@@ -106,11 +107,69 @@ struct rx_buff {
     uint8_t buff[(ETH_RX_BUF_SIZE + 31) & ~31];
 };
 
+/*
+ * With data cache enabled DMA descriptors and receive buffers are placed
+ * in MPU region with non-cacheable attribute.  Descriptors are smaller than
+ * cache line and are accessed by DMA and by HAL code that does no cache
+ * maintenance, so they can't be cacheable.  Transmitted data is cleaned
+ * from cache before it is given to DMA.
+ */
+#if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U) &&                  \
+    MYNEWT_VAL(STM32_ENABLE_DCACHE)
+#define STM32_ETH_DCACHE 1
+#else
+#define STM32_ETH_DCACHE 0
+#endif
+
+#define STM32_ETH_RX_POOL_SIZE                                                \
+    OS_MEMPOOL_SIZE(STM32_ETH_RX_BUFFER_CNT, sizeof(struct rx_buff))
+
+/* Memory accessed by Ethernet DMA */
+struct stm32_eth_dma_mem {
+    ETH_DMADescTypeDef rx_descs[ETH_RX_DESC_CNT];
+    ETH_DMADescTypeDef tx_descs[ETH_TX_DESC_CNT];
+    os_membuf_t rx_pool_mem[STM32_ETH_RX_POOL_SIZE];
+};
+
+#if STM32_ETH_DCACHE
+/* MPU region size is power of 2 and region base is aligned to its size */
+#define STM32_ETH_DMA_MEM_SIZE sizeof(struct stm32_eth_dma_mem)
+#define STM32_ETH_DMA_SIZE                                                    \
+    (STM32_ETH_DMA_MEM_SIZE <= 0x1000    ? 0x1000                             \
+     : STM32_ETH_DMA_MEM_SIZE <= 0x2000  ? 0x2000                             \
+     : STM32_ETH_DMA_MEM_SIZE <= 0x4000  ? 0x4000                             \
+     : STM32_ETH_DMA_MEM_SIZE <= 0x8000  ? 0x8000                             \
+     : STM32_ETH_DMA_MEM_SIZE <= 0x10000 ? 0x10000                            \
+                                         : 0x20000)
+_Static_assert(STM32_ETH_DMA_MEM_SIZE <= STM32_ETH_DMA_SIZE,
+               "Too many RX buffers for Ethernet DMA MPU region");
+
+static union {
+    struct stm32_eth_dma_mem mem;
+    uint8_t region[STM32_ETH_DMA_SIZE];
+} stm32_eth_dma __attribute__((aligned(STM32_ETH_DMA_SIZE)));
+
+#define STM32_ETH_DMA_SIZE_ENC                                                \
+    (STM32_ETH_DMA_SIZE == 0x1000    ? ARM_MPU_REGION_SIZE_4KB                \
+     : STM32_ETH_DMA_SIZE == 0x2000  ? ARM_MPU_REGION_SIZE_8KB                \
+     : STM32_ETH_DMA_SIZE == 0x4000  ? ARM_MPU_REGION_SIZE_16KB               \
+     : STM32_ETH_DMA_SIZE == 0x8000  ? ARM_MPU_REGION_SIZE_32KB               \
+     : STM32_ETH_DMA_SIZE == 0x10000 ? ARM_MPU_REGION_SIZE_64KB               \
+                                     : ARM_MPU_REGION_SIZE_128KB)
+
+/* Normal memory, non-cacheable (TEX=1 C=0 B=0), no execution */
+MPU_ARM_V7_REGION(stm32_eth_dma_region, &stm32_eth_dma,
+                  ARM_MPU_RASR(1, ARM_MPU_AP_FULL, 1, 0, 0, 0, 0,
+                               STM32_ETH_DMA_SIZE_ENC));
+#else
+static struct {
+    struct stm32_eth_dma_mem mem;
+} stm32_eth_dma;
+#endif
+
 struct stm32_eth_state {
     struct netif st_nif;
     ETH_HandleTypeDef st_eth;
-    ETH_DMADescTypeDef st_rx_descs[ETH_RX_DESC_CNT];
-    ETH_DMADescTypeDef st_tx_descs[ETH_TX_DESC_CNT];
     ETH_TxPacketConfig st_tx_cfg;
     ETH_MACConfigTypeDef st_mac_cfg;
     struct hal_timer st_phy_tmr;
@@ -120,7 +179,8 @@ struct stm32_eth_state {
 static struct stm32_eth_state stm32_eth_state;
 static bool rx_alloc_failed;
 
-LWIP_MEMPOOL_DECLARE(RX_POOL, STM32_ETH_RX_BUFFER_CNT, sizeof(struct rx_buff), "Zero-copy RX PBUF pool");
+/* Zero-copy RX pbuf pool */
+static struct os_mempool stm32_eth_rx_pool;
 
 static void
 stm32_eth_input(struct stm32_eth_state *ses)
@@ -161,9 +221,9 @@ HAL_ETH_RxCpltCallback(ETH_HandleTypeDef *heth)
 void
 pbuf_free_custom(struct pbuf *p)
 {
-    struct pbuf_custom *custom_pbuf = (struct pbuf_custom *)p;
     struct stm32_eth_state *ses = &stm32_eth_state;
-    LWIP_MEMPOOL_FREE(RX_POOL, custom_pbuf);
+
+    os_memblock_put(&stm32_eth_rx_pool, p);
 
     if (rx_alloc_failed) {
         rx_alloc_failed = 0;
@@ -176,7 +236,7 @@ HAL_ETH_RxAllocateCallback(uint8_t **buff)
 {
     struct pbuf_custom *p;
 
-    p = LWIP_MEMPOOL_ALLOC(RX_POOL);
+    p = os_memblock_get(&stm32_eth_rx_pool);
     if (p != NULL) {
         *buff = ((struct rx_buff *)p)->buff;
         p->custom_free_function = pbuf_free_custom;
@@ -409,6 +469,10 @@ stm32_eth_output(struct netif *nif, struct pbuf *p)
 
         tx_buffer[i].buffer = q->payload;
         tx_buffer[i].len = q->len;
+#if STM32_ETH_DCACHE
+        /* DMA reads data from memory, not from cache */
+        SCB_CleanDCache_by_Addr(q->payload, q->len);
+#endif
 
         if (i > 0) {
             tx_buffer[i - 1].next = &tx_buffer[i];
@@ -502,7 +566,8 @@ stm32_lwip_init(struct netif *nif)
     nif->mld_mac_filter = stm32_mld_mac_filter;
 #endif
 
-    LWIP_MEMPOOL_INIT(RX_POOL);
+    os_mempool_init(&stm32_eth_rx_pool, STM32_ETH_RX_BUFFER_CNT,
+                    sizeof(struct rx_buff), stm32_eth_dma.mem.rx_pool_mem, "eth_rx");
 
     cfg = ses->cfg;
 
@@ -522,8 +587,8 @@ stm32_lwip_init(struct netif *nif)
     ETH_CLK_ENABLE();
 
     ses->st_eth.Instance = ETH;
-    ses->st_eth.Init.RxDesc = ses->st_rx_descs;
-    ses->st_eth.Init.TxDesc = ses->st_tx_descs;
+    ses->st_eth.Init.RxDesc = stm32_eth_dma.mem.rx_descs;
+    ses->st_eth.Init.TxDesc = stm32_eth_dma.mem.tx_descs;
     ses->st_eth.Init.RxBuffLen = ETH_RX_BUF_SIZE;
 
     switch (cfg->sec_phy_type) {
