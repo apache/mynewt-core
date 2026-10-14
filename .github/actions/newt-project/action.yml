@@ -21,10 +21,12 @@ name: Set up newt project
 description: >
   Create newt project for testing current commit. External repositories
   are restored from cache and then upgraded by newt, so only changes
-  since cache was created are downloaded. Cache is created on Linux and
-  shared with other systems. Cache should be saved only by one job and
-  only from master branch, since only caches from default branch are
-  available to pull requests.
+  since cache was created are downloaded. Only .git directories are
+  cached and working trees are checked out after restore, which keeps
+  cache small and lets each system check out files with its own git
+  settings. Cache is created on Linux and shared with other systems.
+  Cache should be saved only by one job and only from master branch,
+  since only caches from default branch are available to pull requests.
 
 inputs:
   project:
@@ -49,30 +51,28 @@ runs:
       run: |
         newt new "${{ inputs.path }}"
         cp -f "${{ inputs.project }}" "${{ inputs.path }}/project.yml"
-        echo "cache-prefix=newt-repos-shared-" >> "$GITHUB_OUTPUT"
+        echo "cache-prefix=newt-repos-git-" >> "$GITHUB_OUTPUT"
 
     - name: Restore repositories from cache
       id: restore
       uses: actions/cache/restore@v6
       with:
-        path: ${{ inputs.path }}/repos
+        path: ${{ inputs.path }}/repos/*/.git
         key: ${{ steps.project.outputs.cache-prefix }}${{ github.sha }}
         restore-keys: ${{ steps.project.outputs.cache-prefix }}
         # Cache is created on Linux, Windows needs this to restore it
         enableCrossOsArchive: true
 
-    # Repositories restored on Windows from cache created on Linux may
-    # appear modified (e.g. due to symlinks or line endings). newt silently
-    # skips upgrade of modified repositories, so reset them to match local
-    # git settings and remove those still modified, so that they are
-    # cloned again.
-    - name: Clean up restored repositories
-      if: runner.os == 'Windows' && steps.restore.outputs.cache-matched-key != ''
+    # newt silently skips upgrade of modified repositories, so remove
+    # those still appearing modified after checkout (e.g. due to line
+    # endings on Windows), so that they are cloned again.
+    - name: Check out restored repositories
+      if: steps.restore.outputs.cache-matched-key != ''
       shell: bash
       working-directory: ${{ inputs.path }}
       run: |
+        bash "$GITHUB_WORKSPACE/.github/scripts/checkout_repos.sh" .
         for d in repos/*/; do
-          git -C "$d" reset -q --hard
           if [ -n "$(git -C "$d" status --porcelain --untracked-files=no)" ]; then
             echo "::warning::$d modified after restore from cache, removing"
             rm -rf "$d"
@@ -113,6 +113,6 @@ runs:
         steps.restore.outputs.cache-matched-key != steps.key.outputs.key
       uses: actions/cache/save@v6
       with:
-        path: ${{ inputs.path }}/repos
+        path: ${{ inputs.path }}/repos/*/.git
         key: ${{ steps.key.outputs.key }}
         enableCrossOsArchive: true
