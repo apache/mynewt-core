@@ -46,9 +46,22 @@ else
     cp ${BIN_BASENAME}.img ${BIN_BASENAME}.bin
     echo "loadfile ${BIN_BASENAME}.bin 0x1d000000" >> script
   fi
-  echo "r" >> script
-  echo "g" >> script
+  if [ "$MYNEWT_VAL_MCU_NO_BOOTLOADER_BUILD" != "1" ]; then
+    echo "r" >> script
+    echo "g" >> script
+  fi
   echo "q" >> script
 
   JLink${COMSPEC:+.}Exe  -AutoConnect 1 -Device PIC32MZ2048EFH064 -If ICSP -speed 12000 -CommandFile script
+
+  if [ "$MYNEWT_VAL_MCU_NO_BOOTLOADER_BUILD" == "1" ]; then
+    # Application started from boot flash by debugger reset and go does
+    # not run (first context switch never happens). Pulse MCLR without
+    # connecting to the target instead.
+    echo "r0" > script
+    echo "sleep 200" >> script
+    echo "r1" >> script
+    echo "q" >> script
+    JLink${COMSPEC:+.}Exe -Device PIC32MZ2048EFH064 -If ICSP -CommandFile script
+  fi
 fi
