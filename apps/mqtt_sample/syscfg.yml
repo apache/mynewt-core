@@ -1,0 +1,58 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MQTT_SAMPLE_BROKER_ADDR:
+        description: 'IPv4 address of the MQTT broker.'
+        value: '"127.0.0.1"'
+    MQTT_SAMPLE_BROKER_PORT:
+        description: 'TCP port of the MQTT broker.'
+        value: 1883
+    MQTT_SAMPLE_CLIENT_ID:
+        description: 'MQTT client identifier.'
+        value: '"mynewt-mqtt-sample"'
+    MQTT_SAMPLE_TOPIC:
+        description: 'Topic the sample subscribes and publishes to.'
+        value: '"mynewt/sample"'
+    MQTT_SAMPLE_PUBLISH_INTERVAL_MS:
+        description: 'Interval between published messages.'
+        value: 5000
+    MQTT_SAMPLE_KEEP_ALIVE_S:
+        description: 'MQTT keep alive interval in seconds.'
+        value: 60
+    MQTT_SAMPLE_BUF_SIZE:
+        description: >
+            Size of the coreMQTT network buffer; bounds the largest packet
+            that can be received.
+        value: 512
+    MQTT_SAMPLE_STACK_SIZE:
+        description: 'Stack size (in os_stack_t units) of the MQTT task.'
+        value: 1024
+    MQTT_SAMPLE_PRIO:
+        description: 'Priority of the MQTT task.'
+        type: task_priority
+        value: 10
+
+syscfg.vals:
+    CONSOLE_IMPLEMENTATION: full
+    LOG_IMPLEMENTATION: full
+
+# The simulator runs on the host libc, whose printf needs a much bigger stack
+syscfg.vals.BSP_SIMULATED:
+    MQTT_SAMPLE_STACK_SIZE: 4096
