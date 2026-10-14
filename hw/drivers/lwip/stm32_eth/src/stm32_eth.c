@@ -472,9 +472,7 @@ stm32_lwip_init(struct netif *nif)
     int i, j;
     const struct stm32_eth_cfg *cfg;
     uint32_t reg;
-    ETH_MACFilterConfigTypeDef filterConfig = {
-        .PassAllMulticast = ENABLE,
-    };
+    ETH_MACFilterConfigTypeDef filterConfig;
 
     /*
      * LwIP clears most of these field in netif_add() before calling
@@ -539,7 +537,14 @@ stm32_lwip_init(struct netif *nif)
 
     /*
      * XXX pass all multicast traffic for now
+     *
+     * Modify current filter settings instead of building them from zero.
+     * Meaning of BroadcastFilter differs between HAL families (F4/F7/H7
+     * DISABLE drops broadcast frames, H5 ENABLE does), reset value of the
+     * register accepts broadcast (ARP) frames on all of them.
      */
+    HAL_ETH_GetMACFilterConfig(&ses->st_eth, &filterConfig);
+    filterConfig.PassAllMulticast = ENABLE;
     HAL_ETH_SetMACFilterConfig(&ses->st_eth, &filterConfig);
 
     /*
