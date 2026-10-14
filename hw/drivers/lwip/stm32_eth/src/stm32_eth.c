@@ -125,20 +125,25 @@ LWIP_MEMPOOL_DECLARE(RX_POOL, STM32_ETH_RX_BUFFER_CNT, sizeof(struct rx_buff), "
 static void
 stm32_eth_input(struct stm32_eth_state *ses)
 {
-    struct pbuf *p = NULL;
+    struct pbuf *p;
     int sr;
 
-    if (rx_alloc_failed) {
-        return;
-    }
+    /*
+     * One RX interrupt can be reported for several received frames,
+     * take all of them, otherwise they wait for next frame to arrive.
+     */
+    while (!rx_alloc_failed) {
+        p = NULL;
 
-    OS_ENTER_CRITICAL(sr);
+        OS_ENTER_CRITICAL(sr);
 
-    HAL_ETH_ReadData(&ses->st_eth, (void **)&p);
+        HAL_ETH_ReadData(&ses->st_eth, (void **)&p);
 
-    OS_EXIT_CRITICAL(sr);
+        OS_EXIT_CRITICAL(sr);
 
-    if (p != NULL) {
+        if (p == NULL) {
+            break;
+        }
         if (ses->st_nif.input(p, &ses->st_nif) != ERR_OK) {
             pbuf_free(p);
         }
