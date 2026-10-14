@@ -26,6 +26,7 @@
 
 #include "stm32f7xx_hal_pwr_ex.h"
 #include "stm32f7xx_hal.h"
+#include <arm_mpu.h>
 #include <assert.h>
 
 /*
@@ -66,6 +67,9 @@ SystemClock_Config(void)
     RCC_OscInitTypeDef osc_init = {0};
     RCC_ClkInitTypeDef clk_init = {0};
     HAL_StatusTypeDef status;
+
+    /* MPU regions declared with MPU_ARM_V7_REGION(), set before caches */
+    arm_mpu_init();
 
     /* Enable the MCU instruction cache */
 #if MYNEWT_VAL(STM32_ENABLE_ICACHE)
