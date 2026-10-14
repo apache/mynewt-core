@@ -200,7 +200,12 @@ lwip_sock_udp_rx(void *arg, struct udp_pcb *pcb, struct pbuf *p,
       addr, port);
     off = 0;
     for (q = p; q; q = q->next) {
-        os_mbuf_copyinto(m, off, q->payload, p->len);
+        if (os_mbuf_copyinto(m, off, q->payload, q->len)) {
+            os_mbuf_free_chain(m);
+            pbuf_free(p);
+            return;
+        }
+        off += q->len;
     }
     pbuf_free(p);
     STAILQ_INSERT_TAIL(&s->ls_rx, OS_MBUF_PKTHDR(m), omp_next);
@@ -224,12 +229,22 @@ lwip_sock_tcp_rx(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
         mn_socket_readable(&s->ls_sock, MN_ECONNABORTED);
         return ERR_OK;
     }
+    /*
+     * When there is no memory for data, ERR_MEM tells lwIP to keep the pbuf
+     * and deliver it again later.  Receive window is not opened until
+     * application reads data, so sender can't overrun this.
+     */
     m = os_msys_get_pkthdr(p->tot_len, 0);
-    assert(m);
-    /* XXX fix this */
+    if (!m) {
+        return ERR_MEM;
+    }
     off = 0;
     for (q = p; q; q = q->next) {
-        os_mbuf_copyinto(m, off, q->payload, p->len);
+        if (os_mbuf_copyinto(m, off, q->payload, q->len)) {
+            os_mbuf_free_chain(m);
+            return ERR_MEM;
+        }
+        off += q->len;
     }
     pbuf_free(p);
     STAILQ_INSERT_TAIL(&s->ls_rx, OS_MBUF_PKTHDR(m), omp_next);
