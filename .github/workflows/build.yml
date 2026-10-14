@@ -70,12 +70,19 @@ jobs:
         uses: ./.github/actions/newt-project
         with:
           save-cache: true
+      # Only .git directories of repositories are packed, working trees
+      # are checked out by jobs restoring project
       - name: Pack project
         shell: bash
         run: |
              cp -r .newt-bin build/.newt-bin
-             tar -C build -cf - . | zstd -T0 -3 -o newt-project.tar.zst
-             ls -lh newt-project.tar.zst
+             cd build
+             {
+               find . -mindepth 1 -maxdepth 1 ! -name repos
+               find repos -mindepth 1 -maxdepth 1 -name '.*'
+               find repos -mindepth 2 -maxdepth 2 -name .git
+             } | tar -cf - -T - | zstd -T0 -3 -o ../newt-project.tar.zst
+             ls -lh ../newt-project.tar.zst
       - name: Upload project
         uses: actions/upload-artifact@v7
         with:
