@@ -21,12 +21,16 @@
 #include "mynewt_cm.h"
 #include "mcu/stm32_hal.h"
 #include <hal/hal_system.h>
+#include <arm_mpu.h>
 
 void SystemClock_Config(void);
 
 void
 hal_system_init(void)
 {
+    /* MPU regions declared with MPU_ARM_V7_REGION(), set before caches */
+    arm_mpu_init();
+
     /* Configure System Clock */
     SystemClock_Config();
 
