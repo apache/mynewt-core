@@ -28,9 +28,14 @@
 
 LINK_TABLE(ARM_MPU_Region_t, mpu_regions);
 
+/*
+ * Region base address is aligned to region size (at least 32 bytes) so
+ * VALID bit can be added.  Using + instead of | allows address of variable
+ * to be used, it is not compile time constant for bitwise operation.
+ */
 #define MPU_ARM_V7_REGION(name, address, rasr)                                \
     LINK_TABLE_ELEMENT(mpu_regions, name) = {                                 \
-        .RBAR = address | MPU_RBAR_VALID_Msk,                                 \
+        .RBAR = (uint32_t)(address) + MPU_RBAR_VALID_Msk,                     \
         .RASR = rasr,                                                         \
     };
 
