@@ -1,0 +1,70 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    COREMQTT_SUB_UNSUB_MAX_VECTORS:
+        description: >
+            Maximum number of topic filters in a single SUBSCRIBE or
+            UNSUBSCRIBE packet sent with a single transport writev call.
+        value: 4
+    COREMQTT_MAX_CONNACK_RECEIVE_RETRY_COUNT:
+        description: >
+            Number of receive attempts for CONNACK when MQTT_Connect() is
+            called with a timeout of 0.
+        value: 5
+    COREMQTT_PINGRESP_TIMEOUT_MS:
+        description: >
+            Time (in milliseconds) to wait for PINGRESP after sending
+            PINGREQ.
+        value: 5000
+    COREMQTT_PACKET_TX_TIMEOUT_MS:
+        description: >
+            Maximum time (in milliseconds) without any packet sent before
+            MQTT_ProcessLoop() sends PINGREQ. The keep alive interval used
+            is the smaller of this and the one negotiated with the broker.
+        value: 30000
+    COREMQTT_PACKET_RX_TIMEOUT_MS:
+        description: >
+            Maximum time (in milliseconds) without any packet received
+            before MQTT_ProcessLoop() sends PINGREQ.
+        value: 30000
+    COREMQTT_RECV_POLLING_TIMEOUT_MS:
+        description: >
+            Maximum time (in milliseconds) to keep calling transport receive
+            without getting any data once reception of a packet has started.
+        value: 10
+    COREMQTT_SEND_TIMEOUT_MS:
+        description: >
+            Maximum time (in milliseconds) allowed for sending a single
+            MQTT packet over the transport.
+        value: 20000
+
+    COREMQTT_LOG_MOD:
+        description: 'Numeric module ID to use for coreMQTT log messages.'
+        value: 160
+    COREMQTT_LOG_LVL:
+        description: >
+            Minimum level for the coreMQTT log. coreMQTT logs every packet
+            and state change at info level.
+        value: 2
+    COREMQTT_LOG_BUF_SIZE:
+        description: >
+            Size of the stack buffer used for formatting a single coreMQTT
+            log message. Longer messages are truncated.
+        value: 128
