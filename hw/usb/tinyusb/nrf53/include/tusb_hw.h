@@ -22,7 +22,22 @@
 
 #define CFG_TUSB_MCU OPT_MCU_NRF5X
 
+#include <stdbool.h>
 #include <syscfg/syscfg.h>
+
+/*
+ * TinyUSB nRF5x device driver applies nRF52840 USBD errata 199 workaround
+ * and calls nrf52_errata_199() also when built for nRF5340.  nrfx declares
+ * nRF52 errata functions for NRF52_SERIES only; the errata does not apply
+ * to nRF5340.
+ */
+#ifndef NRF52_SERIES
+static inline bool
+nrf52_errata_199(void)
+{
+    return false;
+}
+#endif
 
 #define CFG_TUSB_RHPORT0_SPEED  OPT_MODE_FULL_SPEED
 
