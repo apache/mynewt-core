@@ -123,6 +123,8 @@ hal_bsp_init(void)
 
     (void)rc;
 
+    /* FFR functions use flash geometry filled in by FLASH_Init() */
+    FLASH_Init(&config);
     FFR_Init(&config);
 
 #if MYNEWT_VAL(TIMER_0)
