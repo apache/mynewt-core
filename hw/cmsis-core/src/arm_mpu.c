@@ -34,6 +34,10 @@ arm_mpu_init(void)
     ARM_MPU_Region_t regions[8] = { 0 };
     size_t size = min(ARRAY_SIZE(regions), mpu_regions_size());
 
+    if (size == 0) {
+        return;
+    }
+
     ARM_MPU_Disable();
 
     for (size_t i = 0; i < size; ++i) {
@@ -44,6 +48,16 @@ arm_mpu_init(void)
     ARM_MPU_Load(regions, size);
 
     ARM_MPU_Enable(MPU_CTRL_PRIVDEFENA_Msk);
+
+#if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    /*
+     * Data cache could be already enabled (i.e. by boot loader) and hold
+     * lines of memory that is now non-cacheable.
+     */
+    if (SCB->CCR & SCB_CCR_DC_Msk) {
+        SCB_CleanInvalidateDCache();
+    }
+#endif
 }
 #elif (__CORTEX_M == 23) || (__CORTEX_M == 33) || (__CORTEX_M == 34) ||       \
     (__CORTEX_M == 35)
