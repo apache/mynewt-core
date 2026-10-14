@@ -33,14 +33,27 @@ hal_system_init(void)
     /* Update SystemCoreClock global variable */
     SystemCoreClockUpdate();
 
+    /*
+     * Boot loader can leave caches enabled, so cache that is not
+     * requested by configuration is disabled here.
+     */
+
     /* Enable the instruction cache */
 #if MYNEWT_VAL(STM32_ENABLE_ICACHE)
     SCB_EnableICache();
+#else
+    if (SCB->CCR & SCB_CCR_IC_Msk) {
+        SCB_DisableICache();
+    }
 #endif
 
     /* Enable the data cache */
 #if MYNEWT_VAL(STM32_ENABLE_DCACHE)
     SCB_EnableDCache();
+#else
+    if (SCB->CCR & SCB_CCR_DC_Msk) {
+        SCB_DisableDCache();
+    }
 #endif
 
     /* Relocate the vector table */
