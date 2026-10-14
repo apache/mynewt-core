@@ -21,3 +21,8 @@ syscfg.defs:
    HARDFLOAT:
        description: 'Use hardware FPU'
        value: 0
+   COMPILER_WERROR:
+       description: >
+           Treat compiler warnings as errors (-Werror). Set to 0 to have
+           warnings reported without failing the build.
+       value: 1

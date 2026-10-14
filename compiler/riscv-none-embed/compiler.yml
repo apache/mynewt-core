@@ -25,7 +25,8 @@ compiler.path.objdump: "riscv-none-embed-objdump"
 compiler.path.objsize: "riscv-none-embed-size"
 compiler.path.objcopy: "riscv-none-embed-objcopy"
 
-compiler.flags.base: [-Wall, -Werror, -Wno-format-truncation, -ffunction-sections, -fdata-sections, -fno-builtin-printf, -fno-common]
+compiler.flags.base: [-Wall, -Wno-format-truncation, -ffunction-sections, -fdata-sections, -fno-builtin-printf, -fno-common]
+compiler.flags.base.COMPILER_WERROR: [-Werror]
 compiler.flags.default: [compiler.flags.base, -O1, -ggdb]
 compiler.flags.optimized: [compiler.flags.base, -Os, -ggdb]
 compiler.flags.speed: [compiler.flags.base, -Ofast, -ggdb]

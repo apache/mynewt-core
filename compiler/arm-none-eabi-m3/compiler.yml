@@ -25,7 +25,8 @@ compiler.path.objdump: arm-none-eabi-objdump
 compiler.path.objsize: arm-none-eabi-size
 compiler.path.objcopy: arm-none-eabi-objcopy
 
-compiler.flags.base: [-mcpu=cortex-m3, -mthumb-interwork, -mthumb, -Wall, -Werror, -fno-exceptions, -ffunction-sections, -fdata-sections, -fno-common]
+compiler.flags.base: [-mcpu=cortex-m3, -mthumb-interwork, -mthumb, -Wall, -fno-exceptions, -ffunction-sections, -fdata-sections, -fno-common]
+compiler.flags.base.COMPILER_WERROR: [-Werror]
 compiler.flags.default: [compiler.flags.base, -O1, -ggdb]
 compiler.flags.optimized: [compiler.flags.base, -Os, -ggdb]
 compiler.flags.speed: [compiler.flags.base, -O3, -ggdb]
