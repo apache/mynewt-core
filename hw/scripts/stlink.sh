@@ -24,15 +24,15 @@
 stlink_sn () {
     if [ -n "$STLINK_SN" ]; then
         if [ "$STLINK_USE_STM32_PROGRAMMER_CLI" == 1 ] ; then
-            EXTRA_JTAG_CMD="sn=$STLINK_SN " $EXTRA_JTAG_CMD
+            EXTRA_JTAG_CMD="sn=$STLINK_SN $EXTRA_JTAG_CMD"
         else
-            EXTRA_JTAG_CMD="--serial $STLINK_SN " $EXTRA_JTAG_CMD
+            EXTRA_JTAG_CMD="--serial $STLINK_SN $EXTRA_JTAG_CMD"
         fi
     elif [ -n "$MYNEWT_VAL_MYNEWT_DEBUGGER_SN" ]; then
         if [ "$STLINK_USE_STM32_PROGRAMMER_CLI" == 1 ] ; then
-            EXTRA_JTAG_CMD="sn=$MYNEWT_VAL_MYNEWT_DEBUGGER_SN " $EXTRA_JTAG_CMD
+            EXTRA_JTAG_CMD="sn=$MYNEWT_VAL_MYNEWT_DEBUGGER_SN $EXTRA_JTAG_CMD"
         else
-            EXTRA_JTAG_CMD="--serial $MYNEWT_VAL_MYNEWT_DEBUGGER_SN " $EXTRA_JTAG_CMD
+            EXTRA_JTAG_CMD="--serial $MYNEWT_VAL_MYNEWT_DEBUGGER_SN $EXTRA_JTAG_CMD"
         fi
     fi
 }
