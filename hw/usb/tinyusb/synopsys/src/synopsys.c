@@ -75,7 +75,11 @@ tinyusb_hardware_init(void)
     hal_gpio_init_af(MCU_GPIO_PORTC(2), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
     hal_gpio_init_af(MCU_GPIO_PORTC(3), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
 
+#ifdef __HAL_RCC_USB1_OTG_HS_ULPI_CLK_ENABLE
     __HAL_RCC_USB1_OTG_HS_ULPI_CLK_ENABLE();
+#else
+    __HAL_RCC_USB_OTG_HS_ULPI_CLK_ENABLE();
+#endif
 #else
     /*
      * USB Pin Init
