@@ -48,3 +48,63 @@ syscfg.defs:
         description:
             Use ULPI interface
         value: 0
+    USB_ULPI_CK_PIN:
+        description: >
+            Pin used for ULPI CK signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PA5 only.
+        value: 'MCU_GPIO_PORTA(5)'
+    USB_ULPI_STP_PIN:
+        description: >
+            Pin used for ULPI STP signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PC0 only.
+        value: 'MCU_GPIO_PORTC(0)'
+    USB_ULPI_DIR_PIN:
+        description: >
+            Pin used for ULPI DIR signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PC2 or PI11.
+        value: 'MCU_GPIO_PORTC(2)'
+    USB_ULPI_NXT_PIN:
+        description: >
+            Pin used for ULPI NXT signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PC3 or PH4.
+        value: 'MCU_GPIO_PORTC(3)'
+    USB_ULPI_D0_PIN:
+        description: >
+            Pin used for ULPI D0 signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PA3 only.
+        value: 'MCU_GPIO_PORTA(3)'
+    USB_ULPI_D1_PIN:
+        description: >
+            Pin used for ULPI D1 signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PB0 only.
+        value: 'MCU_GPIO_PORTB(0)'
+    USB_ULPI_D2_PIN:
+        description: >
+            Pin used for ULPI D2 signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PB1 only.
+        value: 'MCU_GPIO_PORTB(1)'
+    USB_ULPI_D3_PIN:
+        description: >
+            Pin used for ULPI D3 signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PB10 only.
+        value: 'MCU_GPIO_PORTB(10)'
+    USB_ULPI_D4_PIN:
+        description: >
+            Pin used for ULPI D4 signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PB11, or PB2 on STM32F446.
+        value: 'MCU_GPIO_PORTB(11)'
+    USB_ULPI_D5_PIN:
+        description: >
+            Pin used for ULPI D5 signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PB12 only.
+        value: 'MCU_GPIO_PORTB(12)'
+    USB_ULPI_D6_PIN:
+        description: >
+            Pin used for ULPI D6 signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PB13 only.
+        value: 'MCU_GPIO_PORTB(13)'
+    USB_ULPI_D7_PIN:
+        description: >
+            Pin used for ULPI D7 signal (AF10). Possible pins on
+            STM32F2/F4/F7/H7: PB5 only.
+        value: 'MCU_GPIO_PORTB(5)'
