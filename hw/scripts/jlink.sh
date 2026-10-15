@@ -36,9 +36,9 @@ jlink_target_cmd () {
 
 jlink_sn () {
     if [ -n "$JLINK_SN" ]; then
-        EXTRA_JTAG_CMD="-select usb=$JLINK_SN " $EXTRA_JTAG_CMD
+        EXTRA_JTAG_CMD="-select usb=$JLINK_SN $EXTRA_JTAG_CMD"
     elif [ -n "$MYNEWT_VAL_MYNEWT_DEBUGGER_SN" ]; then
-        EXTRA_JTAG_CMD="-select usb=$MYNEWT_VAL_MYNEWT_DEBUGGER_SN " $EXTRA_JTAG_CMD
+        EXTRA_JTAG_CMD="-select usb=$MYNEWT_VAL_MYNEWT_DEBUGGER_SN $EXTRA_JTAG_CMD"
     fi
 }
 
