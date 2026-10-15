@@ -65,3 +65,21 @@ jobs:
         uses: ./.github/actions/ccache-save
         with:
           key: bootloader-main
+
+  # Separate job, so that only it has write access to caches
+  cache-cleanup:
+    name: Remove superseded caches
+    needs: bootloader
+    if: >-
+      !cancelled() && github.ref == 'refs/heads/master' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-slim
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/actions
+      - name: Remove superseded caches
+        uses: ./.github/actions/cache-cleanup
