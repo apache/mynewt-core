@@ -21,7 +21,9 @@ name: Save ccache
 description: >
   Show ccache statistics, drop cache entries not used by current job and
   save ccache directory to cache. Cache is saved only from master branch
-  since only caches from default branch are available to pull requests.
+  since only caches from default branch are available to pull requests,
+  and only if there were cache misses, since otherwise restored cache
+  already contains everything used by job.
   Supported only on Linux, does nothing on other systems.
 
 inputs:
@@ -33,14 +35,19 @@ runs:
   using: composite
   steps:
     - name: Show ccache statistics
+      id: stats
       if: runner.os == 'Linux'
       shell: bash
-      run: ccache --show-stats
+      run: |
+        ccache --show-stats
+        misses=$(ccache --print-stats | awk '$1 == "cache_miss" { print $2 }')
+        echo "misses=${misses:-unknown}" >> "$GITHUB_OUTPUT"
 
     - name: Remove unused ccache entries
       if: >-
         runner.os == 'Linux' && github.ref == 'refs/heads/master' &&
-        github.event_name != 'pull_request'
+        github.event_name != 'pull_request' &&
+        steps.stats.outputs.misses != '0'
       shell: bash
       run: |
         # Keep only entries used by this job so that cache size does not
@@ -52,7 +59,8 @@ runs:
     - name: Save ccache directory
       if: >-
         runner.os == 'Linux' && github.ref == 'refs/heads/master' &&
-        github.event_name != 'pull_request'
+        github.event_name != 'pull_request' &&
+        steps.stats.outputs.misses != '0'
       uses: actions/cache/save@v6
       with:
         path: ${{ runner.temp }}/ccache
