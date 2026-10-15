@@ -37,6 +37,23 @@
 #endif
 #define GPIO_AF_USB        MYNEWT_VAL(USB_AF_USB)
 
+#if MYNEWT_VAL(USB_USE_OTG_HS_ULPI)
+static const int ulpi_pins[] = {
+    MYNEWT_VAL(USB_ULPI_CK_PIN),
+    MYNEWT_VAL(USB_ULPI_STP_PIN),
+    MYNEWT_VAL(USB_ULPI_DIR_PIN),
+    MYNEWT_VAL(USB_ULPI_NXT_PIN),
+    MYNEWT_VAL(USB_ULPI_D0_PIN),
+    MYNEWT_VAL(USB_ULPI_D1_PIN),
+    MYNEWT_VAL(USB_ULPI_D2_PIN),
+    MYNEWT_VAL(USB_ULPI_D3_PIN),
+    MYNEWT_VAL(USB_ULPI_D4_PIN),
+    MYNEWT_VAL(USB_ULPI_D5_PIN),
+    MYNEWT_VAL(USB_ULPI_D6_PIN),
+    MYNEWT_VAL(USB_ULPI_D7_PIN),
+};
+#endif
+
 void
 OTG_HS_IRQHandler(void)
 {
@@ -62,18 +79,10 @@ tinyusb_hardware_init(void)
 #endif
     USB_OTG_CLK_ENABLE();
 #if MYNEWT_VAL(USB_USE_OTG_HS_ULPI)
-    hal_gpio_init_af(MCU_GPIO_PORTA(3), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTA(5), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTB(0), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTB(1), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTB(5), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTB(10), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTB(11), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTB(12), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTB(13), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTC(0), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTC(2), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
-    hal_gpio_init_af(MCU_GPIO_PORTC(3), 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    /* All ULPI signals use AF10 on STM32F2/F4/F7/H7 */
+    for (int i = 0; i < ARRAY_SIZE(ulpi_pins); ++i) {
+        hal_gpio_init_af(ulpi_pins[i], 10, GPIO_NOPULL, GPIO_MODE_AF_PP);
+    }
 
 #ifdef __HAL_RCC_USB1_OTG_HS_ULPI_CLK_ENABLE
     __HAL_RCC_USB1_OTG_HS_ULPI_CLK_ENABLE();
