@@ -37,6 +37,29 @@
 #endif
 #define GPIO_AF_USB        MYNEWT_VAL(USB_AF_USB)
 
+/*
+ * TinyUSB port of selected core (dwc2_stm32.h): OTG_FS is port 0, OTG_HS
+ * is port 1 when device also has OTG_FS.  On devices with OTG_HS only
+ * (STM32H72x/H73x/H7Ax/H7Bx, STM32U59x/5Ax) OTG_HS is port 0.
+ */
+#if !MYNEWT_VAL(USB_USE_OTG_HS) && !defined(USB_OTG_FS)
+#error "MCU has no USB_OTG_FS, set USB_USE_OTG_HS: 1"
+#endif
+#if MYNEWT_VAL(USB_USE_OTG_HS) && defined(USB_OTG_FS)
+#define USB_OTG_RHPORT 1
+#else
+#define USB_OTG_RHPORT 0
+#endif
+
+#if (MYNEWT_VAL_CHOICE(USBD_RHPORT, USB0) && USB_OTG_RHPORT != 0) ||          \
+    (MYNEWT_VAL_CHOICE(USBD_RHPORT, USB1) && USB_OTG_RHPORT != 1)
+#if USB_OTG_RHPORT == 0
+#error "USB core selected by USB_USE_OTG_HS requires USBD_RHPORT: USB0"
+#else
+#error "USB core selected by USB_USE_OTG_HS requires USBD_RHPORT: USB1"
+#endif
+#endif
+
 #if MYNEWT_VAL(USB_USE_OTG_HS_ULPI)
 static const int ulpi_pins[] = {
     MYNEWT_VAL(USB_ULPI_CK_PIN),
@@ -55,17 +78,10 @@ static const int ulpi_pins[] = {
 #endif
 
 void
-OTG_HS_IRQHandler(void)
+USB_OTG_IRQHandler(void)
 {
     /* TinyUSB provides interrupt handler code */
-    tud_int_handler(1);
-}
-
-void
-OTG_FS_IRQHandler(void)
-{
-    /* TinyUSB provides interrupt handler code */
-    tud_int_handler(0);
+    tud_int_handler(USB_OTG_RHPORT);
 }
 
 void
