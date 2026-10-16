@@ -59,8 +59,8 @@ jobs:
         run: |
              cd build
              cd repos/mcuboot
-             git fetch origin main:main
-             git checkout main
+             git fetch --depth=1 origin main
+             git checkout --detach FETCH_HEAD
              cd ../..
              bash ../.github/test_build_bootloader_main.sh
              newt test @mcuboot/boot/boot_serial
