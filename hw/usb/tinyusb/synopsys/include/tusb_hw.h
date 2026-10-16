@@ -124,4 +124,32 @@
 #define USBD_AUDIO_FEEDBACK_EP  0x84
 #endif
 
+/*
+ * Network class (NCM/ECM/RNDIS) endpoints.  STM32F4 OTG_FS has endpoints
+ * 0-3 only, so there the network class can not be used together with CDC.
+ */
+#if defined(MYNEWT_VAL_USBD_NET_NOTIFY_EP)
+#define USBD_NET_NOTIFY_EP      MYNEWT_VAL(USBD_NET_NOTIFY_EP)
+#elif MYNEWT_VAL(MCU_STM32F4) && !MYNEWT_VAL(USB_USE_OTG_HS)
+#define USBD_NET_NOTIFY_EP      0x83
+#else
+#define USBD_NET_NOTIFY_EP      0x84
+#endif
+
+#if defined(MYNEWT_VAL_USBD_NET_DATA_OUT_EP)
+#define USBD_NET_DATA_OUT_EP    MYNEWT_VAL(USBD_NET_DATA_OUT_EP)
+#elif MYNEWT_VAL(MCU_STM32F4) && !MYNEWT_VAL(USB_USE_OTG_HS)
+#define USBD_NET_DATA_OUT_EP    0x01
+#else
+#define USBD_NET_DATA_OUT_EP    0x05
+#endif
+
+#if defined(MYNEWT_VAL_USBD_NET_DATA_IN_EP)
+#define USBD_NET_DATA_IN_EP     MYNEWT_VAL(USBD_NET_DATA_IN_EP)
+#elif MYNEWT_VAL(MCU_STM32F4) && !MYNEWT_VAL(USB_USE_OTG_HS)
+#define USBD_NET_DATA_IN_EP     0x81
+#else
+#define USBD_NET_DATA_IN_EP     0x85
+#endif
+
 #endif

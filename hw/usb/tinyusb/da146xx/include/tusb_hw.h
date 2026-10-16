@@ -149,4 +149,27 @@ void tusb_vbus_changed(bool present);
 #define USBD_AUDIO_FEEDBACK_EP  0x83
 #endif
 
+/*
+ * Network class (NCM/ECM/RNDIS) endpoints.  Controller has four
+ * endpoints, defaults are shared with CDC so both can not be used
+ * together.
+ */
+#if defined(MYNEWT_VAL_USBD_NET_NOTIFY_EP)
+#define USBD_NET_NOTIFY_EP      MYNEWT_VAL(USBD_NET_NOTIFY_EP)
+#else
+#define USBD_NET_NOTIFY_EP      0x81
+#endif
+
+#if defined(MYNEWT_VAL_USBD_NET_DATA_OUT_EP)
+#define USBD_NET_DATA_OUT_EP    MYNEWT_VAL(USBD_NET_DATA_OUT_EP)
+#else
+#define USBD_NET_DATA_OUT_EP    0x02
+#endif
+
+#if defined(MYNEWT_VAL_USBD_NET_DATA_IN_EP)
+#define USBD_NET_DATA_IN_EP     MYNEWT_VAL(USBD_NET_DATA_IN_EP)
+#else
+#define USBD_NET_DATA_IN_EP     0x82
+#endif
+
 #endif

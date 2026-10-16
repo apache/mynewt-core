@@ -79,8 +79,19 @@ enum usb_desc_ix {
 #else
 #define AUDIO_IF_STR_IX 0
 #endif
+#if defined MYNEWT_VAL_USBD_NET_DESCRIPTOR_STRING
+    NET_IF_STR_IX,
+#else
+#define NET_IF_STR_IX   0
+#endif
 #if defined MYNEWT_VAL_USBD_DFU_SLOT_NAME
     DFU_SLOT_NAME_IF_STR_IX,
+#endif
+#if USBD_NET_MAC_STRING
+    /* Generated from tud_network_mac_address, not in string_desc_arr */
+    NET_MAC_STR_IX,
+#else
+#define NET_MAC_STR_IX  0
 #endif
 };
 
@@ -176,7 +187,14 @@ tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_t
 }
 #endif /* CFG_TUD_HID */
 
+/* Microsoft OS 2.0 descriptors for NCM, they need BOS (USB 2.01) */
+#define USBD_MS_OS20    (CFG_TUD_NCM && MYNEWT_VAL(USBD_NET_MS_OS20))
+
+#if USBD_MS_OS20
+#define USB_BCD     tu_htole16(0x201)
+#else
 #define USB_BCD     tu_htole16(0x200)
+#endif
 
 const tusb_desc_device_t desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
@@ -206,17 +224,17 @@ const tusb_desc_device_t desc_device = {
  * device qualifier is mostly similar to device descriptor since we don't change configuration based on speed.
  */
 tusb_desc_device_qualifier_t const desc_device_qualifier = {
-    .bLength            = sizeof(tusb_desc_device_t),
-    .bDescriptorType    = TUSB_DESC_DEVICE,
+    .bLength            = sizeof(tusb_desc_device_qualifier_t),
+    .bDescriptorType    = TUSB_DESC_DEVICE_QUALIFIER,
     .bcdUSB             = USB_BCD,
 
 #if CFG_TUD_BTH
     .bDeviceClass       = TUD_BT_APP_CLASS,
     .bDeviceSubClass    = TUD_BT_APP_SUBCLASS,
     .bDeviceProtocol    = TUD_BT_PROTOCOL_PRIMARY_CONTROLLER,
-#elif CFG_TUD_CDC || CFG_TUD_AUDIO
+#elif CFG_TUD_CDC || CFG_TUD_AUDIO || USBD_NET_ENABLED
     /*
-     * Use Interface Association Descriptor (IAD) for CDC and Audio
+     * Use Interface Association Descriptor (IAD) for CDC, Audio and Network
      * As required by USB Specs IAD's subclass must be common class (2) and protocol must be IAD (1)
      */
     .bDeviceClass       = TUSB_CLASS_MISC,
@@ -269,6 +287,12 @@ enum {
 #endif
 #endif
 
+#if USBD_NET_ENABLED
+    /* Windows expects RNDIS to be the first function */
+    ITF_NUM_NET,
+    ITF_NUM_NET_DATA,
+#endif
+
 #if CFG_CDC
     ITF_NUM_CDC,
     ITF_NUM_CDC_DATA,
@@ -313,7 +337,24 @@ enum {
     ITF_NUM_TOTAL
 };
 
+#if CFG_TUD_NCM
+#define USBD_NET_DESC_LEN   TUD_CDC_NCM_DESC_LEN
+#elif MYNEWT_VAL_CHOICE(USBD_NET, ECM)
+#define USBD_NET_DESC_LEN   TUD_CDC_ECM_DESC_LEN
+#elif MYNEWT_VAL_CHOICE(USBD_NET, RNDIS)
+#define USBD_NET_DESC_LEN   TUD_RNDIS_DESC_LEN
+#else
+#define USBD_NET_DESC_LEN   0
+#endif
+
+#define USBD_NET_DATA_EP_SIZE \
+    ((USBD_RHPORT_MODE & OPT_MODE_HIGH_SPEED) ? 512 : 64)
+/* NCM notification interval: 32 ms at high speed (2^(9-1) * 125 us) */
+#define USBD_NET_NOTIFY_INTERVAL \
+    ((USBD_RHPORT_MODE & OPT_MODE_HIGH_SPEED) ? 9 : 50)
+
 #define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + \
+                             USBD_NET_DESC_LEN + \
                              CFG_CDC * TUD_CDC_DESC_LEN + \
                              CFG_CDC_CONSOLE * TUD_CDC_DESC_LEN + \
                              CFG_CDC_HCI * TUD_CDC_DESC_LEN + \
@@ -334,6 +375,25 @@ const uint8_t desc_configuration[] = {
                        USBD_BTH_EVENT_EP_INTERVAL, USBD_BTH_DATA_IN_EP, USBD_BTH_DATA_OUT_EP,
                        (USBD_RHPORT_MODE & OPT_MODE_HIGH_SPEED) ? 512 : USBD_BTH_DATA_EP_SIZE,
                        0, 9, 17, 25, 33, 49),
+#endif
+
+#if CFG_TUD_NCM
+    TUD_CDC_NCM_DESCRIPTOR(ITF_NUM_NET, NET_IF_STR_IX, NET_MAC_STR_IX,
+                           USBD_NET_NOTIFY_EP, USBD_NET_NOTIFY_EP_SIZE,
+                           USBD_NET_DATA_OUT_EP, USBD_NET_DATA_IN_EP,
+                           USBD_NET_DATA_EP_SIZE, CFG_TUD_NET_MTU,
+                           USBD_NET_NOTIFY_INTERVAL,
+                           NCM_NETWORK_CAPS_ETH_FILTER |
+                           NCM_NETWORK_CAPS_NTB_INPUT_SIZE),
+#elif MYNEWT_VAL_CHOICE(USBD_NET, ECM)
+    TUD_CDC_ECM_DESCRIPTOR(ITF_NUM_NET, NET_IF_STR_IX, NET_MAC_STR_IX,
+                           USBD_NET_NOTIFY_EP, USBD_NET_NOTIFY_EP_SIZE,
+                           USBD_NET_DATA_OUT_EP, USBD_NET_DATA_IN_EP,
+                           USBD_NET_DATA_EP_SIZE, CFG_TUD_NET_MTU),
+#elif MYNEWT_VAL_CHOICE(USBD_NET, RNDIS)
+    TUD_RNDIS_DESCRIPTOR(ITF_NUM_NET, NET_IF_STR_IX, USBD_NET_NOTIFY_EP,
+                         USBD_NET_NOTIFY_EP_SIZE, USBD_NET_DATA_OUT_EP,
+                         USBD_NET_DATA_IN_EP, USBD_NET_DATA_EP_SIZE),
 #endif
 
 #if CFG_CDC_CONSOLE
@@ -380,11 +440,9 @@ const uint8_t desc_configuration[] = {
 #endif
 };
 
-#if CFG_TUD_AUDIO
-/* Audio descriptor has many parts, make sure declared length matches. */
+/* Descriptor is composed from many parts, check declared length. */
 TU_VERIFY_STATIC(sizeof(desc_configuration) == CONFIG_TOTAL_LEN,
                  "Configuration descriptor length mismatch");
-#endif
 
 /**
  * Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -423,12 +481,83 @@ const char *string_desc_arr[] = {
 #if defined MYNEWT_VAL_USBD_AUDIO_DESCRIPTOR_STRING
     MYNEWT_VAL(USBD_AUDIO_DESCRIPTOR_STRING),
 #endif
+#if defined MYNEWT_VAL_USBD_NET_DESCRIPTOR_STRING
+    MYNEWT_VAL(USBD_NET_DESCRIPTOR_STRING),
+#endif
 #if defined MYNEWT_VAL_USBD_DFU_SLOT_NAME
     MYNEWT_VAL(USBD_DFU_SLOT_NAME),
 #endif
 };
 
 static uint16_t desc_string[MYNEWT_VAL(USBD_STRING_DESCRIPTOR_MAX_LENGTH) + 1];
+
+#if USBD_MS_OS20
+
+#if MYNEWT_VAL(USBD_WINDOWS_COMP_ID)
+#error "USBD_NET_MS_OS20 can not be used with USBD_WINDOWS_COMP_ID"
+#endif
+
+#define MS_OS_20_VENDOR_CODE    0x01
+/* wIndex of GET_MS_OS_20_DESCRIPTOR vendor request */
+#define MS_OS_20_DESCRIPTOR_INDEX   0x07
+#define MS_OS_20_DESC_LEN       (0x0A + 0x08 + 0x08 + 0x14)
+#define BOS_TOTAL_LEN           (TUD_BOS_DESC_LEN + \
+                                 TUD_BOS_MICROSOFT_OS_DESC_LEN)
+
+static const uint8_t desc_bos[] = {
+    TUD_BOS_DESCRIPTOR(BOS_TOTAL_LEN, 1),
+    TUD_BOS_MS_OS_20_DESCRIPTOR(MS_OS_20_DESC_LEN, MS_OS_20_VENDOR_CODE),
+};
+
+/*
+ * Microsoft OS 2.0 descriptor set: NCM function gets WINNCM compatible ID
+ * so Windows binds its inbox NCM driver (UsbNcm) automatically.
+ */
+static const uint8_t desc_ms_os_20[] = {
+    /* Set header: length, type, Windows version (8.1+), total length */
+    U16_TO_U8S_LE(0x000A), U16_TO_U8S_LE(MS_OS_20_SET_HEADER_DESCRIPTOR),
+    U32_TO_U8S_LE(0x06030000), U16_TO_U8S_LE(MS_OS_20_DESC_LEN),
+    /* Configuration subset: length, type, config index, reserved, length */
+    U16_TO_U8S_LE(0x0008), U16_TO_U8S_LE(MS_OS_20_SUBSET_HEADER_CONFIGURATION),
+    0, 0, U16_TO_U8S_LE(MS_OS_20_DESC_LEN - 0x0A),
+    /* Function subset: length, type, first interface, reserved, length */
+    U16_TO_U8S_LE(0x0008), U16_TO_U8S_LE(MS_OS_20_SUBSET_HEADER_FUNCTION),
+    ITF_NUM_NET, 0, U16_TO_U8S_LE(MS_OS_20_DESC_LEN - 0x0A - 0x08),
+    /* Compatible ID: length, type, compatible ID, sub-compatible ID */
+    U16_TO_U8S_LE(0x0014), U16_TO_U8S_LE(MS_OS_20_FEATURE_COMPATBLE_ID),
+    'W', 'I', 'N', 'N', 'C', 'M', 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+TU_VERIFY_STATIC(sizeof(desc_ms_os_20) == MS_OS_20_DESC_LEN,
+                 "MS OS 2.0 descriptor length mismatch");
+
+/*
+ * Invoked when received GET BOS DESCRIPTOR request
+ */
+const uint8_t *
+tud_descriptor_bos_cb(void)
+{
+    return desc_bos;
+}
+
+bool
+tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage,
+                           const tusb_control_request_t *request)
+{
+    if (request->bmRequestType_bit.type != TUSB_REQ_TYPE_VENDOR ||
+        request->bRequest != MS_OS_20_VENDOR_CODE ||
+        request->wIndex != MS_OS_20_DESCRIPTOR_INDEX) {
+        return false;
+    }
+    if (stage != CONTROL_STAGE_SETUP) {
+        return true;
+    }
+
+    return tud_control_xfer(rhport, request, (void *)(uintptr_t)desc_ms_os_20,
+                            sizeof(desc_ms_os_20));
+}
+#endif /* USBD_MS_OS20 */
 
 #if MYNEWT_VAL(USBD_WINDOWS_COMP_ID)
 
@@ -557,6 +686,17 @@ tud_descriptor_string_cb(uint8_t index, uint16_t langid)
         /* TODO: Add function call to get serial number */
         desc_string[1] = '1';
         char_num = 1;
+#if USBD_NET_MAC_STRING
+    } else if (index == NET_MAC_STR_IX) {
+        /* Host side MAC address as 12 hex digits, e.g. 02A1B2C3D4E5 */
+        for (i = 0; i < 6; ++i) {
+            desc_string[1 + 2 * i] =
+                "0123456789ABCDEF"[tud_network_mac_address[i] >> 4];
+            desc_string[2 + 2 * i] =
+                "0123456789ABCDEF"[tud_network_mac_address[i] & 0x0F];
+        }
+        char_num = 12;
+#endif
     } else if (index - 2 < ARRAY_SIZE(string_desc_arr)) {
         str = string_desc_arr[index - 2];
 

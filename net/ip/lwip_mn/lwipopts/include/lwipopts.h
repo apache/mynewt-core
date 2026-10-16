@@ -29,6 +29,14 @@ extern "C" {
 #define LWIP_NETIF_TX_SINGLE_PBUF 	1
 #define LWIP_NETIF_LOOPBACK		1	/* yes loopback interface */
 
+/*
+ * Allow checksum generation and checking to be disabled per interface,
+ * e.g. for Ethernet controllers with hardware checksum offload.
+ */
+#ifndef LWIP_CHECKSUM_CTRL_PER_NETIF
+#define LWIP_CHECKSUM_CTRL_PER_NETIF    1
+#endif
+
 #define TCPIP_THREAD_PRIO		5
 #define TCPIP_THREAD_STACKSIZE	((6 * 1024) / sizeof(portSTACK_TYPE))
 #define TCPIP_MBOX_SIZE			10
@@ -78,7 +86,7 @@ extern "C" {
 #define MEMP_NUM_PBUF                   20
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
-#define MEMP_NUM_UDP_PCB                4
+#define MEMP_NUM_UDP_PCB                MYNEWT_VAL_LWIP_NUM_UDP_PCB
 
 /* MEMP_NUM_TCP_PCB: the number of simulatenously active TCP
    connections. */

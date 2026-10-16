@@ -324,6 +324,100 @@ extern "C" {
 #endif
 #endif /* CFG_TUD_AUDIO */
 
+/* ------------- Network (CDC-NCM, CDC-ECM, RNDIS) ------------- */
+/*
+ * TinyUSB has one driver for ECM and RNDIS and another one for NCM, only
+ * one of them can be enabled.  Note: CFG_TUD_NET is a deprecated TinyUSB
+ * name, USBD_NET_ENABLED is used instead.
+ */
+#if MYNEWT_VAL_CHOICE(USBD_NET, NCM)
+#define CFG_TUD_NCM                     1
+#define CFG_TUD_ECM_RNDIS               0
+#elif MYNEWT_VAL_CHOICE(USBD_NET, ECM) || MYNEWT_VAL_CHOICE(USBD_NET, RNDIS)
+#define CFG_TUD_NCM                     0
+#define CFG_TUD_ECM_RNDIS               1
+#else
+#define CFG_TUD_NCM                     0
+#define CFG_TUD_ECM_RNDIS               0
+#endif
+#define USBD_NET_ENABLED                (CFG_TUD_NCM || CFG_TUD_ECM_RNDIS)
+/* NCM and ECM report host side MAC address in a string descriptor */
+#define USBD_NET_MAC_STRING \
+    (CFG_TUD_NCM || MYNEWT_VAL_CHOICE(USBD_NET, ECM))
+
+#if USBD_NET_ENABLED
+/* Ethernet frame without FCS */
+#define CFG_TUD_NET_MTU                 1514
+
+#if !defined(USBD_NET_NOTIFY_EP) || !defined(USBD_NET_DATA_OUT_EP) || \
+    !defined(USBD_NET_DATA_IN_EP)
+#error "USB port tusb_hw.h does not define network endpoints"
+#endif
+#define USBD_NET_NOTIFY_EP_SIZE         MYNEWT_VAL(USBD_NET_NOTIFY_EP_SIZE)
+
+#if CFG_TUD_NCM
+#if MYNEWT_VAL(USBD_NET_NCM_NTB_SIZE) < 2048
+#error "USBD_NET_NCM_NTB_SIZE must be at least 2048"
+#endif
+#define CFG_TUD_NCM_IN_NTB_MAX_SIZE     MYNEWT_VAL(USBD_NET_NCM_NTB_SIZE)
+#define CFG_TUD_NCM_OUT_NTB_MAX_SIZE    MYNEWT_VAL(USBD_NET_NCM_NTB_SIZE)
+#define CFG_TUD_NCM_IN_NTB_N            MYNEWT_VAL(USBD_NET_NCM_NTB_COUNT)
+#define CFG_TUD_NCM_OUT_NTB_N           MYNEWT_VAL(USBD_NET_NCM_NTB_COUNT)
+#endif
+
+/*
+ * Network endpoints must not be used by any other enabled class.  Port
+ * defaults avoid CDC where hardware allows, other combinations may need
+ * USBD_NET_*_EP settings.
+ */
+#define USBD_NET_EP_CLASH(_ep) \
+    ((_ep) == USBD_NET_NOTIFY_EP || (_ep) == USBD_NET_DATA_OUT_EP || \
+     (_ep) == USBD_NET_DATA_IN_EP)
+#if CFG_CDC && (USBD_NET_EP_CLASH(USBD_CDC_NOTIFY_EP) || \
+                USBD_NET_EP_CLASH(USBD_CDC_DATA_OUT_EP) || \
+                USBD_NET_EP_CLASH(USBD_CDC_DATA_IN_EP))
+#error "USBD_NET endpoints collide with CDC endpoints"
+#endif
+#if CFG_CDC_CONSOLE && (USBD_NET_EP_CLASH(USBD_CDC_CONSOLE_NOTIFY_EP) || \
+                        USBD_NET_EP_CLASH(USBD_CDC_CONSOLE_DATA_OUT_EP) || \
+                        USBD_NET_EP_CLASH(USBD_CDC_CONSOLE_DATA_IN_EP))
+#error "USBD_NET endpoints collide with CDC console endpoints"
+#endif
+#if CFG_CDC_HCI && (USBD_NET_EP_CLASH(USBD_CDC_HCI_NOTIFY_EP) || \
+                    USBD_NET_EP_CLASH(USBD_CDC_HCI_DATA_OUT_EP) || \
+                    USBD_NET_EP_CLASH(USBD_CDC_HCI_DATA_IN_EP))
+#error "USBD_NET endpoints collide with CDC HCI endpoints"
+#endif
+#if CFG_TUD_HID && USBD_NET_EP_CLASH(USBD_HID_REPORT_EP)
+#error "USBD_NET endpoints collide with HID endpoint"
+#endif
+#if CFG_TUD_MSC && (USBD_NET_EP_CLASH(USBD_MSC_DATA_OUT_EP) || \
+                    USBD_NET_EP_CLASH(USBD_MSC_DATA_IN_EP))
+#error "USBD_NET endpoints collide with MSC endpoints"
+#endif
+#if CFG_TUD_BTH && (USBD_NET_EP_CLASH(USBD_BTH_EVENT_EP) || \
+                    USBD_NET_EP_CLASH(USBD_BTH_DATA_OUT_EP) || \
+                    USBD_NET_EP_CLASH(USBD_BTH_DATA_IN_EP) || \
+                    USBD_NET_EP_CLASH(USBD_BTH_DATA_OUT_EP + 1) || \
+                    USBD_NET_EP_CLASH(USBD_BTH_DATA_IN_EP + 1))
+#error "USBD_NET endpoints collide with BTH endpoints"
+#endif
+#if CFG_TUD_AUDIO_ENABLE_EP_OUT && USBD_NET_EP_CLASH(USBD_AUDIO_OUT_EP)
+#error "USBD_NET endpoints collide with audio OUT endpoint"
+#endif
+#if CFG_TUD_AUDIO_ENABLE_EP_IN && USBD_NET_EP_CLASH(USBD_AUDIO_IN_EP)
+#error "USBD_NET endpoints collide with audio IN endpoint"
+#endif
+#if CFG_TUD_AUDIO && CFG_TUD_AUDIO_ENABLE_FEEDBACK_EP && \
+    USBD_NET_EP_CLASH(USBD_AUDIO_FEEDBACK_EP)
+#error "USBD_NET endpoints collide with audio feedback endpoint"
+#endif
+#if CFG_TUD_AUDIO && CFG_TUD_AUDIO_ENABLE_INTERRUPT_EP && \
+    USBD_NET_EP_CLASH(USBD_AUDIO_INT_EP)
+#error "USBD_NET endpoints collide with audio interrupt endpoint"
+#endif
+#endif /* USBD_NET_ENABLED */
+
 #ifdef __cplusplus
 }
 #endif

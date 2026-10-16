@@ -1,0 +1,77 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    USBD_NET_IP_ADDR:
+        description: >
+            IPv4 address of the device on USB network interface.
+        value: '"192.168.7.1"'
+    USBD_NET_NETMASK:
+        description: >
+            IPv4 network mask of USB network interface.
+        value: '"255.255.255.0"'
+    USBD_NET_MAC_ADDR:
+        description: >
+            Device side MAC address as 6 comma separated bytes, e.g.
+            0x02,0x00,0x00,0x00,0x00,0x01.  Host side uses the same address
+            with last byte xor 1.  Empty: locally administered address
+            derived from hal_bsp_hw_id().
+        value:
+    USBD_NET_TX_QUEUE_LEN:
+        description: >
+            Number of outgoing frames lwIP can queue for USB transmission.
+        value: 8
+    USBD_NET_DHCP_SERVER:
+        description: >
+            Run DHCP server on USB network interface so the host gets its
+            address automatically.  Server answers only on USB interface
+            and does not offer router or DNS server.
+        value: 1
+    USBD_NET_DHCP_POOL_START:
+        description: >
+            Host part of first address leased by DHCP server, e.g. 2 gives
+            192.168.7.2 with default address and mask.
+        value: 2
+    USBD_NET_DHCP_POOL_SIZE:
+        description: >
+            Number of addresses DHCP server can lease, at most
+            DHCP_SERVER_MAX_LEASES.
+        value: 4
+        range: 1..64
+    USBD_NET_DHCP_LEASE_TIME:
+        description: DHCP lease time in seconds.
+        value: 86400
+    USBD_NET_SYSINIT_STAGE:
+        description: >
+            Sysinit stage of USB network interface.  Must be after lwIP
+            (IP_SYSINIT_STAGE) and before USB stack start
+            (USBD_SYSINIT_STAGE) since host MAC address is reported in USB
+            descriptors.
+        value: 250
+
+syscfg.vals:
+    USBD_NET: NCM
+    USBD_NET_DESCRIPTOR_STRING: '"Mynewt network"'
+
+syscfg.restrictions:
+    - '(USBD_NET == "NCM") || (USBD_NET == "ECM") || (USBD_NET == "RNDIS")'
+    # Network function uses Interface Association Descriptor
+    - 'USBD_COMPOSITE_DEVICE'
+    - 'USBD_NET_SYSINIT_STAGE > IP_SYSINIT_STAGE'
+    - 'USBD_NET_SYSINIT_STAGE < USBD_SYSINIT_STAGE'

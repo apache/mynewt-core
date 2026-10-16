@@ -1,0 +1,49 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/usb/tinyusb/net_lwip
+pkg.description: >
+    lwIP network interface for TinyUSB network function (CDC-NCM,
+    CDC-ECM or RNDIS selected with USBD_NET).
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "https://mynewt.apache.org/"
+pkg.keywords:
+    - usb
+    - tinyusb
+    - lwip
+    - ncm
+    - ecm
+    - rndis
+
+# Package provides TinyUSB callbacks that override weak defaults
+# (tud_event_hook_cb, tud_network_set_packet_filter_cb).
+pkg.whole_archive: true
+
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/net/ip/lwip_mn"
+    - "@apache-mynewt-core/hw/usb/tinyusb"
+    - "@apache-mynewt-core/hw/usb/tinyusb/std_descriptors"
+
+pkg.deps.USBD_NET_DHCP_SERVER:
+    - "@apache-mynewt-core/net/ip/dhcp_server"
+
+pkg.init:
+    usb_net_lwip_init: 'MYNEWT_VAL(USBD_NET_SYSINIT_STAGE)'

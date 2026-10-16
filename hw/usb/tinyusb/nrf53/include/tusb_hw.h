@@ -22,7 +22,22 @@
 
 #define CFG_TUSB_MCU OPT_MCU_NRF5X
 
+#include <stdbool.h>
 #include <syscfg/syscfg.h>
+
+/*
+ * TinyUSB nRF5x device driver applies nRF52840 USBD errata 199 workaround
+ * and calls nrf52_errata_199() also when built for nRF5340.  nrfx declares
+ * nRF52 errata functions for NRF52_SERIES only; the errata does not apply
+ * to nRF5340.
+ */
+#ifndef NRF52_SERIES
+static inline bool
+nrf52_errata_199(void)
+{
+    return false;
+}
+#endif
 
 #define CFG_TUSB_RHPORT0_SPEED  OPT_MODE_FULL_SPEED
 
@@ -143,6 +158,28 @@
 #define USBD_AUDIO_FEEDBACK_EP  MYNEWT_VAL(USBD_AUDIO_FEEDBACK_EP)
 #else
 #define USBD_AUDIO_FEEDBACK_EP  0x88
+#endif
+
+/*
+ * Network class (NCM/ECM/RNDIS) endpoints, clear of CDC, HID and MSC
+ * defaults.
+ */
+#if defined(MYNEWT_VAL_USBD_NET_NOTIFY_EP)
+#define USBD_NET_NOTIFY_EP      MYNEWT_VAL(USBD_NET_NOTIFY_EP)
+#else
+#define USBD_NET_NOTIFY_EP      0x84
+#endif
+
+#if defined(MYNEWT_VAL_USBD_NET_DATA_OUT_EP)
+#define USBD_NET_DATA_OUT_EP    MYNEWT_VAL(USBD_NET_DATA_OUT_EP)
+#else
+#define USBD_NET_DATA_OUT_EP    0x05
+#endif
+
+#if defined(MYNEWT_VAL_USBD_NET_DATA_IN_EP)
+#define USBD_NET_DATA_IN_EP     MYNEWT_VAL(USBD_NET_DATA_IN_EP)
+#else
+#define USBD_NET_DATA_IN_EP     0x85
 #endif
 
 #endif

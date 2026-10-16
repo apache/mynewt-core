@@ -108,4 +108,26 @@
 #define USBD_AUDIO_FEEDBACK_EP 0x85
 #endif
 
+/*
+ * Network class (NCM/ECM/RNDIS) endpoints.  Notification endpoint
+ * shares number with audio feedback endpoint default.
+ */
+#if defined(MYNEWT_VAL_USBD_NET_NOTIFY_EP)
+#define USBD_NET_NOTIFY_EP MYNEWT_VAL(USBD_NET_NOTIFY_EP)
+#else
+#define USBD_NET_NOTIFY_EP 0x85
+#endif
+
+#if defined(MYNEWT_VAL_USBD_NET_DATA_OUT_EP)
+#define USBD_NET_DATA_OUT_EP MYNEWT_VAL(USBD_NET_DATA_OUT_EP)
+#else
+#define USBD_NET_DATA_OUT_EP 0x07
+#endif
+
+#if defined(MYNEWT_VAL_USBD_NET_DATA_IN_EP)
+#define USBD_NET_DATA_IN_EP MYNEWT_VAL(USBD_NET_DATA_IN_EP)
+#else
+#define USBD_NET_DATA_IN_EP 0x87
+#endif
+
 #endif

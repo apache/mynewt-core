@@ -492,6 +492,11 @@ stm32_lwip_init(struct netif *nif)
     nif->mtu = 1500;
     nif->hwaddr_len = ETHARP_HWADDR_LEN;
     nif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
+    /*
+     * Controller inserts and verifies IP/UDP/TCP/ICMP checksums in hardware,
+     * lwIP does not need to compute them for this interface.
+     */
+    NETIF_SET_CHECKSUM_CTRL(nif, NETIF_CHECKSUM_DISABLE_ALL);
 
 #if LWIP_IGMP
     nif->flags |= NETIF_FLAG_IGMP;

@@ -38,9 +38,14 @@ pkg.include_dirs:
 pkg.source_dirs:
     - "@tinyusb/src"
 
+# Pinned to commit past 0.21.0 to get 16bedd9 ("fix(ncm): bump
+# wNdbInDivisor/wNdbOutDivisor from 1 to 4 for Windows compat"). Since
+# KB5124008 Windows UsbNcm driver rejects NDP divisor 1 and the NCM
+# device fails to start (code 10). Switch back to a release tag once one
+# includes it.
 repository.tinyusb:
     type: github
     branch: master
-    vers: 0.21.0-commit
+    vers: 16bedd901866b0e8904c19b6b61de68d66d6663a-commit
     user: hathach
     repo: tinyusb
