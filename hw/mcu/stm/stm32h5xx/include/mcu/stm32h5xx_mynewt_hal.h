@@ -48,7 +48,6 @@ struct stm32_hal_i2c_cfg {
     I2C_TypeDef *hic_i2c;
     volatile uint32_t *hic_rcc_reg; /* RCC register to modify */
     uint32_t hic_rcc_dev;           /* RCC device ID */
-    uint32_t (*get_pclk)(void);
     uint8_t hic_pin_sda;
     uint8_t hic_pin_scl;
     uint8_t hic_pin_af;
