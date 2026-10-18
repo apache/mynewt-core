@@ -99,6 +99,44 @@ i2c_reset(I2C_HandleTypeDef *hi2c)
 }
 #endif
 
+/*
+ * Returns frequency of the kernel clock of given I2C peripheral.
+ * On devices where I2C clock source is selectable in RCC, frequency is
+ * reported by HAL_RCCEx_GetPeriphCLKFreq(); if HAL does not report
+ * frequency for given instance, PCLK1 is assumed.
+ */
+uint32_t
+stm32_i2c_get_clock_freq(const I2C_TypeDef *i2c)
+{
+    uint32_t freq = 0;
+
+#if defined(I2C1) && defined(RCC_PERIPHCLK_I2C1)
+    if (i2c == I2C1) {
+        freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_I2C1);
+    }
+#endif
+#if defined(I2C2) && defined(RCC_PERIPHCLK_I2C2)
+    if (i2c == I2C2) {
+        freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_I2C2);
+    }
+#endif
+#if defined(I2C3) && defined(RCC_PERIPHCLK_I2C3)
+    if (i2c == I2C3) {
+        freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_I2C3);
+    }
+#endif
+#if defined(I2C4) && defined(RCC_PERIPHCLK_I2C4)
+    if (i2c == I2C4) {
+        freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_I2C4);
+    }
+#endif
+    if (freq == 0) {
+        freq = HAL_RCC_GetPCLK1Freq();
+    }
+
+    return freq;
+}
+
 #if !MYNEWT_VAL(STM32_HAL_I2C_HAS_CLOCKSPEED)
 #ifndef __LL_I2C_CONVERT_TIMINGS
 /* This is copy of macro from STM HAL for HALs that don't have it */
@@ -187,7 +225,9 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     if (cfg->hic_timingr) {
         init->Timing = cfg->hic_timingr;
     } else {
-        init->Timing = hal_i2c_timing(cfg->hic_speed, HAL_RCC_GetPCLK1Freq());
+        /* Standard mode if speed was not specified */
+        init->Timing = hal_i2c_timing(cfg->hic_speed ? cfg->hic_speed : 100000,
+                                      stm32_i2c_get_clock_freq(cfg->hic_i2c));
     }
 #else
     init->ClockSpeed = cfg->hic_speed;

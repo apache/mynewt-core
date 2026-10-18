@@ -41,6 +41,16 @@ extern "C" {
                  ((uint8_t)(MYNEWT_VAL(PWM_2) != 0)))
 
 uint32_t stm32_hal_timer_get_freq(void *timx);
+
+/**
+ * Get frequency of the clock that drives given I2C peripheral
+ *
+ * @param i2c I2C peripheral instance (I2C1, I2C2, ...)
+ *
+ * @return I2C kernel clock frequency in Hz
+ */
+uint32_t stm32_i2c_get_clock_freq(const I2C_TypeDef *i2c);
+
 void stm32_periph_create(void);
 
 #ifndef STM32_HAL_TIMER_TIM1_IRQ
