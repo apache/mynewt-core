@@ -25,32 +25,46 @@ syscfg.defs:
     description: 'Enable EC non-blocking operation'
     value: 0
   MBEDTLS_ECP_DP_SECP192R1:
+    description: 'NIST P-192 (secp192r1) curve'
     value: 0
   MBEDTLS_ECP_DP_SECP224R1:
+    description: 'NIST P-224 (secp224r1) curve'
     value: 0
   MBEDTLS_ECP_DP_SECP256R1:
+    description: 'NIST P-256 (secp256r1) curve'
     value: 1
   MBEDTLS_ECP_DP_SECP384R1:
+    description: 'NIST P-384 (secp384r1) curve'
     value: 0
   MBEDTLS_ECP_DP_SECP521R1:
+    description: 'NIST P-521 (secp521r1) curve'
     value: 0
   MBEDTLS_ECP_DP_SECP192K1:
+    description: 'Koblitz secp192k1 curve'
     value: 0
   MBEDTLS_ECP_DP_SECP224K1:
+    description: 'Koblitz secp224k1 curve'
     value: 0
   MBEDTLS_ECP_DP_SECP256K1:
+    description: 'Koblitz secp256k1 curve'
     value: 0
   MBEDTLS_ECP_DP_BP256R1:
+    description: 'Brainpool brainpoolP256r1 curve'
     value: 0
   MBEDTLS_ECP_DP_BP384R1:
+    description: 'Brainpool brainpoolP384r1 curve'
     value: 0
   MBEDTLS_ECP_DP_BP512R1:
+    description: 'Brainpool brainpoolP512r1 curve'
     value: 0
   MBEDTLS_ECP_DP_CURVE25519:
+    description: 'Curve25519 (ECDH only)'
     value: 0
   MBEDTLS_ECP_DP_CURVE448:
+    description: 'Curve448 (ECDH only)'
     value: 0
   MBEDTLS_ECJPAKE_C:
+    description: 'Elliptic curve J-PAKE'
     value: 0
 
   # ECDH
@@ -77,14 +91,19 @@ syscfg.defs:
     description: 'Set to enable HW based AES'
     value: 0
   MBEDTLS_AES_C:
+    description: 'AES block cipher'
     value: 1
   MBEDTLS_AES_ROM_TABLES:
+    description: 'Store AES tables in ROM instead of generating them in RAM'
     value: 0
   MBEDTLS_AES_FEWER_TABLES:
+    description: 'Use smaller AES tables (slower)'
     value: 0
   MBEDTLS_ARIA_C:
+    description: 'ARIA block cipher'
     value: 0
   MBEDTLS_CAMELLIA_C:
+    description: 'Camellia block cipher'
     value: 0
   MBEDTLS_DES_C:
     description: '3DES'
@@ -92,36 +111,48 @@ syscfg.defs:
 
   # Random number generator based on AES-256
   MBEDTLS_CTR_DRBG_C:
+    description: 'CTR_DRBG random generator based on AES'
     value: 0
 
   # NIST key-wrap algo
   MBEDTLS_NIST_KW_C:
+    description: 'NIST AES key wrapping (KW and KWP)'
     value: 0
 
   # Stream ciphers
   MBEDTLS_CHACHA20_C:
+    description: 'ChaCha20 stream cipher'
     value: 0
   MBEDTLS_CHACHAPOLY_C:
+    description: 'ChaCha20-Poly1305 AEAD'
     value: 0
 
   # MAC
   MBEDTLS_CMAC_C:
+    description: 'CMAC message authentication code'
     value: 0
   MBEDTLS_POLY1305_C:
+    description: 'Poly1305 message authentication code'
     value: 0
 
   # Cipher modes
   MBEDTLS_CIPHER_MODE_CBC:
+    description: 'Cipher Block Chaining mode for block ciphers'
     value: 0
   MBEDTLS_CIPHER_MODE_CFB:
+    description: 'Cipher Feedback mode for block ciphers'
     value: 0
   MBEDTLS_CIPHER_MODE_CTR:
+    description: 'Counter mode for block ciphers'
     value: 0
   MBEDTLS_CIPHER_MODE_OFB:
+    description: 'Output Feedback mode for block ciphers'
     value: 0
   MBEDTLS_CIPHER_MODE_XTS:
+    description: 'XTS mode for AES'
     value: 0
   MBEDTLS_CCM_C:
+    description: 'Counter with CBC-MAC mode for block ciphers'
     value: 0
 
   # Hash functions
@@ -129,60 +160,79 @@ syscfg.defs:
     description: 'Set to enable HW based HASH'
     value: 0
   MBEDTLS_SHA256_C:
+    description: 'SHA-256 hash function'
     value: 1
   MBEDTLS_MD5_C:
+    description: 'MD5 hash function'
     value: 0
   MBEDTLS_SHA1_C:
+    description: 'SHA-1 hash function'
     value: 0
   MBEDTLS_SHA512_C:
+    description: 'SHA-512 hash function'
     value: 0
   MBEDTLS_RIPEMD160_C:
+    description: 'RIPEMD-160 hash function'
     value: 0
 
   # HKDF
   MBEDTLS_HKDF_C:
+    description: 'HMAC-based key derivation function (HKDF)'
     value: 0
 
   # base64 encoding (required for PEM)
   MBEDTLS_BASE64_C:
+    description: 'Base64 encoding and decoding'
     value: 1
 
   # Timing interface - FIXME: better disable by default?
   MBEDTLS_TIMING_C:
+    description: 'Portable timing interface'
     value: 0
 
   MBEDTLS_ENTROPY_C:
+    description: 'Generic entropy pool'
     value: 1
 
   # Default value for hardware backed entropy source.
   # Override from app's syscfg
   MBEDTLS_ENTROPY_HARDWARE_ALT:
+    description: 'Hardware entropy source provided by mbedtls_hardware_poll()'
     value: 0
 
   # PKCS#1 v1.5 not supported by MCUBoot
   MBEDTLS_PKCS1_V15:
+    description: 'PKCS#1 v1.5 encoding'
     value: 1
   MBEDTLS_PKCS1_V21:
+    description: 'PKCS#1 v2.1 encoding (OAEP and PSS)'
     value: 1
 
   # Prime numbers generation
   MBEDTLS_GENPRIME:
+    description: 'Prime number generation'
     value: 0
 
   # Key-exchange mechanisms
   MBEDTLS_KEY_EXCHANGE_DHE_RSA_ENABLED:
+    description: 'DHE-RSA key exchange in TLS'
     value: 0
   MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED:
+    description: 'ECDHE-RSA key exchange in TLS'
     value: 0
   MBEDTLS_KEY_EXCHANGE_RSA_PSK_ENABLED:
+    description: 'RSA-PSK key exchange in TLS'
     value: 0
   MBEDTLS_KEY_EXCHANGE_RSA_ENABLED:
+    description: 'RSA key exchange in TLS'
     value: 0
 
   # SSL/TLS support
   MBEDTLS_SSL_TLS_C:
+    description: 'SSL/TLS client and server'
     value: 0
 
   # MPI
   MBEDTLS_MPI_MAX_SIZE:
+    description: 'Maximum number of bytes for usable MPIs'
     value: 1024
