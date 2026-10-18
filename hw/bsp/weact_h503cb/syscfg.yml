@@ -1,0 +1,109 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    FLASH_LAYOUT:
+        choices:
+            - default
+            - no_bootloader
+            - bootloader_and_spiflash_1m
+            - bootloader_and_spiflash_8m
+        value: default
+syscfg.defs.'(FLASH_LAYOUT=="no_bootloader")':
+    BOOT_LOADER:
+        description: 'Build everything as bootloader'
+        value: 0
+
+syscfg.vals:
+    STM32_FLASH_SIZE_KB: 128
+    STM32_FLASH_NUM_AREAS: 16
+    MCU_RAM_START: 0x20000000
+    MCU_RAM_SIZE: 32K
+    MCU_TARGET: STM32H503
+    STM32_CLOCK_VOLTAGESCALING_CONFIG: 'PWR_REGULATOR_VOLTAGE_SCALE0'
+    STM32_CLOCK_HSI: 1
+    STM32_CLOCK_HSE: 1
+    STM32_CLOCK_HSE_BYPASS: 0
+    STM32_CLOCK_PLL1: 1
+    STM32_CLOCK_PLL1_SOURCE: LL_RCC_PLL1SOURCE_HSE
+    STM32_CLOCK_PLL1_PLLM: 4
+    STM32_CLOCK_PLL1_PLLN: 250
+    STM32_CLOCK_PLL1_PLLP: 2
+    STM32_CLOCK_PLL1_PLLQ: 10
+    STM32_CLOCK_PLL1_PLLR: 2
+    STM32_CLOCK_PLL1_RGE: 'RCC_PLL1_VCIRANGE_1'
+    STM32_CLOCK_AHB_DIVIDER: 'RCC_SYSCLK_DIV1'
+    STM32_CLOCK_APB1_DIVIDER: 'RCC_HCLK_DIV1'
+    STM32_CLOCK_APB2_DIVIDER: 'RCC_HCLK_DIV1'
+    STM32_CLOCK_APB3_DIVIDER: 'RCC_HCLK_DIV1'
+    STM32_FLASH_LATENCY: 'FLASH_LATENCY_6'
+    STM32_CLOCK_SYSCLK_SOURCE: LL_RCC_SYS_CLKSOURCE_PLL1
+    STM32_ENABLE_ICACHE: 1
+    WATCHDOG_INTERVAL: 28000
+    UART_0: 0
+    UART_1_PIN_TX: 'MCU_GPIO_PORTA(9)'
+    UART_1_PIN_RX: 'MCU_GPIO_PORTA(10)'
+    UART_2_PIN_TX: 'MCU_GPIO_PORTA(2)'
+    UART_2_PIN_RX: 'MCU_GPIO_PORTA(3)'
+    SPI_0_PIN_SS: 'MCU_GPIO_PORTA(4)'
+    SPI_0_PIN_SCK: 'MCU_GPIO_PORTA(5)'
+    SPI_0_PIN_MISO: 'MCU_GPIO_PORTA(6)'
+    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTA(7)'
+    I2C_0_PIN_SCL: 'MCU_GPIO_PORTB(8)'
+    I2C_0_PIN_SDA: 'MCU_GPIO_PORTB(9)'
+    TIMER_0_TIM: 'TIM2'
+    TIMER_1_TIM: 'TIM3'
+    TIMER_2_TIM: 'TIM6'
+
+    BOOTUTIL_SINGLE_APPLICATION_SLOT: 1
+    BOOTUTIL_OVERWRITE_ONLY: 1
+    # Flasher parameters
+    MYNEWT_DOWNLOADER: stm32_programmer_cli
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
+    JLINK_TARGET: STM32H503CB
+
+# External SPI flash connected to SPI1 (PA4-PA7)
+syscfg.vals.'(FLASH_LAYOUT=="bootloader_and_spiflash_1m" || FLASH_LAYOUT=="bootloader_and_spiflash_8m")':
+    SPI_0_MASTER: 1
+    SPIFLASH: 1
+    SPIFLASH_SPI_NUM: 0
+    SPIFLASH_SPI_CS_PIN: 'MCU_GPIO_PORTA(4)'
+    SPIFLASH_SPI_MODE: 0
+    SPIFLASH_BAUDRATE: 8000
+    SPIFLASH_SECTOR_SIZE: 4096
+    SPIFLASH_PAGE_SIZE: 256
+    # Chip is detected at runtime from the list below
+    SPIFLASH_W25Q64JV: 1
+    SPIFLASH_W25Q128JV: 1
+    SPIFLASH_W25Q128JW: 1
+    SPIFLASH_W25Q128JW_IQ: 1
+
+syscfg.vals.'(FLASH_LAYOUT=="bootloader_and_spiflash_1m")':
+    SPIFLASH_SECTOR_COUNT: 256
+    SPIFLASH_W25Q80DV: 1
+    SPIFLASH_W25Q32JV: 1
+
+syscfg.vals.'(FLASH_LAYOUT=="bootloader_and_spiflash_8m")':
+    SPIFLASH_SECTOR_COUNT: 2048
+
+syscfg.vals.'(FLASH_LAYOUT=="bootloader_and_spiflash_1m" || FLASH_LAYOUT=="bootloader_and_spiflash_8m") && REBOOT_LOG_FCB':
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+
+syscfg.vals.'(FLASH_LAYOUT=="bootloader_and_spiflash_1m" || FLASH_LAYOUT=="bootloader_and_spiflash_8m") && NFFS':
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS

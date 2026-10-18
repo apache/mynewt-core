@@ -230,6 +230,7 @@ hw/bsp/stm32f4discovery/include/bsp/stm32f4xx_hal_conf.h
 hw/bsp/stm32f7discovery/include/bsp/stm32f7xx_hal_conf.h
 hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
 hw/bsp/weact_g431cb/include/bsp/stm32g4xx_hal_conf.h
+hw/bsp/weact_h503cb/include/bsp/stm32h5xx_hal_conf.h
 
 # baselibc - BSD License.
 # tinyprintf - BSD License.
