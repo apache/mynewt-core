@@ -57,7 +57,6 @@ extern "C" {
 #define MBEDTLS_ECDSA_SIGN_ALT          /* Enable alternative sign() */
 #define MBEDTLS_ECDSA_VERIFY_ALT        /* Enable alternative verify() */
 #define MBEDTLS_ECDSA_GENKEY_ALT        /* Enable alternative genkey() */
-#define MBEDTLS_BIGNUM_ALT              /* Enable alternative MPI implementation */
 
 /**
  * \name SECTION: Module configuration options
@@ -278,19 +277,9 @@ extern "C" {
 #define MBEDTLS_AES_FEWER_TABLES
 #endif
 
-#undef MBEDTLS_ARC4_C
-#if MYNEWT_VAL(MBEDTLS_ARC4_C)
-#define MBEDTLS_ARC4_C
-#endif
-
 #undef MBEDTLS_ARIA_C
 #if MYNEWT_VAL(MBEDTLS_ARIA_C)
 #define MBEDTLS_ARIA_C
-#endif
-
-#undef MBEDTLS_BLOWFISH_C
-#if MYNEWT_VAL(MBEDTLS_BLOWFISH_C)
-#define MBEDTLS_BLOWFISH_C
 #endif
 
 #undef MBEDTLS_CAMELLIA_C
@@ -373,16 +362,6 @@ extern "C" {
 #define MBEDTLS_SHA256_C
 #endif
 
-#undef MBEDTLS_MD2_C
-#if MYNEWT_VAL(MBEDTLS_MD2_C)
-#define MBEDTLS_MD2_C
-#endif
-
-#undef MBEDTLS_MD4_C
-#if MYNEWT_VAL(MBEDTLS_MD4_C)
-#define MBEDTLS_MD4_C
-#endif
-
 #undef MBEDTLS_MD5_C
 #if MYNEWT_VAL(MBEDTLS_MD5_C)
 #define MBEDTLS_MD5_C
@@ -401,15 +380,6 @@ extern "C" {
 #undef MBEDTLS_RIPEMD160_C
 #if MYNEWT_VAL(MBEDTLS_RIPEMD160_C)
 #define MBEDTLS_RIPEMD160_C
-#endif
-
-#undef MBEDTLS_SSL_PROTO_TLS1
-#undef MBEDTLS_SSL_PROTO_TLS1_1
-#undef MBEDTLS_SSL_CBC_RECORD_SPLITTING
-#if MYNEWT_VAL(MBEDTLS_MD5_C) && MYNEWT_VAL(MBEDTLS_SHA1_C)
-#define MBEDTLS_SSL_PROTO_TLS1
-#define MBEDTLS_SSL_PROTO_TLS1_1
-#define MBEDTLS_SSL_CBC_RECORD_SPLITTING
 #endif
 
 #undef MBEDTLS_HKDF_C
@@ -476,24 +446,17 @@ extern "C" {
 #undef MBEDTLS_SSL_CLI_C
 #undef MBEDTLS_SSL_SRV_C
 #undef MBEDTLS_SSL_DTLS_ANTI_REPLAY
-#undef MBEDTLS_SSL_DTLS_BADMAC_LIMIT
 #if MYNEWT_VAL(MBEDTLS_SSL_TLS_C)
 #define MBEDTLS_SSL_TLS_C
 #define MBEDTLS_SSL_CLI_C
 #define MBEDTLS_SSL_SRV_C
 #define MBEDTLS_SSL_DTLS_ANTI_REPLAY
-#define MBEDTLS_SSL_DTLS_BADMAC_LIMIT
 #endif
 
 #if MYNEWT_VAL(MBEDTLS_MPI_MAX_SIZE) == 0
 #define MBEDTLS_MPI_MAX_SIZE 1024
 #else
 #define MBEDTLS_MPI_MAX_SIZE MYNEWT_VAL(MBEDTLS_MPI_MAX_SIZE)
-#endif
-
-#undef MBEDTLS_BIGNUM_ALT
-#if MYNEWT_VAL(MBEDTLS_BIGNUM_ALT)
-#define MBEDTLS_BIGNUM_ALT
 #endif
 
 /* TODO configure when supported */

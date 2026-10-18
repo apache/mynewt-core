@@ -82,11 +82,7 @@ syscfg.defs:
     value: 0
   MBEDTLS_AES_FEWER_TABLES:
     value: 0
-  MBEDTLS_ARC4_C:
-    value: 0
   MBEDTLS_ARIA_C:
-    value: 0
-  MBEDTLS_BLOWFISH_C:
     value: 0
   MBEDTLS_CAMELLIA_C:
     value: 0
@@ -134,10 +130,6 @@ syscfg.defs:
     value: 0
   MBEDTLS_SHA256_C:
     value: 1
-  MBEDTLS_MD2_C:
-    value: 0
-  MBEDTLS_MD4_C:
-    value: 0
   MBEDTLS_MD5_C:
     value: 0
   MBEDTLS_SHA1_C:
@@ -194,5 +186,3 @@ syscfg.defs:
   # MPI
   MBEDTLS_MPI_MAX_SIZE:
     value: 1024
-  MBEDTLS_BIGNUM_ALT:
-    value: 0
