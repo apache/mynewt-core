@@ -38,7 +38,20 @@ syscfg.defs:
             - nrfutil
             # Renesas ezFlashCLI for DA146x devices
             - ezflashcli
+            # Microchip MPLAB IPE command line (ipecmd) with PICkit, Snap, ICD
+            - mplab_ipe
             - bsp_downloader
+        value:
+    MYNEWT_DOWNLOADER_MPLAB_TOOL:
+        description: >
+            Programmer used by mplab_ipe downloader as passed to ipecmd
+            with -TP option (PK3, PK4, PK5, SNAP, ICD3, ICD4, ICD5).
+        value: PK4
+    MYNEWT_DOWNLOADER_MPLAB_DEVICE:
+        description: >
+            Device name used by mplab_ipe downloader as passed to ipecmd
+            with -P option (e.g. 32MZ2048EFM144). If not set, PIC32
+            download script uses JLINK_TARGET without PIC prefix.
         value:
     MYNEWT_DOWNLOADER_SCRIPT:
         description: >
