@@ -23,7 +23,7 @@ bsp.maker: "Olimex"
 
 bsp.arch: pic32
 bsp.compiler: "@apache-mynewt-core/compiler/xc32"
-bsp.downloadscript: "hw/bsp/olimex-pic32-hmz144/download.sh"
+bsp.downloadscript: "hw/scripts/pic32_download.sh"
 bsp.debugscript: "hw/bsp/olimex-pic32-hmz144/debug.sh"
 bsp.linkerscript:
     - "@apache-mynewt-core/hw/mcu/microchip/pic32mz/p32mz_app.ld"
