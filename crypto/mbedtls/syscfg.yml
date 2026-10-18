@@ -17,13 +17,100 @@
 #
 
 syscfg.defs:
+  # Core modules
+  MBEDTLS_ASN1_PARSE_C:
+    description: 'Generic ASN1 parser'
+    value: 1
+  MBEDTLS_ASN1_WRITE_C:
+    description: 'Generic ASN1 writer'
+    value: 1
+  MBEDTLS_OID_C:
+    description: 'OID database'
+    value: 1
+  MBEDTLS_CIPHER_C:
+    description: 'Generic cipher layer'
+    value: 1
+  MBEDTLS_MD_C:
+    description: 'Generic message digest layer'
+    value: 1
+  MBEDTLS_ERROR_C:
+    description: 'Error code to error string conversion'
+    value: 1
+  MBEDTLS_ERROR_STRERROR_DUMMY:
+    description: 'Dummy mbedtls_strerror() when MBEDTLS_ERROR_C is disabled'
+    value: 1
+  MBEDTLS_DEBUG_C:
+    description: 'Debug functions'
+    value: 1
+  MBEDTLS_VERSION_C:
+    description: 'Run-time version information'
+    value: 1
+  MBEDTLS_VERSION_FEATURES:
+    description: 'Run-time checking of compile-time features'
+    value: 1
+  MBEDTLS_MEMORY_BUFFER_ALLOC_C:
+    description: 'Buffer allocator'
+    value: 0
+  MBEDTLS_THREADING_C:
+    description: 'Threading abstraction layer'
+    value: 0
+
+  # base64 encoding (required for PEM)
+  MBEDTLS_BASE64_C:
+    description: 'Base64 encoding and decoding'
+    value: 1
+
+  # Timing interface - FIXME: better disable by default?
+  MBEDTLS_TIMING_C:
+    description: 'Portable timing interface'
+    value: 0
+
+  # Hardware acceleration (x86 and Armv8-A only)
+  MBEDTLS_AESNI_C:
+    description: 'AES-NI x86-64 acceleration'
+    value: 1
+  MBEDTLS_AESCE_C:
+    description: 'Armv8-A AES crypto extension acceleration'
+    value: 1
+  MBEDTLS_PADLOCK_C:
+    description: 'VIA Padlock x86 acceleration'
+    value: 1
+
+  # MPI
+  MBEDTLS_BIGNUM_C:
+    description: 'Multi-precision integer library'
+    value: 1
+  MBEDTLS_MPI_MAX_SIZE:
+    description: 'Maximum number of bytes for usable MPIs'
+    value: 1024
+  MBEDTLS_MPI_WINDOW_SIZE:
+    description: 'Maximum window size used for modular exponentiation'
+    value: 3
+
+  # Prime numbers generation
+  MBEDTLS_GENPRIME:
+    description: 'Prime number generation'
+    value: 0
+
   # Eliptic curves
+  MBEDTLS_ECP_C:
+    description: 'Elliptic curve over GF(p)'
+    value: 1
   MBEDTLS_ECP_ALT:
     description: 'Enable alternative EC point implementation'
     value: 0
   MBEDTLS_ECP_RESTARTABLE:
     description: 'Enable EC non-blocking operation'
     value: 0
+  MBEDTLS_ECP_NIST_OPTIM:
+    description: 'Fast reduction for NIST curves'
+    value: 1
+  MBEDTLS_ECP_WINDOW_SIZE:
+    description: 'Maximum window size used for EC point multiplication'
+    value: 4
+  MBEDTLS_ECP_FIXED_POINT_OPTIM:
+    description: 'Fixed-point speed-up for EC point multiplication'
+    value: 1
   MBEDTLS_ECP_DP_SECP192R1:
     description: 'NIST P-192 (secp192r1) curve'
     value: 0
@@ -68,6 +155,9 @@ syscfg.defs:
     value: 0
 
   # ECDH
+  MBEDTLS_ECDH_C:
+    description: 'Elliptic curve Diffie-Hellman'
+    value: 1
   MBEDTLS_ECDH_GEN_PUBLIC_ALT:
     description: 'ECDH alternative public key generation implementation'
     value: 0
@@ -76,6 +166,12 @@ syscfg.defs:
     value: 0
 
   # ECDSA
+  MBEDTLS_ECDSA_C:
+    description: 'Elliptic curve DSA'
+    value: 1
+  MBEDTLS_ECDSA_DETERMINISTIC:
+    description: 'Deterministic ECDSA (RFC 6979), requires HMAC_DRBG'
+    value: 1
   MBEDTLS_ECDSA_SIGN_ALT:
     description: 'ECDSA alternative sign implementation'
     value: 0
@@ -85,6 +181,56 @@ syscfg.defs:
   MBEDTLS_ECDSA_GENKEY_ALT:
     description: 'ECDSA alternative genkey implementation'
     value: 0
+
+  # RSA
+  MBEDTLS_RSA_C:
+    description: 'RSA public key cryptosystem'
+    value: 1
+
+  # PKCS#1 v1.5 not supported by MCUBoot
+  MBEDTLS_PKCS1_V15:
+    description: 'PKCS#1 v1.5 encoding'
+    value: 1
+  MBEDTLS_PKCS1_V21:
+    description: 'PKCS#1 v2.1 encoding (OAEP and PSS)'
+    value: 1
+
+  # Diffie-Hellman-Merkle
+  MBEDTLS_DHM_C:
+    description: 'Diffie-Hellman-Merkle key exchange'
+    value: 1
+
+  # Public key
+  MBEDTLS_PK_C:
+    description: 'Generic public key wrapper'
+    value: 1
+  MBEDTLS_PK_PARSE_C:
+    description: 'Public key parsing'
+    value: 1
+  MBEDTLS_PK_PARSE_EC_EXTENDED:
+    description: 'Parse EC keys with explicit curve parameters'
+    value: 1
+  MBEDTLS_PK_PARSE_EC_COMPRESSED:
+    description: 'Parse EC keys in compressed format'
+    value: 1
+  MBEDTLS_PK_WRITE_C:
+    description: 'Public key writing'
+    value: 1
+  MBEDTLS_PEM_PARSE_C:
+    description: 'PEM parsing'
+    value: 1
+  MBEDTLS_PEM_WRITE_C:
+    description: 'PEM writing'
+    value: 1
+  MBEDTLS_PKCS5_C:
+    description: 'PKCS#5 functions'
+    value: 1
+  MBEDTLS_PKCS7_C:
+    description: 'PKCS#7 parsing'
+    value: 1
+  MBEDTLS_PKCS12_C:
+    description: 'PKCS#12 PBE functions'
+    value: 1
 
   # Ciphers
   MBEDTLS_AES_ALT:
@@ -99,19 +245,20 @@ syscfg.defs:
   MBEDTLS_AES_FEWER_TABLES:
     description: 'Use smaller AES tables (slower)'
     value: 0
+  MBEDTLS_AES_ONLY_128_BIT_KEY_LENGTH:
+    description: 'Support only 128-bit AES keys'
+    value: 0
   MBEDTLS_ARIA_C:
     description: 'ARIA block cipher'
     value: 0
   MBEDTLS_CAMELLIA_C:
     description: 'Camellia block cipher'
     value: 0
+  MBEDTLS_CAMELLIA_SMALL_MEMORY:
+    description: 'Smaller Camellia implementation (slower)'
+    value: 0
   MBEDTLS_DES_C:
     description: '3DES'
-    value: 0
-
-  # Random number generator based on AES-256
-  MBEDTLS_CTR_DRBG_C:
-    description: 'CTR_DRBG random generator based on AES'
     value: 0
 
   # NIST key-wrap algo
@@ -154,6 +301,12 @@ syscfg.defs:
   MBEDTLS_CCM_C:
     description: 'Counter with CBC-MAC mode for block ciphers'
     value: 0
+  MBEDTLS_GCM_C:
+    description: 'Galois/Counter Mode for AES'
+    value: 1
+  MBEDTLS_GCM_LARGE_TABLE:
+    description: 'Use 4-bit tables for GCM multiplication (faster, more RAM)'
+    value: 0
 
   # Hash functions
   MBEDTLS_SHA256_ALT:
@@ -162,14 +315,29 @@ syscfg.defs:
   MBEDTLS_SHA256_C:
     description: 'SHA-256 hash function'
     value: 1
+  MBEDTLS_SHA256_SMALLER:
+    description: 'Smaller SHA-256 implementation (slower)'
+    value: 1
+  MBEDTLS_SHA224_C:
+    description: 'SHA-224 hash function'
+    value: 1
+  MBEDTLS_SHA512_C:
+    description: 'SHA-512 hash function'
+    value: 0
+  MBEDTLS_SHA512_SMALLER:
+    description: 'Smaller SHA-512 implementation (slower)'
+    value: 0
+  MBEDTLS_SHA384_C:
+    description: 'SHA-384 hash function (uses SHA-512 code)'
+    value: 1
+  MBEDTLS_SHA3_C:
+    description: 'SHA-3 hash functions'
+    value: 1
   MBEDTLS_MD5_C:
     description: 'MD5 hash function'
     value: 0
   MBEDTLS_SHA1_C:
     description: 'SHA-1 hash function'
-    value: 0
-  MBEDTLS_SHA512_C:
-    description: 'SHA-512 hash function'
     value: 0
   MBEDTLS_RIPEMD160_C:
     description: 'RIPEMD-160 hash function'
@@ -180,16 +348,30 @@ syscfg.defs:
     description: 'HMAC-based key derivation function (HKDF)'
     value: 0
 
-  # base64 encoding (required for PEM)
-  MBEDTLS_BASE64_C:
-    description: 'Base64 encoding and decoding'
-    value: 1
-
-  # Timing interface - FIXME: better disable by default?
-  MBEDTLS_TIMING_C:
-    description: 'Portable timing interface'
+  # Random number generators
+  MBEDTLS_CTR_DRBG_C:
+    description: 'CTR_DRBG random generator based on AES'
     value: 0
+  MBEDTLS_CTR_DRBG_USE_128_BIT_KEY:
+    description: 'Use AES-128 instead of AES-256 in CTR_DRBG'
+    value: 0
+  MBEDTLS_CTR_DRBG_RESEED_INTERVAL:
+    description: 'CTR_DRBG interval before reseed is performed'
+    value: 10000
+  MBEDTLS_CTR_DRBG_MAX_REQUEST:
+    description: 'CTR_DRBG maximum number of bytes per request'
+    value: 1024
+  MBEDTLS_HMAC_DRBG_C:
+    description: 'HMAC_DRBG random generator'
+    value: 1
+  MBEDTLS_HMAC_DRBG_RESEED_INTERVAL:
+    description: 'HMAC_DRBG interval before reseed is performed'
+    value: 10000
+  MBEDTLS_HMAC_DRBG_MAX_REQUEST:
+    description: 'HMAC_DRBG maximum number of bytes per request'
+    value: 1024
 
+  # Entropy
   MBEDTLS_ENTROPY_C:
     description: 'Generic entropy pool'
     value: 1
@@ -200,18 +382,28 @@ syscfg.defs:
     description: 'Hardware entropy source provided by mbedtls_hardware_poll()'
     value: 0
 
-  # PKCS#1 v1.5 not supported by MCUBoot
-  MBEDTLS_PKCS1_V15:
-    description: 'PKCS#1 v1.5 encoding'
+  # X.509
+  MBEDTLS_X509_USE_C:
+    description: 'X.509 core for using certificates'
     value: 1
-  MBEDTLS_PKCS1_V21:
-    description: 'PKCS#1 v2.1 encoding (OAEP and PSS)'
+  MBEDTLS_X509_CRT_PARSE_C:
+    description: 'X.509 certificate parsing'
     value: 1
-
-  # Prime numbers generation
-  MBEDTLS_GENPRIME:
-    description: 'Prime number generation'
-    value: 0
+  MBEDTLS_X509_CRL_PARSE_C:
+    description: 'X.509 CRL parsing'
+    value: 1
+  MBEDTLS_X509_CSR_PARSE_C:
+    description: 'X.509 CSR parsing'
+    value: 1
+  MBEDTLS_X509_CREATE_C:
+    description: 'X.509 core for creating certificates'
+    value: 1
+  MBEDTLS_X509_CRT_WRITE_C:
+    description: 'X.509 certificate writing'
+    value: 1
+  MBEDTLS_X509_CSR_WRITE_C:
+    description: 'X.509 CSR writing'
+    value: 1
 
   # Key-exchange mechanisms
   MBEDTLS_KEY_EXCHANGE_DHE_RSA_ENABLED:
@@ -231,8 +423,12 @@ syscfg.defs:
   MBEDTLS_SSL_TLS_C:
     description: 'SSL/TLS client and server'
     value: 0
-
-  # MPI
-  MBEDTLS_MPI_MAX_SIZE:
-    description: 'Maximum number of bytes for usable MPIs'
-    value: 1024
+  MBEDTLS_SSL_CACHE_C:
+    description: 'Simple SSL cache'
+    value: 1
+  MBEDTLS_SSL_COOKIE_C:
+    description: 'DTLS hello cookie support'
+    value: 1
+  MBEDTLS_SSL_TICKET_C:
+    description: 'TLS server-side session tickets'
+    value: 1
