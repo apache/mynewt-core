@@ -28,6 +28,9 @@ syscfg.defs:
         range: 8000000, 24000000, 50000000, 100000000, 200000000
 
 syscfg.vals:
+    # Device name for programmers, J-Link or MPLAB IPE (MYNEWT_DOWNLOADER: mplab_ipe)
+    JLINK_TARGET: PIC32MZ2048EFH064
+    MYNEWT_DOWNLOADER: jlink
     TIMER_0: 1
     I2C_3: 1
     I2C_3_FREQ_KHZ: 400
