@@ -1740,7 +1740,7 @@ SECTIONS
    *  around absolute sections as needed.
    *
    */
-  .bss     :
+  .bss ALIGN(4) :
   {
     *(.dynbss)
     *(COMMON)
