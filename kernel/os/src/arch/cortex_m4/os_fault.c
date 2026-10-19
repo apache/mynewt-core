@@ -151,7 +151,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 #endif
 
     SCB->ICSR = SCB_ICSR_NMIPENDSET_Msk;
-    asm("isb");
+    __asm("isb");
     hal_system_reset();
 }
 
