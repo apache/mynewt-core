@@ -27,3 +27,31 @@ syscfg.defs:
             The path is machine specific, so when this setting is empty
             newt uses the environment variable with the same name instead.
         value: ""
+    XC32_V5:
+        description: >
+            Set to 1 when XC32 v5.00 or later is used. XC32 v5.00 removed
+            newlib, picolibc is used instead. Device family pack must be
+            provided with XC32_DFP_FLAGS.
+        value: 0
+    XC32_LIBC_CFLAGS:
+        description: >
+            Compiler options selecting C library. Set based on XC32_V5.
+        value: "-mnewlib-libc"
+    XC32_LIBC_LDFLAGS:
+        description: >
+            Linker options selecting C library. Set based on XC32_V5.
+            newt sorts linker flags, so libraries that depend on each other
+            are passed in one -Wl option to keep their order.
+        value: "-lc-newlib"
+    XC32_DINIT_LDFLAGS:
+        description: >
+            Linker options for data initialization template. Set based on
+            XC32_V5. XC32 v5 by default allocates sections initialized by
+            .dinit (e.g. interrupt vector offset registers in SFR area),
+            which makes binary image span up to SFR addresses.
+        value: ""
+
+syscfg.vals.XC32_V5:
+    XC32_LIBC_CFLAGS: "-mchp-stdlibc=picolibc"
+    XC32_LIBC_LDFLAGS: "-Wl,--start-group,-lc-pico,-lm-pico,-lgcc,--end-group"
+    XC32_DINIT_LDFLAGS: "-Wl,--no-alloc-dinit-mapping"
