@@ -18,3 +18,10 @@
 #
 
 syscfg.defs:
+    FLASH_TEST_BUFFER_SIZE:
+        description: >
+            Size of buffer used by flash read and write commands. When 0,
+            32 byte buffer on stack is used. Otherwise static buffer of this
+            size is used, so bigger chunks are passed to flash driver
+            (fewer requests for remote or slow flash devices).
+        value: 0

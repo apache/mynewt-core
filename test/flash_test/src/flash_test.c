@@ -42,6 +42,11 @@ dump_sector_range_info(struct streamer *streamer, int start_sector, uint32_t sta
     }
 }
 
+#if MYNEWT_VAL(FLASH_TEST_BUFFER_SIZE)
+/* Static, so it can be bigger than shell task stack allows */
+static char flash_cli_buf[MYNEWT_VAL(FLASH_TEST_BUFFER_SIZE)];
+#endif
+
 static int
 flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
               struct streamer *streamer)
@@ -55,7 +60,13 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
     int devid = 0;
     int rc;
     char *eptr;
+#if MYNEWT_VAL(FLASH_TEST_BUFFER_SIZE)
+    char *tmp_buf = flash_cli_buf;
+    const uint32_t tmp_buf_size = sizeof(flash_cli_buf);
+#else
     char tmp_buf[32];
+    const uint32_t tmp_buf_size = sizeof(tmp_buf);
+#endif
     char pr_str[80];
     /* arg_idx points to first argument after 'flash' */
     int arg_idx = 1;
@@ -192,7 +203,7 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
                 (long unsigned int) off, (long unsigned int) sz);
         sz += off;
         while (off < sz) {
-            sec_cnt = min(sizeof(tmp_buf), sz - off);
+            sec_cnt = min(tmp_buf_size, sz - off);
             if (hal_flash_read(devid, fa_off + off, tmp_buf, sec_cnt)) {
                 streamer_printf(streamer, "flash read failure at %#lx\n",
                         (long unsigned int) off);
@@ -218,12 +229,12 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
                 (long unsigned int) off, (long unsigned int) sz);
 
         sz += off;
-        for (i = 0; i < sizeof(tmp_buf); i++) {
+        for (i = 0; i < tmp_buf_size; i++) {
             tmp_buf[i] = i + 1;
         }
 
         while (off < sz) {
-            sec_cnt = min(sizeof(tmp_buf), sz - off);
+            sec_cnt = min(tmp_buf_size, sz - off);
             if (hal_flash_write(devid, fa_off + off, tmp_buf, sec_cnt)) {
                 streamer_printf(streamer, "flash write failure at %#lx\n",
                         (long unsigned int) off);
