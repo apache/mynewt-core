@@ -135,6 +135,24 @@ SystemInit(void)
     /* Configure System Clock */
     SystemClock_Config();
 
+    /* Multi vector mode */
+    INTCONSET = _INTCON_MVEC_MASK;
+    /* Vector spacing 0x20 */
+    _CP0_SET_INTCTL(_CP0_GET_INTCTL() | (1 << _CP0_INTCTL_VS_POSITION));
+
+#if defined(PRISS) && (__PIC32_SRS_SET_COUNT == 8)
+    /*
+     * Assign Shadow Register Sets to interrupts:
+     * Interrupt level 0 - (normal execution) SRS 0
+     * Interrupt level 1 - (SW0 - context switch) also SRS 0
+     * Interrupts level 2-7 - SRS 2-7
+     */
+    PRISS = 0x76543200;
+    /* Assign exceptions to SRS 1 */
+    _CP0_SET_SRSCTL((_CP0_GET_SRSCTL() & ~_CP0_SRSCTL_ESS_MASK) |
+                    (1 << _CP0_SRSCTL_ESS_POSITION));
+#endif
+
 #if !MYNEWT_VAL(MCU_JTAG_ENABLE)
     /*
      * Programmer may leave JTAGEN set in DEVCFG0, disable JTAG port
