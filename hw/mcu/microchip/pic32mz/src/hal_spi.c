@@ -692,7 +692,7 @@ hal_spi_abort(int spi_num)
 
     /* Clear TX and RX FIFO by turning off and on module */
     SPIxCONCLR(spi_num) = _SPI1CON_ON_MASK;
-    asm volatile ("nop");
+    __asm volatile("nop");
     SPIxCONSET(spi_num) = _SPI1CON_ON_MASK;
 
     return 0;

@@ -159,13 +159,13 @@ hal_system_start(void *img_start)
      * Normal loop here is inlined by GCC to call to memset hence asm version of
      * memset that does not use stack (that just get erased).
      */
-    asm volatile("    mov     r0, #0        \n"
-                 "1:  stmia   %0!, {r0}     \n"
-                 "    cmp     %0, %1        \n"
-                 "    blt     1b            \n"
-        :
-        : "r" (&_ram_start), "r" (&__StackTop)
-        : "r0");
+    __asm volatile("    mov     r0, #0        \n"
+                   "1:  stmia   %0!, {r0}     \n"
+                   "    cmp     %0, %1        \n"
+                   "    blt     1b            \n"
+                   :
+                   : "r"(&_ram_start), "r"(&__StackTop)
+                   : "r0");
     /* Application startup code expects interrupts to be enabled */
     __enable_irq();
 
@@ -187,13 +187,13 @@ hal_system_start(void *img_start)
 {
     uint32_t *img_data = img_start;
 
-    asm volatile (".syntax unified        \n"
-                  /* 1st word is stack pointer */
-                  "    msr  msp, %0       \n"
-                  /* 2nd word is a reset handler (image entry) */
-                  "    bx   %1            \n"
-                  : /* no output */
-                  : "r" (img_data[0]), "r" (img_data[1]));
+    __asm volatile(".syntax unified        \n"
+                   /* 1st word is stack pointer */
+                   "    msr  msp, %0       \n"
+                   /* 2nd word is a reset handler (image entry) */
+                   "    bx   %1            \n"
+                   : /* no output */
+                   : "r"(img_data[0]), "r"(img_data[1]));
 }
 
 #endif
