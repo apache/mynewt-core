@@ -37,7 +37,7 @@ hal_system_reset(void)
     __disable_irq();
 
     if (hal_debugger_connected()) {
-        asm("bkpt");
+        __asm("bkpt");
     }
 
     CMAC->CM_EXC_STAT_REG = CMAC_CM_EXC_STAT_REG_EXC_FW_ERROR_Msk;
