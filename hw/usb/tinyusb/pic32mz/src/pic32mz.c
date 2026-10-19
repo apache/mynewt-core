@@ -50,4 +50,11 @@ tinyusb_hardware_init(void)
     USBCRCONbits.PHYIDEN = 0;
     USBCRCONbits.USBIDVAL = 1;
     USBCRCONbits.USBIDOVEN = 1;
+#if !MYNEWT_VAL(OS_SCHEDULING)
+    /*
+     * OS is not started (e.g. DFU in bootloader) so interrupts were not
+     * enabled by os_start(). Without them USB interrupt is never serviced.
+     */
+    __builtin_enable_interrupts();
+#endif
 }
