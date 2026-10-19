@@ -102,11 +102,16 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
         }
     } else {
         /* Try parse flash id if any, if not set 0 will be used */
-        if (argc == 2) {
+        if (argc >= 2) {
             devid = (int)parse_ull_bounds(argv[1], 0, 255, &rc);
             if (rc != 0) {
-                streamer_printf(streamer, "Invalid flash id %s\n", argv[1]);
-                return 0;
+                if (argc == 2) {
+                    streamer_printf(streamer, "Invalid flash id %s\n", argv[1]);
+                    return 0;
+                }
+                /* No flash id, argv[1] is a command, use flash 0 */
+                devid = 0;
+                arg_idx--;
             }
         }
     }
