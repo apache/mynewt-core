@@ -33,6 +33,6 @@ compiler.flags.debug: [compiler.flags.base, -Og, -g3]
 
 compiler.as.flags: [-x, assembler-with-cpp, $(XC32_DFP_FLAGS)]
 
-compiler.ld.flags: -nostartfiles -nostdlib -static-libgcc -lgcc -lm -lc-newlib -Wl,--gc-sections $(XC32_DFP_FLAGS)
+compiler.ld.flags: -nostartfiles -nostdlib -static-libgcc -lgcc -lm -lc-newlib -lpic32 -Wl,--gc-sections $(XC32_DFP_FLAGS)
 compiler.ld.resolve_circular_deps: true
 compiler.ld.mapfile: true

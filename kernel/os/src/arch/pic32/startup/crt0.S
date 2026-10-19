@@ -273,51 +273,15 @@ _bss_check:
 #if defined(INIT_DATA) || defined(__PIC32_HAS_INIT_DATA)
         ##################################################################
         # Initialize data using the linker-generated .dinit table
+        # Format of the table depends on the compiler version, so use
+        # data-init code provided by the compiler (libpic32). XC32 v5
+        # linker does not generate the table at all when this code is
+        # not linked.
         ##################################################################
-        .equiv FMT_CLEAR,0
-        .equiv FMT_COPY,1
-_dinit_init:
-        la      t0,_dinit_addr
-
-#define SRC t0
-#define DST t1
-#define LEN t2
-#define FMT t3
-
-0:      lw      DST,0(SRC)
-        beqz    DST,9f
-        addu    SRC,4
-        lw      LEN,0(SRC)
-        addu    SRC,4
-        lw      FMT,0(SRC)
-        beq     FMT,$0,_dinit_clear
-        addu    SRC,4
-
-_dinit_copy:
-        lbu     t4,0(SRC)
-        subu    LEN,1
-        addu    SRC,1
-        sb      t4,0(DST)
-        bne     LEN,$0,_dinit_copy
-        addu    DST,1
-
-        b       _dinit_end
+        .extern   __pic32_data_init
+        la      t0,__pic32_data_init
+        jalr    t0
         nop
-
-_dinit_clear:
-        sb      $0,(DST)
-        subu    LEN,1
-        bne     LEN,$0,_dinit_clear
-        addu    DST,1
-
-_dinit_end:
-        addu    SRC,3
-        addiu   LEN,$0,-4
-        and     SRC,LEN,SRC
-        lw      DST,0(SRC)
-        bne     DST,$0,0b
-        nop
-9:
 
 #endif /* INIT_DATA */
 
