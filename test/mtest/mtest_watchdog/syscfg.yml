@@ -16,6 +16,13 @@
 # under the License.
 #
 
+syscfg.defs:
+    WATCHDOG_TIMEOUT_MULT:
+        description: >
+            Multiplier of WATCHDOG_INTERVAL used as test timeout.
+            Increase on boards with inaccurate watchdog clock.
+        value: 2
+
 syscfg.vals:
     WATCHDOG_INTERVAL: 2000
     SANITY_INTERVAL: 500

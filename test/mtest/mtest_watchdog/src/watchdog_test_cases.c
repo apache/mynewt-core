@@ -23,6 +23,9 @@
 #include "mtest_watchdog/mtest_watchdog.h"
 #include "os/os_cputime.h"
 
+#define WDOG_TEST_TIMEOUT_US                                                  \
+    (MYNEWT_VAL(WATCHDOG_TIMEOUT_MULT) * MYNEWT_VAL(WATCHDOG_INTERVAL) * 1000)
+
 extern volatile int reset_count;
 
 MTEST_CASE(watchdog_test_case_1)
@@ -43,7 +46,7 @@ MTEST_CASE(watchdog_test_case_1)
             last_tickle = now;
         }
 
-        if (now - start >= 2 * (MYNEWT_VAL(WATCHDOG_INTERVAL) * 1000)) {
+        if (now - start >= WDOG_TEST_TIMEOUT_US) {
             break;
         }
     }
@@ -70,7 +73,7 @@ MTEST_CASE(watchdog_test_case_2)
     while (1) {
         now = os_cputime_ticks_to_usecs(os_cputime_get32());
 
-        if (now - start > 2 * (MYNEWT_VAL(WATCHDOG_INTERVAL) * 1000)) {
+        if (now - start > WDOG_TEST_TIMEOUT_US) {
             MTEST_CASE_ASSERT(0, "WDOG failed to fire");
         }
     }
