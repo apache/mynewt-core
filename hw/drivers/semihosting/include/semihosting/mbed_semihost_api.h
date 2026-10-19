@@ -47,7 +47,7 @@ static inline int __semihost(int reason, const void *arg)
 {
     int value;
 
-    asm volatile(
+    __asm volatile(
         "mov r0, %1"          "\n\t"
         "mov r1, %2"          "\n\t"
         AngelSWIInsn " %a3"   "\n\t"
