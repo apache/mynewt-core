@@ -4,7 +4,6 @@ hw/drivers/rtt
 hw/drivers/semihosting
 libc/baselibc
 net/lora/node/src/mac
-net/mqtt/eclipse
 
 # NXP preserved code style
 hw/mcu/nxp/kinetis/MK64F12/src

@@ -573,11 +573,6 @@ available under the "3-clause BSD" license. For details, see:
     * net/lora/node/
     * net/lora/node/LICENSE.txt
 
-This product bundles Eclipse Paho's MQTT by IBM Corp. which is available
-under the Eclipse Public License 1.0. For details see:
-    * net/mqtt/eclipse/
-    * net/mqtt/eclipse/LICENSE.txt
-
 This product bundles SEGGER SystemView, which is available under the
 "3-clause BSD" license. For details, see:
     * sys/sysview/vendor
