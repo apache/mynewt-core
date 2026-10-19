@@ -25,11 +25,12 @@ compiler.path.objdump: "xc32-objdump"
 compiler.path.objsize: "xc32-size"
 compiler.path.objcopy: "xc32-objcopy"
 
-compiler.flags.base: [-std=gnu11, -fno-common, $(XC32_LIBC_CFLAGS), -ffunction-sections, -fdata-sections, $(XC32_DFP_FLAGS)]
+compiler.flags.base: [-fno-common, $(XC32_LIBC_CFLAGS), -ffunction-sections, -fdata-sections, $(XC32_DFP_FLAGS)]
 compiler.flags.default: [compiler.flags.base, -O2, -g3]
 compiler.flags.optimized: [compiler.flags.base, -O2, -g3]
 compiler.flags.speed: [compiler.flags.base, -O2, -g3]
 compiler.flags.debug: [compiler.flags.base, -Og, -g3]
+compiler.c.flags: [-std=c11]
 
 compiler.as.flags: [-x, assembler-with-cpp, $(XC32_DFP_FLAGS)]
 
