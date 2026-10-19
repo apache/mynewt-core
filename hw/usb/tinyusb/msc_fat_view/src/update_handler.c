@@ -53,6 +53,10 @@ static medium_state_t medium_state;
 struct unallocated_write {
     uint32_t first_sector;
     uint32_t last_sector;
+    /* Last flash sector prepared for writing (-1 none yet) */
+    int flash_sector_id;
+    /* Offset in flash area up to which flash is ready for writing */
+    uint32_t erased_limit;
     enum {
         NOT_TOUCHED_YET = 0,
         WRITE_IN_PROGRESS = 1,
@@ -123,6 +127,7 @@ image_write_sector(struct msc_fat_view_write_handler *handler, uint32_t sector, 
 {
 #ifdef FLASH_AREA_IMAGE
     const struct flash_area *fa;
+    struct flash_area flash_sector;
     uint32_t write_offset;
     int rc;
 
@@ -149,6 +154,8 @@ image_write_sector(struct msc_fat_view_write_handler *handler, uint32_t sector, 
             MSC_FAT_VIEW_LOG_INFO("Image writing detected\n");
             unallocated_write.first_sector = sector;
             unallocated_write.last_sector = sector;
+            unallocated_write.flash_sector_id = -1;
+            unallocated_write.erased_limit = 0;
         }
     } else if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
         if (sector != unallocated_write.last_sector + 1) {
@@ -162,11 +169,30 @@ image_write_sector(struct msc_fat_view_write_handler *handler, uint32_t sector, 
     }
     if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
         write_offset = (sector - unallocated_write.first_sector) * SECTOR_SIZE;
-        if (!hal_flash_isempty_no_buf(fa->fa_device_id, fa->fa_off + write_offset, SECTOR_SIZE)) {
-            flash_area_erase(fa, write_offset, SECTOR_SIZE);
+        /*
+         * Flash sectors are usually bigger than disk sector. Erase each flash
+         * sector (if needed) only once, when first disk sector falls into it.
+         * Erasing it later would destroy data that was already written.
+         */
+        rc = 0;
+        while (rc == 0 && write_offset + SECTOR_SIZE > unallocated_write.erased_limit) {
+            rc = flash_area_getnext_sector(FLASH_AREA_IMAGE,
+                                           &unallocated_write.flash_sector_id,
+                                           &flash_sector);
+            if (rc == 0) {
+                if (!hal_flash_isempty_no_buf(flash_sector.fa_device_id,
+                                              flash_sector.fa_off,
+                                              flash_sector.fa_size)) {
+                    rc = hal_flash_erase_sector(flash_sector.fa_device_id,
+                                                flash_sector.fa_off);
+                }
+                unallocated_write.erased_limit =
+                    flash_sector.fa_off + flash_sector.fa_size - fa->fa_off;
+            }
         }
 
-        if ((rc = flash_area_write(fa, write_offset, buffer, SECTOR_SIZE)) < 0) {
+        if (rc != 0 ||
+            (rc = flash_area_write(fa, write_offset, buffer, SECTOR_SIZE)) < 0) {
             MSC_FAT_VIEW_LOG_ERROR("Flash write error, following writes will be rejected %d 0x%08x\n",
                                    rc, fa->fa_off + write_offset);
             unallocated_write.write_status = WRITE_EXCEEDED_SPACE;
