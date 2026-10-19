@@ -270,10 +270,6 @@ fs/fatfs
 # HiFive1 - Apache License 2.0
 hw/mcu/sifive/src/ext/freedom-e-sdk_3235929
 
-# MQTT - Eclipse Public License
-net/mqtt/eclipse/include
-net/mqtt/eclipse/src
-
 # LORA - BSD License
 net/lora/node/src
 net/lora/node/include
