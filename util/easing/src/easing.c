@@ -20,9 +20,10 @@
 #include <math.h>
 #include "easing/easing.h"
 
-#define HALF_PI 1.57079632679f   /* PI/2 */
+#define FULL_PI   3.14159265359f /* PI */
+#define HALF_PI   1.57079632679f /* PI/2 */
 #define ONE_DIV_E 0.36787944117f /* 1/e */
-#define PI_TIMES2 6.28318530718f  /* 2PI */
+#define PI_TIMES2 6.28318530718f /* 2PI */
 
 /* Custom */
 static inline float exponential_custom_io(float step, float max_steps, float max_val)
@@ -34,14 +35,14 @@ static inline float exponential_custom_io(float step, float max_steps, float max
 static inline float exp_sin_custom_io(float step, float max_steps, float max_val)
 {
     float mplier = max_val / 2.35040238729f;
-    float pi_d_maxs = (float)M_PI / max_steps;
+    float pi_d_maxs = FULL_PI / max_steps;
     step += max_steps;
-    return ( exp( sinf((step * pi_d_maxs) + (float)M_PI_2)) - ONE_DIV_E ) * mplier;
+    return (exp(sinf((step * pi_d_maxs) + HALF_PI)) - ONE_DIV_E) * mplier;
 }
 
 static inline float sine_custom_io(float step, float max_steps, float max_val)
 {
-    return max_val * cosf((PI_TIMES2 * step/max_steps) + (float)M_PI) + max_val;
+    return max_val * cosf((PI_TIMES2 * step / max_steps) + FULL_PI) + max_val;
 }
 
 /* Linear */
@@ -212,17 +213,17 @@ static inline float circular_io(float step, float max_steps, float max_val)
 /* Sine */
 static inline float sine_in(float step, float max_steps, float max_val)
 {
-	return -max_val * cosf((float)step / max_steps * (float)M_PI_2) + max_val;
+    return -max_val * cosf((float)step / max_steps * HALF_PI) + max_val;
 }
 
 static inline float sine_out(float step, float max_steps, float max_val)
 {
-	return max_val * sinf((((float)step / max_steps)) * (float)M_PI_2);
+    return max_val * sinf((((float)step / max_steps)) * HALF_PI);
 }
 
 static inline float sine_io(float step, float max_steps, float max_val)
 {
-	return -max_val / 2 * (cosf((float)M_PI * step / max_steps) - 1);
+    return -max_val / 2 * (cosf(FULL_PI * step / max_steps) - 1);
 }
 
 /* Bounce */
