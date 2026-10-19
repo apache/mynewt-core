@@ -45,7 +45,13 @@ stm32_mcu_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_addres
 #endif
         eraseinit.Sector = ((sector_address - dev->hf_base_addr) / FLASH_SECTOR_SIZE) % FLASH_SECTOR_NB;
         eraseinit.NbSectors = 1;
+        /* Stale error flags would make HAL_FLASHEx_Erase() fail */
+        STM32_HAL_FLASH_CLEAR_ERRORS();
         rc = HAL_FLASHEx_Erase(&eraseinit, &PageError);
+        /* ICACHE may still hold erased content */
+        if (LL_ICACHE_IsEnabled()) {
+            LL_ICACHE_Invalidate();
+        }
         if (rc == HAL_OK) {
             return 0;
         }
