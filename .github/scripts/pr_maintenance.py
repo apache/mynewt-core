@@ -57,6 +57,10 @@ CI_RUNS_MAX_AGE_DAYS = 30
 # Limit API usage, remaining pull requests are handled by next runs
 MAX_PULLS_PER_RUN = 20
 
+# Workflows trees are queried with object() which returns null if path
+# doesn't exist, Commit.file() fails whole query (and gh pagination) instead
+TREES_PER_QUERY = 100
+
 REPO = os.environ.get("GITHUB_REPOSITORY", "")
 
 PULLS_QUERY = """
@@ -88,20 +92,13 @@ query (
         }
         baseRef {
           target {
-            ... on Commit {
-              file(path: ".github/workflows") {
-                oid
-              }
-            }
+            oid
           }
         }
         commits(last: 1) {
           nodes {
             commit {
               oid
-              file(path: ".github/workflows") {
-                oid
-              }
               status {
                 context(name: $context) {
                   state
@@ -117,6 +114,16 @@ query (
 }
 """
 
+TREES_QUERY = """
+query ($owner: String!, $repo: String!) {
+  repository(owner: $owner, name: $repo) {
+%s
+  }
+}
+"""
+
+TREE_FIELD = 'c%d: object(expression: "%s:.github/workflows") { oid }'
+
 
 def gh(*args):
     """Runs gh command, returns its output"""
@@ -126,6 +133,25 @@ def gh(*args):
 
 def error(message):
     print(f"::error::{message}")
+
+
+def workflows_trees(commits):
+    """Returns dict of commit to its .github/workflows tree (or None)"""
+    owner, repo = REPO.split("/")
+    commits = sorted(set(commits))
+    trees = {}
+
+    for i in range(0, len(commits), TREES_PER_QUERY):
+        chunk = commits[i:i + TREES_PER_QUERY]
+        fields = "\n".join(TREE_FIELD % (n, c) for n, c in enumerate(chunk))
+        data = json.loads(gh("api", "graphql",
+                             "-f", f"query={TREES_QUERY % fields}",
+                             "-f", f"owner={owner}", "-f", f"repo={repo}"))
+        result = data["data"]["repository"]
+        for n, c in enumerate(chunk):
+            trees[c] = (result[f"c{n}"] or {}).get("oid")
+
+    return trees
 
 
 def list_pulls():
@@ -145,16 +171,25 @@ def list_pulls():
                 continue
 
             base = (node["baseRef"] or {}).get("target") or {}
-            base_tree = (base.get("file") or {}).get("oid")
             pulls.append({
                 "number": node["number"],
                 "head": commit["oid"],
                 "labels": [l["name"] for l in node["labels"]["nodes"]],
                 "status": (commit["status"] or {}).get("context"),
-                "tree": (commit["file"] or {}).get("oid"),
-                "base_tree": base_tree,
-                "base": f"{node['baseRefName']}@{(base_tree or 'none')[:12]}",
+                "base_name": node["baseRefName"],
+                "base_head": base.get("oid"),
             })
+
+    trees = workflows_trees([p["head"] for p in pulls] +
+                            [p["base_head"] for p in pulls if p["base_head"]])
+
+    for pull in pulls:
+        base_head = pull.pop("base_head")
+        base_name = pull.pop("base_name")
+        base_tree = trees.get(base_head)
+        pull["tree"] = trees[pull["head"]]
+        pull["base_tree"] = base_tree
+        pull["base"] = f"{base_name}@{(base_tree or 'none')[:12]}"
 
     return pulls
 
