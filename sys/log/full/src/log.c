@@ -749,7 +749,6 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
     struct log_entry_hdr *hdr;
     struct os_mbuf *om;
     uint16_t len;
-    uint16_t hdr_len;
     int rc;
 
     /* Remove a layer of indirection for convenience. */
@@ -761,26 +760,18 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
         goto err;
     }
 
-    hdr = (struct log_entry_hdr *)om->om_data;
-
     /*
-     * We do a pull up twice, once so that the base header is
-     * contiguous, so that we read the flags correctly, second
-     * time is so that we account for the image hash as well.
+     * Make the header padding contiguous. Header length can't be read from
+     * the header flags here since those are set by log_append_prepare().
      */
-    om = os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
+    om = os_mbuf_pullup(om, LOG_HDR_SIZE);
     if (!om) {
         rc = -1;
         goto err;
     }
 
-    hdr_len = log_hdr_len(hdr);
-
-    om = os_mbuf_pullup(om, hdr_len);
-    if (!om) {
-        rc = -1;
-        goto err;
-    }
+    /* Pullup may have moved the header to a new mbuf. */
+    hdr = (struct log_entry_hdr *)om->om_data;
 
     /*
      * Check that the log body length is less than the maximum entry. This code
@@ -790,8 +781,8 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
      * maximum entry length was checked.
      */
     len = os_mbuf_len(om);
-    if (len > hdr_len) {
-        rc = log_chk_max_entry_len(log, len - hdr_len);
+    if (len > LOG_HDR_SIZE) {
+        rc = log_chk_max_entry_len(log, len - LOG_HDR_SIZE);
         if (rc != OS_OK) {
             goto drop;
         }
