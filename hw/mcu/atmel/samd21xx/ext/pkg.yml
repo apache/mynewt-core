@@ -80,7 +80,6 @@ pkg.src_dirs:
 
 
 pkg.cflags:
-    - -std=c99
 #   - -DI2C_MASTER_CALLBACK_MODE=true
 #   - -DI2C_SLAVE_CALLBACK_MODE=true
     - -DWDT_CALLBACK_MODE=true
