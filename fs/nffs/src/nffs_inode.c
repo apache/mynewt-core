@@ -36,6 +36,9 @@ static uint8_t *nffs_inode_filename_buf1 =
 /** A list of directory inodes with pending unlink operations. */
 static struct nffs_hash_list nffs_inode_unlink_list;
 
+static int nffs_inode_process_unlink_list(struct nffs_hash_entry **inout_next,
+                                          int ignore_corruption);
+
 struct nffs_inode_entry *
 nffs_inode_entry_alloc(void)
 {
@@ -384,6 +387,12 @@ nffs_inode_dec_refcnt(struct nffs_inode_entry *inode_entry)
     int rc;
 
     rc = nffs_inode_dec_refcnt_priv(inode_entry, 0);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Free directory that was unlinked while still referenced. */
+    rc = nffs_inode_process_unlink_list(NULL, 0);
     return rc;
 }
 
@@ -1136,7 +1145,16 @@ nffs_inode_unlink_from_ram_priv(struct nffs_inode *inode,
     nffs_inode_setflags(inode->ni_inode_entry, NFFS_INODE_FLAG_DELETED);
 
     if (nffs_hash_id_is_dir(inode->ni_inode_entry->nie_hash_entry.nhe_id)) {
-        nffs_inode_insert_unlink_list(inode->ni_inode_entry);
+        /*
+         * Directory still referenced (e.g. by open directory) is unlinked
+         * when its reference count drops to zero. Dummy directory inodes
+         * are not referenced at all.
+         */
+        if (inode->ni_inode_entry->nie_refcnt > 1) {
+            inode->ni_inode_entry->nie_refcnt--;
+        } else {
+            nffs_inode_insert_unlink_list(inode->ni_inode_entry);
+        }
         rc = nffs_inode_process_unlink_list(out_next, ignore_corruption);
     } else {
         rc = nffs_inode_dec_refcnt_priv(inode->ni_inode_entry,
