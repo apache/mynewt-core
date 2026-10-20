@@ -208,6 +208,45 @@ image_write_sector(struct msc_fat_view_write_handler *handler, uint32_t sector, 
 #endif
 }
 
+/*
+ * Checks if whole image (including TLVs) was already written.
+ * Host can update directory entry before all file data is written
+ * (i.e. when file grows with each write), image must not be checked
+ * till then.
+ */
+static bool
+image_write_complete(void)
+{
+#ifdef FLASH_AREA_IMAGE
+    const struct flash_area *fa;
+    struct image_header hdr;
+    struct image_tlv_info tlv_info;
+    uint32_t written;
+    uint32_t tlv_off;
+    bool complete = false;
+
+    written = (unallocated_write.last_sector - unallocated_write.first_sector + 1) *
+              SECTOR_SIZE;
+    if (flash_area_open(FLASH_AREA_IMAGE, &fa)) {
+        return false;
+    }
+    if (flash_area_read(fa, 0, &hdr, sizeof(hdr)) == 0) {
+        tlv_off = hdr.ih_hdr_size + hdr.ih_img_size + hdr.ih_protect_tlv_size;
+        if (tlv_off + sizeof(tlv_info) <= written &&
+            flash_area_read(fa, tlv_off, &tlv_info, sizeof(tlv_info)) == 0) {
+            /* Not a TLV area, image is broken, let image check reject it */
+            complete = tlv_info.it_magic != IMAGE_TLV_INFO_MAGIC ||
+                       tlv_off + tlv_info.it_tlv_tot <= written;
+        }
+    }
+    flash_area_close(fa);
+
+    return complete;
+#else
+    return true;
+#endif
+}
+
 static int
 image_file_written(struct msc_fat_view_write_handler *handler, uint32_t size,
                    uint32_t sector, bool first_sector)
@@ -216,6 +255,11 @@ image_file_written(struct msc_fat_view_write_handler *handler, uint32_t size,
     uint32_t flags;
 
     if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
+        if (unallocated_write.first_sector == sector && first_sector &&
+            !image_write_complete()) {
+            MSC_FAT_VIEW_LOG_INFO("New file not complete yet (%d bytes)\n", (int)size);
+            return 0;
+        }
         if (unallocated_write.first_sector == sector && first_sector) {
             MSC_FAT_VIEW_LOG_INFO("New file detected\n");
             if (BOOT_LOADER) {
