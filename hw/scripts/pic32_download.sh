@@ -38,6 +38,11 @@
 #  - MCU_NO_BOOTLOADER_BUILD set when application is built to run without
 #    bootloader
 #
+# Environment variables used with J-Link:
+#  - PIC32_JLINK_IF interface to use: ICSP (default) or JTAG, JTAG requires
+#    JTAGEN configuration bit set (MCU_JTAG_ENABLE: 1)
+#  - PIC32_JLINK_SPEED interface speed in kHz (default 12000)
+#
 
 . $CORE_PATH/hw/scripts/jlink.sh
 
@@ -45,14 +50,30 @@ PIC32_DEVICE=${MYNEWT_VAL_JLINK_TARGET}
 IMAGE_FLASH_ADDR=${FLASH_OFFSET}
 IMAGE_FLASH_SIZE=${FLASH_AREA_SIZE}
 PIC32_JLINK_SPEED=${PIC32_JLINK_SPEED:-12000}
+PIC32_JLINK_IF=${PIC32_JLINK_IF:-ICSP}
 
-# Runs JLinkExe with command file; fails if J-Link reported an error
+case "${PIC32_JLINK_IF}" in
+    ICSP)
+        PIC32_JLINK_IF_ARGS="-If ICSP"
+        ;;
+    JTAG)
+        # Without -JTAGConf J-Link Commander asks for device position in
+        # JTAG chain and the question consumes commands from command file.
+        PIC32_JLINK_IF_ARGS="-If JTAG -JTAGConf -1,-1"
+        ;;
+    *)
+        >&2 echo "Unsupported PIC32_JLINK_IF=${PIC32_JLINK_IF} (ICSP or JTAG)"
+        exit 1
+        ;;
+esac
+
+# Runs JLinkExe with command file; fails if J-Link reported an error.
+# Output is kept in JLINK_OUT for additional checks by caller.
 pic32_jlink_run() {
-    local out
-    out=$(JLink${COMSPEC:+.}Exe -Device ${PIC32_DEVICE} -If ICSP $EXTRA_JTAG_CMD "$@" 2>&1)
+    JLINK_OUT=$(JLink${COMSPEC:+.}Exe -Device ${PIC32_DEVICE} ${PIC32_JLINK_IF_ARGS} $EXTRA_JTAG_CMD "$@" 2>&1)
     local rc=$?
-    echo "$out"
-    if [ $rc -ne 0 ] || echo "$out" | grep -q -E "Error occurred|Could not connect|Failed to"; then
+    echo "$JLINK_OUT"
+    if [ $rc -ne 0 ] || echo "$JLINK_OUT" | grep -q -E "Error occurred|Could not connect|Failed to|^JTAGConf>"; then
         echo "J-Link operation failed"
         exit 1
     fi
@@ -77,6 +98,12 @@ pic32_jlink_load() {
     echo "q" >> $script
 
     pic32_jlink_run -AutoConnect 1 -speed ${PIC32_JLINK_SPEED} -CommandFile $script
+    # loadfile prints O.K. when done, J-Link does not always report an error
+    # when target could not be reached
+    if ! echo "$JLINK_OUT" | grep -q -E "^O\.K\.[[:space:]]*$"; then
+        echo "J-Link did not program the image"
+        exit 1
+    fi
 
     # Code started by debugger reset and go does not run reliably (first
     # context switch never happens). Pulse MCLR without connecting to the
