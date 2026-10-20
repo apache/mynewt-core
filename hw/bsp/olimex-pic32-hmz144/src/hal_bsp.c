@@ -36,7 +36,11 @@
 /* JTAG on, WDT off */
 #pragma config FDMTEN=0, FSOSCEN=0, DMTCNT=1
 #pragma config DEBUG=ON
+#if MYNEWT_VAL(MCU_JTAG_ENABLE)
+#pragma config JTAGEN=ON
+#else
 #pragma config JTAGEN=OFF
+#endif
 #pragma config FSLEEP=OFF
 #pragma config TRCEN=OFF
 #pragma config ICESEL=ICS_PGx2
