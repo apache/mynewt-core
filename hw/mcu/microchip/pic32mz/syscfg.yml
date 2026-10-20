@@ -283,5 +283,14 @@ syscfg.defs:
             converted to img files.
         value: 0
 
+    MCU_JTAG_ENABLE:
+        description: >
+            Enable JTAG port. When 0, JTAG is disabled in configuration
+            word (DEVCFG0 JTAGEN, set by BSP) and also at runtime in
+            SystemInit() since some programmers leave JTAGEN set in
+            DEVCFG0. JTAG pins (TMS, TCK, TDI, TDO) can be used as GPIO
+            only when JTAG is disabled.
+        value: 0
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 1000

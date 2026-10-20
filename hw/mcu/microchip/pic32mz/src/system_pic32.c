@@ -134,4 +134,12 @@ SystemInit(void)
 {
     /* Configure System Clock */
     SystemClock_Config();
+
+#if !MYNEWT_VAL(MCU_JTAG_ENABLE)
+    /*
+     * Programmer may leave JTAGEN set in DEVCFG0, disable JTAG port
+     * so that its pins (TMS, TCK, TDI, TDO) can be used as GPIO.
+     */
+    CFGCONbits.JTAGEN = 0;
+#endif
 }
