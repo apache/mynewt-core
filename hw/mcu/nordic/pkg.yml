@@ -303,7 +303,6 @@ app.cflags.NRFX_WDT_ENABLED:
     - -DNRFX_WDT_ENABLED=1
 
 pkg.cflags:
-    - -std=gnu99
     - -Wno-unused-variable
 
 pkg.deps:
