@@ -20,6 +20,7 @@
 #include <os/mynewt.h>
 #include <mcu/mcu.h>
 #include <mcu/stm32_hal.h>
+#include <stm32_common/stm32_hal.h>
 #include <bsp/bsp.h>
 #include <i2s/i2s.h>
 #include <i2s/i2s_driver.h>
@@ -152,11 +153,11 @@ i2s_init_interrupts(const struct i2s_cfg *cfg)
 static void
 i2s_init_pins(struct stm32_i2s_pins *pins)
 {
-    hal_gpio_init_stm(pins->ck_pin->pin, (GPIO_InitTypeDef *)&pins->ck_pin->hal_init);
-    hal_gpio_init_stm(pins->ws_pin->pin, (GPIO_InitTypeDef *)&pins->ws_pin->hal_init);
-    hal_gpio_init_stm(pins->sd_pin->pin, (GPIO_InitTypeDef *)&pins->sd_pin->hal_init);
+    hal_gpio_init_stm(pins->ck_pin->pin, &pins->ck_pin->hal_init);
+    hal_gpio_init_stm(pins->ws_pin->pin, &pins->ws_pin->hal_init);
+    hal_gpio_init_stm(pins->sd_pin->pin, &pins->sd_pin->hal_init);
     if (pins->mck_pin) {
-        hal_gpio_init_stm(pins->mck_pin->pin, (GPIO_InitTypeDef *)&pins->mck_pin->hal_init);
+        hal_gpio_init_stm(pins->mck_pin->pin, &pins->mck_pin->hal_init);
     }
 }
 

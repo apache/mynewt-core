@@ -28,6 +28,7 @@
 #include <stm32f4xx_hal_rcc.h>
 #include <stm32f4xx_hal_gpio.h>
 #include <mcu/stm32_hal.h>
+#include <stm32_common/stm32_hal.h>
 #include <adc_touch.h>
 
 #define ADC_ASYNC   1

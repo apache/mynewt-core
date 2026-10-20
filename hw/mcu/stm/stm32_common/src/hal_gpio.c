@@ -20,6 +20,7 @@
 #include "hal/hal_gpio.h"
 #include "mcu/cmsis_nvic.h"
 #include "mcu/stm32_hal.h"
+#include "stm32_common/stm32_hal.h"
 #include "stm32_common/mcu.h"
 #include <assert.h>
 
@@ -620,10 +621,10 @@ hal_gpio_set_nvic(IRQn_Type irqn)
  * @return int
  */
 int
-hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg)
+hal_gpio_init_stm(int pin, const GPIO_InitTypeDef *cfg)
 {
     int port;
-    uint32_t mcu_pin_mask;
+    GPIO_InitTypeDef init_cfg;
 
     /* Is this a valid pin? */
     port = MCU_GPIO_PIN_PORT(pin);
@@ -631,14 +632,15 @@ hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg)
         return -1;
     }
 
-    mcu_pin_mask = GPIO_MASK(pin);
-    cfg->Pin = mcu_pin_mask;
+    /* cfg can be const and located in flash, modify a copy */
+    init_cfg = *cfg;
+    init_cfg.Pin = GPIO_MASK(pin);
 
     /* Enable the GPIO clock */
     hal_gpio_clk_enable(port);
 
     /* Initialize pin as an input, setting proper mode */
-    HAL_GPIO_Init(portmap[port], cfg);
+    HAL_GPIO_Init(portmap[port], &init_cfg);
 
     return 0;
 }
@@ -654,10 +656,9 @@ hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg)
  * @return int
  */
 int
-hal_gpio_deinit_stm(int pin, GPIO_InitTypeDef *cfg)
+hal_gpio_deinit_stm(int pin, const GPIO_InitTypeDef *cfg)
 {
     int port;
-    uint32_t mcu_pin_mask;
 
     /* Is this a valid pin? */
     port = MCU_GPIO_PIN_PORT(pin);
@@ -665,11 +666,8 @@ hal_gpio_deinit_stm(int pin, GPIO_InitTypeDef *cfg)
         return -1;
     }
 
-    mcu_pin_mask = GPIO_MASK(pin);
-    cfg->Pin = mcu_pin_mask;
-
     /* Initialize pin as an input, setting proper mode */
-    HAL_GPIO_DeInit(portmap[port], cfg->Pin);
+    HAL_GPIO_DeInit(portmap[port], GPIO_MASK(pin));
 
     return 0;
 }
@@ -797,7 +795,8 @@ hal_gpio_init_fun(uint32_t pin)
 int
 hal_gpio_deinit(int pin)
 {
-    GPIO_InitTypeDef gpio;
+    GPIO_InitTypeDef gpio = { 0 };
+
     return hal_gpio_deinit_stm(pin, &gpio);
 }
 

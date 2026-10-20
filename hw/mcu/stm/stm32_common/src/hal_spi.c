@@ -23,6 +23,7 @@
 #include <hal/hal_spi.h>
 #include <hal/hal_gpio.h>
 #include "mcu/stm32_hal.h"
+#include "stm32_common/stm32_hal.h"
 #include "mcu/cmsis_nvic.h"
 
 #define SPI_0_ENABLED (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))

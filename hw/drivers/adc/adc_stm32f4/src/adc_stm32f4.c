@@ -30,6 +30,7 @@
 #include "adc_stm32f4/adc_stm32f4.h"
 #include "stm32f4xx_hal_dma.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
+#include "stm32_common/stm32_hal.h"
 
 #if MYNEWT_VAL(ADC_1)||MYNEWT_VAL(ADC_2)||MYNEWT_VAL(ADC_3)
 #include <adc/adc.h>
