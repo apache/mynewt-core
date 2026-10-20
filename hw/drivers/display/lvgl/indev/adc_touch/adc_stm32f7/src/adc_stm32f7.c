@@ -22,6 +22,7 @@
 #include <os/os.h>
 
 #include <mcu/stm32_hal.h>
+#include <stm32_common/stm32_hal.h>
 #include <stm32_common/mcu.h>
 
 #include <stm32f7xx_hal_adc.h>

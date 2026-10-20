@@ -27,6 +27,7 @@
 #include <hal/hal_gpio.h>
 
 #include <mcu/stm32_hal.h>
+#include <stm32_common/stm32_hal.h>
 #include <stm32_common/mcu.h>
 
 #if MYNEWT_VAL(I2C_3)

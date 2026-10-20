@@ -43,6 +43,9 @@ extern "C" {
 uint32_t stm32_hal_timer_get_freq(void *timx);
 void stm32_periph_create(void);
 
+int hal_gpio_init_stm(int pin, const GPIO_InitTypeDef *cfg);
+int hal_gpio_deinit_stm(int pin, const GPIO_InitTypeDef *cfg);
+
 #ifndef STM32_HAL_TIMER_TIM1_IRQ
 #define STM32_HAL_TIMER_TIM1_IRQ    TIM1_UP_TIM10_IRQn
 #endif

@@ -19,6 +19,7 @@
 
 #include <os/mynewt.h>
 #include <mcu/stm32_hal.h>
+#include <stm32_common/stm32_hal.h>
 #include <stm32_common/mcu.h>
 
 #define STM32_PIN_FUN_CFG(port_n, pin_n, pf, af) \
@@ -78,7 +79,7 @@ void
 stm32_pin_config(stm32_pin_cfg_t cfg)
 {
     if (cfg) {
-        hal_gpio_init_stm(cfg->pin, (GPIO_InitTypeDef *)&cfg->hal_init);
+        hal_gpio_init_stm(cfg->pin, &cfg->hal_init);
     }
 }
 
