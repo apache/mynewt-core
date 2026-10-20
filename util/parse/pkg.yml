@@ -24,10 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - parse
 
-pkg.cflags:
-    # Required for [U]LLONG_{MIN,MAX}
-    - "-std=c99"
-
 pkg.deps:
     - "@apache-mynewt-core/sys/defs"
     - "@apache-mynewt-core/net/ip/mn_socket"
