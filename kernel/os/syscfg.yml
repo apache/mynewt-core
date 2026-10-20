@@ -202,6 +202,10 @@ syscfg.defs:
             ticks.
         value: 0
 
+# Enable runtime checks (e.g. mempool poisoning) in unit tests
+syscfg.vals.SELFTEST:
+    OS_DEBUG_MODE: 1
+
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1
     OS_CTX_SW_STACK_CHECK: 1
