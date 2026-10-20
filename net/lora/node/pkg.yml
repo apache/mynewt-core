@@ -24,10 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - lora
 
-pkg.cflags:
-    # Allow declarations inside for loops.
-    - "-std=c99"
-
 pkg.deps:
     - "@apache-mynewt-core/util/static_task"
 
