@@ -104,9 +104,7 @@ tu_restart(void)
 static void
 tu_dflt_task_handler(void *arg)
 {
-    while (1) {
-        os_eventq_run(os_eventq_dflt_get());
-    }
+    os_eventq_loop(os_eventq_dflt_get());
 }
 
 static void

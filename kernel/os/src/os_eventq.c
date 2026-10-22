@@ -215,6 +215,20 @@ os_eventq_run(struct os_eventq *evq)
 #endif
 }
 
+void
+os_eventq_loop(struct os_eventq *evq)
+{
+    while (1) {
+        os_eventq_run(evq);
+    }
+}
+
+void
+os_eventq_task_handler(void *arg)
+{
+    os_eventq_loop(arg);
+}
+
 static struct os_event *
 os_eventq_poll_0timo(struct os_eventq **evq, int nevqs)
 {
