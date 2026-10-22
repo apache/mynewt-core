@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include "os/mynewt.h"
+#include "static_task/static_task.h"
 #include "node/lora.h"
 #include "node/lora_priv.h"
 #include "node/lora_band.h"
@@ -64,15 +65,21 @@ uint8_t g_lora_node_last_tx_mac_cmd;
     LoRaMacCallback_t lora_cb;
 #endif
 
-/* MAC task */
-#define LORA_MAC_STACK_SIZE   (256)
-struct os_task g_lora_mac_task;
-os_stack_t g_lora_mac_stack[LORA_MAC_STACK_SIZE];
-
 /*
  * Lora MAC data object
  */
+#if !MYNEWT_VAL(LORA_NODE_CLI)
+struct lora_mac_obj g_lora_mac_data = {
+    .lm_evq = OS_EVENTQ_INITIALIZER(g_lora_mac_data.lm_evq),
+};
+
+/* MAC task, processes events from g_lora_mac_data.lm_evq */
+#define LORA_MAC_STACK_SIZE   (256)
+STATIC_TASK_DEFINE(loramac, MYNEWT_VAL(LORA_MAC_PRIO), LORA_MAC_STACK_SIZE,
+                   os_eventq_task_handler, &g_lora_mac_data.lm_evq);
+#else
 struct lora_mac_obj g_lora_mac_data;
+#endif
 
 /* The join event argument */
 struct lm_join_ev_arg_obj
@@ -391,20 +398,6 @@ lora_mac_txq_timer_cb(struct os_event *ev)
 {
     lora_mac_proc_tx_q_event(NULL);
 }
-
-/**
- * The LoRa mac task
- *
- * @param arg Pointer to arg passed to task (currently NULL).
- */
-void
-lora_mac_task(void *arg)
-{
-    /* Process events */
-    while (1) {
-        os_eventq_run(&g_lora_mac_data.lm_evq);
-    }
-}
 #endif
 
 #if !MYNEWT_VAL(LORA_APP_AUTO_JOIN)
@@ -647,16 +640,8 @@ lora_node_init(void)
     lora_app_init();
 
     /*--- MAC INIT ---*/
-    /* Initialize eventq */
-    os_eventq_init(&g_lora_mac_data.lm_evq);
-
     /* Set up transmit done queue and event */
     os_mqueue_init(&g_lora_mac_data.lm_txq, lora_mac_proc_tx_q_event, NULL);
-
-    /* Create the mac task */
-    os_task_init(&g_lora_mac_task, "loramac", lora_mac_task, NULL,
-                 MYNEWT_VAL(LORA_MAC_PRIO), OS_WAIT_FOREVER, g_lora_mac_stack,
-                 LORA_MAC_STACK_SIZE);
 
     /* Initialize join event */
     g_lora_mac_data.lm_join_ev.ev_cb = lora_mac_join_event;

@@ -29,6 +29,7 @@ pkg.cflags:
     - "-std=c99"
 
 pkg.deps:
+    - "@apache-mynewt-core/util/static_task"
 
 pkg.deps.LORA_NODE_CLI:
     - "@apache-mynewt-core/sys/shell"
