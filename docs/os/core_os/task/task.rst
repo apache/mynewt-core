@@ -108,6 +108,58 @@ task. This task simply toggles an LED at a one second interval.
         /* main never returns */
     }
 
+Statically defined tasks
+------------------------
+
+Many packages need a task that only processes events from its own event
+queue. Package ``util/static_task`` provides
+``STATIC_EVENTQ_TASK_DEFINE(name, prio, stack_size)`` that defines such
+a task ``name_task``, its stack ``name_stack`` and a statically
+initialized event queue ``name_evq``. No task handler or initialization
+code is needed: all tasks defined this way are created by
+:c:func:`static_task_init()`, which sysinit calls at stage
+``STATIC_TASK_SYSINIT_STAGE`` (by default after all other packages are
+initialized). Events can be put on ``name_evq`` at any time, also from
+earlier sysinit stages; they are processed once the task starts.
+Tasks are started in alphabetical order of their names. A package using
+the macros adds ``@apache-mynewt-core/util/static_task`` to its
+``pkg.deps`` and includes ``static_task/static_task.h``.
+
+``STATIC_TASK_DEFINE(name, prio, stack_size, func, arg)`` does the same for
+a task with its own handler and no event queue.
+``STATIC_EVENTQ_TASK_DECLARE(name)`` declares the symbols for use in other
+files.
+
+.. code-block:: c
+
+    /* foo.h */
+    STATIC_EVENTQ_TASK_DECLARE(foo);
+
+    /* foo.c */
+    STATIC_EVENTQ_TASK_DEFINE(foo, MYNEWT_VAL(FOO_TASK_PRIO),
+                              MYNEWT_VAL(FOO_TASK_STACK_SIZE));
+
+    static void
+    foo_event_cb(struct os_event *ev)
+    {
+        /* Executed in foo_task context */
+    }
+
+    static struct os_event foo_event = {
+        .ev_cb = foo_event_cb,
+    };
+
+    void
+    foo_irq_handler(void)
+    {
+        os_eventq_put(&foo_evq, &foo_event);
+    }
+
+The definition is placed in a link table, so it is only linked in when
+its object file is pulled from the package library; this is the case
+when other code in the same file is referenced. Otherwise set
+``pkg.whole_archive: true`` in the package's ``pkg.yml``.
+
 
 API
 ----

@@ -49,6 +49,24 @@ waiting for an event on the queue and puts the task into the
 A task can use the :c:func:`os_eventq_run()` wrapper function that calls the
 :c:func:`os_eventq_get()` function to dequeue an event from the queue and then
 calls the event callback function to process the event.
+A task that does nothing else can call :c:func:`os_eventq_loop()`, which
+calls :c:func:`os_eventq_run()` forever and never returns.
+:c:func:`os_eventq_task_handler()` does the same with the event queue
+passed as the task argument, so it can be given directly to
+:c:func:`os_task_init()`.
+
+An event queue can be initialized statically with
+``OS_EVENTQ_INITIALIZER``, so events can be put on it before the task
+that processes them is created:
+
+.. code:: c
+
+    struct os_eventq my_evq = OS_EVENTQ_INITIALIZER(my_evq);
+
+``STATIC_EVENTQ_TASK_DEFINE`` from ``util/static_task`` defines a task
+together with its stack and statically initialized event queue; see
+:doc:`../task/task`.
+
 Note:
 
 -  Only one task should consume or block waiting for events from an

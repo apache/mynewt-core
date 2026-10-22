@@ -105,6 +105,18 @@ struct os_eventq {
 };
 
 /**
+ * Static initializer for event queue, equivalent of os_eventq_init().
+ *
+ * struct os_eventq my_evq = OS_EVENTQ_INITIALIZER(my_evq);
+ *
+ * @param evq                   The event queue variable being initialized
+ */
+#define OS_EVENTQ_INITIALIZER(evq)                                            \
+    {                                                                         \
+        .evq_list = STAILQ_HEAD_INITIALIZER((evq).evq_list),                  \
+    }
+
+/**
  * Initialize the event queue
  *
  * @param evq                   The event queue to initialize
