@@ -35,9 +35,12 @@ permissions:
 
 jobs:
   # Builds newt once per run for all platforms used by jobs of this
-  # workflow, other jobs take newt from artifact uploaded by this job.
-  newt:
-    name: Build newt
+  # workflow and downloads external repositories. Windows and macOS jobs
+  # take newt from artifact uploaded by this job, Linux jobs use project
+  # (including newt) prepared by this job. Done in single job, since
+  # each job waits for runner, which may take long on shared runners.
+  prepare:
+    name: Prepare project
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -55,20 +58,6 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
-
-  # Downloads external repositories once per run, all Linux jobs use
-  # project prepared by this job.
-  prepare:
-    name: Prepare project
-    needs: newt
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v7
-      - name: Install newt
-        uses: ./.github/actions/newt-install
-        with:
-          artifact: newt
       - name: Set up project
         uses: ./.github/actions/newt-project
         with:
@@ -134,7 +123,7 @@ jobs:
 
   blinky-other-os:
     name: Build blinky
-    needs: newt
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -283,7 +272,7 @@ jobs:
 
   targets-other-os:
     name: Build all test targets
-    needs: newt
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -452,7 +441,7 @@ jobs:
   # access to caches and none of jobs building code does.
   cache-cleanup:
     name: Remove superseded caches
-    needs: [newt, prepare, blinky, bootloader, apps, targets, mtest-apps, gcc-target, unit-tests]
+    needs: [prepare, blinky, bootloader, apps, targets, mtest-apps, gcc-target, unit-tests]
     if: >-
       !cancelled() && github.ref == 'refs/heads/master' &&
       github.event_name != 'pull_request'
