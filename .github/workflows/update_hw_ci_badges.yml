@@ -21,7 +21,7 @@ name: Update HW CI Badges
 
 on:
   schedule:
-    - cron: '0 5 * * *'
+    - cron: '17 5 * * *'
 
 permissions:
   contents: write
