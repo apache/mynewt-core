@@ -158,6 +158,22 @@ struct os_event *os_eventq_get(struct os_eventq *evq);
  */
 void os_eventq_run(struct os_eventq *evq);
 
+/**
+ * Process events from the event queue forever.  Equivalent to calling
+ * os_eventq_run() in an endless loop.  Never returns.
+ *
+ * @param evq                   The event queue to process.
+ */
+void os_eventq_loop(struct os_eventq *evq) __attribute__((noreturn));
+
+/**
+ * Task handler that processes events from the event queue passed as task
+ * argument forever.  Can be passed directly to os_task_init().
+ *
+ * @param arg                   The event queue to process
+ *                                  (struct os_eventq *).
+ */
+void os_eventq_task_handler(void *arg) __attribute__((noreturn));
 
 /**
  * Poll the list of event queues specified by the evq parameter

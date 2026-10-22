@@ -182,9 +182,7 @@ os_main(void *arg)
     fn(0, NULL);
 #else
     (void)fn;
-    while (1) {
-        os_eventq_run(os_eventq_dflt_get());
-    }
+    os_eventq_loop(os_eventq_dflt_get());
 #endif
     assert(0);
 }
