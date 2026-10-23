@@ -88,19 +88,53 @@ extern struct os_task g_idle_task;
 
 #define TICKS_PER_MIN (60 * OS_TICKS_PER_SEC)
 
-static uint32_t idle_task_ticks[16];
+/* Unit of os_task.t_run_time */
+#if MYNEWT_VAL(OS_TASK_RUN_TIME_CPUTIME)
+#define RUN_TIME_TICKS_PER_SEC ((uint64_t)MYNEWT_VAL(OS_CPUTIME_FREQ))
+#else
+#define RUN_TIME_TICKS_PER_SEC ((uint64_t)OS_TICKS_PER_SEC)
+#endif
+#define RUN_TIME_TICKS_PER_MIN (60 * RUN_TIME_TICKS_PER_SEC)
+
+/* Idle task run time (64 bit) at each of last 16 minutes */
+static uint64_t idle_task_ticks[16];
 static uint32_t last_snap_shot_minute;
+
+/*
+ * t_run_time is 32 bit only, with OS_TASK_RUN_TIME_CPUTIME it wraps
+ * often (every ~71 minutes for 1 MHz cputime).  Load monitor samples it
+ * every minute and accumulates it in 64 bits.
+ */
+static uint64_t idle_run_time;
+static os_time_t idle_run_time_last;
 
 static struct os_callout load_monitor;
 
-static uint32_t
+static uint64_t
+idle_run_time_get(void)
+{
+    os_sr_t sr;
+    os_time_t now;
+    uint64_t ret;
+
+    OS_ENTER_CRITICAL(sr);
+    now = g_idle_task.t_run_time;
+    idle_run_time += (os_time_t)(now - idle_run_time_last);
+    idle_run_time_last = now;
+    ret = idle_run_time;
+    OS_EXIT_CRITICAL(sr);
+
+    return ret;
+}
+
+static int
 load_in_last_minutes(int minutes)
 {
     uint32_t ix1 = last_snap_shot_minute & 15;
     uint32_t ix2 = (ix1 - minutes) & 15;
-    uint32_t idle_ticks = idle_task_ticks[ix1] - idle_task_ticks[ix2];
+    uint64_t idle_ticks = idle_task_ticks[ix1] - idle_task_ticks[ix2];
 
-    return 100 - idle_ticks * 100 / (minutes * TICKS_PER_MIN);
+    return 100 - (int)(idle_ticks * 100 / (minutes * RUN_TIME_TICKS_PER_MIN));
 }
 
 static void
@@ -110,7 +144,7 @@ load_monitor_cb(struct os_event *e)
 
     last_snap_shot_minute = os_time_get() / TICKS_PER_MIN;
     ix = last_snap_shot_minute & 15;
-    idle_task_ticks[ix] = g_idle_task.t_run_time;
+    idle_task_ticks[ix] = idle_run_time_get();
 
     os_callout_reset(&load_monitor, TICKS_PER_MIN);
 }
@@ -154,9 +188,14 @@ uptime_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *
                     minutes, seconds, (int)(uptime.tv_usec / 1000));
     if (MYNEWT_VAL(SHELL_UPTIME_LOAD)) {
         int cpu_load[4];
-        os_time_t now = os_time_get();
+        uint64_t total_ticks;
 
-        cpu_load[3] = 100 - (int)(g_idle_task.t_run_time * 100ULL / now);
+        total_ticks = uptime.tv_sec * RUN_TIME_TICKS_PER_SEC +
+                      uptime.tv_usec * RUN_TIME_TICKS_PER_SEC / 1000000;
+        if (total_ticks == 0) {
+            total_ticks = 1;
+        }
+        cpu_load[3] = 100 - (int)(idle_run_time_get() * 100 / total_ticks);
         if (last_snap_shot_minute >= 1) {
             cpu_load[0] = load_in_last_minutes(1);
         } else {
