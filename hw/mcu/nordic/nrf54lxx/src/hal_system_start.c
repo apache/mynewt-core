@@ -32,13 +32,13 @@ hal_system_start(void *img_start)
 {
     uint32_t *img_data = img_start;
 
-    asm volatile(".syntax unified        \n"
-                 /* 1st word is stack pointer */
-                 "    msr  msp, %0       \n"
-                 /* 2nd word is a reset handler (image entry) */
-                 "    bx   %1            \n"
-                 : /* no output */
-                 : "r"(img_data[0]), "r"(img_data[1]));
+    __asm volatile(".syntax unified        \n"
+                   /* 1st word is stack pointer */
+                   "    msr  msp, %0       \n"
+                   /* 2nd word is a reset handler (image entry) */
+                   "    bx   %1            \n"
+                   : /* no output */
+                   : "r"(img_data[0]), "r"(img_data[1]));
 }
 
 /**

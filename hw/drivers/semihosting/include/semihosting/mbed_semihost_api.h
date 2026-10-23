@@ -47,15 +47,15 @@ static inline int __semihost(int reason, const void *arg)
 {
     int value;
 
-    asm volatile(
-        "mov r0, %1"          "\n\t"
-        "mov r1, %2"          "\n\t"
-        AngelSWIInsn " %a3"   "\n\t"
-        "mov %0, r0"
-        : "=r"(value)                                          /* output operands             */
-        : "r"(reason), "r"(arg), "i"(AngelSWI)                 /* input operands              */
-        : "r0", "r1", "r2", "r3", "ip", "lr", "memory", "cc"   /* list of clobbered registers */
-    );
+    __asm volatile("mov r0, %1\n\t"
+                   "mov r1, %2\n\t" AngelSWIInsn " %a3\n\t"
+                   "mov %0, r0"
+                   /* output operands */
+                   : "=r"(value)
+                   /* input operands */
+                   : "r"(reason), "r"(arg), "i"(AngelSWI)
+                   /* list of clobbered registers */
+                   : "r0", "r1", "r2", "r3", "ip", "lr", "memory", "cc");
 
     return value;
 }

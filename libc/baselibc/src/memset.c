@@ -15,17 +15,17 @@ void *memset(void *dst, int c, size_t n)
 
 #if defined(__i386__)
 	size_t nl = n >> 2;
-	asm volatile ("cld ; rep ; stosl ; movl %3,%0 ; rep ; stosb"
+	__asm volatile ("cld ; rep ; stosl ; movl %3,%0 ; rep ; stosb"
 		      : "+c" (nl), "+D" (q)
 		      : "a" ((unsigned char)c * 0x01010101U), "r" (n & 3));
 #elif defined(__x86_64__)
 	size_t nq = n >> 3;
-	asm volatile ("cld ; rep ; stosq ; movl %3,%%ecx ; rep ; stosb"
+	__asm volatile ("cld ; rep ; stosq ; movl %3,%%ecx ; rep ; stosb"
 		      :"+c" (nq), "+D" (q)
 		      : "a" ((unsigned char)c * 0x0101010101010101U),
 			"r" ((uint32_t) n & 7));
 #elif defined(__arm__)
-    asm volatile (".syntax unified                          \n"
+    __asm volatile (".syntax unified                          \n"
                   /* copy 8-bit value to all 4 bytes in word */
 #if __CORTEX_M < 3
                   /* Cortex-M0 does not support flexible 2nd operand */
@@ -68,7 +68,7 @@ void *memset(void *dst, int c, size_t n)
                  );
 #elif defined(__riscv)
     (void)q;
-    asm volatile ("   add %[len], %[len], %[dst]            \n"
+    __asm volatile ("   add %[len], %[len], %[dst]            \n"
                   "   j 2f                                  \n"
                   "1: sb %[val], (%[dst])                   \n"
                   "   addi %[dst], %[dst], 1                \n"

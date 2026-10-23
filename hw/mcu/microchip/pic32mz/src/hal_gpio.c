@@ -398,7 +398,7 @@ hal_gpio_toggle(int pin)
      * One instruction cycle is required between a write and a read
      * operation on the same port.
      */
-    asm volatile ("nop");
+    __asm volatile("nop");
 
     return !!(PORTx(port) & mask);
 }

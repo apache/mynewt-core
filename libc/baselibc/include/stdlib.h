@@ -78,7 +78,7 @@ __extern_inline char *getenv(const char *name)
 
 #define EXIT_SUCCESS	0
 #define EXIT_FAILURE	1
-__extern void _exit(int s);
+__extern void _exit(int s) __attribute__((noreturn));
 __extern_inline void exit(int err)
 {
 	_exit(err);

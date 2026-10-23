@@ -36,3 +36,8 @@ pkg.deps:
 pkg.init:
     hal_bsp_init_trng: 2
 
+
+# Native builds use host libc and POSIX APIs, which glibc hides in strict
+# ISO C mode (e.g. -std=c11) unless a feature test macro is defined.
+pkg.cflags:
+    - -D_DEFAULT_SOURCE

@@ -134,34 +134,34 @@ mtb_stop(void)
      * Store MTB registers in mtb_state_at_crash so it can be used for
      * crash analyzes.
      */
-    asm volatile (".syntax unified           \n"
-                  "    ldr  r1, =0xe00ff000  \n"
-                  "    ldr  r2, [r1, #0x1c]  \n"
-                  "    tst  r2, #1           \n"
-                  "    beq  1f               \n"
-                  "    bic  r2, #0x00ff      \n"
-                  "    bic  r2, #0x0f00      \n"
-                  "    add  r1, r2           \n"
-                  "    ldr  r2, [r1, #4]     \n"
-                  "    bic  r2, #0x80000000  \n"
-                  "    str  r2, [r1, #4]     \n"
+    __asm volatile(".syntax unified           \n"
+                   "    ldr  r1, =0xe00ff000  \n"
+                   "    ldr  r2, [r1, #0x1c]  \n"
+                   "    tst  r2, #1           \n"
+                   "    beq  1f               \n"
+                   "    bic  r2, #0x00ff      \n"
+                   "    bic  r2, #0x0f00      \n"
+                   "    add  r1, r2           \n"
+                   "    ldr  r2, [r1, #4]     \n"
+                   "    bic  r2, #0x80000000  \n"
+                   "    str  r2, [r1, #4]     \n"
 #if MYNEWT_VAL(OS_COREDUMP)
-                  "    str  r2, [%[mtbs], #4]\n"
-                  "    ldr  r2, [r1]         \n"
-                  "    str  r2, [%[mtbs]]    \n"
-                  "    ldr  r2, [r1, #8]     \n"
-                  "    str  r2, [%[mtbs], #8]\n"
-                  "    ldr  r2, [r1, #12]    \n"
-                  "    str  r2, [%[mtbs], #12]\n"
+                   "    str  r2, [%[mtbs], #4]\n"
+                   "    ldr  r2, [r1]         \n"
+                   "    str  r2, [%[mtbs]]    \n"
+                   "    ldr  r2, [r1, #8]     \n"
+                   "    str  r2, [%[mtbs], #8]\n"
+                   "    ldr  r2, [r1, #12]    \n"
+                   "    str  r2, [%[mtbs], #12]\n"
 #endif /* MYNEWT_VAL(OS_COREDUMP) */
-                  " 1:                       \n"
-                  :
+                   " 1:                       \n"
+                   :
 #if MYNEWT_VAL(OS_COREDUMP)
-                  : [mtbs] "r" (&mtb_state_at_crash)
+                   : [mtbs] "r"(&mtb_state_at_crash)
 #else
-                  :
+                   :
 #endif
-                  : "r1", "r2");
+                   : "r1", "r2");
 }
 
 void
@@ -196,7 +196,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 #endif
 
     SCB->ICSR = SCB_ICSR_PENDNMISET_Msk;
-    asm("isb");
+    __asm("isb");
     hal_system_reset();
 }
 

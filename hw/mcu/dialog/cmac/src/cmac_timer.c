@@ -215,10 +215,10 @@ compensate_ll_timer(uint32_t slept_us)
      * Compiler barrier to make sure calculations are already done prior to
      * this line since code below has strict time constraints.
      */
-    asm volatile(""
-                 :
-                 :"r" (comp_ll_timer_36), "r" (comp_ll_timer_09)
-                 : "memory");
+    __asm volatile(""
+                   :
+                   : "r"(comp_ll_timer_36), "r"(comp_ll_timer_09)
+                   : "memory");
 
     /*
      * Normally we should only wait for next 1MHz tick but since prior to
