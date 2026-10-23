@@ -21,10 +21,6 @@ BSP:
   - changed-files:
       - any-glob-to-any-file: hw/bsp/**
 
-CI:
-  - changed-files:
-      - any-glob-to-any-file: .github/workflows/**
-
 Dialog:
   - changed-files:
       - any-glob-to-any-file: ['hw/mcu/dialog/**', 'hw/bsp/dialog*/**']
