@@ -27,7 +27,7 @@ CI:
 
 Dialog:
   - changed-files:
-      - any-glob-to-any-file: ['hw/mcu/dialog/**, hw/bsp/dialog*/**']
+      - any-glob-to-any-file: ['hw/mcu/dialog/**', 'hw/bsp/dialog*/**']
 
 Nordic:
   - changed-files:
