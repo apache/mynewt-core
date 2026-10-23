@@ -104,7 +104,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0
+      - uses: carlosperate/arm-none-eabi-gcc-action@0edbb000a5a98e2292b051b463bff6f512547118 # v1.14.0
         with:
           release: '15.2.Rel1'
       - name: Install Dependencies
@@ -142,7 +142,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0
+      - uses: carlosperate/arm-none-eabi-gcc-action@0edbb000a5a98e2292b051b463bff6f512547118 # v1.14.0
         with:
           release: '15.2.Rel1'
       - name: Install GNU sed
@@ -173,7 +173,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0
+      - uses: carlosperate/arm-none-eabi-gcc-action@0edbb000a5a98e2292b051b463bff6f512547118 # v1.14.0
         with:
           release: '15.2.Rel1'
       - name: Install Dependencies
@@ -211,7 +211,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0
+      - uses: carlosperate/arm-none-eabi-gcc-action@0edbb000a5a98e2292b051b463bff6f512547118 # v1.14.0
         with:
           release: '15.2.Rel1'
       - name: Install Dependencies
@@ -248,7 +248,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0
+      - uses: carlosperate/arm-none-eabi-gcc-action@0edbb000a5a98e2292b051b463bff6f512547118 # v1.14.0
         with:
           release: '15.2.Rel1'
       - name: Restore project
@@ -291,7 +291,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0
+      - uses: carlosperate/arm-none-eabi-gcc-action@0edbb000a5a98e2292b051b463bff6f512547118 # v1.14.0
         with:
           release: '15.2.Rel1'
       - name: Install GNU sed
@@ -323,7 +323,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: carlosperate/arm-none-eabi-gcc-action@v1.14.0
+      - uses: carlosperate/arm-none-eabi-gcc-action@0edbb000a5a98e2292b051b463bff6f512547118 # v1.14.0
         with:
           release: 15.2.Rel1
       - name: Install Dependencies
