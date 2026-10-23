@@ -20,11 +20,8 @@
 name: Bootloader (main)
 
 on:
-  push:
-    branches:
-      - master
   schedule:
-    - cron: 42 0 * * *
+    - cron: 42 0 * * 6
 
 concurrency:
   group: ${{ github.workflow }}
