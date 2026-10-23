@@ -47,3 +47,7 @@ targets
 /keys/
 /repos/
 /cov-int/
+
+# Python bytecode
+__pycache__/
+*.pyc
