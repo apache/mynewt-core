@@ -47,12 +47,12 @@ jobs:
           author: Mynewt Bot <dev@mynewt.apache.org>
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
-            Update HW CI badges in README
+            readme: Update HW CI status badges
 
             Automated update of hardware CI status badges.
             This commit fetches the latest test results from the Codecoup lab.
           branch: update-hw-ci-badges
-          title: "Update HW CI status badges"
+          title: "readme: Update HW CI status badges"
           body: |
             Update of the HW CI status badges in README.md
             - Fetched the latest test results from the Codecoup hardware lab
