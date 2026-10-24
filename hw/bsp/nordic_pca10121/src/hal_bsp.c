@@ -48,28 +48,6 @@ extern uint8_t __StackLimit;
 extern uint8_t __StackTop;
 #endif
 
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    /*
-     * Internal flash mapped to id 0.
-     */
-    if (id == 0) {
-        return &nrf_flash_dev;
-    }
-#if MYNEWT_VAL(QSPI_ENABLE)
-    if (id == 1) {
-        return &nrf_qspi_dev;
-    }
-#endif
-#if MYNEWT_VAL(IPC_NRF5340_FLASH_CLIENT)
-    if (id == 2) {
-        return ipc_flash();
-    }
-#endif
-    return NULL;
-}
-
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)
 {

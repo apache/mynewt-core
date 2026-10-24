@@ -21,7 +21,6 @@
 #include "bsp/bsp.h"
 #include "os/mynewt.h"
 #include "mynewt_cm.h"
-#include "spiflash/spiflash.h"
 
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash_int.h>
@@ -31,10 +30,6 @@
 #include <stm32_common/stm32_hal.h>
 #if MYNEWT_PKG_apache_mynewt_core__bus_drivers
 #include <bus/drivers/spi_common.h>
-#endif
-
-#if MYNEWT_PKG_apache_mynewt_core__hw_drivers_flash_fs_flash
-#include <fs_flash/fs_flash.h>
 #endif
 
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
@@ -152,28 +147,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
         .hbmd_size = RAM_SIZE,
     },
 };
-
-extern const struct hal_flash stm32_flash_dev;
-
-static const struct hal_flash *flash_devs[] = {
-    [0] = &stm32_flash_dev,
-#if MYNEWT_VAL(SPIFLASH)
-    [1] = &spiflash_dev.hal,
-#endif
-#if MYNEWT_PKG_apache_mynewt_core__hw_drivers_flash_fs_flash
-    [2] = &fs_flash_dev.hal,
-#endif
-};
-
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id >= ARRAY_SIZE(flash_devs)) {
-        return NULL;
-    }
-
-    return flash_devs[id];
-}
 
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)

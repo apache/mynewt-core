@@ -124,21 +124,9 @@ static struct eflash_crypto_dev enc_flash_dev0 = {
         .efd_hwdev = &kinetis_flash_dev,
     }
 };
-#endif
 
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id == 0) {
-        return &kinetis_flash_dev;
-    }
-#if MYNEWT_VAL(ENC_FLASH_DEV)
-    if (id == 1) {
-        return &enc_flash_dev0.ecd_dev.efd_hal;
-    }
+HAL_FLASH_DEV(enc_flash, (1), &enc_flash_dev0.ecd_dev.efd_hal);
 #endif
-    return NULL;
-}
 
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)

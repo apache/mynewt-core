@@ -22,12 +22,6 @@
 #include "hal/hal_system.h"
 #include "mcu/cmac_periph.h"
 
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    return NULL;
-}
-
 void
 hal_bsp_init(void)
 {

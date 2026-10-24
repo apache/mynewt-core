@@ -55,24 +55,9 @@ static sec_data_secret struct eflash_nrf5x_dev enc_flash_dev0 = {
     }
 };
 
-#endif
+HAL_FLASH_DEV(enc_flash, (1), &enc_flash_dev0.end_dev.efd_hal);
 
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    /*
-     * Internal flash mapped to id 0.
-     */
-    if (id == 0) {
-        return &nrf_flash_dev;
-    }
-#if MYNEWT_VAL(ENC_FLASH_DEV)
-    if (id == 1) {
-        return &enc_flash_dev0.end_dev.efd_hal;
-    }
 #endif
-    return NULL;
-}
 
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)

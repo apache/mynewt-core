@@ -21,7 +21,6 @@
 #include "bsp/bsp.h"
 #include "os/mynewt.h"
 #include "mynewt_cm.h"
-#include "spiflash/spiflash.h"
 
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash_int.h>
@@ -181,18 +180,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
         .hbmd_size = ITCM_SIZE,
     },
 };
-
-extern const struct hal_flash stm32_flash_dev;
-
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id != 0) {
-        return NULL;
-    }
-
-    return &stm32_flash_dev;
-}
 
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)

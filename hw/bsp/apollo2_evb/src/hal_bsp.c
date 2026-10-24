@@ -104,15 +104,6 @@ static const struct apollo2_spi_cfg hal_bsp_spi5m_cfg = {
 };
 #endif
 
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id != 0) {
-        return (NULL);
-    }
-    return &apollo2_flash_dev;
-}
-
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)
 {

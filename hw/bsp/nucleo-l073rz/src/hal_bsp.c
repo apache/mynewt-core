@@ -29,10 +29,6 @@
 #include <stm32l073xx.h>
 #include <stm32_common/stm32_hal.h>
 
-#if MYNEWT_VAL(SPIFLASH)
-#include <spiflash/spiflash.h>
-#endif
-
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
 #include <pwm_stm32/pwm_stm32.h>
 #endif
@@ -111,7 +107,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     },
 };
 
-extern const struct hal_flash stm32_flash_dev;
 #if MYNEWT_VAL(SPIFLASH)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 struct bus_spi_node_cfg flash_spi_cfg = {
@@ -124,22 +119,6 @@ struct bus_spi_node_cfg flash_spi_cfg = {
 #endif
 #endif
 
-static const struct hal_flash *flash_devs[] = {
-    [0] = &stm32_flash_dev,
-#if MYNEWT_VAL(SPIFLASH)
-    [1] = &spiflash_dev.hal,
-#endif
-};
-
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id >= ARRAY_SIZE(flash_devs)) {
-        return NULL;
-    }
-
-    return flash_devs[id];
-}
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)
 {
