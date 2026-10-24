@@ -30,7 +30,9 @@
 #include <stm32_common/stm32_hal.h>
 #include <stm32_common/mcu.h>
 
-#if MYNEWT_VAL(I2C_3)
+#if MYNEWT_VAL(I2C_4)
+#define HAL_I2C_MAX_DEVS    5
+#elif MYNEWT_VAL(I2C_3)
 #define HAL_I2C_MAX_DEVS    4
 #elif MYNEWT_VAL(I2C_2)
 #define HAL_I2C_MAX_DEVS    3
@@ -65,6 +67,9 @@ static struct stm32_hal_i2c i2c2;
 #if MYNEWT_VAL(I2C_3)
 static struct stm32_hal_i2c i2c3;
 #endif
+#if MYNEWT_VAL(I2C_4)
+static struct stm32_hal_i2c i2c4;
+#endif
 
 static struct stm32_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 #if MYNEWT_VAL(I2C_0)
@@ -85,6 +90,11 @@ static struct stm32_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 #if MYNEWT_VAL(I2C_3)
     &i2c3,
 #elif HAL_I2C_MAX_DEVS > 4
+    NULL,
+#endif
+#if MYNEWT_VAL(I2C_4)
+    &i2c4,
+#elif HAL_I2C_MAX_DEVS > 5
     NULL,
 #endif
 };
