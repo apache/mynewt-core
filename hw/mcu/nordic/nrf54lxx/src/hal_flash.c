@@ -158,3 +158,7 @@ const struct hal_flash nrf54l_flash_dev = {
     .hf_align = MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE),
     .hf_erased_val = 0xff,
 };
+
+#if MYNEWT_VAL(MCU_FLASH_ID) >= 0
+HAL_FLASH_DEV(nrf54l_flash, MYNEWT_VAL(MCU_FLASH_ID), &nrf54l_flash_dev);
+#endif

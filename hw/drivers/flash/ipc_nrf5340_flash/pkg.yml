@@ -32,3 +32,6 @@ pkg.deps:
 
 pkg.init.IPC_NRF5340_FLASH_SERVER:
     ipc_nrf5340_flash_server_init: 'MYNEWT_VAL(IPC_NRF5340_FLASH_SERVER_INIT_STAGE)'
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true

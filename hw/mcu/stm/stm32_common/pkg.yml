@@ -69,3 +69,6 @@ pkg.deps.CRYPTO:
 
 pkg.deps.HASH:
     - "@apache-mynewt-core/hw/drivers/hash/hash_stm32"
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true

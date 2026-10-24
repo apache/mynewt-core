@@ -16,6 +16,11 @@
 # under the License.
 
 syscfg.defs:
+    MCU_FLASH_ID:
+        description: >
+            Flash device id of MCU internal flash (device: in bsp.yml flash map).
+            Set to -1 to not register device for default hal_bsp_flash_dev().
+        value: 0
     TIMER_0:
         description: 'Timer 0'
         value:  1

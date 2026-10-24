@@ -31,3 +31,6 @@ pkg.keywords:
 pkg.deps:
   - "@apache-mynewt-core/hw/hal"
   - "@apache-mynewt-core/hw/cmsis-core"
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true

@@ -54,6 +54,10 @@ const struct hal_flash fe310_flash_dev = {
     .hf_erased_val = 0xff,
 };
 
+#if MYNEWT_VAL(MCU_FLASH_ID) >= 0
+HAL_FLASH_DEV(fe310_flash, MYNEWT_VAL(MCU_FLASH_ID), &fe310_flash_dev);
+#endif
+
 #define FLASH_CMD_READ_STATUS_REGISTER 0x05
 #define FLASH_CMD_WRITE_ENABLE 0x06
 #define FLASH_CMD_PAGE_PROGRAM 0x02

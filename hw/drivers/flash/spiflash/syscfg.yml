@@ -17,6 +17,11 @@
 #
 
 syscfg.defs:
+    SPIFLASH_FLASH_ID:
+        description: >
+            Flash device id of SPI flash (device: in bsp.yml flash map).
+            Set to -1 to not register device for default hal_bsp_flash_dev().
+        value: 1
     SPIFLASH:
         description: "SpiFlash enable"
         value:  0

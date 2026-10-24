@@ -153,6 +153,10 @@ const struct stm32_qspi_dev stm32_qspi_dev = {
     .data = &stm32_qspi_data,
 };
 
+#if MYNEWT_VAL(STM32_QSPI_FLASH_ID) >= 0
+HAL_FLASH_DEV(stm32_qspi, MYNEWT_VAL(STM32_QSPI_FLASH_ID), &stm32_qspi_dev.hal_flash);
+#endif
+
 const struct hal_flash *const qspi_flash_0 = &stm32_qspi_dev.hal_flash;
 
 typedef uint32_t qspi_cmd_t;

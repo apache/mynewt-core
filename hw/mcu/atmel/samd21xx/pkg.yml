@@ -38,3 +38,6 @@ pkg.cflags:
     - -DEVENTS_INTERRUPT_HOOKS_MODE=true
     - -DEXTINT_CALLBACK_MODE=true
     - -DSPI_CALLBACK_MODE=true
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true

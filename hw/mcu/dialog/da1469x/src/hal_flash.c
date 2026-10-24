@@ -64,6 +64,10 @@ const struct hal_flash da1469x_flash_dev = {
     .hf_erased_val = 0xff,
 };
 
+#if MYNEWT_VAL(MCU_FLASH_ID) >= 0
+HAL_FLASH_DEV(da1469x_flash, MYNEWT_VAL(MCU_FLASH_ID), &da1469x_flash_dev);
+#endif
+
 const struct qspi_flash_config *
 da1469x_qspi_get_config(void)
 {

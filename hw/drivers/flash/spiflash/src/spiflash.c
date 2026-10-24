@@ -682,6 +682,10 @@ struct spiflash_dev spiflash_dev = {
     .flash_chip = NULL,
 };
 
+#if MYNEWT_VAL(SPIFLASH_FLASH_ID) >= 0
+HAL_FLASH_DEV(spiflash, MYNEWT_VAL(SPIFLASH_FLASH_ID), &spiflash_dev.hal);
+#endif
+
 static inline void spiflash_lock_no_apd(struct spiflash_dev *dev)
 {
 #if MYNEWT_VAL(OS_SCHEDULING)

@@ -62,3 +62,6 @@ pkg.deps.SDADC:
 
 pkg.init:
     da1469x_lpclk_init: 'MYNEWT_VAL(DA1469X_LPCLK_SYSINIT_STAGE)'
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true
