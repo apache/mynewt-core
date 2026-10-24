@@ -1,0 +1,103 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.vals:
+    SPIFLASH_FLASH_ID: 2
+    STM32_FLASH_SIZE_KB: 2048
+    STM32_FLASH_NUM_AREAS: 16
+    # Image 1 (1920kB) with 4kB sectors in SPI flash
+    BOOTUTIL_MAX_IMG_SECTORS: 512
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_CONFIG
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    MCU_RAM_START: 0x24000000
+    MCU_RAM_SIZE: 512K
+    STM32_CLOCK_VOLTAGESCALING_CONFIG: 'PWR_REGULATOR_VOLTAGE_SCALE0'
+    STM32_CLOCK_HSI: 1
+    STM32_CLOCK_HSE: 1
+    STM32_CLOCK_HSE_BYPASS: 0
+    STM32_CLOCK_PLL_PLLM: 5
+    STM32_CLOCK_PLL_PLLN: 192
+    STM32_CLOCK_PLL_PLLP: 2
+    STM32_CLOCK_PLL_PLLQ: 20
+    STM32_CLOCK_PLL_PLLR: 2
+    STM32_CLOCK_AHB_DIVIDER: 'RCC_HCLK_DIV2'
+    STM32_CLOCK_APB1_DIVIDER: 'RCC_APB1_DIV2'
+    STM32_CLOCK_APB2_DIVIDER: 'RCC_APB2_DIV2'
+    STM32_CLOCK_APB3_DIVIDER: 'RCC_APB3_DIV2'
+    STM32_CLOCK_APB4_DIVIDER: 'RCC_APB4_DIV2'
+    STM32_CLOCK_PLLRGE: 'RCC_PLL1VCIRANGE_3'
+    STM32_FLASH_LATENCY: 'FLASH_LATENCY_4'
+    STM32_ENABLE_ICACHE: 1
+    WATCHDOG_INTERVAL: 28000
+    UART_1_PIN_TX: 'MCU_GPIO_PORTA(9)'
+    UART_1_PIN_RX: 'MCU_GPIO_PORTA(10)'
+    # USART3 (PD8/PD9) is UART_3, there is no UART_0
+    UART_0: 0
+    UART_3: 1
+    UART_3_PIN_TX: 'MCU_GPIO_PORTD(8)'
+    UART_3_PIN_RX: 'MCU_GPIO_PORTD(9)'
+    CONSOLE_UART_DEV: '"uart3"'
+    SPI_0_PIN_SS: -1
+    SPI_0_PIN_SCK: 'MCU_GPIO_PORTB(3)'
+    SPI_0_PIN_MISO: 'MCU_GPIO_PORTB(4)'
+    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTD(7)'
+    I2C_1_PIN_SCL: 'MCU_GPIO_PORTB(8)'
+    I2C_1_PIN_SDA: 'MCU_GPIO_PORTB(9)'
+    I2C_2_PIN_SCL: 'MCU_GPIO_PORTB(10)'
+    I2C_2_PIN_SDA: 'MCU_GPIO_PORTB(11)'
+    I2C_3_PIN_SCL: 'MCU_GPIO_PORTA(8)'
+    I2C_3_PIN_SDA: 'MCU_GPIO_PORTC(9)'
+    # PD12/PD13 are also QSPI flash IO1/IO3
+    I2C_4_PIN_SCL: 'MCU_GPIO_PORTD(12)'
+    I2C_4_PIN_SDA: 'MCU_GPIO_PORTD(13)'
+    TIMER_0_TIM: 'TIM12'
+    TIMER_1_TIM: 'TIM13'
+    TIMER_2_TIM: 'TIM14'
+
+    # SPI flash on SPI1 (SPI_0): Winbond W25Q64JV, 8MB, holds image 1
+    SPIFLASH: 1
+    SPI_0_MASTER: 1
+    SPIFLASH_SPI_NUM: 0
+    SPIFLASH_SPI_CS_PIN: 'MCU_GPIO_PORTD(6)'
+    SPIFLASH_SPI_MODE: 0
+    SPIFLASH_BAUDRATE: 8000
+    SPIFLASH_SECTOR_SIZE: 4096
+    SPIFLASH_PAGE_SIZE: 256
+    SPIFLASH_SECTOR_COUNT: 2048
+    SPIFLASH_W25Q64JV: 1
+    # spi_stm32 DMA transfers return stale data on H7 (D-cache)
+    SPI_STM32_MIN_RX_LENGTH_FOR_DMA: -1
+    SPI_STM32_MIN_TX_LENGTH_FOR_DMA: -1
+
+    # Flasher parameters
+    MYNEWT_DOWNLOADER: stm32_programmer_cli
+    MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
+    JLINK_TARGET: STM32H743VI
+
+# QSPI flash: Winbond W25Q64JV, 8MB
+syscfg.vals.STM32_QSPI_FLASH:
+    STM32_QSPI_FLASH_PIN_CS: MCU_AFIO_PORTB(6, GPIO_AF10_QUADSPI)
+    STM32_QSPI_FLASH_PIN_SCK: MCU_AFIO_PORTB(2, GPIO_AF9_QUADSPI)
+    STM32_QSPI_FLASH_PIN_DIO0: MCU_AFIO_PORTD(11, GPIO_AF9_QUADSPI)
+    STM32_QSPI_FLASH_PIN_DIO1: MCU_AFIO_PORTD(12, GPIO_AF9_QUADSPI)
+    STM32_QSPI_FLASH_PIN_DIO2: MCU_AFIO_PORTE(2, GPIO_AF9_QUADSPI)
+    STM32_QSPI_FLASH_PIN_DIO3: MCU_AFIO_PORTD(13, GPIO_AF9_QUADSPI)
+    STM32_QSPI_FLASH_SECTOR_COUNT: 2048
+
