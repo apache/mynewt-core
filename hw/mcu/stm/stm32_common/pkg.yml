@@ -36,6 +36,20 @@ pkg.deps.UART_1:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 pkg.deps.UART_2:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_3:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_4:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_5:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_6:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_7:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_8:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_9:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.PWM_0:
     - "@apache-mynewt-core/hw/drivers/pwm/pwm_stm32"
