@@ -47,6 +47,13 @@ syscfg.defs:
             If set HAL provides standard implementation of _sbrk function.
             It also provides _sbrkInit function that sets up heap space for malloc.
         value: 1
+    HAL_FLASH_DEV_TABLE:
+        description: >
+            Use common hal_bsp_flash_dev() and hal_flash_init() that work on
+            flash devices registered with HAL_FLASH_DEV() (hal_flash_devs
+            link table). Set to 0 when BSP provides its own
+            hal_bsp_flash_dev().
+        value: 0
     HAL_FLASH_MAX_DEVICE_COUNT:
         description: >
             If set to zero, flash device ids have continues numbers 0,1,2,...
