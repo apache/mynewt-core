@@ -57,6 +57,10 @@ const struct hal_flash apollo3_flash_dev = {
     .hf_erased_val = 0xff,
 };
 
+#if MYNEWT_VAL(MCU_FLASH_ID) >= 0
+HAL_FLASH_DEV(apollo3_flash, MYNEWT_VAL(MCU_FLASH_ID), &apollo3_flash_dev);
+#endif
+
 static int
 apollo3_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
     uint32_t num_bytes)

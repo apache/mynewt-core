@@ -63,6 +63,10 @@ const struct hal_flash pic32mz_flash_dev = {
     .hf_erased_val = 0xff,
 };
 
+#if MYNEWT_VAL(MCU_FLASH_ID) >= 0
+HAL_FLASH_DEV(pic32mz_flash, MYNEWT_VAL(MCU_FLASH_ID), &pic32mz_flash_dev);
+#endif
+
 static int
 flash_do_op(uint32_t op)
 {

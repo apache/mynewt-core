@@ -74,6 +74,10 @@ const struct hal_flash stm32_flash_dev = {
     .hf_erased_val = FLASH_ERASED_VAL,
 };
 
+#if MYNEWT_VAL(MCU_FLASH_ID) >= 0
+HAL_FLASH_DEV(stm32_flash, MYNEWT_VAL(MCU_FLASH_ID), &stm32_flash_dev);
+#endif
+
 static int
 stm32_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
         uint32_t num_bytes)

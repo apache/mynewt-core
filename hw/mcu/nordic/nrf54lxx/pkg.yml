@@ -50,3 +50,6 @@ pkg.deps.UART_3:
 
 pkg.deps.BLE_CONTROLLER:
     - "@apache-mynewt-nimble/nimble/drivers/nrf5x"
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true

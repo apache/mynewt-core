@@ -93,6 +93,10 @@ const struct hal_flash nrf_qspi_dev = {
     .hf_erased_val = 0xff,
 };
 
+#if MYNEWT_VAL(QSPI_FLASH_ID) >= 0
+HAL_FLASH_DEV(nrf_qspi, MYNEWT_VAL(QSPI_FLASH_ID), &nrf_qspi_dev);
+#endif
+
 static int
 nrf_qspi_read(const struct hal_flash *dev, uint32_t address,
               void *dst, uint32_t num_bytes)

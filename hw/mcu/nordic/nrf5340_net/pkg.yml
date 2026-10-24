@@ -60,3 +60,6 @@ pkg.deps.MCU_DEFAULT_STARTUP:
 
 pkg.deps.CORTEX_DEFAULT_STARTUP:
     - "@apache-mynewt-core/boot/startup"
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true

@@ -255,4 +255,9 @@ struct nrf5340_vflash nrf5340_net_vflash_dev = {
     }
 };
 
+#if MYNEWT_VAL(NRF5340_NET_VFLASH_ID) >= 0
+HAL_FLASH_DEV(nrf5340_net_vflash, MYNEWT_VAL(NRF5340_NET_VFLASH_ID),
+              &nrf5340_net_vflash_dev.nv_flash);
+#endif
+
 #endif

@@ -50,3 +50,6 @@ pkg.deps.UART_1:
 
     
     
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true

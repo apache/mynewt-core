@@ -507,4 +507,8 @@ const struct hal_flash nxp_qspi_dev = {
     .hf_erased_val = 0xff,
 };
 
+#if MYNEWT_VAL(QSPI_FLASH_ID) >= 0
+HAL_FLASH_DEV(nxp_qspi, MYNEWT_VAL(QSPI_FLASH_ID), &nxp_qspi_dev);
+#endif
+
 #endif /* MYNEWT_VAL(QSPI_ENABLE) */

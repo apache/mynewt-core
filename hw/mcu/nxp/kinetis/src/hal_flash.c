@@ -64,6 +64,10 @@ struct hal_flash kinetis_flash_dev = {
     .hf_erased_val = 0xff,
 };
 
+#if MYNEWT_VAL(MCU_FLASH_ID) >= 0
+HAL_FLASH_DEV(kinetis_flash, MYNEWT_VAL(MCU_FLASH_ID), &kinetis_flash_dev);
+#endif
+
 static int
 kinetis_flash_read(const struct hal_flash *dev,
                    uint32_t address,

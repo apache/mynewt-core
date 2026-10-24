@@ -383,6 +383,11 @@ struct ipc_flash nrf5340_ipc_flash_dev = {
     },
 };
 
+#if MYNEWT_VAL(IPC_NRF5340_FLASH_ID) >= 0
+HAL_FLASH_DEV(ipc_nrf5340_flash, MYNEWT_VAL(IPC_NRF5340_FLASH_ID),
+              &nrf5340_ipc_flash_dev.hal_flash);
+#endif
+
 const struct hal_flash *
 ipc_flash(void)
 {

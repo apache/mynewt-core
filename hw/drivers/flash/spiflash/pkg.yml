@@ -29,3 +29,6 @@ pkg.deps:
 
 pkg.deps.SPIFLASH_STAT:
     - "@apache-mynewt-core/sys/stats"
+
+# Flash device is only referenced from hal_flash_devs link table
+pkg.whole_archive: true
