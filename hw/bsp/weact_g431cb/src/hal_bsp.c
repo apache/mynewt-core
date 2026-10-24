@@ -135,22 +135,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     },
 };
 
-extern const struct hal_flash stm32_flash_dev;
-
-static const struct hal_flash *flash_devs[] = {
-    [0] = &stm32_flash_dev,
-};
-
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id >= ARRAY_SIZE(flash_devs)) {
-        return NULL;
-    }
-
-    return flash_devs[id];
-}
-
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)
 {

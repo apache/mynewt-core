@@ -69,27 +69,10 @@ struct bus_spi_node_cfg flash_spi_cfg = {
 #endif
 #endif
 
-static const struct hal_flash *flash_devs[] = {
-    /* MCU internal flash. */
-    [0] = &nrf_flash_dev,
-#if MYNEWT_VAL(SPIFLASH)
-    /* External SPI Flash. */
-    [1] = &spiflash_dev.hal,
-#endif
-};
-
 /**
  * Retrieves the flash device with the specified ID.  Returns NULL if no such
  * device exists.
  */
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id >= ARRAY_SIZE(flash_devs)) {
-        return NULL;
-    }
-    return flash_devs[id];
-}
 
 /**
  * Retrieves the configured priority for the given interrupt. If no priority

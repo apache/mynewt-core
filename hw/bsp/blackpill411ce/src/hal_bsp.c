@@ -38,10 +38,6 @@
 #include "adc_stm32f4/adc_stm32f4.h"
 #endif
 
-#if MYNEWT_VAL(SPIFLASH)
-#include <spiflash/spiflash.h>
-#endif
-
 const uint32_t stm32_flash_sectors[] = {
     0x08000000,     /* 16kB */
     0x08004000,     /* 16kB */
@@ -107,8 +103,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
-extern const struct hal_flash stm32_flash_dev;
-
 #if MYNEWT_VAL(I2C_0)
 /*
  * NOTE: The PB8 and PB9 pins are connected through jumpers in the board to
@@ -153,23 +147,6 @@ const struct stm32_hal_i2c_cfg os_bsp_i2c2_cfg = {
     .hic_speed = 100000,
 };
 #endif
-
-static const struct hal_flash *flash_devs[] = {
-    [0] = &stm32_flash_dev,
-#if MYNEWT_VAL(SPIFLASH)
-    [1] = &spiflash_dev.hal,
-#endif
-};
-
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id >= ARRAY_SIZE(flash_devs)) {
-        return NULL;
-    }
-
-    return flash_devs[id];
-}
 
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)

@@ -58,16 +58,6 @@ const struct qspi_flash_config rdids[] = {
 const int qspi_flash_config_array_size = ARRAY_SIZE(rdids);
 #endif
 
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id != 0) {
-        return NULL;
-    }
-
-    return &da1469x_flash_dev;
-}
-
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)
 {

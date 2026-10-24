@@ -108,23 +108,6 @@ struct bus_spi_node_cfg flash_spi_cfg = {
 #endif
 #endif
 
-static const struct hal_flash *flash_devs[] = {
-    [0] = &pic32mz_flash_dev,
-#if MYNEWT_VAL(SPIFLASH)
-    [1] = &spiflash_dev.hal,
-#endif
-};
-
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    if (id >= ARRAY_SIZE(flash_devs)) {
-        return NULL;
-    }
-
-    return flash_devs[id];
-}
-
 void
 hal_bsp_init(void)
 {

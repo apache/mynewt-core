@@ -172,19 +172,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
-extern const struct hal_flash stm32_flash_dev;
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    /*
-     * Internal flash mapped to id 0.
-     */
-    if (id != 0) {
-        return NULL;
-    }
-    return &stm32_flash_dev;
-}
-
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)
 {

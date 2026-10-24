@@ -57,18 +57,7 @@ static sec_data_secret struct eflash_mbedtls_dev ef_dev0 = {
     }
 };
 
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    switch (id) {
-    case 0:
-        return &native_flash_dev;
-    case 1:
-        return &ef_dev0.dev.efd_hal;
-    default:
-        return NULL;
-    }
-}
+HAL_FLASH_DEV(enc_flash, (1), &ef_dev0.dev.efd_hal);
 
 int
 hal_bsp_power_state(int state)

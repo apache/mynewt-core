@@ -23,6 +23,7 @@ syscfg.defs:
         value: 1
 
 syscfg.vals:
+    HAL_FLASH_DEV_TABLE: 0
     # Sim isn't flash constrained, so include filename, line number, and
     # message in asserts and sysinit panic messages.
     OS_CRASH_FILE_LINE: 1
