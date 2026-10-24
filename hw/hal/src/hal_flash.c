@@ -28,6 +28,40 @@
 
 static uint8_t protected_flash[1];
 
+#if MYNEWT_VAL(HAL_FLASH_DEV_TABLE)
+/*
+ * Common implementation, returns flash device registered with HAL_FLASH_DEV().
+ */
+const struct hal_flash *
+hal_bsp_flash_dev(uint8_t id)
+{
+    LINK_TABLE_FOREACH(e, hal_flash_devs) {
+        if (e->id == id) {
+            return e->hf;
+        }
+    }
+
+    return NULL;
+}
+
+int
+hal_flash_init(void)
+{
+    int rc = 0;
+
+    LINK_TABLE_FOREACH(e, hal_flash_devs) {
+        /* Same id registered twice, check flash id syscfg values */
+        for (const struct hal_flash_dev_entry *d = hal_flash_devs; d != e; ++d) {
+            assert(d->id != e->id);
+        }
+        if (e->hf->hf_itf->hff_init(e->hf)) {
+            rc = SYS_EIO;
+        }
+    }
+
+    return rc;
+}
+#else
 int
 hal_flash_init(void)
 {
@@ -52,6 +86,7 @@ hal_flash_init(void)
     }
     return rc;
 }
+#endif
 
 uint32_t
 hal_flash_align(uint8_t flash_id)

@@ -25,3 +25,6 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
+
+pkg.link_tables:
+    - hal_flash_devs

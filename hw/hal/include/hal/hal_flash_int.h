@@ -25,6 +25,8 @@ extern "C" {
 #endif
 
 #include <inttypes.h>
+#include <stddef.h>
+#include <os/link_tables.h>
 
 /*
  * API that flash driver has to implement.
@@ -55,6 +57,49 @@ struct hal_flash {
     int hf_align;       /* Alignment requirement. 1 if unrestricted. */
     uint8_t hf_erased_val;
 };
+
+/*
+ * Flash device registered with HAL_FLASH_DEV().
+ */
+struct hal_flash_dev_entry {
+    const struct hal_flash *hf;
+    uint8_t id;
+};
+
+LINK_TABLE(struct hal_flash_dev_entry, hal_flash_devs)
+
+/**
+ * Register flash device for common hal_bsp_flash_dev() and hal_flash_init()
+ * (HAL_FLASH_DEV_TABLE)
+ *
+ * @param name - unique name of table element
+ * @param flash_id - flash device id, as used by "device:" in bsp.yml flash map
+ * @param dev - pointer to struct hal_flash of the device
+ *
+ * Drivers take flash_id from syscfg so BSP can set id that matches its flash
+ * map, i.e.:
+ *
+ * #if MYNEWT_VAL(SPIFLASH_FLASH_ID) >= 0
+ * HAL_FLASH_DEV(spiflash, MYNEWT_VAL(SPIFLASH_FLASH_ID), &spiflash_dev.hal);
+ * #endif
+ *
+ * Element name is hal_flash_dev_<id>_<name>, so table elements are sorted by
+ * id (linker sorts names as text, so it works for ids 0..9).
+ * flash_id must be in form (n): MYNEWT_VAL() expands to (n), literal id has to
+ * be written as (n) too.
+ */
+#define HAL_FLASH_DEV_ID_(x)        x
+#define HAL_FLASH_DEV_ID(x)         HAL_FLASH_DEV_ID_ x
+#define HAL_FLASH_DEV_CAT_(a, b, c) a##b##c
+#define HAL_FLASH_DEV_CAT(a, b, c)  HAL_FLASH_DEV_CAT_(a, b, c)
+
+#define HAL_FLASH_DEV(name, flash_id, dev)                                         \
+    LINK_TABLE_ELEMENT(hal_flash_devs,                                             \
+                       HAL_FLASH_DEV_CAT(hal_flash_dev_,                           \
+                                         HAL_FLASH_DEV_ID(flash_id), _##name)) = { \
+        .hf = (dev),                                                               \
+        .id = (flash_id),                                                          \
+    }
 
 /*
  * Return size of the flash sector. sec_idx is index to hf_sectors array.
