@@ -24,13 +24,24 @@
 static int
 fcb2_sector_find_last(struct fcb2 *fcb, struct fcb2_entry *loc)
 {
+    uint32_t max_entry_num;
     int rc;
     int last_valid = 0;
+
+    /* Entry descriptors grow from the end of sector towards its header */
+    max_entry_num =
+        (loc->fe_range->fsr_sector_size -
+         fcb2_len_in_flash(loc->fe_range, sizeof(struct fcb2_disk_area))) /
+        fcb2_len_in_flash(loc->fe_range, FCB2_ENTRY_SIZE);
 
     loc->fe_entry_num = 1;
 
     do {
-        rc = fcb2_elem_info(loc);
+        if (loc->fe_entry_num > max_entry_num) {
+            rc = FCB2_ERR_NOVAR;
+        } else {
+            rc = fcb2_elem_info(loc);
+        }
         if (rc == 0) {
             last_valid = loc->fe_entry_num;
         }
