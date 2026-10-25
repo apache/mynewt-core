@@ -67,6 +67,17 @@
 #define LORA_MAC_COMMAND_MAX_FOPTS_LENGTH           15
 
 /*!
+ * Join accept frame size without and with CFList (MHDR + payload + MIC)
+ */
+#define LORA_MAC_JOIN_ACCEPT_LEN                    17
+#define LORA_MAC_JOIN_ACCEPT_CFLIST_LEN             33
+
+/*!
+ * Minimum data frame size (MHDR + DevAddr + FCtrl + FCnt + MIC)
+ */
+#define LORA_MAC_DATA_FRAME_MIN_LEN                 12
+
+/*!
  * LoRaMac region.
  */
 static LoRaMacRegion_t LoRaMacRegion;
@@ -585,7 +596,11 @@ lora_mac_join_accept_rxd(uint8_t *payload, uint16_t size)
         return;
     }
 
-    /* XXX: check for too small frame! */
+    if ((size != LORA_MAC_JOIN_ACCEPT_LEN) &&
+        (size != LORA_MAC_JOIN_ACCEPT_CFLIST_LEN)) {
+        STATS_INC(lora_mac_stats, rx_invalid);
+        return;
+    }
 
     LoRaMacJoinDecrypt(payload + 1, size - 1, LoRaMacAppKey,
                        LoRaMacRxPayload + 1);
@@ -982,6 +997,11 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 goto process_rx_done;
             }
 
+            if (size < LORA_MAC_DATA_FRAME_MIN_LEN) {
+                STATS_INC(lora_mac_stats, rx_invalid);
+                goto process_rx_done;
+            }
+
             address = payload[hdrlen++];
             address |= ((uint32_t)payload[hdrlen++] << 8);
             address |= ((uint32_t)payload[hdrlen++] << 16);
@@ -1019,6 +1039,12 @@ lora_mac_process_radio_rx(struct os_event *ev)
             sequenceCounter |= ( uint16_t )payload[hdrlen++] << 8;
 
             appPayloadStartIndex = 8 + fCtrl.Bits.FOptsLen;
+
+            /* FOpts must fit in the frame */
+            if (appPayloadStartIndex > size - LORAMAC_MFR_LEN) {
+                STATS_INC(lora_mac_stats, rx_invalid);
+                goto process_rx_done;
+            }
 
             micRx = ( uint32_t )payload[size - LORAMAC_MFR_LEN];
             micRx |= ( ( uint32_t )payload[size - LORAMAC_MFR_LEN + 1] << 8 );
