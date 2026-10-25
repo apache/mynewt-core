@@ -53,7 +53,7 @@ struct smp_uart_state {
     struct os_mbuf *sus_tx;
     int sus_tx_off;
     struct os_mbuf_pkthdr *sus_rx_pkt;
-    struct os_mbuf_pkthdr *sus_rx_q;
+    STAILQ_HEAD(, os_mbuf_pkthdr) sus_rx_q;
     struct os_mbuf_pkthdr *sus_rx;
 };
 
@@ -307,11 +307,16 @@ smp_uart_rx_frame(struct os_event *ev)
     struct os_mbuf_pkthdr *m;
     int sr;
 
-    OS_ENTER_CRITICAL(sr);
-    m = sus->sus_rx_q;
-    sus->sus_rx_q = NULL;
-    OS_EXIT_CRITICAL(sr);
-    if (m) {
+    while (1) {
+        OS_ENTER_CRITICAL(sr);
+        m = STAILQ_FIRST(&sus->sus_rx_q);
+        if (m) {
+            STAILQ_REMOVE_HEAD(&sus->sus_rx_q, omp_next);
+        }
+        OS_EXIT_CRITICAL(sr);
+        if (!m) {
+            break;
+        }
         smp_uart_rx_pkt(sus, m);
     }
 }
@@ -345,10 +350,10 @@ smp_uart_rx_char(void *arg, uint8_t data)
     m = OS_MBUF_PKTHDR_TO_MBUF(sus->sus_rx);
     if (data == '\n') {
         /*
-         * Full line of input. Process it outside interrupt context.
+         * Full line of input. Process it outside interrupt context. More
+         * lines may be received before previous ones are processed.
          */
-        assert(!sus->sus_rx_q);
-        sus->sus_rx_q = sus->sus_rx;
+        STAILQ_INSERT_TAIL(&sus->sus_rx_q, sus->sus_rx, omp_next);
         sus->sus_rx = NULL;
         os_eventq_put(mgmt_evq_get(), &sus->sus_cb_ev);
         return 0;
@@ -388,11 +393,12 @@ smp_uart_pkg_init(void)
     rc = smp_transport_init(&sus->sus_transport, smp_uart_out, smp_uart_mtu);
     assert(rc == 0);
 
+    STAILQ_INIT(&sus->sus_rx_q);
+    sus->sus_cb_ev.ev_cb = smp_uart_rx_frame;
+
     sus->sus_dev =
       (struct uart_dev *)os_dev_open(MYNEWT_VAL(SMP_UART), 0, &uc);
     assert(sus->sus_dev);
-
-    sus->sus_cb_ev.ev_cb = smp_uart_rx_frame;
 }
 
 /**
