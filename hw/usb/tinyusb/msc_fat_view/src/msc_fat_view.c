@@ -1068,32 +1068,41 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
         }
         if (entry->attr == 0xF) {
             /* Long file name */
-            if (entry->sequence & 0x40) {
-                n = (entry->sequence & 0xF);
-                if (entry + n > limit) {
-                    MSC_FAT_VIEW_LOG_DEBUG("Entry accross sectors\n");
-                    break;
-                }
-                checksum = entry->checksum;
-
-                while (n) {
-                    n--;
-                    assert(entry->checksum == checksum);
-                    /* If name in directory is longer then we have space for just ignore it */
-                    if (n > sizeof(name) / 13) {
-                        continue;
-                    } else if (n == sizeof(name) / 13) {
-                        /* This part also needs to be ignored, but store \0 for strcmp() sake */
-                        name[sizeof(name) / 13] = 0;
-                    }
-                    msc_fat_view_read_ucs_2(name + n * 13, (uint8_t *)entry->name1, 5);
-                    msc_fat_view_read_ucs_2(name + n * 13 + 5, (uint8_t *)entry->name2, 6);
-                    msc_fat_view_read_ucs_2(name + n * 13 + 5 + 6, (uint8_t *)entry->name3, 2);
-                    entry++;
-                }
-                entry--;
+            if ((entry->sequence & 0x40) == 0) {
+                /* Not first entry of long name, ignore it */
                 continue;
             }
+            n = (entry->sequence & 0x1F);
+            if (n == 0 || n > 20) {
+                /* Invalid sequence number */
+                continue;
+            }
+            if (entry + n > limit) {
+                MSC_FAT_VIEW_LOG_DEBUG("Entry accross sectors\n");
+                break;
+            }
+            checksum = entry->checksum;
+            /*
+             * Name parts that do not fit in name are ignored.
+             * Last part may not have terminator, add it.
+             */
+            name[min(n * 13, sizeof(name) - 1)] = '\0';
+
+            for (; n > 0; n--, entry++) {
+                if (entry->attr != 0xF || entry->checksum != checksum) {
+                    /* Broken long name, short name will be used */
+                    checksum = 0xFFFF;
+                }
+                if (n * 13 > sizeof(name) - 1) {
+                    continue;
+                }
+                i = (n - 1) * 13;
+                msc_fat_view_read_ucs_2(name + i, (uint8_t *)entry->name1, 5);
+                msc_fat_view_read_ucs_2(name + i + 5, (uint8_t *)entry->name2, 6);
+                msc_fat_view_read_ucs_2(name + i + 5 + 6, (uint8_t *)entry->name3, 2);
+            }
+            entry--;
+            continue;
         }
         /* Exclude directories and volume names */
         if (msc_fat_view_short_name_checksum(entry->name) != checksum) {
@@ -1108,6 +1117,8 @@ msc_fat_view_write_root_sector(uint32_t sector, const uint8_t *buffer)
             }
             name[i] = '\0';
         }
+        /* Long name applies only to this entry */
+        checksum = 0xFFFF;
         MSC_FAT_VIEW_LOG_DEBUG("File name %s\n", name);
         file_entry = msc_fat_view_find_dir_entry(name);
         if (file_entry == NULL) {
