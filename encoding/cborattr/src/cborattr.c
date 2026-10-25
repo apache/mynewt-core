@@ -323,6 +323,10 @@ cbor_internal_read_object(CborValue *root_value, const struct cbor_attr_t *attrs
                 err |= cbor_value_get_int64(&cur_value, lptr);
                 break;
             case CborAttrUnsignedIntegerType:
+                if (!cbor_value_is_unsigned_integer(&cur_value)) {
+                    err |= CborErrorIllegalType;
+                    break;
+                }
                 err |= cbor_value_get_uint64(&cur_value, lptr);
                 break;
 #if FLOAT_SUPPORT
@@ -411,6 +415,10 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
             err |= cbor_value_get_int64(&elem, lptr);
             break;
         case CborAttrUnsignedIntegerType:
+            if (!cbor_value_is_unsigned_integer(&elem)) {
+                err |= CborErrorIllegalType;
+                break;
+            }
             lptr = &arr->arr.uintegers.store[off];
             err |= cbor_value_get_uint64(&elem, lptr);
             break;
