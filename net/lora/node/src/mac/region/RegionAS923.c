@@ -874,7 +874,8 @@ uint8_t RegionAS923DlChannelReq( DlChannelReqParams_t* dlChannelReq )
     }
 
     // Verify if an uplink frequency exists
-    if( Channels[dlChannelReq->ChannelId].Frequency == 0 )
+    if( ( dlChannelReq->ChannelId >= AS923_MAX_NB_CHANNELS ) ||
+        ( Channels[dlChannelReq->ChannelId].Frequency == 0 ) )
     {
         status &= 0xFD;
     }

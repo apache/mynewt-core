@@ -803,7 +803,8 @@ uint8_t RegionKR920DlChannelReq( DlChannelReqParams_t* dlChannelReq )
     }
 
     // Verify if an uplink frequency exists
-    if( Channels[dlChannelReq->ChannelId].Frequency == 0 )
+    if( ( dlChannelReq->ChannelId >= KR920_MAX_NB_CHANNELS ) ||
+        ( Channels[dlChannelReq->ChannelId].Frequency == 0 ) )
     {
         status &= 0xFD;
     }
