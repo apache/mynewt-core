@@ -22,6 +22,7 @@
  * protocol (Bluetooth, TCP/IP, etc.).
  */
 
+#include <string.h>
 #include "os/mynewt.h"
 #include "oic/port/mynewt/stream.h"
 #include "oic/messaging/coap/coap.h"
@@ -46,6 +47,8 @@ oc_stream_reass(struct oc_stream_reassembler *r, struct os_mbuf *om1,
         if (r->ep_match(OS_MBUF_USRHDR(om2), ep_desc)) {
             /* Data from same connection.  Append. */
             os_mbuf_concat(om2, om1);
+            /* Header may be incomplete, don't use uninitialized bytes */
+            memset(hdr, 0, sizeof(hdr));
             os_mbuf_copydata(om2, 0, sizeof(hdr), hdr);
 
             if (coap_tcp_msg_size(hdr, sizeof(hdr)) <= pkt2->omp_len) {
@@ -76,6 +79,7 @@ oc_stream_reass(struct oc_stream_reassembler *r, struct os_mbuf *om1,
     r->ep_fill(OS_MBUF_USRHDR(om2), ep_desc);
     pkt2 = OS_MBUF_PKTHDR(om2);
 
+    memset(hdr, 0, sizeof(hdr));
     os_mbuf_copydata(om2, 0, sizeof(hdr), hdr);
     if (coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt2->omp_len) {
         STAILQ_INSERT_TAIL(&r->pkt_q, pkt2, omp_next);

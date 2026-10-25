@@ -1109,7 +1109,9 @@ coap_get_header_uri_path(struct coap_packet_rx *pkt, char *path, int maxlen)
         return 0;
     }
     maxlen = min(maxlen, pkt->uri_path_len);
-    os_mbuf_copydata(pkt->m, pkt->uri_path_off, maxlen, path);
+    if (os_mbuf_copydata(pkt->m, pkt->uri_path_off, maxlen, path)) {
+        return 0;
+    }
     return maxlen;
 }
 #ifdef OC_CLIENT
@@ -1134,7 +1136,9 @@ coap_get_header_uri_query(struct coap_packet_rx *pkt, char *query, int maxlen)
         return 0;
     }
     maxlen = min(maxlen, pkt->uri_query_len);
-    os_mbuf_copydata(pkt->m, pkt->uri_query_off, maxlen, query);
+    if (os_mbuf_copydata(pkt->m, pkt->uri_query_off, maxlen, query)) {
+        return 0;
+    }
     return maxlen;
 }
 #ifdef OC_CLIENT
@@ -1359,7 +1363,9 @@ coap_get_payload_copy(struct coap_packet_rx *pkt, uint8_t *payload, int maxlen)
 {
     if (pkt->payload_len) {
         maxlen = min(maxlen, pkt->payload_len);
-        os_mbuf_copydata(pkt->m, pkt->payload_off, maxlen, payload);
+        if (os_mbuf_copydata(pkt->m, pkt->payload_off, maxlen, payload)) {
+            return 0;
+        }
         return maxlen;
     } else {
         return 0;
