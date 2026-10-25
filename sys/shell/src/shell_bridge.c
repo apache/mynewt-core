@@ -73,7 +73,7 @@ shell_bridge_exec(struct mgmt_ctxt *cb)
     };
 
     err = cbor_read_object(&cb->it, attrs);
-    if (err != 0) {
+    if (err != 0 || argc < 1) {
         return MGMT_ERR_EINVAL;
     }
 
