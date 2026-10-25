@@ -370,7 +370,7 @@ smp_uart_rx_char(void *arg, uint8_t data)
         sus->sus_rx = NULL;
         os_eventq_put(mgmt_evq_get(), &sus->sus_cb_ev);
         return 0;
-    } else {
+    } else if (OS_MBUF_PKTLEN(m) < MGMT_NLIP_MAX_FRAME) {
         rc = os_mbuf_append(m, &data, 1);
         if (rc == 0) {
             return 0;
