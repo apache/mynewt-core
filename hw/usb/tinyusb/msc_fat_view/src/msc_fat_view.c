@@ -48,6 +48,10 @@
 #endif
 #endif
 
+#if defined(CFG_TUD_MSC_EP_BUFSIZE) && (CFG_TUD_MSC_EP_BUFSIZE % SECTOR_SIZE) != 0
+#error USBD_MSC_EP_BUFSIZE must be multiple of 512
+#endif
+
 #define FAT_TYPE_FAT12              12
 #define FAT_TYPE_FAT16              16
 #define FAT_TYPE_FAT32              32
@@ -1374,7 +1378,6 @@ int32_t
 tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer, uint32_t bufsize)
 {
     (void)lun;
-    (void)offset;
 
     last_scsi_command = SCSI_CMD_READ_10;
 
@@ -1383,6 +1386,10 @@ tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer, uint
     }
     MSC_FAT_VIEW_LOG_DEBUG("SCSI READ10 %d, %d, %d\n", (int)lba, (int)offset,
                            (int)bufsize);
+    /* Only whole sectors can be read, block size other than 512 is not supported */
+    if (offset != 0 || (bufsize % SECTOR_SIZE) != 0) {
+        return -1;
+    }
 
     for (uint32_t i = 0; i < bufsize; i += SECTOR_SIZE, ++lba) {
         msc_fat_view_read_sector(lba, (uint8_t *)buffer + i);
@@ -1400,13 +1407,16 @@ tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t *buffer, 
 {
     int32_t res;
     MSC_FAT_VIEW_LOG_DEBUG("SCSI WRITE10 %d, %d, %d\n", (int)lba, (int)offset, (int)bufsize);
-    assert(offset == 0);
 
     last_scsi_command = SCSI_CMD_WRITE_10;
 
     (void)lun;
 
     if (medium_state < MEDIUM_RELOAD) {
+        return -1;
+    }
+    /* Only whole sectors can be written, block size other than 512 is not supported */
+    if (offset != 0 || (bufsize % SECTOR_SIZE) != 0) {
         return -1;
     }
 
