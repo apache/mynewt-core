@@ -256,10 +256,13 @@ oc_tcp_rx_frag(struct mn_socket *sock, struct os_mbuf *frag,
 static void
 oc_tcp4_err(struct mn_socket *sock, int err)
 {
+    struct oc_tcp4_ep_desc ep_desc = { .sock = sock };
     struct oc_tcp4_conn *conn;
 
     conn = oc_tcp4_remove_conn(sock);
     assert(conn != NULL);
+
+    oc_stream_flush(&oc_tcp4_r, &ep_desc);
 
     if (conn->err_cb != NULL) {
         conn->err_cb(conn->sock, err, conn->err_arg);
@@ -417,12 +420,15 @@ oc_tcp4_remove_conn(struct mn_socket *sock)
 int
 oc_tcp4_del_conn(struct mn_socket *sock)
 {
+    struct oc_tcp4_ep_desc ep_desc = { .sock = sock };
     struct oc_tcp4_conn *conn;
 
     conn = oc_tcp4_remove_conn(sock);
     if (conn == NULL) {
         return SYS_ENOENT;
     }
+
+    oc_stream_flush(&oc_tcp4_r, &ep_desc);
 
     os_memblock_put(&oc_tcp4_conn_pool, conn);
 
