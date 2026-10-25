@@ -211,33 +211,42 @@ int
 mn_inet_pton(int af, const char *src, void *dst)
 {
     const char *ch_src;
-    uint8_t *ch_tgt;
+    uint8_t addr[4];
+    int digits;
     int val;
     int cnt;
     int rc;
 
     if (af == MN_PF_INET) {
         cnt = 0;
-        ch_tgt = dst;
         val = 0;
-        for (ch_src = src; *ch_src; ch_src++) {
-            if (cnt > 4) {
-                return 0;
-            }
+        digits = 0;
+        for (ch_src = src;; ch_src++) {
             if (isdigit((unsigned char)*ch_src)) {
                 val = val * 10 + *ch_src - '0';
                 if (val > 255) {
                     return 0;
                 }
-                *ch_tgt = val;
-            } else if (*ch_src == '.') {
-                ++cnt;
+                digits++;
+            } else if (*ch_src == '.' || *ch_src == '\0') {
+                /* Exactly 4 non-empty octets are expected */
+                if (digits == 0 || cnt == sizeof(addr)) {
+                    return 0;
+                }
+                addr[cnt++] = val;
                 val = 0;
-                ch_tgt++;
+                digits = 0;
+                if (*ch_src == '\0') {
+                    break;
+                }
             } else {
                 return 0;
             }
         }
+        if (cnt != sizeof(addr)) {
+            return 0;
+        }
+        memcpy(dst, addr, sizeof(addr));
         return 1;
     } else {
         rc = mn_inet6_pton(src, dst);
