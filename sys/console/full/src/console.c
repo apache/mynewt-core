@@ -689,9 +689,15 @@ insert_char(char *pos, char c)
 {
     char tmp;
     int end;
+    int pending;
 
-    if ((!MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) || !trailing_selection) &&
-        cur + trailing_chars >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
+    /* Trailing selection is cleared below, but only when echo is on */
+    pending = trailing_chars;
+    if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none) &&
+        MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection && echo) {
+        pending = 0;
+    }
+    if (cur + pending >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
         return;
     }
 
