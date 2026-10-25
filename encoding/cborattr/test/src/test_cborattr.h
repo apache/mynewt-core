@@ -55,6 +55,7 @@ TEST_CASE_DECL(test_cborattr_decode_string_bounds);
 TEST_CASE_DECL(test_cborattr_decode_string_array_bounds);
 TEST_CASE_DECL(test_cborattr_decode_mbuf);
 TEST_CASE_DECL(test_cborattr_decode_array_default);
+TEST_CASE_DECL(test_cborattr_decode_type_mismatch);
 
 #ifdef __cplusplus
 }
