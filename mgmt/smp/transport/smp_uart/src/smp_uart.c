@@ -276,6 +276,10 @@ smp_uart_rx_pkt(struct smp_uart_state *sus, struct os_mbuf_pkthdr *rxm)
     if (rc < 0) {
         goto err;
     }
+    /* First frame starts with packet length */
+    if (!sus->sus_rx_pkt && rc < sizeof(nsh->nsh_len)) {
+        goto err;
+    }
     rxm->omp_len = m->om_len = rc + 2;
     if (sus->sus_rx_pkt) {
         os_mbuf_adj(m, 2);
@@ -286,6 +290,15 @@ smp_uart_rx_pkt(struct smp_uart_state *sus, struct os_mbuf_pkthdr *rxm)
 
     m = OS_MBUF_PKTHDR_TO_MBUF(sus->sus_rx_pkt);
     nsh = (struct smp_ser_hdr *)m->om_data;
+
+    /* Drop packets larger than MTU or than declared length */
+    if (ntohs(nsh->nsh_len) > MGMT_MAX_MTU + sizeof(crc) ||
+        sus->sus_rx_pkt->omp_len - sizeof(*nsh) > ntohs(nsh->nsh_len)) {
+        os_mbuf_free_chain(m);
+        sus->sus_rx_pkt = NULL;
+        return;
+    }
+
     if (sus->sus_rx_pkt->omp_len - sizeof(*nsh) == ntohs(nsh->nsh_len)) {
         os_mbuf_adj(m, 4);
         os_mbuf_adj(m, -2);
