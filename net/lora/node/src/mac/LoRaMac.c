@@ -1692,7 +1692,7 @@ AddMacCommand(uint8_t cmd, uint8_t p1, uint8_t p2)
             }
             break;
         case MOTE_MAC_DL_CHANNEL_ANS:
-            if (MacCommandsBufferIndex < bufLen) {
+            if (MacCommandsBufferIndex < (bufLen - 1)) {
                 MacCommandsBuffer[MacCommandsBufferIndex++] = cmd;
                 // Status: Uplink frequency exists, Channel frequency OK
                 MacCommandsBuffer[MacCommandsBufferIndex++] = p1;
