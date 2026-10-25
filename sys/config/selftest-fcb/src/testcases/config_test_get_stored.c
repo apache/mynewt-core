@@ -73,5 +73,17 @@ TEST_CASE_SELF(config_test_get_stored_fcb)
     rc = conf_get_stored_value("myfoo/mybar", stored_val, 1);
     TEST_ASSERT(rc == OS_EINVAL);
 
+    /*
+     * Buffer without space for terminating NUL
+     */
+    memset(stored_val, 0xa5, sizeof(stored_val));
+    rc = conf_get_stored_value("myfoo/mybar", stored_val, 2);
+    TEST_ASSERT(rc == OS_EINVAL);
+    TEST_ASSERT((uint8_t)stored_val[2] == 0xa5);
+
+    rc = conf_get_stored_value("myfoo/mybar", stored_val, 3);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(!strcmp(stored_val, "31"));
+
     test_export_block = 1;
 }
