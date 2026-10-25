@@ -94,6 +94,7 @@ TEST_CASE_DECL(os_mbuf_test_alloc)
 TEST_CASE_DECL(os_mbuf_test_dup)
 TEST_CASE_DECL(os_mbuf_test_dup_pool)
 TEST_CASE_DECL(os_mbuf_test_append)
+TEST_CASE_DECL(os_mbuf_test_copydata)
 TEST_CASE_DECL(os_mbuf_test_pullup)
 TEST_CASE_DECL(os_mbuf_test_extend)
 TEST_CASE_DECL(os_mbuf_test_adj)
@@ -107,6 +108,7 @@ TEST_SUITE(os_mbuf_test_suite)
     os_mbuf_test_dup();
     os_mbuf_test_dup_pool();
     os_mbuf_test_append();
+    os_mbuf_test_copydata();
     os_mbuf_test_pullup();
     os_mbuf_test_extend();
     os_mbuf_test_adj();
