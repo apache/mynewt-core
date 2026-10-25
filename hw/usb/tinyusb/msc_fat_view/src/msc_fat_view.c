@@ -366,15 +366,26 @@ fat_chain_append(cluster_t first_cluster, fat_chain_t *tail)
     }
 }
 
-static void
+/*
+ * Make space for new chain at given position.
+ * Returns false if there is no space for new chain.
+ */
+static bool
 fat_chain_insert(fat_chain_t *chain)
 {
-    fat_chain_t *limit = fat_chains + fat_chain_count + 1;
+    fat_chain_t *limit = fat_chains + fat_chain_count;
+
+    if (fat_chain_count >= ARRAY_SIZE(fat_chains)) {
+        MSC_FAT_VIEW_LOG_ERROR("No space for new FAT chain\n");
+        return false;
+    }
 
     fat_chain_count++;
     for (; limit > chain; --limit) {
         limit[0] = limit[-1];
     }
+
+    return true;
 }
 
 static void
@@ -392,11 +403,10 @@ fat_chain_remove(fat_chain_t *chain)
 static void
 fat_chain_insert_short(fat_chain_t *chain, cluster_t cluster, cluster_t next_cluster)
 {
-    if (next_cluster == 0) {
+    if (next_cluster == 0 || !fat_chain_insert(chain)) {
         return;
     }
 
-    fat_chain_insert(chain);
     chain->first = cluster;
     if (cluster + 1 == next_cluster) {
         chain->count = 2;
@@ -463,7 +473,9 @@ fat_modify_next_cluster(cluster_t cluster, cluster_t next_cluster, fat_chain_t *
         }
     } else if (chain->first + chain->count - 1 > cluster) {
         /* Chain is no longer in once piece */
-        fat_chain_insert(chain);
+        if (!fat_chain_insert(chain)) {
+            return;
+        }
         chain->count = cluster - chain->first + 1;
         chain[1].first = cluster + 1;
         chain[1].count -= chain->count;
@@ -492,12 +504,14 @@ alloc_cluster_chain(cluster_t first_cluster, cluster_t cluster_count)
 
     for (; chain < limit; ++chain) {
         if (c < chain->first) {
+            free_space = chain->first - c;
+            /* Found first free space, move chains up */
+            if (!fat_chain_insert(chain)) {
+                return 0;
+            }
             if (prev) {
                 prev->next_chain = c;
             }
-            free_space = chain->first - c;
-            /* Found first free space, move chains up */
-            fat_chain_insert(chain);
             limit++;
             chain->first = c;
             chain->count = min(cluster_count, free_space);
@@ -513,6 +527,10 @@ alloc_cluster_chain(cluster_t first_cluster, cluster_t cluster_count)
         c = chain->first + chain->count;
     }
     if (cluster_count) {
+        if (fat_chain_count >= ARRAY_SIZE(fat_chains)) {
+            MSC_FAT_VIEW_LOG_ERROR("No space for new FAT chain\n");
+            return 0;
+        }
         if (prev) {
             prev->next_chain = c;
         }
