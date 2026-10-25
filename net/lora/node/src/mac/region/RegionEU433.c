@@ -810,7 +810,8 @@ uint8_t RegionEU433DlChannelReq( DlChannelReqParams_t* dlChannelReq )
     }
 
     // Verify if an uplink frequency exists
-    if( Channels[dlChannelReq->ChannelId].Frequency == 0 )
+    if( ( dlChannelReq->ChannelId >= EU433_MAX_NB_CHANNELS ) ||
+        ( Channels[dlChannelReq->ChannelId].Frequency == 0 ) )
     {
         status &= 0xFD;
     }

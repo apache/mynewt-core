@@ -835,7 +835,8 @@ uint8_t RegionIN865DlChannelReq( DlChannelReqParams_t* dlChannelReq )
     }
 
     // Verify if an uplink frequency exists
-    if( Channels[dlChannelReq->ChannelId].Frequency == 0 )
+    if( ( dlChannelReq->ChannelId >= IN865_MAX_NB_CHANNELS ) ||
+        ( Channels[dlChannelReq->ChannelId].Frequency == 0 ) )
     {
         status &= 0xFD;
     }
