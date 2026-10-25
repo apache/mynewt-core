@@ -423,7 +423,10 @@ log_fcb2_read(struct log *log, const void *dptr, void *buf, uint16_t off, uint16
 
     loc = (struct fcb2_entry *)dptr;
 
-    if (off + len > loc->fe_data_len) {
+    if (off >= loc->fe_data_len) {
+        return 0;
+    }
+    if (len > loc->fe_data_len - off) {
         len = loc->fe_data_len - off;
     }
     rc = fcb2_read(loc, off, buf, len);
@@ -446,7 +449,10 @@ log_fcb2_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om,
 
     loc = (struct fcb2_entry *)dptr;
 
-    if (off + len > loc->fe_data_len) {
+    if (off >= loc->fe_data_len) {
+        return 0;
+    }
+    if (len > loc->fe_data_len - off) {
         len = loc->fe_data_len - off;
     }
 

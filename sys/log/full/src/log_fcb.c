@@ -721,7 +721,10 @@ log_fcb_read(struct log *log, const void *dptr, void *buf, uint16_t offset,
 
     loc = (struct fcb_entry *)dptr;
 
-    if (offset + len > loc->fe_data_len) {
+    if (offset >= loc->fe_data_len) {
+        return 0;
+    }
+    if (len > loc->fe_data_len - offset) {
         len = loc->fe_data_len - offset;
     }
     rc = flash_area_read(loc->fe_area, loc->fe_data_off + offset, buf, len);
@@ -744,7 +747,10 @@ log_fcb_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om,
 
     loc = (struct fcb_entry *)dptr;
 
-    if (offset + len > loc->fe_data_len) {
+    if (offset >= loc->fe_data_len) {
+        return 0;
+    }
+    if (len > loc->fe_data_len - offset) {
         len = loc->fe_data_len - offset;
     }
 
