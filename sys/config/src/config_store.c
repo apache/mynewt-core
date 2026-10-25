@@ -179,7 +179,7 @@ conf_get_stored_value(char *name, char *buf, int buf_len)
         return OS_ENOENT;
     }
     val_len = strlen(cgva.val);
-    if (buf_len < val_len) {
+    if (buf_len <= val_len) {
         return OS_EINVAL;
     }
     strcpy(buf, cgva.val);
