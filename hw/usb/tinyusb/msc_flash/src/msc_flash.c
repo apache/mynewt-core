@@ -57,62 +57,72 @@ struct lun_data luns[1] = {
     }
 };
 
-static uint32_t
+static int
 flash_read(struct lun_data *lun_data, uint32_t addr, uint8_t *buffer, uint32_t bufsize)
 {
+    int rc = -1;
 #if defined(MYNEWT_VAL_MSC_FLASH_FLASH_ID)
-    hal_flash_read(lun_data->flash_id, lun_data->flash_start + addr, buffer, bufsize);
+    rc = hal_flash_read(lun_data->flash_id, lun_data->flash_start + addr,
+                        buffer, bufsize);
 #elif defined(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID)
     const struct flash_area *fa;
-    flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa);
-    if (fa) {
-        flash_area_read(fa, addr, buffer, bufsize);
+
+    if (flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa) == 0) {
+        rc = flash_area_read(fa, addr, buffer, bufsize);
         flash_area_close(fa);
     }
 #endif
-    return bufsize;
+    return rc;
 }
 
-static uint32_t
+static int
 flash_write(struct lun_data *lun_data, uint32_t addr, const uint8_t *buffer,
             uint32_t bufsize)
 {
+    int rc = -1;
 #if defined(MYNEWT_VAL_MSC_FLASH_FLASH_ID)
-    hal_flash_write(lun_data->flash_id, lun_data->flash_start + addr, buffer, bufsize);
+    rc = hal_flash_write(lun_data->flash_id, lun_data->flash_start + addr,
+                         buffer, bufsize);
 #elif defined(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID)
     const struct flash_area *fa;
-    flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa);
-    if (fa) {
-        flash_area_write(fa, addr, buffer, bufsize);
+
+    if (flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa) == 0) {
+        rc = flash_area_write(fa, addr, buffer, bufsize);
         flash_area_close(fa);
     }
 #endif
-    return bufsize;
+    return rc;
 }
 
-static void
+static int
 flash_erase_if_needed(struct lun_data *lun_data, uint32_t addr, uint32_t size)
 {
     int left = size;
-    while (left > 0) {
+    int rc = 0;
+
+    while (left > 0 && rc == 0) {
 #if defined(MYNEWT_VAL_MSC_FLASH_FLASH_ID)
         if (!hal_flash_isempty(lun_data->flash_id, lun_data->flash_start + addr,
                                lun_data->flash_sector_buffer, 512)) {
-            hal_flash_erase(lun_data->flash_id, lun_data->flash_start + addr, 512);
+            rc = hal_flash_erase(lun_data->flash_id,
+                                 lun_data->flash_start + addr, 512);
         }
 #elif defined(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID)
         const struct flash_area *fa;
-        flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa);
-        if (fa) {
+
+        rc = flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa);
+        if (rc == 0) {
             if (!flash_area_read_is_empty(fa, addr,
                                           lun_data->flash_sector_buffer, 512)) {
-                flash_area_erase(fa, addr, 512);
+                rc = flash_area_erase(fa, addr, 512);
             }
             flash_area_close(fa);
         }
 #endif
         left -= 512;
     }
+
+    return rc;
 }
 #define IN_ARRAY(arr, ix) ((ix) < ARRAY_SIZE(arr))
 
@@ -257,7 +267,9 @@ tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer,
         if (!lba_to_flash_addr(lun_data, lba, offset, bufsize, &flash_addr)) {
             return -1;
         }
-        flash_read(lun_data, flash_addr, buffer, bufsize);
+        if (flash_read(lun_data, flash_addr, buffer, bufsize) != 0) {
+            return -1;
+        }
     }
 
     return bufsize;
@@ -286,8 +298,10 @@ tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t *buffer,
         if (!lba_to_flash_addr(lun_data, lba, offset, bufsize, &flash_addr)) {
             return -1;
         }
-        flash_erase_if_needed(lun_data, flash_addr, bufsize);
-        flash_write(lun_data, flash_addr, buffer, bufsize);
+        if (flash_erase_if_needed(lun_data, flash_addr, bufsize) != 0 ||
+            flash_write(lun_data, flash_addr, buffer, bufsize) != 0) {
+            return -1;
+        }
     }
 
     return bufsize;
@@ -381,9 +395,7 @@ msc_flash_init(void)
     uint32_t end_address;
     uint32_t flash_size;
 
-    flash_area_open(flash_area_id, &fa);
-
-    if (fa) {
+    if (flash_area_open(flash_area_id, &fa) == 0) {
         start_address = fa->fa_off;
         end_address = start_address + fa->fa_size;
         flash_size = end_address - start_address;
