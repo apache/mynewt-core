@@ -227,6 +227,10 @@ tud_msc_start_stop_cb(uint8_t lun, uint8_t power_condition, bool start, bool loa
 
     MSC_FLASH_LOG_DEBUG("Start: %d eject: %d\n", start, load_eject);
 
+    if (lun_data == NULL) {
+        return false;
+    }
+
     if (load_eject) {
         if (start) {
         } else {
@@ -252,7 +256,7 @@ tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer,
 
     /* Check if disk is even present */
     if (lun_data == NULL || lun_data->medium_state != MEDIUM_PRESENT) {
-        return 0;
+        return -1;
     }
 
     /* If MBR was selected add marker and partition type */
