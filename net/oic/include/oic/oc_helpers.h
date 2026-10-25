@@ -53,7 +53,7 @@ void oc_free_string(oc_string_t *ocstring);
 void oc_concat_strings(oc_string_t *concat, const char *, const char *);
 #define oc_string_len(ocstring) ((ocstring).os_sz ? (ocstring).os_sz - 1 : 0)
 
-void _oc_new_array(oc_array_t *ocarray, uint8_t size, uint8_t elem_sz);
+void _oc_new_array(oc_array_t *ocarray, size_t size, size_t elem_sz);
 void _oc_free_array(oc_array_t *ocarray);
 
 #define oc_new_int_array(ocarray, size)                                 \
@@ -73,7 +73,7 @@ void _oc_free_array(oc_array_t *ocarray);
 #define oc_bool_array(ocboolarray) (ocboolarray.oa_arr.b)
 #define oc_double_array(ocdoublearray) (ocdoublearray.oa_arr.d)
 
-void _oc_alloc_string_array(oc_string_array_t *ocstringarray, uint8_t size);
+void _oc_alloc_string_array(oc_string_array_t *ocstringarray, size_t size);
 bool _oc_copy_string_to_string_array(oc_string_array_t *ocstringarray,
                                      const char str[], uint8_t index);
 bool _oc_string_array_add_item(oc_string_array_t *ocstringarray,

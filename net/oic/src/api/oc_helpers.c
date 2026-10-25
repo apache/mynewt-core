@@ -63,8 +63,16 @@ oc_concat_strings(oc_string_t *concat, const char *str1, const char *str2)
 }
 
 void
-_oc_new_array(oc_array_t *oa, uint8_t size, uint8_t elem_size)
+_oc_new_array(oc_array_t *oa, size_t size, size_t elem_size)
 {
+    oa->oa_arr.b = NULL;
+    oa->oa_sz = 0;
+
+    /* Array size in bytes must fit in oa_sz */
+    if (size == 0 || size > UINT16_MAX / elem_size) {
+        return;
+    }
+
     oa->oa_arr.b = malloc(size * elem_size);
     if (oa->oa_arr.b) {
         oa->oa_sz = size * elem_size;
@@ -78,10 +86,10 @@ void _oc_free_array(oc_array_t *oa)
 }
 
 void
-_oc_alloc_string_array(oc_string_array_t *osa, uint8_t size)
+_oc_alloc_string_array(oc_string_array_t *osa, size_t size)
 {
-    int i;
-    int pos;
+    size_t i;
+    size_t pos;
 
     _oc_new_array(osa, size, STRING_ARRAY_ITEM_MAX_LEN);
     if (osa->oa_arr.s) {
