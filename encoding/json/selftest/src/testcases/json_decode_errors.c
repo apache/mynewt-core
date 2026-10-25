@@ -125,10 +125,14 @@ static const char json_no_brak[] =
 static const char json_no_start[] =
     "\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\",\"KeyIntArr\": [153,2532,-322]}";
 
+/* Value with escape sequences longer than any buffer */
+static char json_str_escapes[16 + 600 * 2 + 4];
+
 /* now test the decode on a string */
 TEST_CASE_SELF(test_json_decode_errors)
 {
     int rc;
+    int i;
 
     rc = json_test_decode(json_ok1);
     TEST_ASSERT(rc == 0);
@@ -167,4 +171,12 @@ TEST_CASE_SELF(test_json_decode_errors)
     TEST_ASSERT(rc != 0);
     rc = json_test_decode(json_no_start);
     TEST_ASSERT(rc != 0);
+
+    strcpy(json_str_escapes, "{\"KeyString\": \"");
+    for (i = 0; i < 600; i++) {
+        strcat(json_str_escapes, "\\b");
+    }
+    strcat(json_str_escapes, "\"}");
+    rc = json_test_decode(json_str_escapes);
+    TEST_ASSERT(rc == JSON_ERR_STRLONG);
 }
