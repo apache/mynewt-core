@@ -144,7 +144,7 @@ smp_uart_out(struct os_mbuf *m)
         while (off < mpkt->omp_len) {
             slen = mpkt->omp_len - off;
             last = 1;
-            if (slen > sizeof(tmp_buf) + boff) {
+            if (slen > sizeof(tmp_buf) - boff) {
                 slen = sizeof(tmp_buf) - boff;
                 last = 0;
             }
