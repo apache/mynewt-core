@@ -979,7 +979,7 @@ bool RegionCN779ChannelsRemove( ChannelRemoveParams_t* channelRemove  )
 {
     uint8_t id = channelRemove->ChannelId;
 
-    if( id < CN779_NUMB_DEFAULT_CHANNELS )
+    if( ( id < CN779_NUMB_DEFAULT_CHANNELS ) || ( id >= CN779_MAX_NB_CHANNELS ) )
     {
         return false;
     }

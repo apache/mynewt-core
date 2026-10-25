@@ -1056,7 +1056,7 @@ bool RegionAS923ChannelsRemove( ChannelRemoveParams_t* channelRemove  )
 {
     uint8_t id = channelRemove->ChannelId;
 
-    if( id < AS923_NUMB_DEFAULT_CHANNELS )
+    if( ( id < AS923_NUMB_DEFAULT_CHANNELS ) || ( id >= AS923_MAX_NB_CHANNELS ) )
     {
         return false;
     }
