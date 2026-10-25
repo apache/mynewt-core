@@ -43,6 +43,7 @@ extern "C" {
 TEST_CASE_DECL(cbmem_test_case_1);
 TEST_CASE_DECL(cbmem_test_case_2);
 TEST_CASE_DECL(cbmem_test_case_3);
+TEST_CASE_DECL(cbmem_test_case_too_long);
 TEST_SUITE_DECL(cbmem_test_suite);
 
 int cbmem_test_case_1_walk(struct cbmem *cbmem,
