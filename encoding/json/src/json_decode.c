@@ -320,6 +320,10 @@ json_internal_read_object(struct json_buffer *jb,
                 /* don't update end here, leave at value start */
                 return JSON_ERR_NULLPTR;
             }
+            if ((pval - valbuf) >= JSON_VAL_MAX || (pval - valbuf) >= maxlen) {
+                /* don't update end here, leave at value start */
+                return JSON_ERR_STRLONG;
+            }
             switch (c) {
             case 'b':
                 *pval++ = '\b';
