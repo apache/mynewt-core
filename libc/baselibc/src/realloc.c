@@ -18,10 +18,15 @@ void *realloc(void *ptr, size_t size)
 	if (!ptr)
 		return malloc(size);
 
-	if (size == 0 || size > (SIZE_MAX - 2 * sizeof(struct arena_header))) {
+	if (size == 0) {
 		free(ptr);
 		return NULL;
 	}
+
+	/* Make sure that adding arena header and rounding up does not wrap,
+	   original block is left untouched on failure */
+	if (size > (SIZE_MAX - 2 * sizeof(struct arena_header)))
+		return NULL;
 
 	/* Add the obligatory arena header, and round up */
 	size = (size + 2 * sizeof(struct arena_header) - 1) & ARENA_SIZE_MASK;
@@ -40,12 +45,13 @@ void *realloc(void *ptr, size_t size)
 		oldsize = ah->a.size - sizeof(struct arena_header);
 
 		newptr = malloc(size);
-                if (newptr) {
-                    memcpy(newptr, ptr, (size < oldsize) ? size : oldsize);
-                    free(ptr);
-                } else {
-                    newptr = ptr;
-                }
+		if (newptr) {
+			memcpy(newptr, ptr, (size < oldsize) ? size : oldsize);
+			free(ptr);
+		} else if (ah->a.size >= size) {
+			/* Shrinking, current block is still large enough */
+			newptr = ptr;
+		}
 		return newptr;
 	}
 }
