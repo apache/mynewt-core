@@ -34,11 +34,9 @@ TEST_CASE_SELF(inet_pton_test)
         { "001.002.005.006", { 1, 2, 5, 6 } }
     };
     struct test_vec invalid_vec[] = {
-        { "a.b.c.d" },
-        { "1a.b3.4.2" },
-        { "1.3.4.2a" },
-        { "1111.3.4.2" },
-        { "3.256.1.0" },
+        { "a.b.c.d" },   { "1a.b3.4.2" }, { "1.3.4.2a" }, { "1111.3.4.2" },
+        { "3.256.1.0" }, { "1.2.3.4.5" }, { "1.2.3.4." }, { "1.2.3" },
+        { "1..2.3" },    { ".1.2.3" },    { "" },
     };
     int i;
 
@@ -47,10 +45,12 @@ TEST_CASE_SELF(inet_pton_test)
         rc = mn_inet_pton(MN_PF_INET, ok_vec[i].str, addr);
         TEST_ASSERT(rc == 1);
         TEST_ASSERT(!memcmp(ok_vec[i].cmp, addr, sizeof(uint32_t)));
-        TEST_ASSERT(addr[5] == 0xa5);
+        TEST_ASSERT(addr[4] == 0xa5);
     }
     for (i = 0; i < sizeof(invalid_vec) / sizeof(invalid_vec[0]); i++) {
+        memset(addr, 0xa5, sizeof(addr));
         rc = mn_inet_pton(MN_PF_INET, invalid_vec[i].str, addr);
         TEST_ASSERT(rc == 0);
+        TEST_ASSERT(addr[4] == 0xa5);
     }
 }
