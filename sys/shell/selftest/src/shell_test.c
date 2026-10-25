@@ -51,35 +51,17 @@ test_dirty_stack(void)
     memset((void *)buf, 0xa5, sizeof(buf));
 }
 
-/* Executes "shell exec" mgmt request with specified arguments. */
+/* Executes "shell exec" mgmt request with specified CBOR payload. */
 static int
-test_shell_exec(const char **args, int argc)
+test_shell_exec_raw(const uint8_t *req, size_t len)
 {
     const struct mgmt_handler *handler;
     struct mgmt_ctxt ctxt;
-    CborEncoder req_enc;
-    CborEncoder map;
-    CborEncoder arr;
     CborEncoder payload;
-    uint8_t req[256];
     uint8_t rsp[512];
     int rc;
-    int i;
 
-    /* Encode request: {"argv": [args...]} */
-    cbor_encoder_init(&req_enc, req, sizeof(req), 0);
-    rc = cbor_encoder_create_map(&req_enc, &map, CborIndefiniteLength);
-    rc |= cbor_encode_text_stringz(&map, "argv");
-    rc |= cbor_encoder_create_array(&map, &arr, CborIndefiniteLength);
-    for (i = 0; i < argc; i++) {
-        rc |= cbor_encode_text_stringz(&arr, args[i]);
-    }
-    rc |= cbor_encoder_close_container(&map, &arr);
-    rc |= cbor_encoder_close_container(&req_enc, &map);
-    TEST_ASSERT_FATAL(rc == 0);
-
-    rc = cbor_parser_init(req, cbor_encoder_get_buffer_size(&req_enc, req), 0,
-                          &ctxt.parser, &ctxt.it);
+    rc = cbor_parser_init(req, len, 0, &ctxt.parser, &ctxt.it);
     TEST_ASSERT_FATAL(rc == 0);
 
     cbor_encoder_init(&ctxt.encoder, rsp, sizeof(rsp), 0);
@@ -99,8 +81,43 @@ test_shell_exec(const char **args, int argc)
     return handler->mh_write(&ctxt);
 }
 
+/* Executes "shell exec" mgmt request with specified arguments. */
+static int
+test_shell_exec(const char **args, int argc)
+{
+    CborEncoder req_enc;
+    CborEncoder map;
+    CborEncoder arr;
+    uint8_t req[256];
+    int rc;
+    int i;
+
+    /* Encode request: {"argv": [args...]} */
+    cbor_encoder_init(&req_enc, req, sizeof(req), 0);
+    rc = cbor_encoder_create_map(&req_enc, &map, CborIndefiniteLength);
+    rc |= cbor_encode_text_stringz(&map, "argv");
+    rc |= cbor_encoder_create_array(&map, &arr, CborIndefiniteLength);
+    for (i = 0; i < argc; i++) {
+        rc |= cbor_encode_text_stringz(&arr, args[i]);
+    }
+    rc |= cbor_encoder_close_container(&map, &arr);
+    rc |= cbor_encoder_close_container(&req_enc, &map);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    return test_shell_exec_raw(req, cbor_encoder_get_buffer_size(&req_enc, req));
+}
+
 TEST_CASE_SELF(shell_bridge_test_case_exec)
 {
+    static const uint8_t req_no_argv[] = {
+        0xa0,
+    };
+    static const uint8_t req_argv_int[] = {
+        0xa1, 0x64, 'a', 'r', 'g', 'v', 0x01,
+    };
+    static const uint8_t req_argv_map[] = {
+        0xa1, 0x64, 'a', 'r', 'g', 'v', 0xa0,
+    };
     const char *args[TEST_ARGC_MAX];
     int rc;
     int i;
@@ -130,6 +147,21 @@ TEST_CASE_SELF(shell_bridge_test_case_exec)
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(test_cmd_calls == 1);
     TEST_ASSERT(test_cmd_argv_terminated);
+
+    /* No "argv" attribute: {} */
+    rc = test_shell_exec_raw(req_no_argv, sizeof(req_no_argv));
+    TEST_ASSERT(rc == MGMT_ERR_EINVAL);
+    TEST_ASSERT(test_cmd_calls == 0);
+
+    /* "argv" is not an array: {"argv": 1} */
+    rc = test_shell_exec_raw(req_argv_int, sizeof(req_argv_int));
+    TEST_ASSERT(rc == MGMT_ERR_EINVAL);
+    TEST_ASSERT(test_cmd_calls == 0);
+
+    /* "argv" is not an array: {"argv": {}} */
+    rc = test_shell_exec_raw(req_argv_map, sizeof(req_argv_map));
+    TEST_ASSERT(rc == MGMT_ERR_EINVAL);
+    TEST_ASSERT(test_cmd_calls == 0);
 }
 
 TEST_SUITE(shell_bridge_test_suite)
