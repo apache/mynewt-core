@@ -123,6 +123,33 @@ get_lun_data(uint8_t lun)
 }
 
 /*
+ * Converts LBA and offset to flash address. Returns false if access of size
+ * bytes is not fully contained within flash exported by LUN.
+ */
+static bool
+lba_to_flash_addr(struct lun_data *lun_data, uint32_t lba, uint32_t offset,
+                  uint32_t size, uint32_t *addr)
+{
+    uint64_t start;
+    uint64_t end;
+
+    if (lba < MYNEWT_VAL_MSC_FLASH_MBR || lba >= lun_data->block_count) {
+        return false;
+    }
+
+    start = (uint64_t)(lba - MYNEWT_VAL_MSC_FLASH_MBR) * lun_data->block_size + offset;
+    end = (uint64_t)(lun_data->block_count - MYNEWT_VAL_MSC_FLASH_MBR) *
+          lun_data->block_size;
+    if (start + size > end) {
+        return false;
+    }
+
+    *addr = start;
+
+    return true;
+}
+
+/*
  * Invoked when received SCSI_CMD_INQUIRY
  * Application fill vendor id, product id and revision with string up to 8, 16, 4 characters respectively
  */
@@ -209,6 +236,7 @@ tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer,
                   uint32_t bufsize)
 {
     struct lun_data *lun_data = get_lun_data(lun);
+    uint32_t flash_addr;
 
     MSC_FLASH_LOG_DEBUG("read10(%d, %d, buf, %d)", lba, offset, bufsize);
 
@@ -226,7 +254,10 @@ tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer,
         buf[510] = 0x55;
         buf[511] = 0xAA;
     } else {
-        flash_read(lun_data, (lba - MYNEWT_VAL_MSC_FLASH_MBR) * 512, buffer, bufsize);
+        if (!lba_to_flash_addr(lun_data, lba, offset, bufsize, &flash_addr)) {
+            return -1;
+        }
+        flash_read(lun_data, flash_addr, buffer, bufsize);
     }
 
     return bufsize;
@@ -252,7 +283,9 @@ tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t *buffer,
     }
 
     if (lba >= MYNEWT_VAL_MSC_FLASH_MBR) {
-        flash_addr = (lba - MYNEWT_VAL_MSC_FLASH_MBR) * 512;
+        if (!lba_to_flash_addr(lun_data, lba, offset, bufsize, &flash_addr)) {
+            return -1;
+        }
         flash_erase_if_needed(lun_data, flash_addr, bufsize);
         flash_write(lun_data, flash_addr, buffer, bufsize);
     }
