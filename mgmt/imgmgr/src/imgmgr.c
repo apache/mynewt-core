@@ -137,7 +137,7 @@ imgr_get_current_hash(uint8_t *hash, uint16_t hashlen)
     uint8_t imghash[IMGMGR_HASH_LEN];
     int rc;
 
-    if (!hashlen || !hash) {
+    if (!hashlen || hashlen > IMGMGR_HASH_LEN || !hash) {
         return -2;
     }
 
