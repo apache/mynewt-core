@@ -78,9 +78,11 @@ fs_ls_cmd(int argc, char **argv)
         goto done;
     }
 
-    plen = strlen(path);
+    /* Leave space for '/' and terminating NUL */
     strncpy(name, path, sizeof(name) - 2);
-    if (name[plen - 1] != '/') {
+    name[sizeof(name) - 2] = '\0';
+    plen = strlen(name);
+    if (plen == 0 || name[plen - 1] != '/') {
         name[plen++] = '/';
         name[plen] = '\0';
     }
