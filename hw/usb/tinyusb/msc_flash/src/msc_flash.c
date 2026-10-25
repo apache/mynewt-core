@@ -39,9 +39,10 @@ struct lun_data {
     medium_state_t medium_state;
     uint32_t block_count;
     uint16_t block_size;
-    /* Flash Id or Flash area id */
+    /* Flash Id */
     uint8_t flash_id;
 
+    /* Address of exported part of flash */
     uint32_t flash_start;
     uint32_t flash_end;
 
@@ -60,38 +61,16 @@ struct lun_data luns[1] = {
 static int
 flash_read(struct lun_data *lun_data, uint32_t addr, uint8_t *buffer, uint32_t bufsize)
 {
-    int rc = -1;
-#if defined(MYNEWT_VAL_MSC_FLASH_FLASH_ID)
-    rc = hal_flash_read(lun_data->flash_id, lun_data->flash_start + addr,
-                        buffer, bufsize);
-#elif defined(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID)
-    const struct flash_area *fa;
-
-    if (flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa) == 0) {
-        rc = flash_area_read(fa, addr, buffer, bufsize);
-        flash_area_close(fa);
-    }
-#endif
-    return rc;
+    return hal_flash_read(lun_data->flash_id, lun_data->flash_start + addr,
+                          buffer, bufsize);
 }
 
 static int
 flash_write(struct lun_data *lun_data, uint32_t addr, const uint8_t *buffer,
             uint32_t bufsize)
 {
-    int rc = -1;
-#if defined(MYNEWT_VAL_MSC_FLASH_FLASH_ID)
-    rc = hal_flash_write(lun_data->flash_id, lun_data->flash_start + addr,
-                         buffer, bufsize);
-#elif defined(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID)
-    const struct flash_area *fa;
-
-    if (flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa) == 0) {
-        rc = flash_area_write(fa, addr, buffer, bufsize);
-        flash_area_close(fa);
-    }
-#endif
-    return rc;
+    return hal_flash_write(lun_data->flash_id, lun_data->flash_start + addr,
+                           buffer, bufsize);
 }
 
 static int
@@ -101,24 +80,11 @@ flash_erase_if_needed(struct lun_data *lun_data, uint32_t addr, uint32_t size)
     int rc = 0;
 
     while (left > 0 && rc == 0) {
-#if defined(MYNEWT_VAL_MSC_FLASH_FLASH_ID)
         if (!hal_flash_isempty(lun_data->flash_id, lun_data->flash_start + addr,
                                lun_data->flash_sector_buffer, 512)) {
             rc = hal_flash_erase(lun_data->flash_id,
                                  lun_data->flash_start + addr, 512);
         }
-#elif defined(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID)
-        const struct flash_area *fa;
-
-        rc = flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa);
-        if (rc == 0) {
-            if (!flash_area_read_is_empty(fa, addr,
-                                          lun_data->flash_sector_buffer, 512)) {
-                rc = flash_area_erase(fa, addr, 512);
-            }
-            flash_area_close(fa);
-        }
-#endif
         left -= 512;
     }
 
@@ -400,45 +366,39 @@ boot_preboot(void)
 void
 msc_flash_init(void)
 {
+    uint32_t start_address;
+    uint32_t end_address;
+    uint8_t flash_id;
 #if defined(MYNEWT_VAL_MSC_FLASH_FLASH_ID)
     /* Flash ID as defined in bsp.yml */
-    int flash_id = MYNEWT_VAL_MSC_FLASH_FLASH_ID;
-    uint32_t start_address;
+    const struct hal_flash *hf;
     uint32_t sector_size;
-    uint32_t end_address;
-    uint32_t flash_size;
-    const struct hal_flash *hf = hal_bsp_flash_dev(flash_id);
 
-    if (hf) {
-        hal_flash_sector_info(flash_id, 0, &start_address, &sector_size);
-        start_address += MYNEWT_VAL_MSC_FLASH_FLASH_OFFSET;
-        hal_flash_sector_info(flash_id, hf->hf_sector_cnt - 1, &end_address,
-                              &sector_size);
-        end_address += sector_size;
-        flash_size = end_address - start_address;
-        luns[0].flash_id = MYNEWT_VAL_MSC_FLASH_FLASH_ID;
-        luns[0].block_count = flash_size / 512 + MYNEWT_VAL_MSC_FLASH_MBR;
-        luns[0].block_size = 512;
-        luns[0].flash_start = start_address;
-        luns[0].flash_end = end_address;
+    flash_id = MYNEWT_VAL_MSC_FLASH_FLASH_ID;
+    hf = hal_bsp_flash_dev(flash_id);
+    if (!hf) {
+        return;
     }
+    hal_flash_sector_info(flash_id, 0, &start_address, &sector_size);
+    start_address += MYNEWT_VAL_MSC_FLASH_FLASH_OFFSET;
+    hal_flash_sector_info(flash_id, hf->hf_sector_cnt - 1, &end_address, &sector_size);
+    end_address += sector_size;
 #elif defined(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID)
-    int flash_area_id = MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID;
-    /* Flash ID as defined in bsp.yml */
     const struct flash_area *fa;
-    uint32_t start_address;
-    uint32_t end_address;
-    uint32_t flash_size;
 
-    if (flash_area_open(flash_area_id, &fa) == 0) {
-        start_address = fa->fa_off;
-        end_address = start_address + fa->fa_size;
-        flash_size = end_address - start_address;
-        luns[0].flash_id = MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID;
-        luns[0].block_count = flash_size / 512 + MYNEWT_VAL_MSC_FLASH_MBR;
-        luns[0].block_size = 512;
-        luns[0].flash_start = start_address;
-        luns[0].flash_end = end_address;
+    if (flash_area_open(MYNEWT_VAL_MSC_FLASH_FLASH_AREA_ID, &fa)) {
+        return;
     }
+    flash_id = fa->fa_device_id;
+    start_address = fa->fa_off;
+    end_address = start_address + fa->fa_size;
+    flash_area_close(fa);
 #endif
+
+    luns[0].flash_id = flash_id;
+    luns[0].block_count =
+        (end_address - start_address) / 512 + MYNEWT_VAL_MSC_FLASH_MBR;
+    luns[0].block_size = 512;
+    luns[0].flash_start = start_address;
+    luns[0].flash_end = end_address;
 }
