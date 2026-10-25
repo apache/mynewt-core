@@ -127,8 +127,14 @@ config_txt_read(const struct file_entry *entry, uint32_t file_sector, uint8_t bu
     config_txt_render_file(&export_stream.out_stream);
 }
 
+/* Longest line that can be split between sectors */
+#define CONFIG_LINE_MAX (2 * (CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN))
+
+/* Beginning of the line from previous sector */
 static uint8_t *line;
 static size_t line_len;
+/* Line from previous sector was too long */
+static bool line_dropped;
 
 enum config_write_state {
     WRITE_STATE_IDLE,
@@ -151,6 +157,43 @@ static bool
 line_is_marker(const uint8_t *bl, size_t len, const char *marker)
 {
     return len == strlen(marker) - 1 && memcmp(marker, bl, len) == 0;
+}
+
+static void
+line_free(void)
+{
+    os_free(line);
+    line = NULL;
+    line_len = 0;
+}
+
+/*
+ * Store part of the line that continues in next sector.
+ * Line that does not fit in CONFIG_LINE_MAX is dropped.
+ */
+static void
+line_append(const uint8_t *buf, size_t len)
+{
+    uint8_t *new_line;
+
+    if (line_dropped) {
+        return;
+    }
+    if (line_len + len > CONFIG_LINE_MAX) {
+        new_line = NULL;
+    } else {
+        /* One more byte for string terminator added by handle_line() */
+        new_line = os_realloc(line, line_len + len + 1);
+    }
+    if (new_line == NULL) {
+        MSC_FAT_VIEW_LOG_ERROR("Config line dropped\n");
+        line_free();
+        line_dropped = true;
+        return;
+    }
+    memcpy(new_line + line_len, buf, len);
+    line = new_line;
+    line_len += len;
 }
 
 static void
@@ -225,9 +268,12 @@ config_write_sector(uint32_t sector, uint8_t *buffer)
     uint8_t *p;
     uint8_t *e = buffer + 512;
     uint8_t *line_begin = buffer;
-    uint8_t *bl;
-    uint8_t *el;
     int c;
+
+    if (config_write_state != WRITE_STATE_CONFIG_LINES) {
+        line_free();
+        line_dropped = false;
+    }
 
     for (p = buffer; p < e; ++p) {
         if (config_write_state == WRITE_STATE_CONFIG_WRITTEN) {
@@ -238,21 +284,16 @@ config_write_sector(uint32_t sector, uint8_t *buffer)
         } else {
             c = *p;
             if (c == '\r' || c == '\n') {
-                if (line) {
-                    line_len += (p - line_begin);
-                    line = os_realloc(line, line_len + (p - line_begin));
-                    bl = line;
-                    el = bl + line_len;
-                } else {
-                    bl = line_begin;
-                    el = p;
-                    line_len = p - bl;
+                if (line || line_dropped) {
+                    line_append(line_begin, p - line_begin);
+                    if (line) {
+                        handle_line(line, line + line_len);
+                    }
+                    line_free();
+                    line_dropped = false;
+                } else if (p > line_begin) {
+                    handle_line(line_begin, p);
                 }
-                if (line_len) {
-                    handle_line(bl, el);
-                }
-                os_free(line);
-                line = NULL;
                 line_begin = p + 1;
             } else if (iscntrl(c)) {
                 if (config_write_state != WRITE_STATE_IDLE) {
@@ -261,6 +302,10 @@ config_write_sector(uint32_t sector, uint8_t *buffer)
                 }
             }
         }
+    }
+    if (config_write_state == WRITE_STATE_CONFIG_LINES && line_begin < e) {
+        /* Line continues in next sector */
+        line_append(line_begin, e - line_begin);
     }
     return config_write_state == WRITE_STATE_IDLE ? 0 : 512;
 }
