@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <stdio.h>
 #include "os/mynewt.h"
 #include <tinycbor/cbor.h>
 #include <oic/oc_api.h>
@@ -175,9 +176,147 @@ test_parse_rep_arrays(void)
     oc_free_rep(rep);
 }
 
+/* Encodes {"a0": 0, "a1": 1, ...} */
+static size_t
+test_parse_encode_map(int cnt)
+{
+    CborEncoder enc;
+    CborEncoder map;
+    char key[16];
+    int rc;
+    int i;
+
+    cbor_encoder_init(&enc, test_parse_buf, sizeof(test_parse_buf), 0);
+    rc = cbor_encoder_create_map(&enc, &map, cnt);
+    for (i = 0; i < cnt; i++) {
+        snprintf(key, sizeof(key), "a%d", i);
+        rc |= cbor_encode_text_stringz(&map, key);
+        rc |= cbor_encode_int(&map, i);
+    }
+    rc |= cbor_encoder_close_container(&enc, &map);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    return cbor_encoder_get_buffer_size(&enc, test_parse_buf);
+}
+
+static void
+test_parse_rep_invalid(void)
+{
+    /* 1 */
+    static const uint8_t not_map[] = { 0x01 };
+    /* [1] */
+    static const uint8_t not_map_arr[] = { 0x81, 0x01 };
+    /* {"a": ["x...x"]} with string not fitting in array item */
+    static const uint8_t long_str[] = { 0xa1, 0x61, 'a', 0x81, 0x78, 0x18,
+                                        'x',  'x',  'x', 'x',  'x',  'x',
+                                        'x',  'x',  'x', 'x',  'x',  'x',
+                                        'x',  'x',  'x', 'x',  'x',  'x',
+                                        'x',  'x',  'x', 'x',  'x',  'x' };
+    /* {"a": [false, "A"]} */
+    static const uint8_t mixed[] = { 0xa1, 0x61, 'a', 0x82, 0xf4, 0x61, 'A' };
+    /* {"a": [1, {}]} */
+    static const uint8_t mixed_map[] = { 0xa1, 0x61, 'a', 0x82, 0x01, 0xa0 };
+    /* {1: 1} */
+    static const uint8_t int_key[] = { 0xa1, 0x01, 0x01 };
+    /* {"a": [1, 2 with 5 elements declared */
+    static const uint8_t truncated[] = { 0xa1, 0x61, 'a', 0x85, 0x01, 0x02 };
+    /* {"a": {"a": {"a": ... 10 levels */
+    static const uint8_t nested[] = { 0xa1, 0x61, 'a',  0xa1, 0x61, 'a',  0xa1,
+                                      0x61, 'a',  0xa1, 0x61, 'a',  0xa1, 0x61,
+                                      'a',  0xa1, 0x61, 'a',  0xa1, 0x61, 'a',
+                                      0xa1, 0x61, 'a',  0xa1, 0x61, 'a',  0xa1,
+                                      0x61, 'a',  0xa0 };
+    oc_rep_t dummy;
+    oc_rep_t *rep;
+    size_t len;
+    int rc;
+
+    rep = &dummy;
+    rc = test_parse_rep(not_map, sizeof(not_map), &rep);
+    TEST_ASSERT(rc != 0);
+    TEST_ASSERT(rep == NULL);
+
+    rc = test_parse_rep(not_map_arr, sizeof(not_map_arr), &rep);
+    TEST_ASSERT(rc != 0);
+    oc_free_rep(rep);
+
+    rc = test_parse_rep(long_str, sizeof(long_str), &rep);
+    TEST_ASSERT(rc != 0);
+    oc_free_rep(rep);
+
+    rc = test_parse_rep(mixed, sizeof(mixed), &rep);
+    TEST_ASSERT(rc != 0);
+    oc_free_rep(rep);
+
+    rc = test_parse_rep(mixed_map, sizeof(mixed_map), &rep);
+    TEST_ASSERT(rc != 0);
+    oc_free_rep(rep);
+
+    rc = test_parse_rep(int_key, sizeof(int_key), &rep);
+    TEST_ASSERT(rc != 0);
+    oc_free_rep(rep);
+
+    rc = test_parse_rep(truncated, sizeof(truncated), &rep);
+    TEST_ASSERT(rc != 0);
+    oc_free_rep(rep);
+
+    rc = test_parse_rep(nested, sizeof(nested), &rep);
+    TEST_ASSERT(rc != 0);
+    oc_free_rep(rep);
+
+    /* More properties than rep objects */
+    len = test_parse_encode_map(MYNEWT_VAL(OC_NUM_REP_OBJECTS) + 1);
+    rc = test_parse_rep(test_parse_buf, len, &rep);
+    TEST_ASSERT(rc != 0);
+    oc_free_rep(rep);
+}
+
+static void
+test_parse_rep_objects(void)
+{
+    /* [] */
+    static const uint8_t empty[] = { 0x80 };
+    /* [{"a": 1}, {"b": ["xy", "z"]}] */
+    static const uint8_t objs[] = { 0x82, 0xa1, 0x61, 'a', 0x01, 0xa1, 0x61,
+                                    'b',  0x82, 0x62, 'x', 'y',  0x61, 'z' };
+    oc_rep_t *rep;
+    size_t len;
+    int rc;
+
+    rc = test_parse_rep(empty, sizeof(empty), &rep);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(rep == NULL);
+
+    rc = test_parse_rep(objs, sizeof(objs), &rep);
+    TEST_ASSERT_FATAL(rc == 0);
+    TEST_ASSERT_FATAL(rep != NULL && rep->type == OBJECT);
+    TEST_ASSERT_FATAL(rep->value_object != NULL);
+    TEST_ASSERT(rep->value_object->type == INT);
+    TEST_ASSERT(rep->value_object->value_int == 1);
+    TEST_ASSERT_FATAL(rep->next != NULL && rep->next->type == OBJECT);
+    TEST_ASSERT_FATAL(rep->next->value_object != NULL);
+    TEST_ASSERT_FATAL(rep->next->value_object->type == STRING_ARRAY);
+    TEST_ASSERT(oc_string_array_get_allocated_size(
+                    rep->next->value_object->value_array) == 2);
+    TEST_ASSERT(!strcmp(
+        oc_string_array_get_item(rep->next->value_object->value_array, 0), "xy"));
+    TEST_ASSERT(!strcmp(
+        oc_string_array_get_item(rep->next->value_object->value_array, 1), "z"));
+    TEST_ASSERT(rep->next->next == NULL);
+    oc_free_rep(rep);
+
+    /* All rep objects were freed after failed and successful parsing */
+    len = test_parse_encode_map(MYNEWT_VAL(OC_NUM_REP_OBJECTS));
+    rc = test_parse_rep(test_parse_buf, len, &rep);
+    TEST_ASSERT(rc == 0);
+    oc_free_rep(rep);
+}
+
 void
 test_parse(void)
 {
     test_parse_coap_options();
     test_parse_rep_arrays();
+    test_parse_rep_invalid();
+    test_parse_rep_objects();
 }
