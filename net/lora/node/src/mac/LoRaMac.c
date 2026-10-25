@@ -214,9 +214,18 @@ static struct hal_timer RxWindowTimer2;
 static RxConfigParams_t RxWindow1Config;
 static RxConfigParams_t RxWindow2Config;
 
-/* Lengths of MAC commands */
-static const uint8_t
-g_lora_mac_cmd_lens[LORA_MAC_MAX_MAC_CMD_CID + 1] = {0, 0, 1, 2, 1, 2, 3, 2, 1};
+/* Lengths of MAC commands, including CID */
+static const uint8_t g_lora_mac_cmd_lens[LORA_MAC_MAX_MAC_CMD_CID + 1] = {
+    [MOTE_MAC_LINK_CHECK_REQ] = 1,
+    [MOTE_MAC_LINK_ADR_ANS] = 2,
+    [MOTE_MAC_DUTY_CYCLE_ANS] = 1,
+    [MOTE_MAC_RX_PARAM_SETUP_ANS] = 2,
+    [MOTE_MAC_DEV_STATUS_ANS] = 3,
+    [MOTE_MAC_NEW_CHANNEL_ANS] = 2,
+    [MOTE_MAC_RX_TIMING_SETUP_ANS] = 1,
+    [MOTE_MAC_TX_PARAM_SETUP_ANS] = 1,
+    [MOTE_MAC_DL_CHANNEL_ANS] = 2,
+};
 
 /* Radio events */
 struct os_event g_lora_mac_radio_tx_timeout_event;
@@ -3278,7 +3287,7 @@ lora_mac_extract_mac_cmds(uint8_t max_cmd_bytes, uint8_t *buf)
          * will always send them in order and if we cannot fit we stop.
          */
         cmd = MacCommandsBuffer[i];
-        assert((cmd <= MOTE_MAC_RX_TIMING_SETUP_ANS) &&
+        assert((cmd <= LORA_MAC_MAX_MAC_CMD_CID) &&
                (cmd >= MOTE_MAC_LINK_CHECK_REQ));
 
         /* Get length of this command */
