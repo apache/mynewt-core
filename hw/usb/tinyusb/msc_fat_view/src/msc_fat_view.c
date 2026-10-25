@@ -570,13 +570,28 @@ free_cluster_chain(cluster_t cluster)
 void
 msc_fat_view_add_dir_entry(const file_entry_t *file)
 {
-    int entry_ix = root_dir_entry_count++;
+    int entry_ix;
     medium_state_t state = medium_state;
+
+    /* File may be already in root directory (i.e. added again after error) */
+    for (entry_ix = 0; entry_ix < root_dir_entry_count; ++entry_ix) {
+        if (root_dir[entry_ix].file == file) {
+            break;
+        }
+    }
+    if (entry_ix == root_dir_entry_count) {
+        if (root_dir_entry_count >= ARRAY_SIZE(root_dir)) {
+            MSC_FAT_VIEW_LOG_ERROR("No space for root entry %s\n", file->name);
+            return;
+        }
+        root_dir_entry_count++;
+    }
 
     if (state != MEDIUM_NOT_PRESENT) {
         medium_state = MEDIUM_NOT_PRESENT;
     }
     root_dir[entry_ix].file = file;
+    root_dir[entry_ix].deleted = 0;
     root_dir[entry_ix].dir_slots = fat_dir_entry_slots(file->name);
     MSC_FAT_VIEW_LOG_DEBUG("Added root entry %s\n", file->name);
     if (state != MEDIUM_NOT_PRESENT) {
