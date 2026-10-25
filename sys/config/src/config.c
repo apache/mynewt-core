@@ -145,6 +145,9 @@ conf_parse_name(char *name, int *name_argc, char *name_argv[])
         name_argv[i++] = tok;
         tok = strtok_r(NULL, sep, &tok_ptr);
     }
+    if (i == 0) {
+        return -1;
+    }
     *name_argc = i;
 
     return 0;
