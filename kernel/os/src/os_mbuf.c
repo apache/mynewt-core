@@ -415,6 +415,10 @@ os_mbuf_off(const struct os_mbuf *om, int off, uint16_t *out_off)
     struct os_mbuf *next;
     struct os_mbuf *cur;
 
+    if (off < 0) {
+        return NULL;
+    }
+
     /* Cast away const. */
     cur = (struct os_mbuf *)om;
 
@@ -442,6 +446,10 @@ os_mbuf_copydata(const struct os_mbuf *om, int off, int len, void *dst)
 {
     unsigned int count;
     uint8_t *udst;
+
+    if (off < 0 || len < 0) {
+        return (-1);
+    }
 
     if (!len) {
         return 0;
