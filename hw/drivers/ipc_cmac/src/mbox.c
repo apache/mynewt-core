@@ -35,7 +35,7 @@ mbox_src_get(uint16_t *size)
     *size = MYNEWT_VAL(CMAC_MBOX_SIZE_S2C);
 #else
     struct cmac_shm_mbox *mbox = (struct cmac_shm_mbox *)g_cmac_shm_mbox_c2s;
-    *size = g_cmac_shm_config->mbox_c2s_size;
+    *size = g_cmac_shm_mbox_c2s_size;
 #endif
 
     return mbox;
@@ -49,7 +49,7 @@ mbox_dst_get(uint16_t *size)
     *size = MYNEWT_VAL(CMAC_MBOX_SIZE_C2S);
 #else
     struct cmac_shm_mbox *mbox = (struct cmac_shm_mbox *)g_cmac_shm_mbox_s2c;
-    *size = g_cmac_shm_config->mbox_s2c_size;
+    *size = g_cmac_shm_mbox_s2c_size;
 #endif
 
     return mbox;
@@ -96,6 +96,11 @@ cmac_mbox_read(void)
         rd_off = mbox->rd_off;
         wr_off = mbox->wr_off;
 
+        /* Offsets are in shared memory, make sure they are within mailbox */
+        if (rd_off >= mbox_size || wr_off >= mbox_size) {
+            return -1;
+        }
+
         if (rd_off <= wr_off) {
             chunk = wr_off - rd_off;
         } else {
@@ -136,6 +141,11 @@ cmac_mbox_write(const void *data, uint16_t len)
     while (len) {
         rd_off = mbox->rd_off;
         wr_off = mbox->wr_off;
+
+        /* Offsets are in shared memory, make sure they are within mailbox */
+        if (rd_off >= mbox_size || wr_off >= mbox_size) {
+            return -1;
+        }
 
         /*
          * Calculate maximum length to write, i.e. up to end of buffer or stop

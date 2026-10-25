@@ -30,6 +30,9 @@ extern volatile struct cmac_shm_config *g_cmac_shm_config;
 extern volatile struct cmac_shm_ctrl *g_cmac_shm_ctrl;
 extern volatile struct cmac_shm_mbox *g_cmac_shm_mbox_s2c;
 extern volatile struct cmac_shm_mbox *g_cmac_shm_mbox_c2s;
+/* Mailbox sizes, copied from shared memory before CMAC is started */
+extern uint16_t g_cmac_shm_mbox_s2c_size;
+extern uint16_t g_cmac_shm_mbox_c2s_size;
 extern volatile struct cmac_shm_dcdc *g_cmac_shm_dcdc;
 extern volatile struct cmac_shm_trim *g_cmac_shm_trim;
 extern volatile struct cmac_shm_rand *g_cmac_shm_rand;
