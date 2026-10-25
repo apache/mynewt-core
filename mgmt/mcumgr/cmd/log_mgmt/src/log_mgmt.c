@@ -221,13 +221,17 @@ log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
     }
 
 #if MYNEWT_VAL(LOG_FLAGS_TRAILER)
-    trailer_len = log_read_trailer_len(log, dptr);
-    if (trailer_len) {
-        /* If trailer is present, so is the length of the trailer */
-        trailer_len += LOG_TRAILER_LEN_SIZE;
+    if (leh->ue_flags & LOG_FLAGS_TRAILER) {
+        trailer_len = log_read_trailer_len(log, dptr);
+        if (trailer_len) {
+            /* If trailer is present, so is the length of the trailer */
+            trailer_len += LOG_TRAILER_LEN_SIZE;
+        }
+        /* Ignore trailer length that does not fit in entry */
+        if (trailer_len <= len) {
+            len -= trailer_len;
+        }
     }
-
-    len -= trailer_len;
 #endif
 
     entry.ts = leh->ue_ts;
