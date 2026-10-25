@@ -80,6 +80,8 @@ volatile struct cmac_shm_config *g_cmac_shm_config;
 volatile struct cmac_shm_ctrl *g_cmac_shm_ctrl;
 volatile struct cmac_shm_mbox *g_cmac_shm_mbox_s2c;
 volatile struct cmac_shm_mbox *g_cmac_shm_mbox_c2s;
+uint16_t g_cmac_shm_mbox_s2c_size;
+uint16_t g_cmac_shm_mbox_c2s_size;
 volatile struct cmac_shm_trim *g_cmac_shm_trim;
 volatile struct cmac_shm_rand *g_cmac_shm_rand;
 volatile struct cmac_shm_dcdc *g_cmac_shm_dcdc;
@@ -221,6 +223,12 @@ shm_init(void)
     g_cmac_shm_ctrl = CMAC_SHARED_PTR(ih->shm_ctrl);
     g_cmac_shm_mbox_s2c = CMAC_SHARED_PTR(ih->shm_mbox_s2c);
     g_cmac_shm_mbox_c2s = CMAC_SHARED_PTR(ih->shm_mbox_c2s);
+    /*
+     * Config is writable by CMAC, so copy mailbox sizes while it is not
+     * running yet.
+     */
+    g_cmac_shm_mbox_s2c_size = g_cmac_shm_config->mbox_s2c_size;
+    g_cmac_shm_mbox_c2s_size = g_cmac_shm_config->mbox_c2s_size;
     g_cmac_shm_trim = CMAC_SHARED_PTR(ih->shm_trim);
     g_cmac_shm_rand = CMAC_SHARED_PTR(ih->shm_rand);
     g_cmac_shm_dcdc = CMAC_SHARED_PTR(ih->shm_dcdc);
