@@ -18,7 +18,7 @@ void *realloc(void *ptr, size_t size)
 	if (!ptr)
 		return malloc(size);
 
-	if (size == 0 || size > (SIZE_MAX - sizeof(struct arena_header))) {
+	if (size == 0 || size > (SIZE_MAX - 2 * sizeof(struct arena_header))) {
 		free(ptr);
 		return NULL;
 	}

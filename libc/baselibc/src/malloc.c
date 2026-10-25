@@ -149,7 +149,8 @@ void *malloc(size_t size)
     void *more_mem;
     extern void *_sbrk(int incr);
 
-    if (size == 0 || size > (SIZE_MAX - sizeof(struct arena_header))) {
+    /* Make sure that adding arena header and rounding up does not wrap */
+    if (size == 0 || size > (SIZE_MAX - 2 * sizeof(struct arena_header))) {
         return NULL;
     }
 
