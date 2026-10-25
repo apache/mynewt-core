@@ -42,6 +42,10 @@ wifi_cli(int argc, char **argv)
         goto usage;
     }
     wi = wifi_if_lookup(0);
+    if (!wi) {
+        console_printf("No wifi interface\n");
+        return 0;
+    }
 
     if (!strcmp(argv[1], "start")) {
         wifi_start(wi);
@@ -61,15 +65,15 @@ wifi_cli(int argc, char **argv)
               ap->wa_key_type ? "X" : "");
         }
     } else if (!strcmp(argv[1], "connect")) {
-        if (argc < 2) {
+        if (argc < 3) {
             goto conn_usage;
         }
         i = strlen(argv[2]);
         if (i >= sizeof(wi->wi_ssid)) {
             goto conn_usage;
         }
-        if (argc > 2) {
-            i = strlen(argv[2]);
+        if (argc > 3) {
+            i = strlen(argv[3]);
             if (i >= sizeof(wi->wi_key)) {
                 goto conn_usage;
             }
