@@ -12,5 +12,6 @@ char *strstr(const char *haystack, const char *needle)
 
 char *strnstr(const char *haystack, const char *needle, size_t len)
 {
-	return (char *)memmem(haystack, strlen(haystack), needle, len);
+	return (char *)memmem(haystack, strnlen(haystack, len), needle,
+			      strlen(needle));
 }
