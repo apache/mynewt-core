@@ -343,6 +343,7 @@ int vsscanf(const char *buffer, const char *format, va_list ap)
 				matchinv = 1;
 			} else {
 				set_bit(matchmap, (unsigned char)ch);
+				range_start = (unsigned char)ch;
 				state = st_match;
 			}
 			break;
@@ -351,10 +352,11 @@ int vsscanf(const char *buffer, const char *format, va_list ap)
 			if (ch == ']') {
 				goto match_run;
 			} else if (ch == '-') {
-				range_start = (unsigned char)ch;
+				/* range_start holds previous character */
 				state = st_match_range;
 			} else {
 				set_bit(matchmap, (unsigned char)ch);
+				range_start = (unsigned char)ch;
 			}
 			break;
 
@@ -365,9 +367,10 @@ int vsscanf(const char *buffer, const char *format, va_list ap)
 				goto match_run;
 			} else {
 				int i;
-				for (i = range_start; i < (unsigned char)ch;
+				for (i = range_start; i <= (unsigned char)ch;
 				     i++)
 					set_bit(matchmap, i);
+				range_start = (unsigned char)ch;
 				state = st_match;
 			}
 			break;
@@ -380,6 +383,7 @@ int vsscanf(const char *buffer, const char *format, va_list ap)
 				if (sarg)
 					*sarg++ = uc;
 				q++;
+				width--;
 			}
 			if (q != qq && sarg) {
 				*sarg = '\0';
