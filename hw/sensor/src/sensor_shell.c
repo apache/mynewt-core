@@ -1026,12 +1026,19 @@ sensor_cmd_exec(int argc, char **argv)
 
         g_spd.spd_read_in_progress = true;
     } else if (!strcmp(argv[1], "type")) {
+        if (argc < 3) {
+            console_printf("Too few arguments: %d\n"
+                           "Usage: sensor type <sensor_name>\n",
+                           argc - 2);
+            rc = SYS_EINVAL;
+            goto done;
+        }
         rc = sensor_cmd_display_type(argv);
         if (rc) {
             goto done;
         }
     } else if (!strcmp(argv[1], "notify")) {
-        if (argc < 3) {
+        if (argc < 5) {
             console_printf("Too few arguments: %d\n"
                            "Usage: sensor notify <sensor_name> <on/off> "
                            "<single/double/wakeup/freefall/orient/sleep/orient_xl/orient_yl/orient_zl/orient_xh/orient_yh/orient_zh>",
