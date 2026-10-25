@@ -50,6 +50,7 @@ TEST_SUITE(log_test_suite_misc)
 {
     log_test_case_level();
     log_test_case_append_cb();
+    log_test_case_read_past_end();
 #if MYNEWT_VAL(LOG_FCB)
     log_test_case_2logs();
 #endif
