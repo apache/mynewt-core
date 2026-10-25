@@ -38,6 +38,7 @@ TEST_SUITE(test_cborattr_suite)
     test_cborattr_decode_string_bounds();
     test_cborattr_decode_string_array_bounds();
     test_cborattr_decode_mbuf();
+    test_cborattr_decode_array_default();
 }
 
 #if MYNEWT_VAL(SELFTEST)
