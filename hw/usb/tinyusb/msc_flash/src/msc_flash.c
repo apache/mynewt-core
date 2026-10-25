@@ -133,6 +133,37 @@ get_lun_data(uint8_t lun)
 }
 
 /*
+ * Fills buffer with part of MBR starting at offset. Returns number of bytes
+ * filled, MBR occupies single block.
+ */
+static uint32_t
+mbr_read(struct lun_data *lun_data, uint32_t offset, uint8_t *buf, uint32_t len)
+{
+    static const struct {
+        uint16_t off;
+        uint8_t val;
+    } mbr[] = {
+        /* Partition type */
+        { 450, 0x81 },
+        /* Boot signature */
+        { 510, 0x55 },
+        { 511, 0xAA },
+    };
+    int i;
+
+    len = min(len, lun_data->block_size - offset);
+    memset(buf, 0, len);
+
+    for (i = 0; i < ARRAY_SIZE(mbr); i++) {
+        if (mbr[i].off >= offset && mbr[i].off < offset + len) {
+            buf[mbr[i].off - offset] = mbr[i].val;
+        }
+    }
+
+    return len;
+}
+
+/*
  * Converts LBA and offset to flash address. Returns false if access of size
  * bytes is not fully contained within flash exported by LUN.
  */
@@ -259,14 +290,14 @@ tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void *buffer,
         return -1;
     }
 
+    /* Offset within block is derived from block size chosen by host */
+    if (offset >= lun_data->block_size) {
+        return -1;
+    }
+
     /* If MBR was selected add marker and partition type */
     if (MYNEWT_VAL_MSC_FLASH_MBR == 1 && lba == 0) {
-        uint8_t *buf = buffer;
-
-        memset(buffer, 0, bufsize);
-        buf[450] = 0x81;
-        buf[510] = 0x55;
-        buf[511] = 0xAA;
+        bufsize = mbr_read(lun_data, offset, buffer, bufsize);
     } else {
         if (!lba_to_flash_addr(lun_data, lba, offset, bufsize, &flash_addr)) {
             return -1;
