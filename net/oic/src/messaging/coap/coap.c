@@ -721,6 +721,15 @@ err_short:
             }
             opt_len += (255 + (tmp[0] << 8) + tmp[1]);
             cur_opt += 2;
+        } else if (opt_len == 15) {
+            coap_error_message = "Reserved option length";
+            STATS_INC(coap_stats, ierr);
+            return BAD_REQUEST_4_00;
+        }
+
+        /* Option value must fit in the remaining part of the packet */
+        if (opt_len > (size_t)(OS_MBUF_PKTLEN(m) - cur_opt)) {
+            goto err_short;
         }
 
         opt_num += opt_delta;
