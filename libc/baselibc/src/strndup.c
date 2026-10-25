@@ -7,13 +7,13 @@
 
 char *strndup(const char *s, size_t n)
 {
-	int l = n > strlen(s) ? strlen(s) + 1 : n + 1;
-	char *d = malloc(l);
+	size_t l = strnlen(s, n);
+	char *d = malloc(l + 1);
 
 	if (!d)
 		return NULL;
-	
+
 	memcpy(d, s, l);
-	d[n] = '\0';
+	d[l] = '\0';
 	return d;
 }
