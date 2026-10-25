@@ -113,6 +113,17 @@ hal_flash_check_addr(const struct hal_flash *hf, uint32_t addr)
     return 0;
 }
 
+/* Checks that range of num_bytes starting at addr is within flash */
+static int
+hal_flash_check_range(const struct hal_flash *hf, uint32_t addr, uint32_t num_bytes)
+{
+    if (hal_flash_check_addr(hf, addr) ||
+        num_bytes > hf->hf_base_addr + hf->hf_size - addr) {
+        return SYS_EINVAL;
+    }
+    return 0;
+}
+
 int
 hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
 {
@@ -123,8 +134,7 @@ hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
     if (!hf) {
         return SYS_EINVAL;
     }
-    if (hal_flash_check_addr(hf, address) ||
-      hal_flash_check_addr(hf, address + num_bytes)) {
+    if (hal_flash_check_range(hf, address, num_bytes)) {
         return SYS_EINVAL;
     }
 
@@ -191,8 +201,7 @@ hal_flash_write(uint8_t id, uint32_t address, const void *src,
     if (!hf) {
         return SYS_EINVAL;
     }
-    if (hal_flash_check_addr(hf, address) ||
-      hal_flash_check_addr(hf, address + num_bytes)) {
+    if (hal_flash_check_range(hf, address, num_bytes)) {
         return SYS_EINVAL;
     }
 
@@ -272,8 +281,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     if (!hf) {
         return SYS_EINVAL;
     }
-    if (hal_flash_check_addr(hf, address) ||
-      hal_flash_check_addr(hf, address + num_bytes)) {
+    if (hal_flash_check_range(hf, address, num_bytes)) {
         return SYS_EINVAL;
     }
 
@@ -352,8 +360,7 @@ hal_flash_isempty(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
     if (!hf) {
         return SYS_EINVAL;
     }
-    if (hal_flash_check_addr(hf, address) ||
-      hal_flash_check_addr(hf, address + num_bytes)) {
+    if (hal_flash_check_range(hf, address, num_bytes)) {
         return SYS_EINVAL;
     }
     if (hf->hf_itf->hff_is_empty) {
