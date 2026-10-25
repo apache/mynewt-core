@@ -1118,6 +1118,14 @@ lora_mac_process_radio_rx(struct os_event *ev)
             if (multicast == 1) {
                 rxi->pkt_type = MCPS_MULTICAST;
 
+                /* Multicast frames must not carry MAC commands */
+                if ((fCtrl.Bits.FOptsLen > 0) ||
+                    ((appPayloadStartIndex < size - LORAMAC_MFR_LEN) &&
+                     (payload[appPayloadStartIndex] == 0))) {
+                    STATS_INC(lora_mac_stats, rx_invalid);
+                    goto process_rx_done;
+                }
+
                 if((curMulticastParams->DownLinkCounter == downLinkCounter ) &&
                     (curMulticastParams->DownLinkCounter != 0)) {
                     /* XXX: I need to understand multicast. Are these sent
