@@ -32,11 +32,13 @@ slot0_img_size(const file_entry_t *file)
     (void)file;
 
     if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
-        flash_area_read(fa, 0, &image_header, sizeof(image_header));
-        size = image_header.ih_img_size + image_header.ih_hdr_size;
-        flash_area_read(fa, size, &tlv_info, sizeof(tlv_info));
-        if (tlv_info.it_magic == IMAGE_TLV_INFO_MAGIC) {
-            size += tlv_info.it_tlv_tot;
+        if (flash_area_read(fa, 0, &image_header, sizeof(image_header)) == 0 &&
+            image_header.ih_magic == IMAGE_MAGIC) {
+            size = image_header.ih_img_size + image_header.ih_hdr_size;
+            if (flash_area_read(fa, size, &tlv_info, sizeof(tlv_info)) == 0 &&
+                tlv_info.it_magic == IMAGE_TLV_INFO_MAGIC) {
+                size += tlv_info.it_tlv_tot;
+            }
         }
         flash_area_close(fa);
     }
@@ -53,8 +55,12 @@ slot0_img_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buf
 
     if (0 == flash_area_open(FLASH_AREA_IMAGE_0, &fa)) {
         addr = file_sector * 512;
-        flash_area_read(fa, addr, buffer, 512);
+        if (flash_area_read(fa, addr, buffer, 512)) {
+            memset(buffer, 0, 512);
+        }
         flash_area_close(fa);
+    } else {
+        memset(buffer, 0, 512);
     }
 }
 

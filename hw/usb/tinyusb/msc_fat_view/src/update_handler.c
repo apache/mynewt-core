@@ -134,7 +134,9 @@ image_write_sector(struct msc_fat_view_write_handler *handler, uint32_t sector, 
     if (unallocated_write.write_status < 0) {
         return 0;
     }
-    flash_area_open(FLASH_AREA_IMAGE, &fa);
+    if (flash_area_open(FLASH_AREA_IMAGE, &fa)) {
+        return 0;
+    }
     if (unallocated_write.write_status == NOT_TOUCHED_YET) {
         if (BOOT_LOADER) {
             if (((struct image_header *)buffer)->ih_magic == IMAGE_MAGIC) {

@@ -221,7 +221,10 @@ slot0_hex_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buf
 {
     size_t file_offset = file_sector * 512;
 
-    flash_area_open(FLASH_AREA_IMAGE_0, &slot0_hx.fa);
+    if (flash_area_open(FLASH_AREA_IMAGE_0, &slot0_hx.fa)) {
+        memset(buffer, 0, 512);
+        return;
+    }
 
     mem_ostream_init(&slot0_hx.memstr, buffer, 512);
     slot0_hx.memstr.write_ptr = -file_offset;
