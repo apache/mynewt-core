@@ -83,6 +83,11 @@ cbmem_append_internal(struct cbmem *cbmem, const void *data, uint16_t len,
     uint8_t *end;
     int rc;
 
+    /* Entry with header must fit in the buffer */
+    if (sizeof(*dst) + len > (size_t)(cbmem->c_buf_end - cbmem->c_buf)) {
+        return (-1);
+    }
+
     rc = cbmem_lock_acquire(cbmem);
     if (rc != 0) {
         goto err;
@@ -211,13 +216,18 @@ int
 cbmem_append_scat_gath(struct cbmem *cbmem, const struct cbmem_scat_gath *sg)
 {
     const struct cbmem_scat_gath_entry *entry;
-    uint16_t len;
+    uint32_t len;
     int i;
 
     len = 0;
     for (i = 0; i < sg->count; i++) {
         entry = sg->entries + i;
         len += cbmem_scat_gath_entry_len(entry);
+    }
+
+    /* Entry length must fit in entry header */
+    if (len > UINT16_MAX) {
+        return (-1);
     }
 
     return cbmem_append_internal(cbmem, sg, len, copy_data_from_scat_gath);
