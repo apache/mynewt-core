@@ -62,8 +62,12 @@ bootlaoder_read(const struct file_entry *entry, uint32_t file_sector, uint8_t bu
 
     if (0 == flash_area_open(FLASH_AREA_BOOTLOADER, &fa)) {
         addr = file_sector * 512;
-        flash_area_read(fa, addr, buffer, 512);
+        if (flash_area_read(fa, addr, buffer, 512)) {
+            memset(buffer, 0, 512);
+        }
         flash_area_close(fa);
+    } else {
+        memset(buffer, 0, 512);
     }
 }
 

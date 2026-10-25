@@ -59,7 +59,9 @@ coredump_read(const struct file_entry *file_entry, uint32_t file_sector, uint8_t
     coredump_entry_t *core_entry = (coredump_entry_t *)file_entry;
     const struct flash_area *fa = core_entry->flash_area;
 
-    flash_area_read(fa, file_sector * 512, buffer, 512);
+    if (flash_area_read(fa, file_sector * 512, buffer, 512)) {
+        memset(buffer, 0, 512);
+    }
 }
 
 static void
