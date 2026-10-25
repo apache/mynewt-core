@@ -146,6 +146,13 @@ reboot_fun(struct os_event *ev)
     os_reboot(0);
 }
 
+/* Markers end with new line character that is not part of the line */
+static bool
+line_is_marker(const uint8_t *bl, size_t len, const char *marker)
+{
+    return len == strlen(marker) - 1 && memcmp(marker, bl, len) == 0;
+}
+
 static void
 handle_line(uint8_t *bl, uint8_t *el)
 {
@@ -156,12 +163,12 @@ handle_line(uint8_t *bl, uint8_t *el)
     uint8_t *vb;
 
     if (config_write_state == WRITE_STATE_IDLE) {
-        if (memcmp(CONFIG_BEGIN, bl, len) == 0) {
+        if (line_is_marker(bl, len, CONFIG_BEGIN)) {
             config_write_state = WRITE_STATE_CONFIG_LINES;
             return;
         }
     } else if (config_write_state == WRITE_STATE_CONFIG_LINES) {
-        if (memcmp(CONFIG_END, bl, len) == 0) {
+        if (line_is_marker(bl, len, CONFIG_END)) {
             conf_commit(NULL);
             conf_save();
             config_write_state = WRITE_STATE_CONFIG_WRITTEN;
