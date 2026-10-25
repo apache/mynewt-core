@@ -86,6 +86,7 @@ TEST_SUITE(cbmem_test_suite)
     cbmem_test_case_1();
     cbmem_test_case_2();
     cbmem_test_case_3();
+    cbmem_test_case_too_long();
 }
 
 int
