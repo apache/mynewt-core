@@ -209,6 +209,10 @@ oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
     if (s == 0)
         array = rep;
     while (array != NULL) {
+        if (array->type != OBJECT) {
+            array = array->next;
+            continue;
+        }
         oc_rep_t *device_map = array->value_object;
         while (device_map != NULL) {
             switch (device_map->type) {
