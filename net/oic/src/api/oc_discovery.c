@@ -182,140 +182,138 @@ oc_create_discovery_resource(void)
 #if MYNEWT_VAL(OC_CLIENT_DISCOVERY_ENABLE)
 oc_discovery_flags_t
 oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
-                                oc_discovery_cb_t *handler,
-                                oc_endpoint_t *endpoint)
+                                oc_discovery_cb_t *handler, oc_endpoint_t *endpoint)
 {
-  oc_discovery_flags_t ret = OC_CONTINUE_DISCOVERY;
-  oc_string_t uri = {
-      .os_sz = 0,
-      .os_str = NULL
-  };
-  oc_string_t di = {
-      .os_sz = 0,
-      .os_str = NULL
-  };
-  bool secure = false;
-  uint16_t dtls_port = 0, default_port = 0;
-  oc_string_array_t types = {};
-  oc_interface_mask_t interfaces = 0;
-  oc_server_handle_t handle;
-  uint16_t data_off;
-  struct os_mbuf *m;
-  int len;
-  struct oc_endpoint_ip *ip;
+    oc_discovery_flags_t ret = OC_CONTINUE_DISCOVERY;
+    oc_string_t uri = { .os_sz = 0, .os_str = NULL };
+    oc_string_t di = { .os_sz = 0, .os_str = NULL };
+    bool secure = false;
+    uint16_t dtls_port = 0, default_port = 0;
+    oc_string_array_t types = {};
+    oc_interface_mask_t interfaces = 0;
+    oc_server_handle_t handle;
+    uint16_t data_off;
+    struct os_mbuf *m;
+    int len;
+    struct oc_endpoint_ip *ip;
 
-  memcpy(&handle.endpoint, endpoint, oc_endpoint_size(endpoint));
-  if (oc_endpoint_is_ip(endpoint)) {
-      default_port = ((struct oc_endpoint_ip *)endpoint)->port;
-  }
-
-  oc_rep_t *array = 0, *rep;
-
-  len = coap_get_payload(rsp, &m, &data_off);
-  int s = oc_parse_rep(m, data_off, len, &rep);
-  if (s == 0)
-    array = rep;
-  while (array != NULL) {
-    oc_rep_t *device_map = array->value_object;
-    while (device_map != NULL) {
-      switch (device_map->type) {
-      case STRING:
-        if (oc_string_len(device_map->name) == 2 &&
-            strncmp(oc_string(device_map->name), "di", 2) == 0)
-          di = device_map->value_string;
-        break;
-      default:
-        break;
-      }
-      device_map = device_map->next;
+    memcpy(&handle.endpoint, endpoint, oc_endpoint_size(endpoint));
+    if (oc_endpoint_is_ip(endpoint)) {
+        default_port = ((struct oc_endpoint_ip *)endpoint)->port;
     }
-    device_map = array->value_object;
-    while (device_map != NULL) {
-      switch (device_map->type) {
-      case OBJECT_ARRAY: {
-        oc_rep_t *links = device_map->value_object_array;
-        while (links != NULL) {
-          switch (links->type) {
-          case OBJECT: {
-            oc_rep_t *resource_info = links->value_object;
-            while (resource_info != NULL) {
-              switch (resource_info->type) {
-              case STRING:
-                uri = resource_info->value_string;
+
+    oc_rep_t *array = 0, *rep;
+
+    len = coap_get_payload(rsp, &m, &data_off);
+    int s = oc_parse_rep(m, data_off, len, &rep);
+    if (s == 0)
+        array = rep;
+    while (array != NULL) {
+        oc_rep_t *device_map = array->value_object;
+        while (device_map != NULL) {
+            switch (device_map->type) {
+            case STRING:
+                if (oc_string_len(device_map->name) == 2 &&
+                    strncmp(oc_string(device_map->name), "di", 2) == 0)
+                    di = device_map->value_string;
                 break;
-              case STRING_ARRAY:
-                if (oc_string_len(resource_info->name) == 2 &&
-                    strncmp(oc_string(resource_info->name), "rt", 2) == 0)
-                  types = resource_info->value_array;
-                else {
-                  interfaces = 0;
-                  int i;
-                  for (i = 0; i < oc_string_array_get_allocated_size(
-                                    resource_info->value_array);
-                       i++) {
-                    interfaces |= oc_ri_get_interface_mask(
-                      oc_string_array_get_item(resource_info->value_array, i),
-                      oc_string_array_get_item_size(resource_info->value_array,
-                                                    i));
-                  }
-                }
+            default:
                 break;
-              case OBJECT: {
-                oc_rep_t *policy_info = resource_info->value_object;
-                while (policy_info != NULL) {
-                  if (policy_info->type == INT &&
-                      oc_string_len(policy_info->name) == 4 &&
-                      strncmp(oc_string(policy_info->name), "port", 4) == 0) {
-                    dtls_port = policy_info->value_int;
-                  }
-                  if (policy_info->type == BOOL &&
-                      oc_string_len(policy_info->name) == 3 &&
-                      strncmp(oc_string(policy_info->name), "sec", 3) == 0 &&
-                      policy_info->value_boolean == true) {
-                    secure = true;
-                  }
-                  policy_info = policy_info->next;
-                }
-              } break;
-              default:
-                break;
-              }
-              resource_info = resource_info->next;
             }
-            if (default_port) {
-                ip = (struct oc_endpoint_ip *)&handle.endpoint;
-                if (secure) {
-                    ip->port = dtls_port;
-                    ip->ep.oe_flags |= OC_ENDPOINT_SECURED;
-                } else {
-                    ip->port = default_port;
-                    ip->ep.oe_flags &= ~OC_ENDPOINT_SECURED;
-                }
-            }
-            if (handler(oc_string(di), oc_string(uri), types, interfaces,
-                        &handle) == OC_STOP_DISCOVERY) {
-              ret = OC_STOP_DISCOVERY;
-              goto done;
-            }
-            dtls_port = 0;
-            secure = false;
-          } break;
-          default:
-            break;
-          }
-          links = links->next;
+            device_map = device_map->next;
         }
-      } break;
-      default:
-        break;
-      }
-      device_map = device_map->next;
+        device_map = array->value_object;
+        while (device_map != NULL) {
+            switch (device_map->type) {
+            case OBJECT_ARRAY: {
+                oc_rep_t *links = device_map->value_object_array;
+                while (links != NULL) {
+                    switch (links->type) {
+                    case OBJECT: {
+                        oc_rep_t *resource_info = links->value_object;
+                        while (resource_info != NULL) {
+                            switch (resource_info->type) {
+                            case STRING:
+                                uri = resource_info->value_string;
+                                break;
+                            case STRING_ARRAY:
+                                if (oc_string_len(resource_info->name) == 2 &&
+                                    strncmp(oc_string(resource_info->name),
+                                            "rt", 2) == 0)
+                                    types = resource_info->value_array;
+                                else {
+                                    interfaces = 0;
+                                    int i;
+                                    for (i = 0;
+                                         i < oc_string_array_get_allocated_size(
+                                                 resource_info->value_array);
+                                         i++) {
+                                        interfaces |= oc_ri_get_interface_mask(
+                                            oc_string_array_get_item(
+                                                resource_info->value_array, i),
+                                            oc_string_array_get_item_size(
+                                                resource_info->value_array, i));
+                                    }
+                                }
+                                break;
+                            case OBJECT: {
+                                oc_rep_t *policy_info = resource_info->value_object;
+                                while (policy_info != NULL) {
+                                    if (policy_info->type == INT &&
+                                        oc_string_len(policy_info->name) == 4 &&
+                                        strncmp(oc_string(policy_info->name),
+                                                "port", 4) == 0) {
+                                        dtls_port = policy_info->value_int;
+                                    }
+                                    if (policy_info->type == BOOL &&
+                                        oc_string_len(policy_info->name) == 3 &&
+                                        strncmp(oc_string(policy_info->name),
+                                                "sec", 3) == 0 &&
+                                        policy_info->value_boolean == true) {
+                                        secure = true;
+                                    }
+                                    policy_info = policy_info->next;
+                                }
+                            } break;
+                            default:
+                                break;
+                            }
+                            resource_info = resource_info->next;
+                        }
+                        if (default_port) {
+                            ip = (struct oc_endpoint_ip *)&handle.endpoint;
+                            if (secure) {
+                                ip->port = dtls_port;
+                                ip->ep.oe_flags |= OC_ENDPOINT_SECURED;
+                            } else {
+                                ip->port = default_port;
+                                ip->ep.oe_flags &= ~OC_ENDPOINT_SECURED;
+                            }
+                        }
+                        if (handler(oc_string(di), oc_string(uri), types,
+                                    interfaces, &handle) == OC_STOP_DISCOVERY) {
+                            ret = OC_STOP_DISCOVERY;
+                            goto done;
+                        }
+                        dtls_port = 0;
+                        secure = false;
+                    } break;
+                    default:
+                        break;
+                    }
+                    links = links->next;
+                }
+            } break;
+            default:
+                break;
+            }
+            device_map = device_map->next;
+        }
+        array = array->next;
     }
-    array = array->next;
-  }
 done:
-  oc_free_rep(rep);
-  return ret;
+    oc_free_rep(rep);
+    return ret;
 }
 #endif /* OC_CLIENT_DISCOVERY_ENABLE */
 #endif /* OC_CLIENT */
