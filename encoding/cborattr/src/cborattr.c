@@ -405,6 +405,15 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
     arrcount = 0;
     tp = arr->arr.strings.store;
     for (off = 0; off < arr->maxlen; off++) {
+        if (cbor_value_at_end(&elem)) {
+            break;
+        }
+        /* Element type is checked by cbor_internal_read_object() */
+        if (arr->element_type != CborAttrStructObjectType &&
+            !valid_attr_type(cbor_value_get_type(&elem), arr->element_type)) {
+            err |= CborErrorIllegalType;
+            break;
+        }
         switch (arr->element_type) {
         case CborAttrBooleanType:
             lptr = &arr->arr.booleans.store[off];
@@ -427,7 +436,13 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
             lptr = &arr->arr.halffloats.store[off];
             err |= cbor_value_get_half_float(&elem, lptr);
             break;
-        case CborAttrFloatType:
+        case CborAttrFloatType: {
+            float fval;
+
+            err |= cbor_value_get_float(&elem, &fval);
+            arr->arr.reals.store[off] = fval;
+            break;
+        }
         case CborAttrDoubleType:
             lptr = &arr->arr.reals.store[off];
             err |= cbor_value_get_double(&elem, lptr);
@@ -468,9 +483,6 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
                 /* elem was not advanced, no further progress is possible */
                 break;
             }
-        }
-        if (!cbor_value_is_valid(&elem)) {
-            break;
         }
     }
     if (arr->count) {
