@@ -726,7 +726,7 @@ msc_fat_view_fat_next_cluster(cluster_t cluster, fat_chain_t **cache)
         chain = fat_chains;
     }
     /* Skip chains that end before cluster */
-    while (cluster >= chain->first + chain->count) {
+    while (chain < limit && cluster >= chain->first + chain->count) {
         ++chain;
     }
     /*
