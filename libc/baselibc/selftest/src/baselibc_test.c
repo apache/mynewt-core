@@ -22,10 +22,16 @@
 #include "testutil/testutil.h"
 
 TEST_CASE_DECL(tinyprintf_test)
+TEST_CASE_DECL(strndup_test)
+TEST_CASE_DECL(strnstr_test)
+TEST_CASE_DECL(sscanf_set_test)
 
 TEST_SUITE(baselibc_test_suite)
 {
     tinyprintf_test();
+    strndup_test();
+    strnstr_test();
+    sscanf_set_test();
 }
 
 int
