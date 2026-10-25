@@ -79,6 +79,7 @@ TEST_CASE_TASK(oic_tests)
     oc_evq_set(os_eventq_dflt_get());
 
     oc_main_init(&test_handler);
+    test_parse();
     test_discovery();
     test_getset();
     test_observe();
