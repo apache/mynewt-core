@@ -1149,7 +1149,12 @@ bma400_read_fifo(struct bma400 *bma400, uint16_t *fifo_count, struct sensor_acce
             case 0x40: /* Control frame */
                 *fifo_count -= 2;
                 break;
+            default:
+                /* Unknown frame, FIFO content can not be parsed */
+                return SYS_EINVAL;
             }
+        } else {
+            return rc;
         }
     }
 
