@@ -18,11 +18,24 @@
  */
 #include "conf_test_fcb2.h"
 
+/* Fill unused stack with non-zero pattern so that uninitialized stack
+ * variables of the function called next do not happen to be zero.
+ */
+static void __attribute__((noinline))
+config_test_dirty_stack(void)
+{
+    volatile uint8_t buf[1024];
+
+    memset((void *)buf, 0xa5, sizeof(buf));
+}
+
 TEST_CASE_SELF(config_test_getset_unknown)
 {
+    static const char *const no_tokens[] = { "", "/", "///" };
     char name[80];
     char tmp[64], *str;
     int rc;
+    int i;
 
     strcpy(name, "foo/bar");
     rc = conf_set_value(name, "tmp");
@@ -45,4 +58,25 @@ TEST_CASE_SELF(config_test_getset_unknown)
     TEST_ASSERT(str == NULL);
     TEST_ASSERT(test_get_called == 1);
     ctest_clear_call_state();
+
+    /* Names without any tokens */
+    for (i = 0; i < ARRAY_SIZE(no_tokens); i++) {
+        strcpy(name, no_tokens[i]);
+        config_test_dirty_stack();
+        rc = conf_set_value(name, "tmp");
+        TEST_ASSERT(rc != 0);
+        TEST_ASSERT(ctest_get_call_state() == 0);
+
+        strcpy(name, no_tokens[i]);
+        config_test_dirty_stack();
+        str = conf_get_value(name, tmp, sizeof(tmp));
+        TEST_ASSERT(str == NULL);
+        TEST_ASSERT(ctest_get_call_state() == 0);
+
+        strcpy(name, no_tokens[i]);
+        config_test_dirty_stack();
+        rc = conf_commit(name);
+        TEST_ASSERT(rc != 0);
+        TEST_ASSERT(ctest_get_call_state() == 0);
+    }
 }
