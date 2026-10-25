@@ -266,6 +266,9 @@ static uint8_t _cdc_stop_bits[] = { 1, 1, 2, 1, 1 };
 static uint8_t
 stop_bits(uint8_t cdc_stop_bits)
 {
+    if (cdc_stop_bits >= ARRAY_SIZE(_cdc_stop_bits)) {
+        return 1;
+    }
     return _cdc_stop_bits[cdc_stop_bits];
 }
 
@@ -276,7 +279,8 @@ cdc_cdc_uart_coding_cb(cdc_itf_t *itf, cdc_line_coding_t const *p_line_coding)
 
     if (uart_dev) {
         if (cdc_uart_conf.uc_speed == p_line_coding->bit_rate &&
-            cdc_uart_conf.uc_databits == stop_bits(p_line_coding->data_bits) &&
+            cdc_uart_conf.uc_databits == p_line_coding->data_bits &&
+            cdc_uart_conf.uc_stopbits == stop_bits(p_line_coding->stop_bits) &&
             cdc_uart_conf.uc_parity == p_line_coding->parity) {
             return;
         }
