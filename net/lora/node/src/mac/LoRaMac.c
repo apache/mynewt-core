@@ -1715,40 +1715,39 @@ static uint8_t ParseMacCommandsToRepeat( uint8_t* cmdBufIn, uint8_t length, uint
 {
     uint8_t i = 0;
     uint8_t cmdCount = 0;
+    uint8_t cmd;
+    uint8_t cmd_len;
 
     if ((cmdBufIn == NULL) || (cmdBufOut == NULL)) {
         return 0;
     }
 
-    for (i = 0; i < length; i++) {
-        switch( cmdBufIn[i] ) {
+    while (i < length) {
+        cmd = cmdBufIn[i];
+        if ((cmd < MOTE_MAC_LINK_CHECK_REQ) || (cmd > LORA_MAC_MAX_MAC_CMD_CID)) {
+            break;
+        }
+
+        /* Stop on command truncated at the end of buffer */
+        cmd_len = g_lora_mac_cmd_lens[cmd];
+        if (cmd_len > length - i) {
+            break;
+        }
+
+        switch (cmd) {
             // STICKY
             case MOTE_MAC_DL_CHANNEL_ANS:
             case MOTE_MAC_RX_PARAM_SETUP_ANS:
-                cmdBufOut[cmdCount++] = cmdBufIn[i++];
-                cmdBufOut[cmdCount++] = cmdBufIn[i];
-                break;
             case MOTE_MAC_RX_TIMING_SETUP_ANS:
-                cmdBufOut[cmdCount++] = cmdBufIn[i];
+                memcpy(&cmdBufOut[cmdCount], &cmdBufIn[i], cmd_len);
+                cmdCount += cmd_len;
                 break;
             // NON-STICKY
-            case MOTE_MAC_DEV_STATUS_ANS:
-                // 2 bytes payload
-                i += 2;
-                break;
-            case MOTE_MAC_LINK_ADR_ANS:
-            case MOTE_MAC_NEW_CHANNEL_ANS:
-                // 1 byte payload
-                i++;
-                break;
-            case MOTE_MAC_TX_PARAM_SETUP_ANS:
-            case MOTE_MAC_DUTY_CYCLE_ANS:
-            case MOTE_MAC_LINK_CHECK_REQ:
-                // 0 byte payload
-                break;
             default:
                 break;
         }
+
+        i += cmd_len;
     }
 
     return cmdCount;
