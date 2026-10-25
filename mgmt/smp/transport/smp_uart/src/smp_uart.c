@@ -43,9 +43,8 @@
 #define SHELL_NLIP_PKT          0x0609
 #define SHELL_NLIP_DATA         0x0414
 
-#define NUS_EV_TO_STATE(ptr)                                            \
-    (struct smp_uart_state *)((uint8_t *)ptr -                         \
-      (int)&(((struct smp_uart_state *)0)->sus_cb_ev))
+#define NUS_EV_TO_STATE(ptr)                                                  \
+    CONTAINER_OF(ptr, struct smp_uart_state, sus_cb_ev)
 
 struct smp_uart_state {
     struct smp_transport sus_transport; /* keep first in struct */
