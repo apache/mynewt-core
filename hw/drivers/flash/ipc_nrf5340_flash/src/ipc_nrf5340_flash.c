@@ -23,6 +23,7 @@
 #include <os/os_mutex.h>
 #include <hal/hal_flash.h>
 #include <hal/hal_flash_int.h>
+#include <hal/hal_bsp.h>
 #include <ipc_nrf5340/ipc_nrf5340.h>
 #if MYNEWT_VAL(MCU_APP_CORE)
 #include <mcu/nrf5340_hal.h>
@@ -445,16 +446,23 @@ nrf5340_ipc_flash_info_resp(struct ipc_msg *req)
 static int
 nrf5340_ipc_flash_read_resp(struct ipc_msg *req)
 {
+    const struct hal_flash *hf = hal_bsp_flash_dev(0);
     const uint8_t *p;
     uint32_t address;
     uint32_t size;
 
-    assert(req->hdr.msg_len = HDR_SZ + 2 * sizeof(uint32_t));
-    nrf5340_ipc_flash_server_read(&req->param, req->hdr.msg_len - HDR_SZ);
+    assert(req->hdr.msg_len == HDR_SZ + 2 * sizeof(uint32_t));
+    nrf5340_ipc_flash_server_read(&req->param, 2 * sizeof(uint32_t));
 
     p = req->param;
     address = get32(&p);
     size = get32(&p);
+
+    /* Only flash content can be read */
+    if (address < hf->hf_base_addr || address - hf->hf_base_addr > hf->hf_size ||
+        size > hf->hf_size - (address - hf->hf_base_addr)) {
+        return nrf5340_ipc_flash_std_resp(req, SYS_EINVAL, NULL, 0);
+    }
 
     return nrf5340_ipc_flash_std_resp(req, 0, (void *)address, size);
 }
