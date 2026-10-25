@@ -245,11 +245,21 @@ end:
     return rc;
 }
 
+/* Checks that range of len bytes starting at off is within flash area */
+static int
+flash_area_check_range(const struct flash_area *fa, uint32_t off, uint32_t len)
+{
+    if (off > fa->fa_size || len > fa->fa_size - off) {
+        return -1;
+    }
+    return 0;
+}
+
 int
 flash_area_read(const struct flash_area *fa, uint32_t off, void *dst,
     uint32_t len)
 {
-    if (off > fa->fa_size || off + len > fa->fa_size) {
+    if (flash_area_check_range(fa, off, len)) {
         return -1;
     }
     return hal_flash_read(fa->fa_device_id, fa->fa_off + off, dst, len);
@@ -259,7 +269,7 @@ int
 flash_area_write(const struct flash_area *fa, uint32_t off, const void *src,
     uint32_t len)
 {
-    if (off > fa->fa_size || off + len > fa->fa_size) {
+    if (flash_area_check_range(fa, off, len)) {
         return -1;
     }
     return hal_flash_write(fa->fa_device_id, fa->fa_off + off,
@@ -269,7 +279,7 @@ flash_area_write(const struct flash_area *fa, uint32_t off, const void *src,
 int
 flash_area_erase(const struct flash_area *fa, uint32_t off, uint32_t len)
 {
-    if (off > fa->fa_size || off + len > fa->fa_size) {
+    if (flash_area_check_range(fa, off, len)) {
         return -1;
     }
     return hal_flash_erase(fa->fa_device_id, fa->fa_off + off, len);
@@ -320,6 +330,9 @@ int
 flash_area_read_is_empty(const struct flash_area *fa, uint32_t off, void *dst,
                          uint32_t len)
 {
+    if (flash_area_check_range(fa, off, len)) {
+        return -1;
+    }
     return hal_flash_isempty(fa->fa_device_id, fa->fa_off + off, dst, len);
 }
 
