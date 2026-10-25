@@ -212,6 +212,12 @@ cbor_internal_read_object(CborValue *root_value, const struct cbor_attr_t *attrs
     /* stuff fields with defaults in case they're omitted in the JSON input */
     for (cursor = attrs; cursor->attribute != NULL; cursor++) {
         if (!cursor->nodefault) {
+            if (cursor->type == CborAttrArrayType) {
+                if (cursor->addr.array.count) {
+                    *cursor->addr.array.count = 0;
+                }
+                continue;
+            }
             lptr = cbor_target_address(cursor, parent, offset);
             if (lptr != NULL) {
                 switch (cursor->type) {
