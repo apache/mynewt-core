@@ -90,11 +90,10 @@ oc_stream_reass(struct oc_stream_reassembler *r, struct os_mbuf *om1,
 }
 
 void
-oc_stream_conn_del(struct oc_stream_reassembler *r, void *ep_desc)
+oc_stream_flush(struct oc_stream_reassembler *r, void *ep_desc)
 {
     struct os_mbuf_pkthdr *pkt;
     struct os_mbuf *m;
-    struct oc_conn_ev *oce;
 
     STAILQ_FOREACH(pkt, &r->pkt_q, omp_next) {
         m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
@@ -104,6 +103,14 @@ oc_stream_conn_del(struct oc_stream_reassembler *r, void *ep_desc)
             break;
         }
     }
+}
+
+void
+oc_stream_conn_del(struct oc_stream_reassembler *r, void *ep_desc)
+{
+    struct oc_conn_ev *oce;
+
+    oc_stream_flush(r, ep_desc);
 
     /* Notify listeners that this connection is gone. */
 

@@ -88,6 +88,14 @@ int oc_stream_reass(struct oc_stream_reassembler *r, struct os_mbuf *frag,
  */
 void oc_stream_conn_del(struct oc_stream_reassembler *r, void *ep_desc);
 
+/**
+ * Drops partially received packet of a given connection.
+ *
+ * @param r                     The reassembler.
+ * @param ep                    Endpoint identifying the connection.
+ */
+void oc_stream_flush(struct oc_stream_reassembler *r, void *ep_desc);
+
 #ifdef __cplusplus
 }
 #endif
