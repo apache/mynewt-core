@@ -30,7 +30,6 @@ permissions:
 jobs:
   update-badges:
     runs-on: ubuntu-slim
-    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v7
