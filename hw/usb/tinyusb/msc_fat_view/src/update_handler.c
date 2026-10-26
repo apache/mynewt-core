@@ -60,6 +60,8 @@ struct unallocated_write {
     int flash_sector_id;
     /* Offset in flash area up to which flash is ready for writing */
     uint32_t erased_limit;
+    /* Offset in flash area at which image starts */
+    uint32_t image_offset;
     enum {
         NOT_TOUCHED_YET = 0,
         WRITE_IN_PROGRESS = 1,
@@ -151,6 +153,11 @@ image_write_sector(struct msc_fat_view_write_handler *handler, uint32_t sector, 
             unallocated_write.last_sector = sector;
             unallocated_write.flash_sector_id = -1;
             unallocated_write.erased_limit = 0;
+            unallocated_write.image_offset = 0;
+            if (!BOOT_LOADER &&
+                img_mgmt_upload_offset(&unallocated_write.image_offset) != 0) {
+                unallocated_write.write_status = WRITE_EXCEEDED_SPACE;
+            }
         }
     } else if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
         if (sector != unallocated_write.last_sector + 1) {
@@ -163,7 +170,8 @@ image_write_sector(struct msc_fat_view_write_handler *handler, uint32_t sector, 
         }
     }
     if (unallocated_write.write_status == WRITE_IN_PROGRESS) {
-        write_offset = (sector - unallocated_write.first_sector) * SECTOR_SIZE;
+        write_offset = unallocated_write.image_offset +
+                       (sector - unallocated_write.first_sector) * SECTOR_SIZE;
         /*
          * Flash sectors are usually bigger than disk sector. Erase each flash
          * sector (if needed) only once, when first disk sector falls into it.
@@ -225,10 +233,11 @@ image_write_complete(void)
     if (flash_area_open(FLASH_AREA_IMAGE, &fa)) {
         return false;
     }
-    if (flash_area_read(fa, 0, &hdr, sizeof(hdr)) == 0) {
+    if (flash_area_read(fa, unallocated_write.image_offset, &hdr, sizeof(hdr)) == 0) {
         tlv_off = hdr.ih_hdr_size + hdr.ih_img_size + hdr.ih_protect_tlv_size;
         if (tlv_off + sizeof(tlv_info) <= written &&
-            flash_area_read(fa, tlv_off, &tlv_info, sizeof(tlv_info)) == 0) {
+            flash_area_read(fa, unallocated_write.image_offset + tlv_off,
+                            &tlv_info, sizeof(tlv_info)) == 0) {
             /* Not a TLV area, image is broken, let image check reject it */
             complete = tlv_info.it_magic != IMAGE_TLV_INFO_MAGIC ||
                        tlv_off + tlv_info.it_tlv_tot <= written;

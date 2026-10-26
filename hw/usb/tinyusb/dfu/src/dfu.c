@@ -96,24 +96,41 @@ tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16
 {
     const struct flash_area *fa;
     uint32_t status = DFU_STATUS_OK;
+    uint32_t image_off = 0;
+    uint32_t off;
 
-    if (flash_area_open(FIRMWARE_SLOT, &fa)) {
+#ifdef FLASH_AREA_IMAGE_1
+    if (FIRMWARE_SLOT == FLASH_AREA_IMAGE_1 && img_mgmt_upload_offset(&image_off)) {
+        status = DFU_STATUS_ERR_ADDRESS;
+    }
+#endif
+
+    if (status != DFU_STATUS_OK || flash_area_open(FIRMWARE_SLOT, &fa)) {
         status = DFU_STATUS_ERR_ADDRESS;
     } else {
+        off = image_off + block_num * CFG_TUD_DFU_XFER_BUFSIZE;
         if (block_num == 0) {
             USBD_DFU_LOG_INFO("Download started\n");
+#if MYNEWT_VAL(BOOTUTIL_SWAP_USING_OFFSET)
+            /* Bootloader refuses swap if sector 0 has a header */
+            if (image_off != 0 && !flash_erased(fa, 0, image_off) &&
+                flash_area_erase(fa, 0, image_off)) {
+                USBD_DFU_LOG_ERROR("Flash erase failed\n");
+                status = DFU_STATUS_ERR_ERASE;
+            }
+#endif
         }
-        if (!flash_erased(fa, block_num * CFG_TUD_DFU_XFER_BUFSIZE, length)) {
-            USBD_DFU_LOG_DEBUG("Erasing flash 0x%X (0x%X bytes)\n", block_num * CFG_TUD_DFU_XFER_BUFSIZE, length);
-            if (flash_area_erase(fa, block_num * CFG_TUD_DFU_XFER_BUFSIZE, length)) {
+        if (status == DFU_STATUS_OK && !flash_erased(fa, off, length)) {
+            USBD_DFU_LOG_DEBUG("Erasing flash 0x%X (0x%X bytes)\n", off, length);
+            if (flash_area_erase(fa, off, length)) {
                 USBD_DFU_LOG_ERROR("Flash erase failed\n");
                 status = DFU_STATUS_ERR_ERASE;
             }
         }
         if (status == DFU_STATUS_OK) {
-            USBD_DFU_LOG_DEBUG("Writing flash 0x%X (0x%X bytes)\n", block_num * CFG_TUD_DFU_XFER_BUFSIZE, length);
+            USBD_DFU_LOG_DEBUG("Writing flash 0x%X (0x%X bytes)\n", off, length);
 
-            if (flash_area_write(fa, block_num * CFG_TUD_DFU_XFER_BUFSIZE, data, length) < 0) {
+            if (flash_area_write(fa, off, data, length) < 0) {
                 USBD_DFU_LOG_ERROR("Flash write failed\n");
                 status = DFU_STATUS_ERR_PROG;
             }
