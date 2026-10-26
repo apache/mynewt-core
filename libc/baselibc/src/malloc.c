@@ -4,6 +4,7 @@
  * Very simple linked-list based malloc()/free().
  */
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -170,7 +171,8 @@ retry_alloc:
             break;
         }
     }
-    if (result == NULL) {
+    /* _sbrk() takes signed increment, larger sizes would shrink the heap */
+    if (result == NULL && size <= INT_MAX) {
         more_mem = _sbrk(size);
         if (more_mem != (void *)-1) {
             add_malloc_block(more_mem, size);
