@@ -93,12 +93,53 @@ flash_sector_find(uint8_t flash_id, uint32_t addr, uint32_t *sector_start,
     return -1;
 }
 
+static bool
+buf_is_erased(const uint8_t *buf, uint32_t len, uint8_t erased_val)
+{
+    while (len--) {
+        if (*buf++ != erased_val) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/*
+ * Writes data skipping parts that contain only erased value. Some flash types
+ * do not allow writing again to location that was written with erased value.
+ */
+static int
+flash_write_non_erased(struct lun_data *lun_data, uint32_t addr,
+                       const uint8_t *buffer, uint32_t len)
+{
+    uint8_t erased_val = hal_flash_erased_val(lun_data->flash_id);
+    uint32_t chunk;
+    uint32_t off;
+    uint32_t n;
+    int rc;
+
+    chunk = max(32, hal_flash_align(lun_data->flash_id));
+    for (off = 0; off < len; off += n) {
+        n = min(chunk, len - off);
+        if (buf_is_erased(buffer + off, n, erased_val)) {
+            continue;
+        }
+        rc = hal_flash_write(lun_data->flash_id, addr + off, buffer + off, n);
+        if (rc) {
+            return rc;
+        }
+    }
+
+    return 0;
+}
+
 static int
 flash_write(struct lun_data *lun_data, uint32_t addr, const uint8_t *buffer,
             uint32_t bufsize)
 {
-    return hal_flash_write(lun_data->flash_id, lun_data->flash_start + addr,
-                           buffer, bufsize);
+    return flash_write_non_erased(lun_data, lun_data->flash_start + addr,
+                                  buffer, bufsize);
 }
 
 static int
