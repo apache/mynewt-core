@@ -28,48 +28,50 @@
 void
 oc_str_to_uuid(const char *str, oc_uuid_t *uuid)
 {
-  int i, j = 0, k = 1;
-  uint8_t c = 0;
+    size_t i, j = 0, k = 1;
+    size_t len = strlen(str);
+    uint8_t c = 0;
 
-  for (i = 0; i < strlen(str); i++) {
-    if (str[i] == '-')
-      continue;
-    else if (isalpha((unsigned char)str[i])) {
-      switch (str[i]) {
-      case 65:
-      case 97:
-        c |= 0x0a;
-        break;
-      case 66:
-      case 98:
-        c |= 0x0b;
-        break;
-      case 67:
-      case 99:
-        c |= 0x0c;
-        break;
-      case 68:
-      case 100:
-        c |= 0x0d;
-        break;
-      case 69:
-      case 101:
-        c |= 0x0e;
-        break;
-      case 70:
-      case 102:
-        c |= 0x0f;
-        break;
-      }
-    } else
-      c |= str[i] - 48;
-    if ((j + 1) * 2 == k) {
-      uuid->id[j++] = c;
-      c = 0;
-    } else
-      c = c << 4;
-    k++;
-  }
+    /* A UUID can contain at most 16 bytes; ignore additional input. */
+    for (i = 0; i < len && j < sizeof(uuid->id); i++) {
+        if (str[i] == '-')
+            continue;
+        else if (isalpha((unsigned char)str[i])) {
+            switch (str[i]) {
+            case 65:
+            case 97:
+                c |= 0x0a;
+                break;
+            case 66:
+            case 98:
+                c |= 0x0b;
+                break;
+            case 67:
+            case 99:
+                c |= 0x0c;
+                break;
+            case 68:
+            case 100:
+                c |= 0x0d;
+                break;
+            case 69:
+            case 101:
+                c |= 0x0e;
+                break;
+            case 70:
+            case 102:
+                c |= 0x0f;
+                break;
+            }
+        } else
+            c |= str[i] - 48;
+        if ((j + 1) * 2 == k) {
+            uuid->id[j++] = c;
+            c = 0;
+        } else
+            c = c << 4;
+        k++;
+    }
 }
 
 void
