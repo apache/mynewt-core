@@ -45,10 +45,10 @@ struct lun_data {
     /* Address of exported part of flash */
     uint32_t flash_start;
     uint32_t flash_end;
-
-    /* buffer for checking if flash is empty */
-    uint8_t flash_sector_buffer[512];
 };
+
+/* Buffer for read-modify-write of flash sector */
+static uint8_t flash_sector_buffer[MYNEWT_VAL(MSC_FLASH_SECTOR_BUF_SIZE)];
 
 struct lun_data luns[1] = {
     {
@@ -134,31 +134,79 @@ flash_write_non_erased(struct lun_data *lun_data, uint32_t addr,
     return 0;
 }
 
+/*
+ * Writes data that does not cross sector boundary. If flash is not erased,
+ * sector content is preserved by reading it to buffer, erasing sector and
+ * writing it back with new data.
+ */
+static int
+flash_write_in_sector(struct lun_data *lun_data, uint32_t sector_start,
+                      uint32_t sector_size, uint32_t addr,
+                      const uint8_t *buffer, uint32_t len)
+{
+    int rc;
+
+    rc = hal_flash_isempty(lun_data->flash_id, addr, flash_sector_buffer, len);
+    if (rc == 1) {
+        return flash_write_non_erased(lun_data, addr, buffer, len);
+    } else if (rc < 0) {
+        return rc;
+    }
+
+    if (sector_size > sizeof(flash_sector_buffer)) {
+        MSC_FLASH_LOG_ERROR("Sector size %u exceeds buffer size\n",
+                            (unsigned)sector_size);
+        return -1;
+    }
+
+    rc = hal_flash_read(lun_data->flash_id, sector_start, flash_sector_buffer,
+                        sector_size);
+    if (rc) {
+        return rc;
+    }
+    memcpy(flash_sector_buffer + (addr - sector_start), buffer, len);
+
+    rc = hal_flash_erase_sector(lun_data->flash_id, sector_start);
+    if (rc) {
+        return rc;
+    }
+
+    return flash_write_non_erased(lun_data, sector_start, flash_sector_buffer,
+                                  sector_size);
+}
+
 static int
 flash_write(struct lun_data *lun_data, uint32_t addr, const uint8_t *buffer,
             uint32_t bufsize)
 {
-    return flash_write_non_erased(lun_data, lun_data->flash_start + addr,
-                                  buffer, bufsize);
-}
+    uint32_t sector_start;
+    uint32_t sector_size;
+    uint32_t n;
+    int rc;
 
-static int
-flash_erase_if_needed(struct lun_data *lun_data, uint32_t addr, uint32_t size)
-{
-    int left = size;
-    int rc = 0;
+    addr += lun_data->flash_start;
 
-    while (left > 0 && rc == 0) {
-        if (!hal_flash_isempty(lun_data->flash_id, lun_data->flash_start + addr,
-                               lun_data->flash_sector_buffer, 512)) {
-            rc = hal_flash_erase(lun_data->flash_id,
-                                 lun_data->flash_start + addr, 512);
+    while (bufsize > 0) {
+        rc = flash_sector_find(lun_data->flash_id, addr, &sector_start, &sector_size);
+        if (rc) {
+            return rc;
         }
-        left -= 512;
+
+        n = min(bufsize, sector_start + sector_size - addr);
+        rc = flash_write_in_sector(lun_data, sector_start, sector_size, addr,
+                                   buffer, n);
+        if (rc) {
+            return rc;
+        }
+
+        addr += n;
+        buffer += n;
+        bufsize -= n;
     }
 
-    return rc;
+    return 0;
 }
+
 #define IN_ARRAY(arr, ix) ((ix) < ARRAY_SIZE(arr))
 
 static struct lun_data *
@@ -368,8 +416,7 @@ tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t *buffer,
         if (!lba_to_flash_addr(lun_data, lba, offset, bufsize, &flash_addr)) {
             return -1;
         }
-        if (flash_erase_if_needed(lun_data, flash_addr, bufsize) != 0 ||
-            flash_write(lun_data, flash_addr, buffer, bufsize) != 0) {
+        if (flash_write(lun_data, flash_addr, buffer, bufsize) != 0) {
             return -1;
         }
     }
