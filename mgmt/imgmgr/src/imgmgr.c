@@ -242,16 +242,21 @@ imgr_erase_state(struct mgmt_ctxt *ctxt)
     int area_id;
     int rc;
     CborError g_err = CborNoError;
+    uint32_t off;
 
     area_id = imgmgr_find_best_area_id();
     if (area_id >= 0) {
+        rc = img_mgmt_upload_offset(&off);
+        if (rc != 0) {
+            return MGMT_ERR_EUNKNOWN;
+        }
+
         rc = flash_area_open(area_id, &fa);
         if (rc) {
             return img_mgmt_error_rsp(ctxt, MGMT_ERR_EINVAL,
                                       img_mgmt_err_str_flash_open_failed);
         }
-
-        rc = flash_area_erase(fa, 0, sizeof(struct image_header));
+        rc = flash_area_erase(fa, 0, off + sizeof(struct image_header));
         if (rc) {
             return img_mgmt_error_rsp(ctxt, MGMT_ERR_EINVAL,
                                       img_mgmt_err_str_flash_erase_failed);
