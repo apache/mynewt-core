@@ -35,7 +35,6 @@ jobs:
   validate_bsp_folder:
     name: Validate hw/bsp folder
     runs-on: ubuntu-slim
-    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
