@@ -65,6 +65,34 @@ flash_read(struct lun_data *lun_data, uint32_t addr, uint8_t *buffer, uint32_t b
                           buffer, bufsize);
 }
 
+/* Finds sector containing address */
+static int
+flash_sector_find(uint8_t flash_id, uint32_t addr, uint32_t *sector_start,
+                  uint32_t *sector_size)
+{
+    const struct hal_flash *hf = hal_bsp_flash_dev(flash_id);
+    uint32_t start;
+    uint32_t size;
+    int i;
+
+    if (!hf) {
+        return -1;
+    }
+
+    for (i = 0; i < hf->hf_sector_cnt; i++) {
+        if (hal_flash_sector_info(flash_id, i, &start, &size)) {
+            return -1;
+        }
+        if (addr >= start && addr - start < size) {
+            *sector_start = start;
+            *sector_size = size;
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
 static int
 flash_write(struct lun_data *lun_data, uint32_t addr, const uint8_t *buffer,
             uint32_t bufsize)
@@ -366,13 +394,14 @@ boot_preboot(void)
 void
 msc_flash_init(void)
 {
+    uint32_t sector_start;
+    uint32_t sector_size;
     uint32_t start_address;
     uint32_t end_address;
     uint8_t flash_id;
 #if defined(MYNEWT_VAL_MSC_FLASH_FLASH_ID)
     /* Flash ID as defined in bsp.yml */
     const struct hal_flash *hf;
-    uint32_t sector_size;
 
     flash_id = MYNEWT_VAL_MSC_FLASH_FLASH_ID;
     hf = hal_bsp_flash_dev(flash_id);
@@ -394,6 +423,19 @@ msc_flash_init(void)
     end_address = start_address + fa->fa_size;
     flash_area_close(fa);
 #endif
+
+    /*
+     * Exported flash must consist of whole sectors, otherwise writing to it
+     * would require erasing flash outside of it.
+     */
+    if (flash_sector_find(flash_id, start_address, &sector_start, &sector_size) ||
+        sector_start != start_address ||
+        flash_sector_find(flash_id, end_address - 1, &sector_start, &sector_size) ||
+        sector_start + sector_size != end_address) {
+        MSC_FLASH_LOG_ERROR("Flash 0x%x-0x%x is not sector aligned\n",
+                            (unsigned)start_address, (unsigned)end_address);
+        return;
+    }
 
     luns[0].flash_id = flash_id;
     luns[0].block_count =
