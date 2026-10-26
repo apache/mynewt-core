@@ -27,6 +27,12 @@ syscfg.defs:
     MSC_FLASH_FLASH_AREA_ID:
         description: 'Target flash area'
         value:
+    MSC_FLASH_SECTOR_BUF_SIZE:
+        description: >
+            Size of buffer used to preserve content of flash sector when
+            block within it is written. Writes to flash with sectors larger
+            than this value fail unless written area is already erased.
+        value: 4096
     MSC_FLASH_MBR:
         description: >
             Add partition table. It can prevent Windows to popup request
