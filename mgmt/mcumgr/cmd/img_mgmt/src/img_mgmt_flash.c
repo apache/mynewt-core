@@ -119,6 +119,7 @@ img_mgmt_upload_inspect(const struct img_mgmt_upload_req *req,
     const struct image_header *hdr;
     const struct flash_area *fa;
     struct image_version cur_ver;
+    uint32_t upload_off;
     uint8_t rem_bytes;
     bool empty;
     int rc;
@@ -188,7 +189,13 @@ img_mgmt_upload_inspect(const struct img_mgmt_upload_req *req,
             *errstr = img_mgmt_err_str_flash_open_failed;
             return MGMT_ERR_EUNKNOWN;
         }
-        if (action->size > fa->fa_size) {
+
+        rc = img_mgmt_upload_offset(&upload_off);
+        if (rc != 0) {
+            return MGMT_ERR_EUNKNOWN;
+        }
+
+        if (action->size > fa->fa_size - upload_off) {
             flash_area_close(fa);
             *errstr = img_mgmt_err_str_no_slot;
             return MGMT_ERR_EINVAL;
@@ -418,7 +425,14 @@ img_mgmt_write_image_data(unsigned int offset, const void *data,
 #else
     const struct flash_area *fa;
     struct flash_area sector;
+    uint32_t upload_off;
     int rc;
+
+    rc = img_mgmt_upload_offset(&upload_off);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+    offset += upload_off;
 
     rc = flash_area_open(FLASH_AREA_IMAGE_1, &fa);
     if (rc != 0) {
@@ -467,7 +481,14 @@ img_mgmt_write_image_data(unsigned int offset, const void *data,
     return MGMT_ERR_ENOTSUP;
 #else
     const struct flash_area *fa;
+    uint32_t upload_off;
     int rc;
+
+    rc = img_mgmt_upload_offset(&upload_off);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+    offset += upload_off;
 
     rc = flash_area_open(FLASH_AREA_IMAGE_1, &fa);
     if (rc != 0) {
@@ -519,6 +540,13 @@ img_mgmt_erase_if_needed(uint32_t off, uint32_t len)
     int rc = 0;
     struct flash_area sector;
     const struct flash_area *cfa;
+    uint32_t upload_off;
+
+    rc = img_mgmt_upload_offset(&upload_off);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+    off += upload_off;
 
     rc = flash_area_open(FLASH_AREA_IMAGE_1, &cfa);
     if (rc != 0) {
@@ -589,4 +617,56 @@ img_mgmt_module_init(void)
     SYSINIT_ASSERT_ACTIVE();
 
     img_mgmt_register_group();
+}
+
+int
+img_mgmt_upload_offset(uint32_t *offset)
+{
+#if MYNEWT_VAL(BOOTUTIL_SWAP_USING_OFFSET) && defined(FLASH_AREA_IMAGE_1)
+    struct flash_area sector;
+    int sector_id;
+    int rc;
+
+    sector_id = -1;
+    rc = flash_area_getnext_sector(FLASH_AREA_IMAGE_1, &sector_id, &sector);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+    *offset = sector.fa_size;
+#else
+    *offset = 0;
+#endif
+    return 0;
+}
+
+int
+img_mgmt_slot_image_offset(int slot, uint32_t *offset)
+{
+#if MYNEWT_VAL(BOOTUTIL_SWAP_USING_OFFSET) && defined(FLASH_AREA_IMAGE_1)
+    int rc;
+    struct image_header hdr;
+    uint32_t upload_off;
+
+    *offset = 0;
+    if (flash_area_id_from_image_slot(slot) != FLASH_AREA_IMAGE_1) {
+        return 0;
+    }
+
+    rc = img_mgmt_upload_offset(&upload_off);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = img_mgmt_read(slot, upload_off, &hdr, sizeof hdr);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    if (hdr.ih_magic == IMAGE_MAGIC) {
+        *offset = upload_off;
+    }
+#else
+    *offset = 0;
+#endif
+    return 0;
 }

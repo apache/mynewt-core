@@ -142,14 +142,20 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     bool hash_found;
     uint8_t erased_val;
     uint32_t erased_val_32;
+    uint32_t image_off;
     int rc;
+
+    rc = img_mgmt_slot_image_offset(image_slot, &image_off);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
 
     rc = img_mgmt_erased_val(image_slot, &erased_val);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
 
-    rc = img_mgmt_read(image_slot, 0, &hdr, sizeof hdr);
+    rc = img_mgmt_read(image_slot, image_off, &hdr, sizeof hdr);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
@@ -177,7 +183,7 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
      * also contains the hash TLV. All images are required to have a hash TLV.
      * If the hash is missing, the image is considered invalid.
      */
-    data_off = hdr.ih_hdr_size + hdr.ih_img_size;
+    data_off = image_off + hdr.ih_hdr_size + hdr.ih_img_size;
     if (data_off < hdr.ih_img_size) {
         return MGMT_ERR_EUNKNOWN;
     }
@@ -513,7 +519,13 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
 #else
         /* erase the entire req.size all at once */
         if (action.erase) {
-            rc = img_mgmt_erase_image_data(0, req.size);
+            uint32_t upload_off;
+
+            rc = img_mgmt_upload_offset(&upload_off);
+            if (rc == 0) {
+                rc = img_mgmt_erase_image_data(0, req.size + upload_off);
+            }
+
             if (rc != 0) {
                 rc = MGMT_ERR_EUNKNOWN;
                 errstr = img_mgmt_err_str_flash_erase_failed;

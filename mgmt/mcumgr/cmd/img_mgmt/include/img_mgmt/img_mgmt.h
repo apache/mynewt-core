@@ -174,6 +174,26 @@ int img_mgmt_ver_str(const struct image_version *ver, char *dst);
 int img_mgmt_slot_in_use(int slot);
 
 /**
+ * @brief Get the offset at which a new image is written to slot 1
+ *
+ * @param offset Filled with the offset, 0 unless
+ *               BOOTUTIL_SWAP_USING_OFFSET is enabled
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int img_mgmt_upload_offset(uint32_t *offset);
+
+/**
+ * @brief Get the offset at which the image in the given slot starts
+ *
+ * @param slot   Slot to check
+ * @param offset Filled with the image offset
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int img_mgmt_slot_image_offset(int slot, uint32_t *offset);
+
+/**
  * @brief Check if the DFU status is pending
  *
  * @return 1 if there's pending DFU otherwise 0.
