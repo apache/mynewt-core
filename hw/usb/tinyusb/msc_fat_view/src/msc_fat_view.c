@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <string.h>
 #include <ctype.h>
 #include <os/endian.h>
 #include <bsp/bsp.h>
