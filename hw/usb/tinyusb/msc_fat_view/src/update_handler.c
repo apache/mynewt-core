@@ -18,6 +18,8 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include <bsp/bsp.h>
 #include <sysflash/sysflash.h>
 #include <tusb.h>
@@ -74,45 +76,35 @@ static const char *write_result_text[] = {
     "File write error.",
 };
 
-static uint32_t
-flash_result_create_content(struct MemFile *file)
+static void
+flash_result_create_content(struct out_stream *out)
 {
     int ix = abs(write_status) - 1;
     if (ix > 2) {
         ix = 2;
     }
-    fwrite(write_result_text[ix], 1, strlen(write_result_text[ix]), &file->file);
-
-    return file->bytes_written;
+    ostream_write_str(out, write_result_text[ix]);
 }
 
 static uint32_t
 flash_result_size(const file_entry_t *file_entry)
 {
-    struct MemFile sector_file;
+    struct mem_out_stream mem;
 
-    (void)file_entry;
-    fmemopen_w(&sector_file, (char *)NULL, 0);
+    msc_fat_view_sector_stream_init(&mem, NULL, 0);
+    flash_result_create_content((struct out_stream *)&mem);
 
-    flash_result_create_content(&sector_file);
-
-    return sector_file.bytes_written;
+    return mem.write_ptr;
 }
 
 static void
 flash_result_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
-    struct MemFile sector_file;
-    int written = 0;
-    (void)entry;
+    struct mem_out_stream mem;
 
-    if (file_sector == 0) {
-        fmemopen_w(&sector_file, (char *)buffer, 512);
-        flash_result_create_content(&sector_file);
-        written = sector_file.bytes_written;
-    }
-
-    memset(buffer + written, 0, 512 - written);
+    memset(buffer, 0, 512);
+    msc_fat_view_sector_stream_init(&mem, buffer, file_sector);
+    flash_result_create_content((struct out_stream *)&mem);
 }
 
 static const file_entry_t flash_result = {

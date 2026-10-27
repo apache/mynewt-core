@@ -18,6 +18,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include <stddef.h>
 #include <ctype.h>
 #include <stream/stream.h>
@@ -26,69 +27,18 @@
 #include <hal/hal_flash.h>
 #include <config/config.h>
 
-struct config_export_stream {
-    struct out_stream out_stream;
-    /* Buffer to write to (can be NULL) */
-    uint8_t *buffer;
-    /* Stream start offset, writes to stream preceding this will be dropped */
-    uint32_t buffer_start_offset;
-    /* Stream end offset, writes to stream after this will be dropped */
-    uint16_t buffer_end_offset;
-    /* Current stream write offset */
-    uint32_t write_offset;
-};
-
-static int
-config_export_write(struct out_stream *ostream, const uint8_t *buf, uint32_t count)
-{
-    struct config_export_stream *str = (struct config_export_stream *)ostream;
-    uint32_t upper_limit = str->write_offset + count;
-    uint32_t lower_limit = str->write_offset;
-    int cnt = count;
-
-    if (lower_limit < str->buffer_end_offset && upper_limit > str->buffer_start_offset) {
-        if (lower_limit < str->buffer_start_offset) {
-            cnt -= str->buffer_start_offset - lower_limit;
-            lower_limit = str->buffer_start_offset;
-        }
-        if (upper_limit > str->buffer_end_offset) {
-            cnt -= upper_limit - str->buffer_end_offset;
-        }
-        memcpy(str->buffer + lower_limit - str->buffer_start_offset,
-               buf + (lower_limit - str->write_offset), cnt);
-    }
-    str->write_offset += count;
-
-    return count;
-}
-
-static int
-config_export_flush(struct out_stream *ostream)
-{
-    return 0;
-}
-
-OSTREAM_DEF(config_export);
-
-static struct config_export_stream export_stream = {
-    .out_stream.vft = &config_export_vft,
-};
+/* Stream used by config_text_export() (conf_export() callback has no context) */
+static struct out_stream *export_stream;
 
 static void
 config_text_export(char *name, char *val)
 {
-    int name_len = strlen(name);
-    int val_len = 0;
-
+    ostream_write_str(export_stream, name);
+    ostream_write_str(export_stream, " = ");
     if (val) {
-        val_len = strlen(val);
+        ostream_write_str(export_stream, val);
     }
-    ostream_write(&export_stream.out_stream, (const uint8_t *)name, name_len, false);
-    ostream_write(&export_stream.out_stream, (const uint8_t *)" = ", 3, false);
-    if (val) {
-        ostream_write(&export_stream.out_stream, (const uint8_t *)val, val_len, false);
-    }
-    ostream_write(&export_stream.out_stream, (const uint8_t *)"\n", 1, false);
+    ostream_write_str(export_stream, "\n");
 }
 
 static const char *const CONFIG_BEGIN = "#### Config begin ####\n";
@@ -97,34 +47,33 @@ static const char *const CONFIG_END = "##### Config end #####\n";
 void
 config_txt_render_file(struct out_stream *stream)
 {
-    ostream_write_str(&export_stream.out_stream, CONFIG_BEGIN);
+    export_stream = stream;
+    ostream_write_str(stream, CONFIG_BEGIN);
     conf_export(config_text_export, CONF_EXPORT_SHOW);
-    ostream_write_str(&export_stream.out_stream, CONFIG_END);
+    ostream_write_str(stream, CONFIG_END);
+    export_stream = NULL;
 }
 
 static uint32_t
 config_txt_size(const file_entry_t *file_entry)
 {
-    export_stream.buffer = NULL;
-    export_stream.buffer_start_offset = 0;
-    export_stream.buffer_end_offset = 0;
-    export_stream.write_offset = 0;
+    struct mem_out_stream mem;
 
-    config_txt_render_file(&export_stream.out_stream);
+    msc_fat_view_sector_stream_init(&mem, NULL, 0);
+    config_txt_render_file((struct out_stream *)&mem);
 
-    return export_stream.write_offset;
+    return mem.write_ptr;
 }
 
 static void
 config_txt_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buffer[512])
 {
-    export_stream.buffer = buffer;
-    export_stream.buffer_start_offset = 512 * file_sector;
-    export_stream.buffer_end_offset = export_stream.buffer_start_offset + 512;
-    export_stream.write_offset = 0;
+    struct mem_out_stream mem;
 
     MSC_FAT_VIEW_LOG_DEBUG("Config.txt read sector %d\n", file_sector);
-    config_txt_render_file(&export_stream.out_stream);
+    memset(buffer, 0, 512);
+    msc_fat_view_sector_stream_init(&mem, buffer, file_sector);
+    config_txt_render_file((struct out_stream *)&mem);
 }
 
 /* Longest line that can be split between sectors */
