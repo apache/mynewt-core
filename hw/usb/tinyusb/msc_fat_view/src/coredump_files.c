@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <string.h>
 #include <os/os.h>
 #include <bsp/bsp.h>
 #include <sysflash/sysflash.h>
