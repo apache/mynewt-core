@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include <stream/stream.h>
@@ -191,4 +192,34 @@ ostream_write_str(struct out_stream *ostream, const char *str)
 {
     int len = strlen(str);
     return ostream_write(ostream, (const uint8_t *)str, len, false);
+}
+
+int
+ostream_vprintf(struct out_stream *ostream, const char *fmt, va_list ap)
+{
+    char buf[MYNEWT_VAL(STREAM_PRINTF_MAX)];
+    int len;
+
+    len = vsnprintf(buf, sizeof(buf), fmt, ap);
+    if (len < 0) {
+        return len;
+    }
+    if ((size_t)len >= sizeof(buf)) {
+        len = sizeof(buf) - 1;
+    }
+
+    return ostream_write(ostream, (const uint8_t *)buf, len, false);
+}
+
+int
+ostream_printf(struct out_stream *ostream, const char *fmt, ...)
+{
+    va_list ap;
+    int rc;
+
+    va_start(ap, fmt);
+    rc = ostream_vprintf(ostream, fmt, ap);
+    va_end(ap);
+
+    return rc;
 }
