@@ -25,6 +25,7 @@
 #include <tusb.h>
 #include <class/msc/msc.h>
 #include <msc_fat_view/msc_fat_view.h>
+#include <msc_fat_view/readme.h>
 #include <img_mgmt/img_mgmt.h>
 #include <bootutil/image.h>
 #include <modlog/modlog.h>
@@ -313,3 +314,7 @@ invalid_fun(const struct file_entry *entry)
 }
 
 ROOT_DIR_ENTRY(ghost_entry, "", 0, NULL, NULL, NULL, NULL, invalid_fun);
+
+#ifdef FLASH_AREA_IMAGE
+README_TEXT(90, "\nNew firmware can be copied to this drive (drag-drop .img file to upgrade device).");
+#endif

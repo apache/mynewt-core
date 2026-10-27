@@ -21,6 +21,7 @@
 #include <string.h>
 #include <sysflash/sysflash.h>
 #include <msc_fat_view/msc_fat_view.h>
+#include <msc_fat_view/readme.h>
 #include <bootutil/image.h>
 
 #if MYNEWT_VAL(MSC_FAT_VIEW_HUGE_FILE_SIZE) > 0
@@ -51,3 +52,5 @@ huge_file_read(const struct file_entry *entry, uint32_t file_sector, uint8_t buf
 }
 
 ROOT_DIR_ENTRY(huge_file, "Huge file", FAT_FILE_ENTRY_ATTRIBUTE_READ_ONLY, huge_file_size, huge_file_read, NULL, NULL, NULL);
+
+README_TEXT(80, "\n'Huge file' can be used to verify USB performance.");

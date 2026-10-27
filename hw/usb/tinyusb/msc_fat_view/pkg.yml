@@ -36,6 +36,9 @@ pkg.deps:
 pkg.deps.MSC_FAT_VIEW_CONFIG:
     - "@apache-mynewt-core/sys/config"
 
+pkg.deps.MSC_FAT_VIEW_DEFAULT_README:
+    - "@apache-mynewt-core/hw/usb/tinyusb/msc_fat_view/readme"
+
 pkg.deps.MSC_FAT_VIEW_COREDUMP_FILES:
     - "@apache-mynewt-core/sys/coredump"
 
@@ -46,9 +49,6 @@ pkg.whole_archive: true
 
 pkg.source_files.MSC_FAT_VIEW_COREDUMP_FILES:
     - src/coredump_files.c
-
-pkg.source_files.MSC_FAT_VIEW_DEFAULT_README:
-    - src/entry_readme.c
 
 pkg.source_files.MSC_FAT_VIEW_HUGE_FILE:
     - src/entry_huge_file.c
