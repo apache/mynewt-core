@@ -20,6 +20,7 @@
 #ifndef H_STREAM_
 #define H_STREAM_
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -274,5 +275,30 @@ ostream_write_uint32(struct out_stream *ostream, uint32_t data)
  * @return number of bytes written, negative on error
  */
 int ostream_write_str(struct out_stream *ostream, const char *str);
+
+/**
+ * Write printf-formatted text to output stream
+ *
+ * Text is formatted in stack buffer of STREAM_PRINTF_MAX bytes,
+ * longer output is truncated. Null terminator is not written.
+ *
+ * @param ostream - stream to write to
+ * @param fmt     - printf format string
+ * @param ap      - arguments
+ * @return number of bytes written, negative on error
+ */
+int ostream_vprintf(struct out_stream *ostream, const char *fmt, va_list ap);
+
+/**
+ * Write printf-formatted text to output stream
+ *
+ * @see ostream_vprintf()
+ *
+ * @param ostream - stream to write to
+ * @param fmt     - printf format string
+ * @return number of bytes written, negative on error
+ */
+int ostream_printf(struct out_stream *ostream, const char *fmt, ...)
+    __attribute__((format(printf, 2, 3)));
 
 #endif /* H_STREAM_ */
