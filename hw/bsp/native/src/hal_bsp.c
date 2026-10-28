@@ -57,7 +57,7 @@ static sec_data_secret struct eflash_mbedtls_dev ef_dev0 = {
     }
 };
 
-HAL_FLASH_DEV(enc_flash, (1), &ef_dev0.dev.efd_hal);
+HAL_FLASH_DEV(enc_flash, 1, &ef_dev0.dev.efd_hal);
 
 int
 hal_bsp_power_state(int state)
