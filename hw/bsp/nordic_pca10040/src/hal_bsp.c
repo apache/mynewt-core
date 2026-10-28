@@ -55,7 +55,7 @@ static sec_data_secret struct eflash_nrf5x_dev enc_flash_dev0 = {
     }
 };
 
-HAL_FLASH_DEV(enc_flash, (1), &enc_flash_dev0.end_dev.efd_hal);
+HAL_FLASH_DEV(enc_flash, 1, &enc_flash_dev0.end_dev.efd_hal);
 
 #endif
 

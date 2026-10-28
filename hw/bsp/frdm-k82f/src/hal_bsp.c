@@ -159,7 +159,7 @@ static struct eflash_crypto_dev enc_flash_dev0 = {
     }
 };
 
-HAL_FLASH_DEV(enc_flash, (2), &enc_flash_dev0.ecd_dev.efd_hal);
+HAL_FLASH_DEV(enc_flash, 2, &enc_flash_dev0.ecd_dev.efd_hal);
 #endif
 
 const struct hal_bsp_mem_dump *

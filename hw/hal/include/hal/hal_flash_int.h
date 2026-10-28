@@ -85,20 +85,18 @@ LINK_TABLE(struct hal_flash_dev_entry, hal_flash_devs)
  *
  * Element name is hal_flash_dev_<id>_<name>, so table elements are sorted by
  * id (linker sorts names as text, so it works for ids 0..9).
- * flash_id must be in form (n): MYNEWT_VAL() expands to (n), literal id has to
- * be written as (n) too.
+ * flash_id is pasted into element name, so it must be a plain number
+ * (literal or MYNEWT_VAL() of a setting that newt writes without
+ * parentheses).
  */
-#define HAL_FLASH_DEV_ID_(x)        x
-#define HAL_FLASH_DEV_ID(x)         HAL_FLASH_DEV_ID_ x
 #define HAL_FLASH_DEV_CAT_(a, b, c) a##b##c
 #define HAL_FLASH_DEV_CAT(a, b, c)  HAL_FLASH_DEV_CAT_(a, b, c)
 
-#define HAL_FLASH_DEV(name, flash_id, dev)                                         \
-    LINK_TABLE_ELEMENT(hal_flash_devs,                                             \
-                       HAL_FLASH_DEV_CAT(hal_flash_dev_,                           \
-                                         HAL_FLASH_DEV_ID(flash_id), _##name)) = { \
-        .hf = (dev),                                                               \
-        .id = (flash_id),                                                          \
+#define HAL_FLASH_DEV(name, flash_id, dev)                                       \
+    LINK_TABLE_ELEMENT(hal_flash_devs,                                           \
+                       HAL_FLASH_DEV_CAT(hal_flash_dev_, flash_id, _##name)) = { \
+        .hf = (dev),                                                             \
+        .id = (flash_id),                                                        \
     }
 
 /*
