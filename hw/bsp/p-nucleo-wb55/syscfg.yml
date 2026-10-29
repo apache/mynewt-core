@@ -68,6 +68,16 @@ syscfg.vals:
     JLINK_TARGET: STM32WB55RG
     MYNEWT_DOWNLOADER_MFG_IMAGE_FLASH_OFFSET: 0x08000000
 
+# CPU2 radio needs HSE (32 MHz, trimmed from OTP), LSE for its sleep timer
+# and HSI48 (CLK48) for RNG. CPU2 BLE init hangs when HSI16 is off.
+syscfg.vals.IPC_STM32WB:
+    STM32_CLOCK_HSI: 1
+    STM32_CLOCK_HSE: 1
+    STM32_CLOCK_HSE_TUNING_OTP: 1
+    STM32_CLOCK_LSE: 1
+    STM32_CLOCK_HSI48: 1
+    STM32_CLOCK_RFWKP: lse
+
 syscfg.vals.COREDUMP:
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
 
