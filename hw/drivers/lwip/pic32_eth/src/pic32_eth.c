@@ -453,7 +453,7 @@ pic32_lwip_init(struct netif *nif)
     nif->linkoutput = pic32_eth_output;
     nif->mtu = 1500;
     nif->hwaddr_len = ETHARP_HWADDR_LEN;
-    nif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
+    nif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET;
 
 #if LWIP_IGMP
     nif->flags |= NETIF_FLAG_IGMP;
