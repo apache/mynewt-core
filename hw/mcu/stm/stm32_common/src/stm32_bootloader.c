@@ -22,6 +22,10 @@
 #include <mcu/mcu.h>
 #include <os/util.h>
 
+#if MYNEWT_VAL_STM32_BOOTLOADER_CLI
+#include <shell/shell.h>
+#endif
+
 #if defined(STM32F4)
 /*
  * stm32f4xx_hal_rcc.c has empty weak HAL_RCC_DeInit(), working one is in
@@ -98,3 +102,17 @@ stm32_start_bootloader(void)
         : "r" (system_memory[0]), "r" (system_memory[1]), "r" (0)
         : "memory");
 }
+
+#if MYNEWT_VAL_STM32_BOOTLOADER_CLI
+
+int
+stm32_dfu(int argc, const char *argv[])
+{
+    stm32_start_bootloader();
+
+    return 0;
+}
+
+MAKE_SHELL_CMD(stm32_dfu, stm32_dfu, NULL)
+
+#endif
