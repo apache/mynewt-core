@@ -58,6 +58,8 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/drivers/display/lcd_itf"
 
+pkg.deps.LVGL_SSD1306:
+    - "@apache-mynewt-core/hw/drivers/display/lvgl/oled/ssd1306"
 pkg.deps.LVGL_GC9A01:
     - "@apache-mynewt-core/hw/drivers/display/lvgl/tft/gc9a01"
 pkg.deps.LVGL_ILI9341:
