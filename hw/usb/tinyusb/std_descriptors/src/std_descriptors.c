@@ -293,11 +293,6 @@ enum {
     ITF_NUM_NET_DATA,
 #endif
 
-#if CFG_CDC
-    ITF_NUM_CDC,
-    ITF_NUM_CDC_DATA,
-#endif
-
 #if CFG_CDC_CONSOLE
     ITF_NUM_CDC_CONSOLE,
     ITF_NUM_CDC_CONSOLE_DATA,
@@ -306,6 +301,11 @@ enum {
 #if CFG_CDC_HCI
     ITF_NUM_CDC_HCI,
     ITF_NUM_CDC_HCI_DATA,
+#endif
+
+#if CFG_CDC
+    ITF_NUM_CDC,
+    ITF_NUM_CDC_DATA,
 #endif
 
 #if CFG_TUD_MSC
