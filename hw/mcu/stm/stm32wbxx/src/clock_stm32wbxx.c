@@ -295,14 +295,13 @@ SystemClock_Config(void)
     osc_init.MSIState = RCC_MSI_OFF;
 #endif
 
-#endif
-
     osc_init.PLL.PLLState = RCC_PLL_NONE;
 
     status = HAL_RCC_OscConfig(&osc_init);
     if (status != HAL_OK) {
         assert(0);
     }
+#endif
 
 #if TRNG_ENABLED
     pclk_init.PeriphClockSelection = RCC_PERIPHCLK_RNG;
