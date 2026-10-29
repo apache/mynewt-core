@@ -1,0 +1,56 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    STM32_ROM_BOOT_PIN:
+        description: >
+            Pin checked at startup, when it is in active state STM32
+            system memory bootloader is started. -1 to disable.
+        value: -1
+    STM32_ROM_BOOT_PIN_PULL:
+        description: Pull applied to STM32_ROM_BOOT_PIN.
+        value: HAL_GPIO_PULL_NONE
+    STM32_ROM_BOOT_PIN_VALUE:
+        description: Active state of STM32_ROM_BOOT_PIN (0 or 1).
+        value: 0
+    STM32_ROM_BOOT_RESET_COUNT:
+        description: >
+            Number of consecutive resets with reset pin needed to start
+            system memory bootloader, 0 to disable. Useful for boards
+            without user button.
+        value: 0
+    STM32_ROM_BOOT_RESET_COUNT_NVREG:
+        description: >
+            Non-volatile register (RTC backup register) used to count
+            reset pin presses. Required when STM32_ROM_BOOT_RESET_COUNT
+            is not 0.
+        value: -1
+    STM32_ROM_BOOT_RESET_WINDOW_MS:
+        description: >
+            Time after reset pin reset during which next reset pin press
+            is counted as consecutive. Startup is delayed by this time
+            after each reset pin reset.
+        value: 500
+    STM32_ROM_BOOT_SYSINIT_STAGE:
+        description: >
+            Sysinit stage at which pin and reset count are checked.
+        value: 1
+
+syscfg.restrictions:
+    - '(STM32_ROM_BOOT_RESET_COUNT == 0) || (STM32_ROM_BOOT_RESET_COUNT_NVREG >= 0)'
