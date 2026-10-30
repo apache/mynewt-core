@@ -19,6 +19,7 @@
 
 #include "os/mynewt.h"
 
+#include <hal/hal_bsp.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_timer.h>
 #include <mcu/cmsis_nvic.h>
@@ -683,6 +684,37 @@ stm32_mii_dump(int (*func)(const char *fmt, ...))
     return 0;
 }
 
+/*
+ * MAC address with last 3 bytes zero (e.g. 02:00:00:00:00:00) is a prefix,
+ * last 3 bytes are then derived from hardware id so each board is different.
+ */
+static void
+stm32_eth_mac_from_hw_id(const uint8_t *cfg_mac, uint8_t *mac)
+{
+    uint8_t id[32];
+    uint32_t hash = 2166136261u;
+    int len;
+    int i;
+
+    memcpy(mac, cfg_mac, ETHARP_HWADDR_LEN);
+    if (mac[3] != 0 || mac[4] != 0 || mac[5] != 0) {
+        return;
+    }
+
+    /* FNV-1a hash of hardware id */
+    len = hal_bsp_hw_id(id, sizeof(id));
+    /* Without hardware id all boards would get the same address */
+    assert(len > 0);
+    for (i = 0; i < len; ++i) {
+        hash = (hash ^ id[i]) * 16777619u;
+    }
+    /* Fold 32-bit hash to 24 bits */
+    hash ^= hash >> 24;
+    mac[3] = (uint8_t)(hash >> 16);
+    mac[4] = (uint8_t)(hash >> 8);
+    mac[5] = (uint8_t)hash;
+}
+
 int
 stm32_eth_set_hwaddr(uint8_t *addr)
 {
@@ -705,6 +737,7 @@ stm32_eth_open(void)
     struct stm32_eth_state *ses = &stm32_eth_state;
     struct netif *nif;
     struct ip4_addr addr;
+    uint8_t mac[ETHARP_HWADDR_LEN];
     int rc;
     bool up = MYNEWT_VAL(STM32_ETH_SYS_CONFIG) ? stm32_eth_auto_up
                                                : MYNEWT_VAL(STM32_ETH_AUTO_UP);
@@ -718,7 +751,8 @@ stm32_eth_open(void)
         return -1;
     }
 
-    stm32_eth_set_hwaddr(stm32_eth_mac_address);
+    stm32_eth_mac_from_hw_id(stm32_eth_mac_address, mac);
+    stm32_eth_set_hwaddr(mac);
 
     if (ses->cfg->sec_phy_irq >= 0) {
         rc = hal_gpio_irq_init(ses->cfg->sec_phy_irq, stm32_phy_isr, ses,

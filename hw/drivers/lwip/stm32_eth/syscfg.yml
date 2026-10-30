@@ -28,7 +28,11 @@ syscfg.defs:
         defunct: 1
 
     STM32_ETH_MAC_ADDR:
-        description: "Use given array of 6 bytes for MAC address."
+        description: >
+            Use given array of 6 bytes for MAC address. If last 3 bytes
+            are 0 (e.g. 0x02,0x00,0x00,0x00,0x00,0x00), first 3 bytes are
+            used as prefix and last 3 bytes are derived from
+            hal_bsp_hw_id(), so each board gets a different address.
         value: 0x00,0x01,0x01,0x02,0x02,0x03
 
     STM32_ETH_RX_BUFFER_CNT:
