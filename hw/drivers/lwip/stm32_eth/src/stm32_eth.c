@@ -771,6 +771,10 @@ stm32_eth_open(void)
     if (up) {
         netif_set_up(nif);
         netif_set_default(nif);
+#if LWIP_IPV6
+        nif->ip6_autoconfig_enabled = 1;
+        netif_create_ip6_linklocal_address(nif, 1);
+#endif
         if (dhcp) {
             dhcp_start(nif);
         }
