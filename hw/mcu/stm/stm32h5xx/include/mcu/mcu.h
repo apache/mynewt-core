@@ -28,6 +28,9 @@ extern "C" {
 
 #if defined(STM32H503xx)
 #define STM32_SYSTEM_MEMORY 0x0BF87000
+#elif defined(STM32H5E4xx) || defined(STM32H5E5xx) || defined(STM32H5F4xx) || \
+    defined(STM32H5F5xx)
+#define STM32_SYSTEM_MEMORY 0x0BFAC000
 #else
 #define STM32_SYSTEM_MEMORY 0x0BF97000
 #endif
