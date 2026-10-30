@@ -26,7 +26,13 @@
 extern "C" {
 #endif
 
+#if defined(STM32H742xx) || defined(STM32H743xx) || defined(STM32H750xx) || \
+    defined(STM32H753xx)
+/* System memory starts at 0x1FF00000, bootloader vector table is at offset 0x9800 */
+#define STM32_SYSTEM_MEMORY     0x1FF09800
+#else
 #define STM32_SYSTEM_MEMORY     0x1FF00000
+#endif
 
 #ifdef __cplusplus
 }
