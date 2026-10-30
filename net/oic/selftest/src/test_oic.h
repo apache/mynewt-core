@@ -42,6 +42,7 @@ void oic_test_get_endpoint(struct oc_server_handle *);
 
 void test_uuid(void);
 void test_parse(void);
+void test_coap_transaction(void);
 void test_discovery(void);
 void test_getset(void);
 void test_observe(void);
