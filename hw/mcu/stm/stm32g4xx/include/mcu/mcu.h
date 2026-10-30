@@ -29,7 +29,7 @@ extern "C" {
 
 #define SVC_IRQ_NUMBER SVC_IRQn
 
-#define STM32_SYSTEM_MEMORY     0x0BF90000
+#define STM32_SYSTEM_MEMORY     0x1FFF0000
 
 #ifdef __cplusplus
 }
