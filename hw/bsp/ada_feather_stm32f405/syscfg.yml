@@ -74,3 +74,8 @@ syscfg.vals.'(CONFIG_FCB || CONFIG_FCB2)':
 
 syscfg.vals.REBOOT_LOG_FCB:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+
+syscfg.vals.ETH_0:
+    # Applications do not bring Ethernet interface up themselves
+    LWIP_AUTO_UP: 1
+    LWIP_AUTO_UP_DHCP: 1

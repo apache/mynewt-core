@@ -38,6 +38,9 @@ pkg.deps.STD_LWIPOPTS:
 pkg.init:
     ip_init: 'MYNEWT_VAL(IP_SYSINIT_STAGE)'
 
+pkg.init.LWIP_AUTO_UP:
+    lwip_auto_up_init: 'MYNEWT_VAL(LWIP_AUTO_UP_SYSINIT_STAGE)'
+
 pkg.whole_archive: true
 
 pkg.link_tables:
