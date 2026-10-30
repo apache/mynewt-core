@@ -28,7 +28,11 @@ syscfg.defs:
         defunct: 1
 
     STM32_ETH_MAC_ADDR:
-        description: "Use given array of 6 bytes for MAC address."
+        description: >
+            Use given array of 6 bytes for MAC address. If last 3 bytes
+            are 0 (e.g. 0x02,0x00,0x00,0x00,0x00,0x00), first 3 bytes are
+            used as prefix and last 3 bytes are derived from
+            hal_bsp_hw_id(), so each board gets a different address.
         value: 0x00,0x01,0x01,0x02,0x02,0x03
 
     STM32_ETH_RX_BUFFER_CNT:
@@ -37,17 +41,21 @@ syscfg.defs:
 
     STM32_ETH_AUTO_UP:
         description: >
-            When set to 1 interface will be enabled automatically.
-        value: 1
+            Interface is brought up by the application, e.g. with
+            netif_set_up() or 'ip <interface> up' shell command, or by
+            LWIP_AUTO_UP.
+        defunct: 1
 
     STM32_ETH_DHCP:
         description: >
-            When set to 1 dhcp will be started automatically.
-        value: 1
+            DHCP client is started by the application, e.g. with
+            dhcp_start() or 'ip <interface> up' shell command, or by
+            LWIP_AUTO_UP_DHCP.
+        defunct: 1
 
     STM32_ETH_SYS_CONFIG:
         description: >
-            When set to 1 mac address auto up and dhcp settings
-            are taken from sys/config instead of syscfg.
+            When set to 1 MAC address is taken from eth/mac sys/config
+            value instead of syscfg.
         value: 0
 
