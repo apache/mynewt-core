@@ -58,7 +58,7 @@ coap_receive(struct os_mbuf **mp)
     struct os_mbuf *m;
     static struct coap_packet_rx message[1];
     static struct coap_packet response[1];
-    static coap_transaction_t *transaction = NULL;
+    coap_transaction_t *transaction = NULL;
     struct os_mbuf *rsp;
     struct oc_endpoint endpoint; /* XXX */
 
