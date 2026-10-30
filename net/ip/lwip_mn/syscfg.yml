@@ -31,3 +31,23 @@ syscfg.defs:
         description: >
             Adds standard lwipopts.h, suitable for start playing with LWIP.
         value: 1
+
+    LWIP_AUTO_UP:
+        description: >
+            Bring up network interfaces which drivers added but left down
+            and make the first one default route.  For applications that do
+            not configure network interfaces themselves, can be enabled by
+            BSP or target.
+        value: 0
+    LWIP_AUTO_UP_DHCP:
+        description: >
+            Start DHCP client on interfaces brought up by LWIP_AUTO_UP.
+        value: 0
+    LWIP_AUTO_UP_SYSINIT_STAGE:
+        description: >
+            Sysinit stage of LWIP_AUTO_UP, must be after network interface
+            drivers.
+        value: 300
+
+syscfg.restrictions:
+    - '!LWIP_AUTO_UP_DHCP || LWIP_AUTO_UP'
