@@ -34,9 +34,10 @@ is done through GitHub API using gh tool.
 Workflows labels are informative only, workflow runs of contributors
 without write access need approval anyway.
 
-Pull requests without activity for MAX_AGE_DAYS are skipped, also
-when marked with 'stale' label (set by stale workflow) until new commit
-is pushed.
+Pull requests without activity for MAX_AGE_DAYS are skipped. So are
+pull requests marked with 'stale' label by stale workflow, unless they
+were updated or commented on since then. In that case 'stale' label is
+removed, so that it doesn't stay until next run of stale workflow.
 
 Workflows and path labels are updated only for pull requests changed
 since previous successful run, unless .github of their base branch
@@ -56,6 +57,10 @@ STALE_LABEL = "stale"
 
 # Keep in sync with days-before-pr-stale in stale.yml
 MAX_AGE_DAYS = 365
+
+# Newest label events checked for stale label. If it is not among them,
+# other labels were added later, so pull request was updated anyway
+LABEL_EVENTS = 10
 
 # Runs never approved stay waiting forever, skip old ones
 CI_RUNS_MAX_AGE_DAYS = 30
@@ -105,7 +110,16 @@ query (
           nodes {
             commit {
               oid
-              committedDate
+            }
+          }
+        }
+        timelineItems(itemTypes: LABELED_EVENT, last: %d) {
+          nodes {
+            ... on LabeledEvent {
+              createdAt
+              label {
+                name
+              }
             }
           }
         }
@@ -113,7 +127,7 @@ query (
     }
   }
 }
-"""
+""" % LABEL_EVENTS
 
 TREES_QUERY = """
 query ($owner: String!, $repo: String!) {
@@ -178,6 +192,14 @@ def previous_run():
     return runs["workflow_runs"][0]
 
 
+def stale_updated(node):
+    """Returns True if pull request was updated since marked as stale"""
+    marked = [e["createdAt"] for e in node["timelineItems"]["nodes"]
+              if e["label"]["name"] == STALE_LABEL]
+    # Adding stale label is last change made by stale workflow
+    return not marked or node["updatedAt"] > max(marked)
+
+
 def list_pulls():
     """
     Returns list of pull requests and number of errors. Merge base tree
@@ -195,10 +217,8 @@ def list_pulls():
         for node in page["data"]["repository"]["pullRequests"]["nodes"]:
             labels = [l["name"] for l in node["labels"]["nodes"]]
             commit = node["commits"]["nodes"][0]["commit"]
-            # Adding stale label updates pull request, stale workflow
-            # removes label only on its next run but rebase is new commit
             if node["updatedAt"] < since or \
-                    (STALE_LABEL in labels and commit["committedDate"] < since):
+                    (STALE_LABEL in labels and not stale_updated(node)):
                 skipped += 1
                 continue
 
@@ -300,6 +320,15 @@ def sync_label(pulls, label, color, wanted):
     return errors
 
 
+def update_stale_label(pulls):
+    """
+    Removes stale label, pull requests still having it were updated
+    since marked as stale. Returns number of errors.
+    """
+    # Label is never added, color is not needed
+    return sync_label(pulls, STALE_LABEL, None, lambda p: False)
+
+
 def update_ci_label(pulls):
     """Returns number of errors"""
     since = date.today() - timedelta(days=CI_RUNS_MAX_AGE_DAYS)
@@ -353,6 +382,7 @@ def main():
     # updating labels fails
     write_outputs({"pr-numbers": "\n".join(str(p["number"])
                                            for p in changed)})
+    errors += update_stale_label(pulls)
     errors += update_ci_label(pulls)
     # Pull requests without merge base tree failed and were reported
     changed = [p for p in changed if "merge_base_tree" in p]

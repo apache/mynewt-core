@@ -18,9 +18,8 @@
 #
 
 # Marks pull requests without activity for 12 months as stale. Stale pull
-# requests are never closed, stale label is removed by next run after any
-# update or comment. Pull request maintenance workflow skips stale pull
-# requests until new commit is pushed.
+# requests are never closed. Pull request maintenance workflow skips stale
+# pull requests and removes stale label after any update or comment.
 
 name: Stale pull requests
 
