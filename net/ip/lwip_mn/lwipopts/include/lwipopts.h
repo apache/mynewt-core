@@ -19,6 +19,8 @@
 #ifndef __LWIP_LWIPOPTS_H__
 #define __LWIP_LWIPOPTS_H__
 
+#include <syscfg/syscfg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,6 +52,16 @@ extern "C" {
 #define DNS_TABLE_SIZE                  3
 #define DNS_MAX_NAME_LENGTH             64
 #define LWIP_NETIF_HOSTNAME             1
+
+#if defined(MYNEWT_VAL_LWIP_APPS_MDNS) && MYNEWT_VAL_LWIP_APPS_MDNS
+#define LWIP_MDNS_RESPONDER             1
+/* mDNS keeps per interface state in netif client data */
+#ifndef LWIP_NUM_NETIF_CLIENT_DATA
+#define LWIP_NUM_NETIF_CLIENT_DATA      1
+#endif
+/* mDNS restarts probing on address changes (e.g. DHCP) */
+#define LWIP_NETIF_EXT_STATUS_CALLBACK  1
+#endif
 
 #define LWIP_NETIF_STATUS_CALLBACK      1
 #define LWIP_NETIF_LINK_CALLBACK        1
