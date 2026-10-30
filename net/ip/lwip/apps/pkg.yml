@@ -60,3 +60,6 @@ pkg.deps:
 
 pkg.init.LWIP_APPS_IPERF_START:
     iperf_init: 1000
+
+pkg.init.LWIP_APPS_MDNS:
+    lwip_mdns_init: 'MYNEWT_VAL(LWIP_APPS_MDNS_SYSINIT_STAGE)'

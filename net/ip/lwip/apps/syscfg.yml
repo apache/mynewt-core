@@ -27,8 +27,18 @@ syscfg.defs:
         description: 'Start iperf2 server in sysinit'
         value: 0
     LWIP_APPS_MDNS:
-        description: 'Enable MDNS'
+        description: >
+            Enable MDNS responder. It is started on every network interface
+            that has host name set (netif->hostname).
         value: 0
+    LWIP_APPS_MDNS_TTL:
+        description: 'TTL in seconds of MDNS host name records'
+        value: 3600
+    LWIP_APPS_MDNS_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for MDNS responder, must be after network
+            interfaces are added.
+        value: 1000
     LWIP_APPS_MQTT:
         description: 'Enable MQTT'
         value: 0
