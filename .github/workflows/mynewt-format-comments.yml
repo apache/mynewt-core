@@ -1,0 +1,219 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Posts the problems found by mynewt-format-check.yml as review comments on
+# the PR lines that break a rule.
+#
+# The check itself runs on 'pull_request', where PRs from forks only get a
+# read-only token. This workflow runs from the base branch with a write token
+# and never checks out or runs PR code: it only reads the uploaded results,
+# which are treated as untrusted input.
+#
+# Other Mynewt repositories (e.g. NimBLE) use it from a workflow of their own
+# (a workflow_run trigger only sees workflows of its repository):
+#
+#   on:
+#     workflow_run:
+#       workflows: ["Compliance check"]
+#       types: [completed]
+#   permissions:
+#     actions: read
+#     contents: read
+#     pull-requests: write
+#   jobs:
+#     comment:
+#       uses: apache/mynewt-core/.github/workflows/mynewt-format-comments.yml@master
+
+name: Coding style comments
+
+on:
+  workflow_run:
+    workflows: ["Compliance check"]
+    types: [completed]
+  workflow_call:
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Comment mynewt-format problems
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-slim
+    steps:
+      - name: Download results
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: mynewt-format-results
+          path: results
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post review comments
+        if: steps.download.outcome == 'success'
+        uses: actions/github-script@v9
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        with:
+          script: |
+            const fs = require('fs');
+            const MARKER = '<!-- mynewt-format';
+            const MAX_COMMENTS = 50;
+            const { owner, repo } = context.repo;
+
+            const prText = fs.readFileSync('results/pr-number', 'utf8').trim();
+            if (!/^\d+$/.test(prText)) {
+              core.setFailed(`bad PR number '${prText.slice(0, 20)}'`);
+              return;
+            }
+            const pull_number = Number(prText);
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+            // The results must belong to the PR's current head; anything else
+            // is stale (a newer push is being checked) or forged.
+            if (pr.head.sha !== process.env.HEAD_SHA) {
+              core.info(`PR #${pull_number} head moved on, nothing to do`);
+              return;
+            }
+
+            const problems = [];
+            for (const line of fs.readFileSync('results/problems.jsonl', 'utf8').split('\n')) {
+              if (!line.trim()) continue;
+              try {
+                const p = JSON.parse(line);
+                if (typeof p.path === 'string' && Number.isInteger(p.line) &&
+                    typeof p.rule === 'string' && /^[a-z0-9-]+$/.test(p.rule)) {
+                  problems.push(p);
+                }
+              } catch (e) {
+                // Not a problem record; ignore.
+              }
+            }
+            if (!problems.length) {
+              core.info('No mynewt-format problems');
+              return;
+            }
+
+            // Lines GitHub accepts comments on: the new side of each diff hunk.
+            const commentable = new Map();
+            const files = await github.paginate(github.rest.pulls.listFiles,
+                                                { owner, repo, pull_number, per_page: 100 });
+            for (const f of files) {
+              const lines = new Set();
+              let n = 0;
+              for (const l of (f.patch || '').split('\n')) {
+                const h = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(l);
+                if (h) {
+                  n = Number(h[1]);
+                } else if (l.startsWith('+') || l.startsWith(' ')) {
+                  lines.add(n++);
+                }
+              }
+              commentable.set(f.filename, lines);
+            }
+
+            // Comments posted by earlier runs, so a new push does not repeat them.
+            const posted = new Set();
+            const old = await github.paginate(github.rest.pulls.listReviewComments,
+                                              { owner, repo, pull_number, per_page: 100 });
+            for (const c of old) {
+              const m = /<!-- mynewt-format: (\S+) -->/.exec(c.body || '');
+              if (m && c.user && c.user.type === 'Bot') {
+                posted.add(`${c.path}:${c.line}:${m[1]}`);
+              }
+            }
+
+            // Text from the results is untrusted: limit its size and keep
+            // '@' from notifying anyone.
+            const text = (s, max) => String(s ?? '').slice(0, max).replace(/@/g, '@\u200b');
+
+            // One comment per rule and line; a rule can be broken more than
+            // once on a line (e.g. both sides of an operator).
+            const groups = new Map();
+            for (const p of problems) {
+              const key = `${p.path}:${p.line}:${p.rule}`;
+              if (posted.has(key) || !commentable.has(p.path)) continue;
+              if (!groups.has(key)) groups.set(key, []);
+              groups.get(key).push(p);
+            }
+
+            const expand = s => s.replace(/[^\t]*\t/g,
+                                          m => m.slice(0, -1).padEnd((Math.floor((m.length - 1) / 4) + 1) * 4));
+            const comments = [];
+            const elsewhere = [];
+            for (const group of groups.values()) {
+              const p = group[0];
+              const kind = p.severity === 'warning' ? 'warning' : 'error';
+              const messages = [...new Set(group.map(g => text(g.message, 300)))];
+              if (!commentable.get(p.path).has(p.line) || comments.length >= MAX_COMMENTS) {
+                elsewhere.push(`- \`${text(p.path, 200)}:${p.line}\` ${kind} ` +
+                               `\`${p.rule}\`: ${messages.join('; ')}`);
+                continue;
+              }
+              const raw = String(p.source ?? '').slice(0, 300);
+              const carets = Array(expand(raw).length + 1).fill(' ');
+              for (const g of group) {
+                const col = Number.isInteger(g.column) && g.column > 0 ? g.column : 1;
+                carets[Math.min(expand(raw.slice(0, col - 1)).length, carets.length - 1)] = '^';
+              }
+              comments.push({
+                path: p.path,
+                line: p.line,
+                side: 'RIGHT',
+                body: [
+                  `**mynewt-format** ${kind} \`${p.rule}\`: ${messages.join('; ')}`,
+                  '',
+                  '````c',
+                  text(expand(raw), 400),
+                  carets.join('').trimEnd(),
+                  '````',
+                  '',
+                  `Details: \`mynewt-format --explain ${p.rule}\``,
+                  `${MARKER}: ${p.rule} -->`,
+                ].join('\n'),
+              });
+            }
+
+            if (!comments.length && !elsewhere.length) {
+              core.info('All problems were already commented on');
+              return;
+            }
+            const body = [
+              `**mynewt-format** found ${comments.length + elsewhere.length} new ` +
+              'coding style problem(s) in the lines changed by this PR. This check ' +
+              'is informational and does not block merging.',
+              '',
+              'Check locally: `mynewt-format --git-diff origin/master` ' +
+              '(`tools/mynewt-format-setup.sh` in apache-mynewt-core installs the command).',
+            ];
+            if (elsewhere.length) {
+              body.push('', 'Problems that could not be attached to a diff line:', '',
+                        ...elsewhere.slice(0, 100));
+            }
+            await github.rest.pulls.createReview({
+              owner, repo, pull_number,
+              commit_id: pr.head.sha,
+              event: 'COMMENT',
+              body: body.join('\n'),
+              comments,
+            });
+            core.info(`Posted ${comments.length} comment(s)`);
