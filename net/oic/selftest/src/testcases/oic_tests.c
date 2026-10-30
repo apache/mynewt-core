@@ -81,6 +81,7 @@ TEST_CASE_TASK(oic_tests)
     oc_main_init(&test_handler);
     test_uuid();
     test_parse();
+    test_coap_transaction();
     test_discovery();
     test_getset();
     test_observe();
