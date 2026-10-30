@@ -32,7 +32,6 @@
 #endif
 
 #include <bsp/bsp.h>
-#include <lwip/dhcp.h>
 
 #if MYNEWT_VAL(MCU_STM32F4)
 #include <bsp/stm32f4xx_hal_conf.h>
@@ -284,8 +283,6 @@ HAL_ETH_RxLinkCallback(void **p_start, void **p_end, uint8_t *buff, uint16_t len
 
 static uint8_t stm32_eth_mac_address[6] = { UNMANGLE_MYNEWT_VAL(
     MYNEWT_VAL_STM32_ETH_MAC_ADDR) };
-static uint8_t stm32_eth_auto_up;
-static uint8_t stm32_eth_dhcp;
 
 #if MYNEWT_VAL(STM32_ETH_SYS_CONFIG)
 #define equals(a, b) (strcmp(a, b) == 0)
@@ -319,11 +316,7 @@ stm32_eth_conf_get(int argc, char **argv, char *val, int val_len_max)
     char *ret = NULL;
 
     if (argc == 1) {
-        if (equals(argv[0], "up")) {
-            ret = conf_str_from_value(CONF_BOOL, &stm32_eth_auto_up, val, val_len_max);
-        } else if (equals(argv[0], "dhcp")) {
-            ret = conf_str_from_value(CONF_BOOL, &stm32_eth_dhcp, val, val_len_max);
-        } else if (equals(argv[0], "mac") && val_len_max >= 18) {
+        if (equals(argv[0], "mac") && val_len_max >= 18) {
             ret = format_mac_address(stm32_eth_mac_address, val, val_len_max);
         }
     }
@@ -377,10 +370,6 @@ stm32_eth_conf_set(int argc, char **argv, char *val)
         } else {
             return -1;
         }
-    } else if (equals(name, "up")) {
-        CONF_VALUE_SET(val, CONF_BOOL, stm32_eth_auto_up);
-    } else if (equals(name, "dhcp")) {
-        CONF_VALUE_SET(val, CONF_BOOL, stm32_eth_dhcp);
     }
 
     return 0;
@@ -402,10 +391,6 @@ stm32_eth_conf_export(void (*export_func)(char *name, char *val),
 
     export_func("eth/mac",
                 format_mac_address(stm32_eth_mac_address, buf, sizeof(buf)));
-    export_func("eth/up", conf_str_from_value(CONF_BOOL, &stm32_eth_auto_up,
-                                              buf, sizeof(buf)));
-    export_func("eth/dhcp",
-                conf_str_from_value(CONF_BOOL, &stm32_eth_dhcp, buf, sizeof(buf)));
 
     return 0;
 }
@@ -739,10 +724,6 @@ stm32_eth_open(void)
     struct ip4_addr addr;
     uint8_t mac[ETHARP_HWADDR_LEN];
     int rc;
-    bool up = MYNEWT_VAL(STM32_ETH_SYS_CONFIG) ? stm32_eth_auto_up
-                                               : MYNEWT_VAL(STM32_ETH_AUTO_UP);
-    bool dhcp = MYNEWT_VAL(STM32_ETH_SYS_CONFIG) ? stm32_eth_dhcp
-                                                 : MYNEWT_VAL(STM32_ETH_DHCP);
 
     if (ses->cfg == NULL) {
         /*
@@ -761,24 +742,18 @@ stm32_eth_open(void)
     }
 
     /*
-     * Register network interface with LwIP.
+     * Register network interface with LwIP.  Bringing it up, default
+     * route and IPv4 configuration (DHCP, static address) are left to
+     * the application.
      */
     memset(&addr, 0, sizeof(addr));
     nif = netif_add(&ses->st_nif, &addr, &addr, &addr, NULL, stm32_lwip_init,
                     tcpip_input);
     assert(nif);
-
-    if (up) {
-        netif_set_up(nif);
-        netif_set_default(nif);
 #if LWIP_IPV6
-        nif->ip6_autoconfig_enabled = 1;
-        netif_create_ip6_linklocal_address(nif, 1);
+    nif->ip6_autoconfig_enabled = 1;
+    netif_create_ip6_linklocal_address(nif, 1);
 #endif
-        if (dhcp) {
-            dhcp_start(nif);
-        }
-    }
 
     return 0;
 }
