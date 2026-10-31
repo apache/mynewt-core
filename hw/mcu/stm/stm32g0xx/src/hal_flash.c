@@ -21,30 +21,31 @@
 #include <mcu/stm32_hal.h>
 #include "hal/hal_flash_int.h"
 
-#define STM32_FLASH_SIZE      (MYNEWT_VAL(STM32_FLASH_SIZE_KB) * 1024)
-
 int
 stm32_mcu_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     FLASH_EraseInitTypeDef eraseinit;
     uint32_t PageError;
+    uint32_t offset;
     HAL_StatusTypeDef rc;
 
     (void)PageError;
 
     if (!(sector_address & (FLASH_PAGE_SIZE - 1))) {
+        offset = sector_address - dev->hf_base_addr;
         eraseinit.TypeErase = FLASH_TYPEERASE_PAGES;
-#ifdef FLASH_BANK_2
-        if ((sector_address - dev->hf_base_addr) < (STM32_FLASH_SIZE / 2)) {
-            eraseinit.Banks = FLASH_BANK_1;
-        }
-        else {
-            eraseinit.Banks = FLASH_BANK_2;
-        }
-#else
         eraseinit.Banks = FLASH_BANK_1;
+        eraseinit.Page = offset / FLASH_PAGE_SIZE;
+#ifdef FLASH_DBANK_SUPPORT
+        /*
+         * Only some devices (or option byte DUAL_BANK) have two banks,
+         * pages in bank 2 are numbered from 256.
+         */
+        if (FLASH_BANK_NB == 2 && offset >= FLASH_BANK_SIZE) {
+            eraseinit.Banks = FLASH_BANK_2;
+            eraseinit.Page = 256 + (offset - FLASH_BANK_SIZE) / FLASH_PAGE_SIZE;
+        }
 #endif
-        eraseinit.Page = (sector_address - dev->hf_base_addr) / FLASH_PAGE_SIZE;
         eraseinit.NbPages = 1;
         rc = HAL_FLASHEx_Erase(&eraseinit, &PageError);
         if (rc == HAL_OK) {
