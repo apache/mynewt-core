@@ -41,12 +41,25 @@ struct smp_transport g_smp_ble_transport;
 /* ble smp attr handle */
 uint16_t g_ble_smp_attr_handle;
 
+/* Requests split over several writes, one per connection.  An entry is in
+ * use while its reassembly buffer holds data.
+ */
+struct smp_ble_reasm {
+    uint16_t conn_handle;
+    struct smp_reasm reasm;
+};
+
+static struct smp_ble_reasm smp_ble_reasm[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
+
+static struct ble_gap_event_listener smp_ble_gap_listener;
+
 /**
  * The vendor specific "smp" service consists of one write no-rsp
  * characteristic for smp requests: a single-byte characteristic that can
- * only accepts write-without-response commands.  The contents of each write
- * command contains an NMP request.  NMP responses are sent back in the form of
- * unsolicited notifications from the same characteristic.
+ * only accepts write-without-response commands.  Each write command contains
+ * an SMP request or a part of one; a request longer than the ATT MTU can be
+ * split over several consecutive writes.  SMP responses are sent back in the
+ * form of unsolicited notifications from the same characteristic.
  */
 
 /* {8D53DC1D-1DB7-4CD3-868B-8A527460AA84} */
@@ -84,49 +97,159 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     },
 };
 
+/**
+ * Returns reassembly entry holding a partial request from the specified
+ * connection, or NULL if there is none.
+ */
+static struct smp_ble_reasm *
+smp_ble_reasm_find(uint16_t conn_handle)
+{
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(smp_ble_reasm); i++) {
+        if (smp_ble_reasm[i].reasm.sr_om != NULL &&
+            smp_ble_reasm[i].conn_handle == conn_handle) {
+            return &smp_ble_reasm[i];
+        }
+    }
+
+    return NULL;
+}
+
+static struct smp_ble_reasm *
+smp_ble_reasm_alloc(uint16_t conn_handle)
+{
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(smp_ble_reasm); i++) {
+        if (smp_ble_reasm[i].reasm.sr_om == NULL) {
+            smp_ble_reasm[i].conn_handle = conn_handle;
+            return &smp_ble_reasm[i];
+        }
+    }
+
+    return NULL;
+}
+
+static int
+smp_ble_gap_event(struct ble_gap_event *event, void *arg)
+{
+    struct smp_ble_reasm *entry;
+
+    if (event->type == BLE_GAP_EVENT_DISCONNECT) {
+        entry = smp_ble_reasm_find(event->disconnect.conn.conn_handle);
+        if (entry != NULL) {
+            smp_reasm_reset(&entry->reasm);
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Adds a written fragment to the partial request of the connection.
+ *
+ * @param conn_handle           Connection the fragment was received on.
+ * @param frag                  The written data; not consumed.
+ * @param out_req               On success, the complete request or NULL if
+ *                                  more fragments are needed.
+ *
+ * @return                      0 on success; nonzero if the request was
+ *                                  dropped.
+ */
+static int
+smp_ble_reasm_rx(uint16_t conn_handle, struct os_mbuf *frag, struct os_mbuf **out_req)
+{
+    struct smp_ble_reasm *entry;
+
+    entry = smp_ble_reasm_find(conn_handle);
+    if (entry == NULL) {
+        entry = smp_ble_reasm_alloc(conn_handle);
+        if (entry == NULL) {
+            return MGMT_ERR_ENOMEM;
+        }
+    }
+
+    return smp_reasm_rx(&entry->reasm, frag, sizeof(conn_handle), out_req);
+}
+
+/**
+ * Turns a write holding a complete request into an smp request mbuf.
+ *
+ * @return                      The request, or NULL on allocation failure.
+ */
+static struct os_mbuf *
+smp_ble_req_from_write(struct ble_gatt_access_ctxt *ctxt)
+{
+    struct os_mbuf *m_req;
+    uint16_t conn_handle;
+    int rc;
+
+    /* Try to reuse the BLE packet mbuf as the smp request.  This
+     * requires a two-byte usrhdr to hold the BLE connection handle so
+     * that the smp response can be sent to the correct peer.  If
+     * it is not possible to reuse the mbuf, then allocate a new one
+     * and copy the request contents.
+     */
+    if (OS_MBUF_USRHDR_LEN(ctxt->om) >= sizeof(conn_handle)) {
+        /* Sufficient usrhdr space already present. */
+        m_req = ctxt->om;
+        ctxt->om = NULL;
+    } else if (OS_MBUF_LEADINGSPACE(ctxt->om) >= sizeof(conn_handle)) {
+
+        /* Usrhdr isn't present, but there is enough leading space to
+         * add one.
+         */
+        m_req = ctxt->om;
+        ctxt->om = NULL;
+
+        m_req->om_pkthdr_len += sizeof(conn_handle);
+    } else {
+        /* The mbuf can't be reused.  Allocate a new one and perform a
+         * copy.  Don't set ctxt->om to NULL; let the NimBLE host free
+         * it.
+         */
+        m_req = os_msys_get_pkthdr(OS_MBUF_PKTLEN(ctxt->om), sizeof(conn_handle));
+        if (!m_req) {
+            return NULL;
+        }
+        rc = os_mbuf_appendfrom(m_req, ctxt->om, 0, OS_MBUF_PKTLEN(ctxt->om));
+        if (rc) {
+            os_mbuf_free_chain(m_req);
+            return NULL;
+        }
+    }
+
+    return m_req;
+}
+
 static int
 gatt_svr_chr_access_smp(uint16_t conn_handle, uint16_t attr_handle,
                             struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     int rc;
+    int req_len;
     struct os_mbuf *m_req;
 
     switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
-            /* Try to reuse the BLE packet mbuf as the smp request.  This
-             * requires a two-byte usrhdr to hold the BLE connection handle so
-             * that the smp response can be sent to the correct peer.  If
-             * it is not possible to reuse the mbuf, then allocate a new one
-             * and copy the request contents.
-             */
-            if (OS_MBUF_USRHDR_LEN(ctxt->om) >= sizeof (conn_handle)) {
-                /* Sufficient usrhdr space already present. */
-                m_req = ctxt->om;
-                ctxt->om = NULL;
-            } else if (OS_MBUF_LEADINGSPACE(ctxt->om) >=
-                       sizeof (conn_handle)) {
+            req_len = smp_reasm_req_len(ctxt->om);
+            if (smp_ble_reasm_find(conn_handle) == NULL && req_len != 0 &&
+                req_len <= OS_MBUF_PKTLEN(ctxt->om)) {
 
-                /* Usrhdr isn't present, but there is enough leading space to
-                 * add one.
-                 */
-                m_req = ctxt->om;
-                ctxt->om = NULL;
-
-                m_req->om_pkthdr_len += sizeof (conn_handle);
-            } else {
-                /* The mbuf can't be reused.  Allocate a new one and perform a
-                 * copy.  Don't set ctxt->om to NULL; let the NimBLE host free
-                 * it.
-                 */
-                m_req = os_msys_get_pkthdr(OS_MBUF_PKTLEN(ctxt->om),
-                                           sizeof (conn_handle));
+                /* Complete request in a single write. */
+                m_req = smp_ble_req_from_write(ctxt);
                 if (!m_req) {
                     return BLE_ATT_ERR_INSUFFICIENT_RES;
                 }
-                rc = os_mbuf_appendfrom(m_req, ctxt->om, 0,
-                                        OS_MBUF_PKTLEN(ctxt->om));
+            } else {
+                /* Part of a request split over several writes. */
+                rc = smp_ble_reasm_rx(conn_handle, ctxt->om, &m_req);
                 if (rc) {
                     return BLE_ATT_ERR_INSUFFICIENT_RES;
+                }
+                if (!m_req) {
+                    return 0;
                 }
             }
 
@@ -222,6 +345,12 @@ smp_ble_gatt_svr_init(void)
     }
 
     rc = ble_gatts_add_svcs(gatt_svr_svcs);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ble_gap_event_listener_register(&smp_ble_gap_listener,
+                                         smp_ble_gap_event, NULL);
     if (rc != 0) {
         return rc;
     }
