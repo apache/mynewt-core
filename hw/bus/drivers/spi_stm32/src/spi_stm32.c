@@ -899,6 +899,24 @@ static const struct bus_dev_ops bus_spi_stm32_ops = {
     .duplex_write_read = spi_stm32_duplex_write_read,
 };
 
+static void
+stm32_dma_clock_enable(stm32_dma_ch_t ch)
+{
+    if (ch <= DMA1_CH7) {
+#if defined(__HAL_RCC_DMA1_CLK_ENABLE)
+        __HAL_RCC_DMA1_CLK_ENABLE();
+#elif defined(__HAL_RCC_GPDMA1_CLK_ENABLE)
+        __HAL_RCC_GPDMA1_CLK_ENABLE();
+#endif
+    } else {
+#if defined(__HAL_RCC_DMA2_CLK_ENABLE)
+        __HAL_RCC_DMA2_CLK_ENABLE();
+#elif defined(__HAL_RCC_GPDMA2_CLK_ENABLE)
+        __HAL_RCC_GPDMA2_CLK_ENABLE();
+#endif
+    }
+}
+
 /* Helper function to setup interrupt handler for SPI and DMA */
 static void
 stm32_init_interrupt(uint8_t irqn, uint8_t pri, void (*handler)(void))
@@ -974,19 +992,8 @@ bus_spi_stm32_dev_init_func(struct os_dev *odev, void *arg)
         __HAL_LINKDMA(&dd->hspi, hdmarx, dd->dmarx);
         __HAL_LINKDMA(&dd->hspi, hdmatx, dd->dmatx);
 
-        if (spi_hw->dmarx_cfg->dma_ch <= DMA1_CH7) {
-#if defined(__HAL_RCC_DMA1_CLK_ENABLE)
-            __HAL_RCC_DMA1_CLK_ENABLE();
-#elif defined(__HAL_RCC_GPDMA1_CLK_DISABLE)
-            __HAL_RCC_GPDMA1_CLK_DISABLE();
-#endif
-        } else {
-#ifdef __HAL_RCC_DMA2_CLK_ENABLE
-            __HAL_RCC_DMA2_CLK_ENABLE();
-#elif defined(__HAL_RCC_GPDMA2_CLK_DISABLE)
-            __HAL_RCC_GPDMA2_CLK_DISABLE();
-#endif
-        }
+        stm32_dma_clock_enable(spi_hw->dmarx_cfg->dma_ch);
+        stm32_dma_clock_enable(spi_hw->dmatx_cfg->dma_ch);
 #ifdef __HAL_RCC_DMAMUX1_CLK_ENABLE
         __HAL_RCC_DMAMUX1_CLK_ENABLE();
 #endif
