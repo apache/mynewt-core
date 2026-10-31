@@ -15,36 +15,36 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-. $CORE_PATH/hw/scripts/common.sh
+. "$CORE_PATH"/hw/scripts/common.sh
 
 #
 # FILE_NAME must contain the name of the file to load
 # FLASH_OFFSET must contain the offset in flash where to place it
 #
 ezflashcli_load () {
-    if [ -z ${FILE_NAME} ]; then
+    if [ -z "${FILE_NAME}" ]; then
         echo "Missing filename"
         exit 1
     fi
     if [ ! -f "${FILE_NAME}" ]; then
         # tries stripping current path for readability
         FILE=${FILE_NAME##$(pwd)/}
-        echo "Cannot find file" $FILE
+        echo "Cannot find file" "$FILE"
         exit 1
     fi
 
     if [ "$BOOT_LOADER" ]; then
-        echo "Downloading" $FILE_NAME
-        ezFlashCLI image_flash ${FILE_NAME}
+        echo "Downloading" "$FILE_NAME"
+        ezFlashCLI image_flash "${FILE_NAME}"
     else
         if [ -z ${FLASH_OFFSET} ]; then
             echo "Missing flash offset"
             exit 1
         fi
 
-        echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
+        echo "Downloading" "$FILE_NAME" "to" $FLASH_OFFSET
 
-        ezFlashCLI write_flash ${FLASH_OFFSET} ${FILE_NAME}
+        ezFlashCLI write_flash ${FLASH_OFFSET} "${FILE_NAME}"
     fi
     ezFlashCLI go
 

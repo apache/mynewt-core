@@ -29,7 +29,7 @@
 #  - FLASH_OFFSET contains the flash offset to download to
 #  - BOOT_LOADER is set if downloading a bootloader
 
-. $CORE_PATH/hw/scripts/jlink.sh
+. "$CORE_PATH"/hw/scripts/jlink.sh
 
 common_file_to_load
 
@@ -46,11 +46,11 @@ GDB_CMD_FILE=.gdb_load
 JLINK_LOG_FILE=.jlink_log
 
 # flash_loader build for this BSP
-if [ -z $FLASH_LOADER ]; then
+if [ -z "$FLASH_LOADER" ]; then
     FL_TGT=da1469x_flash_loader
     FLASH_LOADER=$BIN_ROOT/targets/$FL_TGT/app/@apache-mynewt-core/apps/flash_loader/flash_loader.elf
 fi
-if [ ! -f $FLASH_LOADER ]; then
+if [ ! -f "$FLASH_LOADER" ]; then
     FILE=${FLASH_LOADER##$(pwd)/}
     echo "Can't find flash_loader : $FILE"
     if [ ! -z $FL_TGT ]; then
@@ -59,9 +59,9 @@ if [ ! -f $FLASH_LOADER ]; then
     exit 1
 fi
 
-if [ ! -f $FILE_NAME ]; then
+if [ ! -f "$FILE_NAME" ]; then
     FILE=${FILE_NAME##$(pwd)/}
-    echo "Cannot find file" $FILE
+    echo "Cannot find file" "$FILE"
     exit 1
 fi
 
@@ -71,7 +71,7 @@ hex2le() {
 
 # XXX Write windows version also
 file_size() {
-    echo `wc -c $FILE_NAME | awk '{print $1}'`
+    echo `wc -c "$FILE_NAME" | awk '{print $1}'`
 }
 
 if [ "$BOOT_LOADER" ]; then
@@ -88,11 +88,11 @@ if [ "$BOOT_LOADER" ]; then
             exit 1
         fi
 
-        ${CORE_PATH}/hw/mcu/dialog/da1469x/scripts/da1469x_header_tool.py secure --sign ${MYNEWT_VAL_BOOT_SIG_PEM} \
+        "${CORE_PATH}"/hw/mcu/dialog/da1469x/scripts/da1469x_header_tool.py secure --sign ${MYNEWT_VAL_BOOT_SIG_PEM} \
             -s${MYNEWT_VAL_BOOT_SIG_SLOT} -d${MYNEWT_VAL_BOOT_AES_SLOT} \
-            -E${MYNEWT_VAL_BOOT_AES_KEY} ${IMAGE_FILE} ${FILE_NAME}
+            -E${MYNEWT_VAL_BOOT_AES_KEY} "${IMAGE_FILE}" "${FILE_NAME}"
     else
-        ${CORE_PATH}/hw/mcu/dialog/da1469x/scripts/da1469x_header_tool.py nonsecure ${IMAGE_FILE} ${FILE_NAME}
+        "${CORE_PATH}"/hw/mcu/dialog/da1469x/scripts/da1469x_header_tool.py nonsecure "${IMAGE_FILE}" "${FILE_NAME}"
     fi
 
     if [ $? != 0 ]; then
@@ -103,15 +103,15 @@ if [ "$BOOT_LOADER" ]; then
     FILE_NAME=${IMAGE_FILE}
 fi
 
-FILE_SIZE=$(file_size $FILE_NAME)
+FILE_SIZE=$(file_size "$FILE_NAME")
 
 if [ -z $JLINK_TARGET_HOST ]; then
     JLINK_SERVER_CMD="shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device cortex-m33 -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD > $JLINK_LOG_FILE 2>&1 &\""
 fi
 
 if [ -n "$UART_PROTO_DEV" ]; then
-    ${CORE_PATH}/hw/mcu/dialog/da1469x/scripts/da1469x_serial.py load ${FLASH_LOADER}.bin \
-                -u ${UART_PROTO_DEV} -r ${CORE_PATH}/hw/mcu/dialog/da1469x/scripts/reset.sh
+    "${CORE_PATH}"/hw/mcu/dialog/da1469x/scripts/da1469x_serial.py load "${FLASH_LOADER}".bin \
+                -u ${UART_PROTO_DEV} -r "${CORE_PATH}"/hw/mcu/dialog/da1469x/scripts/reset.sh
     if [ $? != 0 ]; then
         exit 1
     fi
@@ -126,11 +126,13 @@ mon halt
 EOF
 
 if [ ! -n "$UART_PROTO_DEV" ]; then
-    echo "restore $FLASH_LOADER.bin binary 0x20000000" >> $GDB_CMD_FILE
+    # gdb restore command cannot handle paths with spaces, use a path
+    # relative to the current directory if possible.
+    echo "restore ${FLASH_LOADER#"$(pwd)"/}.bin binary 0x20000000" >> $GDB_CMD_FILE
 fi
 
 cat >> $GDB_CMD_FILE <<EOF
-symbol-file $FLASH_LOADER
+symbol-file "$FLASH_LOADER"
 
 # Configure QSPI controller so it can read flash in automode (values 
 # valid for Macronix flash found on Dialog development kits)
@@ -156,7 +158,7 @@ while fl_state != 1
 end
 
 fl_erase 0 $FLASH_OFFSET $FILE_SIZE
-fl_program $FILE_NAME 0 $FLASH_OFFSET
+fl_program ${FILE_NAME#"$(pwd)"/} 0 $FLASH_OFFSET
 
 # 'mon reset' does not appear to reset the board. Write to MCU register
 # directly instead.

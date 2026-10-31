@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-. $CORE_PATH/hw/scripts/common.sh
+. "$CORE_PATH"/hw/scripts/common.sh
 
 jlink_sn () {
     if [ -n "$JLINK_SN" ]; then
@@ -32,14 +32,14 @@ jlink_sn () {
 # FLASH_OFFSET must contain the offset in flash where to place it
 #
 nrfjprog_load () {
-    if [ -z ${FILE_NAME} ]; then
+    if [ -z "${FILE_NAME}" ]; then
         echo "Missing filename"
         exit 1
     fi
     if [ ! -f "${FILE_NAME}" ]; then
         # tries stripping current path for readability
         FILE=${FILE_NAME##$(pwd)/}
-        echo "Cannot find file" $FILE
+        echo "Cannot find file" "$FILE"
         exit 1
     fi
     if [ -z ${FLASH_OFFSET} ]; then
@@ -50,13 +50,13 @@ nrfjprog_load () {
     if [ -n "${MYNEWT_VAL_NRFJPROG_COPROCESSOR}" ] ; then
       NRFJPROG_ARG="${NRFJPROG_ARG} --coprocessor ${MYNEWT_VAL_NRFJPROG_COPROCESSOR}"
     fi
-    arm-none-eabi-objcopy -O ihex -I binary --adjust-vma ${FLASH_OFFSET} ${FILE_NAME} ${BIN_BASENAME}.hex
+    arm-none-eabi-objcopy -O ihex -I binary --adjust-vma ${FLASH_OFFSET} "${FILE_NAME}" "${BIN_BASENAME}".hex
 
     jlink_sn
 
-    echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
+    echo "Downloading" "$FILE_NAME" "to" $FLASH_OFFSET
 
-    nrfjprog ${NRFJPROG_ARG} --program ${BIN_BASENAME}.hex --sectorerase --verify $SRN_ARG
+    nrfjprog ${NRFJPROG_ARG} --program "${BIN_BASENAME}".hex --sectorerase --verify $SRN_ARG
 
     if [ $? -ne 0 ]; then
         exit 1

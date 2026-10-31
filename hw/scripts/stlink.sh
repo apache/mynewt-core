@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-. $CORE_PATH/hw/scripts/common.sh
+. "$CORE_PATH"/hw/scripts/common.sh
 
 #
 # FILE_NAME must contain the name of the file to load
@@ -40,14 +40,14 @@ stlink_sn () {
 stlink_load () {
     stlink_sn
 
-    if [ -z $FILE_NAME ]; then
+    if [ -z "$FILE_NAME" ]; then
         echo "Missing filename"
         exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
         # tries stripping current path for readability
         FILE=${FILE_NAME##$(pwd)/}
-        echo "Cannot find file" $FILE
+        echo "Cannot find file" "$FILE"
         exit 1
     fi
     if [ -z $FLASH_OFFSET ]; then
@@ -55,12 +55,12 @@ stlink_load () {
         exit 1
     fi
 
-    echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
+    echo "Downloading" "$FILE_NAME" "to" $FLASH_OFFSET
 
     if [ "$STLINK_USE_STM32_PROGRAMMER_CLI" == 1 ] ; then
-        STM32_Programmer_CLI -c port=SWD $EXTRA_JTAG_CMD -d $FILE_NAME $FLASH_OFFSET -rst
+        STM32_Programmer_CLI -c port=SWD $EXTRA_JTAG_CMD -d "$FILE_NAME" $FLASH_OFFSET -rst
     else
-        st-flash $EXTRA_JTAG_CMD --reset write $FILE_NAME $FLASH_OFFSET
+        st-flash $EXTRA_JTAG_CMD --reset write "$FILE_NAME" $FLASH_OFFSET
     fi
     if [ $? -ne 0 ]; then
         exit 1
@@ -81,12 +81,12 @@ stlink_debug () {
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
 
     if [ -z "$NO_GDB" ]; then
-        if [ -z $FILE_NAME ]; then
+        if [ -z "$FILE_NAME" ]; then
             echo "Missing filename"
             exit 1
         fi
         if [ ! -f "$FILE_NAME" ]; then
-            echo "Cannot find file" $FILE_NAME
+            echo "Cannot find file" "$FILE_NAME"
             exit 1
         fi
 
@@ -108,7 +108,7 @@ stlink_debug () {
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
         set -m
-        $GDB -x $GDB_CMD_FILE $FILE_NAME
+        $GDB -x $GDB_CMD_FILE "$FILE_NAME"
         set +m
         rm $GDB_CMD_FILE
         sleep 1

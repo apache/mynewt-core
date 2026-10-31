@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-. $CORE_PATH/hw/scripts/common.sh
+. "$CORE_PATH"/hw/scripts/common.sh
 
 CFG_RESET="reset halt"
 
@@ -46,24 +46,24 @@ openocd_load () {
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
 
     if [ $WINDOWS -eq 1 ] ; then
-        FILE_NAME=`cygpath -u $FILE_NAME`
+        FILE_NAME=`cygpath -u "$FILE_NAME"`
     fi
     echo "$EXTRA_JTAG_CMD" > $OCD_CMD_FILE
     echo "init" >> $OCD_CMD_FILE
     echo "$CFG_RESET" >> $OCD_CMD_FILE
     echo "$CFG_POST_INIT" >> $OCD_CMD_FILE
-    echo "flash write_image erase $FILE_NAME $FLASH_OFFSET" >> $OCD_CMD_FILE
+    echo "flash write_image erase {$FILE_NAME} $FLASH_OFFSET" >> $OCD_CMD_FILE
 
     openocd_sn
 
-    if [ -z $FILE_NAME ]; then
+    if [ -z "$FILE_NAME" ]; then
         echo "Missing filename"
         exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
         # tries stripping current path for readability
         FILE=${FILE_NAME##$(pwd)/}
-        echo "Cannot find file" $FILE
+        echo "Cannot find file" "$FILE"
         exit 1
     fi
     if [ -z $FLASH_OFFSET ]; then
@@ -71,7 +71,7 @@ openocd_load () {
         exit 1
     fi
 
-    echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
+    echo "Downloading" "$FILE_NAME" "to" $FLASH_OFFSET
 
     openocd $CFG -f $OCD_CMD_FILE $EXTRA_JTAG_CMD -c shutdown
 
@@ -98,12 +98,12 @@ openocd_debug () {
     echo "$EXTRA_JTAG_CMD" >> $OCD_CMD_FILE
 
     if [ -z "$NO_GDB" ]; then
-        if [ -z $FILE_NAME ]; then
+        if [ -z "$FILE_NAME" ]; then
             echo "Missing filename"
             exit 1
         fi
         if [ ! -f "$FILE_NAME" ]; then
-            echo "Cannot find file" $FILE_NAME
+            echo "Cannot find file" "$FILE_NAME"
             exit 1
         fi
 
@@ -135,11 +135,11 @@ openocd_debug () {
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
         if [ $WINDOWS -eq 1 ]; then
-            FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
+            FILE_NAME=`echo "$FILE_NAME" | sed 's/\//\\\\/g'`
             $COMSPEC /C "start $COMSPEC /C $GDB -x $GDB_CMD_FILE $FILE_NAME"
         else
             set -m
-            $GDB -x $GDB_CMD_FILE $FILE_NAME
+            $GDB -x $GDB_CMD_FILE "$FILE_NAME"
             set +m
             rm $GDB_CMD_FILE
             sleep 1

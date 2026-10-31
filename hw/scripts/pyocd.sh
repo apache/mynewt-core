@@ -16,7 +16,7 @@
 # under the License.
 #
 
-. $CORE_PATH/hw/scripts/common.sh
+. "$CORE_PATH"/hw/scripts/common.sh
 
 CONNECTION_MODE_DEFAULT="halt"
 
@@ -50,14 +50,14 @@ pyocd_load () {
         CONNECTION_MODE=$CONNECTION_MODE_DEFAULT
     fi
 
-    if [ -z $FILE_NAME ]; then
+    if [ -z "$FILE_NAME" ]; then
         echo "Missing filename"
         exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
         # tries stripping current path for readability
         FILE=${FILE_NAME##$(pwd)/}
-        echo "Cannot find file" $FILE
+        echo "Cannot find file" "$FILE"
         exit 1
     fi
     if [ -z $FLASH_OFFSET ]; then
@@ -67,9 +67,9 @@ pyocd_load () {
 
     pyocd_sn
 
-    echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
+    echo "Downloading" "$FILE_NAME" "to" $FLASH_OFFSET
 
-    pyocd flash -e sector -M $CONNECTION_MODE -t $TARGET $FILE_NAME@$FLASH_OFFSET --format bin $UID_ARG
+    pyocd flash -e sector -M $CONNECTION_MODE -t $TARGET "$FILE_NAME"@$FLASH_OFFSET --format bin $UID_ARG
     if [ $? -ne 0 ]; then
         exit 1
     fi
@@ -99,12 +99,12 @@ pyocd_debug () {
     fi
 
     if [ -z "$NO_GDB" ]; then
-        if [ -z $FILE_NAME ]; then
+        if [ -z "$FILE_NAME" ]; then
             echo "Missing filename"
             exit 1
         fi
         if [ ! -f "$FILE_NAME" ]; then
-            echo "Cannot find file" $FILE_NAME
+            echo "Cannot find file" "$FILE_NAME"
             exit 1
         fi
 
@@ -126,7 +126,7 @@ pyocd_debug () {
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
         set -m
-        $GDB -x $GDB_CMD_FILE $FILE_NAME
+        $GDB -x $GDB_CMD_FILE "$FILE_NAME"
         set +m
         rm $GDB_CMD_FILE
         sleep 1

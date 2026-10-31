@@ -44,7 +44,7 @@
 #  - PIC32_JLINK_SPEED interface speed in kHz (default 12000)
 #
 
-. $CORE_PATH/hw/scripts/jlink.sh
+. "$CORE_PATH"/hw/scripts/jlink.sh
 
 PIC32_DEVICE=${MYNEWT_VAL_JLINK_TARGET}
 IMAGE_FLASH_ADDR=${FLASH_OFFSET}
@@ -83,21 +83,24 @@ pic32_jlink_load() {
     jlink_sn
 
     local script=${BIN_BASENAME}.jlink
+    # Use paths relative to the current directory if possible, J-Link
+    # commands do not handle paths with spaces.
+    local base=${BIN_BASENAME#"$(pwd)"/}
 
-    echo "r" > $script
-    echo "h" >> $script
+    echo "r" > "$script"
+    echo "h" >> "$script"
     if [ "$BOOT_LOADER" -o "$MYNEWT_VAL_MCU_NO_BOOTLOADER_BUILD" == "1" ]; then
-        xc32-objcopy -O ihex ${BIN_BASENAME}.elf ${BIN_BASENAME}.hex || exit 1
-        echo "loadfile ${BIN_BASENAME}.hex" >> $script
+        xc32-objcopy -O ihex "${BIN_BASENAME}".elf "${BIN_BASENAME}".hex || exit 1
+        echo "loadfile ${base}.hex" >> "$script"
     else
         # J-Link erases only flash pages covered by the image, everything
         # else (bootloader, other slots, data areas) is left intact.
-        cp ${BIN_BASENAME}.img ${BIN_BASENAME}.bin || exit 1
-        echo "loadfile ${BIN_BASENAME}.bin ${IMAGE_FLASH_ADDR}" >> $script
+        cp "${BIN_BASENAME}".img "${BIN_BASENAME}".bin || exit 1
+        echo "loadfile ${base}.bin ${IMAGE_FLASH_ADDR}" >> "$script"
     fi
-    echo "q" >> $script
+    echo "q" >> "$script"
 
-    pic32_jlink_run -AutoConnect 1 -speed ${PIC32_JLINK_SPEED} -CommandFile $script
+    pic32_jlink_run -AutoConnect 1 -speed ${PIC32_JLINK_SPEED} -CommandFile "$script"
     # loadfile prints O.K. when done, J-Link does not always report an error
     # when target could not be reached
     if ! echo "$JLINK_OUT" | grep -q -E "^O\.K\.[[:space:]]*$"; then
@@ -108,11 +111,11 @@ pic32_jlink_load() {
     # Code started by debugger reset and go does not run reliably (first
     # context switch never happens). Pulse MCLR without connecting to the
     # target instead.
-    echo "r0" > $script
-    echo "sleep 200" >> $script
-    echo "r1" >> $script
-    echo "q" >> $script
-    pic32_jlink_run -CommandFile $script
+    echo "r0" > "$script"
+    echo "sleep 200" >> "$script"
+    echo "r1" >> "$script"
+    echo "q" >> "$script"
+    pic32_jlink_run -CommandFile "$script"
 }
 
 if [ -z "$PIC32_DEVICE" ]; then
@@ -126,7 +129,7 @@ fi
 
 case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
 "mplab_ipe")
-    . $CORE_PATH/hw/scripts/mplab_ipe.sh
+    . "$CORE_PATH"/hw/scripts/mplab_ipe.sh
     # ipecmd expects device name without PIC prefix
     MPLAB_DEVICE=${MYNEWT_VAL_MYNEWT_DOWNLOADER_MPLAB_DEVICE:-${PIC32_DEVICE#PIC}}
     ipe_load
