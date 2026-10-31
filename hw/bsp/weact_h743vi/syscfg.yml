@@ -82,9 +82,6 @@ syscfg.vals:
     SPIFLASH_PAGE_SIZE: 256
     SPIFLASH_SECTOR_COUNT: 2048
     SPIFLASH_W25Q64JV: 1
-    # spi_stm32 DMA transfers return stale data on H7 (D-cache)
-    SPI_STM32_MIN_RX_LENGTH_FOR_DMA: -1
-    SPI_STM32_MIN_TX_LENGTH_FOR_DMA: -1
 
     # Flasher parameters
     MYNEWT_DOWNLOADER: stm32_programmer_cli
