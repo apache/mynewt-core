@@ -28,7 +28,7 @@
 #  - NO_GDB set if we should not start gdb to debug
 #
 
-. $CORE_PATH/hw/scripts/jlink.sh
+. "$CORE_PATH"/hw/scripts/jlink.sh
 
 FILE_NAME=$BIN_BASENAME.elf
 JLINK_DEV="Cortex-M0+"

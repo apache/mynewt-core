@@ -38,6 +38,6 @@ fi
 GDB_SCRIPT_PATH=$BSP_PATH/sim.gdb
 FILE_NAME=$BIN_BASENAME.elf
 
-echo "Debugging" $FILE_NAME
+echo "Debugging" "$FILE_NAME"
 
-gdb -x $GDB_SCRIPT_PATH $FILE_NAME
+gdb -x "$GDB_SCRIPT_PATH" "$FILE_NAME"

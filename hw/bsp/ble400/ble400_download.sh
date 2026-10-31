@@ -29,7 +29,7 @@
 #  - FLASH_OFFSET contains the flash offset to download to
 #  - BOOT_LOADER is set if downloading a bootloader
 
-. $CORE_PATH/hw/scripts/openocd.sh
+. "$CORE_PATH"/hw/scripts/openocd.sh
 
 CFG="-s $BSP_PATH -f ble400.cfg"
 

@@ -43,7 +43,7 @@ if [ "$MFG_IMAGE" ]; then
 fi
 
 if [ $USE_OPENOCD -eq 1 ]; then
-    . $CORE_PATH/hw/scripts/openocd.sh
+    . "$CORE_PATH"/hw/scripts/openocd.sh
 
     CFG="-f interface/cmsis-dap.cfg -f target/nrf51.cfg"
 
@@ -51,7 +51,7 @@ if [ $USE_OPENOCD -eq 1 ]; then
     openocd_load
     openocd_reset_run
 else
-    . $CORE_PATH/hw/scripts/jlink.sh
+    . "$CORE_PATH"/hw/scripts/jlink.sh
 
     JLINK_DEV="nRF51422_xxAC"
 

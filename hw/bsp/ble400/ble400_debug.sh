@@ -28,7 +28,7 @@
 #  - NO_GDB set if we should not start gdb to debug
 #
 
-. $CORE_PATH/hw/scripts/openocd.sh
+. "$CORE_PATH"/hw/scripts/openocd.sh
 
 CFG="-s $BSP_PATH -f ble400.cfg"
 

@@ -42,7 +42,7 @@ if [ "$MFG_IMAGE" ]; then
 fi
 
 if [ $USE_OPENOCD -eq 1 ]; then
-    . $CORE_PATH/hw/scripts/openocd.sh
+    . "$CORE_PATH"/hw/scripts/openocd.sh
 
     #
     # XXXX note that this is using openocd through STM32, with openocd
@@ -54,7 +54,7 @@ if [ $USE_OPENOCD -eq 1 ]; then
     openocd_load
     openocd_reset_run
 else
-    . $CORE_PATH/hw/scripts/jlink.sh
+    . "$CORE_PATH"/hw/scripts/jlink.sh
 
     JLINK_DEV="nRF52"
 
