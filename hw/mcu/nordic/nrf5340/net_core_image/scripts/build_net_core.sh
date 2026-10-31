@@ -35,24 +35,24 @@ fi
 export WORK_DIR=${MYNEWT_USER_WORK_DIR}
 
 export NEWT_CREATE_IMAGE_OUTPUT=$WORK_DIR/create_image_output
-pushd $MYNEWT_PROJECT_ROOT
+pushd "$MYNEWT_PROJECT_ROOT" || exit 1
 
-${NEWT} create-image ${MYNEWT_VAL_NET_CORE_IMAGE_TARGET_NAME} $CREATE_IMAGE_FLAGS -o $NEWT_CREATE_IMAGE_OUTPUT
+"${NEWT}" create-image ${MYNEWT_VAL_NET_CORE_IMAGE_TARGET_NAME} $CREATE_IMAGE_FLAGS -o "$NEWT_CREATE_IMAGE_OUTPUT"
 # Extract image name from output
-export NET_CORE_IMG=`awk '/App image successfully generated:/ { print $NF }' $NEWT_CREATE_IMAGE_OUTPUT`
+export NET_CORE_IMG=`sed -n 's/^App image successfully generated: //p' "$NEWT_CREATE_IMAGE_OUTPUT"`
 
-cd ${WORK_DIR}
+cd "${WORK_DIR}" || exit 1
 if [ -n "$NET_CORE_IMG" ] ; then
   # Copy image to local folder so objcopy creates symbols with short names instead of very long ones.
   # Name net_core.img translates to two symbols created by objcopy:
   # _binary_net_core_img_start, _binary_net_core_img_end those symbols are then used to reference content
   # of net_core.img. Changing this name could lead to invalid builds.
-  cp $NET_CORE_IMG ${WORK_DIR}/net_core.img
+  cp "$NET_CORE_IMG" "${WORK_DIR}"/net_core.img
 
   # Make .o file from existing binary image
-  ${OBJCOPY} --rename-section .data=.net_core_img,alloc,load,readonly,data,contents -O elf32-littlearm -B armv8-m.main -I binary net_core.img ${NET_CORE_O}
+  "${OBJCOPY}" --rename-section .data=.net_core_img,alloc,load,readonly,data,contents -O elf32-littlearm -B armv8-m.main -I binary net_core.img "${NET_CORE_O}"
 
   # Archive .o for newt to use
-  ${AR} -rcs ${NET_CORE_A} ${NET_CORE_O}
+  "${AR}" -rcs "${NET_CORE_A}" "${NET_CORE_O}"
 fi
 popd
