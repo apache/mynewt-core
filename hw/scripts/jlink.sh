@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-. $CORE_PATH/hw/scripts/common.sh
+. "$CORE_PATH"/hw/scripts/common.sh
 
 JLINK_GDB_SERVER=JLinkGDBServer
 
@@ -60,14 +60,14 @@ jlink_load () {
     if [ $WINDOWS -eq 1 ]; then
         JLINK_GDB_SERVER=JLinkGDBServerCL
     fi
-    if [ -z $FILE_NAME ]; then
+    if [ -z "$FILE_NAME" ]; then
         echo "Missing filename"
         exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
         # tries stripping current path for readability
         FILE=${FILE_NAME##$(pwd)/}
-        echo "Cannot find file" $FILE
+        echo "Cannot find file" "$FILE"
         exit 1
     fi
     if [ -z $FLASH_OFFSET ]; then
@@ -75,7 +75,7 @@ jlink_load () {
         exit 1
     fi
 
-    echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
+    echo "Downloading" "$FILE_NAME" "to" $FLASH_OFFSET
 
     # XXX for some reason JLinkExe overwrites flash at offset 0 when
     # downloading somewhere in the flash. So need to figure out how to tell it
@@ -86,7 +86,9 @@ jlink_load () {
     fi
     echo "$JLINK_TARGET_CMD" >> $GDB_CMD_FILE
     echo "mon reset" >> $GDB_CMD_FILE
-    echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
+    # gdb restore command cannot handle paths with spaces, use a path
+    # relative to the current directory if possible.
+    echo "restore ${FILE_NAME#"$(pwd)"/} binary $FLASH_OFFSET" >> $GDB_CMD_FILE
 
     # XXXX 'newt run' was not always updating the flash on nrf52dk. With
     # 'info reg' in place it seems to work every time. Not sure why.
@@ -153,16 +155,16 @@ jlink_debug() {
     if [ -z "$NO_GDB" ]; then
         GDB_CMD_FILE=.gdb_cmds
 
-        if [ -z $FILE_NAME ]; then
+        if [ -z "$FILE_NAME" ]; then
             echo "Missing filename"
             exit 1
         fi
         if [ ! -f "$FILE_NAME" ]; then
-            echo "Cannot find file" $FILE_NAME
+            echo "Cannot find file" "$FILE_NAME"
             exit 1
         fi
 
-        echo "Debugging" $FILE_NAME
+        echo "Debugging" "$FILE_NAME"
 
         if [ -z $JLINK_TARGET_HOST ]; then
             #
@@ -181,7 +183,7 @@ jlink_debug() {
         fi
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
-        $GDB -x $GDB_CMD_FILE $FILE_NAME
+        $GDB -x $GDB_CMD_FILE "$FILE_NAME"
     else
         $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD
     fi

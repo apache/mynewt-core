@@ -51,17 +51,17 @@ fi
 
 case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
   "bsp_downloader")
-    $CORE_PATH/$MYNEWT_VAL_MYNEWT_DOWNLOADER_SCRIPT
+    "$CORE_PATH"/$MYNEWT_VAL_MYNEWT_DOWNLOADER_SCRIPT
     ;;
   "ezflashcli")
     check_downloader ezFlashCLI
-    . $CORE_PATH/hw/scripts/ezflashcli.sh
+    . "$CORE_PATH"/hw/scripts/ezflashcli.sh
     common_file_to_load
     ezflashcli_load
     ;;
   "jlink")
     check_downloader $JLINKEXE
-    . $CORE_PATH/hw/scripts/jlink.sh
+    . "$CORE_PATH"/hw/scripts/jlink.sh
     if [ -z "${MYNEWT_VAL_JLINK_TARGET}" ] ; then
       >&2 echo -e "\n\nSyscfg value MYNEWT_DOWNLOADER set to 'jlink' but JLINK_TARGET not set in syscfg."
       exit -1
@@ -72,19 +72,19 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     ;;
   "nrfjprog")
     check_downloader nrfjprog
-    . $CORE_PATH/hw/scripts/nrfjprog.sh
+    . "$CORE_PATH"/hw/scripts/nrfjprog.sh
     common_file_to_load
     nrfjprog_load
     ;;
   "nrfutil")
     check_downloader nrfutil
-    . $CORE_PATH/hw/scripts/nrfutil.sh
+    . "$CORE_PATH"/hw/scripts/nrfutil.sh
     common_file_to_load
     nrfutil_load
     ;;
   "openocd")
     check_downloader openocd
-    . $CORE_PATH/hw/scripts/openocd.sh
+    . "$CORE_PATH"/hw/scripts/openocd.sh
     if [ -n "${MYNEWT_VAL_MYNEWT_DOWNLOADER_OPENOCD_INTERFACE}" ] ; then
       CFG="-f ${MYNEWT_VAL_MYNEWT_DOWNLOADER_OPENOCD_INTERFACE}"
     fi
@@ -105,7 +105,7 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     ;;
   "pyocd")
     check_downloader pyocd
-    . $CORE_PATH/hw/scripts/pyocd.sh
+    . "$CORE_PATH"/hw/scripts/pyocd.sh
     if [ -z "${MYNEWT_VAL_PYOCD_TARGET}" ] ; then
       >&2 echo -e "\n\nSyscfg value MYNEWT_DOWNLOADER set to 'pyocd' but PYOCD_TARGET not set in syscfg."
       >&2 echo -e "pyocd supported targets can be found with 'pyocd list --targets'\n"
@@ -117,13 +117,13 @@ case "${MYNEWT_VAL_MYNEWT_DOWNLOADER}" in
     ;;
   "stflash")
     check_downloader st-flash
-    . $CORE_PATH/hw/scripts/stlink.sh
+    . "$CORE_PATH"/hw/scripts/stlink.sh
     common_file_to_load
     stlink_load
     ;;
   "stm32_programmer_cli")
     check_downloader STM32_Programmer_CLI
-    . $CORE_PATH/hw/scripts/stm32_programmer.sh
+    . "$CORE_PATH"/hw/scripts/stm32_programmer.sh
     common_file_to_load
     stlink_load
     ;;

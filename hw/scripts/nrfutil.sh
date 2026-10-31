@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-. $CORE_PATH/hw/scripts/common.sh
+. "$CORE_PATH"/hw/scripts/common.sh
 
 jlink_sn () {
     if [ -n "$JLINK_SN" ]; then
@@ -34,7 +34,7 @@ jlink_sn () {
 nrfutil_load () {
     HEX_FILE=${BIN_BASENAME}.hex
     ELF_FILE=${BIN_BASENAME}.elf
-    if [ -z ${FILE_NAME} ]; then
+    if [ -z "${FILE_NAME}" ]; then
         echo "Missing filename"
         exit 1
     fi
@@ -46,17 +46,17 @@ nrfutil_load () {
 
     # If nordicDfu is to be used, create hex file directly from ELF
     if [ "${MYNEWT_VAL_NRFUTIL_DFU_MODE:-0}" -eq 1 ] ; then
-        arm-none-eabi-objcopy -O ihex ${ELF_FILE} ${HEX_FILE}
+        arm-none-eabi-objcopy -O ihex "${ELF_FILE}" "${HEX_FILE}"
     elif [ ! -f "${FILE_NAME}" ]; then
         # tries stripping current path for readability
         FILE=${FILE_NAME##$(pwd)/}
-        echo "Cannot find file" $FILE
+        echo "Cannot find file" "$FILE"
         exit 1
     elif [ -z ${FLASH_OFFSET} ]; then
         echo "Missing flash offset"
         exit 1
     else
-        arm-none-eabi-objcopy -O ihex -I binary --adjust-vma ${FLASH_OFFSET} ${FILE_NAME} ${HEX_FILE}
+        arm-none-eabi-objcopy -O ihex -I binary --adjust-vma ${FLASH_OFFSET} "${FILE_NAME}" "${HEX_FILE}"
     fi
 
     if [ -n "${MYNEWT_VAL_NRFJPROG_COPROCESSOR}" ] ; then
@@ -95,19 +95,19 @@ nrfutil_load () {
         fi
 
         # TODO: hw-version is probably incorrect for non NRF52 devices
-        nrfutil pkg generate --hw-version 52 --sd-req 0 --application ${HEX_FILE} --application-version 1 ${ZIP_FILE}
-        echo "Downloading" ${ZIP_FILE}
-        nrfutil dfu usb-serial -p ${PORT} --package ${ZIP_FILE}
+        nrfutil pkg generate --hw-version 52 --sd-req 0 --application "${HEX_FILE}" --application-version 1 "${ZIP_FILE}"
+        echo "Downloading" "${ZIP_FILE}"
+        nrfutil dfu usb-serial -p ${PORT} --package "${ZIP_FILE}"
         if [ $? -ne 0 ]; then
             ret=1
         fi
     fi
 
-    if [ -z ${ZIP_FILE} ] ; then
+    if [ -z "${ZIP_FILE}" ] ; then
         jlink_sn
 
-        echo "Downloading" ${HEX_FILE}
-        nrfutil device program --firmware ${HEX_FILE} ${SRN_ARG} ${NRF_TRAITS_OPT} ${NRFUTIL_ARG} --options chip_erase_mode=ERASE_RANGES_TOUCHED_BY_FIRMWARE
+        echo "Downloading" "${HEX_FILE}"
+        nrfutil device program --firmware "${HEX_FILE}" ${SRN_ARG} ${NRF_TRAITS_OPT} ${NRFUTIL_ARG} --options chip_erase_mode=ERASE_RANGES_TOUCHED_BY_FIRMWARE
 
         if [ $? -ne 0 ]; then
             ret=1

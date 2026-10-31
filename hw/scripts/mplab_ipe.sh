@@ -17,7 +17,7 @@
 # under the License.
 #
 
-. $CORE_PATH/hw/scripts/common.sh
+. "$CORE_PATH"/hw/scripts/common.sh
 
 #
 # Programming with Microchip MPLAB IPE command line tool (ipecmd) using
@@ -83,7 +83,7 @@ ipe_prepare_hex() {
     if [ "$BOOT_LOADER" -o "$MFG_IMAGE" -o "$MYNEWT_VAL_MCU_NO_BOOTLOADER_BUILD" == "1" ]; then
         # ELF contains boot flash and configuration words, xc32-bin2hex
         # converts virtual addresses to physical ones.
-        xc32-bin2hex ${BIN_BASENAME}.elf || exit 1
+        xc32-bin2hex "${BIN_BASENAME}".elf || exit 1
         HEX_FILE=${BIN_BASENAME}.hex
         IPE_MEMORY=
         IPE_ERASE=
@@ -94,7 +94,7 @@ ipe_prepare_hex() {
         fi
         HEX_FILE=${BIN_BASENAME}.img.hex
         xc32-objcopy -I binary -O ihex --change-addresses ${IMAGE_FLASH_ADDR} \
-            ${BIN_BASENAME}.img ${HEX_FILE} || exit 1
+            "${BIN_BASENAME}".img "${HEX_FILE}" || exit 1
         # Program memory only, without erase, leave boot flash (bootloader)
         # intact. Range limits programming and verification to application
         # area, other flash areas may hold data.
@@ -192,7 +192,7 @@ ipe_load() {
 
     echo "Downloading ${HEX_FILE} with ${TOOL}"
     # -OL: release device from reset after programming
-    if ipe_run -F${HEX_PATH} -M${IPE_MEMORY} ${IPE_ERASE} -OL; then
+    if ipe_run -F"${HEX_PATH}" -M${IPE_MEMORY} ${IPE_ERASE} -OL; then
         return
     fi
 
