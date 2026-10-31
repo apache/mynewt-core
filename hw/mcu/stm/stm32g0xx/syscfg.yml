@@ -30,10 +30,9 @@ syscfg.defs:
     STM32_CLOCK_VOLTAGESCALING_CONFIG:
         description: >
             Adjust voltage scaling.
-            PWR_REGULATOR_VOLTAGE_SCALE1_BOOST for system clock > 150MHz
-            PWR_REGULATOR_VOLTAGE_SCALE1 for system clock up to 150MHz
-            PWR_REGULATOR_VOLTAGE_SCALE2 for system clock <= 26MHz
-        value: PWR_REGULATOR_VOLTAGE_SCALE1_BOOST
+            PWR_REGULATOR_VOLTAGE_SCALE1 for system clock up to 64MHz
+            PWR_REGULATOR_VOLTAGE_SCALE2 for system clock up to 16MHz
+        value: PWR_REGULATOR_VOLTAGE_SCALE1
 
     STM32_CLOCK_LSI:
         description: Enable low-speed internal clock source
