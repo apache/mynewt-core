@@ -22,6 +22,8 @@
 #include "testutil/testutil.h"
 #include "mgmt/mgmt.h"
 #include "smp/smp.h"
+#include "cborattr/cborattr.h"
+#include "os_mgmt/os_mgmt.h"
 
 #define SMP_TEST_GROUP    MGMT_GROUP_ID_PERUSER
 #define SMP_TEST_MAX_RSPS 4
@@ -206,11 +208,61 @@ TEST_CASE(smp_test_case_truncated_second_req)
     smp_test_reset();
 }
 
+TEST_CASE(smp_test_case_mcumgr_params)
+{
+    struct os_mbuf *om;
+    long long unsigned int buf_size = 0;
+    long long unsigned int buf_count = 0;
+    long long int rc_val = -1;
+    const struct cbor_attr_t attrs[] = {
+        {
+         .attribute = "buf_size",
+         .type = CborAttrUnsignedIntegerType,
+         .addr.uinteger = &buf_size,
+         .nodefault = 1,
+         },
+        {
+         .attribute = "buf_count",
+         .type = CborAttrUnsignedIntegerType,
+         .addr.uinteger = &buf_count,
+         .nodefault = 1,
+         },
+        {
+         .attribute = "rc",
+         .type = CborAttrIntegerType,
+         .addr.integer = &rc_val,
+         .nodefault = 1,
+         },
+        { 0 }
+    };
+    int rc;
+
+    smp_test_reset();
+
+    om = smp_test_get_om();
+    smp_test_append_req_id(om, MGMT_GROUP_ID_OS, OS_MGMT_ID_MCUMGR_PARAMS, 6, 1, 0);
+    smp_test_process(om);
+
+    TEST_ASSERT_FATAL(smp_test_num_rsps == 1);
+    TEST_ASSERT(smp_test_rsp_seq(0) == 6);
+
+    rc = cbor_read_mbuf_attrs(smp_test_rsps[0], MGMT_HDR_SIZE,
+                              OS_MBUF_PKTLEN(smp_test_rsps[0]) - MGMT_HDR_SIZE,
+                              attrs);
+    TEST_ASSERT_FATAL(rc == 0);
+    TEST_ASSERT(rc_val == -1);
+    TEST_ASSERT(buf_size == MGMT_MAX_MTU);
+    TEST_ASSERT(buf_count == MYNEWT_VAL(OS_MGMT_MCUMGR_PARAMS_BUF_COUNT));
+
+    smp_test_reset();
+}
+
 TEST_SUITE(smp_test_suite)
 {
     smp_test_case_complete_req();
     smp_test_case_truncated_req();
     smp_test_case_truncated_second_req();
+    smp_test_case_mcumgr_params();
 }
 
 int
