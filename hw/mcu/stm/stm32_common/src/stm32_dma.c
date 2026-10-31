@@ -22,7 +22,7 @@
 #include <stm32_common/stm32_dma.h>
 #include <defs/error.h>
 
-#ifdef DMA2
+#if defined(DMA2) || defined(GPDMA2)
 DMA_HandleTypeDef *stm32_dma_ch[16];
 #else
 DMA_HandleTypeDef *stm32_dma_ch[8];
@@ -36,7 +36,7 @@ stm32_dma_acquire_channel(stm32_dma_ch_t ch, DMA_HandleTypeDef *hdma)
 
     OS_ENTER_CRITICAL(sr);
 
-    if (ch <= DMA_CH_NUM && stm32_dma_ch[ch] == NULL) {
+    if (ch < ARRAY_SIZE(stm32_dma_ch) && stm32_dma_ch[ch] == NULL) {
         stm32_dma_ch[ch] = hdma;
         rc = SYS_EOK;
     }
@@ -143,7 +143,7 @@ stm32_dma1_7_irq_handler(void)
     os_trace_isr_exit();
 }
 
-#ifdef DMA2
+#if defined(DMA2) || defined(GPDMA2)
 
 void
 stm32_dma2_0_irq_handler(void)
