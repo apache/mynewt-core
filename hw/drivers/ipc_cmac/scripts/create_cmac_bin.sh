@@ -20,12 +20,12 @@
 OBJCOPY=${MYNEWT_OBJCOPY_PATH}
 ELF=${MYNEWT_APP_BIN_DIR}/blehci.elf
 
-cd ${WORK_DIR}
+cd "${WORK_DIR}" || exit 1
 
 # Create image by stripping .ram section
-${OBJCOPY} -R .ram -O binary ${ELF} ${BASENAME_IMG}.bin
+"${OBJCOPY}" -R .ram -O binary "${ELF}" "${BASENAME_IMG}".bin
 # RAM image is the same as binary created by newt
-cp ${ELF}.bin ${BASENAME_RAM}.bin
+cp "${ELF}".bin "${BASENAME_RAM}".bin
 
 # Create a copy of image to flash to partition, if required
-cp ${BASENAME_IMG}.bin ${ELF}.img.bin
+cp "${BASENAME_IMG}".bin "${ELF}".img.bin

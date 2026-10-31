@@ -21,10 +21,10 @@
 if [ "${MYNEWT_VAL_TFM_SECURE_BOOT_TARGET}" != "" ] ; then
   export IMPORT_LIBRARY=${MYNEWT_PROJECT_ROOT}/bin/targets/${MYNEWT_VAL_TFM_SECURE_BOOT_TARGET}/tfm_s_CMSE_lib.a
 
-  pushd ${MYNEWT_PROJECT_ROOT}
+  pushd "${MYNEWT_PROJECT_ROOT}" || exit 1
 
-  if [ -f ${IMPORT_LIBRARY} ] ; then
-    cp -u ${IMPORT_LIBRARY} ${MYNEWT_BUILD_GENERATED_DIR}/bin/
+  if [ -f "${IMPORT_LIBRARY}" ] ; then
+    cp -u "${IMPORT_LIBRARY}" "${MYNEWT_BUILD_GENERATED_DIR}"/bin/
   fi
 
   popd

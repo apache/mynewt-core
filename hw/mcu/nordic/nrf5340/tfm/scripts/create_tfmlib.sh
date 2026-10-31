@@ -20,11 +20,11 @@
 
 AR=${MYNEWT_AR_PATH}
 
-pushd ${MYNEWT_PROJECT_ROOT}
+pushd "${MYNEWT_PROJECT_ROOT}" || exit 1
 
-if [ -f ${MYNEWT_PROJECT_ROOT}/bin/tfm_s_CMSE_lib.o ] ; then
-  mv ${MYNEWT_PROJECT_ROOT}/bin/tfm_s_CMSE_lib.o ${MYNEWT_PKG_BIN_DIR}/
-  ${AR} rcs ${MYNEWT_BIN_DIR}/tfm_s_CMSE_lib.a ${MYNEWT_PKG_BIN_DIR}/tfm_s_CMSE_lib.o
+if [ -f "${MYNEWT_PROJECT_ROOT}"/bin/tfm_s_CMSE_lib.o ] ; then
+  mv "${MYNEWT_PROJECT_ROOT}"/bin/tfm_s_CMSE_lib.o "${MYNEWT_PKG_BIN_DIR}"/
+  "${AR}" rcs "${MYNEWT_BIN_DIR}"/tfm_s_CMSE_lib.a "${MYNEWT_PKG_BIN_DIR}"/tfm_s_CMSE_lib.o
 fi
 
 popd

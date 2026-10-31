@@ -28,20 +28,20 @@ export BASENAME_RAM=cmac.ram
 
 if [ ${MYNEWT_VAL_CMAC_IMAGE_SINGLE} -eq 0 ]; then
     # Create empty image binary (1 byte required for objcopy)
-    truncate -s 1 ${WORK_DIR}/${BASENAME_IMG}.bin
+    truncate -s 1 "${WORK_DIR}/${BASENAME_IMG}".bin
     # Create fixed size RAM image
-    truncate -s ${MYNEWT_VAL_CMAC_IMAGE_RAM_SIZE} ${WORK_DIR}/${BASENAME_RAM}.bin
+    truncate -s ${MYNEWT_VAL_CMAC_IMAGE_RAM_SIZE} "${WORK_DIR}/${BASENAME_RAM}".bin
 else
-    cd ${MYNEWT_PROJECT_ROOT}
-    ${NEWT} build ${MYNEWT_VAL_CMAC_IMAGE_TARGET_NAME}
+    cd "${MYNEWT_PROJECT_ROOT}" || exit 1
+    "${NEWT}" build ${MYNEWT_VAL_CMAC_IMAGE_TARGET_NAME}
 fi
 
-cd ${WORK_DIR}
+cd "${WORK_DIR}" || exit 1
 
 # Convert both binaries to objects and create archive to link
-${OBJCOPY} -I binary -O elf32-littlearm -B armv8-m.main \
-    --rename-section .data=.libcmac.img ${BASENAME_IMG}.bin ${BASENAME_IMG}.o
-${OBJCOPY} -I binary -O elf32-littlearm -B armv8-m.main \
-    --rename-section .data=.libcmac.ram ${BASENAME_RAM}.bin ${BASENAME_RAM}.o
-${AR} -rcs ${LIBCMAC_A} ${BASENAME_IMG}.o ${BASENAME_RAM}.o
-cp ${LIBCMAC_A} ${MYNEWT_APP_BIN_DIR}
+"${OBJCOPY}" -I binary -O elf32-littlearm -B armv8-m.main \
+    --rename-section .data=.libcmac.img "${BASENAME_IMG}".bin "${BASENAME_IMG}".o
+"${OBJCOPY}" -I binary -O elf32-littlearm -B armv8-m.main \
+    --rename-section .data=.libcmac.ram "${BASENAME_RAM}".bin "${BASENAME_RAM}".o
+"${AR}" -rcs "${LIBCMAC_A}" "${BASENAME_IMG}".o "${BASENAME_RAM}".o
+cp "${LIBCMAC_A}" "${MYNEWT_APP_BIN_DIR}"
