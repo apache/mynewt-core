@@ -23,7 +23,7 @@
 
 #define SPI_DMA_RX_CHANNEL_DEFINE(dma, st, spi_num)                         \
     const struct stm32_dma_cfg DMA ## dma ## _stream ## st ## _spi ## spi_num ## _rx = { \
-        st,                                                                  \
+        DMA ## dma ## _CH ## st,                                            \
         DMA ## dma ## _Stream ## st ## _IRQn,                               \
         stm32_dma ## dma ## _ ## st ## _irq_handler,                        \
         .regs = DMA ## dma ## _Stream ## st,                                \
@@ -58,7 +58,7 @@
 
 #define SPI_DMA_TX_CHANNEL_DEFINE(dma, st, spi_num)                         \
     const struct stm32_dma_cfg DMA ## dma ## _stream ## st ## _spi ## spi_num ## _tx = { \
-        st,                                            \
+        DMA ## dma ## _CH ## st,                                            \
         DMA ## dma ## _Stream ## st ## _IRQn,                                    \
         stm32_dma ## dma ## _ ## st ## _irq_handler,                        \
         .regs = DMA ## dma ## _Stream ## st,                                     \
