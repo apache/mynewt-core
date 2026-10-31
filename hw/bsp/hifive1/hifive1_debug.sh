@@ -27,7 +27,7 @@
 #  - RESET set if target should be reset when attaching
 #  - NO_GDB set if we should not start gdb to debug
 #
-. $CORE_PATH/hw/scripts/openocd.sh
+. "$CORE_PATH"/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
 CFG="-f $CORE_PATH/hw/bsp/hifive1/riscv_openocd.cfg"

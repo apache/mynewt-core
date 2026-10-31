@@ -27,7 +27,7 @@
 #  - RESET set if target should be reset when attaching
 #  - NO_GDB set if we should not start gdb to debug
 #
-. $CORE_PATH/hw/scripts/openocd.sh
+. "$CORE_PATH"/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
 CFG="-f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $BSP_PATH -f target/stm32f4x.cfg"

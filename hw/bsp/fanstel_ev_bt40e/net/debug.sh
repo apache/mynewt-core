@@ -31,7 +31,7 @@
 #Use custom ports for debuging so that newt debug works on both cores
 EXTRA_JTAG_CMD="-port 3334"
 
-. $CORE_PATH/hw/scripts/jlink.sh
+. "$CORE_PATH"/hw/scripts/jlink.sh
 
 FILE_NAME=$BIN_BASENAME.elf
 JLINK_DEV="nrf5340_xxaa_net"

@@ -30,7 +30,7 @@ cleanup()
 approtect_script=$MYNEWT_PROJECT_ROOT/hw/bsp/nordic_pca10090/approtect_detect
 targetpoweron_script=$MYNEWT_PROJECT_ROOT/hw/bsp/nordic_pca10090/targetpoweron
 
-if [ ! -f  $approtect_script ]; then
+if [ ! -f  "$approtect_script" ]; then
 	echo "$approtect_script not found"
 	exit 0
 fi
@@ -38,7 +38,7 @@ fi
 check_approtect_status() {
 	echo "check_approtect_status..."
 	status=$(JLinkExe -device "CORTEX-M33" -speed 4000 -if SWD \
-		-CommandFile $approtect_script | grep 'register 3' \
+		-CommandFile "$approtect_script" | grep 'register 3' \
 		| awk -F " " 'END{print $NF}')
 
 	if [ -z $status ] ; then
@@ -54,7 +54,7 @@ check_approtect_status() {
 # Turn the power on via the CommandFile and get  target voltage
 get_target_voltage() {
 	voltage=$(JLinkExe  -device "CORTEX-M33" -speed 1000 -if SWD \
-		-CommandFile $targetpoweron_script | \
+		-CommandFile "$targetpoweron_script" | \
 		sed -n 's/VTref\s*=\s*\(.*\)\.\(.*\)V/\1\2/p')
 	echo $voltage
 }

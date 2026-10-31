@@ -28,7 +28,7 @@
 #  - FLASH_OFFSET contains the flash offset to download to
 #  - BOOT_LOADER is set if downloading a bootloader
 
-. $CORE_PATH/hw/scripts/jlink.sh
+. "$CORE_PATH"/hw/scripts/jlink.sh
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0x01000000

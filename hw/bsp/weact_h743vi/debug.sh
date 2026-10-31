@@ -27,7 +27,7 @@
 #  - RESET set if target should be reset when attaching
 #  - NO_GDB set if we should not start gdb to debug
 #
-. $CORE_PATH/hw/scripts/stm32_programmer.sh
+. "$CORE_PATH"/hw/scripts/stm32_programmer.sh
 
 FILE_NAME=$BIN_BASENAME.elf
 
