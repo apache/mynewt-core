@@ -41,6 +41,16 @@ tinyusb_hardware_init(void)
 
     if (MYNEWT_VAL(STM32_CLOCK_HSI48)) {
         RCC->CCIPR2 = RCC->CCIPR2 & ~RCC_CCIPR2_USBSEL;
+        /*
+         * HSI48 is accurate enough for USB only when trimmed by CRS,
+         * CRS reset configuration already uses USB SOF for synchronization.
+         */
+        __HAL_RCC_CRS_CLK_ENABLE();
+        CRS->CR |= CRS_CR_AUTOTRIMEN | CRS_CR_CEN;
+    } else if (MYNEWT_VAL(STM32_CLOCK_PLL)) {
+        /* PLL "Q" output must be configured to 48MHz */
+        __HAL_RCC_PLLCLKOUT_ENABLE(RCC_PLLQCLK);
+        RCC->CCIPR2 = (RCC->CCIPR2 & ~RCC_CCIPR2_USBSEL) | RCC_USBCLKSOURCE_PLL;
     }
 
     /*
