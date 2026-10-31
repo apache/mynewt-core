@@ -400,6 +400,16 @@ smp_process_request_packet(struct smp_streamer *streamer, struct os_mbuf *req)
             break;
         }
         mgmt_ntoh_hdr(&req_hdr);
+
+        /* Drop a request that is shorter than its header claims.  The
+         * transport delivered a partial packet (e.g., one fragment of a
+         * request) and the remaining bytes are not a valid request.
+         */
+        if (OS_MBUF_PKTLEN(req) - MGMT_HDR_SIZE < req_hdr.nh_len) {
+            valid_hdr = false;
+            break;
+        }
+
         os_mbuf_adj(req, MGMT_HDR_SIZE);
 
         rsp = smp_alloc_rsp(req);
