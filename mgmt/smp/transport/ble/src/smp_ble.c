@@ -47,9 +47,15 @@ uint16_t g_ble_smp_attr_handle;
 struct smp_ble_reasm {
     uint16_t conn_handle;
     struct smp_reasm reasm;
+
+    /* Drops the partial request if no fragment arrives in time. */
+    struct os_callout tmo;
 };
 
 static struct smp_ble_reasm smp_ble_reasm[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
+
+#define SMP_BLE_REASM_TMO_TICKS                                               \
+    os_time_ms_to_ticks32(MYNEWT_VAL(SMP_BLE_REASSEMBLY_TIMEOUT))
 
 static struct ble_gap_event_listener smp_ble_gap_listener;
 
@@ -131,6 +137,25 @@ smp_ble_reasm_alloc(uint16_t conn_handle)
     return NULL;
 }
 
+static void
+smp_ble_reasm_drop(struct smp_ble_reasm *entry)
+{
+    os_callout_stop(&entry->tmo);
+    smp_reasm_reset(&entry->reasm);
+}
+
+/**
+ * A client which stopped sending in the middle of a request would otherwise
+ * keep its fragments buffered until disconnect.  The buffered mbufs may also
+ * be needed by the controller to receive the remaining fragments, so the link
+ * could not make progress anymore.
+ */
+static void
+smp_ble_reasm_tmo(struct os_event *ev)
+{
+    smp_ble_reasm_drop(ev->ev_arg);
+}
+
 static int
 smp_ble_gap_event(struct ble_gap_event *event, void *arg)
 {
@@ -139,7 +164,7 @@ smp_ble_gap_event(struct ble_gap_event *event, void *arg)
     if (event->type == BLE_GAP_EVENT_DISCONNECT) {
         entry = smp_ble_reasm_find(event->disconnect.conn.conn_handle);
         if (entry != NULL) {
-            smp_reasm_reset(&entry->reasm);
+            smp_ble_reasm_drop(entry);
         }
     }
 
@@ -162,6 +187,8 @@ smp_ble_reasm_rx(uint16_t conn_handle, struct os_mbuf *frag, struct os_mbuf **ou
 {
     struct smp_ble_reasm *entry;
 
+    int rc;
+
     entry = smp_ble_reasm_find(conn_handle);
     if (entry == NULL) {
         entry = smp_ble_reasm_alloc(conn_handle);
@@ -170,7 +197,15 @@ smp_ble_reasm_rx(uint16_t conn_handle, struct os_mbuf *frag, struct os_mbuf **ou
         }
     }
 
-    return smp_reasm_rx(&entry->reasm, frag, sizeof(conn_handle), out_req);
+    rc = smp_reasm_rx(&entry->reasm, frag, sizeof(conn_handle), out_req);
+
+    if (entry->reasm.sr_om == NULL) {
+        os_callout_stop(&entry->tmo);
+    } else if (MYNEWT_VAL(SMP_BLE_REASSEMBLY_TIMEOUT) > 0) {
+        os_callout_reset(&entry->tmo, SMP_BLE_REASM_TMO_TICKS);
+    }
+
+    return rc;
 }
 
 /**
@@ -338,6 +373,7 @@ int
 smp_ble_gatt_svr_init(void)
 {
     int rc;
+    int i;
 
     rc = ble_gatts_count_cfg(gatt_svr_svcs);
     if (rc != 0) {
@@ -353,6 +389,14 @@ smp_ble_gatt_svr_init(void)
                                          smp_ble_gap_event, NULL);
     if (rc != 0) {
         return rc;
+    }
+
+    /* Timeouts run on the default event queue, like the NimBLE host which
+     * also accesses the reassembly state.
+     */
+    for (i = 0; i < ARRAY_SIZE(smp_ble_reasm); i++) {
+        os_callout_init(&smp_ble_reasm[i].tmo, os_eventq_dflt_get(),
+                        smp_ble_reasm_tmo, &smp_ble_reasm[i]);
     }
 
     os_mqueue_init(&g_smp_ble_mq, &smp_ble_event_data_in, NULL);
