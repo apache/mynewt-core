@@ -68,6 +68,18 @@
 #define MIN_DMA_RX_SIZE MYNEWT_VAL(SPI_STM32_MIN_RX_LENGTH_FOR_DMA)
 #define MIN_DMA_TX_SIZE MYNEWT_VAL(SPI_STM32_MIN_TX_LENGTH_FOR_DMA)
 
+#if defined(__DCACHE_PRESENT) && __DCACHE_PRESENT
+#define SPI_STM32_DCACHE    1
+#else
+#define SPI_STM32_DCACHE    0
+#endif
+
+#if MYNEWT_VAL(MCU_STM32H7)
+/* DTCM RAM is not accessible by DMA1/DMA2 */
+#define DMA_NO_ACCESS_START 0x20000000
+#define DMA_NO_ACCESS_END   0x20020000
+#endif
+
 #if MYNEWT_VAL(SPI_STM32_STAT)
 #include "stats/stats.h"
 #endif
@@ -691,6 +703,61 @@ HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
     os_sem_release(&dd->sem);
 }
 
+#if SPI_STM32_DCACHE
+static inline bool
+dcache_enabled(void)
+{
+    return (SCB->CCR & SCB_CCR_DC_Msk) != 0;
+}
+#endif
+
+/*
+ * Checks if buffer can be used for DMA transfer.
+ * Buffers in memory not accessible by DMA are rejected.
+ * When data cache is enabled, buffer used for reception must occupy whole
+ * cache lines, otherwise invalidation after transfer could discard data
+ * that CPU wrote to the same cache line.
+ */
+static bool
+spi_stm32_dma_buf_ok(const void *buf, uint16_t length, bool rx)
+{
+#ifdef DMA_NO_ACCESS_START
+    if ((uintptr_t)buf < DMA_NO_ACCESS_END &&
+        (uintptr_t)buf + length > DMA_NO_ACCESS_START) {
+        return false;
+    }
+#endif
+#if SPI_STM32_DCACHE
+    if (rx && dcache_enabled() &&
+        (((uintptr_t)buf | length) & (__SCB_DCACHE_LINE_SIZE - 1))) {
+        return false;
+    }
+#endif
+    return true;
+}
+
+/* Writes data from cache to memory before DMA reads it */
+static inline void
+spi_stm32_dcache_clean(const void *buf, uint16_t length)
+{
+#if SPI_STM32_DCACHE
+    if (dcache_enabled()) {
+        SCB_CleanDCache_by_Addr((void *)buf, length);
+    }
+#endif
+}
+
+/* Discards cached data so CPU sees what DMA wrote to memory */
+static inline void
+spi_stm32_dcache_invalidate(void *buf, uint16_t length)
+{
+#if SPI_STM32_DCACHE
+    if (dcache_enabled()) {
+        SCB_InvalidateDCache_by_Addr(buf, length);
+    }
+#endif
+}
+
 static int
 spi_stm32_read(struct bus_dev *bdev, struct bus_node *bnode,
                uint8_t *buf, uint16_t length, os_time_t timeout,
@@ -699,6 +766,7 @@ spi_stm32_read(struct bus_dev *bdev, struct bus_node *bnode,
     struct bus_spi_dev *dev = (struct bus_spi_dev *)bdev;
     struct bus_spi_node *node = (struct bus_spi_node *)bnode;
     struct spi_stm32_driver_data *dd;
+    bool use_dma;
     int rc;
 
     BUS_DEBUG_VERIFY_DEV(dev);
@@ -715,13 +783,21 @@ spi_stm32_read(struct bus_dev *bdev, struct bus_node *bnode,
     if (MYNEWT_VAL(OS_SCHEDULING)) {
         assert(os_sem_get_count(&dd->sem) == 0);
 
-        if (MIN_DMA_RX_SIZE >= 0 && length >= MIN_DMA_RX_SIZE) {
+        use_dma = MIN_DMA_RX_SIZE >= 0 && length >= MIN_DMA_RX_SIZE &&
+                  spi_stm32_dma_buf_ok(buf, length, true);
+        if (use_dma) {
+            spi_stm32_dcache_invalidate(buf, length);
             HAL_SPI_Receive_DMA(&dd->hspi, (uint8_t *)buf, length);
         } else {
             HAL_SPI_Receive_IT(&dd->hspi, (uint8_t *)buf, length);
         }
 
         rc = os_sem_pend(&dd->sem, timeout);
+
+        if (use_dma) {
+            /* Lines could be speculatively fetched during transfer */
+            spi_stm32_dcache_invalidate(buf, length);
+        }
 
         if (rc) {
             HAL_SPI_Abort(&dd->hspi);
@@ -770,7 +846,9 @@ spi_stm32_write(struct bus_dev *bdev, struct bus_node *bnode,
     if (MYNEWT_VAL(OS_SCHEDULING)) {
         assert(os_sem_get_count(&dd->sem) == 0);
 
-        if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
+        if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE &&
+            spi_stm32_dma_buf_ok(buf, length, false)) {
+            spi_stm32_dcache_clean(buf, length);
             HAL_SPI_Transmit_DMA(&dd->hspi, (uint8_t *)buf, length);
         } else {
             HAL_SPI_Transmit_IT(&dd->hspi, (uint8_t *)buf, length);
@@ -808,6 +886,7 @@ spi_stm32_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
     struct bus_spi_dev *dev = (struct bus_spi_dev *)bdev;
     struct bus_spi_node *node = (struct bus_spi_node *)bnode;
     struct spi_stm32_driver_data *dd;
+    bool use_dma;
     int rc;
 
     BUS_DEBUG_VERIFY_DEV(dev);
@@ -825,7 +904,12 @@ spi_stm32_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
     if (MYNEWT_VAL(OS_SCHEDULING)) {
         assert(os_sem_get_count(&dd->sem) == 0);
 
-        if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
+        use_dma = MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE &&
+                  spi_stm32_dma_buf_ok(wbuf, length, false) &&
+                  spi_stm32_dma_buf_ok(rbuf, length, true);
+        if (use_dma) {
+            spi_stm32_dcache_clean(wbuf, length);
+            spi_stm32_dcache_invalidate(rbuf, length);
             HAL_SPI_TransmitReceive_DMA(&dd->hspi, (uint8_t *)wbuf, rbuf, length);
         } else {
             HAL_SPI_TransmitReceive_IT(&dd->hspi, (uint8_t *)wbuf, rbuf, length);
@@ -833,11 +917,15 @@ spi_stm32_duplex_write_read(struct bus_dev *bdev, struct bus_node *bnode,
 
         rc = os_sem_pend(&dd->sem, timeout);
 
+        if (use_dma) {
+            spi_stm32_dcache_invalidate(rbuf, length);
+        }
+
         if (rc) {
             HAL_SPI_Abort(&dd->hspi);
             SPI_STATS_INC(dd->stats, transaction_error_count);
         } else {
-            if (MIN_DMA_TX_SIZE >= 0 && length >= MIN_DMA_TX_SIZE) {
+            if (use_dma) {
                 SPI_STATS_INCN(dd->stats, dma_transferred_bytes, length);
             }
             SPI_STATS_INCN(dd->stats, read_bytes, length);
