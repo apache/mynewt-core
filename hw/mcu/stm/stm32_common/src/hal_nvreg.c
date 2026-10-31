@@ -41,11 +41,23 @@
 #define HAL_NVREG_START_INDEX 0
 #endif
 
+/*
+ * On MCUs where backup registers are in TAMP, HAL finds them using TampOffset
+ * that is normally set by HAL_RTC_Init().
+ */
+#if defined(STM32G0) || defined(STM32L412xx) || defined(STM32L422xx) ||       \
+    defined(STM32L4P5xx) || defined(STM32L4Q5xx)
+#define HAL_NVREG_RTC_HANDLE_INIT                                             \
+    { .Instance = RTC, .TampOffset = TAMP_BASE - RTC_BASE }
+#else
+#define HAL_NVREG_RTC_HANDLE_INIT { .Instance = RTC }
+#endif
+
 void
 hal_nvreg_write(unsigned int reg, uint32_t val)
 {
 #if PWR_ENABLED
-    RTC_HandleTypeDef hrtc = { .Instance = RTC };
+    RTC_HandleTypeDef hrtc = HAL_NVREG_RTC_HANDLE_INIT;
     if (reg < HAL_NVREG_MAX) {
 #if defined(__HAL_RCC_PWR_IS_CLK_DISABLED)
         bool was_pwr_disabled = __HAL_RCC_PWR_IS_CLK_DISABLED();
@@ -78,7 +90,7 @@ hal_nvreg_read(unsigned int reg)
 {
     uint32_t val = 0;
 #if PWR_ENABLED
-    RTC_HandleTypeDef hrtc = { .Instance = RTC };
+    RTC_HandleTypeDef hrtc = HAL_NVREG_RTC_HANDLE_INIT;
     if (reg < HAL_NVREG_MAX) {
 #if defined(__HAL_RCC_BKP_CLK_ENABLE)
         __HAL_RCC_BKP_CLK_ENABLE();
