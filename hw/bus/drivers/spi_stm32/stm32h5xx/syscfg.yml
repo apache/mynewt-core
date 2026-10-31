@@ -1,0 +1,80 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    SPI1_RX_DMA:
+        description: >
+            DMA channel to use for SPI1 RX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA1_channel0_spi1_rx
+    SPI1_TX_DMA:
+        description: >
+            DMA channel to use for SPI1 TX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA1_channel1_spi1_tx
+    SPI2_RX_DMA:
+        description: >
+            DMA channel to use for SPI2 RX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA1_channel2_spi2_rx
+    SPI2_TX_DMA:
+        description: >
+            DMA channel to use for SPI2 TX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA1_channel3_spi2_tx
+    SPI3_RX_DMA:
+        description: >
+            DMA channel to use for SPI3 RX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA1_channel4_spi3_rx
+    SPI3_TX_DMA:
+        description: >
+            DMA channel to use for SPI3 TX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA1_channel5_spi3_tx
+    SPI4_RX_DMA:
+        description: >
+            DMA channel to use for SPI4 RX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA1_channel6_spi4_rx
+    SPI4_TX_DMA:
+        description: >
+            DMA channel to use for SPI4 TX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA1_channel7_spi4_tx
+    SPI5_RX_DMA:
+        description: >
+            DMA channel to use for SPI5 RX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA2_channel0_spi5_rx
+    SPI5_TX_DMA:
+        description: >
+            DMA channel to use for SPI5 TX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA2_channel1_spi5_tx
+    SPI6_RX_DMA:
+        description: >
+            DMA channel to use for SPI6 RX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA2_channel2_spi6_rx
+    SPI6_TX_DMA:
+        description: >
+            DMA channel to use for SPI6 TX.
+            DMA (GPDMA) number can be 1 or 2, channel can be 0-7.
+        value: DMA2_channel3_spi6_tx
