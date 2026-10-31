@@ -173,7 +173,7 @@ INCLUDE "link_tables.ld.h"
         . = ALIGN(4);
         __corebss_end__ = .;
         *(.corebss*)
-        *(.bss.core.nz)
+        *(.noinit*)
         . = ALIGN(4);
         __ecorebss = .;
     } > RAM
