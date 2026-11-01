@@ -27,6 +27,8 @@ Cortex_DisableAll(void)
 {
     /* Disable SysTick interrupt */
     SysTick->CTRL = 0;
+    /* SysTick may have fired already, don't let it hit next image */
+    SCB->ICSR = SCB_ICSR_PENDSTCLR_Msk;
     /* Disable all NVIC interrupts */
     NVIC_DisableAll();
 }
