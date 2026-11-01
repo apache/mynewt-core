@@ -23,5 +23,19 @@ syscfg.defs:
             Sysinit stage for the BLE smp transport.
         value: 501
 
+    SMP_BLE_REASSEMBLY_TIMEOUT:
+        description: >
+            Time in milliseconds after which a partially received request
+            (split over several writes) is dropped if no further write
+            arrives.  This frees the buffered fragments if a client stops
+            sending in the middle of a request.  Must be longer than the
+            gap between writes of one request, i.e. at least a few
+            connection intervals, and any time the host task may be busy
+            in the middle of a request; with well behaved clients the
+            timeout only cleans up, so a long value is safe.  0 disables
+            the timeout; partial requests are then dropped on disconnect
+            only.
+        value: 5000
+
 syscfg.vals.NEWTMGR_BLE_SYSINIT_STAGE:
     SMP_BLE_SYSINIT_STAGE: MYNEWT_VAL(NEWTMGR_BLE_SYSINIT_STAGE)
