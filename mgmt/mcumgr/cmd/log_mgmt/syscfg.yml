@@ -41,7 +41,3 @@ syscfg.defs:
           description: >
               System Initalization stage for LOG MGMT package
           value: 501
-
-# For backwards compatibility with log nmgr
-syscfg.vals.LOG_NMGR_MAX_RSP_LEN:
-    LOG_MGMT_MAX_RSP_SIZE: MYNEWT_VAL(LOG_NMGR_MAX_RSP_LEN)
