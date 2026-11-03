@@ -20,7 +20,7 @@ syscfg.defs:
     NRF5340_NET_VFLASH_ID:
         description: >
             Flash device id of virtual flash of network core image (bootloader only) (device: in bsp.yml flash map).
-            Set to -1 to not register device for default hal_bsp_flash_dev().
+            Set to -1 to not build the virtual flash and the IPC it uses.
         value: 1
     MCU_FLASH_ID:
         description: >
