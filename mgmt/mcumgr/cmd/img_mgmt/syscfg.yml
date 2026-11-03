@@ -57,6 +57,20 @@ syscfg.defs:
             Include only true/non-zero attributes in image status list.
         value: 0
 
+    IMG_MGMT_MOVE_BUF_SIZE:
+        description: >
+            Size of the buffer used to move the image in slot 1 up one
+            sector when BOOTUTIL_SWAP_USING_OFFSET is enabled. Must be at
+            least the sector size of slot 1. Not used with
+            IMG_MGMT_MOVE_BUF_HEAP.
+        value: 8192
+
+    IMG_MGMT_MOVE_BUF_HEAP:
+        description: >
+            Allocate the buffer used to move the image in slot 1 from the
+            heap, sized to the sector, instead of a static buffer.
+        value: 0
+
 syscfg.vals.IMGMGR_MAX_CHUNK_SIZE:
     IMG_MGMT_UL_CHUNK_SIZE: MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)
 
