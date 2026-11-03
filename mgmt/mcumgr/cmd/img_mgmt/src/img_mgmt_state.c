@@ -134,7 +134,7 @@ img_mgmt_state_set_pending(int slot, int permanent)
     }
 
     rc = img_mgmt_write_pending(slot, permanent);
-    if (rc != 0) {
+    if (rc < 0) {
         rc = MGMT_ERR_EUNKNOWN;
     }
 

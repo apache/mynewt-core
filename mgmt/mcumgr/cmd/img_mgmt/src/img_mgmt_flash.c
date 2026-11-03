@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <stdlib.h>
 #include "sysinit/sysinit.h"
 #include "mgmt/mgmt.h"
 #include "img_mgmt_priv.h"
@@ -308,6 +309,150 @@ img_mgmt_erase_slot(void)
 #endif
 }
 
+/*
+ * Moving the image in slot 1 up is only used with swap using offset, when
+ * IMG_MGMT_SLOT1_MOVE_UP is enabled and slot 1 exists.
+ */
+#if MYNEWT_VAL(BOOTUTIL_SWAP_USING_OFFSET) && MYNEWT_VAL(IMG_MGMT_SLOT1_MOVE_UP) && \
+    defined(FLASH_AREA_IMAGE_1)
+#define IMG_MGMT_SLOT1_MOVE 1
+#define IMG_MGMT_MOVE_HEAP  MYNEWT_VAL(IMG_MGMT_MOVE_BUF_HEAP)
+#define IMG_MGMT_MOVE_SIZE  MYNEWT_VAL(IMG_MGMT_MOVE_BUF_SIZE)
+#else
+#define IMG_MGMT_SLOT1_MOVE 0
+#define IMG_MGMT_MOVE_HEAP  0
+#define IMG_MGMT_MOVE_SIZE  1
+#endif
+
+#if MYNEWT_VAL(BOOTUTIL_SWAP_USING_OFFSET) && defined(FLASH_AREA_IMAGE_1)
+/* Copy buffer for moving one sector of slot 1 */
+static uint8_t img_mgmt_move_buf[IMG_MGMT_MOVE_SIZE];
+#endif
+
+/*
+ * Swap using offset expects the image in slot 1 to start at its second
+ * sector. A swap leaves the previous image at the first sector, so move
+ * it up by one sector before it is marked pending. Sectors are copied from
+ * the top down, so no data is overwritten before it is copied.
+ */
+#if MYNEWT_VAL(BOOTUTIL_SWAP_USING_OFFSET) && defined(FLASH_AREA_IMAGE_1)
+static int
+img_mgmt_slot1_move_up(void)
+{
+    const struct flash_area *fa;
+    struct image_header hdr = { 0 };
+    struct image_tlv_info tlv = { 0 };
+    uint32_t sec_sz;
+    uint32_t img_len;
+    uint32_t nsec;
+    uint32_t i;
+    uint8_t *buf = NULL;
+    int rc;
+
+    rc = img_mgmt_upload_offset(&sec_sz);
+    if (rc != 0 || sec_sz == 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+    if (!IMG_MGMT_MOVE_HEAP && sec_sz > IMG_MGMT_MOVE_SIZE) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    rc = flash_area_open(FLASH_AREA_IMAGE_1, &fa);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    /* Image is header, body, protected TLVs and TLV area */
+    rc = flash_area_read(fa, 0, &hdr, sizeof hdr);
+    if (rc != 0) {
+        goto done;
+    }
+    img_len = hdr.ih_hdr_size + hdr.ih_img_size + hdr.ih_protect_tlv_size;
+    rc = flash_area_read(fa, img_len, &tlv, sizeof tlv);
+    if (rc != 0) {
+        goto done;
+    }
+    if (tlv.it_magic == IMAGE_TLV_INFO_MAGIC) {
+        img_len += tlv.it_tlv_tot;
+    }
+
+    /* Moved image must end before the sector holding the trailer */
+    nsec = (img_len + sec_sz - 1) / sec_sz;
+    if (nsec == 0 || (nsec + 1) * sec_sz > fa->fa_size - sec_sz) {
+        rc = -1;
+        goto done;
+    }
+
+    if (IMG_MGMT_MOVE_HEAP) {
+        buf = malloc(sec_sz);
+        if (buf == NULL) {
+            rc = MGMT_ERR_ENOMEM;
+            goto done;
+        }
+    } else {
+        buf = img_mgmt_move_buf;
+    }
+
+    for (i = nsec; i > 0; --i) {
+        rc = flash_area_read(fa, (i - 1) * sec_sz, buf, sec_sz);
+        if (rc != 0) {
+            goto done;
+        }
+        rc = flash_area_erase(fa, i * sec_sz, sec_sz);
+        if (rc != 0) {
+            goto done;
+        }
+        rc = flash_area_write(fa, i * sec_sz, buf, sec_sz);
+        if (rc != 0) {
+            goto done;
+        }
+    }
+
+    rc = flash_area_erase(fa, 0, sec_sz);
+
+done:
+    if (IMG_MGMT_MOVE_HEAP) {
+        free(buf);
+    }
+    flash_area_close(fa);
+    if (rc == 0) {
+        return 0;
+    }
+    return (rc > 0) ? rc : MGMT_ERR_EUNKNOWN;
+}
+#endif
+
+#if MYNEWT_VAL(BOOTUTIL_SWAP_USING_OFFSET) && defined(FLASH_AREA_IMAGE_1)
+/*
+ * Checks if the image in slot 1 starts at the first sector, which a swap
+ * leaves behind. Such an image has to be moved up before it is set pending.
+ */
+static int
+img_mgmt_slot1_at_first_sector(void)
+{
+    const struct flash_area *fa;
+    struct image_header hdr;
+    uint32_t sec_sz;
+    uint32_t magic;
+    int at_first;
+
+    if (img_mgmt_upload_offset(&sec_sz) != 0 || sec_sz == 0) {
+        return 0;
+    }
+
+    if (flash_area_open(FLASH_AREA_IMAGE_1, &fa) != 0) {
+        return 0;
+    }
+    at_first = flash_area_read(fa, 0, &hdr, sizeof hdr) == 0 &&
+               hdr.ih_magic == IMAGE_MAGIC &&
+               flash_area_read(fa, sec_sz, &magic, sizeof magic) == 0 &&
+               magic != IMAGE_MAGIC;
+    flash_area_close(fa);
+
+    return at_first;
+}
+#endif
+
 int
 img_mgmt_write_pending(int slot, bool permanent)
 {
@@ -326,6 +471,18 @@ img_mgmt_write_pending(int slot, bool permanent)
 
         return MGMT_ERR_EBADSTATE;
     }
+
+#if MYNEWT_VAL(BOOTUTIL_SWAP_USING_OFFSET) && defined(FLASH_AREA_IMAGE_1)
+    if (slot == 1 && img_mgmt_slot1_at_first_sector()) {
+        if (!IMG_MGMT_SLOT1_MOVE) {
+            return MGMT_ERR_EBADSTATE;
+        }
+        rc = img_mgmt_slot1_move_up();
+        if (rc != 0) {
+            return rc;
+        }
+    }
+#endif
 
     rc = img_mgmt_read_info(slot, NULL, NULL, &image_flags);
     if (rc != 0) {
