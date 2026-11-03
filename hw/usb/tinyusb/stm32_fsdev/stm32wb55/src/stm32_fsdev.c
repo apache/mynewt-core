@@ -25,6 +25,11 @@
 #include <mcu/stm32wb_bsp.h>
 #include <mcu/stm32wbxx_mynewt_hal.h>
 #include <bsp/stm32wbxx_hal_conf.h>
+#include <stm32wbxx_ll_hsem.h>
+#include <stm32wbxx_ll_rcc.h>
+
+/* HSEM semaphore that CPU1 holds while it uses CLK48 (ST hw_conf.h) */
+#define STM32WB_HSEM_CLK48_CONFIG 5
 
 static void
 USB_IRQHandler(void)
@@ -62,6 +67,22 @@ tinyusb_hardware_init(void)
 #endif
 #endif
     hal_gpio_init_af(MCU_GPIO_PORTA(12), GPIO_AF10_USB, GPIO_NOPULL, GPIO_MODE_AF_PP);
+
+    if (MYNEWT_VAL(STM32_CLOCK_HSI48)) {
+        /*
+         * CPU2 (wireless stack) may reconfigure or stop CLK48 that it uses
+         * for RNG unless CPU1 holds CLK48 config semaphore (AN5289).
+         */
+        __HAL_RCC_HSEM_CLK_ENABLE();
+        LL_HSEM_1StepLock(HSEM, STM32WB_HSEM_CLK48_CONFIG);
+        LL_RCC_SetUSBClockSource(LL_RCC_USB_CLKSOURCE_HSI48);
+        /*
+         * HSI48 is accurate enough for USB only when trimmed by CRS,
+         * CRS reset configuration already uses USB SOF for synchronization.
+         */
+        __HAL_RCC_CRS_CLK_ENABLE();
+        CRS->CR |= CRS_CR_AUTOTRIMEN | CRS_CR_CEN;
+    }
 
     /*
      * Enable USB clock
