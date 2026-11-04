@@ -47,6 +47,13 @@ syscfg.defs:
             Number of UDP protocol control blocks, one per active UDP
             socket (DHCP client and DHCP server use one each).
         value: 4
+    LWIP_NUM_IGMP_GROUP:
+        description: >
+            Number of IGMP multicast group entries. Each interface with
+            IGMP enabled uses one for the all-systems group, plus one for
+            every group joined on it. A group joined on IP4_ADDR_ANY uses
+            one entry on every IGMP interface.
+        value: 8
 
 syscfg.restrictions:
     # As long as MEM_LIBC_MALLOC is 1 this restriction applies
