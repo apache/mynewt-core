@@ -89,3 +89,18 @@ hal_gpio_toggle(int pin)
     hal_gpio_write(pin, pin_state);
     return pin_state;
 }
+
+/**
+ * gpio deinit
+ *
+ * Returns the specified pin to a high-impedance input with no pull.
+ *
+ * @param pin Pin number to deinit
+ *
+ * @return int  0: no error; -1 otherwise.
+ */
+int
+hal_gpio_deinit(int pin)
+{
+    return hal_gpio_init_in(pin, HAL_GPIO_PULL_NONE);
+}

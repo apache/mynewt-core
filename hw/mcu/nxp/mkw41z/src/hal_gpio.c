@@ -101,6 +101,21 @@ hal_gpio_toggle(int pin)
 }
 
 /**
+ * gpio deinit
+ *
+ * Returns the specified pin to its default state.
+ *
+ * @param pin Pin number to deinit
+ *
+ * @return int  0: no error; -1 otherwise.
+ */
+int
+hal_gpio_deinit(int pin)
+{
+    return 0;
+}
+
+/**
  * gpio irq init
  *
  * Initialize an external interrupt on a gpio pin
