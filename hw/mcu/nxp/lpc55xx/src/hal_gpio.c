@@ -124,6 +124,22 @@ hal_gpio_toggle(int pin)
     return 0;
 }
 
+/**
+ * gpio deinit
+ *
+ * Releases any IRQ on the pin and returns it to an input with no pull.
+ *
+ * @param pin Pin number to deinit
+ *
+ * @return int  0: no error; -1 otherwise.
+ */
+int
+hal_gpio_deinit(int pin)
+{
+    hal_gpio_irq_release(pin);
+    return hal_gpio_init_in(pin, HAL_GPIO_PULL_NONE);
+}
+
 /*
  * Find out whether we have a GPIO event slot available.
  */

@@ -281,3 +281,19 @@ hal_gpio_irq_disable(int pin)
     GPIO_REG(GPIO_LOW_IE)  &= ~mask;
     GPIO_REG(GPIO_HIGH_IE) &= ~mask;
 }
+
+/**
+ * gpio deinit
+ *
+ * Releases any IRQ on the pin and returns it to an input with no pull.
+ *
+ * @param pin Pin number to deinit
+ *
+ * @return int  0: no error; -1 otherwise.
+ */
+int
+hal_gpio_deinit(int pin)
+{
+    hal_gpio_irq_release(pin);
+    return hal_gpio_init_in(pin, HAL_GPIO_PULL_NONE);
+}
