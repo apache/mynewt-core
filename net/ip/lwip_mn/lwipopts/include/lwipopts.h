@@ -47,6 +47,9 @@ extern "C" {
 #define MEMP_NUM_RAW_PCB		1
 #define LWIP_SO_RCVTIMEO                1
 #define LWIP_IGMP                       MYNEWT_VAL_LWIP_IGMP
+#if LWIP_IGMP
+#define MEMP_NUM_IGMP_GROUP             MYNEWT_VAL_LWIP_NUM_IGMP_GROUP
+#endif
 #define SO_REUSE                        1
 #define LWIP_DNS                        MYNEWT_VAL_LWIP_DNS
 #define DNS_TABLE_SIZE                  3
