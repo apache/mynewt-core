@@ -19,3 +19,4 @@
 
 target.app: "@apache-mynewt-core/apps/splitty"
 target.bsp: "@apache-mynewt-core/hw/bsp/nordic_pca10056"
+target.loader: "@apache-mynewt-core/apps/slinky"
