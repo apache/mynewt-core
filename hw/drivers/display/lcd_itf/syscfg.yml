@@ -23,6 +23,7 @@ syscfg.defs:
         choices:
             - custom
             - spi
+            - i2c
             - 8080_II_8_bit
             - 8080_II_16_bit
             - 8080_II_16_bit_stm32_fsmc
