@@ -20,6 +20,7 @@
 #define __HIFIVE_BSP_H
 
 #include <stdint.h>
+#include <mcu/mcu.h>
 
 #ifdef __cplusplus
 extern "C" {
