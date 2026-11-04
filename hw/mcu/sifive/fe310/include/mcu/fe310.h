@@ -25,10 +25,14 @@
  * syscfg. Do not change it os/mynewt.h.
  */
 #include "syscfg/syscfg.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* CPU clock frequency in Hz, set up by the clock code (sys_clock.c). */
+extern uint32_t SystemCoreClock;
 
 static inline void
 hal_debug_break(void)
