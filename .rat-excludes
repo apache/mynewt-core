@@ -18,10 +18,10 @@ util/crc/src/crc16.c
 hw/mcu/nordic/nrf51xxx/src/system_nrf51.c
 hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
 hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0.s
-hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0_split.s
-hw/mcu/nordic/nrf52xxx/src/arch/cortex_m4/gcc_startup_cm4_split.s
+boot/split_app/src/arch/cortex_m0/gcc_startup_cm0_split.s
+boot/split_app/src/arch/cortex_m4/gcc_startup_cm4_split.s
 hw/mcu/nordic/nrf91xx/src/arch/cortex_m33/gcc_startup_cm33.s
-hw/mcu/nordic/nrf91xx/src/arch/cortex_m33/gcc_startup_cm33_split.s
+boot/split_app/src/arch/cortex_m33/gcc_startup_cm33_split.s
 
 # Linker scripts for Nordics nRF5X - TCL license
 hw/bsp/ada_feather_nrf52/ada_feather_nrf52_no_boot.ld

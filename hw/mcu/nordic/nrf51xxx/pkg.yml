@@ -29,10 +29,5 @@ pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf_common"
 
-pkg.ign_files.'!MCU_COMMON_STARTUP || SPLIT_LOADER':
-    - gcc_startup_cm0.s
-pkg.ign_files.'!MCU_COMMON_STARTUP || !SPLIT_LOADER':
-    - gcc_startup_cm0_split.s
-
 pkg.deps.BLE_CONTROLLER:
     - "@apache-mynewt-nimble/nimble/drivers/nrf51"
