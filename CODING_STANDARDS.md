@@ -278,3 +278,6 @@ typedefs by applying the ```_t``` marker to them.
 
 * Code must compile cleanly with -Wall enabled.
 
+* C code is built with -std=c11. Do not rely on GNU language modes; use
+alternate keywords such as ```__asm``` instead of ```asm```.
+
