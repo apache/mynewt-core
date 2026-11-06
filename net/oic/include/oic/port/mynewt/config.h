@@ -57,7 +57,7 @@ typedef os_time_t oc_clock_time_t;
 /* Maximum number of server resources */
 #define MAX_APP_RESOURCES MYNEWT_VAL(OC_APP_RESOURCES)
 
-/* Common paramters */
+/* Common parameters */
 /* Maximum number of concurrent requests */
 #define MAX_NUM_CONCURRENT_REQUESTS MYNEWT_VAL(OC_CONCURRENT_REQUESTS)
 
