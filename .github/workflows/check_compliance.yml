@@ -92,6 +92,20 @@ jobs:
             echo "All good, no formatting issues."
           fi
 
+  style_check_mynewt_format:
+    name: Coding style (mynewt-format, informational)
+    runs-on: ubuntu-slim
+    # Informational only: reports problems but never fails the PR.
+    continue-on-error: true
+    steps:
+      # Pull request head instead of merge commit, so that reported lines
+      # match lines of review comments
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/mynewt-format-check
+
   license_check:
     name: Licensing
     runs-on: ubuntu-slim
