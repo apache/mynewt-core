@@ -20,6 +20,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <hal/hal_bsp.h>
+#include "mcu/nrf52_hw_id.h"
 #include "nrf.h"
 
 #ifndef min
@@ -27,7 +28,7 @@
 #endif
 
 int
-hal_bsp_hw_id_len(void)
+nrf52_hw_id_len(void)
 {
     return sizeof(NRF_FICR->DEVICEID) + sizeof(NRF_FICR->DEVICEADDR);
 }
@@ -37,7 +38,7 @@ hal_bsp_hw_id_len(void)
  * DEVICEID[0-1] and DEVICEADDR[0-1].
  */
 int
-hal_bsp_hw_id(uint8_t *id, int max_len)
+nrf52_hw_id(uint8_t *id, int max_len)
 {
     int len, cnt;
 
@@ -49,4 +50,16 @@ hal_bsp_hw_id(uint8_t *id, int max_len)
     memcpy(id + len, (void *)NRF_FICR->DEVICEADDR, cnt);
 
     return len + cnt;
+}
+
+int
+hal_bsp_hw_id_len(void)
+{
+    return nrf52_hw_id_len();
+}
+
+int
+hal_bsp_hw_id(uint8_t *id, int max_len)
+{
+    return nrf52_hw_id(id, max_len);
 }
