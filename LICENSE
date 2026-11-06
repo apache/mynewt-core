@@ -348,6 +348,10 @@ This product bundles parts of stm32f0xx, which is available under the
     * hw/bsp/nucleo-f030r8/include/bsp/stm32f0xx_hal_conf.h
     * hw/bsp/nucleo-f072rb/include/bsp/stm32f0xx_hal_conf.h
 
+This product bundles parts of stm32g0xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/bsp/weact_g0b1cb/include/bsp/stm32g0xx_hal_conf.h
+
 This product bundles parts of stm32l0xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c

@@ -46,6 +46,7 @@ hw/bsp/stm32f4discovery/include/bsp/stm32f4xx_hal_conf.h
 hw/bsp/stm32f7discovery/include/bsp/stm32f7xx_hal_conf.h
 hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
 hw/bsp/nucleo-u575zi-q/include/bsp/stm32u5xx_hal_conf.h
+hw/bsp/weact_g0b1cb/include/bsp/stm32g0xx_hal_conf.h
 hw/bsp/weact_g431cb/include/bsp/stm32g4xx_hal_conf.h
 hw/bsp/weact_h743vi/include/bsp/stm32h7xx_hal_conf.h
 hw/mcu/stm/stm32f1xx/src/system_stm32f1xx.c
