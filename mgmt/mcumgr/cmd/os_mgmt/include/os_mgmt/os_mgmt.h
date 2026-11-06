@@ -33,6 +33,7 @@ extern "C" {
 #define OS_MGMT_ID_MPSTAT         3
 #define OS_MGMT_ID_DATETIME_STR   4
 #define OS_MGMT_ID_RESET          5
+#define OS_MGMT_ID_MCUMGR_PARAMS  6
 
 #define OS_MGMT_TASK_NAME_LEN     32
 

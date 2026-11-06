@@ -150,6 +150,107 @@ err:
     return rc;
 }
 
+int
+smp_reasm_req_len(struct os_mbuf *om)
+{
+    struct mgmt_hdr hdr;
+    int rc;
+
+    rc = os_mbuf_copydata(om, 0, sizeof(hdr), &hdr);
+    if (rc != 0) {
+        return 0;
+    }
+
+    mgmt_ntoh_hdr(&hdr);
+
+    return MGMT_HDR_SIZE + hdr.nh_len;
+}
+
+/**
+ * Checks if the buffer starts with a plausible request header.  Data from the
+ * middle of a request (e.g., after a lost fragment) is rejected this way with
+ * high probability, so that reassembly gets in sync with the next request.
+ */
+static bool
+smp_reasm_hdr_valid(struct os_mbuf *om)
+{
+    struct mgmt_hdr hdr;
+    int rc;
+
+    rc = os_mbuf_copydata(om, 0, sizeof(hdr), &hdr);
+    if (rc != 0) {
+        return false;
+    }
+
+    if (hdr.nh_op != MGMT_OP_READ && hdr.nh_op != MGMT_OP_WRITE) {
+        return false;
+    }
+
+    /* The two low reserved bits hold the protocol version in SMP version 2,
+     * the others must be zero.
+     */
+    if (hdr._res1 & ~0x03) {
+        return false;
+    }
+
+    return true;
+}
+
+void
+smp_reasm_reset(struct smp_reasm *sr)
+{
+    os_mbuf_free_chain(sr->sr_om);
+    sr->sr_om = NULL;
+}
+
+int
+smp_reasm_rx(struct smp_reasm *sr, struct os_mbuf *frag, uint16_t usrhdr_len,
+             struct os_mbuf **out_req)
+{
+    int req_len;
+    int rc;
+
+    *out_req = NULL;
+
+    if (sr->sr_om == NULL) {
+        sr->sr_om = os_msys_get_pkthdr(0, usrhdr_len);
+        if (sr->sr_om == NULL) {
+            return MGMT_ERR_ENOMEM;
+        }
+    }
+
+    rc = os_mbuf_appendfrom(sr->sr_om, frag, 0, OS_MBUF_PKTLEN(frag));
+    if (rc != 0) {
+        smp_reasm_reset(sr);
+        return MGMT_ERR_ENOMEM;
+    }
+
+    req_len = smp_reasm_req_len(sr->sr_om);
+    if (req_len == 0) {
+        /* Header is not complete yet. */
+        return 0;
+    }
+
+    if (req_len > MGMT_MAX_MTU) {
+        smp_reasm_reset(sr);
+        return MGMT_ERR_EMSGSIZE;
+    }
+
+    if (!smp_reasm_hdr_valid(sr->sr_om)) {
+        smp_reasm_reset(sr);
+        return MGMT_ERR_EINVAL;
+    }
+
+    if (OS_MBUF_PKTLEN(sr->sr_om) < req_len) {
+        return 0;
+    }
+
+    *out_req = sr->sr_om;
+    sr->sr_om = NULL;
+
+    return 0;
+}
+
 static void
 smp_event_data_in(struct os_event *ev)
 {
