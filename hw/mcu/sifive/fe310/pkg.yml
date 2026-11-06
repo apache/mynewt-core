@@ -32,7 +32,9 @@ pkg.deps:
 pkg.deps.BUS_DRIVER_PRESENT:
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
 
-pkg.cflags: -march=rv32imac -mabi=ilp32
+app.cflags:
+    - -march=rv32imac_zicsr_zifencei
+    - -mabi=ilp32
 
 # Flash device is only referenced from hal_flash_devs link table
 pkg.whole_archive: true
