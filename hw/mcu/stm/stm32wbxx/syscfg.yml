@@ -23,6 +23,9 @@ syscfg.defs:
             Used internally by the newt tool.
         value: 8
 
+    MCU_PATH:
+        value: '"repos/apache-mynewt-core/hw/mcu/stm/stm32wbxx"'
+
     MCU_STM32WB:
         description: MCUs are of STM32WBxx family
         value: 1
@@ -51,6 +54,12 @@ syscfg.defs:
         description: 0 for 32768 xtal; 1 for input clock
         value: 0
 
+    STM32_CLOCK_LSE_DRIVE:
+        description: >
+            LSE oscillator drive capability (RCC_LSEDRIVE_LOW,
+            RCC_LSEDRIVE_MEDIUMLOW, RCC_LSEDRIVE_MEDIUMHIGH, RCC_LSEDRIVE_HIGH).
+        value: 'RCC_LSEDRIVE_LOW'
+
     STM32_CLOCK_MSI:
         description: Enable multi-speed internal clock source
         value: 1
@@ -74,6 +83,22 @@ syscfg.defs:
     STM32_CLOCK_HSEPRE:
         description: Enable HSE prescaler divider
         value: 0
+
+    STM32_CLOCK_HSE_TUNING_OTP:
+        description: >
+            Set HSE load capacitor tuning from factory programmed OTP
+            (entry with id 0). Required for correct radio frequency.
+        value: 0
+
+    STM32_CLOCK_RFWKP:
+        description: >
+            Clock source of RF wakeup clock (radio sleep timer used by CPU2).
+            none - RFWKPSEL is left untouched.
+        value: none
+        choices:
+            - none
+            - lse
+            - hse_div1024
 
     STM32_CLOCK_HSE_VALUE:
         description: High-speed external clock speed in Hz

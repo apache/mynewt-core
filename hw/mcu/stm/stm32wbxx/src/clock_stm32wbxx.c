@@ -40,6 +40,37 @@
 
 #define TRNG_ENABLED (MYNEWT_VAL(TRNG) != 0)
 
+#if MYNEWT_VAL_CHOICE(STM32_CLOCK_RFWKP, lse)
+#define RFWKP_CLKSOURCE RCC_RFWKPCLKSOURCE_LSE
+#elif MYNEWT_VAL_CHOICE(STM32_CLOCK_RFWKP, hse_div1024)
+#define RFWKP_CLKSOURCE RCC_RFWKPCLKSOURCE_HSE_DIV1024
+#endif
+
+#if MYNEWT_VAL(STM32_CLOCK_HSE) && MYNEWT_VAL(STM32_CLOCK_HSE_TUNING_OTP)
+/*
+ * Factory programmed OTP entries are 8 bytes long with id in the last byte.
+ * Entry with id 0 holds the BD address and HSE load capacitor tuning value.
+ * When entry is written more than once, the last one is valid.
+ */
+#define OTP_ID0_HSE_TUNING_OFFSET 6
+#define OTP_ENTRY_ID_OFFSET       7
+#define OTP_ENTRY_SIZE            8
+
+static void
+stm32wb_hse_tuning_from_otp(void)
+{
+    const uint8_t *entry;
+
+    for (entry = (const uint8_t *)(OTP_AREA_END_ADDR + 1 - OTP_ENTRY_SIZE);
+         entry >= (const uint8_t *)OTP_AREA_BASE; entry -= OTP_ENTRY_SIZE) {
+        if (entry[OTP_ENTRY_ID_OFFSET] == 0) {
+            LL_RCC_HSE_SetCapacitorTuning(entry[OTP_ID0_HSE_TUNING_OFFSET]);
+            break;
+        }
+    }
+}
+#endif
+
 /*
  * HSI is turned on by default, but can be turned off and use HSE/HSI48 instead.
  */
@@ -56,7 +87,7 @@ SystemClock_Config(void)
     RCC_OscInitTypeDef osc_init = {0};
     RCC_ClkInitTypeDef clk_init = {0};
     HAL_StatusTypeDef status;
-#if TRNG_ENABLED
+#if TRNG_ENABLED || defined(RFWKP_CLKSOURCE)
     RCC_PeriphCLKInitTypeDef pclk_init = {0};
 #endif
 
@@ -116,6 +147,8 @@ SystemClock_Config(void)
     osc_init.LSEState = RCC_LSE_BYPASS;
 #else
     osc_init.LSEState = RCC_LSE_ON;
+    HAL_PWR_EnableBkUpAccess();
+    __HAL_RCC_LSEDRIVE_CONFIG(MYNEWT_VAL(STM32_CLOCK_LSE_DRIVE));
 #endif
 
     /*
@@ -144,6 +177,9 @@ SystemClock_Config(void)
      * HSE Oscillator (can be used as PLL, SYSCLK and RTC clock source)
      */
 #if MYNEWT_VAL(STM32_CLOCK_HSE)
+#if MYNEWT_VAL(STM32_CLOCK_HSE_TUNING_OTP)
+    stm32wb_hse_tuning_from_otp();
+#endif
     osc_init.OscillatorType |= RCC_OSCILLATORTYPE_HSE;
 #if MYNEWT_VAL(STM32_CLOCK_HSE_BYPASS)
     osc_init.HSEState = RCC_HSE_BYPASS;
@@ -309,6 +345,16 @@ SystemClock_Config(void)
      * configure the PLL, this should be ok
      */
     pclk_init.RngClockSelection = RCC_RNGCLKSOURCE_PLL;
+    status = HAL_RCCEx_PeriphCLKConfig(&pclk_init);
+    if (status != HAL_OK) {
+        assert(0);
+    }
+#endif
+
+#ifdef RFWKP_CLKSOURCE
+    /* Low speed clock for the radio sleep timer (used by CPU2) */
+    pclk_init.PeriphClockSelection = RCC_PERIPHCLK_RFWAKEUP;
+    pclk_init.RFWakeUpClockSelection = RFWKP_CLKSOURCE;
     status = HAL_RCCEx_PeriphCLKConfig(&pclk_init);
     if (status != HAL_OK) {
         assert(0);
