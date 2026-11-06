@@ -43,6 +43,20 @@ int nrf5340_net_clock_hfxo_request(void);
  */
 int nrf5340_net_clock_hfxo_release(void);
 
+/**
+ * Request low frequency clock source change.
+ *
+ * @param  clksrc Value to determine requested clock source
+ *                This parameter can be one of the following values:
+ *                @arg CLOCK_LFCLKSTAT_SRC_LFRC - 32.768 kHz RC oscillator
+ *                @arg CLOCK_LFCLKSTAT_SRC_LFXO - 32.768 kHz crystal oscillator
+ *                @arg CLOCK_LFCLKSTAT_SRC_LFSYNT - 32.768 kHz synthesized from HFCLK
+ *
+ * @return int 0: clock source was already as requested. 1: clock source
+ *         changed.
+ */
+int nrf5340_net_set_lf_clock_source(uint32_t clksrc);
+
 #ifdef __cplusplus
 }
 #endif
