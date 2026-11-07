@@ -17,6 +17,18 @@
 # under the License.
 #
 
+syscfg.defs:
+    BSP_SDRAM:
+        description: >
+            Enable 8 MB MT48LC4M32B2 SDRAM (16-bit wired) on FMC bank 1
+            (0xC0000000). Variables can be placed there with
+            STM32_SDRAM_SECTION.
+        value: 0
+
+syscfg.vals.BSP_SDRAM:
+    STM32_SDRAM_BANK: 1
+    STM32_SDRAM_SIZE: 0x800000
+
 syscfg.vals:
     STM32_FLASH_SIZE_KB: 1024
     STM32_FLASH_NUM_AREAS: 8
