@@ -17,5 +17,28 @@
  * under the License.
  */
 
-    ITCM (rwx)       : ORIGIN = 0x00000000,   LENGTH = 64K
-    DTCM (rw!x)      : ORIGIN = 0x20000000,   LENGTH = 128K
+/* clang-format off */
+
+/*
+ * TCM sizes come from MCU_DTCM_SIZE / MCU_ITCM_SIZE.
+ * When STACK_REGION is defined (mcu_config.ld.h / bsp_config.ld.h)
+ * stack is placed at the end of DTCM.
+ */
+#ifdef STACK_REGION
+    DTCM (rw!x) : ORIGIN = 0x20000000,
+                 LENGTH = MYNEWT_VAL(MCU_DTCM_SIZE) - STACK_SIZE
+    STACK_RAM (rw) : ORIGIN = 0x20000000 + MYNEWT_VAL(MCU_DTCM_SIZE) - STACK_SIZE,
+                     LENGTH = STACK_SIZE
+#else
+    DTCM (rw!x) : ORIGIN = 0x20000000, LENGTH = MYNEWT_VAL(MCU_DTCM_SIZE)
+#endif
+    ITCM (rwx)  : ORIGIN = 0x00000000, LENGTH = MYNEWT_VAL(MCU_ITCM_SIZE)
+
+/* External SDRAM, when hw/drivers/ram/stm32_sdram is in the build */
+#if MYNEWT_VAL(STM32_SDRAM_SIZE)
+#if MYNEWT_VAL(STM32_SDRAM_BANK) == 2
+    SDRAM (rw) : ORIGIN = 0xD0000000, LENGTH = MYNEWT_VAL(STM32_SDRAM_SIZE)
+#else
+    SDRAM (rw) : ORIGIN = 0xC0000000, LENGTH = MYNEWT_VAL(STM32_SDRAM_SIZE)
+#endif
+#endif

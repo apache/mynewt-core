@@ -23,6 +23,16 @@ syscfg.defs:
             Used internally by the newt tool.
         value: 1
 
+    MCU_DTCM_SIZE:
+        description: >
+            Size of DTCM RAM at 0x20000000 (DTCM linker region).
+            64 kB on STM32F72x/F73x/F74x/F75x, 128 kB on STM32F76x/F77x.
+        value: 0x10000
+    MCU_ITCM_SIZE:
+        description: >
+            Size of ITCM RAM at 0x00000000 (ITCM linker region).
+        value: 0x4000
+
     MCU_STM32F7:
         description: MCUs are of STM32F7xx family
         value: 1

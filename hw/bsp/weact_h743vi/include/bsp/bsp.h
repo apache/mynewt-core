@@ -35,12 +35,12 @@ extern "C" {
 #define bssnz_t         sec_noinit
 
 extern uint8_t _ram_start[];
-extern uint8_t _dtcmram_start;
-extern uint8_t _itcmram_start;
+extern uint8_t _dtcm_start;
+extern uint8_t _itcm_start;
 
 #define RAM_SIZE      (512 * 1024)
-#define DTCMRAM_SIZE  (128 * 1024)
-#define ITCMRAM_SIZE  (64 * 1024)
+#define DTCM_SIZE     MYNEWT_VAL(MCU_DTCM_SIZE)
+#define ITCM_SIZE     MYNEWT_VAL(MCU_ITCM_SIZE)
 
 /* LED pins */
 #define LED_1         MCU_GPIO_PORTE(3)
