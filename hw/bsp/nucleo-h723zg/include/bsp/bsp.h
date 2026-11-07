@@ -42,8 +42,8 @@ extern uint8_t _ram2_start;
 #define RAM_SIZE        (320 * 1024)
 #define RAM2_SIZE       (32 * 1024)
 #define RAM3_SIZE       (16 * 1024)
-#define DTCMRAM_SIZE    (128 * 1024)
-#define ITCMRAM_SIZE    (64 * 1024)
+#define DTCM_SIZE       MYNEWT_VAL(MCU_DTCM_SIZE)
+#define ITCM_SIZE       MYNEWT_VAL(MCU_ITCM_SIZE)
 
 /* LED pins */
 #define LED_1           MCU_GPIO_PORTB(0)
