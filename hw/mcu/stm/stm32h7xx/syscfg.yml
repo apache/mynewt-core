@@ -26,6 +26,17 @@ syscfg.defs:
     MCU_PATH:
         value: '"repos/apache-mynewt-core/hw/mcu/stm/stm32h7xx"'
 
+    MCU_DTCM_SIZE:
+        description: >
+            Size of DTCM RAM at 0x20000000 (DTCM linker region).
+        value: 0x20000
+    MCU_ITCM_SIZE:
+        description: >
+            Size of ITCM RAM at 0x00000000 (ITCM linker region).
+            On STM32H72x/H73x it depends on TCM_AXI_SHARED option bytes
+            (64 kB to 256 kB).
+        value: 0x10000
+
     MCU_STM32H7:
         description: MCUs are of STM32H7xx family
         value: 1
