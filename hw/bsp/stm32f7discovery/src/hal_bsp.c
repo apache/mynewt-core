@@ -73,6 +73,74 @@ const uint32_t stm32_flash_sectors[] = {
     0x08100000,     /* End of flash */
 };
 
+#if MYNEWT_VAL(BSP_SDRAM)
+#include <stm32_sdram/stm32_sdram.h>
+
+/* MT48LC4M32B2-6A, DQ0-DQ15 wired (16-bit), FMC bank 1 (SDNE0 PH3) */
+static const uint32_t sdram_pins[] = {
+    /* D0-D15 */
+    MCU_AFIO_PORTD(14, GPIO_AF12_FMC),
+    MCU_AFIO_PORTD(15, GPIO_AF12_FMC),
+    MCU_AFIO_PORTD(0, GPIO_AF12_FMC),
+    MCU_AFIO_PORTD(1, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(7, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(8, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(9, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(10, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(11, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(12, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(13, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(14, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(15, GPIO_AF12_FMC),
+    MCU_AFIO_PORTD(8, GPIO_AF12_FMC),
+    MCU_AFIO_PORTD(9, GPIO_AF12_FMC),
+    MCU_AFIO_PORTD(10, GPIO_AF12_FMC),
+    /* A0-A11 */
+    MCU_AFIO_PORTF(0, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(1, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(2, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(3, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(4, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(5, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(12, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(13, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(14, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(15, GPIO_AF12_FMC),
+    MCU_AFIO_PORTG(0, GPIO_AF12_FMC),
+    MCU_AFIO_PORTG(1, GPIO_AF12_FMC),
+    /* BA0, BA1, NBL0, NBL1 */
+    MCU_AFIO_PORTG(4, GPIO_AF12_FMC),
+    MCU_AFIO_PORTG(5, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(0, GPIO_AF12_FMC),
+    MCU_AFIO_PORTE(1, GPIO_AF12_FMC),
+    /* SDCLK, SDNWE, SDNRAS, SDNCAS, SDNE0, SDCKE0 */
+    MCU_AFIO_PORTG(8, GPIO_AF12_FMC),
+    MCU_AFIO_PORTH(5, GPIO_AF12_FMC),
+    MCU_AFIO_PORTF(11, GPIO_AF12_FMC),
+    MCU_AFIO_PORTG(15, GPIO_AF12_FMC),
+    MCU_AFIO_PORTH(3, GPIO_AF12_FMC),
+    MCU_AFIO_PORTC(3, GPIO_AF12_FMC),
+};
+
+/*
+ * HCLK 216 MHz, SDCLK = 216 / 2 = 108 MHz. -6A grade needs CAS 3 above
+ * 100 MHz.
+ */
+const struct stm32_sdram_cfg os_bsp_sdram_cfg = {
+    .timing = &stm32_sdram_timing_mt48lc4m32b2_6a,
+    .col_bits = 8,
+    .row_bits = 12,
+    .internal_banks = 4,
+    .bus_width = 16,
+    .cas_latency = 3,
+    .sdclk_div = 2,
+    .read_pipe_delay = 1,
+    .read_burst = 1,
+    .pins = sdram_pins,
+    .pin_cnt = ARRAY_SIZE(sdram_pins),
+};
+#endif
+
 #define SZ (sizeof(stm32_flash_sectors) / sizeof(stm32_flash_sectors[0]))
 static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) + 1 == SZ,
         "STM32_FLASH_NUM_AREAS does not match flash sectors");
