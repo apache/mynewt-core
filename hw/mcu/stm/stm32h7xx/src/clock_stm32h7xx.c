@@ -42,13 +42,191 @@
 #error "At least one of HSE or HSI clock source must be enabled"
 #endif
 
+#define PLL_ANY_ON  (MYNEWT_VAL(STM32_CLOCK_PLL1) || MYNEWT_VAL(STM32_CLOCK_PLL2) || \
+                     MYNEWT_VAL(STM32_CLOCK_PLL3))
+
+/*
+ * PLL1, PLL2 and PLL3 share one source (STM32_CLOCK_PLL_SOURCE),
+ * each PLL has its own M divider.
+ */
+#if PLL_ANY_ON
+#if MYNEWT_VAL(STM32_CLOCK_PLL_SOURCE) == RCC_PLLSOURCE_NONE
+#error "PLL enabled but STM32_CLOCK_PLL_SOURCE is RCC_PLLSOURCE_NONE"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_PLL_SOURCE) == RCC_PLLSOURCE_HSE && !MYNEWT_VAL(STM32_CLOCK_HSE)
+#error "PLL source is HSE but STM32_CLOCK_HSE is not enabled"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_PLL_SOURCE) == RCC_PLLSOURCE_HSI && !MYNEWT_VAL(STM32_CLOCK_HSI)
+#error "PLL source is HSI but STM32_CLOCK_HSI is not enabled"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_PLL_SOURCE) == RCC_PLLSOURCE_CSI && !MYNEWT_VAL(STM32_CLOCK_CSI)
+#error "PLL source is CSI but STM32_CLOCK_CSI is not enabled"
+#endif
+#endif
+
+#if MYNEWT_VAL(STM32_CLOCK_SYSCLK_SOURCE) == RCC_SYSCLKSOURCE_PLLCLK && \
+    !MYNEWT_VAL(STM32_CLOCK_PLL1)
+#error "SYSCLK source is PLL1 but STM32_CLOCK_PLL1 is not enabled"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_SYSCLK_SOURCE) == RCC_SYSCLKSOURCE_HSE && \
+    !MYNEWT_VAL(STM32_CLOCK_HSE)
+#error "SYSCLK source is HSE but STM32_CLOCK_HSE is not enabled"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_SYSCLK_SOURCE) == RCC_SYSCLKSOURCE_HSI && \
+    !MYNEWT_VAL(STM32_CLOCK_HSI)
+#error "SYSCLK source is HSI but STM32_CLOCK_HSI is not enabled"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_SYSCLK_SOURCE) == RCC_SYSCLKSOURCE_CSI && \
+    !MYNEWT_VAL(STM32_CLOCK_CSI)
+#error "SYSCLK source is CSI but STM32_CLOCK_CSI is not enabled"
+#endif
+
+#if MYNEWT_VAL(STM32_CLOCK_PLL1)
+#if !IS_RCC_PLLM_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL1_PLLM))
+#error "PLL1M value is invalid"
+#endif
+#if !IS_RCC_PLLN_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL1_PLLN))
+#error "PLL1N value is invalid"
+#endif
+#if !IS_RCC_PLLP_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL1_PLLP))
+#error "PLL1P value is invalid"
+#endif
+#if !IS_RCC_PLLQ_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL1_PLLQ))
+#error "PLL1Q value is invalid"
+#endif
+#if !IS_RCC_PLLR_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL1_PLLR))
+#error "PLL1R value is invalid"
+#endif
+#endif
+
+/* PLL2/PLL3 P, Q, R divider 0 means that output is disabled */
+#define PLLX_DIV_OK(n, d) (MYNEWT_VAL(STM32_CLOCK_PLL##n##_PLL##d) <= 128)
+/* Divider value for disabled output does not matter but must be valid */
+#define PLLX_DIV(n, d)    (MYNEWT_VAL(STM32_CLOCK_PLL##n##_PLL##d) ? \
+                           MYNEWT_VAL(STM32_CLOCK_PLL##n##_PLL##d) : 1)
+/* Mask of outputs to enable (non-zero dividers) */
+#define PLLX_OUTPUTS(n)                                                       \
+    ((MYNEWT_VAL(STM32_CLOCK_PLL##n##_PLLP) ? RCC_PLL##n##_DIVP : 0) |        \
+     (MYNEWT_VAL(STM32_CLOCK_PLL##n##_PLLQ) ? RCC_PLL##n##_DIVQ : 0) |        \
+     (MYNEWT_VAL(STM32_CLOCK_PLL##n##_PLLR) ? RCC_PLL##n##_DIVR : 0))
+
+#if MYNEWT_VAL(STM32_CLOCK_PLL2)
+#if !IS_RCC_PLL2M_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL2_PLLM))
+#error "PLL2M value is invalid"
+#endif
+#if !IS_RCC_PLL2N_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL2_PLLN))
+#error "PLL2N value is invalid"
+#endif
+#if !PLLX_DIV_OK(2, P) || !PLLX_DIV_OK(2, Q) || !PLLX_DIV_OK(2, R)
+#error "PLL2 P, Q or R value is invalid"
+#endif
+#endif
+
+#if MYNEWT_VAL(STM32_CLOCK_PLL3)
+#if !IS_RCC_PLL3M_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL3_PLLM))
+#error "PLL3M value is invalid"
+#endif
+#if !IS_RCC_PLL3N_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL3_PLLN))
+#error "PLL3N value is invalid"
+#endif
+#if !PLLX_DIV_OK(3, P) || !PLLX_DIV_OK(3, Q) || !PLLX_DIV_OK(3, R)
+#error "PLL3 P, Q or R value is invalid"
+#endif
+#endif
+
+/* Kernel clock selections must use enabled PLL outputs */
+#if MYNEWT_VAL(STM32_CLOCK_USBSEL) == RCC_USBCLKSOURCE_PLL && !MYNEWT_VAL(STM32_CLOCK_PLL1)
+#error "USB clock is PLL1 Q but STM32_CLOCK_PLL1 is not enabled"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_USBSEL) == RCC_USBCLKSOURCE_PLL3 && \
+    !(MYNEWT_VAL(STM32_CLOCK_PLL3) && MYNEWT_VAL(STM32_CLOCK_PLL3_PLLQ))
+#error "USB clock is PLL3 Q but PLL3 or its Q output is not enabled"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_FMCSEL) == RCC_FMCCLKSOURCE_PLL && !MYNEWT_VAL(STM32_CLOCK_PLL1)
+#error "FMC clock is PLL1 Q but STM32_CLOCK_PLL1 is not enabled"
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_FMCSEL) == RCC_FMCCLKSOURCE_PLL2 && \
+    !(MYNEWT_VAL(STM32_CLOCK_PLL2) && MYNEWT_VAL(STM32_CLOCK_PLL2_PLLR))
+#error "FMC clock is PLL2 R but PLL2 or its R output is not enabled"
+#endif
+
+/*
+ * PLL2 and PLL3 configuration, same steps as HAL RCCEx_PLL2_Config() and
+ * RCCEx_PLL3_Config() (static in HAL, used only for peripheral clock
+ * selection) but all requested outputs are enabled at once and no HAL tick
+ * timeout is used (tick is not running yet).
+ * PLL configuration can only be changed when PLL is disabled.
+ */
+static void
+pll2_config(const RCC_PLL2InitTypeDef *pll2, uint32_t outputs)
+{
+    __HAL_RCC_PLL2_DISABLE();
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLL2RDY) != 0U) {
+    }
+
+    __HAL_RCC_PLL2_CONFIG(pll2->PLL2M, pll2->PLL2N, pll2->PLL2P, pll2->PLL2Q,
+                          pll2->PLL2R);
+    __HAL_RCC_PLL2_VCIRANGE(pll2->PLL2RGE);
+    __HAL_RCC_PLL2_VCORANGE(pll2->PLL2VCOSEL);
+    __HAL_RCC_PLL2FRACN_DISABLE();
+    __HAL_RCC_PLL2FRACN_CONFIG(pll2->PLL2FRACN);
+    __HAL_RCC_PLL2FRACN_ENABLE();
+    __HAL_RCC_PLL2CLKOUT_DISABLE(RCC_PLL2_DIVP | RCC_PLL2_DIVQ | RCC_PLL2_DIVR);
+    __HAL_RCC_PLL2CLKOUT_ENABLE(outputs);
+
+    __HAL_RCC_PLL2_ENABLE();
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLL2RDY) == 0U) {
+    }
+}
+
+static void
+pll3_config(const RCC_PLL3InitTypeDef *pll3, uint32_t outputs)
+{
+    __HAL_RCC_PLL3_DISABLE();
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLL3RDY) != 0U) {
+    }
+
+    __HAL_RCC_PLL3_CONFIG(pll3->PLL3M, pll3->PLL3N, pll3->PLL3P, pll3->PLL3Q,
+                          pll3->PLL3R);
+    __HAL_RCC_PLL3_VCIRANGE(pll3->PLL3RGE);
+    __HAL_RCC_PLL3_VCORANGE(pll3->PLL3VCOSEL);
+    __HAL_RCC_PLL3FRACN_DISABLE();
+    __HAL_RCC_PLL3FRACN_CONFIG(pll3->PLL3FRACN);
+    __HAL_RCC_PLL3FRACN_ENABLE();
+    __HAL_RCC_PLL3CLKOUT_DISABLE(RCC_PLL3_DIVP | RCC_PLL3_DIVQ | RCC_PLL3_DIVR);
+    __HAL_RCC_PLL3CLKOUT_ENABLE(outputs);
+
+    __HAL_RCC_PLL3_ENABLE();
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLL3RDY) == 0U) {
+    }
+}
+
 void
 SystemClock_Config(void)
 {
     RCC_OscInitTypeDef osc_init = {0};
     RCC_ClkInitTypeDef clk_init = {0};
-    RCC_PeriphCLKInitTypeDef per_clk_init = {0};
     HAL_StatusTypeDef status;
+    const RCC_PLL2InitTypeDef pll2 = {
+        .PLL2M = MYNEWT_VAL(STM32_CLOCK_PLL2_PLLM),
+        .PLL2N = MYNEWT_VAL(STM32_CLOCK_PLL2_PLLN),
+        .PLL2P = PLLX_DIV(2, P),
+        .PLL2Q = PLLX_DIV(2, Q),
+        .PLL2R = PLLX_DIV(2, R),
+        .PLL2RGE = MYNEWT_VAL(STM32_CLOCK_PLL2_RGE),
+        .PLL2VCOSEL = MYNEWT_VAL(STM32_CLOCK_PLL2_VCOSEL),
+        .PLL2FRACN = MYNEWT_VAL(STM32_CLOCK_PLL2_PLLFRACN),
+    };
+    const RCC_PLL3InitTypeDef pll3 = {
+        .PLL3M = MYNEWT_VAL(STM32_CLOCK_PLL3_PLLM),
+        .PLL3N = MYNEWT_VAL(STM32_CLOCK_PLL3_PLLN),
+        .PLL3P = PLLX_DIV(3, P),
+        .PLL3Q = PLLX_DIV(3, Q),
+        .PLL3R = PLLX_DIV(3, R),
+        .PLL3RGE = MYNEWT_VAL(STM32_CLOCK_PLL3_RGE),
+        .PLL3VCOSEL = MYNEWT_VAL(STM32_CLOCK_PLL3_VCOSEL),
+        .PLL3FRACN = MYNEWT_VAL(STM32_CLOCK_PLL3_PLLFRACN),
+    };
 
     /*
      *  Supply configuration update enable
@@ -62,7 +240,8 @@ SystemClock_Config(void)
      * datasheet.
      */
     __HAL_PWR_VOLTAGESCALING_CONFIG(MYNEWT_VAL(STM32_CLOCK_VOLTAGESCALING_CONFIG));
-    while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+    while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {
+    }
 
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_NONE;
 
@@ -124,45 +303,33 @@ SystemClock_Config(void)
 #endif
 
     /*
-     * Default to HSE as source, when both HSE and HSI are enabled.
-     *
-     * TODO: option to let the PLL turned off could be added, because
-     * both HSI and HSE can be used as SYSCLK source.
+     * PLL1. When disabled it is left untouched here and turned off at the
+     * end, after SYSCLK was switched to its source (it may drive SYSCLK
+     * now, i.e. when started by bootloader).
      */
+#if MYNEWT_VAL(STM32_CLOCK_PLL1)
     osc_init.PLL.PLLState = RCC_PLL_ON;
-#if MYNEWT_VAL(STM32_CLOCK_HSE)
-    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    osc_init.PLL.PLLSource = MYNEWT_VAL(STM32_CLOCK_PLL_SOURCE);
+    osc_init.PLL.PLLM = MYNEWT_VAL(STM32_CLOCK_PLL1_PLLM);
+    osc_init.PLL.PLLN = MYNEWT_VAL(STM32_CLOCK_PLL1_PLLN);
+    osc_init.PLL.PLLP = MYNEWT_VAL(STM32_CLOCK_PLL1_PLLP);
+    osc_init.PLL.PLLQ = MYNEWT_VAL(STM32_CLOCK_PLL1_PLLQ);
+    osc_init.PLL.PLLR = MYNEWT_VAL(STM32_CLOCK_PLL1_PLLR);
+    osc_init.PLL.PLLRGE = MYNEWT_VAL(STM32_CLOCK_PLL1_RGE);
+    osc_init.PLL.PLLVCOSEL = MYNEWT_VAL(STM32_CLOCK_PLL1_VCOSEL);
+    osc_init.PLL.PLLFRACN = MYNEWT_VAL(STM32_CLOCK_PLL1_PLLFRACN);
 #else
-    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+    osc_init.PLL.PLLState = RCC_PLL_NONE;
 #endif
 
-#if !IS_RCC_PLLM_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL_PLLM))
-#error "PLLM value is invalid"
-#endif
-
-#if !IS_RCC_PLLN_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL_PLLN))
-#error "PLLN value is invalid"
-#endif
-
-#if !IS_RCC_PLLP_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL_PLLP))
-#error "PLLP value is invalid"
-#endif
-
-#if !IS_RCC_PLLQ_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL_PLLQ))
-#error "PLLQ value is invalid"
-#endif
-
-#if !IS_RCC_PLLR_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL_PLLR))
-#error "PLLR value is invalid"
-#endif
-
-    osc_init.PLL.PLLM = MYNEWT_VAL(STM32_CLOCK_PLL_PLLM);
-    osc_init.PLL.PLLN = MYNEWT_VAL(STM32_CLOCK_PLL_PLLN);
-    osc_init.PLL.PLLP = MYNEWT_VAL(STM32_CLOCK_PLL_PLLP);
-    osc_init.PLL.PLLQ = MYNEWT_VAL(STM32_CLOCK_PLL_PLLQ);
-    osc_init.PLL.PLLR = MYNEWT_VAL(STM32_CLOCK_PLL_PLLR);
-
-    osc_init.PLL.PLLRGE = MYNEWT_VAL(STM32_CLOCK_PLLRGE);
+    /*
+     * CSI Oscillator (can be used as PLL and SYSCLK clock source).
+     */
+    if (MYNEWT_VAL(STM32_CLOCK_CSI)) {
+        osc_init.OscillatorType |= RCC_OSCILLATORTYPE_CSI;
+        osc_init.CSIState = RCC_CSI_ON;
+        osc_init.CSICalibrationValue = RCC_CSICALIBRATION_DEFAULT;
+    }
 
     if (MYNEWT_VAL(STM32_CLOCK_HSI48)) {
         osc_init.OscillatorType |= RCC_OSCILLATORTYPE_HSI48;
@@ -174,18 +341,32 @@ SystemClock_Config(void)
         assert(0);
     }
 
+    if (!MYNEWT_VAL(STM32_CLOCK_PLL1) &&
+        (MYNEWT_VAL(STM32_CLOCK_PLL2) || MYNEWT_VAL(STM32_CLOCK_PLL3))) {
+        /*
+         * Without PLL1 source was not set by HAL_RCC_OscConfig(). It can only
+         * be changed when all PLLs are disabled.
+         */
+        __HAL_RCC_PLL_PLLSOURCE_CONFIG(MYNEWT_VAL(STM32_CLOCK_PLL_SOURCE));
+    }
+    if (MYNEWT_VAL(STM32_CLOCK_PLL2)) {
+        pll2_config(&pll2, PLLX_OUTPUTS(2));
+    }
+    if (MYNEWT_VAL(STM32_CLOCK_PLL3)) {
+        pll3_config(&pll3, PLLX_OUTPUTS(3));
+    }
+
     /*
-     * Select PLL as system clock source and configure the HCLK, PCLK1 and
-     * PCLK2 clocks dividers. HSI and HSE are also valid system clock sources,
-     * although there is no much point in supporting them now.
+     * Select system clock source and configure the HCLK, PCLK1 and
+     * PCLK2 clocks dividers.
      */
     clk_init.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
                          RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2 |
                          RCC_CLOCKTYPE_D3PCLK1 | RCC_CLOCKTYPE_D1PCLK1;
-    clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    clk_init.SYSCLKSource = MYNEWT_VAL(STM32_CLOCK_SYSCLK_SOURCE);
 
 #if !IS_RCC_HCLK(MYNEWT_VAL(STM32_CLOCK_AHB_DIVIDER))
-#error  "AHB clock divider is invalid"
+#error "AHB clock divider is invalid"
 #endif
 
 #if !IS_RCC_PCLK1(MYNEWT_VAL(STM32_CLOCK_APB1_DIVIDER))
@@ -211,10 +392,11 @@ SystemClock_Config(void)
         assert(0);
     }
 
-#if ((MYNEWT_VAL(STM32_CLOCK_HSI) == 0) || (MYNEWT_VAL(STM32_CLOCK_HSE) == 0))
+#if ((MYNEWT_VAL(STM32_CLOCK_HSI) == 0) || (MYNEWT_VAL(STM32_CLOCK_HSE) == 0) || \
+     (MYNEWT_VAL(STM32_CLOCK_PLL1) == 0))
     /*
-     * Turn off HSE/HSI oscillator; this must be done at the end because
-     * SYSCLK source has to be updated first.
+     * Turn off HSE/HSI oscillator and PLL1; this must be done at the end
+     * because SYSCLK source has to be updated first.
      */
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_NONE;
 #if (MYNEWT_VAL(STM32_CLOCK_HSE) == 0)
@@ -225,17 +407,27 @@ SystemClock_Config(void)
     osc_init.OscillatorType |= RCC_OSCILLATORTYPE_HSI;
     osc_init.HSIState = RCC_HSI_OFF;
 #endif
+#if (MYNEWT_VAL(STM32_CLOCK_PLL1) == 0)
+    osc_init.PLL.PLLState = RCC_PLL_OFF;
+#else
     osc_init.PLL.PLLState = RCC_PLL_NONE;
+#endif
 
     status = HAL_RCC_OscConfig(&osc_init);
     if (status != HAL_OK) {
         assert(0);
     }
 #endif
+
+    /*
+     * Kernel clock selections. Only the mux is set, selected PLL is
+     * configured by its own settings.
+     */
     if (MYNEWT_VAL(STM32_CLOCK_USBSEL)) {
-        per_clk_init.PeriphClockSelection = RCC_PERIPHCLK_USB;
-        per_clk_init.UsbClockSelection = MYNEWT_VAL(STM32_CLOCK_USBSEL);
-        HAL_RCCEx_PeriphCLKConfig(&per_clk_init);
+        __HAL_RCC_USB_CONFIG(MYNEWT_VAL(STM32_CLOCK_USBSEL));
+    }
+    if (MYNEWT_VAL(STM32_CLOCK_FMCSEL)) {
+        __HAL_RCC_FMC_CONFIG(MYNEWT_VAL(STM32_CLOCK_FMCSEL));
     }
 }
 #endif
