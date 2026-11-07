@@ -1,0 +1,81 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    STM32_SDRAM_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for SDRAM initialization. SDRAM must be ready
+            before any package uses memory in .sdram section.
+        value: 1
+    STM32_SDRAM_BANK:
+        description: >
+            FMC SDRAM bank the chip is connected to.
+            1: SDNE0/SDCKE0, mapped at 0xC0000000.
+            2: SDNE1/SDCKE1, mapped at 0xD0000000.
+            Usually set by BSP.
+        value: 1
+        range: 1..2
+    STM32_SDRAM_SIZE:
+        description: >
+            Size of SDRAM in bytes (power of 2). Used for MPU region and
+            by BSP linker region. Must not be smaller than size computed
+            from configured geometry. Usually set by BSP.
+        value:
+        restrictions: $notnull
+    STM32_SDRAM_POWERUP_DELAY_US:
+        description: >
+            Delay after enabling SDRAM clock before first command
+            (at least 100 us for most chips).
+        value: 200
+    STM32_SDRAM_MPU:
+        description: >
+            Add MPU region for SDRAM. Without it SDRAM range is Device
+            memory: not cacheable, no unaligned access, no execution.
+        value: 1
+    STM32_SDRAM_MPU_ATTR:
+        description: >
+            Memory attributes of SDRAM MPU region.
+            write_back: fastest, CPU must clean data cache before DMA/LTDC
+            reads data written by CPU.
+            write_through: CPU writes go directly to SDRAM so LTDC/DMA see
+            them; reads are cached.
+            non_cacheable: no cache maintenance at all, slowest.
+        value: write_through
+        choices:
+            - write_back
+            - write_through
+            - non_cacheable
+    STM32_SDRAM_EXEC:
+        description: >
+            Allow code execution from SDRAM (MPU region without XN).
+        value: 0
+    STM32_SDRAM_CLEAR:
+        description: >
+            Zero .sdram section after initialization so variables placed
+            there with STM32_SDRAM_SECTION behave like .bss.
+        value: 1
+    STM32_SDRAM_TEST:
+        description: >
+            Run destructive memory test of whole SDRAM during
+            initialization. Panic on failure.
+        value: 0
+    STM32_SDRAM_CLI:
+        description: >
+            Shell module 'sdram' with commands info, test, speed.
+        value: 0
