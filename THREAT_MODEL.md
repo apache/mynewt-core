@@ -135,6 +135,12 @@ happens when they do.
    the BLE SMP transport. Link security of other management transports
    (serial physical access, IP reachability) is the integrator's (§10).
 7. **Physical / invasive / side-channel and supply-chain** concerns.
+8. **Issues present only on the development branch (`master`) and not in
+   any release.** Unreleased code is not shipped to users, so a flaw that
+   was introduced after the latest release and does not affect any
+   released version is a regular bug or regression: it is fixed in
+   `master` like any other bug, without a CVE or security advisory.
+   *(maintainer)*
 
 ## §4 Trust boundaries and data flow
 
@@ -509,6 +515,7 @@ exhaustion* (flooding) or about *malicious but well-formed* commands
 | "LoRaWAN/OSDP/CoAP spec-level weakness" | A property of the protocol spec; in model only if Mynewt's *implementation* is memory-unsafe or deviates from the spec's security-relevant requirements. | §3, §6 |
 | "`boot/` doesn't verify signatures" | Correct — that is MCUboot's job; `boot/` is split/startup glue. | §9 false-friends |
 | "Coredump/fault output leaks memory" | Intended diagnostic; gate or disable in production (integrator). | §9, §10.3 |
+| "Memory-safety bug in `master`" where the affected code is not in any release | Unreleased code; a regression fixed as a regular bug, no CVE. VALID only if a released version is affected. | §3.8 |
 
 Discriminator: **vendored-upstream issues, protocol-spec weaknesses, and
 "no auth on a management/network surface"** are out of model; a
@@ -536,7 +543,7 @@ object**, or a **Mynewt-level crypto *misconfiguration***, is VALID.
 | Disposition | Use when |
 | --- | --- |
 | **VALID** | Memory-unsafety / bounds / unbounded-resource / concurrency failure in any externally-reachable parser (`net/`, `mgmt/`, `fs/`, `encoding/`, image header) or kernel object reachable from input — for management, reachable by a crafted SMP/OMP frame on a compiled-in handler, i.e. it breaks *even with the transport perfectly secured*; a Mynewt-level crypto misconfiguration. |
-| **OUT-OF-MODEL** | Depends on the absence of mgmt/network authn/authz/encryption/replay protection, on a protocol-spec weakness, on an internal flaw in **any vendored component** (§3.1), or on a malicious-but-well-formed management command. |
+| **OUT-OF-MODEL** | Depends on the absence of mgmt/network authn/authz/encryption/replay protection, on a protocol-spec weakness, on an internal flaw in **any vendored component** (§3.1), or on a malicious-but-well-formed management command; or the issue exists only in unreleased `master` code (§3.8), which is handled as a regular bug. |
 | **DOWNSTREAM** | Fix is the integrator's: enable secure boot, gate/disable a surface, update a vendored component, size pools, supply a CSPRNG-quality RNG (core provides no unified random API — §5a). |
 | **NON-FINDING** | Matches a §11a row. |
 | **MODEL-GAP** | Real, in-scope in spirit, no §8/§9 item covers it → §14. |
