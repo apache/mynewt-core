@@ -9,12 +9,10 @@
 void *calloc(size_t nmemb, size_t size)
 {
 	void *ptr;
-        int nb;
 
-        nb = sizeof(size_t) * 4;
-        if (size >= SIZE_MAX >> nb || nmemb >= SIZE_MAX >> nb) {
-            return NULL;
-        }
+	if (nmemb && size > SIZE_MAX / nmemb) {
+		return NULL;
+	}
 	size *= nmemb;
 	ptr = malloc(size);
 	if (ptr)
