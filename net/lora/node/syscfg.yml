@@ -102,3 +102,7 @@ syscfg.defs:
         description: >
             Sysinit stage for the LoRa endpoint.
         value: 200
+
+syscfg.vals:
+    # LoRaMAC computes message integrity codes with AES-CMAC.
+    MBEDTLS_CMAC_C: 1

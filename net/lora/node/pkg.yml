@@ -25,6 +25,7 @@ pkg.keywords:
     - lora
 
 pkg.deps:
+    - "@apache-mynewt-core/crypto/mbedtls"
     - "@apache-mynewt-core/util/static_task"
 
 pkg.deps.LORA_NODE_CLI:

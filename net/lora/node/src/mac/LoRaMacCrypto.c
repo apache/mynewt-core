@@ -17,13 +17,16 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
 
 Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jäckle ( STACKFORCE )
 */
+#include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "node/utilities.h"
 
-#include "aes.h"
-#include "cmac.h"
+#include "mbedtls/aes.h"
+#include "mbedtls/cipher.h"
+#include "mbedtls/cmac.h"
 
 #include "node/mac/LoRaMacCrypto.h"
 
@@ -57,14 +60,78 @@ static uint8_t sBlock[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                           };
 
 /*!
- * AES computation context variable
+ * CMAC computation context, set up on first use so that computing a MIC
+ * does not allocate memory
  */
-static aes_context AesContext;
+static mbedtls_cipher_context_t AesCmacCtx;
+static bool AesCmacCtxReady;
 
 /*!
- * CMAC computation context variable
+ * Computes the AES-CMAC of up to two buffers with a 128 bit key
  */
-static AES_CMAC_CTX AesCmacCtx[1];
+static void LoRaMacCmac( const uint8_t *key, const uint8_t *buf1, size_t len1,
+                         const uint8_t *buf2, size_t len2, uint8_t *mac )
+{
+    int rc;
+
+    (void)rc;
+
+    if( !AesCmacCtxReady )
+    {
+        mbedtls_cipher_init( &AesCmacCtx );
+        rc = mbedtls_cipher_setup( &AesCmacCtx,
+            mbedtls_cipher_info_from_type( MBEDTLS_CIPHER_AES_128_ECB ) );
+        assert( rc == 0 );
+        rc = mbedtls_cipher_cmac_starts( &AesCmacCtx, key, 128 );
+        assert( rc == 0 );
+        AesCmacCtxReady = true;
+    }
+    else
+    {
+        rc = mbedtls_cipher_setkey( &AesCmacCtx, key, 128, MBEDTLS_ENCRYPT );
+        assert( rc == 0 );
+        rc = mbedtls_cipher_cmac_reset( &AesCmacCtx );
+        assert( rc == 0 );
+    }
+
+    rc = mbedtls_cipher_cmac_update( &AesCmacCtx, buf1, len1 );
+    assert( rc == 0 );
+    if( len2 > 0 )
+    {
+        rc = mbedtls_cipher_cmac_update( &AesCmacCtx, buf2, len2 );
+        assert( rc == 0 );
+    }
+    rc = mbedtls_cipher_cmac_finish( &AesCmacCtx, mac );
+    assert( rc == 0 );
+}
+
+/*!
+ * Sets up an AES context for encryption with a 128 bit key
+ */
+static void LoRaMacAesInit( mbedtls_aes_context *ctx, const uint8_t *key )
+{
+    int rc;
+
+    (void)rc;
+
+    mbedtls_aes_init( ctx );
+    rc = mbedtls_aes_setkey_enc( ctx, key, 128 );
+    assert( rc == 0 );
+}
+
+/*!
+ * Encrypts one block with AES in ECB mode
+ */
+static void LoRaMacAesEncrypt( mbedtls_aes_context *ctx, const uint8_t *in,
+                               uint8_t *out )
+{
+    int rc;
+
+    (void)rc;
+
+    rc = mbedtls_aes_crypt_ecb( ctx, MBEDTLS_AES_ENCRYPT, in, out );
+    assert( rc == 0 );
+}
 
 /*!
  * \brief Computes the LoRaMAC frame MIC field
@@ -93,15 +160,8 @@ void LoRaMacComputeMic( const uint8_t *buffer, uint16_t size, const uint8_t *key
 
     MicBlockB0[15] = size & 0xFF;
 
-    AES_CMAC_Init( AesCmacCtx );
-
-    AES_CMAC_SetKey( AesCmacCtx, key );
-
-    AES_CMAC_Update( AesCmacCtx, MicBlockB0, LORAMAC_MIC_BLOCK_B0_SIZE );
-
-    AES_CMAC_Update( AesCmacCtx, buffer, size & 0xFF );
-
-    AES_CMAC_Final( Mic, AesCmacCtx );
+    LoRaMacCmac( key, MicBlockB0, LORAMAC_MIC_BLOCK_B0_SIZE, buffer,
+                 size & 0xFF, Mic );
 
     *mic = ( uint32_t )( ( uint32_t )Mic[3] << 24 | ( uint32_t )Mic[2] << 16 | ( uint32_t )Mic[1] << 8 | ( uint32_t )Mic[0] );
 }
@@ -111,9 +171,9 @@ void LoRaMacPayloadEncrypt( const uint8_t *buffer, uint16_t size, const uint8_t 
     uint16_t i;
     uint8_t bufferIndex = 0;
     uint16_t ctr = 1;
+    mbedtls_aes_context aes;
 
-    memset( AesContext.ksch, '\0', 240 );
-    aes_set_key( key, 16, &AesContext );
+    LoRaMacAesInit( &aes, key );
 
     aBlock[5] = dir;
 
@@ -131,7 +191,7 @@ void LoRaMacPayloadEncrypt( const uint8_t *buffer, uint16_t size, const uint8_t 
     {
         aBlock[15] = ( ( ctr ) & 0xFF );
         ctr++;
-        aes_encrypt( aBlock, sBlock, &AesContext );
+        LoRaMacAesEncrypt( &aes, aBlock, sBlock );
         for( i = 0; i < 16; i++ )
         {
             encBuffer[bufferIndex + i] = buffer[bufferIndex + i] ^ sBlock[i];
@@ -143,12 +203,14 @@ void LoRaMacPayloadEncrypt( const uint8_t *buffer, uint16_t size, const uint8_t 
     if( size > 0 )
     {
         aBlock[15] = ( ( ctr ) & 0xFF );
-        aes_encrypt( aBlock, sBlock, &AesContext );
+        LoRaMacAesEncrypt( &aes, aBlock, sBlock );
         for( i = 0; i < size; i++ )
         {
             encBuffer[bufferIndex + i] = buffer[bufferIndex + i] ^ sBlock[i];
         }
     }
+
+    mbedtls_aes_free( &aes );
 }
 
 void LoRaMacPayloadDecrypt( const uint8_t *buffer, uint16_t size, const uint8_t *key, uint32_t address, uint8_t dir, uint32_t sequenceCounter, uint8_t *decBuffer )
@@ -158,46 +220,44 @@ void LoRaMacPayloadDecrypt( const uint8_t *buffer, uint16_t size, const uint8_t 
 
 void LoRaMacJoinComputeMic( const uint8_t *buffer, uint16_t size, const uint8_t *key, uint32_t *mic )
 {
-    AES_CMAC_Init( AesCmacCtx );
-
-    AES_CMAC_SetKey( AesCmacCtx, key );
-
-    AES_CMAC_Update( AesCmacCtx, buffer, size & 0xFF );
-
-    AES_CMAC_Final( Mic, AesCmacCtx );
+    LoRaMacCmac( key, buffer, size & 0xFF, NULL, 0, Mic );
 
     *mic = ( uint32_t )( ( uint32_t )Mic[3] << 24 | ( uint32_t )Mic[2] << 16 | ( uint32_t )Mic[1] << 8 | ( uint32_t )Mic[0] );
 }
 
 void LoRaMacJoinDecrypt( const uint8_t *buffer, uint16_t size, const uint8_t *key, uint8_t *decBuffer )
 {
-    memset( AesContext.ksch, '\0', 240 );
-    aes_set_key( key, 16, &AesContext );
-    aes_encrypt( buffer, decBuffer, &AesContext );
+    mbedtls_aes_context aes;
+
+    LoRaMacAesInit( &aes, key );
+    LoRaMacAesEncrypt( &aes, buffer, decBuffer );
     // Check if optional CFList is included
     if( size >= 16 )
     {
-        aes_encrypt( buffer + 16, decBuffer + 16, &AesContext );
+        LoRaMacAesEncrypt( &aes, buffer + 16, decBuffer + 16 );
     }
+    mbedtls_aes_free( &aes );
 }
 
 void LoRaMacJoinComputeSKeys( const uint8_t *key, const uint8_t *appNonce, uint16_t devNonce, uint8_t *nwkSKey, uint8_t *appSKey )
 {
     uint8_t nonce[16];
     uint8_t *pDevNonce = ( uint8_t * )&devNonce;
+    mbedtls_aes_context aes;
 
-    memset( AesContext.ksch, '\0', 240 );
-    aes_set_key( key, 16, &AesContext );
+    LoRaMacAesInit( &aes, key );
 
     memset( nonce, 0, sizeof( nonce ) );
     nonce[0] = 0x01;
     memcpy( nonce + 1, appNonce, 6 );
     memcpy( nonce + 7, pDevNonce, 2 );
-    aes_encrypt( nonce, nwkSKey, &AesContext );
+    LoRaMacAesEncrypt( &aes, nonce, nwkSKey );
 
     memset( nonce, 0, sizeof( nonce ) );
     nonce[0] = 0x02;
     memcpy( nonce + 1, appNonce, 6 );
     memcpy( nonce + 7, pDevNonce, 2 );
-    aes_encrypt( nonce, appSKey, &AesContext );
+    LoRaMacAesEncrypt( &aes, nonce, appSKey );
+
+    mbedtls_aes_free( &aes );
 }
