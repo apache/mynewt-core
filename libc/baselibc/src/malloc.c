@@ -162,6 +162,7 @@ void *malloc(size_t size)
         return NULL;
 
     void *result = NULL;
+    size_t more;
 retry_alloc:
     for (fp = __malloc_head.next_free; fp->a.type != ARENA_TYPE_HEAD;
          fp = fp->next_free) {
@@ -173,9 +174,21 @@ retry_alloc:
     }
     /* _sbrk() takes signed increment, larger sizes would shrink the heap */
     if (result == NULL && size <= INT_MAX) {
-        more_mem = _sbrk(size);
+        more = size;
+        /* A free block at the end of the heap merges with the new memory,
+           so only the missing part is needed */
+        fp = __malloc_head.a.prev;
+        if (fp->a.type == ARENA_TYPE_FREE &&
+            (char *)fp + fp->a.size == (char *)_sbrk(0)) {
+            more -= fp->a.size;
+            /* add_malloc_block() ignores blocks smaller than this */
+            if (more < sizeof(struct free_arena_header)) {
+                more = 2 * sizeof(struct arena_header);
+            }
+        }
+        more_mem = _sbrk(more);
         if (more_mem != (void *)-1) {
-            add_malloc_block(more_mem, size);
+            add_malloc_block(more_mem, more);
             goto retry_alloc;
         }
     }
