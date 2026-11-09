@@ -72,7 +72,7 @@ ring_buffer_free_space(const struct ring_buffer *rb)
     uint32_t head = rb->head;
     uint32_t tail = rb->tail;
 
-    return rb->size - ((tail - head) & (rb->size - 1)) - 1;
+    return rb->size - 1 - ((head - tail) & (rb->size - 1));
 }
 
 int

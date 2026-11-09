@@ -30,9 +30,9 @@ extern "C" {
 
 struct ring_buffer {
     /* Write pointer */
-    uint8_t head;
+    uint16_t head;
     /* Read pointer */
-    uint8_t tail;
+    uint16_t tail;
     /** Ring buffer size, must be power of 2 */
     uint16_t size;
     /** Data buffer */
