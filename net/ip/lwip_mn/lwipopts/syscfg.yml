@@ -54,6 +54,12 @@ syscfg.defs:
             every group joined on it. A group joined on IP4_ADDR_ANY uses
             one entry on every IGMP interface.
         value: 8
+    LWIP_NUM_SYS_TIMEOUT_EXTRA:
+        description: >
+            Additional lwIP timeouts (sys_timeout()) for application code
+            and lwIP apps not counted automatically (e.g. MQTT).  lwIP
+            core timers, mDNS, TFTP and SNTP are counted.
+        value: 0
 
 syscfg.restrictions:
     # As long as MEM_LIBC_MALLOC is 1 this restriction applies

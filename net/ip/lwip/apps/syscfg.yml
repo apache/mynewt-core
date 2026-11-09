@@ -31,6 +31,11 @@ syscfg.defs:
             Enable MDNS responder. It is started on every network interface
             that has host name set (netif->hostname).
         value: 0
+    LWIP_APPS_MDNS_NUM_NETIF:
+        description: >
+            Maximum number of interfaces with MDNS responder (host name
+            set), each needs lwIP timeout for probing.
+        value: 1
     LWIP_APPS_MDNS_TTL:
         description: 'TTL in seconds of MDNS host name records'
         value: 3600
