@@ -17,7 +17,12 @@
 #
 
 syscfg.defs:
-    TCP_CONSOLE_PORT:
+    CONSOLE_TCP_PORT:
         description: 'Set console TCP port'
         value: 4444
         restrictions: $notnull
+
+    # Defunct settings, use CONSOLE_TCP_xxx instead
+    TCP_CONSOLE_PORT:
+        description: "Use CONSOLE_TCP_PORT instead"
+        defunct: 1

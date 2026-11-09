@@ -181,7 +181,7 @@ tcp_console_pkg_init(void)
 
     sin.msin_len = sizeof(sin);
     sin.msin_family = MN_AF_INET;
-    sin.msin_port = htons(MYNEWT_VAL(TCP_CONSOLE_PORT));
+    sin.msin_port = htons(MYNEWT_VAL(CONSOLE_TCP_PORT));
 
     /* Bind it to all interfaces */
     rc = mn_bind(server_socket, (struct mn_sockaddr *)&sin);
