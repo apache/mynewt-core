@@ -64,7 +64,35 @@ extern "C" {
 #endif
 /* mDNS restarts probing on address changes (e.g. DHCP) */
 #define LWIP_NETIF_EXT_STATUS_CALLBACK  1
+/* Probe timeout of every interface, retried while link is down */
+#define LWIP_APPS_MDNS_SYS_TIMEOUTS     MYNEWT_VAL_LWIP_APPS_MDNS_NUM_NETIF
+#else
+#define LWIP_APPS_MDNS_SYS_TIMEOUTS     0
 #endif
+
+/* Transfer timeout */
+#if defined(MYNEWT_VAL_LWIP_APPS_TFTP) && MYNEWT_VAL_LWIP_APPS_TFTP
+#define LWIP_APPS_TFTP_SYS_TIMEOUTS     1
+#else
+#define LWIP_APPS_TFTP_SYS_TIMEOUTS     0
+#endif
+
+/* Request and retry timeout */
+#if defined(MYNEWT_VAL_LWIP_APPS_SNTP) && MYNEWT_VAL_LWIP_APPS_SNTP
+#define LWIP_APPS_SNTP_SYS_TIMEOUTS     1
+#else
+#define LWIP_APPS_SNTP_SYS_TIMEOUTS     0
+#endif
+
+/*
+ * Default MEMP_NUM_SYS_TIMEOUT (LWIP_NUM_SYS_TIMEOUT_INTERNAL) counts only
+ * lwIP core timers.  sys_timeout() silently does nothing when the pool is
+ * empty, e.g. mDNS never probes and stays silent.
+ */
+#define MEMP_NUM_SYS_TIMEOUT                                                \
+    (LWIP_NUM_SYS_TIMEOUT_INTERNAL + LWIP_APPS_MDNS_SYS_TIMEOUTS +          \
+     LWIP_APPS_TFTP_SYS_TIMEOUTS + LWIP_APPS_SNTP_SYS_TIMEOUTS +            \
+     MYNEWT_VAL_LWIP_NUM_SYS_TIMEOUT_EXTRA)
 
 #define LWIP_NETIF_STATUS_CALLBACK      1
 #define LWIP_NETIF_LINK_CALLBACK        1
