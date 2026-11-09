@@ -260,26 +260,38 @@ This product bundles parts of CMSIS-CORE, which is available under the
     * kernel/os/src/arch/cortex_m33/m33/HAL_CM33.s
     * kernel/os/src/arch/cortex_m33/m33/SVC_Table.s
 
-This product bundles additional files from CMSIS-CORE, but these files are
-missing licensing information.  The BSD license was subsequently added to
-these files in later releases.  These files are:
+This product bundles cmsis_nvic files from ARM mbed cmsis-core, which are
+available under the "3-clause BSD" license.  Bundled files are:
     * hw/cmsis-core/src/cmsis_nvic.c
     * hw/mcu/ambiq/apollo2/include/mcu/cmsis_nvic.h
+    * hw/mcu/ambiq/apollo3/include/mcu/cmsis_nvic.h
+    * hw/mcu/atmel/samd21xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/dialog/cmac/include/mcu/cmsis_nvic.h
     * hw/mcu/dialog/da1469x/include/mcu/cmsis_nvic.h
     * hw/mcu/nordic/nrf51xxx/include/mcu/cmsis_nvic.h
     * hw/mcu/nordic/nrf52xxx/include/mcu/cmsis_nvic.h
+    * hw/mcu/nordic/nrf5340/include/mcu/cmsis_nvic.h
+    * hw/mcu/nordic/nrf5340_net/include/mcu/cmsis_nvic.h
+    * hw/mcu/nordic/nrf54lxx/include/mcu/cmsis_nvic.h
+    * hw/mcu/nordic/nrf91xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/nxp/kinetis/MK64F12/include/mcu/cmsis_nvic.h
+    * hw/mcu/nxp/kinetis/MK8xF/include/mcu/cmsis_nvic.h
+    * hw/mcu/nxp/lpc55xx/include/mcu/cmsis_nvic.h
     * hw/mcu/nxp/mkw41z/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32l1xx/include/mcu/cmsis_nvic.h
     * hw/mcu/stm/stm32f0xx/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32f3xx/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32l0xx/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32f4xx/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32l4xx/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32wbxx/include/mcu/cmsis_nvic.h
     * hw/mcu/stm/stm32f1xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f3xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f4xx/include/mcu/cmsis_nvic.h
     * hw/mcu/stm/stm32f7xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32g0xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32g4xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32h5xx/include/mcu/cmsis_nvic.h
     * hw/mcu/stm/stm32h7xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l0xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l1xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l4xx/include/mcu/cmsis_nvic.h
     * hw/mcu/stm/stm32u5xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32wbxx/include/mcu/cmsis_nvic.h
 
 This product bundles parts of STM32 SDK by STMicroelectronics, which is
 available under the "3-clause BSD" license.  Bundled files are:
@@ -553,7 +565,6 @@ This products bundles Amiq Micro Apollo 3, which is available under the
 "3-clause BSD" license. Bundled files are:
     * hw/mcu/ambiq/apollo3/src/ext/AmbiqSuite
     * hw/mcu/ambiq/apollo3/include/mcu/apollo3.h
-    * hw/mcu/ambiq/apollo3/include/mcu/cmsis_nvic.h
     * hw/mcu/ambiq/apollo3/include/mcu/system_apollo3.h
     * hw/bsp/apollo3_evb/src/system_apollo3.c
 
