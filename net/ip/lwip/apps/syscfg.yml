@@ -33,8 +33,16 @@ syscfg.defs:
         value: 0
     LWIP_APPS_MDNS_NUM_NETIF:
         description: >
-            Maximum number of interfaces with MDNS responder (host name
-            set), each needs lwIP timeout for probing.
+            Maximum number of interfaces with MDNS responder, each needs
+            lwIP timeout for probing.  Responder starts on default
+            interface first, then on other interfaces with host name until
+            limit is reached.
+        value: 1
+    LWIP_APPS_MDNS_LOG_MODULE:
+        description: 'Numeric module ID to use for MDNS log messages.'
+        value: 44
+    LWIP_APPS_MDNS_LOG_LVL:
+        description: 'Minimum level for the MDNS log.'
         value: 1
     LWIP_APPS_MDNS_TTL:
         description: >
@@ -61,3 +69,8 @@ syscfg.defs:
     LWIP_APPS_TFTP:
         description: 'Enable TFTP'
         value: 0
+
+syscfg.logs:
+    LWIP_APPS_MDNS_LOG:
+        module: MYNEWT_VAL(LWIP_APPS_MDNS_LOG_MODULE)
+        level: MYNEWT_VAL(LWIP_APPS_MDNS_LOG_LVL)
