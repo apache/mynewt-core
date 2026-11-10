@@ -205,7 +205,6 @@ hw/mcu/stm/stm32f4xx/src/system_stm32f4xx.c
 hw/mcu/stm/stm32f7xx/src/clock_stm32f7xx.c
 hw/mcu/stm/stm32g0xx/src/clock_stm32g0xx.c
 hw/mcu/stm/stm32g4xx/src/clock_stm32g4xx.c
-hw/mcu/stm/stm32h7xx/src/clock_stm32h7xx.c
 hw/mcu/stm/stm32h7xx/src/system_stm32h7xx.c
 hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c
 hw/mcu/stm/stm32l0xx/src/system_stm32l0xx.c
