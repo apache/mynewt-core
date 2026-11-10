@@ -31,6 +31,7 @@ pkg.deps:
 
 pkg.cflags:
     - -Wno-unused-variable
+    - -std=gnu11
 
 pkg.include_dirs:
     - "@tinyusb/src"
