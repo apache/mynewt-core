@@ -27,13 +27,12 @@ guideline names the rule that checks it, e.g. [`sizeof-parens`], and
 `python3 tools/mynewt-format.py --explain RULE` gives the reasoning with more
 examples. Guidelines marked *(not checked)* are left to review.
 
-The limits and options shown are the defaults; each repository may tune them
-in its `.mynewt-format` file.
+The limits and options shown are the ones set in `.mynewt-format`, which all
+Mynewt repositories share (NimBLE syncs its copy from apache-mynewt-core).
 
-> **Status:** this standard is being introduced. Until mynewt-format becomes
-> the required check, the `clang-format` CI check and the `CODING_STANDARDS.md`
-> at the repository root remain authoritative where they differ (most notably
-> on the 79 column limit).
+> **Status:** mynewt-format is the coding style check of pull requests: errors
+> fail it, warnings are only reported. The `CODING_STANDARDS.md` at the
+> repository root is a short summary of this standard.
 
 ## Contents
 

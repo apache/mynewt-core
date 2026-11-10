@@ -5,6 +5,10 @@ all subprojects of Apache Mynewt.  This covers C and Assembly coding
 conventions, *only*.  Other languages (such as Go), have their own 
 coding conventions.
 
+This is a summary. The complete standard, rule by rule, is
+[tools/mynewt_style/CODING_STANDARDS.md](tools/mynewt_style/CODING_STANDARDS.md),
+which is what mynewt-format checks in CI.
+
 ## Headers
 
 * All files that are newly written, should have the Apache License clause
@@ -128,7 +132,9 @@ not:
 
 ## Line Length and Wrap
 
-* Line length should never exceed 79 columns.
+* Lines of at most 80 columns are preferred. Up to 100 columns is allowed
+  when breaking the line would hurt readability; longer lines are errors.
+  URLs and `#include` lines are exempt.
 
 * When you have to wrap a long statement, put the operator at the end of the 
   line.  i.e.:
