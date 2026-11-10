@@ -26,9 +26,9 @@ file is imported automatically and every class decorated with
 `@register_rule` becomes available, with no other registration needed.
 
 The tool lives in apache-mynewt-core and is also used, from core, to check
-apache-mynewt-nimble. Rules must therefore stay repository neutral: anything
-specific to one code base (paths, name prefixes, ignored files) belongs in
-that repository's `.mynewt-format`.
+apache-mynewt-nimble, with the options of core. Rules must therefore stay
+repository neutral; files to skip belong in that repository's
+`.mynewt-format-ignore`.
 
 | File                   | Rules                                                                    |
 |------------------------|--------------------------------------------------------------------------|

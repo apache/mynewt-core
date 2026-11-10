@@ -34,9 +34,9 @@
 
 mynewt-format lives only here. Other Mynewt repositories, such as
 apache-mynewt-nimble, do not carry a copy: both developers and CI use the
-tool from mynewt-core. All Mynewt repositories use the same options: NimBLE's
-`.mynewt-format` is a copy of the one here, synced daily, so change options
-here. Each repository keeps only its own `.mynewt-format-ignore`.
+tool from mynewt-core. All Mynewt repositories are checked with the options
+in `.mynewt-format` here (`--config`); each keeps only its own
+`.mynewt-format-ignore` (`--ignore-file`).
 
 ## mynewt-format.py
 
@@ -92,13 +92,15 @@ GitHub Actions annotations; `--format json` prints one JSON object per problem
 
 ### Using it in other repositories (NimBLE)
 
-The tool picks up the `.mynewt-format` of the repository you run it in, so
-one copy serves every repository. In a newt project mynewt-core is already
-checked out next to NimBLE:
+One copy of the tool and its options serves every repository. `--config`
+selects the options of mynewt-core and `--ignore-file` the ignore file of the
+repository being checked (without it, the one next to the config is used). In
+a newt project mynewt-core is already checked out next to NimBLE:
 
 ```bash
 cd repos/apache-mynewt-nimble
-python3 ../apache-mynewt-core/tools/mynewt-format.py
+python3 ../apache-mynewt-core/tools/mynewt-format.py \
+    --config ../apache-mynewt-core/.mynewt-format --ignore-file .mynewt-format-ignore
 ```
 
 To get a `mynewt-format` command (a link in `~/.local/bin` to this checkout,
@@ -106,17 +108,19 @@ so it follows `git pull`) and, optionally, a pre-commit hook in NimBLE:
 
 ```bash
 /path/to/mynewt-core/tools/mynewt-format-setup.sh --hook /path/to/mynewt-nimble
-mynewt-format -i                                # in any Mynewt repository
+mynewt-format --config /path/to/mynewt-core/.mynewt-format \
+    --ignore-file .mynewt-format-ignore -i
 ```
 
-Or just add an alias to `~/.bashrc`:
+The hook passes both options itself. Or just add an alias to `~/.bashrc`:
 
 ```bash
-alias mynewt-format='python3 /path/to/mynewt-core/tools/mynewt-format.py'
+alias mynewt-format='python3 /path/to/mynewt-core/tools/mynewt-format.py --config /path/to/mynewt-core/.mynewt-format --ignore-file .mynewt-format-ignore'
 ```
 
 In CI, other repositories use the actions of mynewt-core, which run the tool
-from the same mynewt-core ref as the action (e.g. `@master`):
+with its options from the same mynewt-core ref as the action (e.g. `@master`)
+and the repository's own `.mynewt-format-ignore`:
 `apache/mynewt-core/.github/actions/mynewt-format-check` in the
 `pull_request` workflow, after checking out the pull request head
 (`github.event.pull_request.head.sha`) with full history,

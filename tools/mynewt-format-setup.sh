@@ -19,8 +19,9 @@
 #
 
 # Makes this checkout's mynewt-format available as the 'mynewt-format'
-# command, so it can be used in any Mynewt repository (e.g. NimBLE), which
-# only carries its own .mynewt-format configuration.
+# command, so it can be used in any Mynewt repository (e.g. NimBLE), with
+# options of this checkout (--config /path/to/mynewt-core/.mynewt-format
+# --ignore-file .mynewt-format-ignore).
 #
 #   tools/mynewt-format-setup.sh                   install the command
 #   tools/mynewt-format-setup.sh --hook DIR        also add a pre-commit hook

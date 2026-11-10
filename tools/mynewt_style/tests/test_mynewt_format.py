@@ -1347,9 +1347,35 @@ class TestCli(unittest.TestCase):
         hook = (self.dir / ".git" / "hooks" / "pre-commit").read_text()
         tool = Path(__file__).resolve().parents[2] / "mynewt-format.py"
         self.assertTrue(tool.is_file())
-        self.assertIn(f"exec python3 {tool} --staged --check", hook)
-        # Reinstalling over our own hook is fine.
+        config = tool.parents[1] / ".mynewt-format"
+        self.assertIn(f"exec python3 {tool} --config {config} --staged --check", hook)
+        # Reinstalling over our own hook is fine, ignore file of the
+        # repository is used when it has one.
+        (self.dir / ".mynewt-format-ignore").write_text("x/**\n")
         self.assertEqual(run_cli("--install-hook", cwd=self.dir)[0], 0)
+        hook = (self.dir / ".git" / "hooks" / "pre-commit").read_text()
+        self.assertIn(f"--config {config} --ignore-file .mynewt-format-ignore --staged", hook)
+
+    def test_ignore_file_option(self):
+        # Config of another repository (as NimBLE uses core's), ignore file
+        # of the checked one instead of the one next to the config.
+        other = tempfile.TemporaryDirectory()
+        self.addCleanup(other.cleanup)
+        config = Path(other.name) / ".mynewt-format"
+        config.write_text('[rulesets]\ndefault = ["@whitespace"]\n')
+        (Path(other.name) / ".mynewt-format-ignore").write_text("a.c\n")
+        (self.dir / "my-ignore").write_text("b.c\n")
+        (self.dir / "b.c").write_text(LICENSE + "int b;  \n")
+        args = ("--config", str(config), "--whole-files", "--report", "list", "--no-color", ".")
+        out = run_cli(*args, cwd=self.dir)[1]
+        self.assertNotIn("a.c:", out)
+        self.assertIn("b.c:", out)
+        out = run_cli(*args, "--ignore-file", "my-ignore", cwd=self.dir)[1]
+        self.assertIn("a.c:", out)
+        self.assertNotIn("b.c:", out)
+        code, _, err = run_cli(*args, "--ignore-file", "missing", cwd=self.dir)
+        self.assertEqual(code, 2)
+        self.assertIn("not found", err)
 
     def test_changed_lines_is_the_default(self):
         git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "init.defaultBranch=m"]
