@@ -45,17 +45,19 @@ To maintain code quality and consistency across the project, all contributors
 **should** verify that their committed changes conform to the project's coding style
 before pushing to the remote repository.
 
-We strongly recommend running git-clang-format locally to check your committed changes.
+We strongly recommend running mynewt-format (`tools/mynewt-format.py`) locally to check your committed changes.
 This helps catch formatting issues early, avoiding CI failures and reducing review delays.
+See [tools/README.md](tools/README.md) for installing it and for using it in other Mynewt repositories.
 
-> **Tip:** Before pushing your commits, run this command to see any formatting issues that need fixing:
+> **Tip:** Before pushing your commits, run this command to review any formatting issues and proposed fixes:
 >```sh
->git-clang-format $(git merge-base upstream/master HEAD) HEAD --diff
+>python3 tools/mynewt-format.py -i --git-diff upstream/master
 >```
 
-**Note**: If clang-format produces incorrect or undesirable results (e.g., mangled macros or formatting bugs),
-you may temporarily bypass the formatting check by applying the skip-style-check label to the pull request.
-Use this only when necessary and explain the reason in the PR description.
+**Note**: If mynewt-format produces incorrect or undesirable results, silence the rule for the affected lines
+(e.g. `/* mynewt-format: ignore RULE */`, see [tools/README.md](tools/README.md)) or, as a last resort, bypass the formatting check by
+applying the skip-style-check label to the pull request. Use this only when necessary and explain the reason
+in the PR description.
 
 ## Whitespace and Braces
 

@@ -5,9 +5,7 @@
 RELEASE_NOTES.md
 **/README.md
 Doxyfile
-.clang-format
 .mailmap
-.clang-format-ignore
 
 # Ignore documentation folder
 docs
