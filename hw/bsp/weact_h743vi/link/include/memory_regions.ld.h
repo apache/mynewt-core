@@ -17,7 +17,7 @@
  * under the License.
  */
 
-/* clang-format off */
+/* mynewt-format: off */
     ITCM (rwx)       : ORIGIN = 0x00000000,   LENGTH = 64K
     DTCM (rw!x)      : ORIGIN = 0x20000000,   LENGTH = 128K
     SRAM123   (rw!x) : ORIGIN = 0x30000000,   LENGTH = 384K

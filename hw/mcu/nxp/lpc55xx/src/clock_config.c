@@ -20,7 +20,7 @@
  * 4. Set up all selectors to provide selected clocks.
  */
 
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!GlobalInfo
 product: Clocks v7.0
@@ -28,7 +28,7 @@ processor: LPC55S69
 mcu_data: ksdk2_0
 processor_version: 0.7.2
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 #include "fsl_power.h"
 #include "fsl_clock.h"
@@ -55,7 +55,7 @@ void BOARD_InitBootClocks(void)
 /*******************************************************************************
  ******************** Configuration BOARD_BootClockFRO12M **********************
  ******************************************************************************/
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!Configuration
 name: BOARD_BootClockFRO12M
@@ -66,7 +66,7 @@ settings:
 sources:
 - {id: ANACTRL.fro_hf.outFreq, value: 96 MHz}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 /*******************************************************************************
  * Variables for BOARD_BootClockFRO12M configuration
@@ -103,7 +103,7 @@ void BOARD_BootClockFRO12M(void)
 /*******************************************************************************
  ******************* Configuration BOARD_BootClockFROHF96M *********************
  ******************************************************************************/
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!Configuration
 name: BOARD_BootClockFROHF96M
@@ -115,7 +115,7 @@ settings:
 sources:
 - {id: ANACTRL.fro_hf.outFreq, value: 96 MHz}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 /*******************************************************************************
  * Variables for BOARD_BootClockFROHF96M configuration
@@ -152,7 +152,7 @@ void BOARD_BootClockFROHF96M(void)
 /*******************************************************************************
  ******************** Configuration BOARD_BootClockPLL100M *********************
  ******************************************************************************/
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!Configuration
 name: BOARD_BootClockPLL100M
@@ -172,7 +172,7 @@ sources:
 - {id: ANACTRL.fro_hf.outFreq, value: 96 MHz}
 - {id: SYSCON.XTAL32M.outFreq, value: 16 MHz, enabled: true}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 /*******************************************************************************
  * Variables for BOARD_BootClockPLL100M configuration
@@ -229,7 +229,7 @@ void BOARD_BootClockPLL100M(void)
 /*******************************************************************************
  ******************** Configuration BOARD_BootClockPLL150M *********************
  ******************************************************************************/
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!Configuration
 name: BOARD_BootClockPLL150M
@@ -248,7 +248,7 @@ settings:
 sources:
 - {id: SYSCON.XTAL32M.outFreq, value: 16 MHz, enabled: true}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 /*******************************************************************************
  * Variables for BOARD_BootClockPLL150M configuration
@@ -303,7 +303,7 @@ void BOARD_BootClockPLL150M(void)
 /*******************************************************************************
  ******************* Configuration BOARD_BootClockPLL1_150M ********************
  ******************************************************************************/
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!Configuration
 name: BOARD_BootClockPLL1_150M
@@ -321,7 +321,7 @@ settings:
 sources:
 - {id: SYSCON.XTAL32M.outFreq, value: 16 MHz, enabled: true}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 /*******************************************************************************
  * Variables for BOARD_BootClockPLL1_150M configuration

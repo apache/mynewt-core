@@ -93,10 +93,8 @@ jobs:
           fi
 
   style_check_mynewt_format:
-    name: Coding style (mynewt-format, informational)
+    name: Coding style (mynewt-format)
     runs-on: ubuntu-slim
-    # Informational only: reports problems but never fails the PR.
-    continue-on-error: true
     steps:
       # Pull request head instead of merge commit, so that reported lines
       # match lines of review comments

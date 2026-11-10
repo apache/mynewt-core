@@ -33,10 +33,10 @@
   command, for use in other Mynewt repositories (see below).
 
 mynewt-format lives only here. Other Mynewt repositories, such as
-apache-mynewt-nimble, do not carry a copy: they keep just their own
-`.mynewt-format` and `.mynewt-format-ignore`, and both developers and CI use
-the tool from mynewt-core. Keep the rules repository neutral; anything
-specific to one code base belongs in that repository's `.mynewt-format`.
+apache-mynewt-nimble, do not carry a copy: both developers and CI use the
+tool from mynewt-core. All Mynewt repositories use the same options: NimBLE's
+`.mynewt-format` is a copy of the one here, synced daily, so change options
+here. Each repository keeps only its own `.mynewt-format-ignore`.
 
 ## mynewt-format.py
 
@@ -67,12 +67,14 @@ files completely), so older code that predates a rule does not get in the
 way; `--whole-files` or `--all` check everything. Each problem is shown with
 its source line and, when it can be fixed, the proposed fix right below it;
 `--report list` prints one `file:line:col` line per problem instead. CI runs it the same way on
-every pull request as an informational check: it prints problems and proposed
+every pull request as the coding style check: it prints problems and proposed
 fixes, and leaves a review comment naming the rule on each changed line that
 breaks it, or a single comment recommending a local run when there are more
 than 50 problems (`.github/actions/mynewt-format-check` and
-`mynewt-format-comments`). It does not
-fail the build (clang-format remains the blocking style check for now). To silence a rule locally, use a comment:
+`mynewt-format-comments`). Errors fail the check, warnings are only reported
+and commented on. The `skip-style-check` pull request label makes errors not
+fail the check either; use it only when a rule cannot be satisfied or silenced,
+and explain why in the pull request. To silence a rule locally, use a comment:
 
 ```c
 x = foo;       /* mynewt-format: ignore line-length */

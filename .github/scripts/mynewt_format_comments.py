@@ -188,7 +188,7 @@ def too_many_body(count):
     return "\n".join([
         f"**mynewt-format** found {count} new coding style problems in the "
         "lines changed by this PR, too many to comment on each of them. "
-        "This check is informational and does not block merging.",
+        "Errors fail the coding style check, warnings do not.",
         "",
         "Please run mynewt-format locally and review the proposed fixes:",
         "",
@@ -260,8 +260,8 @@ def main():
 
     body = [
         f"**mynewt-format** found {len(comments) + len(elsewhere)} new "
-        "coding style problem(s) in the lines changed by this PR. This "
-        "check is informational and does not block merging.",
+        "coding style problem(s) in the lines changed by this PR. Errors "
+        "fail the coding style check, warnings do not.",
         "",
         "Check locally: `mynewt-format --git-diff origin/master` "
         "(`tools/mynewt-format-setup.sh` in apache-mynewt-core installs "

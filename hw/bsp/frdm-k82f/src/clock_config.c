@@ -30,7 +30,7 @@
  * 4. Call CLOCK_SetSimConfig to set the clock configuration in SIM.
  */
 
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!GlobalInfo
 product: Clocks v5.0
@@ -40,7 +40,7 @@ mcu_data: ksdk2_0
 processor_version: 5.0.0
 board: FRDM-K82F
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 #include "fsl_smc.h"
 #include "clock_config.h"
@@ -88,7 +88,7 @@ void BOARD_InitBootClocks(void)
 /*******************************************************************************
  ********************* Configuration BOARD_BootClockHSRUN **********************
  ******************************************************************************/
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!Configuration
 name: BOARD_BootClockHSRUN
@@ -135,7 +135,7 @@ settings:
 sources:
 - {id: OSC.OSC.outFreq, value: 12 MHz, enabled: true}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 /*******************************************************************************
  * Variables for BOARD_BootClockHSRUN configuration
@@ -212,7 +212,7 @@ void BOARD_BootClockHSRUN(void)
 /*******************************************************************************
  ********************* Configuration BOARD_BootClockVLPR ***********************
  ******************************************************************************/
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!Configuration
 name: BOARD_BootClockVLPR
@@ -243,7 +243,7 @@ settings:
 sources:
 - {id: OSC.OSC.outFreq, value: 12 MHz}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 /*******************************************************************************
  * Variables for BOARD_BootClockVLPR configuration
@@ -315,7 +315,7 @@ void BOARD_BootClockVLPR(void)
 /*******************************************************************************
  ********************** Configuration BOARD_BootClockRUN ***********************
  ******************************************************************************/
-/* clang-format off */
+/* mynewt-format: off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!Configuration
 name: BOARD_BootClockRUN
@@ -359,7 +359,7 @@ settings:
 sources:
 - {id: OSC.OSC.outFreq, value: 12 MHz, enabled: true}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
-/* clang-format on */
+/* mynewt-format: on */
 
 /*******************************************************************************
  * Variables for BOARD_BootClockRUN configuration

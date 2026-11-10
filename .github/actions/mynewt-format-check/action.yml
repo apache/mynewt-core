@@ -24,7 +24,15 @@ description: >
   repository. Problems are uploaded as mynewt-format-results artifact for
   mynewt-format-comments action. Requires pull request head (not merge
   commit, as review comments use lines of head) checked out with full
-  history. Informational only, never fails.
+  history and issues read permission (for labels). Fails on errors,
+  warnings are reported only. With skip label set on pull request errors
+  are reported only too.
+
+inputs:
+  skip-label:
+    description: Pull request label that makes errors not fail the check
+    required: false
+    default: skip-style-check
 
 runs:
   using: composite
@@ -34,24 +42,9 @@ runs:
       with:
         python-version: '3.x'
 
-    - name: Check style with mynewt-format (report only)
-      shell: bash
-      run: |
-        TOOL="$GITHUB_ACTION_PATH/../../../tools/mynewt-format.py"
-        ARGS="--git-diff origin/$GITHUB_BASE_REF --changed-lines --no-color"
-        python3 "$TOOL" $ARGS || true
-        echo ""
-        echo "Proposed fixes (apply with 'git apply'):"
-        python3 "$TOOL" $ARGS -d 2>/dev/null || true
-        echo ""
-        echo "This check is informational and does not fail the PR."
-        echo "mynewt-format is in apache-mynewt-core (tools/mynewt-format.py);"
-        echo "tools/mynewt-format-setup.sh there installs it as a 'mynewt-format' command."
-        echo "Review fixes locally: mynewt-format -i --git-diff origin/master"
-        echo "Rules: mynewt-format --list-rules (--explain RULE)"
-
     # Fork pull requests get read-only token, so problems are handed over
-    # to mynewt-format-comments action run from workflow_run
+    # to mynewt-format-comments action run from workflow_run. Saved before
+    # the check, so that comments are posted when the check fails too.
     - name: Save results for PR comments
       shell: bash
       env:
@@ -69,3 +62,51 @@ runs:
         name: mynewt-format-results
         path: ${{ runner.temp }}/mynewt-format-results/
         retention-days: 3
+
+    # Labels are queried instead of taken from event payload, which is
+    # not updated when a run is re-run after the label changed
+    - name: Check skip label
+      id: label
+      uses: actions/github-script@v9
+      env:
+        SKIP_LABEL: ${{ inputs.skip-label }}
+      with:
+        script: |
+          const labels = await github.rest.issues.listLabelsOnIssue({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.pull_request.number,
+          });
+          const skip = labels.data.some(l => l.name === process.env.SKIP_LABEL);
+          core.setOutput('skip', skip);
+
+    - name: Check style with mynewt-format
+      shell: bash
+      env:
+        SKIP: ${{ steps.label.outputs.skip }}
+        SKIP_LABEL: ${{ inputs.skip-label }}
+      run: |
+        set +e
+        TOOL="$GITHUB_ACTION_PATH/../../../tools/mynewt-format.py"
+        ARGS="--git-diff origin/$GITHUB_BASE_REF --changed-lines --no-color"
+        # Exit status 1 means errors (warnings alone exit with 0),
+        # 2 means usage or configuration error
+        python3 "$TOOL" $ARGS
+        STATUS=$?
+        FIXES=$(python3 "$TOOL" $ARGS -d 2>/dev/null)
+        if printf '%s\n' "$FIXES" | grep -q '^+++ '; then
+          echo ""
+          echo "Proposed fixes (apply with 'git apply'):"
+          printf '%s\n' "$FIXES"
+        fi
+        echo ""
+        echo "mynewt-format is in apache-mynewt-core (tools/mynewt-format.py);"
+        echo "tools/mynewt-format-setup.sh there installs it as a 'mynewt-format' command."
+        echo "Review fixes locally: mynewt-format -i --git-diff origin/master"
+        echo "Rules: mynewt-format --list-rules (--explain RULE)"
+        if [ "$STATUS" -eq 1 ] && [ "$SKIP" = "true" ]; then
+          echo "::warning::Ignoring coding style errors because" \
+               "'$SKIP_LABEL' label is present."
+          exit 0
+        fi
+        exit $STATUS

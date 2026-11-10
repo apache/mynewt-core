@@ -4,7 +4,7 @@
  * Configuration file for v8.3.6
  */
 
-/* clang-format off */
+/* mynewt-format: off */
 #if 1 /*Set it to "1" to enable content*/
 
 #ifndef LV_CONF_H
