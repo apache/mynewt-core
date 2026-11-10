@@ -36,7 +36,7 @@ rwlock_unblock(struct rwlock *lock)
     RWLOCK_DBG_ASSERT(lock->mtx.mu_owner == g_current_task);
     RWLOCK_DBG_ASSERT(lock->handoffs == 0);
 
-    /* Give priority to pending writers. */
+    // Give priority to pending writers.
     if (lock->pending_writers > 0) {
         /* Indicate that ownership is being transfered to a single writer. */
         lock->handoffs = 1;
@@ -93,13 +93,13 @@ rwlock_write_must_block(const struct rwlock *lock)
 }
 
 void
-rwlock_acquire_read(struct rwlock *lock)
+rwlock_acquire_read(struct rwlock* lock)
 {
     bool acquired;
 
     os_mutex_pend(&lock->mtx, OS_TIMEOUT_NEVER);
 
-    if (rwlock_read_must_block(lock)) {
+    if(rwlock_read_must_block(lock)) {
         lock->pending_readers++;
         acquired = false;
     } else {
@@ -109,7 +109,7 @@ rwlock_acquire_read(struct rwlock *lock)
 
     os_mutex_release(&lock->mtx);
 
-    if (acquired) {
+    if (acquired == true) {
         /* No contention; lock acquired. */
         return;
     }
@@ -135,9 +135,8 @@ rwlock_release_read(struct rwlock *lock)
     /* If this is the last active reader, unblock a pending writer if there is
      * one.
      */
-    if (lock->num_readers == 0) {
+    if (lock->num_readers == 0)
         rwlock_unblock(lock);
-    }
 
     os_mutex_release(&lock->mtx);
 }
@@ -149,12 +148,12 @@ rwlock_acquire_write(struct rwlock *lock)
 
     os_mutex_pend(&lock->mtx, OS_TIMEOUT_NEVER);
 
-    if (rwlock_write_must_block(lock)) {
+    if (rwlock_write_must_block (lock)) {
         lock->pending_writers++;
         acquired = false;
     } else {
         lock->active_writer = true;
-        acquired = true;
+        acquired = true;  
     }
 
     os_mutex_release(&lock->mtx);
@@ -169,14 +168,13 @@ rwlock_acquire_write(struct rwlock *lock)
 
     /* Record writer ownership. */
     os_mutex_pend(&lock->mtx, OS_TIMEOUT_NEVER);
-    lock->active_writer = true;
+    lock->active_writer=true;
     rwlock_complete_handoff(lock);
     os_mutex_release(&lock->mtx);
 }
 
 void
-rwlock_release_write(struct rwlock *lock)
-{
+rwlock_release_write(struct rwlock *lock) {
     os_mutex_pend(&lock->mtx, OS_TIMEOUT_NEVER);
 
     RWLOCK_DBG_ASSERT(lock->active_writer);
@@ -196,7 +194,7 @@ rwlock_init(struct rwlock *lock)
 
     rc = os_mutex_init(&lock->mtx);
     if (rc != 0) {
-        return rc;
+        return (rc);
     }
 
     rc = os_sem_init(&lock->rsem, 0);
