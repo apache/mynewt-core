@@ -20,8 +20,8 @@
 name: Check style with mynewt-format
 description: >
   Check lines changed by pull request with mynewt-format from the same
-  apache-mynewt-core as this action, using configuration of checked out
-  repository. Problems are uploaded as mynewt-format-results artifact for
+  apache-mynewt-core as this action, with .mynewt-format of that
+  apache-mynewt-core and ignore file of checked out repository. Problems are uploaded as mynewt-format-results artifact for
   mynewt-format-comments action. Requires pull request head (not merge
   commit, as review comments use lines of head) checked out with full
   history and issues read permission (for labels). Fails on errors,
@@ -33,6 +33,11 @@ inputs:
     description: Pull request label that makes errors not fail the check
     required: false
     default: skip-style-check
+  ignore-file:
+    description: >
+      Files not to check, relative to repository root. Not having one is fine.
+    required: false
+    default: .mynewt-format-ignore
 
 runs:
   using: composite
@@ -42,6 +47,19 @@ runs:
       with:
         python-version: '3.x'
 
+    # All Mynewt repositories are checked with options of mynewt-core
+    - name: Select options
+      shell: bash
+      env:
+        IGNORE_FILE: ${{ inputs.ignore-file }}
+      run: |
+        CORE="$GITHUB_ACTION_PATH/../../.."
+        ARGS="--config $CORE/.mynewt-format"
+        if [ -f "$IGNORE_FILE" ]; then
+          ARGS="$ARGS --ignore-file $IGNORE_FILE"
+        fi
+        echo "MYNEWT_FORMAT=python3 $CORE/tools/mynewt-format.py $ARGS" >> "$GITHUB_ENV"
+
     # Fork pull requests get read-only token, so problems are handed over
     # to mynewt-format-comments action run from workflow_run. Saved before
     # the check, so that comments are posted when the check fails too.
@@ -50,10 +68,9 @@ runs:
       env:
         PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
-        TOOL="$GITHUB_ACTION_PATH/../../../tools/mynewt-format.py"
         mkdir -p "$RUNNER_TEMP/mynewt-format-results"
         echo "$PR_NUMBER" > "$RUNNER_TEMP/mynewt-format-results/pr-number"
-        python3 "$TOOL" --git-diff "origin/$GITHUB_BASE_REF" --changed-lines \
+        $MYNEWT_FORMAT --git-diff "origin/$GITHUB_BASE_REF" --changed-lines \
           --format json > "$RUNNER_TEMP/mynewt-format-results/problems.jsonl" || true
 
     - name: Upload results for PR comments
@@ -87,13 +104,12 @@ runs:
         SKIP_LABEL: ${{ inputs.skip-label }}
       run: |
         set +e
-        TOOL="$GITHUB_ACTION_PATH/../../../tools/mynewt-format.py"
         ARGS="--git-diff origin/$GITHUB_BASE_REF --changed-lines --no-color"
         # Exit status 1 means errors (warnings alone exit with 0),
         # 2 means usage or configuration error
-        python3 "$TOOL" $ARGS
+        $MYNEWT_FORMAT $ARGS
         STATUS=$?
-        FIXES=$(python3 "$TOOL" $ARGS -d 2>/dev/null)
+        FIXES=$($MYNEWT_FORMAT $ARGS -d 2>/dev/null)
         if printf '%s\n' "$FIXES" | grep -q '^+++ '; then
           echo ""
           echo "Proposed fixes (apply with 'git apply'):"

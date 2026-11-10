@@ -27,8 +27,8 @@ guideline names the rule that checks it, e.g. [`sizeof-parens`], and
 `python3 tools/mynewt-format.py --explain RULE` gives the reasoning with more
 examples. Guidelines marked *(not checked)* are left to review.
 
-The limits and options shown are the ones set in `.mynewt-format`, which all
-Mynewt repositories share (NimBLE syncs its copy from apache-mynewt-core).
+The limits and options shown are the ones set in `.mynewt-format` of
+apache-mynewt-core, which all Mynewt repositories are checked with.
 
 > **Status:** mynewt-format is the coding style check of pull requests: errors
 > fail it, warnings are only reported. The `CODING_STANDARDS.md` at the

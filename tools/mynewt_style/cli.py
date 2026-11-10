@@ -127,6 +127,9 @@ def build_parser() -> argparse.ArgumentParser:
     gen = p.add_argument_group("general")
     gen.add_argument("--config", type=Path, metavar="FILE",
                      help="config file (default: nearest .mynewt-format)")
+    gen.add_argument("--ignore-file", type=Path, metavar="FILE",
+                     help="files not to check, relative to repository root "
+                          "(default: ignore_file of the config, next to it)")
     gen.add_argument("-W", "--werror", action="store_true", help="treat warnings as errors")
     gen.add_argument("--report", choices=("code", "list"), default="code",
                      help="'code' (default) shows each problem with its source line and the "
@@ -160,16 +163,20 @@ def install_hook(repo: Path) -> int:
     # The tool may live in another repository (e.g. mynewt-core checked out
     # next to NimBLE), so the hook calls this copy by its absolute path.
     tool = shlex.quote(str(TOOL_PATH))
+    # Options of the same mynewt-core, ignore file of the repository
+    opts = "--config " + shlex.quote(str(TOOL_PATH.parent.parent / ".mynewt-format"))
+    if (repo / ".mynewt-format-ignore").is_file():
+        opts += " --ignore-file .mynewt-format-ignore"
     if hook.exists() and not re.search(r"# mynewt[-_]format pre-commit hook",
                                        hook.read_text(errors="replace")):
         _err(f"{hook} already exists and was not created by this tool; "
-             f"add 'python3 {tool} --staged' to it manually")
+             f"add 'python3 {tool} {opts} --staged' to it manually")
         return EXIT_USAGE
     hook.write_text(f"""#!/bin/sh
 {marker}
 # Checks only the lines you changed; fix them with:
-#   python3 {tool} -i --staged
-exec python3 {tool} --staged --check
+#   python3 {tool} {opts} -i --staged
+exec python3 {tool} {opts} --staged --check
 """)
     hook.chmod(0o755)
     print(f"installed {hook}")
@@ -194,10 +201,15 @@ def load_everything(args) -> Config:
 def select_files(args, config: Config, repo: Path):
     """Returns (files, git_selection or None)."""
     exts = list(config.settings["extensions"])
-    ignore_file = Path(config.settings["ignore_file"])
-    base = config.path.parent if config.path else repo
-    ignore = fsel.load_ignore_patterns(ignore_file if ignore_file.is_absolute()
-                                       else base / ignore_file)
+    if args.ignore_file:
+        ignore_file = repo / args.ignore_file
+        if not ignore_file.is_file():
+            raise ConfigError(f"ignore file {ignore_file} not found")
+    else:
+        ignore_file = Path(config.settings["ignore_file"])
+        if not ignore_file.is_absolute():
+            ignore_file = (config.path.parent if config.path else repo) / ignore_file
+    ignore = fsel.load_ignore_patterns(ignore_file)
     git = None
     if args.paths:
         if not args.whole_files:
