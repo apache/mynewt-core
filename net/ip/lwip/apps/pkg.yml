@@ -58,6 +58,9 @@ pkg.source_dirs.LWIP_APPS_TFTP:
 pkg.deps:
     - "@apache-mynewt-core/net/ip/lwip"
 
+pkg.deps.LWIP_APPS_MDNS:
+    - "@apache-mynewt-core/sys/log/modlog"
+
 pkg.init.LWIP_APPS_IPERF_START:
     iperf_init: 1000
 
