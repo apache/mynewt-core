@@ -17,6 +17,24 @@
  * under the License.
  */
 
+/* clang-format off */
+
+#if MYNEWT_VAL(STM32_SDRAM_SIZE)
+    /*
+     * External SDRAM (STM32_SDRAM_SECTION). NOLOAD: SDRAM is not usable
+     * before stm32_sdram_init() (sysinit), so nothing here can have an
+     * initial value.
+     */
+    .sdram (NOLOAD) :
+    {
+        . = ALIGN(32);
+        __sdram_start__ = .;
+        *(.sdram .sdram.*)
+        . = ALIGN(32);
+        __sdram_end__ = .;
+    } > SDRAM
+#endif
+
     _dtcm_start = ORIGIN(DTCM);
     _dtcm_limit = ORIGIN(DTCM) + LENGTH(DTCM);
     _itcm_start = ORIGIN(ITCM);

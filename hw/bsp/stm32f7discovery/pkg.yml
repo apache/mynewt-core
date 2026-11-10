@@ -38,3 +38,6 @@ pkg.deps:
     - "@apache-mynewt-core/hw/scripts"
     - "@apache-mynewt-core/boot/startup"
     - "@apache-mynewt-core/hw/drivers/flash/stm32_qspi"
+
+pkg.deps.BSP_SDRAM:
+    - "@apache-mynewt-core/hw/drivers/ram/stm32_sdram"
