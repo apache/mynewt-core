@@ -249,6 +249,14 @@ os_dev_close(struct os_dev *dev)
         goto err;
     }
 
+    OS_ENTER_CRITICAL(sr);
+    if (dev->od_open_ref == 0) {
+        OS_EXIT_CRITICAL(sr);
+        rc = OS_EINVAL;
+        goto err;
+    }
+    OS_EXIT_CRITICAL(sr);
+
     if (dev->od_handlers.od_close) {
         rc = dev->od_handlers.od_close(dev);
         if (rc != 0) {
