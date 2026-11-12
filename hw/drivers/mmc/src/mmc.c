@@ -284,6 +284,14 @@ send_mmc_cmd(mmc_disk_t *mmc, sd_cmd_t cmd, uint32_t payload)
     buf[5] = crc;
     mmc_spi_tx(mmc, buf, 6);
 
+    if (cmd == CMD12) {
+        /*
+         * 7.3.1.3: the byte received right after CMD12 is a stuff byte (the
+         * card may still be sending data of the stopped block); skip it.
+         */
+        mmc_spi_rx(mmc, buf, 1);
+    }
+
     for (n = 10; n > 0; n--) {
         mmc_spi_rx(mmc, buf, 1);
         status = buf[0];
