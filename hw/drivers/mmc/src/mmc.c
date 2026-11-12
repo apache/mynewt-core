@@ -579,6 +579,16 @@ mmc_set_working_settings(mmc_disk_t *mmc)
     MMC_LOG_INFO("Switching to %d kHz", mmc->spi.mmc_spi_cfg.freq_khz);
 }
 
+/**
+ * SDHC/SDXC cards (CCS bit in OCR set) address blocks, SDSC cards address
+ * bytes, so convert the LBA for SDSC cards.
+ */
+static uint32_t
+mmc_block_arg(mmc_disk_t *mmc, uint32_t lba)
+{
+    return (mmc->ocr[0] & 0x40) ? lba : lba * BLOCK_LEN;
+}
+
 static int
 mmc_init(mmc_disk_t *mmc)
 {
@@ -704,10 +714,39 @@ mmc_init(mmc_disk_t *mmc)
 
         mmc_cmd_r1(mmc, CMD0, 0);
         /**
-         * Ver1.x SD Memory Card or Not SD Memory Card
+         * Ver1.x SD Memory Card (SDSC): no CMD8, init with ACMD41 without HCS.
          */
+        timeout = os_time_get() + OS_TICKS_PER_SEC;
+        for (;;) {
+            status = mmc_acmd(mmc, ACMD41, 0, NULL, 0);
+            if ((status & R_IDLE) == 0 || os_time_get() > timeout) {
+                break;
+            }
+            os_time_delay(OS_TICKS_PER_SEC / 10);
+        }
 
-        status = mmc_cmd_rx(mmc, CMD58, 0, cmd_resp, 4);
+        if (status) {
+            goto out;
+        }
+
+        status = mmc_cmd_rx(mmc, CMD58, 0, mmc->ocr, 4);
+        if (CMD_FAILED(status)) {
+            goto out;
+        }
+
+        memset(&mmc->csd, 0, sizeof(mmc->csd));
+        memset(&mmc->cid, 0, sizeof(mmc->cid));
+        memset(&mmc->scr, 0, sizeof(mmc->scr));
+
+        status = mmc_read_csd(mmc, mmc->csd);
+        if (CMD_FAILED(status)) {
+            goto out;
+        }
+        status = mmc_read_scr(mmc, mmc->scr);
+        if (CMD_FAILED(status)) {
+            goto out;
+        }
+        (void)mmc_read_cid(mmc, mmc->cid);
     }
 
 out:
@@ -850,7 +889,7 @@ mmc_read(struct disk *disk, uint32_t lba, void *buf, uint32_t block_count)
     mmc_spi_set_cs(mmc, 0);
 
     cmd = (block_count == 1) ? CMD17 : CMD18;
-    res = send_mmc_cmd(mmc, cmd, lba);
+    res = send_mmc_cmd(mmc, cmd, mmc_block_arg(mmc, lba));
     if (res) {
         rc = error_by_response(res);
         goto out;
@@ -904,7 +943,7 @@ mmc_write(struct disk *disk, uint32_t lba, const void *buf, uint32_t block_count
 
     /* now start write */
     cmd = (block_count == 1) ? CMD24 : CMD25;
-    res = send_mmc_cmd(mmc, cmd, lba);
+    res = send_mmc_cmd(mmc, cmd, mmc_block_arg(mmc, lba));
     if (res) {
         rc = error_by_response(res);
         goto out;
