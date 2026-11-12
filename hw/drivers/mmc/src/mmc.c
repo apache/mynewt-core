@@ -91,6 +91,10 @@ typedef uint8_t sd_cmd_t;
 /* CMD0 attempts at card power-up (10 ms apart) before declaring no card */
 #define MMC_CMD0_ATTEMPTS   (10)
 
+/* Before CMD0: clock 0xFF with CS asserted while the card still sends data */
+#define MMC_DRAIN_CHUNK         (10)
+#define MMC_DRAIN_TIMEOUT_MS    (500)
+
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 
 static struct mmc_spi_cfg mmc0_config = {
@@ -243,6 +247,44 @@ mmc_send_extra_clocks(mmc_disk_t *mmc)
 
     if (MYNEWT_VAL_MMC_SEND_EXTRA_CLOCKS) {
         mmc_spi_tx(mmc, extra_bytes, sizeof(extra_bytes));
+    }
+}
+
+/**
+ * The card may still be sending data or be busy, e.g. when the MCU was reset
+ * in the middle of a read; deasserting CS does not stop it. Clock 0xFF with
+ * CS asserted until a whole chunk reads back as 0xFF (or a timeout), so that
+ * CMD0 is not mixed with the tail of the previous transfer.
+ */
+static void
+mmc_drain(mmc_disk_t *mmc)
+{
+    uint8_t rx[MMC_DRAIN_CHUNK];
+    os_time_t timeout = os_time_get() + os_time_ms_to_ticks32(MMC_DRAIN_TIMEOUT_MS);
+    uint32_t drained = 0;
+    int idle;
+    int i;
+
+    mmc_spi_set_cs(mmc, 0);
+    for (;;) {
+        mmc_spi_rx(mmc, rx, sizeof(rx));
+        idle = 1;
+        for (i = 0; i < MMC_DRAIN_CHUNK; ++i) {
+            if (rx[i] != 0xFF) {
+                idle = 0;
+                break;
+            }
+        }
+        if (idle || OS_TIME_TICK_GT(os_time_get(), timeout)) {
+            break;
+        }
+        drained += sizeof(rx);
+    }
+    mmc_spi_set_cs(mmc, 1);
+
+    if (drained) {
+        MMC_LOG_INFO("Card was still sending, drained %lu bytes%s",
+                     (unsigned long)drained, idle ? "" : " (timeout)");
     }
 }
 
@@ -616,6 +658,8 @@ mmc_init(mmc_disk_t *mmc)
     MMC_LOG_DEBUG("Send clocks to switch to SPI mode");
     /* send the required >= 74 clock cycles (10 bytes, 80 clock cycles). */
     mmc_spi_tx(mmc, buf, 10);
+
+    mmc_drain(mmc);
 
     /**
      * A card that was just inserted may not answer the first CMD0 yet
