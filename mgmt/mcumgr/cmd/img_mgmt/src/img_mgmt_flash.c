@@ -363,12 +363,12 @@ img_mgmt_slot1_move_up(void)
     }
 
     /* Image is header, body, protected TLVs and TLV area */
-    rc = flash_area_read(fa, 0, &hdr, sizeof hdr);
+    rc = flash_area_read(fa, 0, &hdr, sizeof(hdr));
     if (rc != 0) {
         goto done;
     }
     img_len = hdr.ih_hdr_size + hdr.ih_img_size + hdr.ih_protect_tlv_size;
-    rc = flash_area_read(fa, img_len, &tlv, sizeof tlv);
+    rc = flash_area_read(fa, img_len, &tlv, sizeof(tlv));
     if (rc != 0) {
         goto done;
     }
@@ -443,9 +443,9 @@ img_mgmt_slot1_at_first_sector(void)
     if (flash_area_open(FLASH_AREA_IMAGE_1, &fa) != 0) {
         return 0;
     }
-    at_first = flash_area_read(fa, 0, &hdr, sizeof hdr) == 0 &&
+    at_first = flash_area_read(fa, 0, &hdr, sizeof(hdr)) == 0 &&
                hdr.ih_magic == IMAGE_MAGIC &&
-               flash_area_read(fa, sec_sz, &magic, sizeof magic) == 0 &&
+               flash_area_read(fa, sec_sz, &magic, sizeof(magic)) == 0 &&
                magic != IMAGE_MAGIC;
     flash_area_close(fa);
 
@@ -814,7 +814,7 @@ img_mgmt_slot_image_offset(int slot, uint32_t *offset)
         return rc;
     }
 
-    rc = img_mgmt_read(slot, upload_off, &hdr, sizeof hdr);
+    rc = img_mgmt_read(slot, upload_off, &hdr, sizeof(hdr));
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
