@@ -88,6 +88,9 @@ typedef uint8_t sd_cmd_t;
 
 #define BLOCK_LEN           (512)
 
+/* CMD0 attempts at card power-up (10 ms apart) before declaring no card */
+#define MMC_CMD0_ATTEMPTS   (10)
+
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 
 static struct mmc_spi_cfg mmc0_config = {
@@ -597,6 +600,7 @@ mmc_init(mmc_disk_t *mmc)
     uint8_t cmd_resp[4];
     uint8_t buf[10] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
     os_time_t timeout;
+    int attempt;
 
     /**
      * NOTE: The state machine below follows:
@@ -617,6 +621,15 @@ mmc_init(mmc_disk_t *mmc)
 
     /* put card in idle state */
     status = mmc_cmd_r1(mmc, CMD0, 0);
+    /**
+     * A card that was just inserted may not answer the first CMD0 yet
+     * (its own power-up after insertion), so retry a few times with a
+     * short delay before giving up.
+     */
+    for (attempt = 1; status != R_IDLE && attempt < MMC_CMD0_ATTEMPTS; ++attempt) {
+        os_time_delay(OS_TICKS_PER_SEC / 100);
+        status = mmc_cmd_r1(mmc, CMD0, 0);
+    }
 
     /* No card inserted or bad card? */
     if (status != R_IDLE) {
@@ -624,8 +637,9 @@ mmc_init(mmc_disk_t *mmc)
         rc = MMC_CARD_ERROR;
         goto out;
     }
-
-    mmc_set_working_settings(mmc);
+    if (attempt > 1) {
+        MMC_LOG_INFO("Card answered CMD0 on attempt %d", attempt);
+    }
 
     /**
      * FIXME: while doing a hot-swap of the card or powering off the board
@@ -752,6 +766,10 @@ mmc_init(mmc_disk_t *mmc)
 out:
     if (rc == 0 && status != 0) {
         rc = error_by_response(status);
+    }
+    if (rc == 0) {
+        /* Identification is done: raise clock to working frequency */
+        mmc_set_working_settings(mmc);
     }
     return rc;
 }
