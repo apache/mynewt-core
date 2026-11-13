@@ -1702,8 +1702,14 @@ SECTIONS
    * We want the small data sections together, so single-instruction offsets
    * can access them all, and initialized data all before uninitialized, so
    * we can shorten the on-disk segment size.
+   *
+   * Output section is not named .sdata on purpose. XC32 v5 linker keeps
+   * ALLOC flag on output section named .sdata even with
+   * --no-alloc-dinit-mapping and XC32 v5 objcopy does not skip sections
+   * marked MCHP_NOLOAD, so binary image would start in RAM. Content is
+   * still initialized from .dinit and _gp is not affected.
    */
-  .sdata ALIGN(4) :
+  .gpdata ALIGN(4) :
   {
     _sdata_begin = . ;
     *(.sdata .sdata.* .gnu.linkonce.s.*)
