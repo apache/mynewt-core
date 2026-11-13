@@ -28,7 +28,6 @@ pkg.keywords:
 
 pkg.cflags:
     - -mprocessor=32MZ2048EFH064
-    - -G6
 pkg.lflags:
     - "-L@apache-mynewt-core/hw/bsp/olimex-pic32-emz64"
 
