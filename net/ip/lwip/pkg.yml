@@ -55,6 +55,6 @@ pkg.cflags.LWIP_PPP:
 
 repository.lwip:
     type: github
-    vers: STABLE-2_1_2_RELEASE-commit
+    vers: STABLE-2_2_1_RELEASE-commit
     user: lwip-tcpip
     repo: lwip

@@ -42,8 +42,7 @@ lwip_mdns_init(void)
     mdns_resp_init();
     NETIF_FOREACH(nif) {
         if (nif->hostname != NULL && nif->hostname[0] != '\0') {
-            err = mdns_resp_add_netif(nif, nif->hostname,
-                                      MYNEWT_VAL(LWIP_APPS_MDNS_TTL));
+            err = mdns_resp_add_netif(nif, nif->hostname);
             if (err != ERR_OK) {
                 break;
             }
