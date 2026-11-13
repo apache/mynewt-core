@@ -224,26 +224,28 @@ static int
 hal_spi_config_pins(int spi_num, uint8_t mode)
 {
     int ret = 0;
-
-    if (hal_gpio_init_out(spis[spi_num].pins.pin_mosi, 0) ||
-        hal_gpio_init_out(spis[spi_num].pins.pin_sck, 1) ||
-        hal_gpio_init_in(spis[spi_num].pins.pin_miso, HAL_GPIO_PULL_NONE)) {
-        return -1;
-    }
+    int sck_idle;
 
     /*
      * To avoid any glitches when turning off and on module, the SCK pin must
-     * be set to the correct value depending on the mode.
+     * be set to the correct value depending on the mode. Initialize it with
+     * that value directly, setting it to 1 first would make a clock edge
+     * in mode 0 and 1.
      */
     switch (mode) {
-    case HAL_SPI_MODE0:
-    case HAL_SPI_MODE1:
-        hal_gpio_write(spis[spi_num].pins.pin_sck, 0);
-        break;
     case HAL_SPI_MODE2:
     case HAL_SPI_MODE3:
-        hal_gpio_write(spis[spi_num].pins.pin_sck, 1);
+        sck_idle = 1;
         break;
+    default:
+        sck_idle = 0;
+        break;
+    }
+
+    if (hal_gpio_init_out(spis[spi_num].pins.pin_mosi, 0) ||
+        hal_gpio_init_out(spis[spi_num].pins.pin_sck, sck_idle) ||
+        hal_gpio_init_in(spis[spi_num].pins.pin_miso, HAL_GPIO_PULL_NONE)) {
+        return -1;
     }
 
     switch (spi_num) {
