@@ -185,6 +185,10 @@ static mgmt_handler_fn os_mgmt_datetime_read;
 static mgmt_handler_fn os_mgmt_datetime_write;
 #endif
 
+#if MYNEWT_VAL(OS_MGMT_MCUMGR_PARAMS)
+static mgmt_handler_fn os_mgmt_mcumgr_params_read;
+#endif
+
 static const struct mgmt_handler os_mgmt_group_handlers[] = {
 #if MYNEWT_VAL(OS_MGMT_ECHO)
     [OS_MGMT_ID_ECHO] = {
@@ -204,6 +208,11 @@ static const struct mgmt_handler os_mgmt_group_handlers[] = {
     [OS_MGMT_ID_RESET] = {
         NULL, os_mgmt_reset
     },
+#if MYNEWT_VAL(OS_MGMT_MCUMGR_PARAMS)
+    [OS_MGMT_ID_MCUMGR_PARAMS] = {
+        os_mgmt_mcumgr_params_read, NULL
+    },
+#endif
 };
 
 #define OS_MGMT_GROUP_SZ                                                      \
@@ -400,6 +409,31 @@ os_mgmt_datetime_write(struct mgmt_ctxt *ctxt)
     err = os_mgmt_datetime_set(datetime_buf);
     if (err != 0) {
         return MGMT_ERR_ECORRUPT;
+    }
+
+    return MGMT_ERR_EOK;
+}
+#endif
+
+#if MYNEWT_VAL(OS_MGMT_MCUMGR_PARAMS)
+/**
+ * Command handler: os mcumgr parameters
+ *
+ * Reports the largest SMP request (header included) the device accepts and
+ * how many requests a client may have outstanding at once.
+ */
+static int
+os_mgmt_mcumgr_params_read(struct mgmt_ctxt *ctxt)
+{
+    CborError err = 0;
+
+    err |= cbor_encode_text_stringz(&ctxt->encoder, "buf_size");
+    err |= cbor_encode_uint(&ctxt->encoder, MGMT_MAX_MTU);
+    err |= cbor_encode_text_stringz(&ctxt->encoder, "buf_count");
+    err |= cbor_encode_uint(&ctxt->encoder,
+                            MYNEWT_VAL(OS_MGMT_MCUMGR_PARAMS_BUF_COUNT));
+    if (err != 0) {
+        return MGMT_ERR_ENOMEM;
     }
 
     return MGMT_ERR_EOK;

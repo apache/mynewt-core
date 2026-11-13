@@ -40,6 +40,21 @@ syscfg.defs:
             Enable support for datetime command.
         value: 1
 
+    OS_MGMT_MCUMGR_PARAMS:
+        description: >
+            Enable support for the mcumgr parameters command.  It reports the
+            largest SMP request the device accepts (MGMT_MAX_MTU, header
+            included) so that clients can send requests larger than the
+            transport MTU, e.g. split over several BLE writes.
+        value: 1
+
+    OS_MGMT_MCUMGR_PARAMS_BUF_COUNT:
+        description: >
+            Number of outstanding requests reported by the mcumgr parameters
+            command.  Clients may send this many requests without waiting
+            for responses.
+        value: 1
+
     OS_MGMT_SYSINIT_STAGE:
         description: >
             System Initialization stage for OS_MGMT package
