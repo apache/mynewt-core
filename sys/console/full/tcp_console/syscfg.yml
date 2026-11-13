@@ -17,7 +17,29 @@
 #
 
 syscfg.defs:
-    TCP_CONSOLE_PORT:
+    CONSOLE_TCP_PORT:
         description: 'Set console TCP port'
         value: 4444
         restrictions: $notnull
+    CONSOLE_TCP_TX_BUF_COUNT:
+        description: >
+            Number of buffers reserved for console output. Output is kept
+            in them while no client is connected or client does not read
+            data. When all buffers are used the oldest output is dropped
+            and a marker with number of dropped bytes is sent to client.
+            At most half of the buffers is handed to the network stack
+            at once.
+        value: 8
+        restrictions:
+            - 'CONSOLE_TCP_TX_BUF_COUNT >= 2'
+    CONSOLE_TCP_TX_BUF_SIZE:
+        description: >
+            Number of data bytes in single console output buffer.
+        value: 128
+        restrictions:
+            - 'CONSOLE_TCP_TX_BUF_SIZE >= 64'
+
+    # Defunct settings, use CONSOLE_TCP_xxx instead
+    TCP_CONSOLE_PORT:
+        description: "Use CONSOLE_TCP_PORT instead"
+        defunct: 1
