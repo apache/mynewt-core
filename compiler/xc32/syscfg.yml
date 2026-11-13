@@ -50,6 +50,14 @@ syscfg.defs:
             .dinit (e.g. interrupt vector offset registers in SFR area),
             which makes binary image span up to SFR addresses.
         value: ""
+    XC32_SDATA_CFLAGS:
+        description: >
+            Compiler options for small data (gp-relative addressing).
+            Data objects up to the given size in bytes are placed in
+            .sdata/.sbss and accessed relative to gp, e.g. "-G8" for
+            larger or "-G0" to disable small data. Flags are also used
+            for assembly files.
+        value: "-G6"
 
 syscfg.vals.XC32_V5:
     XC32_LIBC_CFLAGS: "-mchp-stdlibc=picolibc"
