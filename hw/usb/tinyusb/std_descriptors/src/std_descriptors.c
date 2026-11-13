@@ -33,6 +33,7 @@
 #include <console/console.h>
 #include <hal/hal_gpio.h>
 #include <usbd_audio_desc.h>
+#include <usbd_string_desc.h>
 
 #define USBD_PRODUCT_RELEASE_NUMBER MYNEWT_VAL(USBD_PRODUCT_RELEASE_NUMBER)
 
@@ -40,60 +41,16 @@
 #define CONFIG_NUM 1
 #endif
 
-enum usb_desc_ix {
-    USB_DESC_IX_SERIAL_NUMBER   = 1,
-    USB_DESC_IX_VENDOR          = 2,
-    USB_DESC_IX_PRODUCT         = 3,
-#if defined MYNEWT_VAL_USBD_CDC_DESCRIPTOR_STRING
-    CDC_IF_STR_IX,
-#else
-#define CDC_IF_STR_IX 0
-#endif
-#if defined MYNEWT_VAL_USBD_CDC_CONSOLE_DESCRIPTOR_STRING
-    CDC_CONSOLE_IF_STR_IX,
-#else
-#define CDC_CONSOLE_IF_STR_IX   0
-#endif
-#if defined MYNEWT_VAL_USBD_CDC_HCI_DESCRIPTOR_STRING
-    CDC_HCI_IF_STR_IX,
-#else
-#define CDC_HCI_IF_STR_IX   0
-#endif
-#if defined MYNEWT_VAL_USBD_MSC_DESCRIPTOR_STRING
-    MSC_IF_STR_IX,
-#else
-#define MSC_IF_STR_IX   0
-#endif
-#if defined MYNEWT_VAL_USBD_HID_DESCRIPTOR_STRING
-    HID_IF_STR_IX,
-#else
-#define HID_IF_STR_IX   0
-#endif
-#if defined MYNEWT_VAL_USBD_BTH_DESCRIPTOR_STRING
-    BTH_IF_STR_IX,
-#else
-#define BTH_IF_STR_IX   0
-#endif
-#if defined MYNEWT_VAL_USBD_AUDIO_DESCRIPTOR_STRING
-    AUDIO_IF_STR_IX,
-#else
-#define AUDIO_IF_STR_IX 0
-#endif
-#if defined MYNEWT_VAL_USBD_NET_DESCRIPTOR_STRING
-    NET_IF_STR_IX,
-#else
-#define NET_IF_STR_IX   0
-#endif
-#if defined MYNEWT_VAL_USBD_DFU_SLOT_NAME
-    DFU_SLOT_NAME_IF_STR_IX,
-#endif
-#if USBD_NET_MAC_STRING
-    /* Generated from tud_network_mac_address, not in string_desc_arr */
-    NET_MAC_STR_IX,
-#else
-#define NET_MAC_STR_IX  0
-#endif
-};
+#define CDC_IF_STR_IX           MYNEWT_VAL(USBD_CDC_DESCRIPTOR_STRING_IX)
+#define CDC_CONSOLE_IF_STR_IX   MYNEWT_VAL(USBD_CDC_CONSOLE_DESCRIPTOR_STRING_IX)
+#define CDC_HCI_IF_STR_IX       MYNEWT_VAL(USBD_CDC_HCI_DESCRIPTOR_STRING_IX)
+#define MSC_IF_STR_IX           MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING_IX)
+#define HID_IF_STR_IX           MYNEWT_VAL(USBD_HID_DESCRIPTOR_STRING_IX)
+#define BTH_IF_STR_IX           MYNEWT_VAL(USBD_BTH_DESCRIPTOR_STRING_IX)
+#define AUDIO_IF_STR_IX         MYNEWT_VAL(USBD_AUDIO_DESCRIPTOR_STRING_IX)
+#define NET_IF_STR_IX           MYNEWT_VAL(USBD_NET_DESCRIPTOR_STRING_IX)
+#define DFU_SLOT_NAME_IF_STR_IX MYNEWT_VAL(USBD_DFU_SLOT_NAME_IX)
+#define NET_MAC_STR_IX          MYNEWT_VAL(USBD_NET_MAC_STRING_IX)
 
 #if MYNEWT_VAL(USBD_CONFIGURATION_SELF_POWERED)
 #define SELF_POWERED_OPT    TUSB_DESC_CONFIG_ATT_SELF_POWERED
@@ -211,9 +168,9 @@ const tusb_desc_device_t desc_device = {
     .idProduct          = MYNEWT_VAL(USBD_PID),
     .bcdDevice          = USBD_PRODUCT_RELEASE_NUMBER,
 
-    .iManufacturer      = 0x02,
-    .iProduct           = 0x03,
-    .iSerialNumber      = 0x01,
+    .iManufacturer      = MYNEWT_VAL(USBD_VENDOR_STRING_IX),
+    .iProduct           = MYNEWT_VAL(USBD_PRODUCT_STRING_IX),
+    .iSerialNumber      = MYNEWT_VAL(USBD_SERIAL_NUMBER_STRING_IX),
 
     .bNumConfigurations = 0x01
 };
@@ -415,7 +372,6 @@ const uint8_t desc_configuration[] = {
 #endif
 
 #if CFG_TUD_MSC
-    /* TODO: MSC not handled yet */
     TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, MSC_IF_STR_IX, USBD_MSC_DATA_OUT_EP, USBD_MSC_DATA_IN_EP,
                        (USBD_RHPORT_MODE & OPT_MODE_HIGH_SPEED) ? 512 : 64),
 #endif
@@ -457,37 +413,55 @@ tud_descriptor_configuration_cb(uint8_t index)
     return desc_configuration;
 }
 
-const char *string_desc_arr[] = {
-    MYNEWT_VAL(USBD_VENDOR_STRING),
-    MYNEWT_VAL(USBD_PRODUCT_STRING),
-#if defined MYNEWT_VAL_USBD_CDC_DESCRIPTOR_STRING
-    MYNEWT_VAL(USBD_CDC_DESCRIPTOR_STRING),
-#endif
-#if defined MYNEWT_VAL_USBD_CDC_CONSOLE_DESCRIPTOR_STRING
-    MYNEWT_VAL(USBD_CDC_CONSOLE_DESCRIPTOR_STRING),
-#endif
-#if defined MYNEWT_VAL_USBD_CDC_HCI_DESCRIPTOR_STRING
-    MYNEWT_VAL(USBD_CDC_HCI_DESCRIPTOR_STRING),
-#endif
-#if defined MYNEWT_VAL_USBD_MSC_DESCRIPTOR_STRING
-    MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING),
-#endif
-#if defined MYNEWT_VAL_USBD_HID_DESCRIPTOR_STRING
-    MYNEWT_VAL(USBD_HID_DESCRIPTOR_STRING),
-#endif
-#if defined MYNEWT_VAL_USBD_BTH_DESCRIPTOR_STRING
-    MYNEWT_VAL(USBD_BTH_DESCRIPTOR_STRING),
-#endif
-#if defined MYNEWT_VAL_USBD_AUDIO_DESCRIPTOR_STRING
-    MYNEWT_VAL(USBD_AUDIO_DESCRIPTOR_STRING),
-#endif
-#if defined MYNEWT_VAL_USBD_NET_DESCRIPTOR_STRING
-    MYNEWT_VAL(USBD_NET_DESCRIPTOR_STRING),
-#endif
-#if defined MYNEWT_VAL_USBD_DFU_SLOT_NAME
-    MYNEWT_VAL(USBD_DFU_SLOT_NAME),
-#endif
+static const uint16_t langid_desc[] = {
+    (TUSB_DESC_STRING << 8) | 4,
+    MYNEWT_VAL(USBD_LANGID),
 };
+
+USBD_STRING_DESC_LANGID(langid_desc);
+USBD_STRING_DESC_SYSCFG(USBD_VENDOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_PRODUCT_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_CDC_DESCRIPTOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_CDC_CONSOLE_DESCRIPTOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_CDC_HCI_DESCRIPTOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_MSC_DESCRIPTOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_HID_DESCRIPTOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_BTH_DESCRIPTOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_AUDIO_DESCRIPTOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_NET_DESCRIPTOR_STRING);
+USBD_STRING_DESC_SYSCFG(USBD_DFU_SLOT_NAME);
+
+int __attribute__((weak))
+usbd_serial_number_string(uint16_t *chars, int max)
+{
+    (void)max;
+
+    /* TODO: Add function call to get serial number */
+    chars[0] = '1';
+
+    return 1;
+}
+
+USBD_STRING_DESC_SYSCFG_FN(USBD_SERIAL_NUMBER_STRING, usbd_serial_number_string);
+
+#if USBD_NET_MAC_STRING
+/* Host side MAC address as 12 hex digits, e.g. 02A1B2C3D4E5 */
+static int
+usbd_net_mac_string(uint16_t *chars, int max)
+{
+    int i;
+
+    assert(max >= 12);
+    for (i = 0; i < 6; ++i) {
+        chars[2 * i] = "0123456789ABCDEF"[tud_network_mac_address[i] >> 4];
+        chars[2 * i + 1] = "0123456789ABCDEF"[tud_network_mac_address[i] & 0x0F];
+    }
+
+    return 12;
+}
+
+USBD_STRING_DESC_SYSCFG_FN(USBD_NET_MAC_STRING, usbd_net_mac_string);
+#endif
 
 static uint16_t desc_string[MYNEWT_VAL(USBD_STRING_DESCRIPTOR_MAX_LENGTH) + 1];
 
@@ -561,7 +535,6 @@ tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage,
 
 #if MYNEWT_VAL(USBD_WINDOWS_COMP_ID)
 
-#define MICROSOFT_OS_STRING_DESCRIPTOR  0xEE
 #define COMPATIBILITY_FEATURE_REQUEST   0xFE
 
 static const uint8_t microsoft_os_string_descriptor[] = {
@@ -574,6 +547,8 @@ static const uint8_t microsoft_os_string_descriptor[] = {
     COMPATIBILITY_FEATURE_REQUEST,  /* BYTE Vendor Code */
     0x00                            /* BYTE Padding */
 };
+
+USBD_STRING_DESC_RAW(0xEE, microsoft_os_string_descriptor);
 
 struct {
     uint32_t len;
@@ -674,43 +649,32 @@ tud_descriptor_string_cb(uint8_t index, uint16_t langid)
     int i;
     const char *str;
 
-#if MYNEWT_VAL(USBD_WINDOWS_COMP_ID)
-    if (index == MICROSOFT_OS_STRING_DESCRIPTOR) {
-        return (const uint16_t *)microsoft_os_string_descriptor;
-    }
-#endif
-    if (index == 0) {
-        desc_string[1] = MYNEWT_VAL(USBD_LANGID);
-        char_num = 1;
-    } else if (index == 1) {
-        /* TODO: Add function call to get serial number */
-        desc_string[1] = '1';
-        char_num = 1;
-#if USBD_NET_MAC_STRING
-    } else if (index == NET_MAC_STR_IX) {
-        /* Host side MAC address as 12 hex digits, e.g. 02A1B2C3D4E5 */
-        for (i = 0; i < 6; ++i) {
-            desc_string[1 + 2 * i] =
-                "0123456789ABCDEF"[tud_network_mac_address[i] >> 4];
-            desc_string[2 + 2 * i] =
-                "0123456789ABCDEF"[tud_network_mac_address[i] & 0x0F];
+    LINK_TABLE_FOREACH(e, usbd_string_descs) {
+        if (e->ix != index) {
+            continue;
         }
-        char_num = 12;
-#endif
-    } else if (index - 2 < ARRAY_SIZE(string_desc_arr)) {
-        str = string_desc_arr[index - 2];
+        switch (e->type) {
+        case USBD_STRING_DESC_RAW:
+            return e->raw;
+        case USBD_STRING_DESC_FN:
+            char_num = e->fn(desc_string + 1, ARRAY_SIZE(desc_string) - 1);
+            break;
+        default:
+            str = e->str;
+            if (str) {
+                char_num = strlen(str);
+                assert(char_num <= ARRAY_SIZE(desc_string) - 1);
+                if (char_num > ARRAY_SIZE(desc_string) - 1) {
+                    char_num = ARRAY_SIZE(desc_string) - 1;
+                }
 
-        if (str) {
-            char_num = strlen(str);
-            assert(char_num <= ARRAY_SIZE(desc_string) - 1);
-            if (char_num > ARRAY_SIZE(desc_string) - 1) {
-                char_num = ARRAY_SIZE(desc_string) - 1;
+                for (i = 0; i < char_num; ++i) {
+                    desc_string[1 + i] = str[i];
+                }
             }
-
-            for (i = 0; i < char_num; ++i) {
-                desc_string[1 + i] = str[i];
-            }
+            break;
         }
+        break;
     }
 
     if (char_num) {

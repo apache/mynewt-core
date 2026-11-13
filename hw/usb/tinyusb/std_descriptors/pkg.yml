@@ -36,3 +36,6 @@ pkg.deps:
 # networking library.
 pkg.deps.'(USBD_NET == "ECM") || (USBD_NET == "RNDIS")':
     - "@apache-mynewt-core/hw/usb/tinyusb/tinyusb_sdk/networking"
+
+pkg.link_tables:
+    - usbd_string_descs
