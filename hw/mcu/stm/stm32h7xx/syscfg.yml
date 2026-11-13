@@ -78,36 +78,163 @@ syscfg.defs:
         description: Enable high-speed 48MHz internal clock source
         value: 0
 
+    STM32_CLOCK_CSI:
+        description: >
+            Enable low-power 4MHz internal clock source (CSI), can be used as
+            PLL (STM32_CLOCK_PLL_SOURCE) or SYSCLK source.
+        value: 0
+
     STM32_CLOCK_USBSEL:
         description: >
             Select USB clock source.
-            0 - disabled
+            0 - leave unchanged (disabled after reset)
             Other acceptable values
-            RCC_USBCLKSOURCE_PLL, RCC_USBCLKSOURCE_PLL3, RCC_USBCLKSOURCE_HSI48
+            RCC_USBCLKSOURCE_PLL (PLL1 Q), RCC_USBCLKSOURCE_PLL3 (PLL3 Q),
+            RCC_USBCLKSOURCE_HSI48
         value: RCC_USBCLKSOURCE_PLL
 
+    STM32_CLOCK_SYSCLK_SOURCE:
+        description: >
+            System clock source. RCC_SYSCLKSOURCE_HSI,
+            RCC_SYSCLKSOURCE_CSI, RCC_SYSCLKSOURCE_HSE or
+            RCC_SYSCLKSOURCE_PLLCLK (PLL1 P).
+        value: RCC_SYSCLKSOURCE_PLLCLK
+
+    STM32_CLOCK_PLL_SOURCE:
+        description: >
+            Clock source of all PLLs (PLL1, PLL2 and PLL3 share one source,
+            each PLL has own M divider). RCC_PLLSOURCE_HSI,
+            RCC_PLLSOURCE_CSI, RCC_PLLSOURCE_HSE or
+            RCC_PLLSOURCE_NONE. Defaults to HSE when STM32_CLOCK_HSE is
+            set.
+        value: RCC_PLLSOURCE_HSI
+
+    # PLL1 (P drives SYSCLK)
+    STM32_CLOCK_PLL1:
+        description: Enable PLL1.
+        value: 1
+    STM32_CLOCK_PLL1_PLLM:
+        description: PLL1 M divider (1..63).
+        value: MYNEWT_VAL(STM32_CLOCK_PLL_PLLM)
+    STM32_CLOCK_PLL1_PLLN:
+        description: PLL1 N multiplier (4..512).
+        value: MYNEWT_VAL(STM32_CLOCK_PLL_PLLN)
+    STM32_CLOCK_PLL1_PLLFRACN:
+        description: PLL1 fractional part of N (0..8191), 0 - integer mode.
+        value: 0
+    STM32_CLOCK_PLL1_PLLP:
+        description: PLL1 P divider (1..128, drives SYSCLK).
+        value: MYNEWT_VAL(STM32_CLOCK_PLL_PLLP)
+    STM32_CLOCK_PLL1_PLLQ:
+        description: PLL1 Q divider (1..128).
+        value: MYNEWT_VAL(STM32_CLOCK_PLL_PLLQ)
+    STM32_CLOCK_PLL1_PLLR:
+        description: PLL1 R divider (1..128).
+        value: MYNEWT_VAL(STM32_CLOCK_PLL_PLLR)
+    STM32_CLOCK_PLL1_RGE:
+        description: >
+            PLL1 input (ref1_ck = source / M) frequency range
+            RCC_PLL1VCIRANGE_0 (1-2 MHz), RCC_PLL1VCIRANGE_1 (2-4 MHz),
+            RCC_PLL1VCIRANGE_2 (4-8 MHz) or RCC_PLL1VCIRANGE_3 (8-16 MHz).
+        value: MYNEWT_VAL(STM32_CLOCK_PLLRGE)
+    STM32_CLOCK_PLL1_VCOSEL:
+        description: >
+            PLL1 VCO range RCC_PLL1VCOWIDE or
+            RCC_PLL1VCOMEDIUM (input 1-2 MHz).
+        value: RCC_PLL1VCOWIDE
+
+    # PLL2
+    STM32_CLOCK_PLL2:
+        description: Enable PLL2.
+        value: 0
+    STM32_CLOCK_PLL2_PLLM:
+        description: PLL2 M divider (1..63).
+        value: 0
+    STM32_CLOCK_PLL2_PLLN:
+        description: PLL2 N multiplier (4..512).
+        value: 0
+    STM32_CLOCK_PLL2_PLLFRACN:
+        description: PLL2 fractional part of N (0..8191), 0 - integer mode.
+        value: 0
+    STM32_CLOCK_PLL2_PLLP:
+        description: PLL2 P divider (1..128), 0 - output P disabled.
+        value: 0
+    STM32_CLOCK_PLL2_PLLQ:
+        description: PLL2 Q divider (1..128), 0 - output Q disabled.
+        value: 0
+    STM32_CLOCK_PLL2_PLLR:
+        description: PLL2 R divider (1..128), 0 - output R disabled.
+        value: 0
+    STM32_CLOCK_PLL2_RGE:
+        description: PLL2 input frequency range RCC_PLL2VCIRANGE_0..3.
+        value: RCC_PLL2VCIRANGE_0
+    STM32_CLOCK_PLL2_VCOSEL:
+        description: PLL2 VCO range RCC_PLL2VCOWIDE or RCC_PLL2VCOMEDIUM.
+        value: RCC_PLL2VCOWIDE
+
+    # PLL3
+    STM32_CLOCK_PLL3:
+        description: Enable PLL3.
+        value: 0
+    STM32_CLOCK_PLL3_PLLM:
+        description: PLL3 M divider (1..63).
+        value: 0
+    STM32_CLOCK_PLL3_PLLN:
+        description: PLL3 N multiplier (4..512).
+        value: 0
+    STM32_CLOCK_PLL3_PLLFRACN:
+        description: PLL3 fractional part of N (0..8191), 0 - integer mode.
+        value: 0
+    STM32_CLOCK_PLL3_PLLP:
+        description: PLL3 P divider (1..128), 0 - output P disabled.
+        value: 0
+    STM32_CLOCK_PLL3_PLLQ:
+        description: PLL3 Q divider (1..128), 0 - output Q disabled.
+        value: 0
+    STM32_CLOCK_PLL3_PLLR:
+        description: PLL3 R divider (1..128), 0 - output R disabled.
+        value: 0
+    STM32_CLOCK_PLL3_RGE:
+        description: PLL3 input frequency range RCC_PLL3VCIRANGE_0..3.
+        value: RCC_PLL3VCIRANGE_0
+    STM32_CLOCK_PLL3_VCOSEL:
+        description: PLL3 VCO range RCC_PLL3VCOWIDE or RCC_PLL3VCOMEDIUM.
+        value: RCC_PLL3VCOWIDE
+
+    # Deprecated PLL1 settings, use STM32_CLOCK_PLL1_xxx instead
     STM32_CLOCK_PLL_PLLM:
-        description: PLL config M parameter
+        description: Use STM32_CLOCK_PLL1_PLLM.
         value: 0
-
+        deprecated: 1
     STM32_CLOCK_PLL_PLLN:
-        description: PLL config N parameter
+        description: Use STM32_CLOCK_PLL1_PLLN.
         value: 0
-
+        deprecated: 1
     STM32_CLOCK_PLL_PLLP:
-        description: PLL config P parameter
+        description: Use STM32_CLOCK_PLL1_PLLP.
         value: 0
-
+        deprecated: 1
     STM32_CLOCK_PLL_PLLQ:
-        description: PLL config Q parameter
+        description: Use STM32_CLOCK_PLL1_PLLQ.
         value: 0
-
+        deprecated: 1
     STM32_CLOCK_PLL_PLLR:
-        description: PLL config R parameter
+        description: Use STM32_CLOCK_PLL1_PLLR.
         value: 0
-
+        deprecated: 1
     STM32_CLOCK_PLLRGE:
-        description: PLL input frequency range
+        description: Use STM32_CLOCK_PLL1_RGE.
+        value: 0
+        deprecated: 1
+
+    STM32_CLOCK_FMCSEL:
+        description: >
+            Select FMC kernel clock source. Only selects the source, the
+            selected PLL must be enabled and configured by its own settings.
+            0 - leave reset default (HCLK3)
+            Other acceptable values
+            RCC_FMCCLKSOURCE_PLL (PLL1 Q), RCC_FMCCLKSOURCE_PLL2 (PLL2 R),
+            RCC_FMCCLKSOURCE_CLKP
         value: 0
 
     STM32_CLOCK_AHB_DIVIDER:
@@ -159,3 +286,6 @@ syscfg.vals.TINYUSB:
 
 syscfg.vals.STM32_CLOCK_HSI48:
     STM32_CLOCK_USBSEL: RCC_USBCLKSOURCE_HSI48
+
+syscfg.vals.STM32_CLOCK_HSE:
+    STM32_CLOCK_PLL_SOURCE: RCC_PLLSOURCE_HSE
