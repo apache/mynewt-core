@@ -1,0 +1,44 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/mcu/stm/stm32_rom_boot
+pkg.description: >
+    Enters STM32 system memory bootloader (ROM bootloader with USB DFU,
+    UART, ...) at startup when a pin is held in active state or reset pin
+    was pressed given number of times in a row.
+    Normally system bootloader is entered by holding BOOT0 pin high during
+    reset. This package is for boards where BOOT0 is not available (no
+    button, pin not routed) or where it does not work because of option
+    bytes (with nSWBOOT0 cleared boot source is taken from nBOOT0 option
+    bit and BOOT0 pin is ignored).
+    Check is done in sysinit, MCUboot needs BOOT_MYNEWT_SYSINIT: 1 to
+    call it.
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - stm32
+    - dfu
+    - bootloader
+
+pkg.deps:
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/kernel/os"
+
+pkg.init:
+    stm32_rom_boot_init: 'MYNEWT_VAL(STM32_ROM_BOOT_SYSINIT_STAGE)'

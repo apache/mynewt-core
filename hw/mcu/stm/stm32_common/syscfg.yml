@@ -506,6 +506,10 @@ syscfg.defs:
         range: 0..255
         value: 0
 
+    STM32_BOOTLOADER_CLI:
+        description: Add stm32_dfu command to shell
+        value: 0
+
     STM32_FLASH_SIZE_KB:
         description: 'Total flash size in KB. Defined in BSP'
         value:

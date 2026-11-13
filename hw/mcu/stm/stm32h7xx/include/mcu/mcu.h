@@ -26,7 +26,17 @@
 extern "C" {
 #endif
 
-#define STM32_SYSTEM_MEMORY     0x1FF00000
+/*
+ * System memory starts at 0x1FF00000, bootloader start address (vector table)
+ * is at offset 0xA000 for STM32H7A3/7B3/7B0 and 0x9800 for other devices.
+ */
+#if defined(STM32H7A3xx) || defined(STM32H7A3xxQ) || \
+    defined(STM32H7B3xx) || defined(STM32H7B3xxQ) || \
+    defined(STM32H7B0xx) || defined(STM32H7B0xxQ)
+#define STM32_SYSTEM_MEMORY     0x1FF0A000
+#else
+#define STM32_SYSTEM_MEMORY     0x1FF09800
+#endif
 
 #ifdef __cplusplus
 }
