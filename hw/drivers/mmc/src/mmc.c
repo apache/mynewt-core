@@ -88,6 +88,13 @@ typedef uint8_t sd_cmd_t;
 
 #define BLOCK_LEN           (512)
 
+/* CMD0 attempts at card power-up (10 ms apart) before declaring no card */
+#define MMC_CMD0_ATTEMPTS   (10)
+
+/* Before CMD0: clock 0xFF with CS asserted while the card still sends data */
+#define MMC_DRAIN_CHUNK         (10)
+#define MMC_DRAIN_TIMEOUT_MS    (500)
+
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 
 static struct mmc_spi_cfg mmc0_config = {
@@ -243,23 +250,66 @@ mmc_send_extra_clocks(mmc_disk_t *mmc)
     }
 }
 
+/**
+ * The card may still be sending data or be busy, e.g. when the MCU was reset
+ * in the middle of a read; deasserting CS does not stop it. Clock 0xFF with
+ * CS asserted until a whole chunk reads back as 0xFF (or a timeout), so that
+ * CMD0 is not mixed with the tail of the previous transfer.
+ */
+static void
+mmc_drain(mmc_disk_t *mmc)
+{
+    uint8_t rx[MMC_DRAIN_CHUNK];
+    os_time_t timeout = os_time_get() + os_time_ms_to_ticks32(MMC_DRAIN_TIMEOUT_MS);
+    uint32_t drained = 0;
+    int idle;
+    int i;
+
+    mmc_spi_set_cs(mmc, 0);
+    for (;;) {
+        mmc_spi_rx(mmc, rx, sizeof(rx));
+        idle = 1;
+        for (i = 0; i < MMC_DRAIN_CHUNK; ++i) {
+            if (rx[i] != 0xFF) {
+                idle = 0;
+                break;
+            }
+        }
+        if (idle || OS_TIME_TICK_GT(os_time_get(), timeout)) {
+            break;
+        }
+        drained += sizeof(rx);
+    }
+    mmc_spi_set_cs(mmc, 1);
+
+    if (drained) {
+        MMC_LOG_INFO("Card was still sending, drained %lu bytes%s",
+                     (unsigned long)drained, idle ? "" : " (timeout)");
+    }
+}
+
 static uint8_t
 send_mmc_cmd(mmc_disk_t *mmc, sd_cmd_t cmd, uint32_t payload)
 {
     int n;
     uint16_t status;
     uint8_t crc;
-    uint8_t buf[6];
+    /* Optional idle 0xFF bytes followed by the 6 command bytes */
+    uint8_t buf[MYNEWT_VAL(MMC_PRE_CMD_BYTES) + 6];
+    uint8_t *cmd_buf = buf + mmc->pre_cmd_bytes;
     char strbuf[90];
 
     mmc_led_on();
 
+    /* Idle bytes go out in the same transfer as the command */
+    memset(buf, 0xFF, mmc->pre_cmd_bytes);
+
     /* 4.7.2: Command Format */
-    buf[0] = 0x40 | cmd;
-    buf[1] = (uint8_t)(payload >> 24);
-    buf[2] = (uint8_t)(payload >> 16);
-    buf[3] = (uint8_t)(payload >> 8);
-    buf[4] = (uint8_t)(payload);
+    cmd_buf[0] = 0x40 | cmd;
+    cmd_buf[1] = (uint8_t)(payload >> 24);
+    cmd_buf[2] = (uint8_t)(payload >> 16);
+    cmd_buf[3] = (uint8_t)(payload >> 8);
+    cmd_buf[4] = (uint8_t)(payload);
 
     /**
      * 7.2.2 Bus Transfer Protection
@@ -278,21 +328,23 @@ send_mmc_cmd(mmc_disk_t *mmc, sd_cmd_t cmd, uint32_t payload)
     default:
         break;
     }
-    buf[5] = crc;
-    mmc_spi_tx(mmc, buf, 6);
+    cmd_buf[5] = crc;
+    mmc_spi_tx(mmc, buf, mmc->pre_cmd_bytes + 6);
+
+    if (cmd == CMD12) {
+        /*
+         * 7.3.1.3: the byte received right after CMD12 is a stuff byte (the
+         * card may still be sending data of the stopped block); skip it.
+         */
+        mmc_spi_rx(mmc, buf, 1);
+    }
 
     for (n = 10; n > 0; n--) {
         mmc_spi_rx(mmc, buf, 1);
         status = buf[0];
-        if (status != 0xFF) {
-            if (status & 0x80) {
-                mmc_spi_rx(mmc, buf, 1);
-                status = status << 8 | buf[0];
-                while (status & 0x8000) {
-                    status <<= 1;
-                }
-                status >>= 8;
-            }
+        /* R1 has bit 7 clear; 0xFF means no response yet, and a byte with
+         * bit 7 set is not an R1 response, so keep polling for one. */
+        if (status != 0xFF && !(status & 0x80)) {
             if (status != 0x7F) {
                 break;
             }
@@ -587,6 +639,7 @@ mmc_init(mmc_disk_t *mmc)
     uint8_t cmd_resp[4];
     uint8_t buf[10] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
     os_time_t timeout;
+    int attempt;
 
     /**
      * NOTE: The state machine below follows:
@@ -605,17 +658,34 @@ mmc_init(mmc_disk_t *mmc)
     /* send the required >= 74 clock cycles (10 bytes, 80 clock cycles). */
     mmc_spi_tx(mmc, buf, 10);
 
-    /* put card in idle state */
-    status = mmc_cmd_r1(mmc, CMD0, 0);
+    mmc_drain(mmc);
 
-    /* No card inserted or bad card? */
-    if (status != R_IDLE) {
-        MMC_LOG_ERROR("Card not detected");
-        rc = MMC_CARD_ERROR;
-        goto out;
+    /* Some cards lose byte alignment without idle clocks before a command */
+    mmc->pre_cmd_bytes = MYNEWT_VAL(MMC_PRE_CMD_BYTES);
+
+    /**
+     * A card that was just inserted may not answer the first CMD0 yet
+     * (its own power-up after insertion), so retry a few times with a
+     * short delay before giving up.
+     */
+    for (attempt = 1; ; ++attempt) {
+        /* put card in idle state */
+        status = mmc_cmd_r1(mmc, CMD0, 0);
+        if (status == R_IDLE) {
+            if (attempt > 1) {
+                MMC_LOG_INFO("Card answered CMD0 on attempt %d", attempt);
+            }
+            break;
+        }
+
+        if (attempt >= MMC_CMD0_ATTEMPTS) {
+            /* No card inserted or bad card? */
+            MMC_LOG_ERROR("Card not detected");
+            rc = MMC_CARD_ERROR;
+            goto out;
+        }
+        os_time_delay(OS_TICKS_PER_SEC / 100);
     }
-
-    mmc_set_working_settings(mmc);
 
     /**
      * FIXME: while doing a hot-swap of the card or powering off the board
@@ -713,6 +783,10 @@ mmc_init(mmc_disk_t *mmc)
 out:
     if (rc == 0 && status != 0) {
         rc = error_by_response(status);
+    }
+    if (rc == 0) {
+        /* Identification is done: raise clock to working frequency */
+        mmc_set_working_settings(mmc);
     }
     return rc;
 }
@@ -881,6 +955,15 @@ mmc_read(struct disk *disk, uint32_t lba, void *buf, uint32_t block_count)
         send_mmc_cmd(mmc, CMD12, 0);
     }
     wait_busy(mmc);
+
+    /*
+     * The first command after identification can still be misread by the
+     * card, so the idle bytes are dropped only after the first successful
+     * read.
+     */
+    if (!MYNEWT_VAL(MMC_PRE_CMD_KEEP)) {
+        mmc->pre_cmd_bytes = 0;
+    }
 
 out:
     mmc_spi_set_cs(mmc, 1);
