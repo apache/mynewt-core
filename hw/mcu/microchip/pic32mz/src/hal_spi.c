@@ -37,6 +37,9 @@
 #define SPIxBRG(P)          (base_address[P][0x30 / 0x4])
 #define SPIxCON2(P)         (base_address[P][0x40 / 0x4])
 
+/* Enhanced buffer depth in 8-bit mode (128-bit FIFO) */
+#define SPI_FIFO_DEPTH      16
+
 static volatile uint32_t * base_address[SPI_CNT] = {
     (volatile uint32_t *)_SPI1_BASE_ADDRESS,
     (volatile uint32_t *)_SPI2_BASE_ADDRESS,
@@ -563,30 +566,37 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int cnt)
     uint8_t rdata;
     uint8_t *tx = (uint8_t *)txbuf;
     uint8_t *rx = (uint8_t *)rxbuf;
+    int txcnt = cnt;
+    int rxcnt = cnt;
 
     /* Slave mode not supported */
     if (spis[spi_num].slave) {
         return -1;
     }
 
-    while (cnt--) {
-        if (tx) {
-            /* Wait until there is some space in TX FIFO */
-            while (SPIxSTAT(spi_num) & _SPI1STAT_SPITBF_MASK) {
-            }
+    /* Master has to send something to receive */
+    if (tx == NULL) {
+        return -1;
+    }
 
+    while (rxcnt) {
+        /*
+         * Keep TX FIFO filled, but do not have more bytes in flight than
+         * RX FIFO can hold.
+         */
+        while (txcnt && rxcnt - txcnt < SPI_FIFO_DEPTH &&
+               !(SPIxSTAT(spi_num) & _SPI1STAT_SPITBF_MASK)) {
             SPIxBUF(spi_num) = *tx++;
-        }
-
-        /* Wait until RX FIFO is not empty */
-        while (SPIxSTAT(spi_num) & _SPI1STAT_SPIRBE_MASK) {
+            --txcnt;
         }
 
         /* Always read RX FIFO to avoid overrun */
-        rdata = SPIxBUF(spi_num);
-
-        if (rx) {
-            *rx++ = rdata;
+        while (!(SPIxSTAT(spi_num) & _SPI1STAT_SPIRBE_MASK)) {
+            rdata = SPIxBUF(spi_num);
+            if (rx) {
+                *rx++ = rdata;
+            }
+            --rxcnt;
         }
     }
 
