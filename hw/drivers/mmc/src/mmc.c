@@ -294,17 +294,22 @@ send_mmc_cmd(mmc_disk_t *mmc, sd_cmd_t cmd, uint32_t payload)
     int n;
     uint16_t status;
     uint8_t crc;
-    uint8_t buf[6];
+    /* Optional idle 0xFF bytes followed by the 6 command bytes */
+    uint8_t buf[MYNEWT_VAL(MMC_PRE_CMD_BYTES) + 6];
+    uint8_t *cmd_buf = buf + mmc->pre_cmd_bytes;
     char strbuf[90];
 
     mmc_led_on();
 
+    /* Idle bytes go out in the same transfer as the command */
+    memset(buf, 0xFF, mmc->pre_cmd_bytes);
+
     /* 4.7.2: Command Format */
-    buf[0] = 0x40 | cmd;
-    buf[1] = (uint8_t)(payload >> 24);
-    buf[2] = (uint8_t)(payload >> 16);
-    buf[3] = (uint8_t)(payload >> 8);
-    buf[4] = (uint8_t)(payload);
+    cmd_buf[0] = 0x40 | cmd;
+    cmd_buf[1] = (uint8_t)(payload >> 24);
+    cmd_buf[2] = (uint8_t)(payload >> 16);
+    cmd_buf[3] = (uint8_t)(payload >> 8);
+    cmd_buf[4] = (uint8_t)(payload);
 
     /**
      * 7.2.2 Bus Transfer Protection
@@ -323,8 +328,8 @@ send_mmc_cmd(mmc_disk_t *mmc, sd_cmd_t cmd, uint32_t payload)
     default:
         break;
     }
-    buf[5] = crc;
-    mmc_spi_tx(mmc, buf, 6);
+    cmd_buf[5] = crc;
+    mmc_spi_tx(mmc, buf, mmc->pre_cmd_bytes + 6);
 
     if (cmd == CMD12) {
         /*
@@ -337,15 +342,9 @@ send_mmc_cmd(mmc_disk_t *mmc, sd_cmd_t cmd, uint32_t payload)
     for (n = 10; n > 0; n--) {
         mmc_spi_rx(mmc, buf, 1);
         status = buf[0];
-        if (status != 0xFF) {
-            if (status & 0x80) {
-                mmc_spi_rx(mmc, buf, 1);
-                status = status << 8 | buf[0];
-                while (status & 0x8000) {
-                    status <<= 1;
-                }
-                status >>= 8;
-            }
+        /* R1 has bit 7 clear; 0xFF means no response yet, and a byte with
+         * bit 7 set is not an R1 response, so keep polling for one. */
+        if (status != 0xFF && !(status & 0x80)) {
             if (status != 0x7F) {
                 break;
             }
@@ -661,6 +660,9 @@ mmc_init(mmc_disk_t *mmc)
 
     mmc_drain(mmc);
 
+    /* Some cards lose byte alignment without idle clocks before a command */
+    mmc->pre_cmd_bytes = MYNEWT_VAL(MMC_PRE_CMD_BYTES);
+
     /**
      * A card that was just inserted may not answer the first CMD0 yet
      * (its own power-up after insertion), so retry a few times with a
@@ -953,6 +955,15 @@ mmc_read(struct disk *disk, uint32_t lba, void *buf, uint32_t block_count)
         send_mmc_cmd(mmc, CMD12, 0);
     }
     wait_busy(mmc);
+
+    /*
+     * The first command after identification can still be misread by the
+     * card, so the idle bytes are dropped only after the first successful
+     * read.
+     */
+    if (!MYNEWT_VAL(MMC_PRE_CMD_KEEP)) {
+        mmc->pre_cmd_bytes = 0;
+    }
 
 out:
     mmc_spi_set_cs(mmc, 1);

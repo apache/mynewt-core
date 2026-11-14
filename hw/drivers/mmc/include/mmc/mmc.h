@@ -75,6 +75,8 @@ typedef struct mmc_disk {
     uint8_t scr[8];
     uint8_t cid[16];
     uint8_t app_cmd : 1;
+    /* 0xFF bytes sent before each command (see MMC_PRE_CMD_BYTES) */
+    uint8_t pre_cmd_bytes;
     struct os_sem sem;
 } mmc_disk_t;
 
