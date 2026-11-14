@@ -37,6 +37,9 @@
 #define SPIxBRG(P)          (base_address[P][0x30 / 0x4])
 #define SPIxCON2(P)         (base_address[P][0x40 / 0x4])
 
+/* Enhanced buffer depth in 8-bit mode (128-bit FIFO) */
+#define SPI_FIFO_DEPTH      16
+
 static volatile uint32_t * base_address[SPI_CNT] = {
     (volatile uint32_t *)_SPI1_BASE_ADDRESS,
     (volatile uint32_t *)_SPI2_BASE_ADDRESS,
@@ -224,26 +227,28 @@ static int
 hal_spi_config_pins(int spi_num, uint8_t mode)
 {
     int ret = 0;
-
-    if (hal_gpio_init_out(spis[spi_num].pins.pin_mosi, 0) ||
-        hal_gpio_init_out(spis[spi_num].pins.pin_sck, 1) ||
-        hal_gpio_init_in(spis[spi_num].pins.pin_miso, HAL_GPIO_PULL_NONE)) {
-        return -1;
-    }
+    int sck_idle;
 
     /*
      * To avoid any glitches when turning off and on module, the SCK pin must
-     * be set to the correct value depending on the mode.
+     * be set to the correct value depending on the mode. Initialize it with
+     * that value directly, setting it to 1 first would make a clock edge
+     * in mode 0 and 1.
      */
     switch (mode) {
-    case HAL_SPI_MODE0:
-    case HAL_SPI_MODE1:
-        hal_gpio_write(spis[spi_num].pins.pin_sck, 0);
-        break;
     case HAL_SPI_MODE2:
     case HAL_SPI_MODE3:
-        hal_gpio_write(spis[spi_num].pins.pin_sck, 1);
+        sck_idle = 1;
         break;
+    default:
+        sck_idle = 0;
+        break;
+    }
+
+    if (hal_gpio_init_out(spis[spi_num].pins.pin_mosi, 0) ||
+        hal_gpio_init_out(spis[spi_num].pins.pin_sck, sck_idle) ||
+        hal_gpio_init_in(spis[spi_num].pins.pin_miso, HAL_GPIO_PULL_NONE)) {
+        return -1;
     }
 
     switch (spi_num) {
@@ -561,30 +566,37 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int cnt)
     uint8_t rdata;
     uint8_t *tx = (uint8_t *)txbuf;
     uint8_t *rx = (uint8_t *)rxbuf;
+    int txcnt = cnt;
+    int rxcnt = cnt;
 
     /* Slave mode not supported */
     if (spis[spi_num].slave) {
         return -1;
     }
 
-    while (cnt--) {
-        if (tx) {
-            /* Wait until there is some space in TX FIFO */
-            while (SPIxSTAT(spi_num) & _SPI1STAT_SPITBF_MASK) {
-            }
+    /* Master has to send something to receive */
+    if (tx == NULL) {
+        return -1;
+    }
 
+    while (rxcnt) {
+        /*
+         * Keep TX FIFO filled, but do not have more bytes in flight than
+         * RX FIFO can hold.
+         */
+        while (txcnt && rxcnt - txcnt < SPI_FIFO_DEPTH &&
+               !(SPIxSTAT(spi_num) & _SPI1STAT_SPITBF_MASK)) {
             SPIxBUF(spi_num) = *tx++;
-        }
-
-        /* Wait until RX FIFO is not empty */
-        while (SPIxSTAT(spi_num) & _SPI1STAT_SPIRBE_MASK) {
+            --txcnt;
         }
 
         /* Always read RX FIFO to avoid overrun */
-        rdata = SPIxBUF(spi_num);
-
-        if (rx) {
-            *rx++ = rdata;
+        while (!(SPIxSTAT(spi_num) & _SPI1STAT_SPIRBE_MASK)) {
+            rdata = SPIxBUF(spi_num);
+            if (rx) {
+                *rx++ = rdata;
+            }
+            --rxcnt;
         }
     }
 
