@@ -49,6 +49,19 @@ syscfg.defs:
             This can fix problem with some older cards that start
             to send status with out of sync clock.
         value: 0
+    MMC_PRE_CMD_BYTES:
+        description: >
+            Number of 0xFF bytes clocked out after CS is asserted and
+            before each command, from card identification until the first
+            successful read. Some cards (seen with SanDisk) lose byte
+            alignment without them and stop answering until they are
+            power cycled. 0 disables.
+        value: 1
+    MMC_PRE_CMD_KEEP:
+        description: >
+            Keep sending the MMC_PRE_CMD_BYTES bytes before all commands.
+            With 0 they are dropped after the first successful read.
+        value: 0
 
     MMC_PKG_SYSINIT_STAGE:
         description: Sysinit stage for MMC package.
