@@ -144,7 +144,7 @@ void pic32_isr_init(void);
  * the main stack (_stack) instead of the task stack.
  *
  * @param _vector - interrupt vector number (i.e. _CHANGE_NOTICE_A_VECTOR)
- * @param _ipl    - interrupt priority level, literal number 2..7
+ * @param _ipl    - interrupt priority level 2..7, number or MYNEWT_VAL()
  * @param _fun    - handler function void fun(void)
  */
 #define PIC32_ISR_NO_FPU(_vector, _ipl, _fun)                                \
@@ -159,7 +159,7 @@ void pic32_isr_init(void);
  * With MCU_ISR_DISPATCHER: 0 it requires HARDFLOAT: 1.
  *
  * @param _vector - interrupt vector number (i.e. _CHANGE_NOTICE_A_VECTOR)
- * @param _ipl    - interrupt priority level, literal number 2..7
+ * @param _ipl    - interrupt priority level 2..7, number or MYNEWT_VAL()
  * @param _fun    - handler function void fun(void)
  */
 #define PIC32_ISR_WITH_FPU(_vector, _ipl, _fun)                              \

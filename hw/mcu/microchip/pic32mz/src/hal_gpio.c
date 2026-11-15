@@ -228,11 +228,12 @@ hal_gpio_handle_isr(uint32_t port)
 }
 
 /*
- * Change notification interrupts, priority is set by pic32_isr_init().
+ * Change notification interrupts, priority (GPIO_CN_IPL) is set by
+ * pic32_isr_init().
  * Handlers are called with FPU disabled, irq handlers must not use floating
  * point.
  */
-#define HAL_GPIO_CN_IPL 2
+#define HAL_GPIO_CN_IPL MYNEWT_VAL(GPIO_CN_IPL)
 
 #ifdef _PORTA
 static void

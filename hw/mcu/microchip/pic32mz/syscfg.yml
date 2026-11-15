@@ -38,6 +38,120 @@ syscfg.defs:
             the main stack instead of the task stack.
             When 0, compiler generates interrupt function for each handler.
         value: 0
+    GPIO_CN_IPL:
+        description: Change notification (GPIO irq) interrupt priority level.
+        value: 2
+        range: 2..7
+    MCU_CORE_TIMER_IPL:
+        description: >
+            Core timer (OS tick) interrupt priority level. Level 1 is used
+            by context switch.
+        value: 2
+        range: 2..7
+    UART_0_RX_IPL:
+        description: 'UART 0 RX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_0_TX_IPL:
+        description: 'UART 0 TX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_1_RX_IPL:
+        description: 'UART 1 RX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_1_TX_IPL:
+        description: 'UART 1 TX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_2_RX_IPL:
+        description: 'UART 2 RX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_2_TX_IPL:
+        description: 'UART 2 TX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_3_RX_IPL:
+        description: 'UART 3 RX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_3_TX_IPL:
+        description: 'UART 3 TX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_4_RX_IPL:
+        description: 'UART 4 RX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_4_TX_IPL:
+        description: 'UART 4 TX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_5_RX_IPL:
+        description: 'UART 5 RX interrupt priority level.'
+        value: 2
+        range: 2..7
+    UART_5_TX_IPL:
+        description: 'UART 5 TX interrupt priority level.'
+        value: 2
+        range: 2..7
+    SPI_0_IPL:
+        description: 'SPI 0 interrupt priority level.'
+        value: 2
+        range: 2..7
+    SPI_1_IPL:
+        description: 'SPI 1 interrupt priority level.'
+        value: 2
+        range: 2..7
+    SPI_2_IPL:
+        description: 'SPI 2 interrupt priority level.'
+        value: 2
+        range: 2..7
+    SPI_3_IPL:
+        description: 'SPI 3 interrupt priority level.'
+        value: 2
+        range: 2..7
+    SPI_4_IPL:
+        description: 'SPI 4 interrupt priority level.'
+        value: 2
+        range: 2..7
+    SPI_5_IPL:
+        description: 'SPI 5 interrupt priority level.'
+        value: 2
+        range: 2..7
+    TIMER_0_IPL:
+        description: 'Timer 0 interrupt priority level.'
+        value: 3
+        range: 2..7
+    TIMER_1_IPL:
+        description: 'Timer 1 interrupt priority level.'
+        value: 3
+        range: 2..7
+    TIMER_2_IPL:
+        description: 'Timer 2 interrupt priority level.'
+        value: 3
+        range: 2..7
+    TIMER_3_IPL:
+        description: 'Timer 3 interrupt priority level.'
+        value: 3
+        range: 2..7
+    TIMER_4_IPL:
+        description: 'Timer 4 interrupt priority level.'
+        value: 3
+        range: 2..7
+    TIMER_5_IPL:
+        description: 'Timer 5 interrupt priority level.'
+        value: 3
+        range: 2..7
+    TIMER_6_IPL:
+        description: 'Timer 6 interrupt priority level.'
+        value: 3
+        range: 2..7
+    TIMER_7_IPL:
+        description: 'Timer 7 interrupt priority level.'
+        value: 3
+        range: 2..7
     I2C_0:
         description: 'I2C interface 0'
         value:  0
