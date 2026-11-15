@@ -25,6 +25,9 @@ pkg.keywords:
     - pic32
     - pic32mz
 
+pkg.link_tables:
+    - pic32_isr_table
+
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"

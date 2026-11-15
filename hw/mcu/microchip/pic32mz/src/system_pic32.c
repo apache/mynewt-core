@@ -24,6 +24,7 @@
 
 #include <hal/hal_bsp.h>
 #include <bsp/bsp.h>
+#include <mcu/pic32_isr.h>
 
 static inline int PLL_ODIV(int n)
 {
@@ -152,6 +153,9 @@ SystemInit(void)
     _CP0_SET_SRSCTL((_CP0_GET_SRSCTL() & ~_CP0_SRSCTL_ESS_MASK) |
                     (1 << _CP0_SRSCTL_ESS_POSITION));
 #endif
+
+    /* Priorities of interrupts declared with PIC32_ISR_NO_FPU/WITH_FPU() */
+    pic32_isr_init();
 
 #if !MYNEWT_VAL(MCU_JTAG_ENABLE)
     /*
