@@ -24,6 +24,7 @@
 #include "os_priv.h"
 
 #include <string.h>
+#include <mcu/pic32_isr.h>
 
 #define OS_TICK_PERIOD ((MYNEWT_VAL(CLOCK_FREQ) / 2) / OS_TICKS_PER_SEC)
 
@@ -71,9 +72,13 @@ static uint32_t last_compare;
 
 static void timer_handler(void);
 
-/* core timer interrupt */
-void __attribute__((interrupt(IPL1AUTO),
-vector(_CORE_TIMER_VECTOR))) isr_core_timer(void)
+/*
+ * Core timer interrupt, priority is set by pic32_isr_init().
+ * Level 1 uses shadow register set 0 and is left for the context switch
+ * (isr_sw0), so the core timer uses level 2.
+ */
+static void
+isr_core_timer(void)
 {
     uint32_t compare;
 
@@ -85,6 +90,7 @@ vector(_CORE_TIMER_VECTOR))) isr_core_timer(void)
         _CP0_SET_COMPARE(compare);
     } while ((int32_t)(compare - _CP0_GET_COUNT()) <= 0);
 }
+PIC32_ISR_NO_FPU(_CORE_TIMER_VECTOR, 2, isr_core_timer);
 
 /* context switch interrupt, in ctx.S */
 void
@@ -202,14 +208,8 @@ os_arch_os_init(void)
         /* Stop core timer while debugger stops */
         _CP0_BIC_DEBUG(_CP0_DEBUG_COUNTDM_MASK);
 
-        /* enable core timer interrupt */
+        /* enable core timer interrupt, priority set by pic32_isr_init() */
         IEC0SET = _IEC0_CTIE_MASK;
-        /* set interrupt priority */
-        IPC0CLR = _IPC0_CTIP_MASK;
-        IPC0SET = (1 << _IPC0_CTIP_POSITION); /* priority 1 */
-        /* set interrupt subpriority */
-        IPC0CLR = _IPC0_CTIS_MASK;
-        IPC0SET = (0 << _IPC0_CTIS_POSITION); /* subpriority 0 */
 
         /* enable software interrupt 0 */
         IEC0SET = _IEC0_CS0IE_MASK;
