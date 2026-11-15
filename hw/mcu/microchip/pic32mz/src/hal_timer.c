@@ -24,6 +24,7 @@
 #include <mcu/pic32.h>
 #include <hal/hal_timer.h>
 #include <mcu/mips_hal.h>
+#include <mcu/pic32_isr.h>
 
 #define PIC32MZ_TIMER_COUNT         (8)
 #define PIC32MZ_PRESCALER_COUNT     (8)
@@ -77,64 +78,48 @@ hal_timer_enable_int(int timer_num)
     switch (timer_num) {
 #if MYNEWT_VAL(TIMER_0)
     case 0:
-        IPC2CLR = _IPC2_T2IP_MASK | _IPC2_T2IS_MASK;
-        IPC2SET = 3 << _IPC2_T2IP_POSITION;
         IFS0CLR = _IFS0_T2IF_MASK;
         IEC0SET = _IEC0_T2IE_MASK;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_1)
     case 1:
-        IPC3CLR = _IPC3_T3IP_MASK | _IPC3_T3IS_MASK;
-        IPC3SET = 3 << _IPC3_T3IP_POSITION;
         IFS0CLR = _IFS0_T3IF_MASK;
         IEC0SET = _IEC0_T3IE_MASK;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_2)
     case 2:
-        IPC4CLR = _IPC4_T4IP_MASK | _IPC4_T4IS_MASK;
-        IPC4SET = 3 << _IPC4_T4IP_POSITION;
         IFS0CLR = _IFS0_T4IF_MASK;
         IEC0SET = _IEC0_T4IE_MASK;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_3)
     case 3:
-        IPC6CLR = _IPC6_T5IP_MASK | _IPC6_T5IS_MASK;
-        IPC6SET = 3 << _IPC6_T5IP_POSITION;
         IFS0CLR = _IFS0_T5IF_MASK;
         IEC0SET = _IEC0_T5IE_MASK;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_4)
     case 4:
-        IPC7CLR = _IPC7_T6IP_MASK | _IPC7_T6IS_MASK;
-        IPC7SET = 3 << _IPC7_T6IP_POSITION;
         IFS0CLR = _IFS0_T6IF_MASK;
         IEC0SET = _IEC0_T6IE_MASK;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_5)
     case 5:
-        IPC8CLR = _IPC8_T7IP_MASK | _IPC8_T7IS_MASK;
-        IPC8SET = 3 << _IPC8_T7IP_POSITION;
         IFS1CLR = _IFS1_T7IF_MASK;
         IEC1SET = _IEC1_T7IE_MASK;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_6)
     case 6:
-        IPC9CLR = _IPC9_T8IP_MASK | _IPC9_T8IS_MASK;
-        IPC9SET = 3 << _IPC9_T8IP_POSITION;
         IFS1CLR = _IFS1_T8IF_MASK;
         IEC1SET = _IEC1_T8IE_MASK;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_7)
     case 7:
-        IPC10CLR = _IPC10_T9IP_MASK | _IPC10_T9IS_MASK;
-        IPC10SET = 3 << _IPC10_T9IP_POSITION;
         IFS1CLR = _IFS1_T9IF_MASK;
         IEC1SET = _IEC1_T9IE_MASK;
         break;
@@ -259,9 +244,13 @@ handle_timer_list(int timer_num)
     update_period_register(timer_num);
 }
 
+/*
+ * Timer interrupts, priority is set by pic32_isr_init().
+ * Timer callbacks are called with FPU disabled, they must not use floating
+ * point.
+ */
 #if MYNEWT_VAL(TIMER_0)
-void
-__attribute__((interrupt(IPL3AUTO), vector(_TIMER_2_VECTOR)))
+static void
 timer2_isr(void)
 {
     update_counter(0);
@@ -269,11 +258,11 @@ timer2_isr(void)
 
     IFS0CLR = _IFS0_T2IF_MASK;
 }
+PIC32_ISR_NO_FPU(_TIMER_2_VECTOR, 3, timer2_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_1)
-void
-__attribute__((interrupt(IPL3AUTO), vector(_TIMER_3_VECTOR)))
+static void
 timer3_isr(void)
 {
     update_counter(1);
@@ -281,11 +270,11 @@ timer3_isr(void)
 
     IFS0CLR = _IFS0_T3IF_MASK;
 }
+PIC32_ISR_NO_FPU(_TIMER_3_VECTOR, 3, timer3_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_2)
-void
-__attribute__((interrupt(IPL3AUTO), vector(_TIMER_4_VECTOR)))
+static void
 timer4_isr(void)
 {
     update_counter(2);
@@ -293,11 +282,11 @@ timer4_isr(void)
 
     IFS0CLR = _IFS0_T4IF_MASK;
 }
+PIC32_ISR_NO_FPU(_TIMER_4_VECTOR, 3, timer4_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_3)
-void
-__attribute__((interrupt(IPL3AUTO), vector(_TIMER_5_VECTOR)))
+static void
 timer5_isr(void)
 {
     update_counter(3);
@@ -305,11 +294,11 @@ timer5_isr(void)
 
     IFS0CLR = _IFS0_T5IF_MASK;
 }
+PIC32_ISR_NO_FPU(_TIMER_5_VECTOR, 3, timer5_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_4)
-void
-__attribute__((interrupt(IPL3AUTO), vector(_TIMER_6_VECTOR)))
+static void
 timer6_isr(void)
 {
     update_counter(4);
@@ -317,11 +306,11 @@ timer6_isr(void)
 
     IFS0CLR = _IFS0_T6IF_MASK;
 }
+PIC32_ISR_NO_FPU(_TIMER_6_VECTOR, 3, timer6_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_5)
-void
-__attribute__((interrupt(IPL3AUTO), vector(_TIMER_7_VECTOR)))
+static void
 timer7_isr(void)
 {
     update_counter(5);
@@ -329,11 +318,11 @@ timer7_isr(void)
 
     IFS1CLR = _IFS1_T7IF_MASK;
 }
+PIC32_ISR_NO_FPU(_TIMER_7_VECTOR, 3, timer7_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_6)
-void
-__attribute__((interrupt(IPL3AUTO), vector(_TIMER_8_VECTOR)))
+static void
 timer8_isr(void)
 {
     update_counter(6);
@@ -341,11 +330,11 @@ timer8_isr(void)
 
     IFS1CLR = _IFS1_T8IF_MASK;
 }
+PIC32_ISR_NO_FPU(_TIMER_8_VECTOR, 3, timer8_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_7)
-void
-__attribute__((interrupt(IPL3AUTO), vector(_TIMER_9_VECTOR)))
+static void
 timer9_isr(void)
 {
     update_counter(7);
@@ -353,6 +342,7 @@ timer9_isr(void)
 
     IFS1CLR = _IFS1_T9IF_MASK;
 }
+PIC32_ISR_NO_FPU(_TIMER_9_VECTOR, 3, timer9_isr);
 #endif
 
 int

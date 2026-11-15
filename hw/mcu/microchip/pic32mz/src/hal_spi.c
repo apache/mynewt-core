@@ -26,6 +26,7 @@
 #include <hal/hal_spi.h>
 #include <mcu/mcu.h>
 #include <mcu/mips_hal.h>
+#include <mcu/pic32_isr.h>
 #include <mcu/pps.h>
 
 #define SPIxCON(P)          (base_address[P][0x0 / 0x4])
@@ -407,65 +408,68 @@ hal_spi_handle_isr(int spi_num)
     }
 }
 
+/*
+ * SPI interrupts, priority is set by pic32_isr_init().
+ * txrx_cb is called with FPU disabled, it must not use floating point.
+ */
 #if MYNEWT_VAL(SPI_0_MASTER)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_SPI1_TX_VECTOR)))
+static void
 hal_spi1_isr(void)
 {
     hal_spi_handle_isr(0);
     IFS3CLR = _IFS3_SPI1TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_SPI1_TX_VECTOR, 2, hal_spi1_isr);
 #endif
 
 #if MYNEWT_VAL(SPI_1_MASTER)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_SPI2_TX_VECTOR)))
+static void
 hal_spi2_isr(void)
 {
     hal_spi_handle_isr(1);
     IFS4CLR = _IFS4_SPI2TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_SPI2_TX_VECTOR, 2, hal_spi2_isr);
 #endif
 
 #if MYNEWT_VAL(SPI_2_MASTER)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_SPI3_TX_VECTOR)))
+static void
 hal_spi3_isr(void)
 {
     hal_spi_handle_isr(2);
     IFS4CLR = _IFS4_SPI3TXIF_MASK;
 }
-
+PIC32_ISR_NO_FPU(_SPI3_TX_VECTOR, 2, hal_spi3_isr);
 #endif
 
 #if MYNEWT_VAL(SPI_3_MASTER)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_SPI4_TX_VECTOR)))
+static void
 hal_spi4_isr(void)
 {
     hal_spi_handle_isr(3);
     IFS5CLR = _IFS5_SPI4TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_SPI4_TX_VECTOR, 2, hal_spi4_isr);
 #endif
 
 #if defined(_SPI5) && MYNEWT_VAL(SPI_4_MASTER)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_SPI5_TX_VECTOR)))
+static void
 hal_spi5_isr(void)
 {
     hal_spi_handle_isr(4);
     IFS5CLR = _IFS5_SPI5TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_SPI5_TX_VECTOR, 2, hal_spi5_isr);
 #endif
 
 #if defined(_SPI6) && MYNEWT_VAL(SPI_5_MASTER)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_SPI6_TX_VECTOR)))
+static void
 hal_spi6_isr(void)
 {
     hal_spi_handle_isr(5);
     IFS5CLR = _IFS5_SPI6TX_MASK;
 }
+PIC32_ISR_NO_FPU(_SPI6_TX_VECTOR, 2, hal_spi6_isr);
 #endif
 
 int
@@ -617,46 +621,6 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int cnt)
     /* Configure SPIxTXIF to trigger when TX FIFO is empty */
     SPIxCONCLR(spi_num) = _SPI1CON_STXISEL_MASK;
     SPIxCONSET(spi_num) = 0b01 << _SPI1CON_STXISEL_POSITION;
-
-    /* Set interrupt priority */
-    switch (spi_num) {
-#if MYNEWT_VAL(SPI_0_MASTER)
-    case 0:
-        IPC27CLR = _IPC27_SPI1TXIS_MASK | _IPC27_SPI1TXIP_MASK;
-        IPC27SET = 2 << _IPC27_SPI1TXIP_POSITION;
-        break;
-#endif
-#if MYNEWT_VAL(SPI_1_MASTER)
-    case 1:
-        IPC36CLR = _IPC36_SPI2TXIS_MASK | _IPC36_SPI2TXIP_MASK;
-        IPC36SET = 2 << _IPC36_SPI2TXIP_POSITION;
-        break;
-#endif
-#if MYNEWT_VAL(SPI_2_MASTER)
-    case 2:
-        IPC39CLR = _IPC39_SPI3TXIS_MASK | _IPC39_SPI3TXIP_MASK;
-        IPC39SET = 2 << _IPC39_SPI3TXIP_POSITION;
-        break;
-#endif
-#if MYNEWT_VAL(SPI_3_MASTER)
-    case 3:
-        IPC41CLR = _IPC41_SPI4TXIS_MASK | _IPC41_SPI4TXIP_MASK;
-        IPC41SET = 2 << _IPC41_SPI4TXIP_POSITION;
-        break;
-#endif
-#if defined(_SPI5) && MYNEWT_VAL(SPI_4_MASTER)
-    case 4:
-        IPC44CLR = _IPC44_SPI5TXIS_MASK | _IPC44_SPI5TXIP_MASK;
-        IPC44SET = 2 << _IPC44_SPI5TXIP_POSITION;
-        break;
-#endif
-#if defined(_SPI6) && MYNEWT_VAL(SPI_5_MASTER)
-    case 5:
-        IPC46CLR = _IPC46_SPI6TXIS_MASK | _IPC46_SPI6TXIP_MASK;
-        IPC46SET = 2 << _IPC46_SPI6TXIP_POSITION;
-        break;
-#endif
-    }
 
     /* Enable interrupt */
     hal_spi_enable_int(spi_num);
