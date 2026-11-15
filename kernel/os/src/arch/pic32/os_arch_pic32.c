@@ -68,7 +68,7 @@ static void timer_handler(void);
 /*
  * Core timer interrupt, priority is set by pic32_isr_init().
  * Level 1 uses shadow register set 0 and is left for the context switch
- * (isr_sw0), so the core timer uses level 2.
+ * (isr_sw0), core timer uses MCU_CORE_TIMER_IPL (2..7).
  */
 static void
 isr_core_timer(void)
@@ -83,7 +83,8 @@ isr_core_timer(void)
         _CP0_SET_COMPARE(compare);
     } while ((int32_t)(compare - _CP0_GET_COUNT()) <= 0);
 }
-PIC32_ISR_NO_FPU(_CORE_TIMER_VECTOR, 2, isr_core_timer);
+PIC32_ISR_NO_FPU(_CORE_TIMER_VECTOR, MYNEWT_VAL(MCU_CORE_TIMER_IPL),
+                 isr_core_timer);
 
 /* context switch interrupt, in ctx.S */
 void
