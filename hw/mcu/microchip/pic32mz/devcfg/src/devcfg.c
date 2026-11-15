@@ -1,0 +1,208 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+/*
+ * Configuration words DEVCFG0..DEVCFG3 from syscfg settings
+ * PIC32MZ_DEVCFGn_<FIELD>. Empty setting (newt emits #undef) means that
+ * no pragma is generated for the field, unless value is derived from
+ * other settings (clock, ethernet).
+ *
+ * Only syscfg header is included so that no other header can define
+ * macros like ON, OFF or POSC used as values.
+ */
+#include <syscfg/syscfg.h>
+
+#define DEVCFG_STR(x)       #x
+#define DEVCFG_PRAGMA(x)    _Pragma(DEVCFG_STR(x))
+#define DEVCFG_CAT_(a, b)   a ## b
+#define DEVCFG_CAT(a, b)    DEVCFG_CAT_(a, b)
+/* #pragma config field = value */
+#define DEVCFG(field, value) DEVCFG_PRAGMA(config field = value)
+/* #pragma config field = MYNEWT_VAL(PIC32MZ_DEVCFG<word>_<field>) */
+#define DEVCFG_VAL(word, field) \
+    DEVCFG(field, MYNEWT_VAL(PIC32MZ_DEVCFG ## word ## _ ## field))
+
+#define DEVCFG_CLOCK_PLL (MYNEWT_VAL_CHOICE(SYSTEM_CLOCK_SRC, FRC_PLL) || \
+                          MYNEWT_VAL_CHOICE(SYSTEM_CLOCK_SRC, POSC_PLL))
+#define DEVCFG_CLOCK_POSC (MYNEWT_VAL_CHOICE(SYSTEM_CLOCK_SRC, POSC) || \
+                           MYNEWT_VAL_CHOICE(SYSTEM_CLOCK_SRC, POSC_PLL))
+
+/* DEVCFG0 */
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_DEBUG
+DEVCFG_VAL(0, DEBUG)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_JTAGEN
+DEVCFG_VAL(0, JTAGEN)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_ICESEL
+DEVCFG_VAL(0, ICESEL)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_TRCEN
+DEVCFG_VAL(0, TRCEN)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_BOOTISA
+DEVCFG_VAL(0, BOOTISA)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_FECCCON
+DEVCFG_VAL(0, FECCCON)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_FSLEEP
+DEVCFG_VAL(0, FSLEEP)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_DBGPER
+DEVCFG_VAL(0, DBGPER)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_SMCLR
+DEVCFG_VAL(0, SMCLR)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_SOSCGAIN
+DEVCFG_VAL(0, SOSCGAIN)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_SOSCBOOST
+DEVCFG_VAL(0, SOSCBOOST)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_POSCGAIN
+DEVCFG_VAL(0, POSCGAIN)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_POSCBOOST
+DEVCFG_VAL(0, POSCBOOST)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG0_EJTAGBEN
+DEVCFG_VAL(0, EJTAGBEN)
+#endif
+
+/* DEVCFG1 */
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG1_FNOSC)
+DEVCFG_VAL(1, FNOSC)
+#elif MYNEWT_VAL_CHOICE(SYSTEM_CLOCK_SRC, FRC_DIV)
+DEVCFG(FNOSC, FRCDIV)
+#elif MYNEWT_VAL_CHOICE(SYSTEM_CLOCK_SRC, POSC)
+DEVCFG(FNOSC, POSC)
+#elif DEVCFG_CLOCK_PLL
+DEVCFG(FNOSC, SPLL)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_DMTINTV
+DEVCFG_VAL(1, DMTINTV)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_FSOSCEN
+DEVCFG_VAL(1, FSOSCEN)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_IESO
+DEVCFG_VAL(1, IESO)
+#endif
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG1_POSCMOD)
+DEVCFG_VAL(1, POSCMOD)
+#elif DEVCFG_CLOCK_POSC
+#error "PIC32MZ_DEVCFG1_POSCMOD must be set when system clock uses POSC"
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_OSCIOFNC
+DEVCFG_VAL(1, OSCIOFNC)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_FCKSM
+DEVCFG_VAL(1, FCKSM)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_WDTPS
+DEVCFG_VAL(1, WDTPS)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_WDTSPGM
+DEVCFG_VAL(1, WDTSPGM)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_WINDIS
+DEVCFG_VAL(1, WINDIS)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_FWDTEN
+DEVCFG_VAL(1, FWDTEN)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_FWDTWINSZ
+DEVCFG_VAL(1, FWDTWINSZ)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_DMTCNT
+DEVCFG_VAL(1, DMTCNT)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG1_FDMTEN
+DEVCFG_VAL(1, FDMTEN)
+#endif
+
+/* DEVCFG2 */
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG2_FPLLIDIV)
+DEVCFG_VAL(2, FPLLIDIV)
+#elif DEVCFG_CLOCK_PLL
+DEVCFG(FPLLIDIV, DEVCFG_CAT(DIV_, MYNEWT_VAL(SYSTEM_CLOCK_PLLIDIV)))
+#endif
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG2_FPLLRNG)
+DEVCFG_VAL(2, FPLLRNG)
+#elif DEVCFG_CLOCK_PLL
+/* SYSTEM_CLOCK_PLLRANGE is raw field value */
+DEVCFG(FPLLRNG, MYNEWT_VAL(SYSTEM_CLOCK_PLLRANGE))
+#endif
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG2_FPLLICLK)
+DEVCFG_VAL(2, FPLLICLK)
+#elif MYNEWT_VAL_CHOICE(SYSTEM_CLOCK_SRC, FRC_PLL)
+DEVCFG(FPLLICLK, PLL_FRC)
+#else
+DEVCFG(FPLLICLK, PLL_POSC)
+#endif
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG2_FPLLMULT)
+DEVCFG_VAL(2, FPLLMULT)
+#elif DEVCFG_CLOCK_PLL
+DEVCFG(FPLLMULT, DEVCFG_CAT(MUL_, MYNEWT_VAL(SYSTEM_CLOCK_PLLMULT)))
+#endif
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG2_FPLLODIV)
+DEVCFG_VAL(2, FPLLODIV)
+#elif DEVCFG_CLOCK_PLL
+DEVCFG(FPLLODIV, DEVCFG_CAT(DIV_, MYNEWT_VAL(SYSTEM_CLOCK_PLLODIV)))
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG2_UPLLFSEL
+DEVCFG_VAL(2, UPLLFSEL)
+#endif
+
+/* DEVCFG3 */
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG3_USERID
+DEVCFG_VAL(3, USERID)
+#endif
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG3_FMIIEN)
+DEVCFG_VAL(3, FMIIEN)
+#elif MYNEWT_VAL(ETH_0)
+#if MYNEWT_VAL_CHOICE(PIC32_ETH_0_PHY_ITF, RMII)
+DEVCFG(FMIIEN, OFF)
+#else
+DEVCFG(FMIIEN, ON)
+#endif
+#endif
+#if defined(MYNEWT_VAL_PIC32MZ_DEVCFG3_FETHIO)
+DEVCFG_VAL(3, FETHIO)
+#elif MYNEWT_VAL(ETH_0)
+#if MYNEWT_VAL(PIC32_ETH_0_PHY_ALT_PINS)
+DEVCFG(FETHIO, OFF)
+#else
+DEVCFG(FETHIO, ON)
+#endif
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG3_PGL1WAY
+DEVCFG_VAL(3, PGL1WAY)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG3_PMDL1WAY
+DEVCFG_VAL(3, PMDL1WAY)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG3_IOL1WAY
+DEVCFG_VAL(3, IOL1WAY)
+#endif
+#ifdef MYNEWT_VAL_PIC32MZ_DEVCFG3_FUSBIDIO
+DEVCFG_VAL(3, FUSBIDIO)
+#endif
