@@ -245,7 +245,7 @@ handle_timer_list(int timer_num)
 }
 
 /*
- * Timer interrupts, priority is set by pic32_isr_init().
+ * Timer interrupts, priority (TIMER_n_IPL) is set by pic32_isr_init().
  * Timer callbacks are called with FPU disabled, they must not use floating
  * point.
  */
@@ -258,7 +258,7 @@ timer2_isr(void)
 
     IFS0CLR = _IFS0_T2IF_MASK;
 }
-PIC32_ISR_NO_FPU(_TIMER_2_VECTOR, 3, timer2_isr);
+PIC32_ISR_NO_FPU(_TIMER_2_VECTOR, MYNEWT_VAL(TIMER_0_IPL), timer2_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_1)
@@ -270,7 +270,7 @@ timer3_isr(void)
 
     IFS0CLR = _IFS0_T3IF_MASK;
 }
-PIC32_ISR_NO_FPU(_TIMER_3_VECTOR, 3, timer3_isr);
+PIC32_ISR_NO_FPU(_TIMER_3_VECTOR, MYNEWT_VAL(TIMER_1_IPL), timer3_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_2)
@@ -282,7 +282,7 @@ timer4_isr(void)
 
     IFS0CLR = _IFS0_T4IF_MASK;
 }
-PIC32_ISR_NO_FPU(_TIMER_4_VECTOR, 3, timer4_isr);
+PIC32_ISR_NO_FPU(_TIMER_4_VECTOR, MYNEWT_VAL(TIMER_2_IPL), timer4_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_3)
@@ -294,7 +294,7 @@ timer5_isr(void)
 
     IFS0CLR = _IFS0_T5IF_MASK;
 }
-PIC32_ISR_NO_FPU(_TIMER_5_VECTOR, 3, timer5_isr);
+PIC32_ISR_NO_FPU(_TIMER_5_VECTOR, MYNEWT_VAL(TIMER_3_IPL), timer5_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_4)
@@ -306,7 +306,7 @@ timer6_isr(void)
 
     IFS0CLR = _IFS0_T6IF_MASK;
 }
-PIC32_ISR_NO_FPU(_TIMER_6_VECTOR, 3, timer6_isr);
+PIC32_ISR_NO_FPU(_TIMER_6_VECTOR, MYNEWT_VAL(TIMER_4_IPL), timer6_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_5)
@@ -318,7 +318,7 @@ timer7_isr(void)
 
     IFS1CLR = _IFS1_T7IF_MASK;
 }
-PIC32_ISR_NO_FPU(_TIMER_7_VECTOR, 3, timer7_isr);
+PIC32_ISR_NO_FPU(_TIMER_7_VECTOR, MYNEWT_VAL(TIMER_5_IPL), timer7_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_6)
@@ -330,7 +330,7 @@ timer8_isr(void)
 
     IFS1CLR = _IFS1_T8IF_MASK;
 }
-PIC32_ISR_NO_FPU(_TIMER_8_VECTOR, 3, timer8_isr);
+PIC32_ISR_NO_FPU(_TIMER_8_VECTOR, MYNEWT_VAL(TIMER_6_IPL), timer8_isr);
 #endif
 
 #if MYNEWT_VAL(TIMER_7)
@@ -342,7 +342,7 @@ timer9_isr(void)
 
     IFS1CLR = _IFS1_T9IF_MASK;
 }
-PIC32_ISR_NO_FPU(_TIMER_9_VECTOR, 3, timer9_isr);
+PIC32_ISR_NO_FPU(_TIMER_9_VECTOR, MYNEWT_VAL(TIMER_7_IPL), timer9_isr);
 #endif
 
 int

@@ -414,7 +414,7 @@ hal_spi_handle_isr(int spi_num)
 }
 
 /*
- * SPI interrupts, priority is set by pic32_isr_init().
+ * SPI interrupts, priority (SPI_n_IPL) is set by pic32_isr_init().
  * txrx_cb is called with FPU disabled, it must not use floating point.
  */
 #if MYNEWT_VAL(SPI_0_MASTER)
@@ -424,7 +424,7 @@ hal_spi1_isr(void)
     hal_spi_handle_isr(0);
     IFS3CLR = _IFS3_SPI1TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_SPI1_TX_VECTOR, 2, hal_spi1_isr);
+PIC32_ISR_NO_FPU(_SPI1_TX_VECTOR, MYNEWT_VAL(SPI_0_IPL), hal_spi1_isr);
 #endif
 
 #if MYNEWT_VAL(SPI_1_MASTER)
@@ -434,7 +434,7 @@ hal_spi2_isr(void)
     hal_spi_handle_isr(1);
     IFS4CLR = _IFS4_SPI2TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_SPI2_TX_VECTOR, 2, hal_spi2_isr);
+PIC32_ISR_NO_FPU(_SPI2_TX_VECTOR, MYNEWT_VAL(SPI_1_IPL), hal_spi2_isr);
 #endif
 
 #if MYNEWT_VAL(SPI_2_MASTER)
@@ -444,7 +444,7 @@ hal_spi3_isr(void)
     hal_spi_handle_isr(2);
     IFS4CLR = _IFS4_SPI3TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_SPI3_TX_VECTOR, 2, hal_spi3_isr);
+PIC32_ISR_NO_FPU(_SPI3_TX_VECTOR, MYNEWT_VAL(SPI_2_IPL), hal_spi3_isr);
 #endif
 
 #if MYNEWT_VAL(SPI_3_MASTER)
@@ -454,7 +454,7 @@ hal_spi4_isr(void)
     hal_spi_handle_isr(3);
     IFS5CLR = _IFS5_SPI4TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_SPI4_TX_VECTOR, 2, hal_spi4_isr);
+PIC32_ISR_NO_FPU(_SPI4_TX_VECTOR, MYNEWT_VAL(SPI_3_IPL), hal_spi4_isr);
 #endif
 
 #if defined(_SPI5) && MYNEWT_VAL(SPI_4_MASTER)
@@ -464,7 +464,7 @@ hal_spi5_isr(void)
     hal_spi_handle_isr(4);
     IFS5CLR = _IFS5_SPI5TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_SPI5_TX_VECTOR, 2, hal_spi5_isr);
+PIC32_ISR_NO_FPU(_SPI5_TX_VECTOR, MYNEWT_VAL(SPI_4_IPL), hal_spi5_isr);
 #endif
 
 #if defined(_SPI6) && MYNEWT_VAL(SPI_5_MASTER)
@@ -474,7 +474,7 @@ hal_spi6_isr(void)
     hal_spi_handle_isr(5);
     IFS5CLR = _IFS5_SPI6TX_MASK;
 }
-PIC32_ISR_NO_FPU(_SPI6_TX_VECTOR, 2, hal_spi6_isr);
+PIC32_ISR_NO_FPU(_SPI6_TX_VECTOR, MYNEWT_VAL(SPI_5_IPL), hal_spi6_isr);
 #endif
 
 int

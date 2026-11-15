@@ -260,7 +260,8 @@ uart_transmit_ready(int port)
 }
 
 /*
- * UART interrupts, priority is set by pic32_isr_init().
+ * UART interrupts, priority (UART_n_RX_IPL, UART_n_TX_IPL) is set by
+ * pic32_isr_init().
  * UART error (fault) interrupts are not used, their priority stays 0.
  */
 #if MYNEWT_VAL(UART_0)
@@ -270,7 +271,7 @@ uart_1_rx_isr(void)
     uart_receive_ready(0);
     IFS3CLR = _IFS3_U1RXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART1_RX_VECTOR, 2, uart_1_rx_isr);
+PIC32_ISR_NO_FPU(_UART1_RX_VECTOR, MYNEWT_VAL(UART_0_RX_IPL), uart_1_rx_isr);
 
 static void
 uart_1_tx_isr(void)
@@ -278,7 +279,7 @@ uart_1_tx_isr(void)
     uart_transmit_ready(0);
     IFS3CLR = _IFS3_U1TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART1_TX_VECTOR, 2, uart_1_tx_isr);
+PIC32_ISR_NO_FPU(_UART1_TX_VECTOR, MYNEWT_VAL(UART_0_TX_IPL), uart_1_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_1)
@@ -288,7 +289,7 @@ uart_2_rx_isr(void)
     uart_receive_ready(1);
     IFS4CLR = _IFS4_U2RXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART2_RX_VECTOR, 2, uart_2_rx_isr);
+PIC32_ISR_NO_FPU(_UART2_RX_VECTOR, MYNEWT_VAL(UART_1_RX_IPL), uart_2_rx_isr);
 
 static void
 uart_2_tx_isr(void)
@@ -296,7 +297,7 @@ uart_2_tx_isr(void)
     uart_transmit_ready(1);
     IFS4CLR = _IFS4_U2TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART2_TX_VECTOR, 2, uart_2_tx_isr);
+PIC32_ISR_NO_FPU(_UART2_TX_VECTOR, MYNEWT_VAL(UART_1_TX_IPL), uart_2_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_2)
@@ -306,7 +307,7 @@ uart_3_rx_isr(void)
     uart_receive_ready(2);
     IFS4CLR = _IFS4_U3RXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART3_RX_VECTOR, 2, uart_3_rx_isr);
+PIC32_ISR_NO_FPU(_UART3_RX_VECTOR, MYNEWT_VAL(UART_2_RX_IPL), uart_3_rx_isr);
 
 static void
 uart_3_tx_isr(void)
@@ -314,7 +315,7 @@ uart_3_tx_isr(void)
     uart_transmit_ready(2);
     IFS4CLR = _IFS4_U3TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART3_TX_VECTOR, 2, uart_3_tx_isr);
+PIC32_ISR_NO_FPU(_UART3_TX_VECTOR, MYNEWT_VAL(UART_2_TX_IPL), uart_3_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_3)
@@ -324,7 +325,7 @@ uart_4_rx_isr(void)
     uart_receive_ready(3);
     IFS5CLR = _IFS5_U4RXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART4_RX_VECTOR, 2, uart_4_rx_isr);
+PIC32_ISR_NO_FPU(_UART4_RX_VECTOR, MYNEWT_VAL(UART_3_RX_IPL), uart_4_rx_isr);
 
 static void
 uart_4_tx_isr(void)
@@ -332,7 +333,7 @@ uart_4_tx_isr(void)
     uart_transmit_ready(3);
     IFS5CLR = _IFS5_U4TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART4_TX_VECTOR, 2, uart_4_tx_isr);
+PIC32_ISR_NO_FPU(_UART4_TX_VECTOR, MYNEWT_VAL(UART_3_TX_IPL), uart_4_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_4)
@@ -342,7 +343,7 @@ uart_5_rx_isr(void)
     uart_receive_ready(4);
     IFS5CLR = _IFS5_U5RXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART5_RX_VECTOR, 2, uart_5_rx_isr);
+PIC32_ISR_NO_FPU(_UART5_RX_VECTOR, MYNEWT_VAL(UART_4_RX_IPL), uart_5_rx_isr);
 
 static void
 uart_5_tx_isr(void)
@@ -350,7 +351,7 @@ uart_5_tx_isr(void)
     uart_transmit_ready(4);
     IFS5CLR = _IFS5_U5TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART5_TX_VECTOR, 2, uart_5_tx_isr);
+PIC32_ISR_NO_FPU(_UART5_TX_VECTOR, MYNEWT_VAL(UART_4_TX_IPL), uart_5_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_5)
@@ -360,7 +361,7 @@ uart_6_rx_isr(void)
     uart_receive_ready(5);
     IFS5CLR = _IFS5_U6RXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART6_RX_VECTOR, 2, uart_6_rx_isr);
+PIC32_ISR_NO_FPU(_UART6_RX_VECTOR, MYNEWT_VAL(UART_5_RX_IPL), uart_6_rx_isr);
 
 static void
 uart_6_tx_isr(void)
@@ -368,7 +369,7 @@ uart_6_tx_isr(void)
     uart_transmit_ready(5);
     IFS5CLR = _IFS5_U6TXIF_MASK;
 }
-PIC32_ISR_NO_FPU(_UART6_TX_VECTOR, 2, uart_6_tx_isr);
+PIC32_ISR_NO_FPU(_UART6_TX_VECTOR, MYNEWT_VAL(UART_5_TX_IPL), uart_6_tx_isr);
 #endif
 
 void
