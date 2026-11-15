@@ -21,27 +21,22 @@
 #include <xc.h>
 #include <mcu/mcu.h>
 #include <mcu/pic32.h>
+#include <mcu/pic32_isr.h>
 
 #include <device/usbd.h>
 
-void
-__attribute__((interrupt(IPL2AUTO), vector(_USB_VECTOR), no_fpu))
+/* USB interrupt, priority (USB_IPL) is set by pic32_isr_init() */
+static void
 USBD_IRQHandler(void)
 {
     IFS4CLR = _IFS4_USBIF_MASK;
     tud_int_handler(0);
 }
+PIC32_ISR_NO_FPU(_USB_VECTOR, MYNEWT_VAL(USB_IPL), USBD_IRQHandler);
 
 void
 tinyusb_hardware_init(void)
 {
-    /* set interrupt priority */
-    IPC33CLR = _IPC33_USBIP_MASK;
-    IPC33SET = (2 << _IPC33_USBIP_POSITION); /* priority 2 */
-    /* set interrupt subpriority */
-    IPC33CLR = _IPC33_USBIS_MASK;
-    IPC33SET = (0 << _IPC33_USBIS_POSITION); /* subpriority 0 */
-
     USBCRCONbits.USBIE = 0;
     IFS4CLR = _IFS4_USBIF_MASK;
     IEC4SET = _IEC4_USBIE_MASK;
