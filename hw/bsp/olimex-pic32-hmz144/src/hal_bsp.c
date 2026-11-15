@@ -32,69 +32,6 @@
 #include <spiflash/spiflash.h>
 #endif
 
-#if MYNEWT_VAL(BOOT_LOADER) || MYNEWT_VAL(MCU_NO_BOOTLOADER_BUILD)
-/* JTAG on, WDT off */
-#pragma config FDMTEN=0, FSOSCEN=0, DMTCNT=1
-#pragma config DEBUG=ON
-#if MYNEWT_VAL(MCU_JTAG_ENABLE)
-#pragma config JTAGEN=ON
-#else
-#pragma config JTAGEN=OFF
-#endif
-#pragma config FSLEEP=OFF
-#pragma config TRCEN=OFF
-#pragma config ICESEL=ICS_PGx2
-
-#if MYNEWT_VAL(CLOCK_FREQ) == 8000000
-#pragma config POSCMOD = OFF
-#pragma config FNOSC = FRCDIV
-#pragma config FPLLICLK=0
-#else
-#pragma config POSCMOD = HS
-#if MYNEWT_VAL(CLOCK_FREQ) == 24000000
-#pragma config FNOSC = POSC
-/* 24MHz posc input -> 50mhz*/
-#pragma config FPLLICLK=0
-#elif MYNEWT_VAL(CLOCK_FREQ) == 50000000
-#pragma config FNOSC = SPLL
-/* 24MHz posc input to pll, div by 3 -> 8, multiply by 50 -> 400, div by 8 -> 50mhz*/
-#pragma config FPLLICLK=0, FPLLIDIV=DIV_3, FPLLRNG=RANGE_5_10_MHZ, FPLLMULT=MUL_50, FPLLODIV=DIV_8
-#elif MYNEWT_VAL(CLOCK_FREQ) == 100000000
-#pragma config FNOSC = SPLL
-/* 24MHz posc input to pll, div by 3, multiply by 50, div by 4 -> 100mhz*/
-#pragma config FPLLICLK=0, FPLLIDIV=DIV_3, FPLLRNG=RANGE_5_10_MHZ, FPLLMULT=MUL_50, FPLLODIV=DIV_4
-#elif MYNEWT_VAL(CLOCK_FREQ) == 200000000
-#pragma config FNOSC = SPLL
-/* 24MHz posc input to pll, div by 3, multiply by 50, div by 2 -> 200mhz*/
-#pragma config FPLLICLK=0, FPLLIDIV=DIV_3, FPLLRNG=RANGE_5_10_MHZ, FPLLMULT=MUL_50, FPLLODIV=DIV_2
-#else
-#error Clock requency not supported
-#endif
-#endif
-/* USB off */
-#pragma config FUSBIDIO=0
-/*
- * Watchdog in non-window mode, watchdog disabled during flash programming,
- * period: 32s
- */
-#pragma config WINDIS=1, WDTSPGM=1, WDTPS=15
-
-#if MYNEWT_VAL(ETH_0)
-#if MYNEWT_VAL_CHOICE(PIC32_ETH_0_PHY_ITF, RMII)
-#pragma config FMIIEN=OFF
-#else
-#pragma config FMIIEN=ON
-#endif
-
-#if MYNEWT_VAL(PIC32_ETH_0_PHY_ALT_PINS)
-#pragma config FETHIO=OFF
-#else
-#pragma config FETHIO=ON
-#endif
-#endif
-
-#endif
-
 #if MYNEWT_VAL(SPIFLASH)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 struct bus_spi_node_cfg flash_spi_cfg = {

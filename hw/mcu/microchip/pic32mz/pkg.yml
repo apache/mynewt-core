@@ -36,5 +36,9 @@ pkg.deps:
 pkg.deps.ETH_0:
     - "@apache-mynewt-core/hw/drivers/lwip/pic32_eth"
 
+# Configuration words are only written by builds that own boot flash
+pkg.deps.'(BOOT_LOADER || MCU_NO_BOOTLOADER_BUILD)':
+    - "@apache-mynewt-core/hw/mcu/microchip/pic32mz/devcfg"
+
 # Flash device is only referenced from hal_flash_devs link table
 pkg.whole_archive: true
