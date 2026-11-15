@@ -29,6 +29,7 @@
 
 /* Include for KVA_TO_PA and PA_TO_KVA0 */
 #include <sys/kmem.h>
+#include <mcu/pic32_isr.h>
 
 #include <pic32_eth/pic32_eth.h>
 #include <pic32_eth/pic32_eth_priv.h>
@@ -375,8 +376,8 @@ error:
     return errval;
 }
 
-void
-__attribute__((interrupt(IPL4AUTO), vector(_ETHERNET_VECTOR)))
+/* Ethernet interrupt, priority is set by pic32_isr_init() */
+static void
 pic32_eth_isr(void)
 {
     /* Enabled pending interrupt requests */
@@ -388,6 +389,7 @@ pic32_eth_isr(void)
 
     IFS4CLR = _IFS4_ETHIF_MASK;
 }
+PIC32_ISR_NO_FPU(_ETHERNET_VECTOR, 4, pic32_eth_isr);
 
 static void
 pic32_phy_isr_task(void *arg)
@@ -680,13 +682,6 @@ pic32_eth_open(void)
     }
 
     os_mutex_init(&pes->lock);
-
-    /* set ETH interrupt priority */
-    IPC38CLR = _IPC38_ETHIP_MASK;
-    IPC38SET = (4 << _IPC38_ETHIP_POSITION); /* priority 4 */
-    /* set ETH interrupt subpriority */
-    IPC38CLR = _IPC38_ETHIS_MASK;
-    IPC38SET = (0 << _IPC38_ETHIS_POSITION); /* subpriority 0 */
 
     /* Microchip provided MAC address */
     pes->nif.hwaddr[5] = EMAC1SA0bits.STNADDR6;
