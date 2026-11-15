@@ -42,9 +42,8 @@
 #  - PIC32_JLINK_IF interface to use: ICSP (default) or JTAG, JTAG requires
 #    JTAGEN configuration bit set (MCU_JTAG_ENABLE: 1)
 #  - PIC32_JLINK_SPEED interface speed in kHz (default 12000)
+#  - JLINK_SN J-Link serial number, overrides syscfg MYNEWT_DEBUGGER_SN
 #
-
-. "$CORE_PATH"/hw/scripts/jlink.sh
 
 PIC32_DEVICE=${MYNEWT_VAL_JLINK_TARGET}
 IMAGE_FLASH_ADDR=${FLASH_OFFSET}
@@ -67,6 +66,16 @@ case "${PIC32_JLINK_IF}" in
         ;;
 esac
 
+# Selects J-Link by serial number. jlink_sn() from jlink.sh uses
+# JLinkGDBServer syntax (-select usb=<SN>), J-Link Commander needs -USB <SN>.
+pic32_jlink_sn() {
+    local sn=${JLINK_SN:-$MYNEWT_VAL_MYNEWT_DEBUGGER_SN}
+
+    if [ -n "$sn" ]; then
+        EXTRA_JTAG_CMD="-USB $sn $EXTRA_JTAG_CMD"
+    fi
+}
+
 # Runs JLinkExe with command file; fails if J-Link reported an error.
 # Output is kept in JLINK_OUT for additional checks by caller.
 pic32_jlink_run() {
@@ -80,7 +89,7 @@ pic32_jlink_run() {
 }
 
 pic32_jlink_load() {
-    jlink_sn
+    pic32_jlink_sn
 
     local script=${BIN_BASENAME}.jlink
     # Use paths relative to the current directory if possible, J-Link
