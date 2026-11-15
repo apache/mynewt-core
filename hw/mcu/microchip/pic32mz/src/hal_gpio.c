@@ -21,6 +21,7 @@
 #include <os/mynewt.h>
 #include <hal/hal_gpio.h>
 #include <mcu/mips_hal.h>
+#include <mcu/pic32_isr.h>
 
 #define GPIO_INDEX(pin)     ((pin) & 0x0F)
 #define GPIO_PORT(pin)      (((pin) >> 4) & 0x0F)
@@ -226,63 +227,70 @@ hal_gpio_handle_isr(uint32_t port)
     }
 }
 
+/*
+ * Change notification interrupts, priority is set by pic32_isr_init().
+ * Handlers are called with FPU disabled, irq handlers must not use floating
+ * point.
+ */
+#define HAL_GPIO_CN_IPL 2
+
 #ifdef _PORTA
-void
-__attribute__((interrupt(IPL1AUTO), vector(_CHANGE_NOTICE_A_VECTOR)))
+static void
 hal_gpio_porta_isr(void)
 {
     hal_gpio_handle_isr(0);
     IFS3CLR = _IFS3_CNAIF_MASK;
 }
+PIC32_ISR_NO_FPU(_CHANGE_NOTICE_A_VECTOR, HAL_GPIO_CN_IPL, hal_gpio_porta_isr);
 #endif
 
-void
-__attribute__((interrupt(IPL1AUTO), vector(_CHANGE_NOTICE_B_VECTOR)))
+static void
 hal_gpio_portb_isr(void)
 {
     hal_gpio_handle_isr(1);
     IFS3CLR = _IFS3_CNBIF_MASK;
 }
+PIC32_ISR_NO_FPU(_CHANGE_NOTICE_B_VECTOR, HAL_GPIO_CN_IPL, hal_gpio_portb_isr);
 
-void
-__attribute__((interrupt(IPL1AUTO), vector(_CHANGE_NOTICE_C_VECTOR)))
+static void
 hal_gpio_portc_isr(void)
 {
     hal_gpio_handle_isr(2);
     IFS3CLR = _IFS3_CNCIF_MASK;
 }
+PIC32_ISR_NO_FPU(_CHANGE_NOTICE_C_VECTOR, HAL_GPIO_CN_IPL, hal_gpio_portc_isr);
 
-void
-__attribute__((interrupt(IPL1AUTO), vector(_CHANGE_NOTICE_D_VECTOR)))
+static void
 hal_gpio_portd_isr(void)
 {
     hal_gpio_handle_isr(3);
     IFS3CLR = _IFS3_CNDIF_MASK;
 }
+PIC32_ISR_NO_FPU(_CHANGE_NOTICE_D_VECTOR, HAL_GPIO_CN_IPL, hal_gpio_portd_isr);
 
-void
-__attribute__((interrupt(IPL1AUTO), vector(_CHANGE_NOTICE_E_VECTOR)))
+static void
 hal_gpio_porte_isr(void)
 {
     hal_gpio_handle_isr(4);
     IFS3CLR = _IFS3_CNEIF_MASK;
 }
+PIC32_ISR_NO_FPU(_CHANGE_NOTICE_E_VECTOR, HAL_GPIO_CN_IPL, hal_gpio_porte_isr);
 
-void
-__attribute__((interrupt(IPL1AUTO), vector(_CHANGE_NOTICE_F_VECTOR)))
+static void
 hal_gpio_portf_isr(void)
 {
     hal_gpio_handle_isr(5);
     IFS3CLR = _IFS3_CNFIF_MASK;
 }
+PIC32_ISR_NO_FPU(_CHANGE_NOTICE_F_VECTOR, HAL_GPIO_CN_IPL, hal_gpio_portf_isr);
 
-void
-__attribute__((interrupt(IPL1AUTO), vector(_CHANGE_NOTICE_G_VECTOR)))
+static void
 hal_gpio_portg_isr(void)
 {
     hal_gpio_handle_isr(6);
     IFS3CLR = _IFS3_CNGIF_MASK;
 }
+PIC32_ISR_NO_FPU(_CHANGE_NOTICE_G_VECTOR, HAL_GPIO_CN_IPL, hal_gpio_portg_isr);
 
 int
 hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
@@ -486,46 +494,6 @@ hal_gpio_irq_enable(int pin)
         break;
     default:
         break;
-    }
-
-    /* Set interrupt priority */
-    switch (port) {
-#if defined(_PORTA)
-    case 0:
-        IPC29CLR = (_IPC29_CNAIP_MASK | _IPC29_CNAIS_MASK);
-        IPC29 |= 1 << _IPC29_CNAIP_POSITION;
-        break;
-#endif
-    case 1:
-        IPC29CLR = (_IPC29_CNBIP_MASK | _IPC29_CNBIS_MASK);
-        IPC29 |= 1 << _IPC29_CNBIP_POSITION;
-        break;
-    case 2:
-        IPC30CLR = (_IPC30_CNCIP_MASK | _IPC30_CNCIS_MASK);
-        IPC30 |= 1 << _IPC30_CNCIP_POSITION;
-        break;
-    case 3:
-        IPC30CLR = (_IPC30_CNDIP_MASK | _IPC30_CNDIS_MASK);
-        IPC30 |= 1 << _IPC30_CNDIP_POSITION;
-        break;
-    case 4:
-        IPC30CLR = (_IPC30_CNEIP_MASK | _IPC30_CNEIS_MASK);
-        IPC30 |= 1 << _IPC30_CNEIP_POSITION;
-        break;
-    case 5:
-        IPC30CLR = (_IPC30_CNFIP_MASK | _IPC30_CNFIS_MASK);
-        IPC30 |= 1 << _IPC30_CNFIP_POSITION;
-        break;
-    case 6:
-        IPC31CLR = (_IPC31_CNGIP_MASK | _IPC31_CNGIS_MASK);
-        IPC31 |= 1 << _IPC31_CNGIP_POSITION;
-        break;
-#ifdef _PORTH
-    case 7:
-        IPC31CLR = (_IPC31_CNHIP_MASK | _IPC31_CNHIS_MASK);
-        IPC31 |= 1 << _IPC31_CNHIP_POSITION;
-        break;
-#endif
     }
 
     /* Clear interrupt flag and enable Change Notice interrupt */

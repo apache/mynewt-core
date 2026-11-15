@@ -26,6 +26,7 @@
 #include <mcu/pps.h>
 #include <mcu/pic32.h>
 #include <mcu/mips_hal.h>
+#include <mcu/pic32_isr.h>
 
 #include <xc.h>
 
@@ -258,136 +259,116 @@ uart_transmit_ready(int port)
     }
 }
 
+/*
+ * UART interrupts, priority is set by pic32_isr_init().
+ * UART error (fault) interrupts are not used, their priority stays 0.
+ */
 #if MYNEWT_VAL(UART_0)
-void
-__attribute__((interrupt(IPL1AUTO), vector(_UART1_FAULT_VECTOR), no_fpu)) uart_1_fault_isr(void)
-{
-    IFS3CLR = _IFS3_U1EIF_MASK;
-}
-
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART1_RX_VECTOR), no_fpu)) uart_1_rx_isr(void)
+static void
+uart_1_rx_isr(void)
 {
     uart_receive_ready(0);
     IFS3CLR = _IFS3_U1RXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART1_RX_VECTOR, 2, uart_1_rx_isr);
 
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART1_TX_VECTOR), no_fpu)) uart_1_tx_isr(void)
+static void
+uart_1_tx_isr(void)
 {
     uart_transmit_ready(0);
     IFS3CLR = _IFS3_U1TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART1_TX_VECTOR, 2, uart_1_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_1)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART2_FAULT_VECTOR), no_fpu)) uart_2_fault_isr(void)
-{
-    IFS4CLR = _IFS4_U2EIF_MASK;
-}
-
-void
-__attribute__((interrupt(IPL1AUTO), vector(_UART2_RX_VECTOR), no_fpu)) uart_2_rx_isr(void)
+static void
+uart_2_rx_isr(void)
 {
     uart_receive_ready(1);
     IFS4CLR = _IFS4_U2RXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART2_RX_VECTOR, 2, uart_2_rx_isr);
 
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART2_TX_VECTOR), no_fpu)) uart_2_tx_isr(void)
+static void
+uart_2_tx_isr(void)
 {
     uart_transmit_ready(1);
     IFS4CLR = _IFS4_U2TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART2_TX_VECTOR, 2, uart_2_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_2)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART3_FAULT_VECTOR), no_fpu)) uart_3_fault_isr(void)
-{
-    IFS4CLR = _IFS4_U3EIF_MASK;
-}
-
-void
-__attribute__((interrupt(IPL1AUTO), vector(_UART3_RX_VECTOR), no_fpu)) uart_3_rx_isr(void)
+static void
+uart_3_rx_isr(void)
 {
     uart_receive_ready(2);
     IFS4CLR = _IFS4_U3RXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART3_RX_VECTOR, 2, uart_3_rx_isr);
 
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART3_TX_VECTOR), no_fpu)) uart_3_tx_isr(void)
+static void
+uart_3_tx_isr(void)
 {
     uart_transmit_ready(2);
     IFS4CLR = _IFS4_U3TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART3_TX_VECTOR, 2, uart_3_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_3)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART4_FAULT_VECTOR), no_fpu)) uart_4_fault_isr(void)
-{
-    IFS5CLR = _IFS5_U4EIF_MASK;
-}
-
-void
-__attribute__((interrupt(IPL1AUTO), vector(_UART4_RX_VECTOR), no_fpu)) uart_4_rx_isr(void)
+static void
+uart_4_rx_isr(void)
 {
     uart_receive_ready(3);
     IFS5CLR = _IFS5_U4RXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART4_RX_VECTOR, 2, uart_4_rx_isr);
 
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART4_TX_VECTOR), no_fpu)) uart_4_tx_isr(void)
+static void
+uart_4_tx_isr(void)
 {
     uart_transmit_ready(3);
     IFS5CLR = _IFS5_U4TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART4_TX_VECTOR, 2, uart_4_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_4)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART5_FAULT_VECTOR), no_fpu)) uart_5_fault_isr(void)
-{
-    IFS5CLR = _IFS5_U5EIF_MASK;
-}
-
-void
-__attribute__((interrupt(IPL1AUTO), vector(_UART5_RX_VECTOR), no_fpu)) uart_5_rx_isr(void)
+static void
+uart_5_rx_isr(void)
 {
     uart_receive_ready(4);
     IFS5CLR = _IFS5_U5RXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART5_RX_VECTOR, 2, uart_5_rx_isr);
 
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART5_TX_VECTOR), no_fpu)) uart_5_tx_isr(void)
+static void
+uart_5_tx_isr(void)
 {
     uart_transmit_ready(4);
     IFS5CLR = _IFS5_U5TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART5_TX_VECTOR, 2, uart_5_tx_isr);
 #endif
 
 #if MYNEWT_VAL(UART_5)
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART6_FAULT_VECTOR), no_fpu)) uart_6_fault_isr(void)
-{
-    IFS5CLR = _IFS5_U6EIF_MASK;
-}
-
-void
-__attribute__((interrupt(IPL1AUTO), vector(_UART6_RX_VECTOR), no_fpu)) uart_6_rx_isr(void)
+static void
+uart_6_rx_isr(void)
 {
     uart_receive_ready(5);
     IFS5CLR = _IFS5_U6RXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART6_RX_VECTOR, 2, uart_6_rx_isr);
 
-void
-__attribute__((interrupt(IPL2AUTO), vector(_UART6_TX_VECTOR), no_fpu)) uart_6_tx_isr(void)
+static void
+uart_6_tx_isr(void)
 {
     uart_transmit_ready(5);
     IFS5CLR = _IFS5_U6TXIF_MASK;
 }
+PIC32_ISR_NO_FPU(_UART6_TX_VECTOR, 2, uart_6_tx_isr);
 #endif
 
 void
@@ -584,20 +565,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
         /* enable RX interrupt */
         IEC3SET = _IEC3_U1RXIE_MASK;
-
-        /* set rx interrupt priority */
-        IPC28CLR = _IPC28_U1RXIP_MASK;
-        IPC28SET = (1 << _IPC28_U1RXIP_POSITION); /* priority 1 */
-        /* set rx interrupt subpriority */
-        IPC28CLR = _IPC28_U1RXIS_MASK;
-        IPC28SET = (0 << _IPC28_U1RXIS_POSITION); /* subpriority 0 */
-
-        /* set tx interrupt priority */
-        IPC28CLR = _IPC28_U1TXIP_MASK;
-        IPC28SET = (1 << _IPC28_U1TXIP_POSITION); /* priority 1 */
-        /* set tx interrupt subpriority */
-        IPC28CLR = _IPC28_U1TXIS_MASK;
-        IPC28SET = (0 << _IPC28_U1TXIS_POSITION); /* subpriority 0 */
         break;
 #endif
 #if MYNEWT_VAL(UART_1)
@@ -607,20 +574,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
         /* enable RX interrupt */
         IEC4SET = _IEC4_U2RXIE_MASK;
-
-        /* set rx interrupt priority */
-        IPC36CLR = _IPC36_U2RXIP_MASK;
-        IPC36SET = (1 << _IPC36_U2RXIP_POSITION); /* priority 1 */
-        /* set rx interrupt subpriority */
-        IPC36CLR = _IPC36_U2RXIS_MASK;
-        IPC36SET = (0 << _IPC36_U2RXIS_POSITION); /* subpriority 0 */
-
-        /* set tx interrupt priority */
-        IPC36CLR = _IPC36_U2TXIP_MASK;
-        IPC36SET = (1 << _IPC36_U2TXIP_POSITION); /* priority 1 */
-        /* set tx interrupt subpriority */
-        IPC36CLR = _IPC36_U2TXIS_MASK;
-        IPC36SET = (0 << _IPC36_U2TXIS_POSITION); /* subpriority 0 */
         break;
 #endif
 #if MYNEWT_VAL(UART_2)
@@ -630,20 +583,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
         /* enable RX interrupt */
         IEC4SET = _IEC4_U3RXIE_MASK;
-
-        /* set rx interrupt priority */
-        IPC39CLR = _IPC39_U3RXIP_MASK;
-        IPC39SET = (1 << _IPC39_U3RXIP_POSITION); /* priority 1 */
-        /* set rx interrupt subpriority */
-        IPC39CLR = _IPC39_U3RXIS_MASK;
-        IPC39SET = (0 << _IPC39_U3RXIS_POSITION); /* subpriority 0 */
-
-        /* set tx interrupt priority */
-        IPC39CLR = _IPC39_U3TXIP_MASK;
-        IPC39SET = (1 << _IPC39_U3TXIP_POSITION); /* priority 1 */
-        /* set tx interrupt subpriority */
-        IPC39CLR = _IPC39_U3TXIS_MASK;
-        IPC39SET = (0 << _IPC39_U3TXIS_POSITION); /* subpriority 0 */
         break;
 #endif
 #if MYNEWT_VAL(UART_3)
@@ -653,20 +592,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
         /* enable RX interrupt */
         IEC5SET = _IEC5_U4RXIE_MASK;
-
-        /* set rx interrupt priority */
-        IPC42CLR = _IPC42_U4RXIP_MASK;
-        IPC42SET = (1 << _IPC42_U4RXIP_POSITION); /* priority 1 */
-        /* set rx interrupt subpriority */
-        IPC42CLR = _IPC42_U4RXIS_MASK;
-        IPC42SET = (0 << _IPC42_U4RXIS_POSITION); /* subpriority 0 */
-
-        /* set tx interrupt priority */
-        IPC43CLR = _IPC43_U4TXIP_MASK;
-        IPC43SET = (1 << _IPC43_U4TXIP_POSITION); /* priority 1 */
-        /* set tx interrupt subpriority */
-        IPC43CLR = _IPC43_U4TXIS_MASK;
-        IPC43SET = (0 << _IPC43_U4TXIS_POSITION); /* subpriority 0 */
         break;
 #endif
 #if MYNEWT_VAL(UART_4)
@@ -676,20 +601,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
         /* enable RX interrupt */
         IEC5SET = _IEC5_U5RXIE_MASK;
-
-        /* set rx interrupt priority */
-        IPC45CLR = _IPC45_U5RXIP_MASK;
-        IPC45SET = (1 << _IPC45_U5RXIP_POSITION); /* priority 1 */
-        /* set rx interrupt subpriority */
-        IPC45CLR = _IPC45_U5RXIS_MASK;
-        IPC45SET = (0 << _IPC45_U5RXIS_POSITION); /* subpriority 0 */
-
-        /* set tx interrupt priority */
-        IPC45CLR = _IPC45_U5TXIP_MASK;
-        IPC45SET = (1 << _IPC45_U5TXIP_POSITION); /* priority 1 */
-        /* set tx interrupt subpriority */
-        IPC45CLR = _IPC45_U5TXIS_MASK;
-        IPC45SET = (0 << _IPC45_U5TXIS_POSITION); /* subpriority 0 */
         break;
 #endif
 #if MYNEWT_VAL(UART_5)
@@ -699,20 +610,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
         /* enable RX interrupt */
         IEC5SET = _IEC5_U6RXIE_MASK;
-
-        /* set rx interrupt priority */
-        IPC47CLR = _IPC47_U6RXIP_MASK;
-        IPC47SET = (1 << _IPC47_U6RXIP_POSITION); /* priority 1 */
-        /* set rx interrupt subpriority */
-        IPC47CLR = _IPC47_U6RXIS_MASK;
-        IPC47SET = (0 << _IPC47_U6RXIS_POSITION); /* subpriority 0 */
-
-        /* set tx interrupt priority */
-        IPC47CLR = _IPC47_U6TXIP_MASK;
-        IPC47SET = (1 << _IPC47_U6TXIP_POSITION); /* priority 1 */
-        /* set tx interrupt subpriority */
-        IPC47CLR = _IPC47_U6TXIS_MASK;
-        IPC47SET = (0 << _IPC47_U6TXIS_POSITION); /* subpriority 0 */
         break;
 #endif
     }
