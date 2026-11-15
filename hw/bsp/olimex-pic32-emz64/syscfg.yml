@@ -55,6 +55,15 @@ syscfg.vals:
     SYSTEM_CLOCK_PLLMULT: 50
     SYSTEM_CLOCK_PLLODIV: 2
 
+syscfg.vals.PIC32MZ_DEVCFG:
+    PIC32MZ_DEVCFG0_ICESEL: ICS_PGx2
+    PIC32MZ_DEVCFG1_POSCMOD: EC
+    # LAN8720 in RMII mode on default pins. Set also in bootloader,
+    # applications run with bootloader configuration words.
+    PIC32MZ_DEVCFG3_FMIIEN: OFF
+    PIC32MZ_DEVCFG3_FETHIO: ON
+    PIC32MZ_DEVCFG3_FUSBIDIO: ON
+
 syscfg.vals.COREDUMP:
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
 
