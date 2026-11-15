@@ -32,8 +32,15 @@ extern void PendSV_Handler(void);
 extern void SysTick_Handler(void);
 
 #if MYNEWT_VAL(HARDFLOAT)
+/* Layout must match _fpctx_save/_fpctx_load in ctx.S */
 struct ctx_fp {
+#if defined(INIT_FPU64) || defined(__PIC32_HAS_FPU64)
+    /* FR64 mode (Status.FR = 1): 32 64-bit registers */
+    uint64_t regs[32];
+#else
+    /* Status.FR = 0: 32 32-bit registers */
     uint32_t regs[32];
+#endif
     uint32_t fcsr;
 };
 #endif
