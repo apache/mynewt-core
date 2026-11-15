@@ -37,7 +37,7 @@ syscfg.defs:
             This reduces code size and interrupts that preempt a task run on
             the main stack instead of the task stack.
             When 0, compiler generates interrupt function for each handler.
-        value: 0
+        value: 1
     GPIO_CN_IPL:
         description: Change notification (GPIO irq) interrupt priority level.
         value: 2
