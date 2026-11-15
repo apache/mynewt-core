@@ -160,13 +160,26 @@
 
 #if MYNEWT_VAL(HARDFLOAT)
 
-#define CTX_FP_SIZE (33 * 4)
+#if defined(INIT_FPU64) || defined(__PIC32_HAS_FPU64)
+/*
+ * FPU in FR64 mode (Status.FR = 1, set in crt0.S): 32 64-bit registers,
+ * each sdc1/ldc1 transfers one register.
+ */
+#define CTX_FP_REG_SIZE (8)
+#else
+/*
+ * Status.FR = 0: 32 32-bit registers, sdc1/ldc1 on even register transfers
+ * even/odd register pair.
+ */
+#define CTX_FP_REG_SIZE (4)
+#endif
+
+#define CTX_FP_SIZE (32 * CTX_FP_REG_SIZE + 4)
 #define CTX_FP_ALIGNED_SIZE ((((CTX_FP_SIZE - 1) / OS_STACK_ALIGNMENT) + 1) * \
     OS_STACK_ALIGNMENT)
-#define CTX_FP_OFFS(r) (((r) * 4) - CTX_FP_ALIGNED_SIZE)
-#define CTX_FP_REG(r) CTX_FP_OFFS(r)
-#define CTX_FP64_REG(r) CTX_FP_OFFS(r)
-#define CTX_FP_FCSR CTX_FP_OFFS(32)
+#define CTX_FP_OFFS(offs) ((offs) - CTX_FP_ALIGNED_SIZE)
+#define CTX_FP_REG(r) CTX_FP_OFFS((r) * CTX_FP_REG_SIZE)
+#define CTX_FP_FCSR CTX_FP_OFFS(32 * CTX_FP_REG_SIZE)
 
 #define TASK_STACK_BOTTOM   (4)
 #define TASK_STACK_SIZE     (8)
@@ -188,6 +201,24 @@
     sdc1    $f26, CTX_FP_REG(26)(k0)
     sdc1    $f28, CTX_FP_REG(28)(k0)
     sdc1    $f30, CTX_FP_REG(30)(k0)
+#if CTX_FP_REG_SIZE == 8
+    sdc1    $f1, CTX_FP_REG(1)(k0)
+    sdc1    $f3, CTX_FP_REG(3)(k0)
+    sdc1    $f5, CTX_FP_REG(5)(k0)
+    sdc1    $f7, CTX_FP_REG(7)(k0)
+    sdc1    $f9, CTX_FP_REG(9)(k0)
+    sdc1    $f11, CTX_FP_REG(11)(k0)
+    sdc1    $f13, CTX_FP_REG(13)(k0)
+    sdc1    $f15, CTX_FP_REG(15)(k0)
+    sdc1    $f17, CTX_FP_REG(17)(k0)
+    sdc1    $f19, CTX_FP_REG(19)(k0)
+    sdc1    $f21, CTX_FP_REG(21)(k0)
+    sdc1    $f23, CTX_FP_REG(23)(k0)
+    sdc1    $f25, CTX_FP_REG(25)(k0)
+    sdc1    $f27, CTX_FP_REG(27)(k0)
+    sdc1    $f29, CTX_FP_REG(29)(k0)
+    sdc1    $f31, CTX_FP_REG(31)(k0)
+#endif
     cfc1    k1, $31
     sw      k1, CTX_FP_FCSR(k0)
 .endm
@@ -209,6 +240,24 @@
     ldc1    $f26, CTX_FP_REG(26)(k0)
     ldc1    $f28, CTX_FP_REG(28)(k0)
     ldc1    $f30, CTX_FP_REG(30)(k0)
+#if CTX_FP_REG_SIZE == 8
+    ldc1    $f1, CTX_FP_REG(1)(k0)
+    ldc1    $f3, CTX_FP_REG(3)(k0)
+    ldc1    $f5, CTX_FP_REG(5)(k0)
+    ldc1    $f7, CTX_FP_REG(7)(k0)
+    ldc1    $f9, CTX_FP_REG(9)(k0)
+    ldc1    $f11, CTX_FP_REG(11)(k0)
+    ldc1    $f13, CTX_FP_REG(13)(k0)
+    ldc1    $f15, CTX_FP_REG(15)(k0)
+    ldc1    $f17, CTX_FP_REG(17)(k0)
+    ldc1    $f19, CTX_FP_REG(19)(k0)
+    ldc1    $f21, CTX_FP_REG(21)(k0)
+    ldc1    $f23, CTX_FP_REG(23)(k0)
+    ldc1    $f25, CTX_FP_REG(25)(k0)
+    ldc1    $f27, CTX_FP_REG(27)(k0)
+    ldc1    $f29, CTX_FP_REG(29)(k0)
+    ldc1    $f31, CTX_FP_REG(31)(k0)
+#endif
     lw      k0, CTX_FP_FCSR(k0)
     ctc1    k0, $31
 .endm
