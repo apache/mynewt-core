@@ -376,7 +376,7 @@ error:
     return errval;
 }
 
-/* Ethernet interrupt, priority is set by pic32_isr_init() */
+/* Ethernet interrupt, priority (PIC32_ETH_0_IPL) is set by pic32_isr_init() */
 static void
 pic32_eth_isr(void)
 {
@@ -389,7 +389,7 @@ pic32_eth_isr(void)
 
     IFS4CLR = _IFS4_ETHIF_MASK;
 }
-PIC32_ISR_NO_FPU(_ETHERNET_VECTOR, 4, pic32_eth_isr);
+PIC32_ISR_NO_FPU(_ETHERNET_VECTOR, MYNEWT_VAL(PIC32_ETH_0_IPL), pic32_eth_isr);
 
 static void
 pic32_phy_isr_task(void *arg)

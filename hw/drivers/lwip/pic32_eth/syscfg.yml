@@ -20,6 +20,11 @@ syscfg.defs:
             Sysinit stage for the pic32 eth driver.
         value: 1000
 
+    PIC32_ETH_0_IPL:
+        description: Ethernet interrupt priority level.
+        value: 4
+        range: 2..7
+
     PIC32_ETH_0_PHY_ITF:
         description: >
             ETH PHY interface type
