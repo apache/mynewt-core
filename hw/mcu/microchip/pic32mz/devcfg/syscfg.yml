@@ -1,0 +1,184 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Values are passed as is to '#pragma config <FIELD> = <value>', use
+# symbolic names from XC32 documentation for the device (e.g. ON, OFF,
+# DIV_3) or raw field value (number). Compiler reports error for invalid
+# value. Empty value means that pragma is not generated (field keeps
+# erased value) or, where noted, that value is derived from other
+# settings. These settings can't be used in preprocessor conditions.
+
+syscfg.defs:
+    # Always 1 when this package is part of the build. BSP or target can
+    # put configuration word settings in syscfg.vals.PIC32MZ_DEVCFG.
+    PIC32MZ_DEVCFG: 1
+
+    # DEVCFG0
+    PIC32MZ_DEVCFG0_DEBUG:
+        description: 'Background debugger: ON, OFF.'
+        value: ON
+    PIC32MZ_DEVCFG0_JTAGEN:
+        description: 'JTAG port: ON, OFF (1, 0).'
+        value: MYNEWT_VAL(MCU_JTAG_ENABLE)
+    PIC32MZ_DEVCFG0_ICESEL:
+        description: 'Debugger channel: ICS_PGx1, ICS_PGx2.'
+        value:
+    PIC32MZ_DEVCFG0_TRCEN:
+        description: 'Trace: ON, OFF.'
+        value: OFF
+    PIC32MZ_DEVCFG0_BOOTISA:
+        description: 'Boot ISA: MIPS32, MICROMIPS.'
+        value:
+    PIC32MZ_DEVCFG0_FECCCON:
+        description: 'Flash ECC: ON, DYNAMIC, OFF_LOCKED, OFF_UNLOCKED.'
+        value:
+    PIC32MZ_DEVCFG0_FSLEEP:
+        description: 'Flash in sleep mode: OFF, VREGS.'
+        value: OFF
+    PIC32MZ_DEVCFG0_DBGPER:
+        description: >
+            Debug mode CPU access permission: PG_NONE, ALLOW_PG0, ALLOW_PG1,
+            ALLOW_PG2, PG_1_0, PG_2_0, PG_2_1, PG_ALL.
+        value:
+    PIC32MZ_DEVCFG0_SMCLR:
+        description: 'Soft master clear: MCLR_NORM, MCLR_POR.'
+        value:
+    PIC32MZ_DEVCFG0_SOSCGAIN:
+        description: 'SOSC gain: GAIN_LEVEL_0..GAIN_LEVEL_3.'
+        value:
+    PIC32MZ_DEVCFG0_SOSCBOOST:
+        description: 'SOSC boost kick start: ON, OFF.'
+        value:
+    PIC32MZ_DEVCFG0_POSCGAIN:
+        description: 'POSC gain: GAIN_LEVEL_0..GAIN_LEVEL_3.'
+        value:
+    PIC32MZ_DEVCFG0_POSCBOOST:
+        description: 'POSC boost kick start: ON, OFF.'
+        value:
+    PIC32MZ_DEVCFG0_EJTAGBEN:
+        description: 'EJTAG boot: NORMAL, REDUCED.'
+        value:
+
+    # DEVCFG1
+    PIC32MZ_DEVCFG1_FNOSC:
+        description: >
+            Oscillator selection: FRCDIV, SPLL, POSC, SOSC, LPRC.
+            When empty derived from SYSTEM_CLOCK_SRC.
+        value:
+    PIC32MZ_DEVCFG1_DMTINTV:
+        description: 'Deadman timer window: WIN_0, WIN_1_2 .. WIN_127_128.'
+        value:
+    PIC32MZ_DEVCFG1_FSOSCEN:
+        description: 'Secondary oscillator: ON, OFF.'
+        value: OFF
+    PIC32MZ_DEVCFG1_IESO:
+        description: 'Internal external switchover: ON, OFF.'
+        value:
+    PIC32MZ_DEVCFG1_POSCMOD:
+        description: >
+            Primary oscillator: EC, HS, OFF. Must be set (usually by BSP)
+            when SYSTEM_CLOCK_SRC is POSC or POSC_PLL.
+        value:
+    PIC32MZ_DEVCFG1_OSCIOFNC:
+        description: 'CLKO output: ON, OFF.'
+        value:
+    PIC32MZ_DEVCFG1_FCKSM:
+        description: 'Clock switching and monitor: CSDCMD, CSECMD, CSDCME, CSECME.'
+        value:
+    PIC32MZ_DEVCFG1_WDTPS:
+        description: 'Watchdog postscaler: PS1, PS2 .. PS1048576.'
+        value: PS32768
+    PIC32MZ_DEVCFG1_WDTSPGM:
+        description: 'Watchdog during flash programming: RUN, STOP.'
+        value: STOP
+    PIC32MZ_DEVCFG1_WINDIS:
+        description: 'Watchdog mode: NORMAL, WINDOW.'
+        value: NORMAL
+    PIC32MZ_DEVCFG1_FWDTEN:
+        description: >
+            Watchdog enabled by hardware: ON, OFF. When OFF watchdog is
+            started by software (hal_watchdog_enable()).
+        value: OFF
+    PIC32MZ_DEVCFG1_FWDTWINSZ:
+        description: 'Watchdog window size: WINSZ_25, WINSZ_37, WINSZ_50, WINSZ_75.'
+        value:
+    PIC32MZ_DEVCFG1_DMTCNT:
+        description: 'Deadman timer count: DMT8 .. DMT31.'
+        value: DMT9
+    PIC32MZ_DEVCFG1_FDMTEN:
+        description: 'Deadman timer: ON, OFF.'
+        value: OFF
+
+    # DEVCFG2
+    PIC32MZ_DEVCFG2_FPLLIDIV:
+        description: >
+            PLL input divider: DIV_1 .. DIV_8.
+            When empty derived from SYSTEM_CLOCK_PLLIDIV.
+        value:
+    PIC32MZ_DEVCFG2_FPLLRNG:
+        description: >
+            PLL input range: RANGE_BYPASS, RANGE_5_10_MHZ, RANGE_8_16_MHZ,
+            RANGE_13_26_MHZ, RANGE_21_42_MHZ, RANGE_34_68_MHZ.
+            When empty derived from SYSTEM_CLOCK_PLLRANGE.
+        value:
+    PIC32MZ_DEVCFG2_FPLLICLK:
+        description: >
+            PLL input: PLL_POSC, PLL_FRC.
+            When empty PLL_FRC for SYSTEM_CLOCK_SRC FRC_PLL, PLL_POSC otherwise.
+        value:
+    PIC32MZ_DEVCFG2_FPLLMULT:
+        description: >
+            PLL multiplier: MUL_1 .. MUL_128.
+            When empty derived from SYSTEM_CLOCK_PLLMULT.
+        value:
+    PIC32MZ_DEVCFG2_FPLLODIV:
+        description: >
+            PLL output divider: DIV_2, DIV_4, DIV_8, DIV_16, DIV_32.
+            When empty derived from SYSTEM_CLOCK_PLLODIV.
+        value:
+    PIC32MZ_DEVCFG2_UPLLFSEL:
+        description: 'USB PLL input frequency: FREQ_24MHZ, FREQ_12MHZ.'
+        value:
+
+    # DEVCFG3
+    PIC32MZ_DEVCFG3_USERID:
+        description: 'User ID, 16 bit number.'
+        value:
+    PIC32MZ_DEVCFG3_FMIIEN:
+        description: >
+            Ethernet interface: ON (MII), OFF (RMII).
+            When empty and ETH_0 is set derived from PIC32_ETH_0_PHY_ITF.
+        value:
+    PIC32MZ_DEVCFG3_FETHIO:
+        description: >
+            Ethernet pins: ON (default), OFF (alternate).
+            When empty and ETH_0 is set derived from PIC32_ETH_0_PHY_ALT_PINS.
+        value:
+    PIC32MZ_DEVCFG3_PGL1WAY:
+        description: 'Permission group lock one way: ON, OFF.'
+        value:
+    PIC32MZ_DEVCFG3_PMDL1WAY:
+        description: 'Peripheral module disable one way: ON, OFF.'
+        value:
+    PIC32MZ_DEVCFG3_IOL1WAY:
+        description: 'Peripheral pin select one way: ON, OFF.'
+        value:
+    PIC32MZ_DEVCFG3_FUSBIDIO:
+        description: 'USBID pin: ON (USB module), OFF (port).'
+        value: OFF
