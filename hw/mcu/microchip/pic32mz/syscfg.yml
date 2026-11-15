@@ -30,6 +30,14 @@ syscfg.defs:
             Specifies the required alignment for internal flash writes.
             Used internally by the newt tool.
         value: 4
+    MCU_ISR_DISPATCHER:
+        description: >
+            Interrupts declared with PIC32_ISR_NO_FPU/WITH_FPU() use common
+            dispatcher instead of compiler generated prologue and epilogue.
+            This reduces code size and interrupts that preempt a task run on
+            the main stack instead of the task stack.
+            When 0, compiler generates interrupt function for each handler.
+        value: 0
     I2C_0:
         description: 'I2C interface 0'
         value:  0
