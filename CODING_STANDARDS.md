@@ -281,6 +281,8 @@ hide or alias the underlying type used (e.g. ```os_time_t```.)   Indicate
 typedefs by applying the ```_t``` marker to them.
 
 * Place all function-local variable definitions at the top of the function body, before any statements.
+The only exception is a loop variable, which may be declared in the ```for```
+statement, e.g. ```for (int i = 0; i < 10; i++)```.
 
 ## Compiler Directives
 
