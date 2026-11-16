@@ -74,7 +74,7 @@ allow_assign_in_loop = true  # allow 'while ((x = next()))'; if conditions are s
 
 [rules.declarations-at-top]
 allow_block_scope = false  # true: also allow declarations at the top of nested blocks
-allow_for_init = false     # true: allow 'for (int i = 0; ...)'
+allow_for_init = true      # allow 'for (int i = 0; ...)'
 
 [rules.function-naming.prefixes]
 # Path glob (first match wins) -> prefixes allowed for non-static functions.
