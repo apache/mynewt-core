@@ -64,8 +64,21 @@ extern "C" {
 #endif
 /* mDNS restarts probing on address changes (e.g. DHCP) */
 #define LWIP_NETIF_EXT_STATUS_CALLBACK  1
-/* Probe timeout of every interface, retried while link is down */
-#define LWIP_APPS_MDNS_SYS_TIMEOUTS     MYNEWT_VAL_LWIP_APPS_MDNS_NUM_NETIF
+/* Same as lwIP default, set here so its timeouts can be counted */
+#ifndef MDNS_MAX_STORED_PKTS
+#define MDNS_MAX_STORED_PKTS            4
+#endif
+/*
+ * Every interface: probe/announce timeout (retried while link is down)
+ * and for each IP version 3 multicast rate limit timeouts plus delayed
+ * unicast and multicast response.  Shared: one per stored packet with
+ * truncated question.  mDNS sets its timer flag even when sys_timeout()
+ * fails, so too few timeouts stop answers for good.
+ */
+#define LWIP_APPS_MDNS_SYS_TIMEOUTS                                         \
+    (MYNEWT_VAL_LWIP_APPS_MDNS_NUM_NETIF *                                  \
+     (1 + 5 * (MYNEWT_VAL_LWIP_IPV4 + MYNEWT_VAL_LWIP_IPV6)) +              \
+     MDNS_MAX_STORED_PKTS)
 #else
 #define LWIP_APPS_MDNS_SYS_TIMEOUTS     0
 #endif

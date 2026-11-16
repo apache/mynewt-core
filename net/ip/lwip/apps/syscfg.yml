@@ -33,8 +33,9 @@ syscfg.defs:
         value: 0
     LWIP_APPS_MDNS_NUM_NETIF:
         description: >
-            Maximum number of interfaces with MDNS responder, each needs
-            lwIP timeout for probing.  Responder starts on default
+            Maximum number of interfaces with MDNS responder, used to
+            reserve lwIP timeouts (MEMP_NUM_SYS_TIMEOUT) for probing and
+            responses on each of them.  Responder starts on default
             interface first, then on other interfaces with host name until
             limit is reached.
         value: 1
