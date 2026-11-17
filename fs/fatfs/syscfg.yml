@@ -37,6 +37,28 @@ syscfg.defs:
             1 - Enable ExFAT support
         value: 1
 
+    FATFS_READ_ONLY:
+        description: >
+            1 - Read only file system. Removes write, flush, unlink, rename
+            and mkdir (they return FS_EACCESS), saves code.
+        value: 0
+
+    FATFS_MINIMIZE:
+        description: >
+            0 - Full function set.
+            1 - Remove unlink, mkdir and rename (they return FS_EACCESS).
+            2 - Also remove opendir and readdir.
+            Level 3 of FatFs (no seek) is not offered, fs_seek is needed.
+        range: 0..2
+        value: 0
+
+    FATFS_TINY:
+        description: >
+            1 - Files use sector buffer of file system object instead of
+            own 512 byte buffer. Saves RAM per open file, slower when
+            several files are used at the same time.
+        value: 0
+
     FATFS_REENTRANT:
         description: >
             0 - Disable locking on file system
