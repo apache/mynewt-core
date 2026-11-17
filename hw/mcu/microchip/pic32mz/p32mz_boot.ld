@@ -1760,6 +1760,18 @@ SECTIONS
   _end = . ;
   _bss_end = . ;
 
+  /*
+   * Data that must survive reset (bssnz_t, sec_noinit). Placed after
+   * _bss_end so crt0 does not clear it and before __HeapBase so heap
+   * does not overlap it. Without explicit rule this orphan section was
+   * placed at heap start.
+   */
+  .noinit ALIGN(4) (NOLOAD) :
+  {
+    *(.noinit .noinit.*)
+    . = ALIGN(4) ;
+  } >kseg0_data_mem
+
   /* Heap starts after BSS */
   . = ALIGN(8);
   __HeapBase = .;
