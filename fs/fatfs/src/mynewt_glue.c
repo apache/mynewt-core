@@ -291,6 +291,9 @@ fatfs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
 static int
 fatfs_write(struct fs_file *fs_file, const void *data, int len)
 {
+#if MYNEWT_VAL(FATFS_READ_ONLY)
+    return FS_EACCESS;
+#else
     FRESULT res;
     UINT out_len;
     FIL *file = &((struct fatfs_file *)fs_file)->fil;
@@ -302,11 +305,15 @@ fatfs_write(struct fs_file *fs_file, const void *data, int len)
         return FS_EFULL;
     }
     return fatfs_to_vfs_error(res);
+#endif
 }
 
 static int
 fatfs_flush(struct fs_file *fs_file)
 {
+#if MYNEWT_VAL(FATFS_READ_ONLY)
+    return FS_EACCESS;
+#else
     FRESULT res;
     FIL *file = &((struct fatfs_file *)fs_file)->fil;
 
@@ -315,11 +322,15 @@ fatfs_flush(struct fs_file *fs_file)
     res = f_sync(file);
 
     return fatfs_to_vfs_error(res);
+#endif
 }
 
 static int
 fatfs_unlink(const char *path)
 {
+#if MYNEWT_VAL(FATFS_READ_ONLY) || MYNEWT_VAL(FATFS_MINIMIZE) >= 1
+    return FS_EACCESS;
+#else
     FRESULT res;
 
     FATFS_LOG_INFO("Unlink %s", path);
@@ -327,11 +338,15 @@ fatfs_unlink(const char *path)
     res = f_unlink(path);
 
     return fatfs_to_vfs_error(res);
+#endif
 }
 
 static int
 fatfs_rename(const char *from, const char *to)
 {
+#if MYNEWT_VAL(FATFS_READ_ONLY) || MYNEWT_VAL(FATFS_MINIMIZE) >= 1
+    return FS_EACCESS;
+#else
     FRESULT res;
 
     FATFS_LOG_INFO("Rename %s to %s", from, to);
@@ -339,22 +354,30 @@ fatfs_rename(const char *from, const char *to)
     res = f_rename(from, to);
 
     return fatfs_to_vfs_error(res);
+#endif
 }
 
 static int
 fatfs_mkdir(const char *path)
 {
+#if MYNEWT_VAL(FATFS_READ_ONLY) || MYNEWT_VAL(FATFS_MINIMIZE) >= 1
+    return FS_EACCESS;
+#else
     FRESULT res;
 
     FATFS_LOG_INFO("Mkdir %s", path);
 
     res = f_mkdir(path);
     return fatfs_to_vfs_error(res);
+#endif
 }
 
 static int
 fatfs_opendir(const char *path, struct fs_dir **out_fs_dir)
 {
+#if MYNEWT_VAL(FATFS_MINIMIZE) >= 2
+    return FS_EACCESS;
+#else
     FRESULT res;
     struct fatfs_dir *dir = NULL;
     int rc;
@@ -386,11 +409,15 @@ out:
         }
     }
     return rc;
+#endif
 }
 
 static int
 fatfs_readdir(struct fs_dir *fs_dir, struct fs_dirent **out_fs_dirent)
 {
+#if MYNEWT_VAL(FATFS_MINIMIZE) >= 2
+    return FS_EACCESS;
+#else
     FRESULT res;
     struct fatfs_dir *fat_dir = ((struct fatfs_dir *)fs_dir);
     FATFS_DIR *dir = &fat_dir->dir;
@@ -407,11 +434,15 @@ fatfs_readdir(struct fs_dir *fs_dir, struct fs_dirent **out_fs_dirent)
         return FS_ENOENT;
     }
     return FS_EOK;
+#endif
 }
 
 static int
 fatfs_closedir(struct fs_dir *fs_dir)
 {
+#if MYNEWT_VAL(FATFS_MINIMIZE) >= 2
+    return FS_EACCESS;
+#else
     FRESULT res;
     FATFS_DIR *dir = &((struct fatfs_dir *)fs_dir)->dir;
 
@@ -421,6 +452,7 @@ fatfs_closedir(struct fs_dir *fs_dir)
 
     os_free(fs_dir);
     return fatfs_to_vfs_error(res);
+#endif
 }
 
 static int
