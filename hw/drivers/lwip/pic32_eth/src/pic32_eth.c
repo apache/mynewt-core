@@ -540,7 +540,7 @@ pic32_lwip_init(struct netif *nif)
     /* Just verify that PHY is aligned with what is selected in APP, it applies to chips that can be MII and RMII */
     if (pes->cfg->phy_type == LAN_8710 || pes->cfg->phy_type == LAN_8740) {
         pic32_eth_phy_read_register(cfg->phy_addr, LAN_87xx_SPECIAL_MODES, &reg);
-        assert(((reg & PHY_RMII) != 0) != ((DEVCFG3 & _DEVCFG3_FMIIEN_MASK) == 0));
+        assert(((reg & PHY_RMII) != 0) == ((DEVCFG3 & _DEVCFG3_FMIIEN_MASK) == 0));
     }
     /*   3.c Automatic MDIX is the default, nothing to do */
     /*   3.d,e,f  */
