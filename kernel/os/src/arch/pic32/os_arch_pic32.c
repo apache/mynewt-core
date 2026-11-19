@@ -116,6 +116,18 @@ os_arch_ctx_sw(struct os_task *t)
     }
 
     IFS0SET = _IFS0_CS0IF_MASK;
+    /*
+     * Interrupt controller presents the request to the core a few cycles
+     * after the flag is set. Task that requested the switch (e.g. it was put
+     * to sleep in os_sem_pend()) must not continue past OS_EXIT_CRITICAL()
+     * before the switch happens. Wait until the request is visible in
+     * Cause.RIPL, then the switch is taken as soon as interrupts are enabled.
+     * From interrupt the switch happens on return to task level anyway.
+     */
+    if (!os_arch_in_isr()) {
+        while ((_CP0_GET_CAUSE() & _CP0_CAUSE_RIPL_MASK) == 0) {
+        }
+    }
 }
 
 os_sr_t
