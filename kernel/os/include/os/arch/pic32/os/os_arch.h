@@ -38,12 +38,21 @@ typedef uint32_t os_stack_t;
 #define OS_SANITY_STACK_SIZE (64)
 #define OS_IDLE_STACK_SIZE (400)
 
+/*
+ * DI returns Status register value from before interrupts were disabled.
+ * Only Status.IE is restored on exit. Other Status bits are left untouched,
+ * CU1 can be set inside critical section by lazy FPU context switch.
+ */
 #define OS_ENTER_CRITICAL(__os_sr)                  \
         do {                                        \
-            __os_sr = __builtin_get_isr_state();    \
-            __builtin_disable_interrupts();         \
-        } while(0)
-#define OS_EXIT_CRITICAL(__os_sr)       __builtin_set_isr_state(__os_sr)
+            __os_sr = __builtin_disable_interrupts(); \
+        } while (0)
+#define OS_EXIT_CRITICAL(__os_sr)                   \
+        do {                                        \
+            if ((__os_sr) & _CP0_STATUS_IE_MASK) {  \
+                __builtin_enable_interrupts();      \
+            }                                       \
+        } while (0)
 #define OS_IS_CRITICAL()               ((_CP0_GET_STATUS() & 1) == 0)
 #define OS_ASSERT_CRITICAL()            assert(OS_IS_CRITICAL())
 

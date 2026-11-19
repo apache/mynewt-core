@@ -44,10 +44,9 @@ struct mips_i2c_cfg {
 };
 
 /* Helper functions to enable/disable interrupts. */
-#define __HAL_DISABLE_INTERRUPTS(__os_sr) do {__os_sr = __builtin_get_isr_state(); \
-        __builtin_disable_interrupts();} while(0)
+#define __HAL_DISABLE_INTERRUPTS(__os_sr) OS_ENTER_CRITICAL(__os_sr)
 
-#define __HAL_ENABLE_INTERRUPTS(__os_sr) __builtin_set_isr_state(__os_sr)
+#define __HAL_ENABLE_INTERRUPTS(__os_sr) OS_EXIT_CRITICAL(__os_sr)
 
 #ifdef __cplusplus
 }
