@@ -1,0 +1,65 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: Check commit messages
+description: >
+  Check messages of pull request commits with check_commits.py of the same
+  apache-mynewt-core as this action, with subsystems file of checked out
+  repository. Problems are uploaded as commit-check-results artifact for
+  commit-check-comments action. Requires pull request head (not merge
+  commit, which would be checked too) checked out with full history.
+
+inputs:
+  subsystems-file:
+    description: >
+      Subsystems that are not paths, relative to repository root. Not
+      having one is fine.
+    required: false
+    default: .github/commit-subsystems
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.x'
+
+    # Fork pull requests get read-only token, so problems are handed over
+    # to commit-check-comments action run from workflow_run
+    - name: Check commit messages
+      shell: bash
+      env:
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        SUBSYSTEMS: ${{ inputs.subsystems-file }}
+      run: |
+        RESULTS="$RUNNER_TEMP/commit-check-results"
+        mkdir -p "$RESULTS"
+        echo "$PR_NUMBER" > "$RESULTS/pr-number"
+        python3 "$GITHUB_ACTION_PATH/../../scripts/check_commits.py" \
+          "origin/$GITHUB_BASE_REF" --subsystems "$SUBSYSTEMS" \
+          --json "$RESULTS/problems.json"
+
+    - name: Upload results for PR comment
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: commit-check-results
+        path: ${{ runner.temp }}/commit-check-results/
+        retention-days: 3
