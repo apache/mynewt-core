@@ -109,7 +109,7 @@ stm32f4xx_plli2s_r_freq(void)
 {
     uint32_t pll_r = FIELD_VAL(RCC, PLLI2SCFGR, PLLI2SR);
 
-    return stm32f4xx_pll_vco_freq() / pll_r;
+    return stm32f4xx_plli2s_vco_freq() / pll_r;
 }
 
 /*
