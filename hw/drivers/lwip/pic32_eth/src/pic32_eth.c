@@ -379,15 +379,12 @@ pic32_eth_output(struct netif *nif, struct pbuf *p)
 
     /* Pass first buffer to ETH */
     sed->hdr.EOWN = 1;
-    /* If TXRTS is on buffer will be used without starting anew */
-    if (ETHCON1bits.TXRTS == 0) {
-        /* TX is not started, just check that buffer was not consumed in the meantime */
-        if (sed->hdr.EOWN) {
-            /* Set first descriptor address */
-            ETHTXST = KVA_TO_PA((uint32_t)&pes->tx_descs[pes->tx_head]);
-            ETHCON1SET = _ETHCON1_TXRTS_MASK;
-        }
-    }
+    /*
+     * Request transmission even if TXRTS reads 1. Under heavy RX traffic
+     * TX logic was seen idle with TXRTS still set, so frames were never
+     * sent again; writing TXRTS restarts it.
+     */
+    ETHCON1SET = _ETHCON1_TXRTS_MASK;
     pes->tx_head = tx_head;
 
     pic32_eth_unlock(pes);
@@ -652,6 +649,7 @@ pic32_lwip_init(struct netif *nif)
     pic32_eth_fill_rx(pes);
 
     ETHRXST = KVA_TO_PA(&pes->rx_descs[0]);
+    ETHTXST = KVA_TO_PA(&pes->tx_descs[0]);
     ETHCON2 = ETH_RX_BUF_SIZE;
     ETHCON1SET = _ETHCON1_ON_MASK | _ETHCON1_RXEN_MASK;
 
