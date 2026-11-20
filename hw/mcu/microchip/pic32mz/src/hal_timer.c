@@ -53,10 +53,46 @@ struct pic32_timer {
     uint32_t index;
     uint32_t counter;
     uint32_t frequency;     /* Holds the true frequency of the timer */
+    uint32_t min_ticks;     /* Set by hal_timer_config() */
     TAILQ_HEAD(hal_timer_qhead, hal_timer) hal_timer_queue;
 };
 static struct pic32_timer timers[PIC32MZ_TIMER_COUNT];
 
+/* Word index of register and its CLR, SET, INV variants */
+#define REG             0
+#define REG_CLR         1
+#define REG_SET         2
+#define REG_INV         3
+
+/* Interrupt flag register (IFSx) and flag mask of each timer */
+struct timer_ifs {
+    volatile uint32_t *reg;
+    uint32_t mask;
+};
+
+static const struct timer_ifs timer_ifs[PIC32MZ_TIMER_COUNT] = {
+    { &IFS0, _IFS0_T2IF_MASK },
+    { &IFS0, _IFS0_T3IF_MASK },
+    { &IFS0, _IFS0_T4IF_MASK },
+    { &IFS0, _IFS0_T5IF_MASK },
+    { &IFS0, _IFS0_T6IF_MASK },
+    { &IFS1, _IFS1_T7IF_MASK },
+    { &IFS1, _IFS1_T8IF_MASK },
+    { &IFS1, _IFS1_T9IF_MASK },
+};
+
+/* Period match happened, interrupt not handled yet */
+static inline bool
+timer_int_pending(int timer_num)
+{
+    return (timer_ifs[timer_num].reg[REG] & timer_ifs[timer_num].mask) != 0;
+}
+
+static inline void
+timer_int_clear(int timer_num)
+{
+    timer_ifs[timer_num].reg[REG_CLR] = timer_ifs[timer_num].mask;
+}
 
 static inline uint32_t
 hal_timer_get_prescaler(int timer_num)
@@ -182,40 +218,57 @@ hal_timer_disable_int(int timer_num)
     }
 }
 
+/*
+ * TMRx counts from 0 to PRx, then resets to 0 and sets interrupt flag, one
+ * period is PRx + 1 ticks.  PRx is set so that period ends at expiry of
+ * first timer in the queue (or at most 0x10000 ticks).  Must be called with
+ * interrupts disabled.
+ */
 static void
 update_period_register(int timer_num)
 {
     struct hal_timer *first;
-    uint32_t ticks;
-    uint32_t delta;
+    uint32_t tmr;
+    uint32_t pr;
+    int32_t delta;
+
+    /*
+     * Period already ended, interrupt handler will add current PRx to
+     * counter and then set new period.
+     */
+    if (timer_int_pending(timer_num)) {
+        return;
+    }
 
     if (TAILQ_EMPTY(&timers[timer_num].hal_timer_queue)) {
         PRx(timer_num) = UINT16_MAX;
-    } else {
-        first = TAILQ_FIRST(&timers[timer_num].hal_timer_queue);
-        ticks = hal_timer_read(timer_num);
+        return;
+    }
 
-        if (ticks >= first->expiry) {
-            /*
-             * Create a timer interrupt immediately. This case must never
-             * execute inside the interrupt handler (otherwise we would skip
-             * the interrupt).
-             */
-            PRx(timer_num) = TMRx(timer_num) + 1;
-        } else {
-            delta = ticks - first->expiry;
-            if (delta > UINT16_MAX)
-                delta = UINT16_MAX;
+    first = TAILQ_FIRST(&timers[timer_num].hal_timer_queue);
+    tmr = TMRx(timer_num);
+    delta = (int32_t)(first->expiry - (timers[timer_num].counter + tmr));
 
-            PRx(timer_num) = delta;
-        }
+    /* New period end must still be ahead of TMRx when PRx is written */
+    if (delta < (int32_t)timers[timer_num].min_ticks) {
+        delta = (int32_t)timers[timer_num].min_ticks;
+    }
+    pr = tmr + (uint32_t)delta;
+    if (pr > UINT16_MAX) {
+        pr = UINT16_MAX;
+    }
+    PRx(timer_num) = pr;
+
+    /* Missed it anyway, end period at 0xFFFF so counter stays correct */
+    if (TMRx(timer_num) >= pr && !timer_int_pending(timer_num)) {
+        PRx(timer_num) = UINT16_MAX;
     }
 }
 
 static inline void
 update_counter(int timer_num)
 {
-    timers[timer_num].counter += PRx(timer_num);
+    timers[timer_num].counter += PRx(timer_num) + 1;
 }
 
 static void
@@ -226,7 +279,7 @@ handle_timer_list(int timer_num)
 
     while ((entry = TAILQ_FIRST(&timers[timer_num].hal_timer_queue)) !=
            NULL) {
-        if (entry->expiry <= current_tick) {
+        if ((int32_t)(entry->expiry - current_tick) <= 0) {
             TAILQ_REMOVE(&timers[timer_num].hal_timer_queue, entry, link);
             entry->link.tqe_prev = NULL;
             entry->link.tqe_next = NULL;
@@ -249,14 +302,19 @@ handle_timer_list(int timer_num)
  * Timer callbacks are called with FPU disabled, they must not use floating
  * point.
  */
+static void
+timer_isr(int timer_num)
+{
+    timer_int_clear(timer_num);
+    update_counter(timer_num);
+    handle_timer_list(timer_num);
+}
+
 #if MYNEWT_VAL(TIMER_0)
 static void
 timer2_isr(void)
 {
-    update_counter(0);
-    handle_timer_list(0);
-
-    IFS0CLR = _IFS0_T2IF_MASK;
+    timer_isr(0);
 }
 PIC32_ISR_NO_FPU(_TIMER_2_VECTOR, MYNEWT_VAL(TIMER_0_IPL), timer2_isr);
 #endif
@@ -265,10 +323,7 @@ PIC32_ISR_NO_FPU(_TIMER_2_VECTOR, MYNEWT_VAL(TIMER_0_IPL), timer2_isr);
 static void
 timer3_isr(void)
 {
-    update_counter(1);
-    handle_timer_list(1);
-
-    IFS0CLR = _IFS0_T3IF_MASK;
+    timer_isr(1);
 }
 PIC32_ISR_NO_FPU(_TIMER_3_VECTOR, MYNEWT_VAL(TIMER_1_IPL), timer3_isr);
 #endif
@@ -277,10 +332,7 @@ PIC32_ISR_NO_FPU(_TIMER_3_VECTOR, MYNEWT_VAL(TIMER_1_IPL), timer3_isr);
 static void
 timer4_isr(void)
 {
-    update_counter(2);
-    handle_timer_list(2);
-
-    IFS0CLR = _IFS0_T4IF_MASK;
+    timer_isr(2);
 }
 PIC32_ISR_NO_FPU(_TIMER_4_VECTOR, MYNEWT_VAL(TIMER_2_IPL), timer4_isr);
 #endif
@@ -289,10 +341,7 @@ PIC32_ISR_NO_FPU(_TIMER_4_VECTOR, MYNEWT_VAL(TIMER_2_IPL), timer4_isr);
 static void
 timer5_isr(void)
 {
-    update_counter(3);
-    handle_timer_list(3);
-
-    IFS0CLR = _IFS0_T5IF_MASK;
+    timer_isr(3);
 }
 PIC32_ISR_NO_FPU(_TIMER_5_VECTOR, MYNEWT_VAL(TIMER_3_IPL), timer5_isr);
 #endif
@@ -301,10 +350,7 @@ PIC32_ISR_NO_FPU(_TIMER_5_VECTOR, MYNEWT_VAL(TIMER_3_IPL), timer5_isr);
 static void
 timer6_isr(void)
 {
-    update_counter(4);
-    handle_timer_list(4);
-
-    IFS0CLR = _IFS0_T6IF_MASK;
+    timer_isr(4);
 }
 PIC32_ISR_NO_FPU(_TIMER_6_VECTOR, MYNEWT_VAL(TIMER_4_IPL), timer6_isr);
 #endif
@@ -313,10 +359,7 @@ PIC32_ISR_NO_FPU(_TIMER_6_VECTOR, MYNEWT_VAL(TIMER_4_IPL), timer6_isr);
 static void
 timer7_isr(void)
 {
-    update_counter(5);
-    handle_timer_list(5);
-
-    IFS1CLR = _IFS1_T7IF_MASK;
+    timer_isr(5);
 }
 PIC32_ISR_NO_FPU(_TIMER_7_VECTOR, MYNEWT_VAL(TIMER_5_IPL), timer7_isr);
 #endif
@@ -325,10 +368,7 @@ PIC32_ISR_NO_FPU(_TIMER_7_VECTOR, MYNEWT_VAL(TIMER_5_IPL), timer7_isr);
 static void
 timer8_isr(void)
 {
-    update_counter(6);
-    handle_timer_list(6);
-
-    IFS1CLR = _IFS1_T8IF_MASK;
+    timer_isr(6);
 }
 PIC32_ISR_NO_FPU(_TIMER_8_VECTOR, MYNEWT_VAL(TIMER_6_IPL), timer8_isr);
 #endif
@@ -337,10 +377,7 @@ PIC32_ISR_NO_FPU(_TIMER_8_VECTOR, MYNEWT_VAL(TIMER_6_IPL), timer8_isr);
 static void
 timer9_isr(void)
 {
-    update_counter(7);
-    handle_timer_list(7);
-
-    IFS1CLR = _IFS1_T9IF_MASK;
+    timer_isr(7);
 }
 PIC32_ISR_NO_FPU(_TIMER_9_VECTOR, MYNEWT_VAL(TIMER_7_IPL), timer9_isr);
 #endif
@@ -428,6 +465,12 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
 
     timers[timer_num].frequency = hal_timer_get_peripheral_base_clock() /
                                   timer_prescalers[i];
+    /*
+     * TMRx runs while new PRx is computed and written, if it passes PRx
+     * before the write there is no match until TMRx wraps at 0xFFFF.
+     * Allow about 1 us for that plus 2 ticks.
+     */
+    timers[timer_num].min_ticks = timers[timer_num].frequency / 1000000 + 2;
 
     /* Start timer */
     TxCONSET(timer_num) = _T2CON_TON_MASK;
@@ -456,8 +499,16 @@ hal_timer_read(int timer_num)
 
     __HAL_DISABLE_INTERRUPTS(ctx);
 
-    tmr = TMRx(timer_num);
     counter = timers[timer_num].counter;
+    tmr = TMRx(timer_num);
+    if (timer_int_pending(timer_num)) {
+        /*
+         * Period ended but interrupt was not handled yet, TMRx is read
+         * again since it could be read just before it was reset.
+         */
+        tmr = TMRx(timer_num);
+        counter += PRx(timer_num) + 1;
+    }
 
     __HAL_ENABLE_INTERRUPTS(ctx);
 
