@@ -85,9 +85,42 @@ TEST_CASE_SELF(mgmt_test_case_register_unregister)
     TEST_ASSERT(mgmt_test_registered(&group_c));
 }
 
+static const struct mgmt_handler mgmt_test_handlers_long[] = {
+    [0] = { mgmt_test_handler, NULL },
+    [1] = { NULL,              NULL },
+    [2] = { mgmt_test_handler, NULL },
+};
+
+TEST_CASE_SELF(mgmt_test_case_shared_group_id)
+{
+    struct mgmt_group short_group = MGMT_TEST_GROUP(MGMT_GROUP_ID_PERUSER);
+    struct mgmt_group long_group = {
+        .mg_handlers = mgmt_test_handlers_long,
+        .mg_handlers_count = 3,
+        .mg_group_id = MGMT_GROUP_ID_PERUSER,
+    };
+
+    /* Two groups share an ID; the first one has fewer handlers.  Commands
+     * beyond its handler table must be found in the second group.
+     */
+    mgmt_register_group(&short_group);
+    mgmt_register_group(&long_group);
+
+    TEST_ASSERT(mgmt_find_handler(MGMT_GROUP_ID_PERUSER, 0) ==
+                &mgmt_test_handlers[0]);
+    TEST_ASSERT(mgmt_find_handler(MGMT_GROUP_ID_PERUSER, 1) == NULL);
+    TEST_ASSERT(mgmt_find_handler(MGMT_GROUP_ID_PERUSER, 2) ==
+                &mgmt_test_handlers_long[2]);
+    TEST_ASSERT(mgmt_find_handler(MGMT_GROUP_ID_PERUSER, 3) == NULL);
+
+    mgmt_unregister_group(&long_group);
+    mgmt_unregister_group(&short_group);
+}
+
 TEST_SUITE(mgmt_test_suite)
 {
     mgmt_test_case_register_unregister();
+    mgmt_test_case_shared_group_id();
 }
 
 int

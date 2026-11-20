@@ -61,6 +61,60 @@ struct smp_transport {
     smp_transport_get_mtu_func_t st_get_mtu;
 };
 
+/**
+ * Reassembly state for a transport that may deliver an SMP request in
+ * several fragments (e.g., BLE writes limited by the ATT MTU).
+ */
+struct smp_reasm {
+    /** Fragments received so far; NULL if no request is pending. */
+    struct os_mbuf *sr_om;
+};
+
+/**
+ * Returns the length of the first SMP request in the supplied buffer, i.e.
+ * the header size plus the payload length from the header.
+ *
+ * @param om                    Buffer starting with an SMP request header.
+ *
+ * @return                      Length of the request in bytes;
+ *                              0 if the buffer does not contain a complete
+ *                                  header yet.
+ */
+int smp_reasm_req_len(struct os_mbuf *om);
+
+/**
+ * Adds a received fragment to the reassembly state.  The fragment data is
+ * copied, the supplied mbuf is not consumed.  When a request is complete, it
+ * is returned in a new packet header mbuf with a user header of usrhdr_len
+ * bytes (left for the caller to fill) and the state is reset.  Any data
+ * following the first request in the last fragment is kept in the returned
+ * packet.
+ *
+ * @param sr                    The reassembly state.
+ * @param frag                  The received fragment.
+ * @param usrhdr_len            User header length for the returned request.
+ * @param out_req               On success, the complete request or NULL if
+ *                                  more fragments are needed.
+ *
+ * @return                      0 on success;
+ *                              MGMT_ERR_EMSGSIZE if the request is longer
+ *                                  than MGMT_MAX_MTU;
+ *                              MGMT_ERR_EINVAL if the data does not start
+ *                                  with a valid request header (e.g.,
+ *                                  after a lost fragment);
+ *                              MGMT_ERR_ENOMEM on allocation failure.
+ *                              On error the pending data is dropped.
+ */
+int smp_reasm_rx(struct smp_reasm *sr, struct os_mbuf *frag,
+                 uint16_t usrhdr_len, struct os_mbuf **out_req);
+
+/**
+ * Drops any partially received request.
+ *
+ * @param sr                    The reassembly state.
+ */
+void smp_reasm_reset(struct smp_reasm *sr);
+
 void smp_event_put(struct os_event *ev);
 int smp_transport_init(struct smp_transport *st,
         smp_transport_out_func_t output_func,

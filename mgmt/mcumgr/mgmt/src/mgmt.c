@@ -72,7 +72,7 @@ mgmt_find_group(uint16_t group_id, uint16_t command_id)
     for (group = mgmt_group_list; group != NULL; group = group->mg_next) {
         if (group->mg_group_id == group_id) {
             if (command_id >= group->mg_handlers_count) {
-                return NULL;
+                continue;
             }
 
             if (!group->mg_handlers[command_id].mh_read &&
