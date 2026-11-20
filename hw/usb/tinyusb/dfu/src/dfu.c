@@ -199,6 +199,9 @@ boot_preboot(void)
     if (MYNEWT_VAL_USBD_DFU_BOOT_PIN >= 0) {
         hal_gpio_init_in(MYNEWT_VAL(USBD_DFU_BOOT_PIN),
                          MYNEWT_VAL(USBD_DFU_BOOT_PIN_PULL));
+#if MYNEWT_VAL(USBD_DFU_BOOT_PIN_SETTLE_US) > 0
+        os_cputime_delay_usecs(MYNEWT_VAL(USBD_DFU_BOOT_PIN_SETTLE_US));
+#endif
         if (hal_gpio_read(MYNEWT_VAL(USBD_DFU_BOOT_PIN)) ==
             MYNEWT_VAL(USBD_DFU_BOOT_PIN_VALUE)) {
             hal_gpio_deinit(MYNEWT_VAL(USBD_DFU_BOOT_PIN));
@@ -225,7 +228,11 @@ boot_preboot(void)
             hal_nvreg_write(MYNEWT_VAL_USBD_DFU_RESET_COUNT_NVREG, new_counter);
         }
     }
-    if (!start_dfu && MYNEWT_VAL_USBD_DFU_MAGIC_NVREG >= 0 &&
+    /*
+     * Magic is consumed even if DFU is already requested by other means,
+     * otherwise it would start DFU again on next boot.
+     */
+    if (MYNEWT_VAL_USBD_DFU_MAGIC_NVREG >= 0 &&
         (hal_nvreg_read(MYNEWT_VAL_USBD_DFU_MAGIC_NVREG) ==
          MYNEWT_VAL_USBD_DFU_MAGIC_VALUE)) {
         /* Reset flag in NVReg */

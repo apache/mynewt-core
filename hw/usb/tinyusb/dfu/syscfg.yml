@@ -92,6 +92,11 @@ syscfg.defs:
             Set to 1 if boot pin needs internal pull-up resistor.
             Set to 2 if boto pin needs internal pull-down resistor.
         value: 0
+    USBD_DFU_BOOT_PIN_SETTLE_US:
+        description: >
+            Time in microseconds to wait after boot pin is configured before
+            it is read.
+        value: 0
 
     USBD_DFU_RESET_COUNT_NVREG:
         description: >
