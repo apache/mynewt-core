@@ -41,6 +41,11 @@
 #define PIC32_PHY_POLL_FREQ             os_cputime_usecs_to_ticks(1500000) /* 1.5 secs */
 
 #define ETH_MAX_PACKET_SIZE             1518
+/*
+ * RX buffer size, ETHCON2.RXBUF_SZ is in 16 byte units, must hold whole
+ * frame so that it does not span descriptors.
+ */
+#define ETH_RX_BUF_SIZE                 1536
 
 /*
  * Phy specific registers
@@ -155,12 +160,18 @@ pic32_eth_fill_rx(struct pic32_eth_state *pes)
         if (pes->rx_bufs[pes->rx_tail]) {
             break;
         }
-        p = pbuf_alloc(PBUF_RAW, ETH_MAX_PACKET_SIZE, PBUF_POOL);
+        p = pbuf_alloc(PBUF_RAW, ETH_RX_BUF_SIZE, PBUF_POOL);
         if (p == NULL) {
             ++pic32_eth_stats.imem;
             break;
         }
-        dcache_flush_area(p->payload, ETH_MAX_PACKET_SIZE);
+        /* DMA needs one contiguous buffer, PBUF_POOL_BUFSIZE is too small */
+        if (p->next != NULL) {
+            pbuf_free(p);
+            ++pic32_eth_stats.imem;
+            break;
+        }
+        dcache_flush_area(p->payload, ETH_RX_BUF_SIZE);
         pes->rx_bufs[pes->rx_tail] = p;
         ped = &pes->rx_descs[pes->rx_tail];
         ped->stat = 0;
@@ -196,15 +207,23 @@ pic32_eth_input(struct pic32_eth_state *pes)
         pes->rx_bufs[rx_head] = NULL;
         if (sed->hdr.EOP == 0 || sed->hdr.SOP == 0) {
             /*
-             * Incoming data spans multiple pbufs. XXX support later
+             * Frame spans multiple descriptors, it should not happen with
+             * ETH_RX_BUF_SIZE buffers. Drop it, descriptor still has to be
+             * consumed to stay in sync with DMA.
              */
             pbuf_free(p);
-            continue;
+            ++pic32_eth_stats.idrop;
+            LINK_STATS_INC(link.drop);
         } else {
             p->len = p->tot_len = sed->hdr.BYTE_COUNT;
             ++pic32_eth_stats.iframe;
             LINK_STATS_INC(link.recv);
-            nif->input(p, nif);
+            /* Input function does not free pbuf when it fails */
+            if (nif->input(p, nif) != ERR_OK) {
+                pbuf_free(p);
+                ++pic32_eth_stats.idrop;
+                LINK_STATS_INC(link.drop);
+            }
         }
         rx_head++;
         if (rx_head >= PIC32_ETH_RX_DESC_COUNT) {
@@ -588,7 +607,7 @@ pic32_lwip_init(struct netif *nif)
     pic32_eth_fill_rx(pes);
 
     ETHRXST = KVA_TO_PA(&pes->rx_descs[0]);
-    ETHCON2 = ETH_MAX_PACKET_SIZE;
+    ETHCON2 = ETH_RX_BUF_SIZE;
     ETHCON1SET = _ETHCON1_ON_MASK | _ETHCON1_RXEN_MASK;
 
     /*
