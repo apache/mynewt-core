@@ -87,6 +87,10 @@ struct pic32_eth_desc {
 struct pic32_eth_state {
     struct netif nif;
     struct tcpip_callback_msg *phy_isr_msg;
+    /* RX processing in tcpip thread, posted from interrupt */
+    struct tcpip_callback_msg *rx_msg;
+    /* Retries posting rx_msg when tcpip mailbox was full */
+    struct os_callout rx_retry;
     struct os_mutex lock;
     /* aliases to descriptors _rx_descs within KSEG1 addresses */
     struct pic32_eth_desc *tx_descs;

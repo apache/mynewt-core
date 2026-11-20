@@ -47,6 +47,11 @@
  */
 #define ETH_RX_BUF_SIZE                 1536
 
+/* RX interrupts, masked from interrupt until tcpip thread handled them */
+#define ETH_RX_IRQS                                                           \
+    (_ETHIEN_PKTPENDIE_MASK | _ETHIEN_RXBUFNAIE_MASK |                        \
+     _ETHIEN_RXBUSEIE_MASK | _ETHIEN_RXDONEIE_MASK | _ETHIEN_RXOVFLWIE_MASK)
+
 /*
  * Phy specific registers
  */
@@ -218,8 +223,8 @@ pic32_eth_input(struct pic32_eth_state *pes)
             p->len = p->tot_len = sed->hdr.BYTE_COUNT;
             ++pic32_eth_stats.iframe;
             LINK_STATS_INC(link.recv);
-            /* Input function does not free pbuf when it fails */
-            if (nif->input(p, nif) != ERR_OK) {
+            /* Runs in tcpip thread, frame goes directly to lwIP */
+            if (ethernet_input(p, nif) != ERR_OK) {
                 pbuf_free(p);
                 ++pic32_eth_stats.idrop;
                 LINK_STATS_INC(link.drop);
@@ -395,16 +400,51 @@ error:
     return errval;
 }
 
-/* Ethernet interrupt, priority (PIC32_ETH_0_IPL) is set by pic32_isr_init() */
+/* tcpip thread: receive frames, then allow RX interrupts again */
+static void
+pic32_eth_rx_task(void *arg)
+{
+    struct pic32_eth_state *pes = arg;
+
+    pic32_eth_input(pes);
+    ETHIENSET = ETH_RX_IRQS;
+}
+
+static void
+pic32_eth_rx_post(struct pic32_eth_state *pes)
+{
+    if (tcpip_callbackmsg_trycallback(pes->rx_msg) != ERR_OK) {
+        /* Mailbox full, RX interrupts stay masked, try again later */
+        os_callout_reset(&pes->rx_retry, 1);
+    }
+}
+
+static void
+pic32_eth_rx_retry(struct os_event *ev)
+{
+    pic32_eth_rx_post(ev->ev_arg);
+}
+
+/*
+ * Ethernet interrupt, priority (PIC32_ETH_0_IPL) is set by pic32_isr_init().
+ * lwIP must not be called from here, frames are processed in tcpip thread.
+ */
 static void
 pic32_eth_isr(void)
 {
     /* Enabled pending interrupt requests */
     uint32_t irq = ETHIRQ & ETHIEN;
+
+    /*
+     * PKTPEND stays set while there are received buffers, mask RX
+     * interrupts until tcpip thread processed them.
+     */
+    if (irq & ETH_RX_IRQS) {
+        ETHIENCLR = ETH_RX_IRQS;
+        pic32_eth_rx_post(&pic32_eth_state);
+    }
     /* Acknowledge the interrupt flags */
     ETHIRQCLR = irq;
-
-    pic32_eth_input(&pic32_eth_state);
 
     IFS4CLR = _IFS4_ETHIF_MASK;
 }
@@ -602,6 +642,11 @@ pic32_lwip_init(struct netif *nif)
 
     }
 
+    pes->rx_msg = tcpip_callbackmsg_new(pic32_eth_rx_task, pes);
+    assert(pes->rx_msg);
+    os_callout_init(&pes->rx_retry, os_eventq_dflt_get(), pic32_eth_rx_retry,
+                    pes);
+
     pic32_eth_setup_descs(pes->rx_descs, PIC32_ETH_RX_DESC_COUNT);
     pic32_eth_setup_descs(pes->tx_descs, PIC32_ETH_TX_DESC_COUNT);
     pic32_eth_fill_rx(pes);
@@ -636,9 +681,7 @@ pic32_lwip_init(struct netif *nif)
     }
 
     /* Enable interrupts except watermark for now */
-    ETHIEN = _ETHIEN_TXABORTIE_MASK | _ETHIEN_PKTPENDIE_MASK | _ETHIEN_RXBUFNAIE_MASK |
-             _ETHIEN_RXBUSEIE_MASK | _ETHIEN_RXDONEIE_MASK | _ETHIEN_RXOVFLWIE_MASK |
-             _ETHIEN_TXBUSEIE_MASK;
+    ETHIEN = _ETHIEN_TXABORTIE_MASK | ETH_RX_IRQS | _ETHIEN_TXBUSEIE_MASK;
     IEC4SET = _IEC4_ETHIE_MASK;
 
     return ERR_OK;
