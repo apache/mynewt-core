@@ -104,6 +104,8 @@ struct pic32_eth_state {
     uint8_t rx_tail;
     uint8_t tx_head;
     uint8_t tx_tail;
+    /* Received descriptors not yet given back, BUFCNT decrements owed */
+    uint8_t rx_bufcdec;
     /* Timer to use for check PHY interrupt if pin is not available */
     struct hal_timer phy_tmr;
     const struct pic32_eth_cfg *cfg;
