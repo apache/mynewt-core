@@ -182,6 +182,15 @@ pic32_eth_fill_rx(struct pic32_eth_state *pes)
         ped->stat = 0;
         ped->data_buffer_address = KVA_TO_PA(p->payload);
         ped->hdr.EOWN = 1;
+        /*
+         * Decrement of BUFCNT makes RX DMA that stopped for lack of
+         * descriptors fetch the descriptor again, so it is done only after
+         * the descriptor is owned by hardware.
+         */
+        if (pes->rx_bufcdec) {
+            pes->rx_bufcdec--;
+            ETHCON1SET = _ETHCON1_BUFCDEC_MASK;
+        }
 
         pes->rx_tail++;
         if (pes->rx_tail >= PIC32_ETH_RX_DESC_COUNT) {
@@ -234,7 +243,8 @@ pic32_eth_input(struct pic32_eth_state *pes)
         if (rx_head >= PIC32_ETH_RX_DESC_COUNT) {
             rx_head = 0;
         }
-        ETHCON1SET = _ETHCON1_BUFCDEC_MASK;
+        /* BUFCNT is decremented when descriptor is given back */
+        pes->rx_bufcdec++;
     }
 
     pes->rx_head = rx_head;
@@ -526,6 +536,7 @@ pic32_lwip_init(struct netif *nif)
 
     pes->rx_head = 0;
     pes->rx_tail = 0;
+    pes->rx_bufcdec = 0;
     pes->tx_head = 0;
     pes->tx_tail = 0;
     pes->rx_descs = (struct pic32_eth_desc *)PA_TO_KVA1((uint32_t)&pes->_rx_descs);
