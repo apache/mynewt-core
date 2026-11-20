@@ -33,6 +33,7 @@ struct pic32_eth_stats {
     uint32_t oerr;
     uint32_t iframe;
     uint32_t imem;
+    uint32_t idrop;
 };
 
 struct pic32_eth_desc {

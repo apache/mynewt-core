@@ -158,6 +158,7 @@ pic32_eth_stats_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct s
     streamer_printf(streamer, "oerr %d\n", (int)pic32_eth_stats.oerr);
     streamer_printf(streamer, "iframe %d\n", (int)pic32_eth_stats.iframe);
     streamer_printf(streamer, "imem %d\n", (int)pic32_eth_stats.imem);
+    streamer_printf(streamer, "idrop %d\n", (int)pic32_eth_stats.idrop);
 
     return 0;
 }
