@@ -41,6 +41,16 @@
 #define PIC32_PHY_POLL_FREQ             os_cputime_usecs_to_ticks(1500000) /* 1.5 secs */
 
 #define ETH_MAX_PACKET_SIZE             1518
+/*
+ * RX buffer size, ETHCON2.RXBUF_SZ is in 16 byte units, must hold whole
+ * frame so that it does not span descriptors.
+ */
+#define ETH_RX_BUF_SIZE                 1536
+
+/* RX interrupts, masked from interrupt until tcpip thread handled them */
+#define ETH_RX_IRQS                                                           \
+    (_ETHIEN_PKTPENDIE_MASK | _ETHIEN_RXBUFNAIE_MASK |                        \
+     _ETHIEN_RXBUSEIE_MASK | _ETHIEN_RXDONEIE_MASK | _ETHIEN_RXOVFLWIE_MASK)
 
 /*
  * Phy specific registers
@@ -155,17 +165,32 @@ pic32_eth_fill_rx(struct pic32_eth_state *pes)
         if (pes->rx_bufs[pes->rx_tail]) {
             break;
         }
-        p = pbuf_alloc(PBUF_RAW, ETH_MAX_PACKET_SIZE, PBUF_POOL);
+        p = pbuf_alloc(PBUF_RAW, ETH_RX_BUF_SIZE, PBUF_POOL);
         if (p == NULL) {
             ++pic32_eth_stats.imem;
             break;
         }
-        dcache_flush_area(p->payload, ETH_MAX_PACKET_SIZE);
+        /* DMA needs one contiguous buffer, PBUF_POOL_BUFSIZE is too small */
+        if (p->next != NULL) {
+            pbuf_free(p);
+            ++pic32_eth_stats.imem;
+            break;
+        }
+        dcache_flush_area(p->payload, ETH_RX_BUF_SIZE);
         pes->rx_bufs[pes->rx_tail] = p;
         ped = &pes->rx_descs[pes->rx_tail];
         ped->stat = 0;
         ped->data_buffer_address = KVA_TO_PA(p->payload);
         ped->hdr.EOWN = 1;
+        /*
+         * Decrement of BUFCNT makes RX DMA that stopped for lack of
+         * descriptors fetch the descriptor again, so it is done only after
+         * the descriptor is owned by hardware.
+         */
+        if (pes->rx_bufcdec) {
+            pes->rx_bufcdec--;
+            ETHCON1SET = _ETHCON1_BUFCDEC_MASK;
+        }
 
         pes->rx_tail++;
         if (pes->rx_tail >= PIC32_ETH_RX_DESC_COUNT) {
@@ -196,21 +221,30 @@ pic32_eth_input(struct pic32_eth_state *pes)
         pes->rx_bufs[rx_head] = NULL;
         if (sed->hdr.EOP == 0 || sed->hdr.SOP == 0) {
             /*
-             * Incoming data spans multiple pbufs. XXX support later
+             * Frame spans multiple descriptors, it should not happen with
+             * ETH_RX_BUF_SIZE buffers. Drop it, descriptor still has to be
+             * consumed to stay in sync with DMA.
              */
             pbuf_free(p);
-            continue;
+            ++pic32_eth_stats.idrop;
+            LINK_STATS_INC(link.drop);
         } else {
             p->len = p->tot_len = sed->hdr.BYTE_COUNT;
             ++pic32_eth_stats.iframe;
             LINK_STATS_INC(link.recv);
-            nif->input(p, nif);
+            /* Runs in tcpip thread, frame goes directly to lwIP */
+            if (ethernet_input(p, nif) != ERR_OK) {
+                pbuf_free(p);
+                ++pic32_eth_stats.idrop;
+                LINK_STATS_INC(link.drop);
+            }
         }
         rx_head++;
         if (rx_head >= PIC32_ETH_RX_DESC_COUNT) {
             rx_head = 0;
         }
-        ETHCON1SET = _ETHCON1_BUFCDEC_MASK;
+        /* BUFCNT is decremented when descriptor is given back */
+        pes->rx_bufcdec++;
     }
 
     pes->rx_head = rx_head;
@@ -355,15 +389,12 @@ pic32_eth_output(struct netif *nif, struct pbuf *p)
 
     /* Pass first buffer to ETH */
     sed->hdr.EOWN = 1;
-    /* If TXRTS is on buffer will be used without starting anew */
-    if (ETHCON1bits.TXRTS == 0) {
-        /* TX is not started, just check that buffer was not consumed in the meantime */
-        if (sed->hdr.EOWN) {
-            /* Set first descriptor address */
-            ETHTXST = KVA_TO_PA((uint32_t)&pes->tx_descs[pes->tx_head]);
-            ETHCON1SET = _ETHCON1_TXRTS_MASK;
-        }
-    }
+    /*
+     * Request transmission even if TXRTS reads 1. Under heavy RX traffic
+     * TX logic was seen idle with TXRTS still set, so frames were never
+     * sent again; writing TXRTS restarts it.
+     */
+    ETHCON1SET = _ETHCON1_TXRTS_MASK;
     pes->tx_head = tx_head;
 
     pic32_eth_unlock(pes);
@@ -376,16 +407,51 @@ error:
     return errval;
 }
 
-/* Ethernet interrupt, priority (PIC32_ETH_0_IPL) is set by pic32_isr_init() */
+/* tcpip thread: receive frames, then allow RX interrupts again */
+static void
+pic32_eth_rx_task(void *arg)
+{
+    struct pic32_eth_state *pes = arg;
+
+    pic32_eth_input(pes);
+    ETHIENSET = ETH_RX_IRQS;
+}
+
+static void
+pic32_eth_rx_post(struct pic32_eth_state *pes)
+{
+    if (tcpip_callbackmsg_trycallback(pes->rx_msg) != ERR_OK) {
+        /* Mailbox full, RX interrupts stay masked, try again later */
+        os_callout_reset(&pes->rx_retry, 1);
+    }
+}
+
+static void
+pic32_eth_rx_retry(struct os_event *ev)
+{
+    pic32_eth_rx_post(ev->ev_arg);
+}
+
+/*
+ * Ethernet interrupt, priority (PIC32_ETH_0_IPL) is set by pic32_isr_init().
+ * lwIP must not be called from here, frames are processed in tcpip thread.
+ */
 static void
 pic32_eth_isr(void)
 {
     /* Enabled pending interrupt requests */
     uint32_t irq = ETHIRQ & ETHIEN;
+
+    /*
+     * PKTPEND stays set while there are received buffers, mask RX
+     * interrupts until tcpip thread processed them.
+     */
+    if (irq & ETH_RX_IRQS) {
+        ETHIENCLR = ETH_RX_IRQS;
+        pic32_eth_rx_post(&pic32_eth_state);
+    }
     /* Acknowledge the interrupt flags */
     ETHIRQCLR = irq;
-
-    pic32_eth_input(&pic32_eth_state);
 
     IFS4CLR = _IFS4_ETHIF_MASK;
 }
@@ -470,6 +536,7 @@ pic32_lwip_init(struct netif *nif)
 
     pes->rx_head = 0;
     pes->rx_tail = 0;
+    pes->rx_bufcdec = 0;
     pes->tx_head = 0;
     pes->tx_tail = 0;
     pes->rx_descs = (struct pic32_eth_desc *)PA_TO_KVA1((uint32_t)&pes->_rx_descs);
@@ -583,12 +650,18 @@ pic32_lwip_init(struct netif *nif)
 
     }
 
+    pes->rx_msg = tcpip_callbackmsg_new(pic32_eth_rx_task, pes);
+    assert(pes->rx_msg);
+    os_callout_init(&pes->rx_retry, os_eventq_dflt_get(), pic32_eth_rx_retry,
+                    pes);
+
     pic32_eth_setup_descs(pes->rx_descs, PIC32_ETH_RX_DESC_COUNT);
     pic32_eth_setup_descs(pes->tx_descs, PIC32_ETH_TX_DESC_COUNT);
     pic32_eth_fill_rx(pes);
 
     ETHRXST = KVA_TO_PA(&pes->rx_descs[0]);
-    ETHCON2 = ETH_MAX_PACKET_SIZE;
+    ETHTXST = KVA_TO_PA(&pes->tx_descs[0]);
+    ETHCON2 = ETH_RX_BUF_SIZE;
     ETHCON1SET = _ETHCON1_ON_MASK | _ETHCON1_RXEN_MASK;
 
     /*
@@ -617,9 +690,7 @@ pic32_lwip_init(struct netif *nif)
     }
 
     /* Enable interrupts except watermark for now */
-    ETHIEN = _ETHIEN_TXABORTIE_MASK | _ETHIEN_PKTPENDIE_MASK | _ETHIEN_RXBUFNAIE_MASK |
-             _ETHIEN_RXBUSEIE_MASK | _ETHIEN_RXDONEIE_MASK | _ETHIEN_RXOVFLWIE_MASK |
-             _ETHIEN_TXBUSEIE_MASK;
+    ETHIEN = _ETHIEN_TXABORTIE_MASK | ETH_RX_IRQS | _ETHIEN_TXBUSEIE_MASK;
     IEC4SET = _IEC4_ETHIE_MASK;
 
     return ERR_OK;

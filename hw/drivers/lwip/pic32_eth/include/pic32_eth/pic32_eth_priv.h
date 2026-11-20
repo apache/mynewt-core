@@ -33,6 +33,7 @@ struct pic32_eth_stats {
     uint32_t oerr;
     uint32_t iframe;
     uint32_t imem;
+    uint32_t idrop;
 };
 
 struct pic32_eth_desc {
@@ -86,6 +87,10 @@ struct pic32_eth_desc {
 struct pic32_eth_state {
     struct netif nif;
     struct tcpip_callback_msg *phy_isr_msg;
+    /* RX processing in tcpip thread, posted from interrupt */
+    struct tcpip_callback_msg *rx_msg;
+    /* Retries posting rx_msg when tcpip mailbox was full */
+    struct os_callout rx_retry;
     struct os_mutex lock;
     /* aliases to descriptors _rx_descs within KSEG1 addresses */
     struct pic32_eth_desc *tx_descs;
@@ -99,6 +104,8 @@ struct pic32_eth_state {
     uint8_t rx_tail;
     uint8_t tx_head;
     uint8_t tx_tail;
+    /* Received descriptors not yet given back, BUFCNT decrements owed */
+    uint8_t rx_bufcdec;
     /* Timer to use for check PHY interrupt if pin is not available */
     struct hal_timer phy_tmr;
     const struct pic32_eth_cfg *cfg;
