@@ -10,14 +10,14 @@
 / Function Configurations
 /---------------------------------------------------------------------------*/
 
-#define _FS_READONLY	0
+#define _FS_READONLY	MYNEWT_VAL(FATFS_READ_ONLY)
 /* This option switches read-only configuration. (0:Read/Write or 1:Read-only)
 /  Read-only configuration removes writing API functions, f_write(), f_sync(),
 /  f_unlink(), f_mkdir(), f_chmod(), f_rename(), f_truncate(), f_getfree()
 /  and optional writing functions as well. */
 
 
-#define _FS_MINIMIZE	0
+#define _FS_MINIMIZE	MYNEWT_VAL(FATFS_MINIMIZE)
 /* This option defines minimization level to remove some basic API functions.
 /
 /   0: All basic functions are enabled.
@@ -203,7 +203,7 @@
 / System Configurations
 /---------------------------------------------------------------------------*/
 
-#define	_FS_TINY	0
+#define	_FS_TINY	MYNEWT_VAL(FATFS_TINY)
 /* This option switches tiny buffer configuration. (0:Normal or 1:Tiny)
 /  At the tiny configuration, size of file object (FIL) is reduced _MAX_SS bytes.
 /  Instead of private sector buffer eliminated from the file object, common sector
