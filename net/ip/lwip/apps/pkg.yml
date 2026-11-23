@@ -36,6 +36,15 @@ pkg.source_files.LWIP_APPS_HTTPD:
     - "@lwip/src/apps/http/httpd.c"
     - "@lwip/src/apps/http/fs.c"
 
+# httpd file access functions have the same names as fs/fs API
+pkg.cflags.LWIP_APPS_HTTPD:
+    - -Dfs_open=httpd_fs_open
+    - -Dfs_close=httpd_fs_close
+    - -Dfs_read=httpd_fs_read
+    - -Dfs_read_async=httpd_fs_read_async
+    - -Dfs_is_file_ready=httpd_fs_is_file_ready
+    - -Dfs_bytes_left=httpd_fs_bytes_left
+
 pkg.source_dirs.LWIP_APPS_IPERF:
     - "@lwip/src/apps/lwiperf"
 
