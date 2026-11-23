@@ -75,6 +75,21 @@ static struct stm32_hal_tmr *stm32_tmr_devs[STM32_HAL_TIMER_MAX] = {
 
 static uint32_t hal_timer_cnt(struct stm32_hal_tmr *tmr);
 
+/*
+ * Program output compare for expiry time and enable its interrupt.
+ * If expiry time passed before compare register was written, generate
+ * compare event right away so it is not missed until counter wraps.
+ */
+static void
+stm32_tmr_set_ocmp(struct stm32_hal_tmr *tmr, uint32_t expiry)
+{
+    tmr->sht_regs->CCR1 = expiry & 0xFFFFU;
+    tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
+    if ((int32_t)(expiry - hal_timer_cnt(tmr)) <= 0) {
+        tmr->sht_regs->EGR = TIM_EGR_CC1G;
+    }
+}
+
 #if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2))
 /*
  * Call expired timer callbacks, and reprogram timer with new expiry time.
@@ -100,7 +115,7 @@ stm32_tmr_cbs(struct stm32_hal_tmr *tmr)
 #if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
         tmr->sht_empty_run = 0;
 #endif
-        tmr->sht_regs->CCR1 = ht->expiry & 0xFFFFU;
+        stm32_tmr_set_ocmp(tmr, ht->expiry);
     } else {
         tmr->sht_regs->DIER &= ~TIM_DIER_CC1IE;
     }
@@ -117,28 +132,36 @@ static void
 stm32_tmr_irq(struct stm32_hal_tmr *tmr)
 {
     uint32_t sr;
-    uint32_t clr = 0;
+    int ctx;
 
+    __HAL_DISABLE_INTERRUPTS(ctx);
     sr = tmr->sht_regs->SR;
     if (sr & TIM_SR_UIF) {
         /*
-         * Overflow interrupt
+         * Overflow interrupt.
+         * Account for overflow and clear its flag atomically, otherwise
+         * hal_timer_cnt() called from callbacks or from higher priority
+         * interrupt would see the flag and count the overflow twice.
          */
         tmr->sht_oflow += STM32_OFLOW_VALUE;
-        clr |= TIM_SR_UIF;
+        tmr->sht_regs->SR = ~TIM_SR_UIF;
 #if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
         tmr->sht_empty_run++;
 #endif
     }
     if (sr & TIM_SR_CC1IF) {
         /*
-         * Capture event
+         * Compare event.
+         * Clear flag before callbacks, so match on compare value they set
+         * is not lost.
          */
-        clr |= TIM_SR_CC1IF;
+        tmr->sht_regs->SR = ~TIM_SR_CC1IF;
+    }
+    __HAL_ENABLE_INTERRUPTS(ctx);
+
+    if (sr & TIM_SR_CC1IF) {
         stm32_tmr_cbs(tmr);
     }
-
-    tmr->sht_regs->SR = ~clr;
 
 #if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
     if (tmr->sht_empty_run >= MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)) {
@@ -600,14 +623,17 @@ hal_timer_cnt(struct stm32_hal_tmr *tmr)
 #endif
 
     __HAL_DISABLE_INTERRUPTS(sr);
+    cnt = tmr->sht_regs->CNT;
     if (tmr->sht_regs->SR & TIM_SR_UIF) {
         /*
-         * Just overflowed
+         * Just overflowed, counter may have wrapped after it was read,
+         * read it again.
          */
         tmr->sht_oflow += STM32_OFLOW_VALUE;
-        tmr->sht_regs->SR &= ~TIM_SR_UIF;
+        tmr->sht_regs->SR = ~TIM_SR_UIF;
+        cnt = tmr->sht_regs->CNT;
     }
-    cnt = tmr->sht_oflow + tmr->sht_regs->CNT;
+    cnt += tmr->sht_oflow;
     __HAL_ENABLE_INTERRUPTS(sr);
 
 #if MYNEWT_VAL(STM32_TIMER_AUTO_OFF_COUNT)
@@ -754,12 +780,11 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
         /*
          * Event in the past (should be the case if it was just inserted).
          */
-        tmr->sht_regs->EGR |= TIM_EGR_CC1G;
+        tmr->sht_regs->EGR = TIM_EGR_CC1G;
         tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
     } else {
         if (timer == TAILQ_FIRST(&tmr->sht_timers)) {
-            tmr->sht_regs->CCR1 = timer->expiry & 0xFFFFU;
-            tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
+            stm32_tmr_set_ocmp(tmr, timer->expiry);
         }
     }
     __HAL_ENABLE_INTERRUPTS(sr);
@@ -798,7 +823,7 @@ hal_timer_stop(struct hal_timer *timer)
         timer->link.tqe_prev = NULL;
         if (reset_ocmp) {
             if (ht) {
-                tmr->sht_regs->CCR1 = ht->expiry & 0xFFFFU;
+                stm32_tmr_set_ocmp(tmr, ht->expiry);
             } else {
                 tmr->sht_regs->DIER &= ~TIM_DIER_CC1IE;
             }
