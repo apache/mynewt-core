@@ -31,8 +31,10 @@ pkg.keywords:
 pkg.source_dirs:
     - src
 
-pkg.source_dirs.LWIP_APPS_HTTPD:
-    - "@lwip/src/apps/httpd"
+# Only server files, fsdata.c is included by fs.c
+pkg.source_files.LWIP_APPS_HTTPD:
+    - "@lwip/src/apps/http/httpd.c"
+    - "@lwip/src/apps/http/fs.c"
 
 pkg.source_dirs.LWIP_APPS_IPERF:
     - "@lwip/src/apps/lwiperf"
