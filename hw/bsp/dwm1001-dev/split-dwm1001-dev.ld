@@ -206,5 +206,9 @@ INCLUDE "link_tables.ld.h"
 
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__HeapBase <= __HeapLimit, "region RAM overflowed with stack")
+
+    /* Split image must start with its own vector table */
+    ASSERT(__split_isr_vector_end > __split_isr_vector_start,
+           "split image vector table missing")
 }
 
