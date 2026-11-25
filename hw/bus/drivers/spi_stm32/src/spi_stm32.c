@@ -27,6 +27,7 @@
 #include <bus/bus_driver.h>
 #include <bus/drivers/spi_common.h>
 #include <bus/drivers/spi_stm32.h>
+#include <bus/drivers/spi_stm32_pins.h>
 #include <spidmacfg.h>
 #include <stm32_common/stm32_dma.h>
 
@@ -136,161 +137,6 @@ struct stm32_spi_hw {
     uint32_t (*get_pclk)(void);
 };
 
-/*
- * SPI functions can only appear on some pins.  To take burden of specifying pin
- * characteristics of the user, following structures and code allow to
- * use simple pin numbers and SPI function to configure pins in MCU.
- */
-enum spi_pin_func {
-    SPI_SCK,
-    SPI_MOSI,
-    SPI_MISO
-};
-
-enum spi_alt_num {
-    SPI_AF_0,
-    SPI_AF_1,
-    SPI_AF_2,
-    SPI_AF_5 = 5,
-    SPI_AF_6,
-    SPI_AF_7,
-    SPI_AF_INVALID = 0xFF,
-};
-
-struct spi_pin_def {
-    /** SPI master number (0-5) */
-    uint8_t spi_num;
-    /** Pin number should be created using MCU_GPIO_PORTx() macro */
-    uint8_t pin_num;
-    /** Pin function */
-    enum spi_pin_func pin_func;
-    /** Alternate function number needed for most STM MCUs (except F1) */
-    enum spi_alt_num alt_fun;
-};
-
-#define SPI_PIN_DEF(_spi_num, _pin, _func, _alt) { _spi_num, _pin, _func, _alt }
-
-/* STMF0 and STML0 have distinct alternate pin functions */
-#if MYNEWT_VAL(MCU_STM32L0) || MYNEWT_VAL(MCU_STM32F0)|| MYNEWT_VAL(MCU_STM32G0)
-static const struct spi_pin_def spi_pin[] = {
-#if MYNEWT_VAL(SPI_0_MASTER)
-    SPI_PIN_DEF(0, MCU_GPIO_PORTA(5), SPI_SCK, SPI_AF_0),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTB(3), SPI_SCK, SPI_AF_0),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTE(13), SPI_SCK, SPI_AF_2),
-
-    SPI_PIN_DEF(0, MCU_GPIO_PORTA(7), SPI_MOSI, SPI_AF_0),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTA(12), SPI_MOSI, SPI_AF_0),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTB(5), SPI_MOSI, SPI_AF_0),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTE(15), SPI_MOSI, SPI_AF_2),
-
-    SPI_PIN_DEF(0, MCU_GPIO_PORTA(6), SPI_MISO, SPI_AF_0),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTA(11), SPI_MISO, SPI_AF_0),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTB(4), SPI_MISO, SPI_AF_0),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTE(14), SPI_MISO, SPI_AF_2),
-#endif
-#if MYNEWT_VAL(SPI_1_MASTER)
-    SPI_PIN_DEF(1, MCU_GPIO_PORTB(10), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTB(13), SPI_SCK, SPI_AF_0),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTD(1), SPI_SCK, SPI_AF_1),
-
-    SPI_PIN_DEF(1, MCU_GPIO_PORTB(15), SPI_MOSI, SPI_AF_0),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTC(3), SPI_MOSI, SPI_AF_2),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTD(4), SPI_MOSI, SPI_AF_1),
-
-    SPI_PIN_DEF(1, MCU_GPIO_PORTB(14), SPI_MISO, SPI_AF_0),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTC(2), SPI_MISO, SPI_AF_2),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTD(3), SPI_MISO, SPI_AF_2),
-#endif
-};
-
-#else
-
-/*
- * All other MCU seems to have same alternate functions for each type of PIN.
- * For F1 function is specified and later ignored as it is not needed.
- */
-static const struct spi_pin_def spi_pin[] = {
-#if MYNEWT_VAL(SPI_0_MASTER)
-    SPI_PIN_DEF(0, MCU_GPIO_PORTA(5), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTB(3), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTG(11), SPI_SCK, SPI_AF_5),
-
-    SPI_PIN_DEF(0, MCU_GPIO_PORTA(7), SPI_MOSI, SPI_AF_5),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTB(5), SPI_MOSI, SPI_AF_5),
-#if MYNEWT_VAL(MCU_STM32H7) || MYNEWT_VAL(MCU_STM32F7)
-    SPI_PIN_DEF(0, MCU_GPIO_PORTD(7), SPI_MOSI, SPI_AF_5),
-#endif
-
-    SPI_PIN_DEF(0, MCU_GPIO_PORTA(6), SPI_MISO, SPI_AF_5),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTB(4), SPI_MISO, SPI_AF_5),
-    SPI_PIN_DEF(0, MCU_GPIO_PORTG(9), SPI_MISO, SPI_AF_5),
-#endif
-#if MYNEWT_VAL(SPI_1_MASTER)
-    SPI_PIN_DEF(1, MCU_GPIO_PORTB(10), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTB(13), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTC(7), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTD(3), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTI(1), SPI_SCK, SPI_AF_5),
-
-    SPI_PIN_DEF(1, MCU_GPIO_PORTB(15), SPI_MOSI, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTC(3), SPI_MOSI, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTI(3), SPI_MOSI, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTG(1), SPI_MOSI, SPI_AF_7),
-
-    SPI_PIN_DEF(1, MCU_GPIO_PORTB(14), SPI_MISO, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTC(2), SPI_MISO, SPI_AF_5),
-    SPI_PIN_DEF(1, MCU_GPIO_PORTI(2), SPI_MISO, SPI_AF_5),
-#endif
-
-#if MYNEWT_VAL(SPI_2_MASTER)
-    SPI_PIN_DEF(2, MCU_GPIO_PORTB(3), SPI_SCK, SPI_AF_6),
-    SPI_PIN_DEF(2, MCU_GPIO_PORTC(10), SPI_SCK, SPI_AF_6),
-
-    SPI_PIN_DEF(2, MCU_GPIO_PORTB(5), SPI_MOSI, SPI_AF_6),
-    SPI_PIN_DEF(2, MCU_GPIO_PORTC(12), SPI_MOSI, SPI_AF_6),
-    SPI_PIN_DEF(2, MCU_GPIO_PORTD(6), SPI_MOSI, SPI_AF_5),
-
-    SPI_PIN_DEF(2, MCU_GPIO_PORTB(4), SPI_MISO, SPI_AF_6),
-    SPI_PIN_DEF(2, MCU_GPIO_PORTC(11), SPI_MISO, SPI_AF_6),
-#endif
-
-#if MYNEWT_VAL(SPI_3_MASTER)
-    SPI_PIN_DEF(3, MCU_GPIO_PORTE(2), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(3, MCU_GPIO_PORTE(12), SPI_SCK, SPI_AF_5),
-
-    SPI_PIN_DEF(3, MCU_GPIO_PORTE(6), SPI_MOSI, SPI_AF_5),
-    SPI_PIN_DEF(3, MCU_GPIO_PORTE(14), SPI_MOSI, SPI_AF_5),
-
-    SPI_PIN_DEF(3, MCU_GPIO_PORTE(5), SPI_MISO, SPI_AF_5),
-    SPI_PIN_DEF(3, MCU_GPIO_PORTE(13), SPI_MISO, SPI_AF_5),
-#endif
-#if MYNEWT_VAL(SPI_4_MASTER)
-    SPI_PIN_DEF(4, MCU_GPIO_PORTF(7), SPI_SCK, SPI_AF_5),
-    SPI_PIN_DEF(4, MCU_GPIO_PORTH(6), SPI_SCK, SPI_AF_5),
-
-    SPI_PIN_DEF(4, MCU_GPIO_PORTF(9), SPI_MOSI, SPI_AF_5),
-    SPI_PIN_DEF(4, MCU_GPIO_PORTF(11), SPI_MOSI, SPI_AF_5),
-
-    SPI_PIN_DEF(4, MCU_GPIO_PORTF(8), SPI_MISO, SPI_AF_5),
-    SPI_PIN_DEF(4, MCU_GPIO_PORTH(7), SPI_MISO, SPI_AF_5),
-#endif
-
-#if MYNEWT_VAL(SPI_5_MASTER)
-    SPI_PIN_DEF(5, MCU_GPIO_PORTA(5), SPI_SCK, SPI_AF_7),
-    SPI_PIN_DEF(5, MCU_GPIO_PORTB(3), SPI_SCK, SPI_AF_7),
-    SPI_PIN_DEF(5, MCU_GPIO_PORTG(13), SPI_SCK, SPI_AF_5),
-
-    SPI_PIN_DEF(5, MCU_GPIO_PORTA(7), SPI_MOSI, SPI_AF_7),
-    SPI_PIN_DEF(5, MCU_GPIO_PORTB(5), SPI_MOSI, SPI_AF_7),
-    SPI_PIN_DEF(5, MCU_GPIO_PORTG(14), SPI_MOSI, SPI_AF_5),
-
-    SPI_PIN_DEF(5, MCU_GPIO_PORTA(6), SPI_MISO, SPI_AF_7),
-    SPI_PIN_DEF(5, MCU_GPIO_PORTB(4), SPI_MISO, SPI_AF_7),
-    SPI_PIN_DEF(5, MCU_GPIO_PORTG(12), SPI_MISO, SPI_AF_5),
-#endif
-};
-#endif
-
 /**
  * Function returns alternate function number.
  * @param spi_num   SPI_x_MASTER number
@@ -302,12 +148,13 @@ static const struct spi_pin_def spi_pin[] = {
 enum spi_alt_num
 spi_stm32_pin_af(int spi_num, int pin, enum spi_pin_func func)
 {
-    int i;
-    for (i = 0; i < ARRAY_SIZE(spi_pin); ++i) {
-        if (spi_pin[i].spi_num == spi_num &&
-            spi_pin[i].pin_num == pin &&
-            spi_pin[i].pin_func == func) {
-            return spi_pin[i].alt_fun;
+    size_t i;
+
+    for (i = 0; i < spi_stm32_pin_count; ++i) {
+        if (spi_stm32_pins[i].spi_num == spi_num &&
+            spi_stm32_pins[i].pin_num == pin &&
+            spi_stm32_pins[i].pin_func == func) {
+            return spi_stm32_pins[i].alt_fun;
         }
     }
     return SPI_AF_INVALID;
