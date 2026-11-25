@@ -70,14 +70,6 @@ fs_ls_cmd(int argc, char **argv)
         return 1;
     }
 
-    rc = fs_open(path, FS_ACCESS_READ, &file);
-    if (rc == 0) {
-        fs_ls_file(path, file);
-        fs_close(file);
-        file_cnt = 1;
-        goto done;
-    }
-
     /* Leave space for '/' and terminating NUL */
     strncpy(name, path, sizeof(name) - 2);
     name[sizeof(name) - 2] = '\0';
@@ -98,16 +90,30 @@ fs_ls_cmd(int argc, char **argv)
                 &namelen)) {
                 break;
             }
-            rc = fs_open(name, FS_ACCESS_READ, &file);
-            if (rc == 0) {
+            /*
+             * Open files only, opening a directory fails and some file
+             * systems (e.g. fatfs) log that as an error.
+             */
+            if (fs_dirent_is_dir(dirent)) {
+                fs_ls_dir(name);
+            } else if (fs_open(name, FS_ACCESS_READ, &file) == 0) {
                 fs_ls_file(name, file);
                 fs_close(file);
             } else {
-                fs_ls_dir(name);
+                console_printf("\t%6s %s\n", "?", name);
             }
             file_cnt++;
         } while (1);
         fs_closedir(dir);
+        goto done;
+    }
+
+    /* Not a directory, maybe a file */
+    rc = fs_open(path, FS_ACCESS_READ, &file);
+    if (rc == 0) {
+        fs_ls_file(path, file);
+        fs_close(file);
+        file_cnt = 1;
         goto done;
     }
     console_printf("Error listing %s - %d\n", path, rc);
