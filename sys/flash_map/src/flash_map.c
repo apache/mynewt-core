@@ -376,6 +376,24 @@ flash_area_id_to_image_slot(int area_id)
     }
 }
 
+const char *
+flash_area_name(uint8_t id)
+{
+#ifdef SYSFLASH_MAP_HAS_NAMES
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(sysflash_map_dflt); i++) {
+        if (sysflash_map_dflt[i].fa_id == id) {
+            return sysflash_map_names[i];
+        }
+    }
+#else
+    (void)id;
+#endif
+
+    return NULL;
+}
+
 /**
  * Reads the flash map layout from the manufacturing meta region.  This
  * function requires that the flash map be populated with a
