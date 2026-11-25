@@ -110,6 +110,30 @@ STATS_NAME_END(spi_stm32_stats_section)
 #define SPI_STATS_INCN(__sectvarname, __var, __n)  do {} while (0)
 #endif
 
+/*
+ * On these MCUs SPI is clocked from selectable kernel clock (RCC CCIPR),
+ * not from APB clock, prescaler must be computed from kernel clock.
+ */
+#if MYNEWT_VAL(MCU_STM32H7)
+#define SPI_STM32_KERNEL_CLOCK  1
+#define SPI1_KERNEL_CLK         RCC_PERIPHCLK_SPI123
+#define SPI2_KERNEL_CLK         RCC_PERIPHCLK_SPI123
+#define SPI3_KERNEL_CLK         RCC_PERIPHCLK_SPI123
+#define SPI4_KERNEL_CLK         RCC_PERIPHCLK_SPI45
+#define SPI5_KERNEL_CLK         RCC_PERIPHCLK_SPI45
+#define SPI6_KERNEL_CLK         RCC_PERIPHCLK_SPI6
+#elif MYNEWT_VAL(MCU_STM32H5) || MYNEWT_VAL(MCU_STM32U5)
+#define SPI_STM32_KERNEL_CLOCK  1
+#define SPI1_KERNEL_CLK         RCC_PERIPHCLK_SPI1
+#define SPI2_KERNEL_CLK         RCC_PERIPHCLK_SPI2
+#define SPI3_KERNEL_CLK         RCC_PERIPHCLK_SPI3
+#define SPI4_KERNEL_CLK         RCC_PERIPHCLK_SPI4
+#define SPI5_KERNEL_CLK         RCC_PERIPHCLK_SPI5
+#define SPI6_KERNEL_CLK         RCC_PERIPHCLK_SPI6
+#else
+#define SPI_STM32_KERNEL_CLOCK  0
+#endif
+
 /* Driver specific data needed for SPI transfer */
 struct spi_stm32_driver_data {
     SPI_HandleTypeDef hspi;
@@ -134,6 +158,10 @@ struct stm32_spi_hw {
     void (*irq_handler)(void);
     void (*enable_clock)(bool enable);
     uint32_t (*get_pclk)(void);
+#if SPI_STM32_KERNEL_CLOCK
+    /* RCC_PERIPHCLK_xxx of SPI kernel clock */
+    uint64_t periph_clk;
+#endif
 };
 
 /*
@@ -328,6 +356,9 @@ static const struct stm32_spi_hw stm32_spi1_hw = {
 #else
     .get_pclk = HAL_RCC_GetPCLK2Freq,
 #endif
+#if SPI_STM32_KERNEL_CLOCK
+    .periph_clk = SPI1_KERNEL_CLK,
+#endif
     .dmarx_cfg = &MYNEWT_VAL(SPI1_RX_DMA),
     .dmatx_cfg = &MYNEWT_VAL(SPI1_TX_DMA),
 };
@@ -369,6 +400,9 @@ static const struct stm32_spi_hw stm32_spi2_hw = {
     .irq_handler = spi2_irq_handler,
     .enable_clock = spi2_clock_enable,
     .get_pclk = HAL_RCC_GetPCLK1Freq,
+#if SPI_STM32_KERNEL_CLOCK
+    .periph_clk = SPI2_KERNEL_CLK,
+#endif
     .dmarx_cfg = &MYNEWT_VAL(SPI2_RX_DMA),
     .dmatx_cfg = &MYNEWT_VAL(SPI2_TX_DMA),
 };
@@ -410,6 +444,9 @@ static const struct stm32_spi_hw stm32_spi3_hw = {
     .irq_handler = spi3_irq_handler,
     .enable_clock = spi3_clock_enable,
     .get_pclk = HAL_RCC_GetPCLK1Freq,
+#if SPI_STM32_KERNEL_CLOCK
+    .periph_clk = SPI3_KERNEL_CLK,
+#endif
     .dmarx_cfg = &MYNEWT_VAL(SPI3_RX_DMA),
     .dmatx_cfg = &MYNEWT_VAL(SPI3_TX_DMA),
 };
@@ -451,6 +488,9 @@ static const struct stm32_spi_hw stm32_spi4_hw = {
     .irq_handler = spi4_irq_handler,
     .enable_clock = spi4_clock_enable,
     .get_pclk = HAL_RCC_GetPCLK2Freq,
+#if SPI_STM32_KERNEL_CLOCK
+    .periph_clk = SPI4_KERNEL_CLK,
+#endif
     .dmarx_cfg = &MYNEWT_VAL(SPI4_RX_DMA),
     .dmatx_cfg = &MYNEWT_VAL(SPI4_TX_DMA),
 };
@@ -493,6 +533,9 @@ const struct stm32_spi_hw stm32_spi5_hw = {
     .irq_handler = spi5_irq_handler,
     .enable_clock = spi5_clock_enable,
     .get_pclk = HAL_RCC_GetPCLK2Freq,
+#if SPI_STM32_KERNEL_CLOCK
+    .periph_clk = SPI5_KERNEL_CLK,
+#endif
     .dmarx_cfg = &MYNEWT_VAL(SPI5_RX_DMA),
     .dmatx_cfg = &MYNEWT_VAL(SPI5_TX_DMA),
 };
@@ -534,6 +577,9 @@ static const struct stm32_spi_hw stm32_spi6_hw = {
     .irq_handler = spi6_irq_handler,
     .enable_clock = spi6_clock_enable,
     .get_pclk = HAL_RCC_GetPCLK2Freq,
+#if SPI_STM32_KERNEL_CLOCK
+    .periph_clk = SPI6_KERNEL_CLK,
+#endif
     .dmarx_cfg = &MYNEWT_VAL(SPI6_RX_DMA),
     .dmatx_cfg = &MYNEWT_VAL(SPI6_TX_DMA),
 };
@@ -645,7 +691,11 @@ spi_stm32_configure(struct bus_dev *bdev, struct bus_node *bnode)
     /* Change from kHz to Hz */
     freq = node->freq * 1000;
     hw = dd->hw;
+#if SPI_STM32_KERNEL_CLOCK
+    pclk = HAL_RCCEx_GetPeriphCLKFreq(hw->periph_clk) / 2;
+#else
     pclk = hw->get_pclk() / 2;
+#endif
     /* Find prescaler so frequency does not exceed requested one. */
     for (prescaler = 0; freq < pclk; ++prescaler) {
         pclk >>= 1;
