@@ -333,7 +333,7 @@ fatfs_unlink(const char *path)
 #else
     FRESULT res;
 
-    FATFS_LOG_INFO("Unlink %s", path);
+    FATFS_LOG_DEBUG("Unlink %s", path);
 
     res = f_unlink(path);
 
@@ -349,7 +349,7 @@ fatfs_rename(const char *from, const char *to)
 #else
     FRESULT res;
 
-    FATFS_LOG_INFO("Rename %s to %s", from, to);
+    FATFS_LOG_DEBUG("Rename %s to %s", from, to);
 
     res = f_rename(from, to);
 
@@ -365,7 +365,7 @@ fatfs_mkdir(const char *path)
 #else
     FRESULT res;
 
-    FATFS_LOG_INFO("Mkdir %s", path);
+    FATFS_LOG_DEBUG("Mkdir %s", path);
 
     res = f_mkdir(path);
     return fatfs_to_vfs_error(res);
@@ -398,11 +398,11 @@ fatfs_opendir(const char *path, struct fs_dir **out_fs_dir)
     *out_fs_dir = (struct fs_dir *)dir;
     rc = FS_EOK;
 
-    FATFS_LOG_INFO("Open dir %s -> %p", path, *out_fs_dir);
+    FATFS_LOG_DEBUG("Open dir %s -> %p", path, *out_fs_dir);
 
 out:
     if (rc != FS_EOK) {
-        FATFS_LOG_ERROR("Open dir %s failed %d", path, rc);
+        FATFS_LOG_DEBUG("Open dir %s failed %d", path, rc);
 
         if (dir) {
             os_free(dir);
@@ -446,7 +446,7 @@ fatfs_closedir(struct fs_dir *fs_dir)
     FRESULT res;
     FATFS_DIR *dir = &((struct fatfs_dir *)fs_dir)->dir;
 
-    FATFS_LOG_INFO("Close dir %p", fs_dir);
+    FATFS_LOG_DEBUG("Close dir %p", fs_dir);
 
     res = f_closedir(dir);
 
