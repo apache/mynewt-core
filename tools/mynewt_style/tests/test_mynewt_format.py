@@ -673,6 +673,64 @@ class TestMacroMultiStatement(RuleTestCase):
                 "#define DECL(n) static int n; static int n##_2\n")
         self.assertViolations(code, [1])
 
+    def test_declarations(self):
+        code = src("""
+            #define ASSERT_FIRST(n)                   \\
+                _Static_assert((n) > 0, "positive");  \\
+                static const int value_##n = (n)
+            #define STATIC_ASSERT_FIRST(n)           \\
+                static_assert((n) > 0, "positive"); \\
+                TEST_EMIT(n)
+            #define ALIGNAS_FIRST(n)                   \\
+                alignas(4) static uint8_t n##_buf[4]; \\
+                uint8_t *n = n##_buf
+            #define TYPE_FIRST(n)    \\
+                U8 buf[(n)];         \\
+                start = prepare(buf)
+            #define FUNCTION(n)                   \\
+                foo_##n(1);                       \\
+                int n##_get(void) { a(); b(); }
+            #define INITIALIZER(n)   \\
+                foo_##n(1);          \\
+                pool_##n = { 1, 2 }
+            """)
+        self.assertViolations(code, [])
+
+    def test_not_wrappable(self):
+        code = src("""
+            #define LOCK()      { os_sr_t sr; OS_ENTER_CRITICAL(sr)
+            #define UNLOCK()    OS_EXIT_CRITICAL(sr); }
+            #define END(p, k)   \\
+                close(&p, &k);  \\
+                }               \\
+                while (0)
+            #define CHECKIF(expr)     \\
+                assert(!(expr));      \\
+                if (0)
+            #define ELSE_LOG(x) log(x); else
+            """)
+        self.assertViolations(code, [])
+
+    def test_block_macro(self):
+        code = src("""
+            #define CALL_ALL(t, f)      \\
+                init();                 \\
+                FOREACH(e, t) {         \\
+                    f(e);               \\
+                }
+            """)
+        self.assertViolations(code, [3])
+
+    def test_position(self):
+        code = src("""
+            #define BAD(x)          \\
+                a(x);               \\
+                if (b) c(x)
+            #define BAD2(x) a(x); for (;;) b(x)
+            """)
+        got = [(v.line, v.column) for v in check(self.rule_name, code)]
+        self.assertEqual(got, [(3, 5), (4, 23)])
+
 
 class TestHeaderGuard(RuleTestCase):
     rule_name = "header-guard"
@@ -898,6 +956,38 @@ class TestMacroArgParens(RuleTestCase):
                 "#define OK6(i) arr[i]\n"
                 "#define BAD(word) ((word >> 8) & 0xff)\n")
         self.assertViolations(code, [1, 8])
+
+    def test_called(self):
+        code = src("""
+            #define APPLY(m, x) m(x)
+            #define CALL(f)                 \\
+                void wrapper(void)          \\
+                {                           \\
+                    f();                    \\
+                }
+            #define TABLE(w) { w(0x63), w(0x7c) }
+            #define NOT_CALLED(f, x) f + x(1)
+            """)
+        self.assertViolations(code, [8])
+
+    def test_string_concatenation(self):
+        code = src("""
+            #define LOG(fmt, ...) printf("%s: " fmt "\\n", __func__, ##__VA_ARGS__)
+            #define STR(v) ("" v)
+            #define PREFIX(v) "a" v
+            """)
+        self.assertViolations(code, [])
+
+    def test_position(self):
+        code = src("""
+            #define BAD(x, y)       \\
+                do {                \\
+                    a = (y) * 2;    \\
+                    b = x * 2;      \\
+                } while (0)
+            """)
+        got = [(v.line, v.column) for v in check(self.rule_name, code)]
+        self.assertEqual(got, [(4, 13)])
 
 
 class TestDuplicateInclude(RuleTestCase):

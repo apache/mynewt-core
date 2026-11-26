@@ -31,6 +31,7 @@ _TAKES_ARG = {"define", "undef", "include", "if", "ifdef", "ifndef", "elif",
               "error", "warning", "pragma", "line", "include_next"}
 
 _DIRECTIVE_RE = re.compile(r"^([ \t]*)#([ \t]*)(\w+)([ \t]*)(.*)$")
+_DEFINE_FN_RE = re.compile(r"\s*#\s*define\s+\w+\(([^)]*)\)")
 
 
 def _strip_eol(line: str):
@@ -365,6 +366,66 @@ class MacroContinuation(Rule):
         return "\n".join(lines) if changed else None
 
 
+def _macro_code(ctx: FileContext, d):
+    """Masked code of a directive, with '\\<newline>' replaced by two spaces,
+    so offsets in it still match the lines of the directive."""
+    return "\n".join(ctx.code_lines[d.start_line - 1:d.end_line]).replace("\\\n", "  ")
+
+
+def _macro_pos(ctx: FileContext, d, offset: int):
+    """(line, column) of an offset in _macro_code()"""
+    raw = "\n".join(ctx.code_lines[d.start_line - 1:d.end_line])
+    return (d.start_line + raw.count("\n", 0, offset),
+            offset - raw.rfind("\n", 0, offset))
+
+
+def _close_paren(text: str, start: int) -> int:
+    """Offset of ')' closing '(' at start, -1 if there is none"""
+    depth = 0
+    for i in range(start, len(text)):
+        if text[i] == "(":
+            depth += 1
+        elif text[i] == ")":
+            depth -= 1
+            if depth == 0:
+                return i
+    return -1
+
+
+_DECL_START_RE = re.compile(
+    r"(do\b|\(\{|static\b|struct\b|union\b|enum\b|const\b|extern\b|typedef\b|"
+    r"void\b|int\b|\w+_t\b|_Static_assert\b|static_assert\b|_Alignas\b|alignas\b|"
+    # variable: 'type name;', 'type *name = ...'
+    r"(?!(return|goto|case|else|sizeof)\b)[A-Za-z_]\w*[\s*]+[A-Za-z_]\w*\s*[;=\[,])")
+_PREFIX_RE = re.compile(r"(if|while|for|switch)\s*\(")
+_FN_DECL_RE = re.compile(r"([A-Za-z_]\w*)[\s*]+(\w+(?:\s*##\s*\w+)*)\s*$")
+
+
+def _has_definition(body: str) -> bool:
+    """True if body has a function definition or '= { ... }' initializer
+    at top level"""
+    depth = 0
+    paren = None    # (open, close) of last top level (...)
+    for i, c in enumerate(body):
+        if c in "([{":
+            if c == "{" and depth == 0:
+                before = body[:i].rstrip()
+                if before.endswith("="):
+                    return True
+                if paren and not body[paren[1] + 1:i].strip():
+                    # 'type name(...) {', not 'FOREACH(...) {'
+                    decl = _FN_DECL_RE.search(body[:paren[0]])
+                    if (decl and decl.group(1) not in ("return", "else", "case", "goto") and
+                            decl.group(2) not in ("if", "while", "for", "switch")):
+                        return True
+            if c == "(" and depth == 0:
+                paren = (i, _close_paren(body, i))
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+    return False
+
+
 @register_rule
 class MacroMultiStatement(Rule):
     name = "macro-multi-statement"
@@ -377,8 +438,16 @@ class MacroMultiStatement(Rule):
             Good:  #define RESET(x)  do { (x)->a = 0; (x)->b = 0; } while (0)
             Bad:   #define RESET(x)  (x)->a = 0; (x)->b = 0
 
-        Macros that expand to declarations or definitions (starting with a
-        type, 'static', 'struct', ...) are not checked. Not auto-fixable.
+        Not checked, as they can't be wrapped:
+        - declarations and definitions: macros starting with a type,
+          'static', 'struct', '_Static_assert', ..., or having a function
+          definition or '= { ... }' initializer
+        - macros opening or closing a block of another macro, e.g.
+          'LOCK() {' and 'UNLOCK() }'
+        - macros ending with 'if (...)', 'for (...)', ... that is followed
+          by a statement where macro is used
+
+        Not auto-fixable.
     """
     severity = "warning"
 
@@ -387,19 +456,33 @@ class MacroMultiStatement(Rule):
         for d in ctx.directives:
             if d.name != "define":
                 continue
-            text = "\n".join(ctx.code_lines[d.start_line - 1:d.end_line])
-            m = re.match(r"\s*#\s*define\s+\w+\(([^)]*)\)", text)
+            text = _macro_code(ctx, d)
+            m = _DEFINE_FN_RE.match(text)
             if not m:
                 continue
-            body = text[m.end():].replace("\\\n", " ").strip()
-            if not body or re.match(r"(do\b|\(\{|static\b|struct\b|union\b|enum\b|"
-                                    r"const\b|extern\b|typedef\b|void\b|int\b|\w+_t\b)", body):
+            start = len(text) - len(text[m.end():].lstrip())
+            body = text[start:].rstrip()
+            if (not body or _DECL_START_RE.match(body) or _has_definition(body) or
+                    body.count("{") != body.count("}")):
                 continue
-            stmts = [s for s in split_top_level(body, sep=";") if s.strip()]
-            if len(stmts) > 1:
-                out.append(self.violation(ctx, d.start_line, 1,
-                                          "multi-statement macro should be wrapped in "
-                                          "'do { ... } while (0)'"))
+            stmts = []
+            pos = start
+            for part in split_top_level(body, sep=";"):
+                if part.strip():
+                    stmts.append((pos + len(part) - len(part.lstrip()), part.strip()))
+                pos += len(part) + 1
+            if len(stmts) < 2:
+                continue
+            # 'if (...)' or 'else' completed by statement after macro
+            last = stmts[-1][1]
+            prefix = _PREFIX_RE.match(last)
+            if last == "else" or (prefix and
+                                  _close_paren(last, prefix.end() - 1) == len(last) - 1):
+                continue
+            line, col = _macro_pos(ctx, d, stmts[1][0])
+            out.append(self.violation(ctx, line, col,
+                                      "multi-statement macro should be wrapped in "
+                                      "'do { ... } while (0)'"))
         return out
 
 
@@ -424,8 +507,11 @@ class MacroArgParens(Rule):
         on both sides (a whole function argument, array index, initializer
         element, right-hand side of '='), when it is stringified/pasted
         ('#x', 'a##x'), used as a member name ('p->x') or a type/declarator
-        ('struct x', 'x name'). Reported only: adding parentheses blindly
-        would break macros that take types.
+        ('struct x', 'x name'). Parameters used as called function or macro
+        name ('x(...)') and string literals concatenated with string
+        literals ('"a" x "b"') are not reported either, parentheses would
+        break them. Reported only: adding parentheses blindly would break
+        macros that take types.
     """
     severity = "warning"
 
@@ -435,31 +521,34 @@ class MacroArgParens(Rule):
         for d in ctx.directives:
             if d.name != "define":
                 continue
-            text = "\n".join(ctx.code_lines[d.start_line - 1:d.end_line])
-            text = text.replace("\\\n", "  ")
-            m = re.match(r"\s*#\s*define\s+\w+\(([^)]*)\)", text)
+            text = _macro_code(ctx, d)
+            m = _DEFINE_FN_RE.match(text)
             if not m:
                 continue
             params = [p.strip() for p in m.group(1).split(",") if p.strip() not in ("", "...")]
-            toks = [t.text for t in tokens(text, m.end())]
+            toks = tokens(text, m.end())
             reported = set()
-            for i, tok in enumerate(toks):
+            for i, t in enumerate(toks):
+                tok = t.text
                 if tok not in params or tok in reported:
                     continue
-                before = toks[i - 1] if i > 0 else None
-                after = toks[i + 1] if i + 1 < len(toks) else None
+                before = toks[i - 1].text if i > 0 else None
+                after = toks[i + 1].text if i + 1 < len(toks) else None
                 if before in _GLUE or after == "##":
                     continue
                 if before in _SAFE_BEFORE and after in _SAFE_AFTER:
                     continue
+                if after == "(":
+                    continue  # called: 'x(...)', '(x)(...)' breaks macro names
+                if '"' in (before, after):
+                    continue  # string literal concatenation: '"a" x "b"'
                 if after is not None and re.match(r"[A-Za-z_]", after):
                     continue  # used as a type: 'x name'
                 if before is not None and re.match(r"[A-Za-z_]", before) and before != "return":
                     continue  # used as a declarator: 'type x'
-                if before is not None and re.match(r"[A-Za-z_]", before) and before != "return":
-                    continue  # used as a declarator: 'type x'
                 reported.add(tok)
-                out.append(self.violation(ctx, d.start_line, 1,
+                line, col = _macro_pos(ctx, d, t.start)
+                out.append(self.violation(ctx, line, col,
                                           f"macro parameter '{tok}' is used without "
                                           f"parentheses"))
         return out
