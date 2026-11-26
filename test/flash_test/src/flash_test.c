@@ -60,6 +60,7 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
     int devid = 0;
     int rc;
     char *eptr;
+    const char *name;
 #if MYNEWT_VAL(FLASH_TEST_BUFFER_SIZE)
     char *tmp_buf = flash_cli_buf;
     const uint32_t tmp_buf_size = sizeof(flash_cli_buf);
@@ -87,12 +88,15 @@ flash_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
     if (arg_idx == 2) {
         /* There was no more arguments, dump flash areas */
         if (argc == 2) {
-            streamer_printf(streamer, "AreaID FlashId     Offset     Size\n");
+            streamer_printf(streamer, "AreaID FlashId     Offset     Size Name\n");
             for (i = 0; i < ARRAY_SIZE(sysflash_map_dflt); ++i) {
-                streamer_printf(streamer, "%6u %7u 0x%08x 0x%06x\n", sysflash_map_dflt[i].fa_id,
+                name = flash_area_name(sysflash_map_dflt[i].fa_id);
+                streamer_printf(streamer, "%6u %7u 0x%08x 0x%06x %s\n",
+                                sysflash_map_dflt[i].fa_id,
                                 sysflash_map_dflt[i].fa_device_id,
                                 (unsigned)sysflash_map_dflt[i].fa_off,
-                                (unsigned)sysflash_map_dflt[i].fa_size);
+                                (unsigned)sysflash_map_dflt[i].fa_size,
+                                name ? name : "");
             }
             return 0;
         } else {
