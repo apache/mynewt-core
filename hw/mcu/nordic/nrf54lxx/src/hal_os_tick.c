@@ -195,6 +195,9 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     nrf_grtc_sys_counter_compare_event_enable(NRF_GRTC, OS_IDLE_CMPREG);
 
     nrf_grtc_sys_counter_interval_set(NRF_GRTC, g_hal_os_tick.ticks_per_ostick);
+    nrf_grtc_sys_counter_auto_mode_set(NRF_GRTC, true);
+    nrf_grtc_waketime_set(NRF_GRTC, 4);
+    nrf_grtc_timeout_set(NRF_GRTC, 5);
     nrf_grtc_sys_counter_set(NRF_GRTC, true);
     nrf_grtc_task_trigger(NRF_GRTC, NRF_GRTC_TASK_START);
 
