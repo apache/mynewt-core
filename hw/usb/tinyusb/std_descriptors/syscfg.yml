@@ -62,6 +62,15 @@ syscfg.defs:
     USBD_PRODUCT_STRING:
         description: Device friendly name
         value: '"Dev device"'
+    USBD_VENDOR_STRING_IX:
+        description: String descriptor index of USBD_VENDOR_STRING
+        value: 2
+    USBD_PRODUCT_STRING_IX:
+        description: String descriptor index of USBD_PRODUCT_STRING
+        value: 3
+    USBD_SERIAL_NUMBER_STRING_IX:
+        description: String descriptor index of serial number
+        value: 1
     USBD_COMPOSITE_DEVICE:
         description: >
             When set to 1 device descriptor will have values assigned to
@@ -152,18 +161,54 @@ syscfg.defs:
     USBD_CDC_DESCRIPTOR_STRING:
         description: String for CDC interface
         value:
+    USBD_CDC_DESCRIPTOR_STRING_IX:
+        description: >
+            String descriptor index of USBD_CDC_DESCRIPTOR_STRING, 0 - none.
+            Set to 4 when string is set.
+        value: 0
+    USBD_CDC_CONSOLE_DESCRIPTOR_STRING_IX:
+        description: >
+            String descriptor index of USBD_CDC_CONSOLE_DESCRIPTOR_STRING,
+            0 - none. Set to 5 when string is set.
+        value: 0
+    USBD_CDC_HCI_DESCRIPTOR_STRING_IX:
+        description: >
+            String descriptor index of USBD_CDC_HCI_DESCRIPTOR_STRING,
+            0 - none. Set to 6 when string is set.
+        value: 0
 
     USBD_MSC_DESCRIPTOR_STRING:
         description: String for MSC interface
         value:
+    USBD_MSC_DESCRIPTOR_STRING_IX:
+        description: >
+            String descriptor index of USBD_MSC_DESCRIPTOR_STRING, 0 - none.
+            Set to 7 when string is set.
+        value: 0
 
     USBD_HID_DESCRIPTOR_STRING:
         description: String for HID interface
         value:
+    USBD_HID_DESCRIPTOR_STRING_IX:
+        description: >
+            String descriptor index of USBD_HID_DESCRIPTOR_STRING, 0 - none.
+            Set to 8 when string is set.
+        value: 0
 
     USBD_BTH_DESCRIPTOR_STRING:
         description: String for BT descriptor
         value:
+    USBD_BTH_DESCRIPTOR_STRING_IX:
+        description: >
+            String descriptor index of USBD_BTH_DESCRIPTOR_STRING, 0 - none.
+            Set to 9 when string is set.
+        value: 0
+
+    USBD_DFU_SLOT_NAME_IX:
+        description: >
+            String descriptor index of USBD_DFU_SLOT_NAME, 0 - none.
+            Set to 12 when slot name is set.
+        value: 0
 
     USBD_HID_REPORT_EP:
         description: HID report endpoint number
@@ -242,6 +287,11 @@ syscfg.defs:
     USBD_AUDIO_DESCRIPTOR_STRING:
         description: String for Audio Control interface
         value:
+    USBD_AUDIO_DESCRIPTOR_STRING_IX:
+        description: >
+            String descriptor index of USBD_AUDIO_DESCRIPTOR_STRING, 0 - none.
+            Set to 10 when string is set.
+        value: 0
     USBD_AUDIO_SAMPLE_RATE:
         description: >
             Audio sampling frequency in Hz, same for microphone and speaker.
@@ -358,6 +408,16 @@ syscfg.defs:
     USBD_NET_DESCRIPTOR_STRING:
         description: String for network control interface
         value:
+    USBD_NET_DESCRIPTOR_STRING_IX:
+        description: >
+            String descriptor index of USBD_NET_DESCRIPTOR_STRING, 0 - none.
+            Set to 11 when string is set.
+        value: 0
+    USBD_NET_MAC_STRING_IX:
+        description: >
+            String descriptor index of host MAC address (iMACAddress),
+            required by NCM and ECM. Set to 13 for them.
+        value: 0
     USBD_NET_NOTIFY_EP:
         description: >
             Network notification (interrupt IN) endpoint address
@@ -419,8 +479,31 @@ syscfg.restrictions:
     - '((USBD_NET != "NCM") && (USBD_NET != "ECM") && (USBD_NET != "RNDIS")) ||
        USBD_COMPOSITE_DEVICE'
     - '(USBD_NET != "NCM") || !USBD_NET_MS_OS20 || !USBD_WINDOWS_COMP_ID'
+    - '((USBD_NET != "NCM") && (USBD_NET != "ECM")) || USBD_NET_MAC_STRING_IX'
 
 syscfg.vals.USBD_COMPOSITE_DEVICE:
     USBD_DEVICE_CLASS: TUSB_CLASS_MISC
     USBD_DEVICE_SUBCLASS: MISC_SUBCLASS_COMMON
     USBD_DEVICE_PROTOCOL: MISC_PROTOCOL_IAD
+
+# Default string descriptor indices for strings that are set
+syscfg.vals.USBD_CDC_DESCRIPTOR_STRING:
+    USBD_CDC_DESCRIPTOR_STRING_IX: 4
+syscfg.vals.USBD_CDC_CONSOLE_DESCRIPTOR_STRING:
+    USBD_CDC_CONSOLE_DESCRIPTOR_STRING_IX: 5
+syscfg.vals.USBD_CDC_HCI_DESCRIPTOR_STRING:
+    USBD_CDC_HCI_DESCRIPTOR_STRING_IX: 6
+syscfg.vals.USBD_MSC_DESCRIPTOR_STRING:
+    USBD_MSC_DESCRIPTOR_STRING_IX: 7
+syscfg.vals.USBD_HID_DESCRIPTOR_STRING:
+    USBD_HID_DESCRIPTOR_STRING_IX: 8
+syscfg.vals.USBD_BTH_DESCRIPTOR_STRING:
+    USBD_BTH_DESCRIPTOR_STRING_IX: 9
+syscfg.vals.USBD_AUDIO_DESCRIPTOR_STRING:
+    USBD_AUDIO_DESCRIPTOR_STRING_IX: 10
+syscfg.vals.USBD_NET_DESCRIPTOR_STRING:
+    USBD_NET_DESCRIPTOR_STRING_IX: 11
+syscfg.vals.USBD_DFU_SLOT_NAME:
+    USBD_DFU_SLOT_NAME_IX: 12
+syscfg.vals.'(USBD_NET == "NCM") || (USBD_NET == "ECM")':
+    USBD_NET_MAC_STRING_IX: 13
