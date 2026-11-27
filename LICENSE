@@ -235,9 +235,9 @@ which are available under a BSD style license.  Relevant files are:
     * hw/mcu/nordic/nrf5340/include/nrfx_config_nrf5340_application.h
     * hw/mcu/nordic/nrf5340_net/include/nrfx_config_nrf5340_network.h
     * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0.s
-    * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0_split.s
-    * hw/mcu/nordic/nrf52xxx/src/arch/cortex_m4/gcc_startup_cm4_split.s
-    * hw/mcu/nordic/nrf91xx/src/arch/cortex_m33/gcc_startup_cm33_split.s
+    * boot/split_app/src/arch/cortex_m0/gcc_startup_cm0_split.s
+    * boot/split_app/src/arch/cortex_m4/gcc_startup_cm4_split.s
+    * boot/split_app/src/arch/cortex_m33/gcc_startup_cm33_split.s
     * hw/mcu/nordic/nrf91xx/src/arch/cortex_m33/gcc_startup_cm33.s
 
 
