@@ -379,6 +379,7 @@ littlefs_close(struct fs_file *fs_file)
 
     rc = lfs_file_close(lfs, file);
     free(file);
+    free(fs_file);
 
     return littlefs_to_vfs_error(rc);
 }
