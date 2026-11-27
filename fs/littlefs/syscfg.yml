@@ -64,6 +64,13 @@ syscfg.defs:
             Build littlefs without write support.
         value: 0
 
+    LITTLEFS_FLUSH_SYNC:
+        description: >
+            fs_flush() calls lfs_file_sync(): cached data and file size are
+            written to flash. With 0 fs_flush() does nothing and data reaches
+            flash only when the file is closed (old behavior).
+        value: 1
+
     LITTLEFS_DISABLE_INLINED_FILES:
          description: >
              Disables inlined files.

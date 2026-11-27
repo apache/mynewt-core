@@ -518,8 +518,26 @@ littlefs_write(struct fs_file *fs_file, const void *data, int len)
 static int
 littlefs_flush(struct fs_file *fs_file)
 {
+#if MYNEWT_VAL(LITTLEFS_FLUSH_SYNC) && !MYNEWT_VAL(LITTLEFS_READONLY)
+    lfs_file_t *file;
+    lfs_t *lfs;
+    int rc;
+
+    if (!fs_file) {
+        return FS_EINVAL;
+    }
+
+    file = ((struct littlefs_file *)fs_file)->file;
+    lfs = ((struct littlefs_file *)fs_file)->lfs;
+
+    /* Write cached data and commit file size, like close does */
+    rc = lfs_file_sync(lfs, file);
+
+    return littlefs_to_vfs_error(rc);
+#else
     (void)fs_file;
     return FS_EOK;
+#endif
 }
 
 static int
