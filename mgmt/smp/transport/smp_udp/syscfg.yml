@@ -1,0 +1,51 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    SMP_UDP_PORT:
+        description: >
+            UDP port SMP server listens on.  1337 is the port used by
+            mcumgr clients and Zephyr for SMP over UDP.
+        value: 1337
+
+    SMP_UDP_IPV4:
+        description: 'Listen for SMP requests on IPv4.'
+        value: 1
+
+    SMP_UDP_IPV6:
+        description: >
+            Listen for SMP requests on IPv6.  Requires IPv6 support in
+            the IP stack.
+        value: 0
+
+    SMP_UDP_MTU:
+        description: >
+            Largest SMP response sent in one datagram.  A longer
+            response is split into several datagrams, which clients do
+            not reassemble, so this must hold the biggest response.
+            Values above link MTU minus IP/UDP headers need IP
+            fragmentation in the IP stack.
+        value: 1024
+        range: 64..1024
+
+    SMP_UDP_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the UDP SMP transport.  Must run after the
+            IP stack and SMP are initialized.
+        value: 501
