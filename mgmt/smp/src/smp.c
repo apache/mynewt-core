@@ -106,7 +106,6 @@ smp_process_packet(struct smp_transport *st)
     struct cbor_mbuf_reader reader;
     struct cbor_mbuf_writer writer;
     struct os_mbuf *m;
-    int rc;
 
     if (!st) {
         return MGMT_ERR_EINVAL;
@@ -125,12 +124,13 @@ smp_process_packet(struct smp_transport *st)
             break;
         }
 
-        rc = smp_process_request_packet(&st->st_streamer, m);
-        if (rc) {
-            return rc;
-        }
+        /* The packet is consumed and an error, if any, was already
+         * reported to the peer.  Keep draining the queue, otherwise
+         * remaining requests wait for the next packet to arrive.
+         */
+        (void)smp_process_request_packet(&st->st_streamer, m);
     }
-    
+
     return 0;
 }
 
